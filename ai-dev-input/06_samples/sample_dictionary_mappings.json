@@ -1,0 +1,44 @@
+{
+  "mappings": [
+    {
+      "source_system": "HIS",
+      "source_code": "I21.3",
+      "source_name": "急性ST段抬高型心肌梗死",
+      "concept_type": "DIAGNOSIS",
+      "standard_code": "AMI_STEMI",
+      "standard_name": "急性ST段抬高型心肌梗死",
+      "mapping_status": "APPROVED",
+      "confidence": 0.99
+    },
+    {
+      "source_system": "EMR",
+      "source_code": "CHEST_PAIN",
+      "source_name": "胸痛",
+      "concept_type": "SYMPTOM",
+      "standard_code": "CHEST_PAIN",
+      "standard_name": "胸痛",
+      "mapping_status": "APPROVED",
+      "confidence": 0.97
+    },
+    {
+      "source_system": "ECG",
+      "source_code": "ST_ELEVATION",
+      "source_name": "ST段抬高",
+      "concept_type": "FINDING",
+      "standard_code": "ST_ELEVATION_CONTIGUOUS_LEADS",
+      "standard_name": "相邻导联ST段抬高",
+      "mapping_status": "APPROVED",
+      "confidence": 0.96
+    },
+    {
+      "source_system": "LIS",
+      "source_code": "TNI",
+      "source_name": "肌钙蛋白I",
+      "concept_type": "LAB_ITEM",
+      "standard_code": "TROPONIN_I",
+      "standard_name": "肌钙蛋白I",
+      "mapping_status": "APPROVED",
+      "confidence": 0.95
+    }
+  ]
+}

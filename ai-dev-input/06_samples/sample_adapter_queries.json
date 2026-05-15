@@ -1,0 +1,34 @@
+{
+  "queries": [
+    {
+      "adapter_code": "ECG_ADAPTER",
+      "adapter_type": "REST",
+      "query_code": "QUERY_ECG_REPORT",
+      "description": "查询患者十二导联心电图报告",
+      "params": {
+        "patient_id": "P_AMI_001",
+        "encounter_id": "E_AMI_001"
+      }
+    },
+    {
+      "adapter_code": "LIS_ADAPTER",
+      "adapter_type": "SQL",
+      "query_code": "QUERY_TROPONIN",
+      "description": "查询患者肌钙蛋白结果",
+      "params": {
+        "patient_id": "P_AMI_001",
+        "encounter_id": "E_AMI_001"
+      }
+    },
+    {
+      "adapter_code": "EMR_WS_ADAPTER",
+      "adapter_type": "WEBSERVICE",
+      "query_code": "QUERY_ADMISSION_NOTE",
+      "description": "查询老系统病历文书",
+      "params": {
+        "patient_id": "P_AMI_001",
+        "encounter_id": "E_AMI_001"
+      }
+    }
+  ]
+}

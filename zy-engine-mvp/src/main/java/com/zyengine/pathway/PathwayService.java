@@ -1,5 +1,6 @@
 package com.zyengine.pathway;
 
+import com.zyengine.adapter.AdapterHubService;
 import com.zyengine.dto.PatientPathwayInstance;
 import com.zyengine.dto.PatientNodeState;
 import com.zyengine.dto.PatientTaskState;
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class PathwayService {
     private final RuleService ruleService;
+    private final AdapterHubService adapterHubService;
     private final EnginePersistenceService persistenceService;
     private final PathwayConfigSupport configSupport = new PathwayConfigSupport();
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
@@ -33,8 +35,10 @@ public class PathwayService {
     private final Map<String, Map<String, PatientNodeState>> nodeStates = new ConcurrentHashMap<String, Map<String, PatientNodeState>>();
     private final Map<String, List<PathwayVariationRecord>> variationRecords = new ConcurrentHashMap<String, List<PathwayVariationRecord>>();
 
-    public PathwayService(RuleService ruleService, EnginePersistenceService persistenceService) {
+    public PathwayService(RuleService ruleService, AdapterHubService adapterHubService,
+                          EnginePersistenceService persistenceService) {
         this.ruleService = ruleService;
+        this.adapterHubService = adapterHubService;
         this.persistenceService = persistenceService;
     }
 
@@ -219,6 +223,7 @@ public class PathwayService {
         Map<String, Object> config = publishedConfig(instance);
         PatientNodeState nodeState = ensureNodeState(instance, config, nodeCode, "RUNNING");
         initializeTasks(instance, config, nodeState);
+        Map<String, Object> taskConfig = configSupport.nodeTask(config, nodeCode, taskCode);
         PatientTaskState taskState = findTask(nodeState, taskCode);
         if (taskState == null) {
             taskState = fallbackTaskState(instance, nodeCode, taskCode);
@@ -227,7 +232,7 @@ public class PathwayService {
         taskState.setStatus(status);
         taskState.setOperatorId(string(request == null ? null : request.get("operator_id"), null));
         taskState.setUpdatedTime(nowText());
-        taskState.setResult(resultSnapshot(request));
+        taskState.setResult(resultSnapshot(request, taskConfig, instance, nodeCode, taskCode, status));
         persistenceService.saveTaskState(taskState);
         return taskState;
     }
@@ -310,15 +315,62 @@ public class PathwayService {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> resultSnapshot(Map<String, Object> request) {
+    private Map<String, Object> resultSnapshot(Map<String, Object> request, Map<String, Object> taskConfig,
+                                               PatientPathwayInstance instance, String nodeCode,
+                                               String taskCode, String status) {
+        Map<String, Object> snapshot;
         if (request == null || request.isEmpty()) {
-            return new LinkedHashMap<String, Object>();
+            snapshot = new LinkedHashMap<String, Object>();
+        } else {
+            Object result = request.get("result");
+            if (result instanceof Map) {
+                snapshot = new LinkedHashMap<String, Object>((Map<String, Object>) result);
+            } else {
+                snapshot = new LinkedHashMap<String, Object>(request);
+            }
         }
-        Object result = request.get("result");
-        if (result instanceof Map) {
-            return new LinkedHashMap<String, Object>((Map<String, Object>) result);
+        if ("COMPLETED".equals(status)) {
+            enrichWithAdapterResult(snapshot, request, taskConfig, instance, nodeCode, taskCode);
         }
-        return new LinkedHashMap<String, Object>(request);
+        return snapshot;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichWithAdapterResult(Map<String, Object> snapshot, Map<String, Object> request,
+                                         Map<String, Object> taskConfig, PatientPathwayInstance instance,
+                                         String nodeCode, String taskCode) {
+        if (taskConfig == null || !(taskConfig.get("source") instanceof Map)) {
+            return;
+        }
+        Map<String, Object> source = (Map<String, Object>) taskConfig.get("source");
+        String adapterCode = string(source.get("adapter_code"), null);
+        String queryCode = string(source.get("query_code"), null);
+        if (adapterCode == null || queryCode == null) {
+            return;
+        }
+
+        Map<String, Object> params = new LinkedHashMap<String, Object>();
+        params.put("patient_id", instance.getPatientId());
+        params.put("encounter_id", instance.getEncounterId());
+        params.put("pathway_code", instance.getPathwayCode());
+        params.put("version_no", instance.getVersionNo());
+        params.put("instance_id", instance.getInstanceId());
+        params.put("node_code", nodeCode);
+        params.put("task_code", taskCode);
+        if (request != null && request.get("params") instanceof Map) {
+            params.putAll((Map<String, Object>) request.get("params"));
+        }
+
+        Map<String, Object> adapterRequest = new LinkedHashMap<String, Object>();
+        adapterRequest.put("adapter_code", adapterCode);
+        adapterRequest.put("query_code", queryCode);
+        adapterRequest.put("params", params);
+        Map<String, Object> adapterResult = adapterHubService.query(adapterRequest);
+
+        snapshot.put("source", source);
+        snapshot.put("adapter_query", adapterResult);
+        snapshot.put("adapter_status", adapterResult.get("status"));
+        snapshot.put("adapter_row_count", adapterResult.get("row_count"));
     }
 
     private Map<String, PatientNodeState> instanceNodeStates(String instanceId) {

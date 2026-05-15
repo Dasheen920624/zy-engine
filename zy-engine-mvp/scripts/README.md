@@ -15,6 +15,7 @@
 .\scripts\run-rule-smoke.cmd
 .\scripts\run-pathway-smoke.cmd
 .\scripts\run-graph-dify-smoke.cmd
+.\scripts\run-terminology-adapter-smoke.cmd
 .\scripts\stop-local.cmd
 ```
 
@@ -35,6 +36,7 @@
 | `run-rule-smoke.cmd` / `run-rule-smoke.ps1` | 导入、发布并模拟执行 AMI 样例规则 |
 | `run-pathway-smoke.cmd` / `run-pathway-smoke.ps1` | 导入、发布并执行 AMI 样例路径闭环 |
 | `run-graph-dify-smoke.cmd` / `run-graph-dify-smoke.ps1` | 验证图谱候选召回、证据查询和 Dify 降级调用 |
+| `run-terminology-adapter-smoke.cmd` / `run-terminology-adapter-smoke.ps1` | 验证字典映射和第三方适配器 Mock 查询 |
 | `stop-local.cmd` / `stop-local.ps1` | 停止本地 `18080` 和 `18081` 演示服务 |
 
 ## Oracle 模式

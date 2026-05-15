@@ -8,6 +8,9 @@
 - 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架。
 - 图谱引擎：候选疾病召回、证据查询、Neo4j 可配置查询和不可用时降级返回。
 - Dify 适配：保留工作流调用入口，支持配置真实 Dify 调用、超时降级和审计记录。
+- 字典映射：提供第三方系统编码到平台标准概念的标准化接口，未命中项会返回待治理状态。
+- 适配器中心：提供 REST/SQL/WebService 风格的第三方取数 Mock，返回统一行集和标准码映射结果。
+- 路径任务取数：任务配置了 `source.adapter_code/query_code` 时，完成任务会自动调用适配器 Mock 并保存取数结果。
 - Oracle 持久化：可选开启，已验证可写入 `ZYENGINE` 用户下的核心表。
 
 ## 编码约定
@@ -74,6 +77,12 @@ GET http://localhost:18080/zy-engine/api/health
 
 ```powershell
 .\scripts\run-graph-dify-smoke.cmd
+```
+
+字典映射与第三方适配器 Mock 验证：
+
+```powershell
+.\scripts\run-terminology-adapter-smoke.cmd
 ```
 
 ## 图谱和 Dify 配置
@@ -190,6 +199,8 @@ POST /zy-engine/api/patient-pathways/{instanceId}/nodes/{nodeCode}/tasks/{taskCo
 POST /zy-engine/api/patient-pathways/{instanceId}/variations
 POST /zy-engine/api/graph/disease-candidates
 POST /zy-engine/api/graph/evidence
+POST /zy-engine/api/terminology/normalize
+POST /zy-engine/api/adapters/query
 POST /zy-engine/api/dify/workflows/run
 ```
 
@@ -200,10 +211,12 @@ POST /zy-engine/api/dify/workflows/run
 - 置信度：`HIGH`
 - 入径后首节点：`AMI_CHEST_PAIN_IDENTIFY`
 - 完成首节点后当前节点：`AMI_REPERFUSION_EVAL`
-- 首节点任务：`TASK_ECG` 可初始化并完成。
+- 首节点任务：`TASK_ECG` 可初始化并完成，完成时会通过 `ECG_ADAPTER/QUERY_ECG_REPORT` 自动拉取心电图 Mock 数据。
 - 路径变异：任务跳过和医生主动记录均可保存原因。
 - 图谱降级：`CHEST_PAIN` + `ST_ELEVATION_CONTIGUOUS_LEADS` 可返回 `AMI_STEMI` 和 `EV_AMI_001`。
 - Dify 降级：未配置真实 Dify 时返回 `DEGRADED`，不影响路径核心状态。
+- 字典映射：`HIS/I21.3/DIAGNOSIS` 可标准化为 `AMI_STEMI`，未知编码会返回 `UNMAPPED` 和 `PENDING_MAPPING`。
+- 适配器 Mock：`ECG_ADAPTER`、`LIS_ADAPTER`、`HIS_ADAPTER`、`EMR_WS_ADAPTER` 可返回 AMI 样例第三方数据。
 - Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录均可写入。
 
 ## 当前边界

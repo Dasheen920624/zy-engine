@@ -70,6 +70,10 @@ X-Trace-Id: trace-demo-task-complete
 
 {
   "operator_id": "D001",
+  "params": {
+    "patient_id": "P_AMI_001",
+    "encounter_id": "E_AMI_001"
+  },
   "result": {
     "report_id": "ECG_001",
     "finding_codes": ["ST_ELEVATION_CONTIGUOUS_LEADS"],
@@ -179,6 +183,48 @@ X-Trace-Id: trace-demo-graph-evidence
   "target_code": "AMI_STEMI",
   "target_type": "PATHWAY",
   "graph_version": "AMI_GRAPH_2026_01"
+}
+
+### Terminology normalize diagnosis code
+POST http://localhost:18080/zy-engine/api/terminology/normalize
+Content-Type: application/json
+X-Trace-Id: trace-demo-terminology-normalize
+
+{
+  "source_system": "HIS",
+  "source_code": "I21.3",
+  "source_name": "急性ST段抬高型心肌梗死",
+  "concept_type": "DIAGNOSIS",
+  "patient_id": "P_AMI_001",
+  "encounter_id": "E_AMI_001"
+}
+
+### Adapter query ECG report mock
+POST http://localhost:18080/zy-engine/api/adapters/query
+Content-Type: application/json
+X-Trace-Id: trace-demo-adapter-ecg
+
+{
+  "adapter_code": "ECG_ADAPTER",
+  "query_code": "QUERY_ECG_REPORT",
+  "params": {
+    "patient_id": "P_AMI_001",
+    "encounter_id": "E_AMI_001"
+  }
+}
+
+### Adapter query WebService admission note mock
+POST http://localhost:18080/zy-engine/api/adapters/query
+Content-Type: application/json
+X-Trace-Id: trace-demo-adapter-webservice
+
+{
+  "adapter_code": "EMR_WS_ADAPTER",
+  "query_code": "QUERY_ADMISSION_NOTE",
+  "params": {
+    "patient_id": "P_AMI_001",
+    "encounter_id": "E_AMI_001"
+  }
 }
 
 ### Dify workflow run

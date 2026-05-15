@@ -79,6 +79,9 @@ $ecgTask = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/$instanceId/nodes/A
 if (-not $ecgTask.success -or $ecgTask.data.status -ne "COMPLETED") {
   throw "Pathway task completion failed."
 }
+if ($ecgTask.data.result.adapter_status -ne "SUCCESS" -or $ecgTask.data.result.adapter_query.rows[0].finding_standard_code -ne "ST_ELEVATION_CONTIGUOUS_LEADS") {
+  throw "Pathway task adapter source fetch failed."
+}
 
 $complete = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/$instanceId/nodes/AMI_CHEST_PAIN_IDENTIFY/complete" -Method Post -ContentType "application/json; charset=utf-8" -Body "{}"
 if (-not $complete.success -or $complete.data.currentNodeCode -ne "AMI_REPERFUSION_EVAL") {
@@ -117,5 +120,6 @@ Write-Host "Encounter: $encounterId"
 Write-Host "Instance: $instanceId"
 Write-Host "Current node after completion: $($complete.data.currentNodeCode)"
 Write-Host "Completed task: $($ecgTask.data.taskCode)=$($ecgTask.data.status)"
+Write-Host "Adapter source: $($ecgTask.data.result.adapter_query.adapter_code)/$($ecgTask.data.result.adapter_query.query_code), rows=$($ecgTask.data.result.adapter_row_count)"
 Write-Host "Skipped task: $($skipTask.data.taskCode)=$($skipTask.data.status)"
 Write-Host "Variation records: $($detail.data.variations.Count)"
