@@ -38,6 +38,7 @@ cd zy-engine-mvp
 .\scripts\start-memory.cmd
 .\scripts\verify-encoding.cmd
 .\scripts\run-rule-smoke.cmd
+.\scripts\run-pathway-smoke.cmd
 ```
 
 内存模式健康检查：

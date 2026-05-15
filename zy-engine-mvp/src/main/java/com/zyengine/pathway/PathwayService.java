@@ -21,8 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PathwayService {
     private final RuleService ruleService;
     private final EnginePersistenceService persistenceService;
+    private final PathwayConfigSupport configSupport = new PathwayConfigSupport();
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
     private final Map<String, Map<String, Object>> pathwayDrafts = new ConcurrentHashMap<String, Map<String, Object>>();
+    private final Map<String, Map<String, Object>> publishedPathways = new ConcurrentHashMap<String, Map<String, Object>>();
 
     public PathwayService(RuleService ruleService, EnginePersistenceService persistenceService) {
         this.ruleService = ruleService;
@@ -30,7 +32,7 @@ public class PathwayService {
     }
 
     public Map<String, Object> createPathway(Map<String, Object> config) {
-        String pathwayCode = String.valueOf(config.get("pathway_code"));
+        String pathwayCode = required(config, "pathway_code");
         pathwayDrafts.put(pathwayCode, config);
         persistenceService.savePathwayDraft(pathwayCode, config);
 
@@ -42,14 +44,16 @@ public class PathwayService {
     }
 
     public Map<String, Object> publish(String pathwayCode, Map<String, Object> request) {
-        String versionNo = String.valueOf(request.get("version_no"));
         Map<String, Object> config = pathwayDrafts.get(pathwayCode);
+        String versionNo = string(request.get("version_no"), configSupport.versionNo(config, "1.0.0"));
         if (config == null) {
             config = new HashMap<String, Object>();
             config.put("pathway_code", pathwayCode);
             config.put("version", versionNo);
         }
+        publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
         persistenceService.savePathwayVersion(pathwayCode, versionNo, "PUBLISHED", config);
+        persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED");
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("pathway_code", pathwayCode);
@@ -83,24 +87,28 @@ public class PathwayService {
     public PatientPathwayInstance admit(Map<String, Object> request) {
         String encounterId = String.valueOf(request.get("encounter_id"));
         String pathwayCode = String.valueOf(request.get("pathway_code"));
+        String versionNo = string(request.get("version_no"), "1.0.0");
+        Map<String, Object> config = publishedPathways.get(pathwayKey(pathwayCode, versionNo));
         String key = encounterId + "::" + pathwayCode;
         PatientPathwayInstance existing = activeInstances.get(key);
         if (existing != null) {
             return existing;
         }
 
+        // 入径首节点优先来自已发布路径配置；没有配置时保留AMI演示兜底，避免旧演示中断。
+        String firstNodeCode = string(configSupport.firstNodeCode(config), "AMI_CHEST_PAIN_IDENTIFY");
         PatientPathwayInstance instance = new PatientPathwayInstance();
         instance.setInstanceId("ppi-" + UUID.randomUUID().toString().replace("-", ""));
         instance.setPatientId(String.valueOf(request.get("patient_id")));
         instance.setEncounterId(encounterId);
         instance.setPathwayCode(pathwayCode);
-        instance.setVersionNo(String.valueOf(request.get("version_no")));
+        instance.setVersionNo(versionNo);
         instance.setStatus("ACTIVE");
-        instance.setCurrentNodeCode("AMI_CHEST_PAIN_IDENTIFY");
+        instance.setCurrentNodeCode(firstNodeCode);
         activeInstances.put(key, instance);
 
         persistenceService.savePatientInstance(instance, String.valueOf(request.get("doctor_id")));
-        persistenceService.updateNodeState(instance, "AMI_CHEST_PAIN_IDENTIFY", "RUNNING");
+        persistenceService.updateNodeState(instance, firstNodeCode, "RUNNING");
         return instance;
     }
 
@@ -108,12 +116,14 @@ public class PathwayService {
         for (PatientPathwayInstance instance : activeInstances.values()) {
             if (instanceId.equals(instance.getInstanceId())) {
                 persistenceService.updateNodeState(instance, nodeCode, "COMPLETED");
-                if ("AMI_CHEST_PAIN_IDENTIFY".equals(nodeCode)) {
-                    instance.setCurrentNodeCode("AMI_REPERFUSION_EVAL");
-                    persistenceService.updateNodeState(instance, "AMI_REPERFUSION_EVAL", "RUNNING");
-                } else if ("AMI_REPERFUSION_EVAL".equals(nodeCode)) {
-                    instance.setCurrentNodeCode("AMI_INPATIENT_TREATMENT");
-                    persistenceService.updateNodeState(instance, "AMI_INPATIENT_TREATMENT", "RUNNING");
+                Map<String, Object> config = publishedPathways.get(pathwayKey(instance.getPathwayCode(), instance.getVersionNo()));
+                String nextNodeCode = configSupport.nextNodeCode(config, nodeCode);
+                if (nextNodeCode == null) {
+                    nextNodeCode = builtInNextNode(nodeCode);
+                }
+                if (nextNodeCode != null) {
+                    instance.setCurrentNodeCode(nextNodeCode);
+                    persistenceService.updateNodeState(instance, nextNodeCode, "RUNNING");
                 }
                 persistenceService.savePatientInstance(instance, null);
                 return instance;
@@ -181,5 +191,35 @@ public class PathwayService {
         map.put("type", type);
         map.put("text", text);
         return map;
+    }
+
+    private String builtInNextNode(String nodeCode) {
+        if ("AMI_CHEST_PAIN_IDENTIFY".equals(nodeCode)) {
+            return "AMI_REPERFUSION_EVAL";
+        }
+        if ("AMI_REPERFUSION_EVAL".equals(nodeCode)) {
+            return "AMI_INPATIENT_TREATMENT";
+        }
+        return null;
+    }
+
+    private String pathwayKey(String pathwayCode, String versionNo) {
+        return pathwayCode + "::" + versionNo;
+    }
+
+    private String required(Map<String, Object> map, String key) {
+        String value = string(map.get(key), null);
+        if (value == null) {
+            throw new IllegalArgumentException(key + " is required");
+        }
+        return value;
+    }
+
+    private String string(Object value, String defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        String text = String.valueOf(value);
+        return text.trim().isEmpty() ? defaultValue : text;
     }
 }

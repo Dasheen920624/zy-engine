@@ -77,6 +77,7 @@ public class RuleService {
         Map<String, Object> patientContext = getPatientContext(request);
         List<RuleDefinition> published = publishedRules();
         if (published.isEmpty()) {
+            // 未导入规则时保留内置AMI规则，保证旧演示和健康验证不被配置化改造打断。
             return evaluateBuiltInRules(patientContext);
         }
 
@@ -117,6 +118,7 @@ public class RuleService {
         RuleResult result = new RuleResult();
         result.setRuleCode(definition.getRuleCode());
         try {
+            // 所有配置化规则统一通过DSL执行器处理，便于后续扩展更多操作符和审计信息。
             RuleDslEvaluator.EvaluationOutcome outcome = dslEvaluator.evaluate(definition.getRuleJson(), patientContext);
             result.setHit(outcome.isHit());
             result.setSeverity(outcome.isHit() ? severity(definition) : "INFO");

@@ -99,6 +99,23 @@ public class EnginePersistenceService {
         }
     }
 
+    public void updatePathwayStatus(String pathwayCode, String status) {
+        if (!enabled()) {
+            return;
+        }
+        String sql = "UPDATE pe_pathway_def SET status=?, updated_time=SYSTIMESTAMP " +
+                "WHERE tenant_id='default' AND org_code='ZYHOSPITAL' AND pathway_code=?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            // 路径主表用于配置中心筛选当前可用路径，发布版本时需要同步主表状态。
+            ps.setString(1, status);
+            ps.setString(2, pathwayCode);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("update pathway status failed: " + ex.getMessage(), ex);
+        }
+    }
+
     public void saveRecommendation(RecommendationCard card) {
         if (!enabled()) {
             return;
@@ -257,7 +274,20 @@ public class EnginePersistenceService {
         } catch (ClassNotFoundException ex) {
             throw new SQLException("Oracle JDBC driver not found", ex);
         }
-        return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
+        SQLException last = null;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
+            } catch (SQLException ex) {
+                last = ex;
+                // Oracle监听偶发拒绝连接时先短暂重试，P2阶段会替换为正式连接池。
+                if (!shouldRetryConnection(ex) || attempt == 3) {
+                    throw ex;
+                }
+                sleepQuietly(500L * attempt);
+            }
+        }
+        throw last;
     }
 
     private String toJson(Object value) {
@@ -281,6 +311,19 @@ public class EnginePersistenceService {
             return text;
         }
         return text.substring(0, maxLength);
+    }
+
+    private boolean shouldRetryConnection(SQLException ex) {
+        String message = ex.getMessage();
+        return message != null && (message.contains("ORA-12518") || message.contains("Listener refused"));
+    }
+
+    private void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private long extractNumericId(String text) {

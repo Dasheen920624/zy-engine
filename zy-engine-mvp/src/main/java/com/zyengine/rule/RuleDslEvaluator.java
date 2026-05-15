@@ -153,6 +153,7 @@ public class RuleDslEvaluator {
     private List<Object> valuesForPath(Map<String, Object> patientContext, String path) {
         Object root = patientContext;
         String normalizedPath = path;
+        // 规则DSL允许直接写 chief_complaints.code，也允许写 facts.xxx，这里统一映射到患者上下文。
         if (path.startsWith("patient.")) {
             root = patientContext.get("patient");
             normalizedPath = path.substring("patient.".length());
