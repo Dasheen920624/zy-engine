@@ -1,0 +1,179 @@
+# 专科诊疗路径三大引擎 MVP
+
+本目录是“专科诊疗路径智能管理平台”的后端最小可运行工程，已按 **JDK 1.8** 兼容方式搭建。当前重点不是一次性做完所有业务，而是把后续开发需要的工程骨架、数据库表、接口链路和中文备注规范先稳住。
+
+## 当前能力
+
+- 路径引擎：路径草稿、版本发布、候选路径识别、医生确认入径、节点流转。
+- 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架。
+- 图谱引擎：候选疾病召回、证据查询接口骨架，后续可替换为 Neo4j 查询。
+- Dify 适配：保留工作流调用入口，当前 MVP 返回降级结果。
+- Oracle 持久化：可选开启，已验证可写入 `ZYENGINE` 用户下的核心表。
+
+## 编码约定
+
+所有源码、Markdown 文档、JSON 样例、YAML、SQL 均统一使用 **UTF-8**。Windows PowerShell 5.1 读取中文文件时请显式指定编码：
+
+```powershell
+Get-Content .\README.md -Encoding UTF8
+```
+
+Oracle 中文表备注和字段备注推荐执行 `db/oracle/zyengine_comments_unistr.sql`，该脚本使用 `UNISTR` 写入中文，可避免客户端字符集不一致导致备注乱码。
+
+详细说明见：
+
+```text
+docs/编码与中文备注规范.md
+```
+
+## 推荐命令行
+
+本机已验证可使用 PowerShell 7。后续建议使用 Windows Terminal 打开 PowerShell 7，命令为：
+
+```powershell
+pwsh
+```
+
+PowerShell 7 与 Windows 自带的 PowerShell 5.1 并存，不会替换系统组件。工程内 `scripts/*.cmd` 入口会自动优先调用 `pwsh`，如果机器未安装 PowerShell 7，则回退到 Windows PowerShell 5.1。
+
+脚本说明见：
+
+```text
+scripts/README.md
+```
+
+## 技术栈
+
+- JDK 1.8
+- Spring Boot 2.7.18
+- Maven
+- Oracle JDBC `ojdbc8`
+- Oracle / 达梦 DDL 预留
+
+## 编译
+
+如果本机 JDK 1.8 访问 Maven 仓库出现证书问题，可使用工程内置的 HTTP Maven 设置：
+
+```powershell
+.\scripts\build.cmd
+```
+
+## 启动：内存演示模式
+
+```powershell
+.\scripts\start-memory.cmd
+```
+
+健康检查：
+
+```text
+GET http://localhost:18080/zy-engine/api/health
+```
+
+## 启动：Oracle 持久化模式
+
+不要把数据库密码写入代码库。请只在运行时通过环境变量传入：
+
+```powershell
+$env:ZYENGINE_DB_ENABLED='true'
+$env:ZYENGINE_DB_URL='jdbc:oracle:thin:@//192.168.4.25:1521/ORCL'
+$env:ZYENGINE_DB_USERNAME='ZYENGINE'
+$env:ZYENGINE_DB_PASSWORD='数据库密码'
+.\scripts\start-oracle.cmd
+```
+
+健康检查：
+
+```text
+GET http://localhost:18081/zy-engine/api/health
+```
+
+## 初始化 Oracle 表
+
+建表脚本：
+
+```text
+db/oracle/zyengine_core_ddl_with_comments.sql
+```
+
+推荐执行方式：
+
+```powershell
+$env:ZYENGINE_DB_CONNECT='//192.168.4.25:1521/ORCL'
+$env:ZYENGINE_DB_USERNAME='ZYENGINE'
+$env:ZYENGINE_DB_PASSWORD='数据库密码'
+.\scripts\run-oracle-ddl.cmd
+```
+
+脚本会创建核心表、索引、表备注和字段备注。表已存在时会跳过建表，不会删除已有数据。为避免中文备注乱码，脚本会在建表后再次执行 `zyengine_comments_unistr.sql` 覆盖写入中文备注。
+
+## 核心表
+
+- `PE_PATHWAY_DEF`：路径主定义表。
+- `PE_PATHWAY_VERSION`：路径版本表。
+- `PE_PATIENT_INSTANCE`：患者路径实例表。
+- `PE_PATIENT_NODE_STATE`：患者节点状态表。
+- `PE_PATIENT_TASK_STATE`：患者任务状态表。
+- `PE_VARIATION_RECORD`：路径变异记录表。
+- `PE_RECOMMENDATION_RECORD`：推荐卡片记录表。
+- `RE_RULE_DEF`：规则定义表。
+- `RE_RULE_EXEC_LOG`：规则执行日志表。
+- `TM_STANDARD_CONCEPT`：标准术语概念表。
+- `TM_CONCEPT_MAPPING`：院内字典映射表。
+- `ADP_ADAPTER_DEF`：第三方适配器定义表。
+- `ADP_QUERY_DEF`：第三方查询定义表。
+- `GE_GRAPH_VERSION`：图谱版本表。
+- `ENGINE_AUDIT_LOG`：引擎审计日志表。
+
+## AMI 样例接口
+
+候选路径识别：
+
+```text
+POST /zy-engine/api/patient-pathways/candidates
+Body: ../ai-dev-input/06_samples/sample_patient_context_ami.json
+```
+
+医生确认入径：
+
+```text
+POST /zy-engine/api/patient-pathways/admit
+```
+
+示例请求：
+
+```json
+{
+  "patient_id": "P_AMI_001",
+  "encounter_id": "E_AMI_001",
+  "pathway_code": "AMI_STEMI",
+  "version_no": "1.0.0",
+  "doctor_id": "D001"
+}
+```
+
+完成首节点：
+
+```text
+POST /zy-engine/api/patient-pathways/{instanceId}/nodes/AMI_CHEST_PAIN_IDENTIFY/complete
+```
+
+已验证结果：
+
+- 候选路径：`AMI_STEMI`
+- 推荐评分：`90.45`
+- 置信度：`HIGH`
+- 入径后首节点：`AMI_CHEST_PAIN_IDENTIFY`
+- 完成首节点后当前节点：`AMI_REPERFUSION_EVAL`
+- Oracle 落表：推荐记录、患者路径实例、节点状态均可写入。
+
+## 当前边界
+
+这是可运行工程骨架，不是最终生产版本。后续开发需要继续补齐：
+
+- 可视化路径配置器、路径 DSL 校验和版本差异对比。
+- 规则 DSL 解析器、热更新、规则包审核发布、规则模拟器。
+- 院内字典映射配置界面和第三方适配器 SDK。
+- Neo4j 图谱查询实现、证据版本管理、图谱发布流程。
+- Dify 工作流真实调用、超时降级、重试和审计。
+- 登录鉴权、租户隔离、操作审计、监控告警和国产化部署脚本。

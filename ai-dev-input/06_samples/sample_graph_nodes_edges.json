@@ -1,0 +1,75 @@
+{
+  "graph_version": "AMI_GRAPH_2026_01",
+  "description": "急性心肌梗死路径样例图谱数据，供Neo4j初始化和图谱引擎接口调试使用。",
+  "nodes": [
+    {
+      "id": "D_AMI_STEMI",
+      "label": "Disease",
+      "code": "AMI_STEMI",
+      "name": "急性ST段抬高型心肌梗死"
+    },
+    {
+      "id": "S_CHEST_PAIN",
+      "label": "Symptom",
+      "code": "CHEST_PAIN",
+      "name": "胸痛"
+    },
+    {
+      "id": "F_ST_ELEVATION",
+      "label": "Finding",
+      "code": "ST_ELEVATION_CONTIGUOUS_LEADS",
+      "name": "相邻导联ST段抬高"
+    },
+    {
+      "id": "P_AMI_STEMI",
+      "label": "Pathway",
+      "code": "AMI_STEMI",
+      "name": "急性ST段抬高型心肌梗死诊疗路径"
+    },
+    {
+      "id": "EV_AMI_001",
+      "label": "Evidence",
+      "code": "EV_AMI_001",
+      "name": "AMI急诊再灌注院内路径专家审核证据"
+    }
+  ],
+  "edges": [
+    {
+      "source": "S_CHEST_PAIN",
+      "target": "D_AMI_STEMI",
+      "type": "SUGGESTS",
+      "weight": 0.65,
+      "name": "症状提示疾病"
+    },
+    {
+      "source": "F_ST_ELEVATION",
+      "target": "D_AMI_STEMI",
+      "type": "SUPPORTS_DIAGNOSIS",
+      "weight": 0.95,
+      "name": "检查发现支持诊断"
+    },
+    {
+      "source": "D_AMI_STEMI",
+      "target": "P_AMI_STEMI",
+      "type": "HAS_PATHWAY",
+      "weight": 1.0,
+      "name": "疾病关联路径"
+    },
+    {
+      "source": "EV_AMI_001",
+      "target": "P_AMI_STEMI",
+      "type": "SUPPORTS_PATHWAY",
+      "weight": 0.9,
+      "name": "证据支持路径"
+    }
+  ],
+  "neo4j_seed_cypher": [
+    "MERGE (d:Disease {code:'AMI_STEMI'}) SET d.name='急性ST段抬高型心肌梗死'",
+    "MERGE (s:Symptom {code:'CHEST_PAIN'}) SET s.name='胸痛'",
+    "MERGE (f:Finding {code:'ST_ELEVATION_CONTIGUOUS_LEADS'}) SET f.name='相邻导联ST段抬高'",
+    "MERGE (p:Pathway {code:'AMI_STEMI'}) SET p.name='急性ST段抬高型心肌梗死诊疗路径'",
+    "MERGE (s)-[:SUGGESTS {weight:0.65, name:'症状提示疾病'}]->(d)",
+    "MERGE (f)-[:SUPPORTS_DIAGNOSIS {weight:0.95, name:'检查发现支持诊断'}]->(d)",
+    "MERGE (d)-[:HAS_PATHWAY {weight:1.0, name:'疾病关联路径'}]->(p)"
+  ]
+}

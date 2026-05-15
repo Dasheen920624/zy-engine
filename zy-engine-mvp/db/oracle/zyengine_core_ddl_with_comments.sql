@@ -1,0 +1,375 @@
+SET DEFINE OFF;
+SET SERVEROUTPUT ON;
+ALTER SESSION SET NLS_LENGTH_SEMANTICS=CHAR;
+
+DECLARE
+  PROCEDURE create_ignore(p_sql VARCHAR2) IS
+  BEGIN
+    EXECUTE IMMEDIATE p_sql;
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLCODE = -955 THEN
+        NULL;
+      ELSE
+        RAISE;
+      END IF;
+  END;
+BEGIN
+  create_ignore('CREATE TABLE pe_pathway_def (
+    id NUMBER(20) PRIMARY KEY,
+    tenant_id VARCHAR2(64) NOT NULL,
+    org_code VARCHAR2(64) NOT NULL,
+    pathway_code VARCHAR2(64) NOT NULL,
+    pathway_name VARCHAR2(200) NOT NULL,
+    specialty_code VARCHAR2(64),
+    disease_code VARCHAR2(64),
+    status VARCHAR2(32) NOT NULL,
+    created_by VARCHAR2(64),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by VARCHAR2(64),
+    updated_time TIMESTAMP,
+    CONSTRAINT uk_pe_pathway_def UNIQUE (tenant_id, org_code, pathway_code)
+  )');
+
+  create_ignore('CREATE TABLE pe_pathway_version (
+    id NUMBER(20) PRIMARY KEY,
+    pathway_code VARCHAR2(64) NOT NULL,
+    version_no VARCHAR2(32) NOT NULL,
+    status VARCHAR2(32) NOT NULL,
+    config_json CLOB NOT NULL,
+    effective_time TIMESTAMP,
+    retired_time TIMESTAMP,
+    approved_by VARCHAR2(64),
+    approved_time TIMESTAMP,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_pe_pathway_version UNIQUE (pathway_code, version_no)
+  )');
+
+  create_ignore('CREATE TABLE pe_patient_instance (
+    id NUMBER(20) PRIMARY KEY,
+    tenant_id VARCHAR2(64) NOT NULL,
+    org_code VARCHAR2(64) NOT NULL,
+    patient_id VARCHAR2(64) NOT NULL,
+    encounter_id VARCHAR2(64) NOT NULL,
+    pathway_code VARCHAR2(64) NOT NULL,
+    version_no VARCHAR2(32) NOT NULL,
+    status VARCHAR2(32) NOT NULL,
+    current_node_code VARCHAR2(64),
+    admitted_by VARCHAR2(64),
+    admission_time TIMESTAMP,
+    exit_time TIMESTAMP,
+    exit_reason VARCHAR2(1000),
+    lock_version NUMBER(10) DEFAULT 0 NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_time TIMESTAMP,
+    CONSTRAINT uk_pe_active_instance UNIQUE (encounter_id, pathway_code, status)
+  )');
+
+  create_ignore('CREATE TABLE pe_patient_node_state (
+    id NUMBER(20) PRIMARY KEY,
+    instance_id NUMBER(20) NOT NULL,
+    node_code VARCHAR2(64) NOT NULL,
+    node_name VARCHAR2(200),
+    status VARCHAR2(32) NOT NULL,
+    enter_time TIMESTAMP,
+    complete_time TIMESTAMP,
+    timeout_flag NUMBER(1) DEFAULT 0 NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )');
+
+  create_ignore('CREATE TABLE pe_patient_task_state (
+    id NUMBER(20) PRIMARY KEY,
+    instance_id NUMBER(20) NOT NULL,
+    node_code VARCHAR2(64) NOT NULL,
+    task_code VARCHAR2(64) NOT NULL,
+    task_name VARCHAR2(200),
+    task_type VARCHAR2(64),
+    status VARCHAR2(32) NOT NULL,
+    result_json CLOB,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_time TIMESTAMP
+  )');
+
+  create_ignore('CREATE TABLE pe_variation_record (
+    id NUMBER(20) PRIMARY KEY,
+    instance_id NUMBER(20) NOT NULL,
+    patient_id VARCHAR2(64) NOT NULL,
+    encounter_id VARCHAR2(64) NOT NULL,
+    node_code VARCHAR2(64),
+    variation_type VARCHAR2(64) NOT NULL,
+    reason VARCHAR2(1000),
+    operator_id VARCHAR2(64),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )');
+
+  create_ignore('CREATE TABLE pe_recommendation_record (
+    id NUMBER(20) PRIMARY KEY,
+    recommendation_id VARCHAR2(128) NOT NULL,
+    patient_id VARCHAR2(64) NOT NULL,
+    encounter_id VARCHAR2(64) NOT NULL,
+    scenario VARCHAR2(64) NOT NULL,
+    target_code VARCHAR2(128) NOT NULL,
+    target_name VARCHAR2(200),
+    score NUMBER(8,2),
+    confidence VARCHAR2(32),
+    action_level VARCHAR2(32),
+    card_json CLOB,
+    trace_id VARCHAR2(128),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_pe_recommendation UNIQUE (recommendation_id)
+  )');
+
+  create_ignore('CREATE TABLE re_rule_def (
+    id NUMBER(20) PRIMARY KEY,
+    tenant_id VARCHAR2(64) NOT NULL,
+    org_code VARCHAR2(64) NOT NULL,
+    rule_code VARCHAR2(64) NOT NULL,
+    rule_name VARCHAR2(200) NOT NULL,
+    rule_type VARCHAR2(64) NOT NULL,
+    version_no VARCHAR2(32) NOT NULL,
+    status VARCHAR2(32) NOT NULL,
+    severity VARCHAR2(32),
+    rule_json CLOB NOT NULL,
+    created_by VARCHAR2(64),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    approved_by VARCHAR2(64),
+    approved_time TIMESTAMP,
+    CONSTRAINT uk_re_rule_def UNIQUE (tenant_id, org_code, rule_code, version_no)
+  )');
+
+  create_ignore('CREATE TABLE re_rule_exec_log (
+    id NUMBER(20) PRIMARY KEY,
+    trace_id VARCHAR2(128) NOT NULL,
+    rule_code VARCHAR2(64) NOT NULL,
+    rule_version VARCHAR2(32),
+    patient_id VARCHAR2(64),
+    encounter_id VARCHAR2(64),
+    event_id VARCHAR2(128),
+    hit_flag NUMBER(1) NOT NULL,
+    severity VARCHAR2(32),
+    message VARCHAR2(1000),
+    input_snapshot CLOB,
+    output_snapshot CLOB,
+    elapsed_ms NUMBER(10),
+    result_status VARCHAR2(32) NOT NULL,
+    error_code VARCHAR2(64),
+    error_message VARCHAR2(1000),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )');
+
+  create_ignore('CREATE TABLE tm_standard_concept (
+    id NUMBER(20) PRIMARY KEY,
+    concept_code VARCHAR2(128) NOT NULL,
+    concept_name VARCHAR2(200) NOT NULL,
+    concept_type VARCHAR2(64) NOT NULL,
+    status VARCHAR2(32) NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_tm_standard_concept UNIQUE (concept_code, concept_type)
+  )');
+
+  create_ignore('CREATE TABLE tm_concept_mapping (
+    id NUMBER(20) PRIMARY KEY,
+    source_system VARCHAR2(64) NOT NULL,
+    source_code VARCHAR2(128) NOT NULL,
+    source_name VARCHAR2(200),
+    concept_type VARCHAR2(64) NOT NULL,
+    standard_code VARCHAR2(128) NOT NULL,
+    mapping_status VARCHAR2(32) NOT NULL,
+    confidence NUMBER(5,2),
+    approved_by VARCHAR2(64),
+    approved_time TIMESTAMP,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_tm_concept_mapping UNIQUE (source_system, source_code, concept_type)
+  )');
+
+  create_ignore('CREATE TABLE adp_adapter_def (
+    id NUMBER(20) PRIMARY KEY,
+    adapter_code VARCHAR2(64) NOT NULL,
+    adapter_name VARCHAR2(200) NOT NULL,
+    adapter_type VARCHAR2(32) NOT NULL,
+    status VARCHAR2(32) NOT NULL,
+    config_json CLOB NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_adp_adapter_def UNIQUE (adapter_code)
+  )');
+
+  create_ignore('CREATE TABLE adp_query_def (
+    id NUMBER(20) PRIMARY KEY,
+    adapter_code VARCHAR2(64) NOT NULL,
+    query_code VARCHAR2(64) NOT NULL,
+    query_name VARCHAR2(200) NOT NULL,
+    query_config CLOB NOT NULL,
+    status VARCHAR2(32) NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_adp_query_def UNIQUE (adapter_code, query_code)
+  )');
+
+  create_ignore('CREATE TABLE ge_graph_version (
+    id NUMBER(20) PRIMARY KEY,
+    graph_version VARCHAR2(64) NOT NULL,
+    status VARCHAR2(32) NOT NULL,
+    description VARCHAR2(1000),
+    published_by VARCHAR2(64),
+    published_time TIMESTAMP,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_ge_graph_version UNIQUE (graph_version)
+  )');
+
+  create_ignore('CREATE TABLE engine_audit_log (
+    id NUMBER(20) PRIMARY KEY,
+    trace_id VARCHAR2(128),
+    engine_type VARCHAR2(32) NOT NULL,
+    action_type VARCHAR2(64) NOT NULL,
+    target_type VARCHAR2(64),
+    target_code VARCHAR2(128),
+    patient_id VARCHAR2(64),
+    encounter_id VARCHAR2(64),
+    operator_id VARCHAR2(64),
+    detail_json CLOB,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )');
+
+  create_ignore('CREATE INDEX idx_pe_instance_patient ON pe_patient_instance(patient_id, encounter_id)');
+  create_ignore('CREATE INDEX idx_pe_node_instance ON pe_patient_node_state(instance_id, node_code)');
+  create_ignore('CREATE INDEX idx_pe_task_instance ON pe_patient_task_state(instance_id, node_code)');
+  create_ignore('CREATE INDEX idx_re_log_trace ON re_rule_exec_log(trace_id)');
+  create_ignore('CREATE INDEX idx_re_log_patient ON re_rule_exec_log(patient_id, encounter_id)');
+  create_ignore('CREATE INDEX idx_audit_trace ON engine_audit_log(trace_id)');
+END;
+/
+
+COMMENT ON TABLE pe_pathway_def IS '路径引擎-专病路径主定义表，保存路径编码、名称、专科和病种等基础信息';
+COMMENT ON COLUMN pe_pathway_def.id IS '主键ID，由应用层生成';
+COMMENT ON COLUMN pe_pathway_def.tenant_id IS '租户ID，单院部署可固定为医院编码';
+COMMENT ON COLUMN pe_pathway_def.org_code IS '医疗机构编码';
+COMMENT ON COLUMN pe_pathway_def.pathway_code IS '路径编码，如AMI_STEMI';
+COMMENT ON COLUMN pe_pathway_def.pathway_name IS '路径名称';
+COMMENT ON COLUMN pe_pathway_def.specialty_code IS '专科编码';
+COMMENT ON COLUMN pe_pathway_def.disease_code IS '关联疾病编码';
+COMMENT ON COLUMN pe_pathway_def.status IS '路径状态：DRAFT/PUBLISHED/DISABLED';
+
+COMMENT ON TABLE pe_pathway_version IS '路径引擎-路径版本表，保存每个路径版本的完整配置JSON和发布审核信息';
+COMMENT ON COLUMN pe_pathway_version.pathway_code IS '路径编码';
+COMMENT ON COLUMN pe_pathway_version.version_no IS '版本号';
+COMMENT ON COLUMN pe_pathway_version.status IS '版本状态：DRAFT/PUBLISHED/RETIRED';
+COMMENT ON COLUMN pe_pathway_version.config_json IS '路径配置DSL原文，包含阶段、节点、任务、流转、绑定规则';
+COMMENT ON COLUMN pe_pathway_version.effective_time IS '版本生效时间';
+COMMENT ON COLUMN pe_pathway_version.retired_time IS '版本停用时间';
+COMMENT ON COLUMN pe_pathway_version.approved_by IS '审核发布人';
+COMMENT ON COLUMN pe_pathway_version.approved_time IS '审核发布时间';
+
+COMMENT ON TABLE pe_patient_instance IS '路径引擎-患者路径实例表，保存患者入径后的路径状态和当前节点';
+COMMENT ON COLUMN pe_patient_instance.patient_id IS '患者ID';
+COMMENT ON COLUMN pe_patient_instance.encounter_id IS '就诊ID';
+COMMENT ON COLUMN pe_patient_instance.pathway_code IS '路径编码';
+COMMENT ON COLUMN pe_patient_instance.version_no IS '患者实例绑定的路径版本';
+COMMENT ON COLUMN pe_patient_instance.status IS '实例状态：ACTIVE/EXITED/CLOSED等';
+COMMENT ON COLUMN pe_patient_instance.current_node_code IS '当前路径节点编码';
+COMMENT ON COLUMN pe_patient_instance.admitted_by IS '确认入径医生或操作员';
+COMMENT ON COLUMN pe_patient_instance.admission_time IS '入径时间';
+COMMENT ON COLUMN pe_patient_instance.exit_time IS '退出路径时间';
+COMMENT ON COLUMN pe_patient_instance.exit_reason IS '退出路径原因';
+COMMENT ON COLUMN pe_patient_instance.lock_version IS '乐观锁版本号';
+
+COMMENT ON TABLE pe_patient_node_state IS '路径引擎-患者路径节点状态表，记录每个节点进入、完成、超时等状态';
+COMMENT ON COLUMN pe_patient_node_state.instance_id IS '患者路径实例ID';
+COMMENT ON COLUMN pe_patient_node_state.node_code IS '节点编码';
+COMMENT ON COLUMN pe_patient_node_state.node_name IS '节点名称';
+COMMENT ON COLUMN pe_patient_node_state.status IS '节点状态：WAITING/RUNNING/COMPLETED/SKIPPED/TIMEOUT';
+COMMENT ON COLUMN pe_patient_node_state.enter_time IS '进入节点时间';
+COMMENT ON COLUMN pe_patient_node_state.complete_time IS '完成节点时间';
+COMMENT ON COLUMN pe_patient_node_state.timeout_flag IS '是否超时，0否1是';
+
+COMMENT ON TABLE pe_patient_task_state IS '路径引擎-患者节点任务状态表，记录检查、检验、表单、医嘱包、随访等任务完成情况';
+COMMENT ON COLUMN pe_patient_task_state.instance_id IS '患者路径实例ID';
+COMMENT ON COLUMN pe_patient_task_state.node_code IS '所属节点编码';
+COMMENT ON COLUMN pe_patient_task_state.task_code IS '任务编码';
+COMMENT ON COLUMN pe_patient_task_state.task_name IS '任务名称';
+COMMENT ON COLUMN pe_patient_task_state.task_type IS '任务类型：FORM/LAB/EXAM/ORDER_SET/FOLLOW_UP等';
+COMMENT ON COLUMN pe_patient_task_state.status IS '任务状态';
+COMMENT ON COLUMN pe_patient_task_state.result_json IS '任务结果JSON快照';
+
+COMMENT ON TABLE pe_variation_record IS '路径引擎-路径变异记录表，记录医生偏离路径、患者原因、资源限制、禁忌证等变异';
+COMMENT ON COLUMN pe_variation_record.instance_id IS '患者路径实例ID';
+COMMENT ON COLUMN pe_variation_record.variation_type IS '变异类型';
+COMMENT ON COLUMN pe_variation_record.reason IS '变异原因说明';
+COMMENT ON COLUMN pe_variation_record.operator_id IS '记录人';
+
+COMMENT ON TABLE pe_recommendation_record IS '路径引擎-推荐卡片记录表，保存候选路径、风险预警、治疗建议等推荐结果';
+COMMENT ON COLUMN pe_recommendation_record.recommendation_id IS '推荐ID';
+COMMENT ON COLUMN pe_recommendation_record.scenario IS '推荐场景：PATHWAY_ENTRY/RISK_ALERT等';
+COMMENT ON COLUMN pe_recommendation_record.target_code IS '推荐目标编码';
+COMMENT ON COLUMN pe_recommendation_record.score IS '综合评分';
+COMMENT ON COLUMN pe_recommendation_record.confidence IS '置信度';
+COMMENT ON COLUMN pe_recommendation_record.action_level IS '动作级别：BLOCK/STRONG_ALERT/WEAK_ALERT/INFO';
+COMMENT ON COLUMN pe_recommendation_record.card_json IS '推荐卡片完整JSON';
+COMMENT ON COLUMN pe_recommendation_record.trace_id IS '调用链追踪ID';
+
+COMMENT ON TABLE re_rule_def IS '规则引擎-规则定义表，保存规则DSL、类型、版本、状态和审核信息';
+COMMENT ON COLUMN re_rule_def.rule_code IS '规则编码';
+COMMENT ON COLUMN re_rule_def.rule_name IS '规则名称';
+COMMENT ON COLUMN re_rule_def.rule_type IS '规则类型：TIME_LIMIT_QC/CONTENT_QC/PATHWAY_NODE/SAFETY等';
+COMMENT ON COLUMN re_rule_def.version_no IS '规则版本号';
+COMMENT ON COLUMN re_rule_def.status IS '规则状态：DRAFT/PUBLISHED/DISABLED';
+COMMENT ON COLUMN re_rule_def.severity IS '默认严重级别';
+COMMENT ON COLUMN re_rule_def.rule_json IS '规则DSL原文';
+
+COMMENT ON TABLE re_rule_exec_log IS '规则引擎-规则执行日志表，记录每次规则执行的输入、输出、命中、耗时和异常';
+COMMENT ON COLUMN re_rule_exec_log.trace_id IS '调用链追踪ID';
+COMMENT ON COLUMN re_rule_exec_log.rule_code IS '规则编码';
+COMMENT ON COLUMN re_rule_exec_log.hit_flag IS '是否命中，0否1是';
+COMMENT ON COLUMN re_rule_exec_log.message IS '规则结果说明';
+COMMENT ON COLUMN re_rule_exec_log.input_snapshot IS '规则输入快照';
+COMMENT ON COLUMN re_rule_exec_log.output_snapshot IS '规则输出快照';
+COMMENT ON COLUMN re_rule_exec_log.elapsed_ms IS '执行耗时毫秒';
+COMMENT ON COLUMN re_rule_exec_log.result_status IS '执行状态：SUCCESS/FAILED/TIMEOUT等';
+
+COMMENT ON TABLE tm_standard_concept IS '字典映射-平台标准概念表，保存疾病、检验、检查、药品、文书等统一编码';
+COMMENT ON COLUMN tm_standard_concept.concept_code IS '标准概念编码';
+COMMENT ON COLUMN tm_standard_concept.concept_name IS '标准概念名称';
+COMMENT ON COLUMN tm_standard_concept.concept_type IS '概念类型';
+COMMENT ON COLUMN tm_standard_concept.status IS '状态';
+
+COMMENT ON TABLE tm_concept_mapping IS '字典映射-第三方系统编码到平台标准概念的映射表';
+COMMENT ON COLUMN tm_concept_mapping.source_system IS '来源系统，如HIS/EMR/LIS/PACS';
+COMMENT ON COLUMN tm_concept_mapping.source_code IS '来源系统原始编码';
+COMMENT ON COLUMN tm_concept_mapping.source_name IS '来源系统原始名称';
+COMMENT ON COLUMN tm_concept_mapping.concept_type IS '概念类型';
+COMMENT ON COLUMN tm_concept_mapping.standard_code IS '映射后的平台标准编码';
+COMMENT ON COLUMN tm_concept_mapping.mapping_status IS '映射状态：DRAFT/APPROVED/REJECTED';
+COMMENT ON COLUMN tm_concept_mapping.confidence IS '映射置信度';
+
+COMMENT ON TABLE adp_adapter_def IS '适配器中心-第三方系统适配器定义表，保存REST/SQL/WebService等连接配置';
+COMMENT ON COLUMN adp_adapter_def.adapter_code IS '适配器编码';
+COMMENT ON COLUMN adp_adapter_def.adapter_name IS '适配器名称';
+COMMENT ON COLUMN adp_adapter_def.adapter_type IS '适配器类型：REST/SQL/WEBSERVICE/MQ/FILE';
+COMMENT ON COLUMN adp_adapter_def.status IS '状态';
+COMMENT ON COLUMN adp_adapter_def.config_json IS '连接配置JSON，敏感信息生产环境应加密或外部注入';
+
+COMMENT ON TABLE adp_query_def IS '适配器中心-适配器查询定义表，保存具体查询模板和字段映射';
+COMMENT ON COLUMN adp_query_def.adapter_code IS '适配器编码';
+COMMENT ON COLUMN adp_query_def.query_code IS '查询编码';
+COMMENT ON COLUMN adp_query_def.query_name IS '查询名称';
+COMMENT ON COLUMN adp_query_def.query_config IS '查询配置JSON';
+COMMENT ON COLUMN adp_query_def.status IS '状态';
+
+COMMENT ON TABLE ge_graph_version IS '图谱引擎-图谱版本元数据表，记录医学知识图谱版本发布状态';
+COMMENT ON COLUMN ge_graph_version.graph_version IS '图谱版本号';
+COMMENT ON COLUMN ge_graph_version.status IS '版本状态';
+COMMENT ON COLUMN ge_graph_version.description IS '版本说明';
+COMMENT ON COLUMN ge_graph_version.published_by IS '发布人';
+COMMENT ON COLUMN ge_graph_version.published_time IS '发布时间';
+
+COMMENT ON TABLE engine_audit_log IS '引擎公共审计日志表，记录路径、规则、图谱、Dify等引擎关键操作';
+COMMENT ON COLUMN engine_audit_log.trace_id IS '调用链追踪ID';
+COMMENT ON COLUMN engine_audit_log.engine_type IS '引擎类型：PATHWAY/RULE/GRAPH/DIFY/TERMINOLOGY/ADAPTER';
+COMMENT ON COLUMN engine_audit_log.action_type IS '操作类型';
+COMMENT ON COLUMN engine_audit_log.target_type IS '操作对象类型';
+COMMENT ON COLUMN engine_audit_log.target_code IS '操作对象编码';
+COMMENT ON COLUMN engine_audit_log.patient_id IS '患者ID';
+COMMENT ON COLUMN engine_audit_log.encounter_id IS '就诊ID';
+COMMENT ON COLUMN engine_audit_log.operator_id IS '操作人';
+COMMENT ON COLUMN engine_audit_log.detail_json IS '操作详情JSON';
+
+PROMPT ZYENGINE core tables and comments are ready.
+

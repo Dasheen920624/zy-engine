@@ -1,0 +1,104 @@
+### Health
+GET http://localhost:18080/zy-engine/api/health
+X-Trace-Id: trace-demo-health
+
+### AMI candidate pathway recognition
+POST http://localhost:18080/zy-engine/api/patient-pathways/candidates
+Content-Type: application/json
+X-Trace-Id: trace-demo-ami-candidate
+
+{
+  "patient": {
+    "patient_id": "P_AMI_001",
+    "gender": "M",
+    "age": 62
+  },
+  "encounter": {
+    "encounter_id": "E_AMI_001",
+    "visit_type": "EMERGENCY",
+    "department_code": "ER",
+    "arrival_time": "2026-05-15T10:02:00+08:00"
+  },
+  "facts": {
+    "chief_complaints": [
+      {
+        "text": "胸痛2小时，伴大汗",
+        "time": "2026-05-15T10:04:00+08:00"
+      }
+    ],
+    "exams": [
+      {
+        "code": "ECG_12_LEAD",
+        "name": "十二导联心电图",
+        "finding_codes": ["ST_ELEVATION_CONTIGUOUS_LEADS"],
+        "report_text": "相邻导联ST段抬高",
+        "report_time": "2026-05-15T10:09:00+08:00"
+      }
+    ],
+    "histories": [
+      {"code": "HYPERTENSION", "name": "高血压"},
+      {"code": "DIABETES", "name": "糖尿病"}
+    ]
+  }
+}
+
+### Admit patient into AMI pathway
+POST http://localhost:18080/zy-engine/api/patient-pathways/admit
+Content-Type: application/json
+X-Trace-Id: trace-demo-ami-admit
+
+{
+  "patient_id": "P_AMI_001",
+  "encounter_id": "E_AMI_001",
+  "pathway_code": "AMI_STEMI",
+  "version_no": "1.0.0",
+  "doctor_id": "D001"
+}
+
+### Complete first node
+POST http://localhost:18080/zy-engine/api/patient-pathways/ppi-replace-with-real-id/nodes/AMI_CHEST_PAIN_IDENTIFY/complete
+Content-Type: application/json
+X-Trace-Id: trace-demo-node-complete
+
+{
+  "operator_id": "D001",
+  "completion_reason": "ECG completed and STEMI candidate identified"
+}
+
+### Rule simulate
+POST http://localhost:18080/zy-engine/api/rules/simulate
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-simulate
+
+{
+  "patient_context": {
+    "patient": {
+      "patient_id": "P_AMI_001",
+      "gender": "M",
+      "age": 62
+    },
+    "encounter": {
+      "encounter_id": "E_AMI_001",
+      "visit_type": "EMERGENCY",
+      "department_code": "ER",
+      "arrival_time": "2026-05-15T10:02:00+08:00"
+    },
+    "facts": {
+      "chief_complaints": [{"text": "胸痛2小时，伴大汗"}],
+      "exams": [{"finding_codes": ["ST_ELEVATION_CONTIGUOUS_LEADS"]}]
+    }
+  }
+}
+
+### Graph disease candidates
+POST http://localhost:18080/zy-engine/api/graph/disease-candidates
+Content-Type: application/json
+X-Trace-Id: trace-demo-graph-candidate
+
+{
+  "symptom_codes": ["CHEST_PAIN"],
+  "finding_codes": ["ST_ELEVATION_CONTIGUOUS_LEADS"],
+  "risk_factor_codes": ["HYPERTENSION", "DIABETES"],
+  "limit": 10
+}
+

@@ -1,0 +1,555 @@
+openapi: 3.0.3
+info:
+  title: Specialty Care Pathway Engines API
+  version: 1.0.0
+  description: 专科诊疗路径平台三大引擎核心接口契约
+servers:
+  - url: /api
+tags:
+  - name: PathwayEngine
+    description: 路径引擎
+  - name: RuleEngine
+    description: 规则引擎
+  - name: GraphEngine
+    description: 图谱引擎
+  - name: Terminology
+    description: 字典映射服务
+  - name: AdapterHub
+    description: 第三方适配器中心
+  - name: DifyAdapter
+    description: Dify工作流适配服务
+paths:
+  /pathways:
+    post:
+      tags: [PathwayEngine]
+      summary: 创建路径定义草稿
+      operationId: createPathway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathwayConfig'
+      responses:
+        '200':
+          description: 创建结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /pathways/{pathwayCode}/publish:
+    post:
+      tags: [PathwayEngine]
+      summary: 发布路径版本
+      operationId: publishPathway
+      parameters:
+        - $ref: '#/components/parameters/PathwayCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version_no, approved_by]
+              properties:
+                version_no:
+                  type: string
+                approved_by:
+                  type: string
+                comment:
+                  type: string
+      responses:
+        '200':
+          description: 发布结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /patient-pathways/candidates:
+    post:
+      tags: [PathwayEngine]
+      summary: 候选路径识别
+      operationId: findCandidatePathways
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientContext'
+      responses:
+        '200':
+          description: 候选路径列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResult'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RecommendationCard'
+  /patient-pathways/admit:
+    post:
+      tags: [PathwayEngine]
+      summary: 医生确认患者入径
+      operationId: admitPatientPathway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [patient_id, encounter_id, pathway_code, version_no, doctor_id]
+              properties:
+                patient_id:
+                  type: string
+                encounter_id:
+                  type: string
+                pathway_code:
+                  type: string
+                version_no:
+                  type: string
+                doctor_id:
+                  type: string
+                recommendation_id:
+                  type: string
+      responses:
+        '200':
+          description: 患者路径实例
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResult'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PatientPathwayInstance'
+  /patient-pathways/{instanceId}/nodes/{nodeCode}/complete:
+    post:
+      tags: [PathwayEngine]
+      summary: 完成路径节点
+      operationId: completePathwayNode
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: nodeCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operator_id:
+                  type: string
+                completion_reason:
+                  type: string
+                evidence:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: 完成结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /rules/evaluate:
+    post:
+      tags: [RuleEngine]
+      summary: 执行规则
+      operationId: evaluateRules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [trace_id, patient_context]
+              properties:
+                trace_id:
+                  type: string
+                rule_codes:
+                  type: array
+                  items:
+                    type: string
+                patient_context:
+                  $ref: '#/components/schemas/PatientContext'
+                event:
+                  $ref: '#/components/schemas/ClinicalEvent'
+      responses:
+        '200':
+          description: 规则执行结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResult'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RuleResult'
+  /rules/simulate:
+    post:
+      tags: [RuleEngine]
+      summary: 规则模拟执行
+      operationId: simulateRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rule_config, patient_context]
+              properties:
+                rule_config:
+                  $ref: '#/components/schemas/RuleDsl'
+                patient_context:
+                  $ref: '#/components/schemas/PatientContext'
+      responses:
+        '200':
+          description: 模拟结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /graph/disease-candidates:
+    post:
+      tags: [GraphEngine]
+      summary: 图谱候选疾病召回
+      operationId: recallDiseaseCandidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphDiseaseCandidateRequest'
+      responses:
+        '200':
+          description: 候选疾病
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResult'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GraphCandidate'
+  /graph/evidence:
+    post:
+      tags: [GraphEngine]
+      summary: 查询证据
+      operationId: queryEvidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_code]
+              properties:
+                target_code:
+                  type: string
+                target_type:
+                  type: string
+                graph_version:
+                  type: string
+      responses:
+        '200':
+          description: 证据列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /terminology/normalize:
+    post:
+      tags: [Terminology]
+      summary: 标准化第三方系统编码
+      operationId: normalizeConcept
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source_system, source_code, concept_type]
+              properties:
+                source_system:
+                  type: string
+                source_code:
+                  type: string
+                source_name:
+                  type: string
+                concept_type:
+                  type: string
+      responses:
+        '200':
+          description: 标准概念
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /adapters/query:
+    post:
+      tags: [AdapterHub]
+      summary: 通过适配器查询第三方系统数据
+      operationId: queryAdapter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [adapter_code, query_code, params]
+              properties:
+                adapter_code:
+                  type: string
+                query_code:
+                  type: string
+                params:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: 适配器结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /dify/workflows/run:
+    post:
+      tags: [DifyAdapter]
+      summary: 调用Dify Workflow
+      operationId: runDifyWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workflow_code, trace_id, inputs]
+              properties:
+                workflow_code:
+                  type: string
+                workflow_version:
+                  type: string
+                trace_id:
+                  type: string
+                inputs:
+                  type: object
+                  additionalProperties: true
+                output_schema:
+                  type: string
+      responses:
+        '200':
+          description: Workflow结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+components:
+  parameters:
+    PathwayCode:
+      name: pathwayCode
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    ApiResult:
+      type: object
+      required: [success, code, message, trace_id]
+      properties:
+        success:
+          type: boolean
+        code:
+          type: string
+          example: "0"
+        message:
+          type: string
+          example: success
+        trace_id:
+          type: string
+        data:
+          nullable: true
+    ClinicalEvent:
+      type: object
+      required: [event_id, event_type, event_time, patient_id, encounter_id, source_system]
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+        event_time:
+          type: string
+          format: date-time
+        patient_id:
+          type: string
+        encounter_id:
+          type: string
+        source_system:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+    PatientContext:
+      type: object
+      required: [patient, encounter, facts]
+      properties:
+        patient:
+          type: object
+          additionalProperties: true
+        encounter:
+          type: object
+          additionalProperties: true
+        facts:
+          type: object
+          additionalProperties: true
+    PathwayConfig:
+      type: object
+      required: [pathway_code, pathway_name, version, stages]
+      properties:
+        pathway_code:
+          type: string
+        pathway_name:
+          type: string
+        version:
+          type: string
+        stages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    RuleDsl:
+      type: object
+      required: [rule_code, rule_name, rule_type, condition]
+      properties:
+        rule_code:
+          type: string
+        rule_name:
+          type: string
+        rule_type:
+          type: string
+        trigger:
+          type: object
+          additionalProperties: true
+        condition:
+          type: object
+          additionalProperties: true
+        result:
+          type: object
+          additionalProperties: true
+    RuleResult:
+      type: object
+      properties:
+        rule_code:
+          type: string
+        hit:
+          type: boolean
+        severity:
+          type: string
+        message:
+          type: string
+        actions:
+          type: array
+          items:
+            type: string
+        evidence:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    RecommendationCard:
+      type: object
+      properties:
+        recommendation_id:
+          type: string
+        patient_id:
+          type: string
+        encounter_id:
+          type: string
+        target_code:
+          type: string
+        target_name:
+          type: string
+        score:
+          type: number
+        confidence:
+          type: string
+        supporting_facts:
+          type: array
+          items:
+            type: object
+        suggested_actions:
+          type: array
+          items:
+            type: string
+    PatientPathwayInstance:
+      type: object
+      properties:
+        instance_id:
+          type: string
+        patient_id:
+          type: string
+        encounter_id:
+          type: string
+        pathway_code:
+          type: string
+        version_no:
+          type: string
+        status:
+          type: string
+        current_node_code:
+          type: string
+    GraphDiseaseCandidateRequest:
+      type: object
+      properties:
+        symptom_codes:
+          type: array
+          items:
+            type: string
+        finding_codes:
+          type: array
+          items:
+            type: string
+        risk_factor_codes:
+          type: array
+          items:
+            type: string
+        lab_abnormal_codes:
+          type: array
+          items:
+            type: string
+        limit:
+          type: integer
+    GraphCandidate:
+      type: object
+      properties:
+        disease_code:
+          type: string
+        disease_name:
+          type: string
+        raw_graph_score:
+          type: number
+        matched_relations:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+

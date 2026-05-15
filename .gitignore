@@ -1,0 +1,31 @@
+# Build outputs
+target/
+**/target/
+
+# Maven local cache generated for this workspace
+**/m2repo/
+
+# Runtime logs
+*.log
+*.out
+*.err
+*.pid
+
+# Local environment and secrets
+.env
+.env.*
+*.local
+application-local.yml
+application-secret.yml
+
+# IDE and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+~$*

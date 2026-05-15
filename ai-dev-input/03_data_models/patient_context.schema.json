@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "patient_context.schema.json",
+  "title": "PatientContext",
+  "type": "object",
+  "required": ["patient", "encounter", "facts"],
+  "properties": {
+    "patient": {
+      "type": "object",
+      "required": ["patient_id", "gender", "age"],
+      "properties": {
+        "patient_id": {"type": "string"},
+        "gender": {"type": "string", "enum": ["M", "F", "U"]},
+        "age": {"type": "integer", "minimum": 0, "maximum": 130}
+      },
+      "additionalProperties": true
+    },
+    "encounter": {
+      "type": "object",
+      "required": ["encounter_id", "visit_type", "department_code", "arrival_time"],
+      "properties": {
+        "encounter_id": {"type": "string"},
+        "visit_type": {"type": "string"},
+        "department_code": {"type": "string"},
+        "arrival_time": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": true
+    },
+    "facts": {
+      "type": "object",
+      "properties": {
+        "chief_complaints": {
+          "type": "array",
+          "items": {"type": "object", "required": ["text"], "properties": {"text": {"type": "string"}, "time": {"type": "string", "format": "date-time"}}}
+        },
+        "diagnoses": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+        "labs": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+        "exams": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+        "histories": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+        "medications": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+        "allergies": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+        "forms": {"type": "object", "additionalProperties": true},
+        "documents": {"type": "array", "items": {"type": "object", "additionalProperties": true}}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "rule_dsl.schema.json",
+  "title": "RuleDsl",
+  "type": "object",
+  "required": ["rule_code", "rule_name", "rule_type", "version", "trigger", "condition", "result"],
+  "properties": {
+    "rule_code": {"type": "string"},
+    "rule_name": {"type": "string"},
+    "rule_type": {"type": "string", "enum": ["TIME_LIMIT_QC", "CONTENT_QC", "PATHWAY_NODE", "SAFETY", "FOLLOWUP", "OPERATION"]},
+    "version": {"type": "string"},
+    "trigger": {
+      "type": "object",
+      "properties": {
+        "events": {"type": "array", "items": {"type": "string"}},
+        "scope": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "data_requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fact_name", "source"],
+        "properties": {
+          "fact_name": {"type": "string"},
+          "source": {"type": "object", "required": ["adapter_code", "query_code"], "properties": {"adapter_code": {"type": "string"}, "query_code": {"type": "string"}}},
+          "filter": {"type": "object", "additionalProperties": true}
+        },
+        "additionalProperties": true
+      }
+    },
+    "condition": {"$ref": "#/$defs/condition"},
+    "result": {
+      "type": "object",
+      "properties": {
+        "hit": {"type": "object", "additionalProperties": true},
+        "not_hit": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "condition": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "all": {"type": "array", "items": {"$ref": "#/$defs/condition"}},
+        "any": {"type": "array", "items": {"$ref": "#/$defs/condition"}},
+        "not": {"$ref": "#/$defs/condition"},
+        "exists": {"type": "string"},
+        "not_exists": {"type": "string"},
+        "field": {"type": "string"},
+        "eq": {},
+        "ne": {},
+        "gt": {"type": "number"},
+        "gte": {"type": "number"},
+        "lt": {"type": "number"},
+        "lte": {"type": "number"},
+        "in": {"type": "array"},
+        "contains_any": {"type": "array", "items": {"type": "string"}},
+        "duration_minutes_between": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 2}
+      }
+    }
+  },
+  "additionalProperties": false
+}
+
