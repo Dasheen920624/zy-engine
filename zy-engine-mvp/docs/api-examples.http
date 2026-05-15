@@ -166,5 +166,34 @@ X-Trace-Id: trace-demo-graph-candidate
   "symptom_codes": ["CHEST_PAIN"],
   "finding_codes": ["ST_ELEVATION_CONTIGUOUS_LEADS"],
   "risk_factor_codes": ["HYPERTENSION", "DIABETES"],
+  "graph_version": "AMI_GRAPH_2026_01",
   "limit": 10
+}
+
+### Graph evidence query
+POST http://localhost:18080/zy-engine/api/graph/evidence
+Content-Type: application/json
+X-Trace-Id: trace-demo-graph-evidence
+
+{
+  "target_code": "AMI_STEMI",
+  "target_type": "PATHWAY",
+  "graph_version": "AMI_GRAPH_2026_01"
+}
+
+### Dify workflow run
+POST http://localhost:18080/zy-engine/api/dify/workflows/run
+Content-Type: application/json
+X-Trace-Id: trace-demo-dify-workflow
+
+{
+  "workflow_code": "WF_AMI_ENTRY_EXPLAIN",
+  "workflow_version": "1.0.0",
+  "trace_id": "trace-demo-dify-workflow",
+  "inputs": {
+    "patient_id": "P_AMI_001",
+    "encounter_id": "E_AMI_001",
+    "target_code": "AMI_STEMI",
+    "evidence_refs": ["EV_AMI_001"]
+  }
 }

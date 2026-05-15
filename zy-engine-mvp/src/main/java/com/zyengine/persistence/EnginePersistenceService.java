@@ -334,6 +334,33 @@ public class EnginePersistenceService {
         }
     }
 
+    public void saveAuditLog(String engineType, String actionType, String targetType, String targetCode,
+                             String patientId, String encounterId, String operatorId, Map<String, Object> detail) {
+        if (!enabled()) {
+            return;
+        }
+        String sql = "INSERT INTO engine_audit_log " +
+                "(id, trace_id, engine_type, action_type, target_type, target_code, patient_id, encounter_id, operator_id, detail_json, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            int i = 1;
+            ps.setLong(i++, Ids.next());
+            ps.setString(i++, TraceContext.getTraceId());
+            ps.setString(i++, engineType);
+            ps.setString(i++, actionType);
+            ps.setString(i++, targetType);
+            ps.setString(i++, targetCode);
+            ps.setString(i++, patientId);
+            ps.setString(i++, encounterId);
+            ps.setString(i++, operatorId);
+            ps.setString(i++, toJson(detail));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save audit log failed: " + ex.getMessage(), ex);
+        }
+    }
+
     private Connection connection() throws SQLException {
         try {
             Class.forName("oracle.jdbc.OracleDriver");

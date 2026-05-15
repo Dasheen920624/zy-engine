@@ -6,8 +6,8 @@
 
 - 路径引擎：路径草稿、版本发布、候选路径识别、医生确认入径、节点流转、节点任务状态、路径变异记录。
 - 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架。
-- 图谱引擎：候选疾病召回、证据查询接口骨架，后续可替换为 Neo4j 查询。
-- Dify 适配：保留工作流调用入口，当前 MVP 返回降级结果。
+- 图谱引擎：候选疾病召回、证据查询、Neo4j 可配置查询和不可用时降级返回。
+- Dify 适配：保留工作流调用入口，支持配置真实 Dify 调用、超时降级和审计记录。
 - Oracle 持久化：可选开启，已验证可写入 `ZYENGINE` 用户下的核心表。
 
 ## 编码约定
@@ -68,6 +68,28 @@ scripts/README.md
 
 ```text
 GET http://localhost:18080/zy-engine/api/health
+```
+
+图谱与 Dify 降级验证：
+
+```powershell
+.\scripts\run-graph-dify-smoke.cmd
+```
+
+## 图谱和 Dify 配置
+
+默认内存模式不要求 Neo4j 或 Dify 可用，接口会返回可解释降级结果。需要接入真实服务时通过环境变量开启：
+
+```powershell
+$env:ZYENGINE_GRAPH_ENABLED='true'
+$env:ZYENGINE_GRAPH_URI='bolt://localhost:7687'
+$env:ZYENGINE_GRAPH_USERNAME='neo4j'
+$env:ZYENGINE_GRAPH_PASSWORD='图谱密码'
+$env:ZYENGINE_GRAPH_DATABASE='neo4j'
+
+$env:ZYENGINE_DIFY_ENABLED='true'
+$env:ZYENGINE_DIFY_BASE_URL='https://dify.example.com'
+$env:ZYENGINE_DIFY_API_KEY='Dify应用API密钥'
 ```
 
 ## 启动：Oracle 持久化模式
@@ -166,6 +188,9 @@ GET  /zy-engine/api/patient-pathways/{instanceId}/nodes/{nodeCode}
 POST /zy-engine/api/patient-pathways/{instanceId}/nodes/{nodeCode}/tasks/{taskCode}/complete
 POST /zy-engine/api/patient-pathways/{instanceId}/nodes/{nodeCode}/tasks/{taskCode}/skip
 POST /zy-engine/api/patient-pathways/{instanceId}/variations
+POST /zy-engine/api/graph/disease-candidates
+POST /zy-engine/api/graph/evidence
+POST /zy-engine/api/dify/workflows/run
 ```
 
 已验证结果：
@@ -177,6 +202,8 @@ POST /zy-engine/api/patient-pathways/{instanceId}/variations
 - 完成首节点后当前节点：`AMI_REPERFUSION_EVAL`
 - 首节点任务：`TASK_ECG` 可初始化并完成。
 - 路径变异：任务跳过和医生主动记录均可保存原因。
+- 图谱降级：`CHEST_PAIN` + `ST_ELEVATION_CONTIGUOUS_LEADS` 可返回 `AMI_STEMI` 和 `EV_AMI_001`。
+- Dify 降级：未配置真实 Dify 时返回 `DEGRADED`，不影响路径核心状态。
 - Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录均可写入。
 
 ## 当前边界
@@ -186,6 +213,6 @@ POST /zy-engine/api/patient-pathways/{instanceId}/variations
 - 可视化路径配置器、路径 DSL 校验和版本差异对比。
 - 规则 DSL 解析器、热更新、规则包审核发布、规则模拟器。
 - 院内字典映射配置界面和第三方适配器 SDK。
-- Neo4j 图谱查询实现、证据版本管理、图谱发布流程。
-- Dify 工作流真实调用、超时降级、重试和审计。
+- 图谱证据版本管理和图谱发布流程。
+- Dify 工作流参数映射、重试和业务级调用模板管理。
 - 登录鉴权、租户隔离、操作审计、监控告警和国产化部署脚本。

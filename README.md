@@ -30,6 +30,7 @@ zy-engine-mvp/
 - AMI/STEMI 候选推荐、医生确认入径、节点流转。
 - Oracle 推荐记录和患者路径实例落库。
 - 节点任务状态和路径变异原因记录。
+- 图谱候选召回、证据查询和 Dify 工作流降级调用。
 
 常用命令：
 
@@ -40,6 +41,7 @@ cd zy-engine-mvp
 .\scripts\verify-encoding.cmd
 .\scripts\run-rule-smoke.cmd
 .\scripts\run-pathway-smoke.cmd
+.\scripts\run-graph-dify-smoke.cmd
 ```
 
 内存模式健康检查：

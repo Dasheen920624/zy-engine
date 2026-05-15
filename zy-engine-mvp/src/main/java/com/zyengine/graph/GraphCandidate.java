@@ -10,6 +10,10 @@ public class GraphCandidate {
     private double rawGraphScore;
     private List<Map<String, Object>> matchedRelations = new ArrayList<Map<String, Object>>();
     private List<String> evidenceRefs = new ArrayList<String>();
+    private String graphVersion;
+    private String graphSource;
+    private boolean degraded;
+    private String degradedReason;
 
     public String getDiseaseCode() {
         return diseaseCode;
@@ -50,5 +54,36 @@ public class GraphCandidate {
     public void setEvidenceRefs(List<String> evidenceRefs) {
         this.evidenceRefs = evidenceRefs;
     }
-}
 
+    public String getGraphVersion() {
+        return graphVersion;
+    }
+
+    public void setGraphVersion(String graphVersion) {
+        this.graphVersion = graphVersion;
+    }
+
+    public String getGraphSource() {
+        return graphSource;
+    }
+
+    public void setGraphSource(String graphSource) {
+        this.graphSource = graphSource;
+    }
+
+    public boolean isDegraded() {
+        return degraded;
+    }
+
+    public void setDegraded(boolean degraded) {
+        this.degraded = degraded;
+    }
+
+    public String getDegradedReason() {
+        return degradedReason;
+    }
+
+    public void setDegradedReason(String degradedReason) {
+        this.degradedReason = degradedReason;
+    }
+}
