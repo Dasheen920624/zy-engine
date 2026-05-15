@@ -4,7 +4,7 @@
 
 ## 当前能力
 
-- 路径引擎：路径草稿、版本发布、候选路径识别、医生确认入径、节点流转。
+- 路径引擎：路径草稿、版本发布、候选路径识别、医生确认入径、节点流转、节点任务状态、路径变异记录。
 - 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架。
 - 图谱引擎：候选疾病召回、证据查询接口骨架，后续可替换为 Neo4j 查询。
 - Dify 适配：保留工作流调用入口，当前 MVP 返回降级结果。
@@ -158,6 +158,16 @@ POST /zy-engine/api/patient-pathways/admit
 POST /zy-engine/api/patient-pathways/{instanceId}/nodes/AMI_CHEST_PAIN_IDENTIFY/complete
 ```
 
+节点任务与变异记录：
+
+```text
+GET  /zy-engine/api/patient-pathways/{instanceId}
+GET  /zy-engine/api/patient-pathways/{instanceId}/nodes/{nodeCode}
+POST /zy-engine/api/patient-pathways/{instanceId}/nodes/{nodeCode}/tasks/{taskCode}/complete
+POST /zy-engine/api/patient-pathways/{instanceId}/nodes/{nodeCode}/tasks/{taskCode}/skip
+POST /zy-engine/api/patient-pathways/{instanceId}/variations
+```
+
 已验证结果：
 
 - 候选路径：`AMI_STEMI`
@@ -165,7 +175,9 @@ POST /zy-engine/api/patient-pathways/{instanceId}/nodes/AMI_CHEST_PAIN_IDENTIFY/
 - 置信度：`HIGH`
 - 入径后首节点：`AMI_CHEST_PAIN_IDENTIFY`
 - 完成首节点后当前节点：`AMI_REPERFUSION_EVAL`
-- Oracle 落表：推荐记录、患者路径实例、节点状态均可写入。
+- 首节点任务：`TASK_ECG` 可初始化并完成。
+- 路径变异：任务跳过和医生主动记录均可保存原因。
+- Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录均可写入。
 
 ## 当前边界
 

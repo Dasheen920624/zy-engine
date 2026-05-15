@@ -1,6 +1,9 @@
 package com.zyengine.pathway;
 
 import com.zyengine.dto.PatientPathwayInstance;
+import com.zyengine.dto.PatientNodeState;
+import com.zyengine.dto.PatientTaskState;
+import com.zyengine.dto.PathwayVariationRecord;
 import com.zyengine.dto.RecommendationCard;
 import com.zyengine.dto.RuleResult;
 import com.zyengine.persistence.EnginePersistenceService;
@@ -8,6 +11,8 @@ import com.zyengine.rule.RuleService;
 import com.zyengine.util.ClinicalFactUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,6 +30,8 @@ public class PathwayService {
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
     private final Map<String, Map<String, Object>> pathwayDrafts = new ConcurrentHashMap<String, Map<String, Object>>();
     private final Map<String, Map<String, Object>> publishedPathways = new ConcurrentHashMap<String, Map<String, Object>>();
+    private final Map<String, Map<String, PatientNodeState>> nodeStates = new ConcurrentHashMap<String, Map<String, PatientNodeState>>();
+    private final Map<String, List<PathwayVariationRecord>> variationRecords = new ConcurrentHashMap<String, List<PathwayVariationRecord>>();
 
     public PathwayService(RuleService ruleService, EnginePersistenceService persistenceService) {
         this.ruleService = ruleService;
@@ -108,22 +115,70 @@ public class PathwayService {
         activeInstances.put(key, instance);
 
         persistenceService.savePatientInstance(instance, String.valueOf(request.get("doctor_id")));
-        persistenceService.updateNodeState(instance, firstNodeCode, "RUNNING");
+        enterNode(instance, config, firstNodeCode);
         return instance;
     }
 
+    public Map<String, Object> getInstanceDetail(String instanceId) {
+        PatientPathwayInstance instance = findInstance(instanceId);
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("instance", instance);
+        result.put("nodes", new ArrayList<PatientNodeState>(instanceNodeStates(instanceId).values()));
+        result.put("current_node", getNodeState(instanceId, instance.getCurrentNodeCode()));
+        result.put("variations", variations(instanceId));
+        return result;
+    }
+
+    public PatientNodeState getNodeState(String instanceId, String nodeCode) {
+        PatientPathwayInstance instance = findInstance(instanceId);
+        Map<String, Object> config = publishedConfig(instance);
+        return ensureNodeState(instance, config, nodeCode, "WAITING");
+    }
+
+    public PatientTaskState completeTask(String instanceId, String nodeCode, String taskCode, Map<String, Object> request) {
+        return updateTask(instanceId, nodeCode, taskCode, "COMPLETED", request);
+    }
+
+    public PatientTaskState skipTask(String instanceId, String nodeCode, String taskCode, Map<String, Object> request) {
+        PatientTaskState taskState = updateTask(instanceId, nodeCode, taskCode, "SKIPPED", request);
+        PatientPathwayInstance instance = findInstance(instanceId);
+        Map<String, Object> variationRequest = new LinkedHashMap<String, Object>();
+        variationRequest.put("node_code", nodeCode);
+        variationRequest.put("variation_type", string(request == null ? null : request.get("variation_type"), "TASK_SKIPPED"));
+        variationRequest.put("reason", string(request == null ? null : request.get("reason"), "任务未按路径执行：" + taskCode));
+        variationRequest.put("operator_id", request == null ? null : request.get("operator_id"));
+        createVariation(instance, variationRequest);
+        return taskState;
+    }
+
+    public PathwayVariationRecord recordVariation(String instanceId, Map<String, Object> request) {
+        return createVariation(findInstance(instanceId), request);
+    }
+
     public PatientPathwayInstance completeNode(String instanceId, String nodeCode) {
+        return completeNode(instanceId, nodeCode, new LinkedHashMap<String, Object>());
+    }
+
+    public PatientPathwayInstance completeNode(String instanceId, String nodeCode, Map<String, Object> request) {
         for (PatientPathwayInstance instance : activeInstances.values()) {
             if (instanceId.equals(instance.getInstanceId())) {
-                persistenceService.updateNodeState(instance, nodeCode, "COMPLETED");
                 Map<String, Object> config = publishedPathways.get(pathwayKey(instance.getPathwayCode(), instance.getVersionNo()));
+                PatientNodeState nodeState = ensureNodeState(instance, config, nodeCode, "RUNNING");
+                nodeState.setStatus("COMPLETED");
+                nodeState.setCompleteTime(nowText());
+                persistenceService.updateNodeState(instance, nodeCode, configSupport.nodeName(config, nodeCode), "COMPLETED");
+                if (hasVariation(request)) {
+                    Map<String, Object> variationRequest = new LinkedHashMap<String, Object>(request);
+                    variationRequest.put("node_code", nodeCode);
+                    createVariation(instance, variationRequest);
+                }
                 String nextNodeCode = configSupport.nextNodeCode(config, nodeCode);
                 if (nextNodeCode == null) {
                     nextNodeCode = builtInNextNode(nodeCode);
                 }
                 if (nextNodeCode != null) {
                     instance.setCurrentNodeCode(nextNodeCode);
-                    persistenceService.updateNodeState(instance, nextNodeCode, "RUNNING");
+                    enterNode(instance, config, nextNodeCode);
                 }
                 persistenceService.savePatientInstance(instance, null);
                 return instance;
@@ -133,6 +188,168 @@ public class PathwayService {
         empty.setInstanceId(instanceId);
         empty.setStatus("NOT_FOUND");
         return empty;
+    }
+
+    private void enterNode(PatientPathwayInstance instance, Map<String, Object> config, String nodeCode) {
+        PatientNodeState nodeState = ensureNodeState(instance, config, nodeCode, "RUNNING");
+        nodeState.setStatus("RUNNING");
+        if (nodeState.getEnterTime() == null) {
+            nodeState.setEnterTime(nowText());
+        }
+        persistenceService.updateNodeState(instance, nodeCode, configSupport.nodeName(config, nodeCode), "RUNNING");
+        initializeTasks(instance, config, nodeState);
+    }
+
+    private void initializeTasks(PatientPathwayInstance instance, Map<String, Object> config, PatientNodeState nodeState) {
+        List<Map<String, Object>> tasks = configSupport.nodeTasks(config, nodeState.getNodeCode());
+        for (Map<String, Object> taskConfig : tasks) {
+            String taskCode = string(taskConfig.get("task_code"), null);
+            if (taskCode == null || findTask(nodeState, taskCode) != null) {
+                continue;
+            }
+            PatientTaskState taskState = buildTaskState(instance, nodeState.getNodeCode(), taskConfig);
+            nodeState.getTasks().add(taskState);
+            persistenceService.saveTaskState(taskState);
+        }
+    }
+
+    private PatientTaskState updateTask(String instanceId, String nodeCode, String taskCode,
+                                        String status, Map<String, Object> request) {
+        PatientPathwayInstance instance = findInstance(instanceId);
+        Map<String, Object> config = publishedConfig(instance);
+        PatientNodeState nodeState = ensureNodeState(instance, config, nodeCode, "RUNNING");
+        initializeTasks(instance, config, nodeState);
+        PatientTaskState taskState = findTask(nodeState, taskCode);
+        if (taskState == null) {
+            taskState = fallbackTaskState(instance, nodeCode, taskCode);
+            nodeState.getTasks().add(taskState);
+        }
+        taskState.setStatus(status);
+        taskState.setOperatorId(string(request == null ? null : request.get("operator_id"), null));
+        taskState.setUpdatedTime(nowText());
+        taskState.setResult(resultSnapshot(request));
+        persistenceService.saveTaskState(taskState);
+        return taskState;
+    }
+
+    private PatientNodeState ensureNodeState(PatientPathwayInstance instance, Map<String, Object> config,
+                                             String nodeCode, String defaultStatus) {
+        Map<String, PatientNodeState> states = instanceNodeStates(instance.getInstanceId());
+        PatientNodeState nodeState = states.get(nodeCode);
+        if (nodeState == null) {
+            nodeState = new PatientNodeState();
+            nodeState.setInstanceId(instance.getInstanceId());
+            nodeState.setNodeCode(nodeCode);
+            nodeState.setNodeName(configSupport.nodeName(config, nodeCode));
+            nodeState.setStatus(defaultStatus);
+            nodeState.setEnterTime(nowText());
+            states.put(nodeCode, nodeState);
+        }
+        return nodeState;
+    }
+
+    private PatientTaskState buildTaskState(PatientPathwayInstance instance, String nodeCode, Map<String, Object> taskConfig) {
+        PatientTaskState taskState = new PatientTaskState();
+        taskState.setInstanceId(instance.getInstanceId());
+        taskState.setNodeCode(nodeCode);
+        taskState.setTaskCode(string(taskConfig.get("task_code"), null));
+        taskState.setTaskName(string(taskConfig.get("task_name"), taskState.getTaskCode()));
+        taskState.setTaskType(string(taskConfig.get("task_type"), "TASK"));
+        taskState.setRequired(booleanValue(taskConfig.get("required"), false));
+        taskState.setStatus("PENDING");
+        taskState.setUpdatedTime(nowText());
+        return taskState;
+    }
+
+    private PatientTaskState fallbackTaskState(PatientPathwayInstance instance, String nodeCode, String taskCode) {
+        PatientTaskState taskState = new PatientTaskState();
+        taskState.setInstanceId(instance.getInstanceId());
+        taskState.setNodeCode(nodeCode);
+        taskState.setTaskCode(taskCode);
+        taskState.setTaskName(taskCode);
+        taskState.setTaskType("TASK");
+        taskState.setRequired(false);
+        taskState.setStatus("PENDING");
+        taskState.setUpdatedTime(nowText());
+        return taskState;
+    }
+
+    private PatientTaskState findTask(PatientNodeState nodeState, String taskCode) {
+        for (PatientTaskState taskState : nodeState.getTasks()) {
+            if (taskCode.equals(taskState.getTaskCode())) {
+                return taskState;
+            }
+        }
+        return null;
+    }
+
+    private PathwayVariationRecord createVariation(PatientPathwayInstance instance, Map<String, Object> request) {
+        PathwayVariationRecord variation = new PathwayVariationRecord();
+        variation.setVariationId("var-" + UUID.randomUUID().toString().replace("-", ""));
+        variation.setInstanceId(instance.getInstanceId());
+        variation.setPatientId(instance.getPatientId());
+        variation.setEncounterId(instance.getEncounterId());
+        variation.setNodeCode(string(request == null ? null : request.get("node_code"), instance.getCurrentNodeCode()));
+        variation.setVariationType(string(request == null ? null : request.get("variation_type"), "PATHWAY_DEVIATION"));
+        variation.setReason(variationReason(request));
+        variation.setOperatorId(string(request == null ? null : request.get("operator_id"), null));
+        variation.setCreatedTime(nowText());
+        variations(instance.getInstanceId()).add(variation);
+        persistenceService.saveVariationRecord(variation);
+        return variation;
+    }
+
+    private boolean hasVariation(Map<String, Object> request) {
+        if (request == null) {
+            return false;
+        }
+        return request.get("variation_type") != null
+                || request.get("variation_reason") != null
+                || request.get("deviation_reason") != null
+                || request.get("reason") != null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> resultSnapshot(Map<String, Object> request) {
+        if (request == null || request.isEmpty()) {
+            return new LinkedHashMap<String, Object>();
+        }
+        Object result = request.get("result");
+        if (result instanceof Map) {
+            return new LinkedHashMap<String, Object>((Map<String, Object>) result);
+        }
+        return new LinkedHashMap<String, Object>(request);
+    }
+
+    private Map<String, PatientNodeState> instanceNodeStates(String instanceId) {
+        Map<String, PatientNodeState> states = nodeStates.get(instanceId);
+        if (states == null) {
+            states = new ConcurrentHashMap<String, PatientNodeState>();
+            nodeStates.put(instanceId, states);
+        }
+        return states;
+    }
+
+    private List<PathwayVariationRecord> variations(String instanceId) {
+        List<PathwayVariationRecord> records = variationRecords.get(instanceId);
+        if (records == null) {
+            records = new ArrayList<PathwayVariationRecord>();
+            variationRecords.put(instanceId, records);
+        }
+        return records;
+    }
+
+    private PatientPathwayInstance findInstance(String instanceId) {
+        for (PatientPathwayInstance instance : activeInstances.values()) {
+            if (instanceId.equals(instance.getInstanceId())) {
+                return instance;
+            }
+        }
+        throw new IllegalArgumentException("patient pathway instance not found: " + instanceId);
+    }
+
+    private Map<String, Object> publishedConfig(PatientPathwayInstance instance) {
+        return publishedPathways.get(pathwayKey(instance.getPathwayCode(), instance.getVersionNo()));
     }
 
     private RecommendationCard buildAmiRecommendation(Map<String, Object> patientContext) {
@@ -221,5 +438,30 @@ public class PathwayService {
         }
         String text = String.valueOf(value);
         return text.trim().isEmpty() ? defaultValue : text;
+    }
+
+    private String variationReason(Map<String, Object> request) {
+        String reason = string(request == null ? null : request.get("reason"), null);
+        if (reason == null) {
+            reason = string(request == null ? null : request.get("variation_reason"), null);
+        }
+        if (reason == null) {
+            reason = string(request == null ? null : request.get("deviation_reason"), null);
+        }
+        return reason == null ? "路径执行发生变异，待补充原因。" : reason;
+    }
+
+    private boolean booleanValue(Object value, boolean defaultValue) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value == null) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(String.valueOf(value));
+    }
+
+    private String nowText() {
+        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
     }
 }

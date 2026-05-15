@@ -55,6 +55,28 @@ X-Trace-Id: trace-demo-ami-admit
   "doctor_id": "D001"
 }
 
+### Get patient pathway runtime detail
+GET http://localhost:18080/zy-engine/api/patient-pathways/ppi-replace-with-real-id
+X-Trace-Id: trace-demo-pathway-detail
+
+### Get current node task states
+GET http://localhost:18080/zy-engine/api/patient-pathways/ppi-replace-with-real-id/nodes/AMI_CHEST_PAIN_IDENTIFY
+X-Trace-Id: trace-demo-node-state
+
+### Complete ECG task
+POST http://localhost:18080/zy-engine/api/patient-pathways/ppi-replace-with-real-id/nodes/AMI_CHEST_PAIN_IDENTIFY/tasks/TASK_ECG/complete
+Content-Type: application/json
+X-Trace-Id: trace-demo-task-complete
+
+{
+  "operator_id": "D001",
+  "result": {
+    "report_id": "ECG_001",
+    "finding_codes": ["ST_ELEVATION_CONTIGUOUS_LEADS"],
+    "completed_time": "2026-05-15T10:09:00+08:00"
+  }
+}
+
 ### Complete first node
 POST http://localhost:18080/zy-engine/api/patient-pathways/ppi-replace-with-real-id/nodes/AMI_CHEST_PAIN_IDENTIFY/complete
 Content-Type: application/json
@@ -63,6 +85,29 @@ X-Trace-Id: trace-demo-node-complete
 {
   "operator_id": "D001",
   "completion_reason": "ECG completed and STEMI candidate identified"
+}
+
+### Skip optional troponin task and record variation
+POST http://localhost:18080/zy-engine/api/patient-pathways/ppi-replace-with-real-id/nodes/AMI_REPERFUSION_EVAL/tasks/TASK_TROPONIN/skip
+Content-Type: application/json
+X-Trace-Id: trace-demo-task-skip
+
+{
+  "operator_id": "D001",
+  "variation_type": "PATIENT_REASON",
+  "reason": "患者暂不具备立即补采肌钙蛋白条件，先完成再灌注策略评估。"
+}
+
+### Record pathway variation directly
+POST http://localhost:18080/zy-engine/api/patient-pathways/ppi-replace-with-real-id/variations
+Content-Type: application/json
+X-Trace-Id: trace-demo-variation
+
+{
+  "node_code": "AMI_REPERFUSION_EVAL",
+  "variation_type": "RESOURCE_LIMIT",
+  "reason": "导管室资源等待，医生已记录路径变异原因。",
+  "operator_id": "D001"
 }
 
 ### Rule simulate

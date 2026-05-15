@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zyengine.common.TraceContext;
 import com.zyengine.dto.PatientPathwayInstance;
+import com.zyengine.dto.PatientTaskState;
+import com.zyengine.dto.PathwayVariationRecord;
 import com.zyengine.dto.RecommendationCard;
 import com.zyengine.dto.RuleResult;
 import com.zyengine.rule.RuleDefinition;
@@ -175,6 +177,10 @@ public class EnginePersistenceService {
     }
 
     public void updateNodeState(PatientPathwayInstance instance, String nodeCode, String status) {
+        updateNodeState(instance, nodeCode, nodeCode, status);
+    }
+
+    public void updateNodeState(PatientPathwayInstance instance, String nodeCode, String nodeName, String status) {
         if (!enabled()) {
             return;
         }
@@ -186,12 +192,72 @@ public class EnginePersistenceService {
             ps.setLong(i++, Ids.next());
             ps.setLong(i++, extractNumericId(instance.getInstanceId()));
             ps.setString(i++, nodeCode);
-            ps.setString(i++, nodeCode);
+            ps.setString(i++, nodeName);
             ps.setString(i++, status);
             ps.setTimestamp(i++, "COMPLETED".equals(status) ? new Timestamp(System.currentTimeMillis()) : null);
             ps.executeUpdate();
         } catch (SQLException ex) {
             throw new IllegalStateException("save node state failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    public void saveTaskState(PatientTaskState taskState) {
+        if (!enabled()) {
+            return;
+        }
+        String sql = "MERGE INTO pe_patient_task_state t " +
+                "USING (SELECT ? instance_id, ? node_code, ? task_code FROM dual) s " +
+                "ON (t.instance_id=s.instance_id AND t.node_code=s.node_code AND t.task_code=s.task_code) " +
+                "WHEN MATCHED THEN UPDATE SET t.task_name=?, t.task_type=?, t.status=?, t.result_json=?, t.updated_time=SYSTIMESTAMP " +
+                "WHEN NOT MATCHED THEN INSERT (id, instance_id, node_code, task_code, task_name, task_type, status, result_json, created_time, updated_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            long instanceId = extractNumericId(taskState.getInstanceId());
+            String resultJson = toJson(taskState.getResult());
+            int i = 1;
+            ps.setLong(i++, instanceId);
+            ps.setString(i++, taskState.getNodeCode());
+            ps.setString(i++, taskState.getTaskCode());
+            ps.setString(i++, taskState.getTaskName());
+            ps.setString(i++, taskState.getTaskType());
+            ps.setString(i++, taskState.getStatus());
+            ps.setString(i++, resultJson);
+            ps.setLong(i++, Ids.next());
+            ps.setLong(i++, instanceId);
+            ps.setString(i++, taskState.getNodeCode());
+            ps.setString(i++, taskState.getTaskCode());
+            ps.setString(i++, taskState.getTaskName());
+            ps.setString(i++, taskState.getTaskType());
+            ps.setString(i++, taskState.getStatus());
+            ps.setString(i++, resultJson);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save task state failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    public void saveVariationRecord(PathwayVariationRecord variation) {
+        if (!enabled()) {
+            return;
+        }
+        String sql = "INSERT INTO pe_variation_record " +
+                "(id, instance_id, patient_id, encounter_id, node_code, variation_type, reason, operator_id, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            int i = 1;
+            ps.setLong(i++, Ids.next());
+            ps.setLong(i++, extractNumericId(variation.getInstanceId()));
+            ps.setString(i++, variation.getPatientId());
+            ps.setString(i++, variation.getEncounterId());
+            ps.setString(i++, variation.getNodeCode());
+            ps.setString(i++, variation.getVariationType());
+            ps.setString(i++, truncate(variation.getReason(), 1000));
+            ps.setString(i++, variation.getOperatorId());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save variation record failed: " + ex.getMessage(), ex);
         }
     }
 

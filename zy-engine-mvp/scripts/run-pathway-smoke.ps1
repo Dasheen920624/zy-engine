@@ -62,9 +62,53 @@ if (-not $admit.success -or $admit.data.currentNodeCode -ne "AMI_CHEST_PAIN_IDEN
 }
 
 $instanceId = $admit.data.instanceId
+$firstNode = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/$instanceId/nodes/AMI_CHEST_PAIN_IDENTIFY" -Method Get
+if (-not $firstNode.success -or $firstNode.data.tasks.Count -lt 1 -or $firstNode.data.tasks[0].taskCode -ne "TASK_ECG") {
+  throw "Pathway first node task initialization failed."
+}
+
+$ecgTaskBody = @{
+  operator_id = "SMOKE_DOCTOR"
+  result = @{
+    report_id = "ECG_SMOKE_001"
+    finding_codes = @("ST_ELEVATION_CONTIGUOUS_LEADS")
+    completed_time = (Get-Date).ToString("o")
+  }
+} | ConvertTo-Json -Depth 20
+$ecgTask = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/$instanceId/nodes/AMI_CHEST_PAIN_IDENTIFY/tasks/TASK_ECG/complete" -Method Post -ContentType "application/json; charset=utf-8" -Body $ecgTaskBody
+if (-not $ecgTask.success -or $ecgTask.data.status -ne "COMPLETED") {
+  throw "Pathway task completion failed."
+}
+
 $complete = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/$instanceId/nodes/AMI_CHEST_PAIN_IDENTIFY/complete" -Method Post -ContentType "application/json; charset=utf-8" -Body "{}"
 if (-not $complete.success -or $complete.data.currentNodeCode -ne "AMI_REPERFUSION_EVAL") {
   throw "Pathway node transition failed."
+}
+
+$skipTaskBody = @{
+  operator_id = "SMOKE_DOCTOR"
+  variation_type = "PATIENT_REASON"
+  reason = "患者暂不具备立即补采肌钙蛋白条件，先完成再灌注策略评估。"
+} | ConvertTo-Json -Depth 20
+$skipTask = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/$instanceId/nodes/AMI_REPERFUSION_EVAL/tasks/TASK_TROPONIN/skip" -Method Post -ContentType "application/json; charset=utf-8" -Body $skipTaskBody
+if (-not $skipTask.success -or $skipTask.data.status -ne "SKIPPED") {
+  throw "Pathway task skip and variation recording failed."
+}
+
+$variationBody = @{
+  node_code = "AMI_REPERFUSION_EVAL"
+  variation_type = "RESOURCE_LIMIT"
+  reason = "导管室资源等待，医生已记录路径变异原因。"
+  operator_id = "SMOKE_DOCTOR"
+} | ConvertTo-Json -Depth 10
+$variation = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/$instanceId/variations" -Method Post -ContentType "application/json; charset=utf-8" -Body $variationBody
+if (-not $variation.success -or $variation.data.variationType -ne "RESOURCE_LIMIT") {
+  throw "Pathway variation recording failed."
+}
+
+$detail = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/$instanceId" -Method Get
+if (-not $detail.success -or $detail.data.variations.Count -lt 2) {
+  throw "Pathway runtime detail query failed."
 }
 
 Write-Host "Pathway smoke test passed."
@@ -72,3 +116,6 @@ Write-Host "Pathway: $($pathway.pathway_code)@$($pathway.version)"
 Write-Host "Encounter: $encounterId"
 Write-Host "Instance: $instanceId"
 Write-Host "Current node after completion: $($complete.data.currentNodeCode)"
+Write-Host "Completed task: $($ecgTask.data.taskCode)=$($ecgTask.data.status)"
+Write-Host "Skipped task: $($skipTask.data.taskCode)=$($skipTask.data.status)"
+Write-Host "Variation records: $($detail.data.variations.Count)"

@@ -26,6 +26,14 @@ public class PathwayConfigSupport {
         return node == null ? nodeCode : string(node.get("node_name"), nodeCode);
     }
 
+    public List<Map<String, Object>> nodeTasks(Map<String, Object> config, String nodeCode) {
+        Map<String, Object> node = findNode(config, nodeCode);
+        if (node == null) {
+            return new ArrayList<Map<String, Object>>();
+        }
+        return maps(node.get("tasks"));
+    }
+
     public String nextNodeCode(Map<String, Object> config, String currentNodeCode) {
         Map<String, Object> currentNode = findNode(config, currentNodeCode);
         if (currentNode == null) {
