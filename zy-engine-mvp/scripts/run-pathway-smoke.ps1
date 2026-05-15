@@ -22,6 +22,21 @@ if (-not $health.success) {
   throw "Health check failed."
 }
 
+function Get-ErrorBodyText {
+  param($ErrorRecord)
+  if ($ErrorRecord.ErrorDetails -and $ErrorRecord.ErrorDetails.Message) {
+    return $ErrorRecord.ErrorDetails.Message
+  }
+  if ($ErrorRecord.Exception -and $ErrorRecord.Exception.Response) {
+    $stream = $ErrorRecord.Exception.Response.GetResponseStream()
+    if ($stream) {
+      $reader = New-Object System.IO.StreamReader($stream, [System.Text.Encoding]::UTF8)
+      return $reader.ReadToEnd()
+    }
+  }
+  return ""
+}
+
 $pathwayJson = Get-Content -LiteralPath $pathwayFile -Raw -Encoding UTF8
 $pathway = $pathwayJson | ConvertFrom-Json
 $patient = Get-Content -LiteralPath $patientFile -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -29,8 +44,26 @@ $patient = Get-Content -LiteralPath $patientFile -Raw -Encoding UTF8 | ConvertFr
 $encounterId = "E_AMI_SMOKE_" + (Get-Date -Format "yyyyMMddHHmmss")
 $patient.encounter.encounter_id = $encounterId
 
+$invalidPathway = $pathwayJson | ConvertFrom-Json
+$invalidPathway.stages[0].nodes[0].transitions[0].to_node = "NOT_EXISTING_NODE"
+$invalidJson = $invalidPathway | ConvertTo-Json -Depth 40
+$invalidAccepted = $false
+try {
+  Invoke-RestMethod -Uri "$BaseUrl/pathways" -Method Post -ContentType "application/json; charset=utf-8" -Body $invalidJson | Out-Null
+  $invalidAccepted = $true
+} catch {
+  $errorBodyText = Get-ErrorBodyText $_
+  $errorBody = $errorBodyText | ConvertFrom-Json
+  if ($errorBody.code -ne "VALIDATION_ERROR" -or $errorBody.success) {
+    throw "Invalid pathway validation response failed: $errorBodyText"
+  }
+}
+if ($invalidAccepted) {
+  throw "Invalid pathway config was accepted."
+}
+
 $created = Invoke-RestMethod -Uri "$BaseUrl/pathways" -Method Post -ContentType "application/json; charset=utf-8" -Body $pathwayJson
-if (-not $created.success -or $created.data.status -ne "DRAFT") {
+if (-not $created.success -or $created.data.status -ne "DRAFT" -or $created.data.validation -ne "PASSED") {
   throw "Pathway create failed."
 }
 
@@ -115,6 +148,7 @@ if (-not $detail.success -or $detail.data.variations.Count -lt 2) {
 }
 
 Write-Host "Pathway smoke test passed."
+Write-Host "Invalid config validation: VALIDATION_ERROR"
 Write-Host "Pathway: $($pathway.pathway_code)@$($pathway.version)"
 Write-Host "Encounter: $encounterId"
 Write-Host "Instance: $instanceId"

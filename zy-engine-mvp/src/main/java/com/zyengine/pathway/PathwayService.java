@@ -44,12 +44,17 @@ public class PathwayService {
 
     public Map<String, Object> createPathway(Map<String, Object> config) {
         String pathwayCode = required(config, "pathway_code");
+        List<String> validationErrors = configSupport.validate(config);
+        if (!validationErrors.isEmpty()) {
+            throw new IllegalArgumentException("pathway config invalid: " + validationErrors);
+        }
         pathwayDrafts.put(pathwayCode, config);
         persistenceService.savePathwayDraft(pathwayCode, config);
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("pathway_code", pathwayCode);
         result.put("status", "DRAFT");
+        result.put("validation", "PASSED");
         result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
         return result;
     }

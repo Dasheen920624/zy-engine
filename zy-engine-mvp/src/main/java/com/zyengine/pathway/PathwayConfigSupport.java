@@ -4,10 +4,77 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PathwayConfigSupport {
+    public List<String> validate(Map<String, Object> config) {
+        List<String> errors = new ArrayList<String>();
+        require(config, "pathway_code", errors);
+        require(config, "pathway_name", errors);
+        if (versionNo(config, null) == null) {
+            errors.add("version or version_no is required");
+        }
+
+        Object stages = config == null ? null : config.get("stages");
+        if (!(stages instanceof Collection) || ((Collection<?>) stages).isEmpty()) {
+            errors.add("stages must contain at least one stage");
+            return errors;
+        }
+
+        Set<String> nodeCodes = new LinkedHashSet<String>();
+        Set<String> duplicatedNodeCodes = new LinkedHashSet<String>();
+        Set<String> taskKeys = new HashSet<String>();
+        List<Map<String, Object>> nodes = allNodes(config);
+        if (nodes.isEmpty()) {
+            errors.add("stages.nodes must contain at least one node");
+        }
+
+        for (Map<String, Object> node : nodes) {
+            String nodeCode = string(node.get("node_code"), null);
+            if (nodeCode == null) {
+                errors.add("node_code is required");
+                continue;
+            }
+            if (!nodeCodes.add(nodeCode)) {
+                duplicatedNodeCodes.add(nodeCode);
+            }
+            if (string(node.get("node_name"), null) == null) {
+                errors.add("node_name is required: " + nodeCode);
+            }
+            for (Map<String, Object> task : maps(node.get("tasks"))) {
+                String taskCode = string(task.get("task_code"), null);
+                if (taskCode == null) {
+                    errors.add("task_code is required: " + nodeCode);
+                    continue;
+                }
+                if (!taskKeys.add(nodeCode + "::" + taskCode)) {
+                    errors.add("duplicate task_code in node " + nodeCode + ": " + taskCode);
+                }
+                validateTaskSource(nodeCode, taskCode, task, errors);
+            }
+        }
+
+        for (String duplicated : duplicatedNodeCodes) {
+            errors.add("duplicate node_code: " + duplicated);
+        }
+        for (Map<String, Object> node : nodes) {
+            String nodeCode = string(node.get("node_code"), null);
+            for (Map<String, Object> transition : maps(node.get("transitions"))) {
+                String target = string(transition.get("to_node"), null);
+                if (target == null) {
+                    errors.add("transition.to_node is required: " + nodeCode);
+                } else if (!nodeCodes.contains(target)) {
+                    errors.add("transition target not found: " + nodeCode + " -> " + target);
+                }
+            }
+        }
+        return errors;
+    }
+
     public String versionNo(Map<String, Object> config, String defaultValue) {
         String version = string(config == null ? null : config.get("version_no"), null);
         if (version == null) {
@@ -116,6 +183,31 @@ public class PathwayConfigSupport {
             }
         }
         return maps;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void validateTaskSource(String nodeCode, String taskCode, Map<String, Object> task, List<String> errors) {
+        Object source = task.get("source");
+        if (source == null) {
+            return;
+        }
+        if (!(source instanceof Map)) {
+            errors.add("task source must be object: " + nodeCode + "/" + taskCode);
+            return;
+        }
+        Map<String, Object> sourceMap = (Map<String, Object>) source;
+        if (string(sourceMap.get("adapter_code"), null) == null) {
+            errors.add("source.adapter_code is required: " + nodeCode + "/" + taskCode);
+        }
+        if (string(sourceMap.get("query_code"), null) == null) {
+            errors.add("source.query_code is required: " + nodeCode + "/" + taskCode);
+        }
+    }
+
+    private void require(Map<String, Object> config, String field, List<String> errors) {
+        if (string(config == null ? null : config.get(field), null) == null) {
+            errors.add(field + " is required");
+        }
     }
 
     private String string(Object value, String defaultValue) {

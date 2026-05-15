@@ -14,10 +14,15 @@ public class GlobalExceptionHandler {
         return ApiResult.failure(ErrorCode.VALIDATION_ERROR, ex.getMessage());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResult<Void> handleIllegalArgument(IllegalArgumentException ex) {
+        return ApiResult.failure(ErrorCode.VALIDATION_ERROR, ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResult<Void> handleException(Exception ex) {
         return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, ex.getMessage());
     }
 }
-

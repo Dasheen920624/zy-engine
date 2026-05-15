@@ -5,6 +5,7 @@
 ## 当前能力
 
 - 路径引擎：路径草稿、版本发布、候选路径识别、医生确认入径、节点流转、节点任务状态、路径变异记录。
+- 路径配置校验：导入路径时校验路径编码、版本、节点、任务、任务数据源和流转目标，错误配置返回 `VALIDATION_ERROR`。
 - 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架。
 - 图谱引擎：候选疾病召回、证据查询、Neo4j 可配置查询和不可用时降级返回。
 - Dify 适配：保留工作流调用入口，支持配置真实 Dify 调用、超时降级和审计记录。
@@ -209,6 +210,7 @@ POST /zy-engine/api/dify/workflows/run
 - 候选路径：`AMI_STEMI`
 - 推荐评分：`90.45`
 - 置信度：`HIGH`
+- 路径导入校验：错误流转目标会返回 `VALIDATION_ERROR`，不会写入草稿。
 - 入径后首节点：`AMI_CHEST_PAIN_IDENTIFY`
 - 完成首节点后当前节点：`AMI_REPERFUSION_EVAL`
 - 首节点任务：`TASK_ECG` 可初始化并完成，完成时会通过 `ECG_ADAPTER/QUERY_ECG_REPORT` 自动拉取心电图 Mock 数据。
