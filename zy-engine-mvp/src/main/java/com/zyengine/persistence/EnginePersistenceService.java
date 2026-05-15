@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zyengine.common.TraceContext;
 import com.zyengine.dto.PatientPathwayInstance;
 import com.zyengine.dto.RecommendationCard;
+import com.zyengine.dto.RuleResult;
+import com.zyengine.rule.RuleDefinition;
+import com.zyengine.util.ClinicalFactUtils;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
@@ -175,6 +178,79 @@ public class EnginePersistenceService {
         }
     }
 
+    public void saveRuleDefinition(RuleDefinition definition, String approvedBy) {
+        if (!enabled()) {
+            return;
+        }
+        String sql = "MERGE INTO re_rule_def t " +
+                "USING (SELECT 'default' tenant_id, 'ZYHOSPITAL' org_code, ? rule_code, ? version_no FROM dual) s " +
+                "ON (t.tenant_id=s.tenant_id AND t.org_code=s.org_code AND t.rule_code=s.rule_code AND t.version_no=s.version_no) " +
+                "WHEN MATCHED THEN UPDATE SET t.rule_name=?, t.rule_type=?, t.status=?, t.severity=?, t.rule_json=?, t.approved_by=?, " +
+                "t.approved_time=CASE WHEN ?='PUBLISHED' THEN SYSTIMESTAMP ELSE t.approved_time END " +
+                "WHEN NOT MATCHED THEN INSERT (id, tenant_id, org_code, rule_code, rule_name, rule_type, version_no, status, severity, rule_json, created_time, approved_by, approved_time) " +
+                "VALUES (?, 'default', 'ZYHOSPITAL', ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, ?, CASE WHEN ?='PUBLISHED' THEN SYSTIMESTAMP ELSE NULL END)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            String json = toJson(definition.getRuleJson());
+            int i = 1;
+            ps.setString(i++, definition.getRuleCode());
+            ps.setString(i++, definition.getVersionNo());
+            ps.setString(i++, definition.getRuleName());
+            ps.setString(i++, definition.getRuleType());
+            ps.setString(i++, definition.getStatus());
+            ps.setString(i++, definition.getSeverity());
+            ps.setString(i++, json);
+            ps.setString(i++, approvedBy);
+            ps.setString(i++, definition.getStatus());
+            ps.setLong(i++, Ids.next());
+            ps.setString(i++, definition.getRuleCode());
+            ps.setString(i++, definition.getRuleName());
+            ps.setString(i++, definition.getRuleType());
+            ps.setString(i++, definition.getVersionNo());
+            ps.setString(i++, definition.getStatus());
+            ps.setString(i++, definition.getSeverity());
+            ps.setString(i++, json);
+            ps.setString(i++, approvedBy);
+            ps.setString(i++, definition.getStatus());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save rule definition failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    public void saveRuleExecLog(RuleResult result, String ruleVersion, Map<String, Object> patientContext,
+                                long elapsedMs, String resultStatus, String errorCode, String errorMessage) {
+        if (!enabled()) {
+            return;
+        }
+        String sql = "INSERT INTO re_rule_exec_log " +
+                "(id, trace_id, rule_code, rule_version, patient_id, encounter_id, event_id, hit_flag, severity, message, input_snapshot, output_snapshot, elapsed_ms, result_status, error_code, error_message, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            int i = 1;
+            ps.setLong(i++, Ids.next());
+            ps.setString(i++, TraceContext.getTraceId());
+            ps.setString(i++, result.getRuleCode());
+            ps.setString(i++, ruleVersion);
+            ps.setString(i++, ClinicalFactUtils.patientId(patientContext));
+            ps.setString(i++, ClinicalFactUtils.encounterId(patientContext));
+            ps.setString(i++, null);
+            ps.setInt(i++, result.isHit() ? 1 : 0);
+            ps.setString(i++, result.getSeverity());
+            ps.setString(i++, truncate(result.getMessage(), 1000));
+            ps.setString(i++, toJson(patientContext));
+            ps.setString(i++, toJson(result));
+            ps.setLong(i++, elapsedMs);
+            ps.setString(i++, resultStatus);
+            ps.setString(i++, errorCode);
+            ps.setString(i++, truncate(errorMessage, 1000));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save rule exec log failed: " + ex.getMessage(), ex);
+        }
+    }
+
     private Connection connection() throws SQLException {
         try {
             Class.forName("oracle.jdbc.OracleDriver");
@@ -200,6 +276,13 @@ public class EnginePersistenceService {
         return text.trim().isEmpty() ? defaultValue : text;
     }
 
+    private String truncate(String text, int maxLength) {
+        if (text == null || text.length() <= maxLength) {
+            return text;
+        }
+        return text.substring(0, maxLength);
+    }
+
     private long extractNumericId(String text) {
         if (text == null) {
             return Ids.next();
@@ -218,4 +301,3 @@ public class EnginePersistenceService {
         }
     }
 }
-

@@ -90,6 +90,28 @@ X-Trace-Id: trace-demo-rule-simulate
   }
 }
 
+### Import AMI rules
+POST http://localhost:18080/zy-engine/api/rules
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-import
+
+< ../ai-dev-input/06_samples/sample_ami_rules.json
+
+### Publish AMI STEMI candidate rule
+POST http://localhost:18080/zy-engine/api/rules/R_AMI_STEMI_CANDIDATE/publish
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-publish
+
+{
+  "version_no": "1.0.0",
+  "approved_by": "D001",
+  "comment": "AMI样例规则发布"
+}
+
+### List rules
+GET http://localhost:18080/zy-engine/api/rules
+X-Trace-Id: trace-demo-rule-list
+
 ### Graph disease candidates
 POST http://localhost:18080/zy-engine/api/graph/disease-candidates
 Content-Type: application/json
@@ -101,4 +123,3 @@ X-Trace-Id: trace-demo-graph-candidate
   "risk_factor_codes": ["HYPERTENSION", "DIABETES"],
   "limit": 10
 }
-

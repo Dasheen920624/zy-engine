@@ -12,6 +12,7 @@
 .\scripts\start-oracle.cmd
 .\scripts\run-oracle-ddl.cmd
 .\scripts\verify-encoding.cmd
+.\scripts\run-rule-smoke.cmd
 .\scripts\stop-local.cmd
 ```
 
@@ -29,6 +30,7 @@
 | `start-oracle.cmd` / `start-oracle.ps1` | 启动 Oracle 持久化模式，默认端口 `18081` |
 | `run-oracle-ddl.cmd` / `run-oracle-ddl.ps1` | 初始化 Oracle 核心表、索引、中文表备注和字段备注 |
 | `verify-encoding.cmd` / `verify-encoding.ps1` | 校验常见乱码特征，并验证 JSON 样例可解析 |
+| `run-rule-smoke.cmd` / `run-rule-smoke.ps1` | 导入、发布并模拟执行 AMI 样例规则 |
 | `stop-local.cmd` / `stop-local.ps1` | 停止本地 `18080` 和 `18081` 演示服务 |
 
 ## Oracle 模式
