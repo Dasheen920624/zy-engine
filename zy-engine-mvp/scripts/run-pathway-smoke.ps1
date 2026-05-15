@@ -76,6 +76,16 @@ if (-not $published.success -or $published.data.status -ne "PUBLISHED") {
   throw "Pathway publish failed."
 }
 
+$pathwayList = Invoke-RestMethod -Uri "$BaseUrl/pathways" -Method Get
+if (-not $pathwayList.success -or -not ($pathwayList.data | Where-Object { $_.pathway_code -eq $pathway.pathway_code })) {
+  throw "Pathway list query failed."
+}
+
+$pathwayDetail = Invoke-RestMethod -Uri "$BaseUrl/pathways/$($pathway.pathway_code)?versionNo=$($pathway.version)" -Method Get
+if (-not $pathwayDetail.success -or $pathwayDetail.data.published_config.pathway_code -ne $pathway.pathway_code) {
+  throw "Pathway config detail query failed."
+}
+
 $candidateBody = $patient | ConvertTo-Json -Depth 30
 $candidate = Invoke-RestMethod -Uri "$BaseUrl/patient-pathways/candidates" -Method Post -ContentType "application/json; charset=utf-8" -Body $candidateBody
 if (-not $candidate.success -or $candidate.data.Count -lt 1 -or $candidate.data[0].targetCode -ne "AMI_STEMI") {
@@ -150,6 +160,7 @@ if (-not $detail.success -or $detail.data.variations.Count -lt 2) {
 Write-Host "Pathway smoke test passed."
 Write-Host "Invalid config validation: VALIDATION_ERROR"
 Write-Host "Pathway: $($pathway.pathway_code)@$($pathway.version)"
+Write-Host "Pathway config detail: selected=$($pathwayDetail.data.selected_version)"
 Write-Host "Encounter: $encounterId"
 Write-Host "Instance: $instanceId"
 Write-Host "Current node after completion: $($complete.data.currentNodeCode)"

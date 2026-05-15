@@ -20,6 +20,17 @@ tags:
     description: Dify工作流适配服务
 paths:
   /pathways:
+    get:
+      tags: [PathwayEngine]
+      summary: 查询路径定义列表
+      operationId: listPathways
+      responses:
+        '200':
+          description: 路径定义列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
     post:
       tags: [PathwayEngine]
       summary: 创建路径定义草稿
@@ -33,6 +44,25 @@ paths:
       responses:
         '200':
           description: 创建结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /pathways/{pathwayCode}:
+    get:
+      tags: [PathwayEngine]
+      summary: 查询路径定义和配置原文
+      operationId: getPathway
+      parameters:
+        - $ref: '#/components/parameters/PathwayCode'
+        - name: versionNo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 路径定义详情
           content:
             application/json:
               schema:
@@ -552,4 +582,3 @@ components:
           items:
             type: object
             additionalProperties: true
-

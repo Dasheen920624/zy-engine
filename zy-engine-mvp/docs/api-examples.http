@@ -161,6 +161,14 @@ X-Trace-Id: trace-demo-rule-publish
 GET http://localhost:18080/zy-engine/api/rules
 X-Trace-Id: trace-demo-rule-list
 
+### List pathway definitions
+GET http://localhost:18080/zy-engine/api/pathways
+X-Trace-Id: trace-demo-pathway-list
+
+### Get pathway config
+GET http://localhost:18080/zy-engine/api/pathways/AMI_STEMI?versionNo=1.0.0
+X-Trace-Id: trace-demo-pathway-config
+
 ### Graph disease candidates
 POST http://localhost:18080/zy-engine/api/graph/disease-candidates
 Content-Type: application/json

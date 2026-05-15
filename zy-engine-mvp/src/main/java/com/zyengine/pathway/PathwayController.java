@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -28,6 +29,17 @@ public class PathwayController {
     @PostMapping("/pathways")
     public ApiResult<Map<String, Object>> createPathway(@RequestBody Map<String, Object> config) {
         return ApiResult.success(pathwayService.createPathway(config));
+    }
+
+    @GetMapping("/pathways")
+    public ApiResult<List<Map<String, Object>>> listPathways() {
+        return ApiResult.success(pathwayService.listPathways());
+    }
+
+    @GetMapping("/pathways/{pathwayCode}")
+    public ApiResult<Map<String, Object>> getPathway(@PathVariable String pathwayCode,
+                                                     @RequestParam(required = false) String versionNo) {
+        return ApiResult.success(pathwayService.getPathway(pathwayCode, versionNo));
     }
 
     @PostMapping("/pathways/{pathwayCode}/publish")

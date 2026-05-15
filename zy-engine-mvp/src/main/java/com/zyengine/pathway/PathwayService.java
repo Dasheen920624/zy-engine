@@ -16,10 +16,13 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -76,6 +79,47 @@ public class PathwayService {
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
         result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
+        return result;
+    }
+
+    public List<Map<String, Object>> listPathways() {
+        Set<String> pathwayCodes = new TreeSet<String>();
+        pathwayCodes.addAll(pathwayDrafts.keySet());
+        for (String key : publishedPathways.keySet()) {
+            pathwayCodes.add(pathwayCodeFromKey(key));
+        }
+
+        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        for (String pathwayCode : pathwayCodes) {
+            Map<String, Object> item = new LinkedHashMap<String, Object>();
+            item.put("pathway_code", pathwayCode);
+            item.put("draft_status", pathwayDrafts.containsKey(pathwayCode) ? "DRAFT" : "NONE");
+            List<String> versions = publishedVersions(pathwayCode);
+            item.put("published_versions", versions);
+            item.put("latest_published_version", versions.isEmpty() ? null : versions.get(versions.size() - 1));
+            list.add(item);
+        }
+        return list;
+    }
+
+    public Map<String, Object> getPathway(String pathwayCode, String versionNo) {
+        Map<String, Object> draft = pathwayDrafts.get(pathwayCode);
+        List<String> versions = publishedVersions(pathwayCode);
+        String selectedVersion = string(versionNo, versions.isEmpty() ? null : versions.get(versions.size() - 1));
+        Map<String, Object> published = selectedVersion == null ? null
+                : publishedPathways.get(pathwayKey(pathwayCode, selectedVersion));
+
+        if (draft == null && published == null) {
+            throw new IllegalArgumentException("pathway not found: " + pathwayCode);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("draft_status", draft == null ? "NONE" : "DRAFT");
+        result.put("published_versions", versions);
+        result.put("selected_version", selectedVersion);
+        result.put("draft_config", draft);
+        result.put("published_config", published);
         return result;
     }
 
@@ -479,6 +523,23 @@ public class PathwayService {
 
     private String pathwayKey(String pathwayCode, String versionNo) {
         return pathwayCode + "::" + versionNo;
+    }
+
+    private String pathwayCodeFromKey(String key) {
+        int index = key.indexOf("::");
+        return index < 0 ? key : key.substring(0, index);
+    }
+
+    private List<String> publishedVersions(String pathwayCode) {
+        List<String> versions = new ArrayList<String>();
+        String prefix = pathwayCode + "::";
+        for (String key : publishedPathways.keySet()) {
+            if (key.startsWith(prefix)) {
+                versions.add(key.substring(prefix.length()));
+            }
+        }
+        Collections.sort(versions);
+        return versions;
     }
 
     private String required(Map<String, Object> map, String key) {
