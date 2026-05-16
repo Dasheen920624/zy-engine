@@ -297,6 +297,12 @@ GET  /api/rule-engine/results/{resultId}
 - `GET /results` 支持 `scenarioCode/packageCode/batchId/source/patientId/encounterId/limit/offset` 过滤，仅返回摘要字段，不带 `results/warnings` 详情。
 - `GET /results/{resultId}` 返回完整 envelope，未找到返回 `VALIDATION_ERROR`。
 
+ORG-001 第三批已织入第三方规则引擎接口：
+
+- `/api/rule-engine/evaluate` 与 `/batch-evaluate` 通过 `OrganizationContextService.resolveWithBody` 解析组织上下文，Header（`X-Tenant-Id/X-Group-Code/X-Hospital-Code/X-Campus-Code/X-Site-Code/X-Department-Code/X-Org-Code`）与 Query 提供默认，Body 字段（同名）优先覆盖。
+- 评估记录与审计明细均带 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`；`org_source` 取值 `HEADER/QUERY/BODY/DEFAULT/NONE`。
+- `GET /api/rule-engine/results` 扩展 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤项，便于多医院/多院区聚合复盘。
+
 Oracle/达梦持久化、异步任务与同步任务状态留给 RULE-001 第三批继续推进。
 
 ### FE-001 前端信息架构与高保真原型

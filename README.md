@@ -59,6 +59,7 @@ zy-engine-mvp/
 - 规则 DSL、规则包导入、包级 review、批量发布、执行日志和统计。
 - 第三方规则引擎 API：`POST /api/rule-engine/evaluate`，按 `scenario_code`（PATHWAY_ENTRY/EMR_QC/INSURANCE_QC/ORDER_SAFETY/DRUG_INDICATION/EXAM_RATIONALITY）路由到已发布规则，支持 `rule_package_code/rule_package_version/rule_codes` 过滤，未匹配规则时返回 `NO_RULES_MATCHED` 警告而不报错。
 - 第三方规则引擎批量与回查：`POST /api/rule-engine/batch-evaluate` 共享场景过滤批量评估，`GET /api/rule-engine/results` 列摘要、`GET /api/rule-engine/results/{resultId}` 取详情；评估结果在内存环形缓冲中保留最近 500 条，便于规则校验工作台抽样复演。
+- 规则引擎接入组织上下文：`/api/rule-engine/*` 通过 Header/Query/Body 三方合并（Body 优先）解析集团/医院/院区/站点/科室，评估记录与审计落组织字段，列表查询支持按医院、院区、scope 等过滤。
 - 图谱版本、节点、边、证据导入与查询，Neo4j 不可用时降级。
 - Dify 工作流模板、参数映射、重试、降级输出、调用统计。
 - 字典映射和适配器 Mock。

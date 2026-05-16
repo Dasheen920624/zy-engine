@@ -560,7 +560,8 @@ Provider 影响：
 - 第一批已落地组织上下文解析接口 `GET /api/system/org-context`，支持 Header/Query 传入 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code`。
 - 默认上下文兼容当前历史 `default/ZYHOSPITAL`，并返回配置继承顺序：科室、站点、院区、医院、集团、系统内置默认（产品基线配置）。
 - 第二批已落地组织目录导入、列表、详情、树形回查和 `ORG_UNIT` DDL；`PLATFORM` 不可导入为真实组织。
-- 后续继续补组织目录 Oracle 持久化、配置包组织继承/覆盖计算、路径/规则/质控接口组织隔离。
+- 第三批新增 `OrganizationContextService.resolveWithBody`，Header/Query/Body 三方合并（Body 优先），首先织入 `/api/rule-engine/*`：评估记录与审计写 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`，`GET /api/rule-engine/results` 支持按多个组织维度过滤。
+- 后续继续补组织目录 Oracle 持久化、配置包组织继承/覆盖计算、路径/质控接口组织隔离。
 
 产出：
 
@@ -592,6 +593,7 @@ Provider 影响：
 - 第三方调用入口与 `/api/rules/*` 配置管理与内部演示接口解耦，便于后续灰度、限流和审计治理。
 - 第二批已落地批量同步 `POST /api/rule-engine/batch-evaluate` 与结果回查 `GET /api/rule-engine/results`、`GET /api/rule-engine/results/{resultId}`：批量调用返回共享 `batch_id` 和每条独立 `result_id`，所有评估都落入容量 500 的内存环形缓冲，列表支持 `scenarioCode/packageCode/batchId/source/patientId/encounterId/limit/offset` 过滤并仅返回摘要字段。
 - 第二批写入 `RULE_ENGINE/BATCH_EVALUATE_SCENARIO` 审计，详情接口包含完整 `results/warnings`，列表接口剔除大字段；Oracle/达梦持久化与异步入口留给第三批。
+- ORG-001 第三批已把组织上下文织入 `/rule-engine/evaluate` 与 `/batch-evaluate`：通过 `OrganizationContextService.resolveWithBody` Header/Query/Body 三方合并（Body 优先），评估记录与审计明细均落 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`；列表查询新增 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤，集团化医院/多院区聚合复盘开箱可用。
 
 产出：
 

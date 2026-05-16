@@ -577,6 +577,109 @@ class EngineApiContractTests {
     }
 
     @Test
+    void ruleEngineEvaluateMergesHeaderOrgContext() throws Exception {
+        invokePost("/api/rules", ruleEngineScenarioPackage());
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("package_version", "2026.05");
+        publishBody.put("approved_by", "JUNIT_ORG_HEADER");
+        invokePost("/api/rules/packages/PKG_RULE_ENGINE_SCENARIOS/publish", publishBody);
+
+        Map<String, Object> req = new LinkedHashMap<String, Object>();
+        req.put("scenario_code", "EMR_QC");
+        req.put("operator_id", "JUNIT_HEADER_OFFICER");
+        req.put("patient_context", ruleEnginePatientContext(false, true, true));
+
+        Map<String, Object> headers = new LinkedHashMap<String, Object>();
+        headers.put("X-Tenant-Id", "TENANT_JUNIT");
+        headers.put("X-Hospital-Code", "HOSPITAL_JUNIT_HDR");
+        headers.put("X-Campus-Code", "CAMPUS_EAST_HDR");
+        Map<String, Object> resp = invokePostWithHeaders("/api/rule-engine/evaluate", req, headers);
+        Map<String, Object> data = asMap(resp.get("data"));
+        assertEquals("TENANT_JUNIT", data.get("tenant_id"));
+        assertEquals("HOSPITAL_JUNIT_HDR", data.get("hospital_code"));
+        assertEquals("CAMPUS_EAST_HDR", data.get("campus_code"));
+        assertEquals("CAMPUS", data.get("scope_level"));
+        assertEquals("CAMPUS_EAST_HDR", data.get("scope_code"));
+        assertEquals("HEADER", data.get("org_source"));
+    }
+
+    @Test
+    void ruleEngineEvaluateBodyOverridesHeaderOrgContext() throws Exception {
+        invokePost("/api/rules", ruleEngineScenarioPackage());
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("package_version", "2026.05");
+        publishBody.put("approved_by", "JUNIT_ORG_BODY");
+        invokePost("/api/rules/packages/PKG_RULE_ENGINE_SCENARIOS/publish", publishBody);
+
+        Map<String, Object> req = new LinkedHashMap<String, Object>();
+        req.put("scenario_code", "EMR_QC");
+        req.put("operator_id", "JUNIT_BODY_OFFICER");
+        req.put("tenant_id", "TENANT_BODY");
+        req.put("hospital_code", "HOSPITAL_BODY");
+        req.put("campus_code", "CAMPUS_BODY");
+        req.put("site_code", "SITE_BODY");
+        req.put("department_code", "DEPT_BODY");
+        req.put("patient_context", ruleEnginePatientContext(false, true, true));
+
+        Map<String, Object> headers = new LinkedHashMap<String, Object>();
+        headers.put("X-Hospital-Code", "HOSPITAL_FROM_HEADER");
+        headers.put("X-Campus-Code", "CAMPUS_FROM_HEADER");
+        Map<String, Object> resp = invokePostWithHeaders("/api/rule-engine/evaluate", req, headers);
+        Map<String, Object> data = asMap(resp.get("data"));
+        assertEquals("TENANT_BODY", data.get("tenant_id"));
+        // Body 字段优先级高于 Header。
+        assertEquals("HOSPITAL_BODY", data.get("hospital_code"));
+        assertEquals("CAMPUS_BODY", data.get("campus_code"));
+        assertEquals("SITE_BODY", data.get("site_code"));
+        assertEquals("DEPT_BODY", data.get("department_code"));
+        assertEquals("DEPARTMENT", data.get("scope_level"));
+        assertEquals("DEPT_BODY", data.get("scope_code"));
+        assertEquals("BODY", data.get("org_source"));
+
+        String resultId = (String) data.get("result_id");
+        Map<String, Object> detail = invokeGet("/api/rule-engine/results/" + resultId);
+        Map<String, Object> detailData = asMap(detail.get("data"));
+        assertEquals("DEPT_BODY", detailData.get("department_code"));
+    }
+
+    @Test
+    void ruleEngineListEvaluationsFiltersByHospital() throws Exception {
+        invokePost("/api/rules", ruleEngineScenarioPackage());
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("package_version", "2026.05");
+        publishBody.put("approved_by", "JUNIT_ORG_FILTER");
+        invokePost("/api/rules/packages/PKG_RULE_ENGINE_SCENARIOS/publish", publishBody);
+
+        Map<String, Object> reqAlpha = new LinkedHashMap<String, Object>();
+        reqAlpha.put("scenario_code", "EMR_QC");
+        reqAlpha.put("hospital_code", "HOSPITAL_ALPHA");
+        reqAlpha.put("patient_context", ruleEnginePatientContext(false, true, true));
+        invokePost("/api/rule-engine/evaluate", reqAlpha);
+
+        Map<String, Object> reqBeta = new LinkedHashMap<String, Object>();
+        reqBeta.put("scenario_code", "EMR_QC");
+        reqBeta.put("hospital_code", "HOSPITAL_BETA");
+        reqBeta.put("patient_context", ruleEnginePatientContext(false, true, true));
+        invokePost("/api/rule-engine/evaluate", reqBeta);
+
+        Map<String, Object> alphaList = invokeGet(
+                "/api/rule-engine/results?hospitalCode=HOSPITAL_ALPHA&scenarioCode=EMR_QC");
+        List<Map<String, Object>> alphaItems = asListOfMap(alphaList.get("data"));
+        assertFalse(alphaItems.isEmpty(), "alpha list should not be empty");
+        for (Map<String, Object> item : alphaItems) {
+            assertEquals("HOSPITAL_ALPHA", item.get("hospital_code"));
+        }
+
+        Map<String, Object> betaList = invokeGet(
+                "/api/rule-engine/results?hospitalCode=HOSPITAL_BETA&scenarioCode=EMR_QC");
+        List<Map<String, Object>> betaItems = asListOfMap(betaList.get("data"));
+        assertFalse(betaItems.isEmpty(), "beta list should not be empty");
+        for (Map<String, Object> item : betaItems) {
+            assertEquals("HOSPITAL_BETA", item.get("hospital_code"));
+        }
+    }
+
+    @Test
     void ruleEngineEvaluateUnmatchedReturnsWarning() throws Exception {
         Map<String, Object> request = new LinkedHashMap<String, Object>();
         request.put("scenario_code", "EXAM_RATIONALITY");
@@ -1655,6 +1758,22 @@ class EngineApiContractTests {
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsBytes(body)))
                 .andReturn();
+        assertEquals(200, result.getResponse().getStatus(), "POST " + path + " unexpected status");
+        return parse(result);
+    }
+
+    private Map<String, Object> invokePostWithHeaders(String path, Object body,
+                                                      Map<String, Object> headers) throws Exception {
+        org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder builder = post(path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding("UTF-8")
+                .content(objectMapper.writeValueAsBytes(body));
+        if (headers != null) {
+            for (Map.Entry<String, Object> entry : headers.entrySet()) {
+                builder = builder.header(entry.getKey(), entry.getValue());
+            }
+        }
+        MvcResult result = mockMvc.perform(builder).andReturn();
         assertEquals(200, result.getResponse().getStatus(), "POST " + path + " unexpected status");
         return parse(result);
     }

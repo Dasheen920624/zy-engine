@@ -2,6 +2,7 @@ package com.zyengine.rule;
 
 import com.zyengine.common.TraceContext;
 import com.zyengine.dto.RuleResult;
+import com.zyengine.organization.OrganizationContext;
 import com.zyengine.persistence.EnginePersistenceService;
 import com.zyengine.util.ClinicalFactUtils;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,8 @@ public class RuleService {
             "rule_package_code", "rule_package_version", "source",
             "evaluated_count", "hit_count", "elapsed_ms",
             "trace_id", "operator_id", "tenant_id",
+            "group_code", "hospital_code", "campus_code", "site_code", "department_code",
+            "scope_level", "scope_code", "org_source",
             "patient_id", "encounter_id", "created_time");
 
     private final EnginePersistenceService persistenceService;
@@ -326,7 +329,11 @@ public class RuleService {
      * 输出标准化结果信封并写入审计。第二批补齐：分配 result_id 并落入评估环形缓冲供回查。
      */
     public Map<String, Object> evaluateForScenario(Map<String, Object> request) {
-        ScenarioInvocation invocation = parseInvocation(request);
+        return evaluateForScenario(request, null);
+    }
+
+    public Map<String, Object> evaluateForScenario(Map<String, Object> request, OrganizationContext orgContext) {
+        ScenarioInvocation invocation = parseInvocation(request, orgContext);
         Map<String, Object> patientContext = requirePatientContext(request.get("patient_context"));
         ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation.scenarioCode, invocation.packageCode,
                 invocation.packageVersion, invocation.ruleCodeFilter, patientContext);
@@ -344,7 +351,11 @@ public class RuleService {
      * 每条独立写入 evaluation ring 并返回单独的 result_id，便于 UI 工作台批量复演与抽样回查。
      */
     public Map<String, Object> batchEvaluateForScenario(Map<String, Object> request) {
-        ScenarioInvocation invocation = parseInvocation(request);
+        return batchEvaluateForScenario(request, null);
+    }
+
+    public Map<String, Object> batchEvaluateForScenario(Map<String, Object> request, OrganizationContext orgContext) {
+        ScenarioInvocation invocation = parseInvocation(request, orgContext);
         Object itemsRaw = request == null ? null : request.get("items");
         if (!(itemsRaw instanceof Collection) || ((Collection<?>) itemsRaw).isEmpty()) {
             throw new IllegalArgumentException("items must be a non-empty array");
@@ -423,6 +434,14 @@ public class RuleService {
         String source = upper(filterValue(filters, "source"));
         String patientId = filterValue(filters, "patientId");
         String encounterId = filterValue(filters, "encounterId");
+        String tenantId = filterValue(filters, "tenantId");
+        String groupCode = filterValue(filters, "groupCode");
+        String hospitalCode = filterValue(filters, "hospitalCode");
+        String campusCode = filterValue(filters, "campusCode");
+        String siteCode = filterValue(filters, "siteCode");
+        String departmentCode = filterValue(filters, "departmentCode");
+        String scopeLevel = upper(filterValue(filters, "scopeLevel"));
+        String scopeCode = filterValue(filters, "scopeCode");
         int limit = filterInt(filters, "limit", 100);
         int offset = filterInt(filters, "offset", 0);
         if (limit <= 0 || limit > EVALUATION_RING_CAPACITY) {
@@ -455,6 +474,30 @@ public class RuleService {
             if (encounterId != null && !encounterId.equals(evaluation.get("encounter_id"))) {
                 continue;
             }
+            if (tenantId != null && !tenantId.equals(evaluation.get("tenant_id"))) {
+                continue;
+            }
+            if (groupCode != null && !groupCode.equals(evaluation.get("group_code"))) {
+                continue;
+            }
+            if (hospitalCode != null && !hospitalCode.equals(evaluation.get("hospital_code"))) {
+                continue;
+            }
+            if (campusCode != null && !campusCode.equals(evaluation.get("campus_code"))) {
+                continue;
+            }
+            if (siteCode != null && !siteCode.equals(evaluation.get("site_code"))) {
+                continue;
+            }
+            if (departmentCode != null && !departmentCode.equals(evaluation.get("department_code"))) {
+                continue;
+            }
+            if (scopeLevel != null && !scopeLevel.equalsIgnoreCase(string(evaluation.get("scope_level"), null))) {
+                continue;
+            }
+            if (scopeCode != null && !scopeCode.equals(evaluation.get("scope_code"))) {
+                continue;
+            }
             if (skipped < offset) {
                 skipped++;
                 continue;
@@ -464,7 +507,7 @@ public class RuleService {
         return matched;
     }
 
-    private ScenarioInvocation parseInvocation(Map<String, Object> request) {
+    private ScenarioInvocation parseInvocation(Map<String, Object> request, OrganizationContext orgContext) {
         if (request == null) {
             throw new IllegalArgumentException("request body is required");
         }
@@ -482,7 +525,21 @@ public class RuleService {
         invocation.packageVersion = string(request.get("rule_package_version"), null);
         invocation.ruleCodeFilter = stringList(request.get("rule_codes"));
         invocation.operatorId = string(request.get("operator_id"), null);
-        invocation.tenantId = string(request.get("tenant_id"), null);
+        // 优先采用 Controller 已经解析好的 OrganizationContext；老调用者只传 body 时按 body.tenant_id 兜底。
+        if (orgContext != null) {
+            invocation.tenantId = orgContext.getTenantId();
+            invocation.groupCode = orgContext.getGroupCode();
+            invocation.hospitalCode = orgContext.getHospitalCode();
+            invocation.campusCode = orgContext.getCampusCode();
+            invocation.siteCode = orgContext.getSiteCode();
+            invocation.departmentCode = orgContext.getDepartmentCode();
+            invocation.scopeLevel = orgContext.getEffectiveScopeLevel();
+            invocation.scopeCode = orgContext.getEffectiveScopeCode();
+            invocation.orgSource = orgContext.getSource();
+        } else {
+            invocation.tenantId = string(request.get("tenant_id"), null);
+            invocation.orgSource = "NONE";
+        }
         return invocation;
     }
 
@@ -552,6 +609,14 @@ public class RuleService {
         evaluation.put("elapsed_ms", outcome.elapsedMs);
         evaluation.put("operator_id", invocation.operatorId);
         evaluation.put("tenant_id", invocation.tenantId);
+        evaluation.put("group_code", invocation.groupCode);
+        evaluation.put("hospital_code", invocation.hospitalCode);
+        evaluation.put("campus_code", invocation.campusCode);
+        evaluation.put("site_code", invocation.siteCode);
+        evaluation.put("department_code", invocation.departmentCode);
+        evaluation.put("scope_level", invocation.scopeLevel);
+        evaluation.put("scope_code", invocation.scopeCode);
+        evaluation.put("org_source", invocation.orgSource);
         evaluation.put("patient_id", ClinicalFactUtils.patientId(patientContext));
         evaluation.put("encounter_id", ClinicalFactUtils.encounterId(patientContext));
         evaluation.put("created_time", nowText());
@@ -586,6 +651,14 @@ public class RuleService {
         auditDetail.put("hit_count", outcome.hitCount);
         auditDetail.put("elapsed_ms", outcome.elapsedMs);
         auditDetail.put("tenant_id", invocation.tenantId);
+        auditDetail.put("group_code", invocation.groupCode);
+        auditDetail.put("hospital_code", invocation.hospitalCode);
+        auditDetail.put("campus_code", invocation.campusCode);
+        auditDetail.put("site_code", invocation.siteCode);
+        auditDetail.put("department_code", invocation.departmentCode);
+        auditDetail.put("scope_level", invocation.scopeLevel);
+        auditDetail.put("scope_code", invocation.scopeCode);
+        auditDetail.put("org_source", invocation.orgSource);
         auditDetail.put("result_ids", resultIds);
         auditDetail.put("batch_id", batchId);
         try {
@@ -615,6 +688,14 @@ public class RuleService {
         List<String> ruleCodeFilter = Collections.emptyList();
         String operatorId;
         String tenantId;
+        String groupCode;
+        String hospitalCode;
+        String campusCode;
+        String siteCode;
+        String departmentCode;
+        String scopeLevel;
+        String scopeCode;
+        String orgSource;
     }
 
     private static class ScenarioPipelineOutcome {

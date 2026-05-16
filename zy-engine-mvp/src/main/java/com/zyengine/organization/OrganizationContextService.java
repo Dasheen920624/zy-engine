@@ -48,6 +48,82 @@ public class OrganizationContextService {
         return context;
     }
 
+    /**
+     * 在 Header/Query 解析基础上叠加请求体的组织声明，便于 RULE-001/PKG-001 这类
+     * 同时接受 Header 与 JSON Body 的接口让第三方在 Body 中显式声明组织维度时优先生效。
+     */
+    public OrganizationContext resolveWithBody(HttpServletRequest request, Map<String, Object> body) {
+        OrganizationContext context = resolve(request);
+        if (body == null || body.isEmpty()) {
+            return context;
+        }
+        boolean applied = applyBody(context, body);
+        if (applied) {
+            applyEffectiveScope(context);
+            context.setSource("BODY");
+            context.setWarnings(warnings(context));
+        }
+        return context;
+    }
+
+    private boolean applyBody(OrganizationContext context, Map<String, Object> body) {
+        boolean applied = false;
+        String tenant = bodyField(body, "tenant_id", "tenantId");
+        if (tenant != null) {
+            context.setTenantId(tenant);
+            applied = true;
+        }
+        String group = bodyField(body, "group_code", "groupCode");
+        if (group != null) {
+            context.setGroupCode(group);
+            applied = true;
+        }
+        String hospital = bodyField(body, "hospital_code", "hospitalCode");
+        if (hospital != null) {
+            context.setHospitalCode(hospital);
+            applied = true;
+        }
+        String campus = bodyField(body, "campus_code", "campusCode");
+        if (campus != null) {
+            context.setCampusCode(campus);
+            applied = true;
+        }
+        String site = bodyField(body, "site_code", "siteCode");
+        if (site != null) {
+            context.setSiteCode(site);
+            applied = true;
+        }
+        String department = bodyField(body, "department_code", "departmentCode");
+        if (department != null) {
+            context.setDepartmentCode(department);
+            applied = true;
+        }
+        String legacyOrg = bodyField(body, "org_code", "orgCode");
+        if (legacyOrg != null) {
+            context.setLegacyOrgCode(legacyOrg);
+            if (context.getHospitalCode() == null) {
+                context.setHospitalCode(legacyOrg);
+            }
+            applied = true;
+        }
+        if (context.getLegacyOrgCode() == null && context.getHospitalCode() != null) {
+            context.setLegacyOrgCode(context.getHospitalCode());
+        }
+        return applied;
+    }
+
+    private String bodyField(Map<String, Object> body, String snakeKey, String camelKey) {
+        String value = clean(stringOf(body.get(snakeKey)));
+        if (value == null) {
+            value = clean(stringOf(body.get(camelKey)));
+        }
+        return value;
+    }
+
+    private String stringOf(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
     public Map<String, Object> orgContextView(HttpServletRequest request) {
         OrganizationContext context = resolve(request);
         Map<String, Object> data = context.toView();

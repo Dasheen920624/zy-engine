@@ -263,7 +263,17 @@ paths:
       description: |
         第三方系统（病历质控、医保质控、医嘱安全等）按 scenario_code 与可选 rule_package_code/rule_package_version 路由到已发布规则，
         返回标准结果信封。RULE-001 第一批仅支持同步入口，未命中任意规则时返回空 results 与 NO_RULES_MATCHED 提示，不抛异常。
+
+        组织上下文：可通过请求头 X-Tenant-Id / X-Group-Code / X-Hospital-Code / X-Campus-Code / X-Site-Code / X-Department-Code 或查询参数传入；
+        当请求体同时提供 tenant_id/group_code/hospital_code/... 时，请求体优先覆盖（org_source=BODY）。
       operationId: ruleEngineEvaluate
+      parameters:
+        - $ref: '#/components/parameters/HeaderTenantId'
+        - $ref: '#/components/parameters/HeaderGroupCode'
+        - $ref: '#/components/parameters/HeaderHospitalCode'
+        - $ref: '#/components/parameters/HeaderCampusCode'
+        - $ref: '#/components/parameters/HeaderSiteCode'
+        - $ref: '#/components/parameters/HeaderDepartmentCode'
       requestBody:
         required: true
         content:
@@ -290,6 +300,16 @@ paths:
                   items:
                     type: string
                 tenant_id:
+                  type: string
+                group_code:
+                  type: string
+                hospital_code:
+                  type: string
+                campus_code:
+                  type: string
+                site_code:
+                  type: string
+                department_code:
                   type: string
                 operator_id:
                   type: string
@@ -403,7 +423,15 @@ paths:
       description: |
         items 内每条 patient_context 共享 scenario_code/rule_package_code 过滤条件，
         每条独立返回 result_id 并落入评估环形缓冲，整次调用共享同一个 batch_id 便于聚合回查。
+        组织上下文解析同 /rule-engine/evaluate：Header/Query 提供默认，Body 字段优先。
       operationId: ruleEngineBatchEvaluate
+      parameters:
+        - $ref: '#/components/parameters/HeaderTenantId'
+        - $ref: '#/components/parameters/HeaderGroupCode'
+        - $ref: '#/components/parameters/HeaderHospitalCode'
+        - $ref: '#/components/parameters/HeaderCampusCode'
+        - $ref: '#/components/parameters/HeaderSiteCode'
+        - $ref: '#/components/parameters/HeaderDepartmentCode'
       requestBody:
         required: true
         content:
@@ -468,6 +496,30 @@ paths:
           schema: {type: string}
         - in: query
           name: encounterId
+          schema: {type: string}
+        - in: query
+          name: tenantId
+          schema: {type: string}
+        - in: query
+          name: groupCode
+          schema: {type: string}
+        - in: query
+          name: hospitalCode
+          schema: {type: string}
+        - in: query
+          name: campusCode
+          schema: {type: string}
+        - in: query
+          name: siteCode
+          schema: {type: string}
+        - in: query
+          name: departmentCode
+          schema: {type: string}
+        - in: query
+          name: scopeLevel
+          schema: {type: string, enum: [PLATFORM, GROUP, HOSPITAL, CAMPUS, SITE, DEPARTMENT]}
+        - in: query
+          name: scopeCode
           schema: {type: string}
         - in: query
           name: limit
@@ -644,6 +696,37 @@ components:
       required: true
       schema:
         type: string
+    HeaderTenantId:
+      name: X-Tenant-Id
+      in: header
+      required: false
+      description: 多租户隔离标识；未提供时默认 default。
+      schema: {type: string}
+    HeaderGroupCode:
+      name: X-Group-Code
+      in: header
+      required: false
+      schema: {type: string}
+    HeaderHospitalCode:
+      name: X-Hospital-Code
+      in: header
+      required: false
+      schema: {type: string}
+    HeaderCampusCode:
+      name: X-Campus-Code
+      in: header
+      required: false
+      schema: {type: string}
+    HeaderSiteCode:
+      name: X-Site-Code
+      in: header
+      required: false
+      schema: {type: string}
+    HeaderDepartmentCode:
+      name: X-Department-Code
+      in: header
+      required: false
+      schema: {type: string}
   schemas:
     ApiResult:
       type: object

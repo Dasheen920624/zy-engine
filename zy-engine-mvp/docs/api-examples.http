@@ -451,6 +451,65 @@ X-Trace-Id: trace-demo-rule-engine-results-by-batch
 GET http://localhost:18080/zy-engine/api/rule-engine/results/reval-1
 X-Trace-Id: trace-demo-rule-engine-result-detail
 
+### RULE-001 第三方调用：Header 传组织上下文（X-Hospital-Code/X-Campus-Code）
+POST http://localhost:18080/zy-engine/api/rule-engine/evaluate
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-engine-org-header
+X-Tenant-Id: default
+X-Hospital-Code: HOSPITAL_DEMO
+X-Campus-Code: CAMPUS_EAST
+X-Department-Code: DEPT_QC
+
+{
+  "scenario_code": "EMR_QC",
+  "operator_id": "QC_OFFICER",
+  "patient_context": {
+    "patient": {"patient_id": "P_EMR_ORG_001"},
+    "encounter": {"encounter_id": "E_EMR_ORG_001"},
+    "facts": {
+      "emr": {
+        "discharge_summary": {
+          "chief_complaint_filled": false,
+          "diagnosis_filled": true,
+          "discharge_orders_filled": true
+        }
+      }
+    }
+  }
+}
+
+### RULE-001 第三方调用：Body 显式声明组织覆盖 Header
+POST http://localhost:18080/zy-engine/api/rule-engine/evaluate
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-engine-org-body
+X-Hospital-Code: HOSPITAL_FROM_GATEWAY
+
+{
+  "scenario_code": "ORDER_SAFETY",
+  "tenant_id": "default",
+  "hospital_code": "HOSPITAL_DEMO",
+  "campus_code": "CAMPUS_WEST",
+  "department_code": "DEPT_PHARMACY",
+  "operator_id": "PHARMACIST",
+  "patient_context": {
+    "patient": {"patient_id": "P_ORD_ORG_001"},
+    "encounter": {"encounter_id": "E_ORD_ORG_001"},
+    "facts": {
+      "orders": {
+        "antibiotic_duplicate_within_48h": true
+      }
+    }
+  }
+}
+
+### RULE-001 评估结果按医院过滤
+GET http://localhost:18080/zy-engine/api/rule-engine/results?hospitalCode=HOSPITAL_DEMO&scenarioCode=EMR_QC&limit=10
+X-Trace-Id: trace-demo-rule-engine-results-hospital
+
+### RULE-001 评估结果按 scope_level / scope_code 过滤
+GET http://localhost:18080/zy-engine/api/rule-engine/results?scopeLevel=DEPARTMENT&scopeCode=DEPT_PHARMACY
+X-Trace-Id: trace-demo-rule-engine-results-scope
+
 ### List pathway definitions
 GET http://localhost:18080/zy-engine/api/pathways
 X-Trace-Id: trace-demo-pathway-list
