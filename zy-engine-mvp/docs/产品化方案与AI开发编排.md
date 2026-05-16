@@ -85,7 +85,7 @@ department_code
 配置选择规则采用最精确优先：
 
 ```text
-科室/站点配置 > 院区配置 > 医院配置 > 集团配置 > 平台默认配置
+科室/站点配置 > 院区配置 > 医院配置 > 集团配置 > 系统内置默认（产品基线配置）
 ```
 
 AI 开发约定：
@@ -536,6 +536,12 @@ Provider 影响：
 
 目标：统一路径、规则、图谱、Dify、字典、适配器的包生命周期。
 
+当前进展：
+
+- 第一批已落地配置包内存态模型、导入、列表、详情、review、hash 校验、publish、export、审计、样例和契约测试。
+- 第二批已接入组织目录：配置包增加 `tenant_id`，列表可按组织范围过滤，review/publish 会校验 `scope_level/scope_code` 是否存在；`PLATFORM/DEFAULT` 仍作为系统内置默认基线。
+- 后续继续补 Oracle/达梦表、跨环境导入导出、发布包回滚、同步任务和前端配置包中心。
+
 产出：
 
 - 配置包数据模型。
@@ -547,6 +553,13 @@ Provider 影响：
 ### ORG-001 组织模型
 
 目标：支持集团、医院、院区、卫生所/站点、科室。
+
+当前进展：
+
+- 第一批已落地组织上下文解析接口 `GET /api/system/org-context`，支持 Header/Query 传入 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code`。
+- 默认上下文兼容当前历史 `default/ZYHOSPITAL`，并返回配置继承顺序：科室、站点、院区、医院、集团、系统内置默认（产品基线配置）。
+- 第二批已落地组织目录导入、列表、详情、树形回查和 `ORG_UNIT` DDL；`PLATFORM` 不可导入为真实组织。
+- 后续继续补组织目录 Oracle 持久化、配置包组织继承/覆盖计算、路径/规则/质控接口组织隔离。
 
 产出：
 

@@ -1,6 +1,22 @@
 -- Dameng core DDL for specialty pathway engines
 -- 达梦语法整体接近Oracle，本脚本避免使用复杂数据库特性。
 
+CREATE TABLE org_unit (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  level_code VARCHAR(32) NOT NULL,
+  org_code VARCHAR(64) NOT NULL,
+  org_name VARCHAR(200) NOT NULL,
+  parent_level_code VARCHAR(32),
+  parent_org_code VARCHAR(64),
+  status VARCHAR(32) NOT NULL,
+  display_order INT DEFAULT 0 NOT NULL,
+  created_by VARCHAR(64),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_org_unit UNIQUE (tenant_id, level_code, org_code)
+);
+
 CREATE TABLE pe_pathway_def (
   id BIGINT PRIMARY KEY,
   tenant_id VARCHAR(64) NOT NULL,
@@ -199,8 +215,8 @@ CREATE TABLE engine_audit_log (
 );
 
 CREATE INDEX idx_pe_instance_patient ON pe_patient_instance(patient_id, encounter_id);
+CREATE INDEX idx_org_parent ON org_unit(tenant_id, parent_level_code, parent_org_code);
 CREATE INDEX idx_pe_node_instance ON pe_patient_node_state(instance_id, node_code);
 CREATE INDEX idx_re_log_trace ON re_rule_exec_log(trace_id);
 CREATE INDEX idx_re_log_patient ON re_rule_exec_log(patient_id, encounter_id);
 CREATE INDEX idx_audit_trace ON engine_audit_log(trace_id);
-

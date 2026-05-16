@@ -12,7 +12,7 @@
 ## 目录内容
 
 1. `02_api_contracts/engines.openapi.yaml`
-   路径引擎、规则引擎、图谱引擎、Dify 适配、字典映射、适配器中心的历史 OpenAPI 契约。
+   路径引擎、规则引擎、图谱引擎、Dify 适配、字典映射、适配器中心和配置包的历史 OpenAPI 契约。
 
 2. `03_data_models/*.schema.json`
    临床事件、患者上下文、路径配置、规则 DSL、图谱查询、推荐卡片等 JSON Schema。
@@ -24,7 +24,7 @@
    达梦数据库核心表结构。
 
 5. `06_samples/*.json`
-   AMI/STEMI 样例路径、规则、患者上下文、图谱、Dify、字典、适配器数据。
+   AMI/STEMI 样例路径、规则、患者上下文、组织上下文、组织目录、图谱、Dify、字典、适配器和配置包数据。
 
 6. `07_tests/*`
    测试矩阵和可执行验收用例定义。
@@ -49,8 +49,8 @@
 
 以 `../zy-engine-mvp/docs/产品化方案与AI开发编排.md` 为准，当前优先：
 
-- `PKG-001` 配置包统一模型。
-- `ORG-001` 集团/医院/院区/站点/科室组织模型。
+- `PKG-001` 配置包统一模型（第一批已补 `sample_config_package.json` 和后端契约测试）。
+- `ORG-001` 集团/医院/院区/站点/科室组织模型（已补 `sample_org_context.json`、`sample_org_units.json`、`/api/system/org-context` 和 `/api/organizations`）。
 - `TERM-001` 医嘱标准化和未映射治理。
 - `RULE-001` 第三方规则引擎 API。
 - `GRAPH-001` 图谱包发布与 Oracle 到 Neo4j 同步。

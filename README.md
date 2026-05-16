@@ -10,10 +10,11 @@
 
 1. [AI接手执行手册](zy-engine-mvp/docs/AI接手执行手册.md)
 2. [产品化方案与AI开发编排](zy-engine-mvp/docs/产品化方案与AI开发编排.md)
-3. [前端配置平台规划与开发验证](zy-engine-mvp/docs/前端配置平台规划与开发验证.md)
-4. [后端 MVP README](zy-engine-mvp/README.md)
-5. [AI研发输入包 README](ai-dev-input/README.md)
-6. [AI开发系统提示词](ai-dev-input/09_ai_task_cards/ai_system_prompt.md)
+3. [多角色评审与执行计划](zy-engine-mvp/docs/多角色评审与执行计划.md)
+4. [前端配置平台规划与开发验证](zy-engine-mvp/docs/前端配置平台规划与开发验证.md)
+5. [后端 MVP README](zy-engine-mvp/README.md)
+6. [AI研发输入包 README](ai-dev-input/README.md)
+7. [AI开发系统提示词](ai-dev-input/09_ai_task_cards/ai_system_prompt.md)
 
 其中 `产品化方案与AI开发编排.md` 是产品和架构总纲，`AI接手执行手册.md` 是后续 AI 的执行入口，`前端配置平台规划与开发验证.md` 是前端配置、演示、规则校验和可视化操作的设计入口。
 
@@ -50,6 +51,8 @@ zy-engine-mvp/
 - DB-only / 内存态测试运行。
 - Oracle 可选持久化。
 - Provider 运行状态接口：`GET /api/system/providers`。
+- 组织上下文接口：`GET /api/system/org-context`，支持集团/医院/院区/站点/科室上下文解析。
+- 组织目录导入、查询和树形回查接口，真实组织不包含 `PLATFORM`，`PLATFORM` 仅作为系统内置默认基线。
 - AMI/STEMI 候选推荐、医生确认入径、节点流转。
 - 路径版本发布、diff、回滚。
 - 路径变异、节点完成率、节点滞留时长、质控聚合指标。
@@ -57,6 +60,7 @@ zy-engine-mvp/
 - 图谱版本、节点、边、证据导入与查询，Neo4j 不可用时降级。
 - Dify 工作流模板、参数映射、重试、降级输出、调用统计。
 - 字典映射和适配器 Mock。
+- 配置包导入、review、hash 校验、发布、导出和审计。
 - 审计日志查询与汇总。
 
 常用命令：
@@ -80,8 +84,8 @@ http://localhost:18080/zy-engine/api/system/providers
 
 当前后续优先级以 [产品化方案与AI开发编排](zy-engine-mvp/docs/产品化方案与AI开发编排.md) 为准。近期优先任务池：
 
-1. `PKG-001` 配置包统一模型。
-2. `ORG-001` 集团/医院/院区/站点/科室组织模型。
+1. `PKG-001` 配置包统一模型（第一批已启动：导入、review、hash、publish、export）。
+2. `ORG-001` 集团/医院/院区/站点/科室组织模型（第一批已启动：组织上下文接口和继承顺序）。
 3. `TERM-001` 医嘱标准化和未映射治理。
 4. `RULE-001` 第三方规则引擎 API，支持病历质控、医保质控、医嘱安全拦截。
 5. `GRAPH-001` 图谱包发布与 Oracle 到 Neo4j 同步。

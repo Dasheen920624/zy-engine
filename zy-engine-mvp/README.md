@@ -13,6 +13,9 @@
 - Dify 适配：保留工作流调用入口，支持配置真实 Dify 调用、超时降级、重试和审计记录；工作流模板可导入并绑定 `required_inputs`、`input_mappings`、`input_defaults`、`timeout_ms`、`retry_count`、`degraded_outputs`，调用时按模板抽取上下文、补全缺省入参并在缺失必填字段时返回 `VALIDATION_ERROR`。
 - 字典映射：提供第三方系统编码到平台标准概念的标准化接口，未命中项会返回待治理状态；支持映射配置导入、列表与版本回查，校验失败返回 `VALIDATION_ERROR`。
 - 适配器中心：提供 REST/SQL/WebService 风格的第三方取数 Mock，返回统一行集和标准码映射结果；支持适配器查询定义导入、列表与单项查询，导入未内置 Mock 的查询会返回 `SUCCESS` 但 `row_count=0`，提示后续接入真实取数。
+- 配置包中心：支持配置包导入、列表、详情、review、hash 校验、组织范围校验、发布、导出和审计；hash 不一致或组织范围不存在的包会阻断发布，同一 `tenant_id + package_code + package_version` 内容不同不会静默覆盖。
+- 组织上下文：支持 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code` 解析，默认兼容 `default/ZYHOSPITAL`，并返回配置继承顺序。
+- 组织目录：支持集团、医院、院区、卫生所/站点、科室导入、列表、详情和树形回查；`PLATFORM` 不可导入为真实组织，只作为系统内置默认基线。
 - 路径任务取数：任务配置了 `source.adapter_code/query_code` 时，完成任务会自动调用适配器 Mock 并保存取数结果。
 - Oracle 持久化：可选开启，已验证可写入 `ZYENGINE` 用户下的核心表。
 - 运行模式探测：`GET /system/providers` 返回数据库、Neo4j、Dify 当前 Provider、ready 状态和降级原因，便于 DB-only 测试环境和内网集成环境使用同一套验收口径。
@@ -183,6 +186,7 @@ $env:ZYENGINE_DB_PASSWORD='数据库密码'
 - `PE_PATIENT_TASK_STATE`：患者任务状态表。
 - `PE_VARIATION_RECORD`：路径变异记录表。
 - `PE_RECOMMENDATION_RECORD`：推荐卡片记录表。
+- `ORG_UNIT`：组织目录表。
 - `RE_RULE_DEF`：规则定义表。
 - `RE_RULE_EXEC_LOG`：规则执行日志表。
 - `TM_STANDARD_CONCEPT`：标准术语概念表。
@@ -263,7 +267,20 @@ POST /zy-engine/api/dify/workflows
 GET  /zy-engine/api/dify/workflows
 GET  /zy-engine/api/dify/workflows/stats?workflowCode=&workflowVersion=&status=&provider=&patientId=&encounterId=&limit=500
 GET  /zy-engine/api/dify/workflows/{workflowCode}?workflowVersion=1.0.0
+POST /zy-engine/api/config-packages
+POST /zy-engine/api/config-packages/import
+GET  /zy-engine/api/config-packages?tenantId=&assetType=&status=&scopeLevel=&scopeCode=
+GET  /zy-engine/api/config-packages/{packageCode}/{packageVersion}?tenantId=
+GET  /zy-engine/api/config-packages/{packageCode}/{packageVersion}/review?tenantId=
+POST /zy-engine/api/config-packages/{packageCode}/{packageVersion}/review?tenantId=
+POST /zy-engine/api/config-packages/{packageCode}/{packageVersion}/publish?tenantId=
+POST /zy-engine/api/config-packages/{packageCode}/{packageVersion}/export?tenantId=
 GET  /zy-engine/api/system/providers
+GET  /zy-engine/api/system/org-context
+POST /zy-engine/api/organizations
+GET  /zy-engine/api/organizations?tenantId=&level=&parentLevel=&parentCode=&status=&limit=
+GET  /zy-engine/api/organizations/tree?tenantId=&rootLevel=&rootCode=
+GET  /zy-engine/api/organizations/{level}/{code}?tenantId=
 GET  /zy-engine/api/rules/exec-logs?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=&limit=100
 GET  /zy-engine/api/rules/exec-logs/summary?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=
 GET  /zy-engine/api/rules/exec-logs/{logId}
@@ -303,6 +320,9 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 - Dify 降级：未配置真实 Dify 时返回 `DEGRADED`，不影响路径核心状态。
 - Dify 工作流模板：`sample_dify_workflows.json` 可通过 `POST /dify/workflows` 导入，`POST /dify/workflows/run` 调用已注册工作流时会按模板应用 `input_mappings`、补全 `input_defaults`、校验 `required_inputs`，并在降级时返回模板的 `degraded_outputs`；真实 Dify 调用失败时会按 `retry_count` 重试，当前最多 3 次。
 - Dify 调用统计：`GET /dify/workflows/stats?workflowCode=WF_AMI_ENTRY_EXPLAIN` 返回 `total_calls/success_calls/degraded_calls/validation_error_calls/average_elapsed_ms`，并按工作流、状态、provider 聚合。
+- 配置包生命周期：`sample_config_package.json` 可通过 `POST /config-packages` 导入，`POST /config-packages/{packageCode}/{packageVersion}/review?tenantId=TENANT_DEMO` 会返回 manifest、hash、组织范围、问题列表和 `ready_to_publish`，`POST /config-packages/{packageCode}/{packageVersion}/publish` 要求 `approved_by` 并写入审计，hash 不一致或组织范围不存在会阻断发布。
+- 组织上下文：`GET /system/org-context` 默认返回 `default/ZYHOSPITAL` 医院级范围；传入 `X-Tenant-Id`、`X-Group-Code`、`X-Hospital-Code`、`X-Campus-Code`、`X-Site-Code`、`X-Department-Code` 后会返回最精确组织范围和配置继承顺序。
+- 组织目录：`sample_org_units.json` 可通过 `POST /organizations` 导入，`GET /organizations/tree?tenantId=TENANT_DEMO` 返回组织树；导入 `PLATFORM` 会返回 `VALIDATION_ERROR`，避免把系统内置默认误建成真实组织。
 - 字典映射：`HIS/I21.3/DIAGNOSIS` 可标准化为 `AMI_STEMI`，未知编码会返回 `UNMAPPED` 和 `PENDING_MAPPING`；`sample_dictionary_mappings.json` 可通过 `POST /terminology/mappings` 导入并经 `GET /terminology/mappings` 回查。
 - 适配器 Mock：`ECG_ADAPTER`、`LIS_ADAPTER`、`HIS_ADAPTER`、`EMR_WS_ADAPTER` 可返回 AMI 样例第三方数据；`sample_adapter_definitions.json` 可通过 `POST /adapters/definitions` 导入，未内置 Mock 的 `PACS_ADAPTER/QUERY_CHEST_CT` 调用会返回 `SUCCESS` 且 `row_count=0`。
 - Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录均可写入。

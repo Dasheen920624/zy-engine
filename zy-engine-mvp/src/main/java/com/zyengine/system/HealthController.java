@@ -61,6 +61,8 @@ public class HealthController {
         Map<String, Object> capabilities = new LinkedHashMap<String, Object>();
         capabilities.put("pathway_engine", true);
         capabilities.put("rule_engine", true);
+        capabilities.put("organization_context", true);
+        capabilities.put("organization_directory", true);
         capabilities.put("graph_fallback", !graphReady);
         capabilities.put("dify_fallback", !difyReady);
         capabilities.put("config_primary_store", "ORACLE");

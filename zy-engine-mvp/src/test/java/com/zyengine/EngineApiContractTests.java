@@ -63,6 +63,212 @@ class EngineApiContractTests {
     }
 
     @Test
+    void orgContextDefaultsToLegacyHospitalScope() throws Exception {
+        Map<String, Object> result = invokeGet("/api/system/org-context");
+        assertEquals(Boolean.TRUE, result.get("success"));
+        Map<String, Object> data = asMap(result.get("data"));
+        assertEquals("default", data.get("tenant_id"));
+        assertEquals("ZYHOSPITAL", data.get("hospital_code"));
+        assertEquals("ZYHOSPITAL", data.get("legacy_org_code"));
+        assertEquals("HOSPITAL", data.get("effective_scope_level"));
+        assertEquals("ZYHOSPITAL", data.get("effective_scope_code"));
+        assertEquals("DEFAULT", data.get("source"));
+        assertEquals(Boolean.TRUE, data.get("db_only_supported"));
+
+        List<Map<String, Object>> inheritance = asListOfMap(data.get("inheritance_order"));
+        assertEquals("HOSPITAL", inheritance.get(0).get("scope_level"));
+        assertEquals("PLATFORM", inheritance.get(inheritance.size() - 1).get("scope_level"));
+        assertEquals("系统内置默认（产品基线配置）", inheritance.get(inheritance.size() - 1).get("scope_name"));
+
+        Map<String, Object> model = asMap(data.get("model"));
+        List<Object> precedence = asList(model.get("config_precedence"));
+        assertEquals("DEPARTMENT", precedence.get(0));
+        assertEquals("PLATFORM", precedence.get(precedence.size() - 1));
+        assertEquals("系统内置默认（产品基线配置）", model.get("baseline_scope_name"));
+
+        Map<String, Object> scopeNames = asMap(data.get("scope_level_names"));
+        assertEquals("系统内置默认（产品基线配置）", scopeNames.get("PLATFORM"));
+    }
+
+    @Test
+    void orgContextResolvesMostSpecificHeaderScope() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(get("/api/system/org-context")
+                        .header("X-Tenant-Id", "TENANT_JUNIT")
+                        .header("X-Group-Code", "GROUP_JUNIT")
+                        .header("X-Hospital-Code", "HOSPITAL_JUNIT")
+                        .header("X-Campus-Code", "CAMPUS_JUNIT")
+                        .header("X-Site-Code", "SITE_JUNIT")
+                        .header("X-Department-Code", "DEPT_CARDIOLOGY"))
+                .andReturn();
+        assertEquals(200, mvcResult.getResponse().getStatus());
+        Map<String, Object> result = parse(mvcResult);
+        Map<String, Object> data = asMap(result.get("data"));
+        assertEquals("TENANT_JUNIT", data.get("tenant_id"));
+        assertEquals("GROUP_JUNIT", data.get("group_code"));
+        assertEquals("HOSPITAL_JUNIT", data.get("hospital_code"));
+        assertEquals("CAMPUS_JUNIT", data.get("campus_code"));
+        assertEquals("SITE_JUNIT", data.get("site_code"));
+        assertEquals("DEPT_CARDIOLOGY", data.get("department_code"));
+        assertEquals("DEPARTMENT", data.get("effective_scope_level"));
+        assertEquals("DEPT_CARDIOLOGY", data.get("effective_scope_code"));
+        assertEquals("HEADER", data.get("source"));
+        assertTrue(asList(data.get("warnings")).isEmpty());
+
+        List<Map<String, Object>> inheritance = asListOfMap(data.get("inheritance_order"));
+        assertEquals("DEPARTMENT", inheritance.get(0).get("scope_level"));
+        assertEquals("DEPT_CARDIOLOGY", inheritance.get(0).get("scope_code"));
+        assertEquals("PLATFORM", inheritance.get(inheritance.size() - 1).get("scope_level"));
+        assertEquals("系统内置默认（产品基线配置）", inheritance.get(inheritance.size() - 1).get("scope_name"));
+
+        Map<String, Object> headerContract = asMap(data.get("header_contract"));
+        assertEquals("X-Hospital-Code", headerContract.get("hospital_code"));
+    }
+
+    @Test
+    void organizationDirectoryImportListGetAndTree() throws Exception {
+        Map<String, Object> importBody = sampleOrganizationImport("TENANT_ORG_JUNIT");
+        Map<String, Object> importResp = invokePost("/api/organizations", importBody);
+        Map<String, Object> imported = asMap(importResp.get("data"));
+        assertEquals("TENANT_ORG_JUNIT", imported.get("tenant_id"));
+        assertEquals(5, ((Number) imported.get("imported_count")).intValue());
+        assertTrue(asList(imported.get("warnings")).isEmpty());
+
+        Map<String, Object> listResp = invokeGet("/api/organizations?tenant_id=TENANT_ORG_JUNIT&level=DEPARTMENT");
+        List<Map<String, Object>> departments = asListOfMap(listResp.get("data"));
+        assertEquals(1, departments.size());
+        assertEquals("DEPT_CARDIOLOGY", departments.get(0).get("code"));
+        assertEquals("科室", departments.get(0).get("level_name"));
+
+        Map<String, Object> getResp = invokeGet("/api/organizations/HOSPITAL/HOSPITAL_JUNIT?tenant_id=TENANT_ORG_JUNIT");
+        Map<String, Object> hospital = asMap(getResp.get("data"));
+        assertEquals("演示医院", hospital.get("name"));
+        List<Map<String, Object>> hospitalChildren = asListOfMap(hospital.get("children"));
+        assertEquals(1, hospitalChildren.size());
+        assertEquals("CAMPUS_EAST", hospitalChildren.get(0).get("code"));
+
+        Map<String, Object> treeResp = invokeGet("/api/organizations/tree?tenant_id=TENANT_ORG_JUNIT"
+                + "&root_level=GROUP&root_code=GROUP_JUNIT");
+        Map<String, Object> tree = asMap(treeResp.get("data"));
+        assertEquals(1, ((Number) tree.get("root_count")).intValue());
+        List<Map<String, Object>> roots = asListOfMap(tree.get("tree"));
+        assertEquals("GROUP_JUNIT", roots.get(0).get("code"));
+        List<Map<String, Object>> groupChildren = asListOfMap(roots.get(0).get("children"));
+        assertEquals("HOSPITAL_JUNIT", groupChildren.get(0).get("code"));
+    }
+
+    @Test
+    void organizationDirectoryRejectsPlatformAsRealUnit() throws Exception {
+        Map<String, Object> unit = new LinkedHashMap<String, Object>();
+        unit.put("level", "PLATFORM");
+        unit.put("code", "DEFAULT");
+        unit.put("name", "系统内置默认");
+
+        Map<String, Object> importBody = new LinkedHashMap<String, Object>();
+        importBody.put("tenant_id", "TENANT_ORG_BAD");
+        importBody.put("units", Arrays.asList(unit));
+        Map<String, Object> response = invokePostExpectingClientError("/api/organizations", importBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertTrue(String.valueOf(response.get("message")).contains("PLATFORM"));
+    }
+
+    @Test
+    void configPackageImportReviewPublishAndExport() throws Exception {
+        invokePost("/api/organizations", sampleOrganizationImport("default"));
+
+        Map<String, Object> packageBody = sampleConfigPackage("PKG_CONFIG_JUNIT", "2026.05.01");
+        Map<String, Object> importedResp = invokePost("/api/config-packages", packageBody);
+        List<Map<String, Object>> imported = asListOfMap(importedResp.get("data"));
+        assertEquals(1, imported.size());
+        Map<String, Object> importedPackage = imported.get(0);
+        assertEquals("default", importedPackage.get("tenant_id"));
+        assertEquals("PKG_CONFIG_JUNIT", importedPackage.get("package_code"));
+        assertEquals("RULE", importedPackage.get("asset_type"));
+        assertEquals("DRAFT", importedPackage.get("status"));
+        assertTrue(String.valueOf(importedPackage.get("content_hash")).startsWith("sha256:"));
+        assertEquals(Boolean.TRUE, asMap(importedPackage.get("scope_reference")).get("exists"));
+
+        Map<String, Object> listResp = invokeGet("/api/config-packages?tenantId=default&assetType=RULE&scopeLevel=HOSPITAL");
+        List<Map<String, Object>> packages = asListOfMap(listResp.get("data"));
+        assertFalse(packages.isEmpty());
+
+        Map<String, Object> reviewBody = new LinkedHashMap<String, Object>();
+        reviewBody.put("reviewed_by", "JUNIT_REVIEWER");
+        Map<String, Object> reviewResp = invokePost("/api/config-packages/PKG_CONFIG_JUNIT/2026.05.01/review", reviewBody);
+        Map<String, Object> review = asMap(reviewResp.get("data"));
+        assertEquals(Boolean.TRUE, review.get("ready_to_publish"));
+        assertEquals("REVIEWED", review.get("status"));
+        assertEquals("JUNIT_REVIEWER", review.get("reviewed_by"));
+        assertTrue(asList(review.get("issues")).isEmpty());
+        assertEquals(1, ((Number) asMap(review.get("summary")).get("asset_count")).intValue());
+        assertEquals(Boolean.TRUE, asMap(review.get("summary")).get("scope_exists"));
+
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("approved_by", "JUNIT_APPROVER");
+        Map<String, Object> publishResp = invokePost("/api/config-packages/PKG_CONFIG_JUNIT/2026.05.01/publish", publishBody);
+        Map<String, Object> published = asMap(publishResp.get("data"));
+        assertEquals("PUBLISHED", published.get("status"));
+        assertEquals("JUNIT_APPROVER", published.get("approved_by"));
+        assertEquals(importedPackage.get("content_hash"), published.get("content_hash"));
+
+        Map<String, Object> exportedResp = invokePost("/api/config-packages/PKG_CONFIG_JUNIT/2026.05.01/export",
+                new LinkedHashMap<String, Object>());
+        Map<String, Object> exported = asMap(exportedResp.get("data"));
+        assertEquals("ZYENGINE_CONFIG_PACKAGE_V1", exported.get("export_format"));
+        assertEquals("PKG_CONFIG_JUNIT", asMap(exported.get("full_snapshot")).get("package_code"));
+
+        Map<String, Object> auditResp = invokeGet("/api/audit-logs?engineType=CONFIG_PACKAGE&targetCode=PKG_CONFIG_JUNIT&limit=10");
+        assertFalse(asList(auditResp.get("data")).isEmpty());
+    }
+
+    @Test
+    void configPackageReviewRejectsHashMismatchBeforePublish() throws Exception {
+        invokePost("/api/organizations", sampleOrganizationImport("default"));
+
+        Map<String, Object> packageBody = sampleConfigPackage("PKG_CONFIG_BAD_HASH", "2026.05.01");
+        packageBody.put("content_hash", "sha256:not-the-calculated-hash");
+        invokePost("/api/config-packages", packageBody);
+
+        Map<String, Object> reviewResp = invokeGet("/api/config-packages/PKG_CONFIG_BAD_HASH/2026.05.01/review");
+        Map<String, Object> review = asMap(reviewResp.get("data"));
+        assertEquals(Boolean.FALSE, review.get("ready_to_publish"));
+        List<Map<String, Object>> issues = asListOfMap(review.get("issues"));
+        assertEquals(1, issues.size());
+        assertEquals("content_hash", issues.get(0).get("field"));
+
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("approved_by", "JUNIT_APPROVER");
+        Map<String, Object> response = invokePostExpectingClientError(
+                "/api/config-packages/PKG_CONFIG_BAD_HASH/2026.05.01/publish", publishBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+    }
+
+    @Test
+    void configPackagePublishRejectsUnknownOrganizationScope() throws Exception {
+        Map<String, Object> packageBody = sampleConfigPackage("PKG_CONFIG_UNKNOWN_SCOPE", "2026.05.01");
+        packageBody.put("tenant_id", "TENANT_NO_SCOPE");
+        packageBody.put("scope_level", "HOSPITAL");
+        packageBody.put("scope_code", "HOSPITAL_NOT_IMPORTED");
+        invokePost("/api/config-packages", packageBody);
+
+        Map<String, Object> reviewResp = invokeGet("/api/config-packages/PKG_CONFIG_UNKNOWN_SCOPE/2026.05.01/review"
+                + "?tenantId=TENANT_NO_SCOPE");
+        Map<String, Object> review = asMap(reviewResp.get("data"));
+        assertEquals(Boolean.FALSE, review.get("ready_to_publish"));
+        assertEquals(Boolean.FALSE, asMap(review.get("summary")).get("scope_exists"));
+        Map<String, Object> scopeReference = asMap(review.get("scope_reference"));
+        assertEquals("HOSPITAL_NOT_IMPORTED", scopeReference.get("scope_code"));
+        assertEquals(Boolean.FALSE, scopeReference.get("exists"));
+
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("approved_by", "JUNIT_APPROVER");
+        Map<String, Object> response = invokePostExpectingClientError(
+                "/api/config-packages/PKG_CONFIG_UNKNOWN_SCOPE/2026.05.01/publish?tenantId=TENANT_NO_SCOPE",
+                publishBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertTrue(String.valueOf(response.get("message")).contains("scope_code"));
+    }
+
+    @Test
     void ruleExecLogSummaryAggregates() throws Exception {
         // 导入并发布两条规则（一条总命中，一条总不命中），多次模拟后调用 summary 接口
         Map<String, Object> hitRule = ruleDefinition("R_SUM_HIT", "命中规则");
@@ -1052,6 +1258,64 @@ class EngineApiContractTests {
         config.put("disease_code", pathwayCode);
         config.put("stages", Arrays.asList(stage));
         return config;
+    }
+
+    private Map<String, Object> sampleConfigPackage(String packageCode, String packageVersion) {
+        Map<String, Object> rule = ruleDefinition("R_" + packageCode, "配置包测试规则");
+        rule.put("package_code", packageCode);
+        rule.put("package_version", packageVersion);
+
+        Map<String, Object> snapshot = new LinkedHashMap<String, Object>();
+        snapshot.put("package_code", packageCode);
+        snapshot.put("package_version", packageVersion);
+        snapshot.put("rules", Arrays.asList(rule));
+
+        Map<String, Object> manifest = new LinkedHashMap<String, Object>();
+        manifest.put("owner", "QUALITY_CENTER");
+        manifest.put("description", "JUnit 配置包样例");
+
+        Map<String, Object> configPackage = new LinkedHashMap<String, Object>();
+        configPackage.put("tenant_id", "default");
+        configPackage.put("package_code", packageCode);
+        configPackage.put("package_version", packageVersion);
+        configPackage.put("asset_type", "RULE");
+        configPackage.put("scope_level", "HOSPITAL");
+        configPackage.put("scope_code", "HOSPITAL_JUNIT");
+        configPackage.put("target_version", packageVersion);
+        configPackage.put("created_by", "JUNIT");
+        configPackage.put("manifest", manifest);
+        configPackage.put("full_snapshot", snapshot);
+        return configPackage;
+    }
+
+    private Map<String, Object> sampleOrganizationImport(String tenantId) {
+        List<Map<String, Object>> units = new java.util.ArrayList<Map<String, Object>>();
+        units.add(orgUnit("GROUP", "GROUP_JUNIT", "演示集团", null, null, 1));
+        units.add(orgUnit("HOSPITAL", "HOSPITAL_JUNIT", "演示医院", "GROUP", "GROUP_JUNIT", 1));
+        units.add(orgUnit("CAMPUS", "CAMPUS_EAST", "东院区", "HOSPITAL", "HOSPITAL_JUNIT", 1));
+        units.add(orgUnit("SITE", "SITE_ER", "急诊站点", "CAMPUS", "CAMPUS_EAST", 1));
+        units.add(orgUnit("DEPARTMENT", "DEPT_CARDIOLOGY", "心血管内科", "SITE", "SITE_ER", 1));
+
+        Map<String, Object> importBody = new LinkedHashMap<String, Object>();
+        importBody.put("tenant_id", tenantId);
+        importBody.put("operator_id", "JUNIT_ORG_ADMIN");
+        importBody.put("units", units);
+        return importBody;
+    }
+
+    private Map<String, Object> orgUnit(String level, String code, String name,
+                                        String parentLevel, String parentCode, int displayOrder) {
+        Map<String, Object> unit = new LinkedHashMap<String, Object>();
+        unit.put("level", level);
+        unit.put("code", code);
+        unit.put("name", name);
+        if (parentLevel != null) {
+            unit.put("parent_level", parentLevel);
+            unit.put("parent_code", parentCode);
+        }
+        unit.put("display_order", displayOrder);
+        unit.put("status", "ACTIVE");
+        return unit;
     }
 
     private Map<String, Object> invokeGet(String path) throws Exception {

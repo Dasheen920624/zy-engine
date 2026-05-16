@@ -15,6 +15,22 @@ DECLARE
       END IF;
   END;
 BEGIN
+  create_ignore('CREATE TABLE org_unit (
+    id NUMBER(20) PRIMARY KEY,
+    tenant_id VARCHAR2(64) NOT NULL,
+    level_code VARCHAR2(32) NOT NULL,
+    org_code VARCHAR2(64) NOT NULL,
+    org_name VARCHAR2(200) NOT NULL,
+    parent_level_code VARCHAR2(32),
+    parent_org_code VARCHAR2(64),
+    status VARCHAR2(32) NOT NULL,
+    display_order NUMBER(10) DEFAULT 0 NOT NULL,
+    created_by VARCHAR2(64),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_time TIMESTAMP,
+    CONSTRAINT uk_org_unit UNIQUE (tenant_id, level_code, org_code)
+  )');
+
   create_ignore('CREATE TABLE pe_pathway_def (
     id NUMBER(20) PRIMARY KEY,
     tenant_id VARCHAR2(64) NOT NULL,
@@ -230,6 +246,7 @@ BEGIN
   )');
 
   create_ignore('CREATE INDEX idx_pe_instance_patient ON pe_patient_instance(patient_id, encounter_id)');
+  create_ignore('CREATE INDEX idx_org_parent ON org_unit(tenant_id, parent_level_code, parent_org_code)');
   create_ignore('CREATE INDEX idx_pe_node_instance ON pe_patient_node_state(instance_id, node_code)');
   create_ignore('CREATE INDEX idx_pe_task_instance ON pe_patient_task_state(instance_id, node_code)');
   create_ignore('CREATE INDEX idx_re_log_trace ON re_rule_exec_log(trace_id)');
@@ -237,6 +254,16 @@ BEGIN
   create_ignore('CREATE INDEX idx_audit_trace ON engine_audit_log(trace_id)');
 END;
 /
+
+COMMENT ON TABLE org_unit IS '组织模型-集团、医院、院区、卫生所/站点、科室目录表，不包含系统内置默认基线';
+COMMENT ON COLUMN org_unit.tenant_id IS '租户ID';
+COMMENT ON COLUMN org_unit.level_code IS '组织层级：GROUP/HOSPITAL/CAMPUS/SITE/DEPARTMENT';
+COMMENT ON COLUMN org_unit.org_code IS '组织编码';
+COMMENT ON COLUMN org_unit.org_name IS '组织名称';
+COMMENT ON COLUMN org_unit.parent_level_code IS '上级组织层级';
+COMMENT ON COLUMN org_unit.parent_org_code IS '上级组织编码';
+COMMENT ON COLUMN org_unit.status IS '组织状态：ACTIVE/DISABLED';
+COMMENT ON COLUMN org_unit.display_order IS '同级显示顺序';
 
 COMMENT ON TABLE pe_pathway_def IS '路径引擎-专病路径主定义表，保存路径编码、名称、专科和病种等基础信息';
 COMMENT ON COLUMN pe_pathway_def.id IS '主键ID，由应用层生成';
@@ -372,4 +399,3 @@ COMMENT ON COLUMN engine_audit_log.operator_id IS '操作人';
 COMMENT ON COLUMN engine_audit_log.detail_json IS '操作详情JSON';
 
 PROMPT ZYENGINE core tables and comments are ready.
-

@@ -8,10 +8,11 @@
 
 1. 本文。
 2. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-3. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
-4. 根目录 `README.md`
-5. `zy-engine-mvp/README.md`
-6. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
+3. `zy-engine-mvp/docs/多角色评审与执行计划.md`
+4. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+5. 根目录 `README.md`
+6. `zy-engine-mvp/README.md`
+7. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
 
 ## 2. 当前项目一句话
 
@@ -206,21 +207,43 @@ git diff --cached --stat
 
 ### PKG-001 配置包统一模型
 
-第一批只做模型和内存/数据库无关服务骨架：
+第一批已完成模型和内存/数据库无关服务骨架：
 
 - `ConfigPackage` 数据结构。
 - `package_code/package_version/scope_level/scope_code/status/hash` 字段。
 - review 返回 manifest。
-- 不急于一次性接所有模块。
+- `POST /api/config-packages`
+- `POST /api/config-packages/{packageCode}/{packageVersion}/review`
+- `POST /api/config-packages/{packageCode}/{packageVersion}/publish`
+- `POST /api/config-packages/{packageCode}/{packageVersion}/export`
+- `tenant_id` 字段和 `tenantId` 查询过滤。
+- review/publish 会校验组织目录中是否存在 `scope_level/scope_code`；`PLATFORM/DEFAULT` 作为系统内置默认基线保留。
+
+下一批做：
+
+- Oracle/达梦配置包表。
+- 跨环境导出导入校验。
+- 配置包回滚。
+- 同步任务状态。
 
 ### ORG-001 组织模型
 
-第一批只做：
+第一批已完成：
 
 - 组织模型类。
 - 组织上下文工具。
-- `/api/system/org-context` 或等价状态接口。
-- 后续再逐步接入所有业务表。
+- `GET /api/system/org-context`。
+- 默认兼容 `default/ZYHOSPITAL`。
+- Header/Query 支持 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code`。
+- `POST /api/organizations` 导入真实组织目录。
+- `GET /api/organizations` 查询组织节点。
+- `GET /api/organizations/tree` 返回组织树。
+- `ORG_UNIT` Oracle/达梦 DDL。
+
+下一批做：
+
+- 组织目录 Oracle 持久化。
+- 路径、规则、质控、审计查询逐步接入组织上下文。
 
 ### TERM-001 医嘱标准化
 

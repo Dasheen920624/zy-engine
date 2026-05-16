@@ -1,0 +1,36 @@
+{
+  "headers": {
+    "X-Tenant-Id": "TENANT_DEMO",
+    "X-Group-Code": "GROUP_DEMO",
+    "X-Hospital-Code": "HOSPITAL_DEMO",
+    "X-Campus-Code": "CAMPUS_EAST",
+    "X-Site-Code": "SITE_ER",
+    "X-Department-Code": "DEPT_CARDIOLOGY"
+  },
+  "expected_context": {
+    "tenant_id": "TENANT_DEMO",
+    "group_code": "GROUP_DEMO",
+    "hospital_code": "HOSPITAL_DEMO",
+    "campus_code": "CAMPUS_EAST",
+    "site_code": "SITE_ER",
+    "department_code": "DEPT_CARDIOLOGY",
+    "effective_scope_level": "DEPARTMENT",
+    "effective_scope_code": "DEPT_CARDIOLOGY"
+  },
+  "config_precedence": [
+    "DEPARTMENT",
+    "SITE",
+    "CAMPUS",
+    "HOSPITAL",
+    "GROUP",
+    "PLATFORM"
+  ],
+  "scope_level_names": {
+    "DEPARTMENT": "科室",
+    "SITE": "卫生所/站点",
+    "CAMPUS": "院区",
+    "HOSPITAL": "医院",
+    "GROUP": "集团",
+    "PLATFORM": "系统内置默认（产品基线配置）"
+  }
+}

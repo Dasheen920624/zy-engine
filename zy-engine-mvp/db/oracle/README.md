@@ -6,7 +6,7 @@
 zyengine_core_ddl_with_comments.sql
 ```
 
-该脚本会创建路径引擎、规则引擎、图谱引擎、字典映射、适配器中心和审计日志的核心表，并写入表备注和字段备注。
+该脚本会创建组织模型、路径引擎、规则引擎、图谱引擎、字典映射、适配器中心和审计日志的核心表，并写入表备注和字段备注。
 
 为避免 SQLPlus 客户端字符集不一致导致中文备注乱码，推荐通过 `../../scripts/run-oracle-ddl.ps1` 执行。该脚本会在建表后执行 `zyengine_comments_unistr.sql`，使用 Oracle `UNISTR` 方式覆盖写入中文表备注和字段备注。
 
@@ -39,6 +39,7 @@ SELECT table_name, comments
     OR table_name LIKE 'TM_%'
     OR table_name LIKE 'ADP_%'
     OR table_name LIKE 'GE_%'
+    OR table_name = 'ORG_UNIT'
     OR table_name = 'ENGINE_AUDIT_LOG'
  ORDER BY table_name;
 ```
