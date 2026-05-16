@@ -50,3 +50,5 @@
 1. `zy-engine-mvp/scripts/run-tests.ps1`
 2. `zy-engine-mvp/scripts/build.ps1`
 3. `git diff --check`
+
+每完成一个明确开发任务，必须只暂存本任务相关文件，使用中文短句提交，并立即推送到远端当前分支，保证其它 AI 可以拉取最新项目。最终回复必须包含提交 hash、推送分支；如无法提交或推送，必须说明原因、影响和替代交接方式。

@@ -145,6 +145,8 @@ git diff --check
 
 ### Step 7：提交
 
+每完成一个明确任务，必须提交并推送一次，保证其它 AI 可以拉取最新项目。不得把已完成任务长期留在本地未提交状态。
+
 提交前：
 
 ```powershell
@@ -169,6 +171,14 @@ git diff --cached --stat
 增加规则包审核与批量发布
 ```
 
+提交后必须推送到远端当前分支，例如：
+
+```powershell
+git push origin main
+```
+
+若因为权限、网络或远端冲突无法推送，必须在最终回复中明确说明原因、当前提交 hash 和其它 AI 获取变更的替代方式。
+
 ## 7. 每批代码 Definition of Done
 
 完成一批任务前必须满足：
@@ -180,6 +190,8 @@ git diff --cached --stat
 - `run-tests.ps1` 通过。
 - `build.ps1` 通过。
 - `git diff --check` 通过。
+- 已提交本任务相关文件。
+- 已推送到远端当前分支，或明确说明无法推送的原因。
 - DB-only 模式仍可运行。
 - 不硬编码单医院逻辑。
 - 不把 Neo4j/Dify 作为强依赖。
@@ -328,11 +340,11 @@ POST /api/rule-engine/evaluate
 - build.ps1
 - git diff --check
 
-提交：
-- <commit hash / link>
+提交与推送：
+- <commit hash / branch / remote>
 
 剩余风险：
 - ...
 ```
 
-如果没有提交或没有推送，必须明确说明原因。
+如果没有提交或没有推送，必须明确说明原因。默认情况下，每个明确任务完成后都要提交并推送一次。

@@ -524,6 +524,7 @@ Provider 影响：
 - `scripts/run-tests.ps1` 通过。
 - `scripts/build.ps1` 通过。
 - `git diff --check` 通过。
+- 每完成一个明确任务，必须提交并推送到远端当前分支，保证其它 AI 可以拉取最新项目。
 - 新增接口有契约测试。
 - 新增配置有样例 JSON 或 API 示例。
 - README 或 docs 已更新。
