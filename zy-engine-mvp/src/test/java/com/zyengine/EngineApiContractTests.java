@@ -706,6 +706,59 @@ class EngineApiContractTests {
     }
 
     @Test
+    void difyWorkflowTemplateMapsInputsAndKeepsRetryPolicy() throws Exception {
+        Map<String, Object> template = new LinkedHashMap<String, Object>();
+        template.put("workflow_code", "WF_JUNIT_MAPPING");
+        template.put("workflow_name", "JUnit 映射工作流");
+        template.put("workflow_version", "1.0.0");
+        template.put("required_inputs", Arrays.asList("patient_id", "encounter_id", "target_code"));
+        template.put("retry_count", 2);
+        Map<String, Object> mappings = new LinkedHashMap<String, Object>();
+        mappings.put("patient_id", "patient_context.patient.patient_id");
+        mappings.put("encounter_id", "patient_context.encounter.encounter_id");
+        mappings.put("target_code", "recommendation.target_code");
+        template.put("input_mappings", mappings);
+        Map<String, Object> degraded = new LinkedHashMap<String, Object>();
+        degraded.put("explanation", "JUnit 映射降级输出。");
+        template.put("degraded_outputs", degraded);
+
+        Map<String, Object> importBody = new LinkedHashMap<String, Object>();
+        importBody.put("templates", Arrays.asList(template));
+        invokePost("/api/dify/workflows", importBody);
+
+        Map<String, Object> getResp = invokeGet("/api/dify/workflows/WF_JUNIT_MAPPING");
+        Map<String, Object> storedTemplate = asMap(getResp.get("data"));
+        assertEquals(2, ((Number) storedTemplate.get("retryCount")).intValue());
+        Map<String, Object> storedMappings = asMap(storedTemplate.get("inputMappings"));
+        assertEquals("patient_context.patient.patient_id", storedMappings.get("patient_id"));
+
+        Map<String, Object> runBody = new LinkedHashMap<String, Object>();
+        runBody.put("workflow_code", "WF_JUNIT_MAPPING");
+        Map<String, Object> patientContext = new LinkedHashMap<String, Object>();
+        Map<String, Object> patient = new LinkedHashMap<String, Object>();
+        patient.put("patient_id", "P_DIFY_MAP_001");
+        patientContext.put("patient", patient);
+        Map<String, Object> encounter = new LinkedHashMap<String, Object>();
+        encounter.put("encounter_id", "E_DIFY_MAP_001");
+        patientContext.put("encounter", encounter);
+        runBody.put("patient_context", patientContext);
+        Map<String, Object> recommendation = new LinkedHashMap<String, Object>();
+        recommendation.put("target_code", "AMI_STEMI");
+        runBody.put("recommendation", recommendation);
+
+        Map<String, Object> runResp = invokePost("/api/dify/workflows/run", runBody);
+        Map<String, Object> data = asMap(runResp.get("data"));
+        assertEquals("DEGRADED", data.get("status"));
+        Map<String, Object> outputs = asMap(data.get("outputs"));
+        assertEquals("AMI_STEMI", outputs.get("target_code"));
+
+        Map<String, Object> statsResp = invokeGet("/api/dify/workflows/stats?workflowCode=WF_JUNIT_MAPPING"
+                + "&patientId=P_DIFY_MAP_001&encounterId=E_DIFY_MAP_001");
+        Map<String, Object> stats = asMap(statsResp.get("data"));
+        assertEquals(1, ((Number) stats.get("degraded_calls")).intValue());
+    }
+
+    @Test
     void graphNodesEdgesImportAndCandidatesRecall() throws Exception {
         String version = "JUNIT_GRAPH_NODES";
 

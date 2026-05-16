@@ -115,10 +115,11 @@ public class DifyService {
 
         DifyWorkflowTemplate template = findTemplate(workflowCode, workflowVersion);
         if (template != null) {
-            // 模板存在时按 input_defaults 填充缺省值，并校验 required_inputs。版本号也同步用模板里的。
+            // 模板存在时按 input_mappings 抽取上下文、按 input_defaults 填充缺省值，并校验 required_inputs。
             if (workflowVersion == null) {
                 workflowVersion = template.getWorkflowVersion();
             }
+            inputs = applyInputMappings(inputs, template, safeRequest);
             inputs = applyInputDefaults(inputs, template);
             List<String> missing = missingRequiredInputs(inputs, template);
             if (!missing.isEmpty()) {
@@ -152,13 +153,36 @@ public class DifyService {
             headers.set("Authorization", "Bearer " + properties.getApiKey());
 
             RestTemplate restTemplate = restTemplate(template);
-            ResponseEntity<Map> response = restTemplate.postForEntity(workflowUrl(),
-                    new HttpEntity<Map<String, Object>>(difyRequest, headers), Map.class);
-            Map<String, Object> body = response.getBody() == null
-                    ? new LinkedHashMap<String, Object>() : response.getBody();
-            Map<String, Object> result = success(workflowCode, workflowVersion, body, System.currentTimeMillis() - start);
-            audit(workflowCode, workflowVersion, inputs, result);
-            return result;
+            int maxAttempts = retryCount(template) + 1;
+            RestClientException lastException = null;
+            for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    ResponseEntity<Map> response = restTemplate.postForEntity(workflowUrl(),
+                            new HttpEntity<Map<String, Object>>(difyRequest, headers), Map.class);
+                    Map<String, Object> body = response.getBody() == null
+                            ? new LinkedHashMap<String, Object>() : response.getBody();
+                    Map<String, Object> result = success(workflowCode, workflowVersion, body,
+                            System.currentTimeMillis() - start);
+                    result.put("attempts", attempt);
+                    result.put("retry_count", retryCount(template));
+                    audit(workflowCode, workflowVersion, inputs, result);
+                    return result;
+                } catch (RestClientException ex) {
+                    lastException = ex;
+                    if (attempt >= maxAttempts) {
+                        break;
+                    }
+                }
+            }
+            if (lastException instanceof ResourceAccessException) {
+                return degraded(workflowCode, workflowVersion, inputs, template, ErrorCode.DIFY_TIMEOUT.getCode(),
+                        "Dify调用超时或网络不可达，已重试后返回本地降级解释。",
+                        System.currentTimeMillis() - start, maxAttempts, retryCount(template));
+            }
+            return degraded(workflowCode, workflowVersion, inputs, template, "DIFY_ERROR",
+                    "Dify调用失败，已重试后返回本地降级解释：" +
+                            (lastException == null ? "UNKNOWN" : lastException.getClass().getSimpleName()),
+                    System.currentTimeMillis() - start, maxAttempts, retryCount(template));
         } catch (ResourceAccessException ex) {
             return degraded(workflowCode, workflowVersion, inputs, template, ErrorCode.DIFY_TIMEOUT.getCode(),
                     "Dify调用超时或网络不可达，已返回本地降级解释。", System.currentTimeMillis() - start);
@@ -188,6 +212,12 @@ public class DifyService {
 
     private Map<String, Object> degraded(String workflowCode, String workflowVersion, Map<String, Object> inputs,
                                          DifyWorkflowTemplate template, String errorCode, String message, long elapsedMs) {
+        return degraded(workflowCode, workflowVersion, inputs, template, errorCode, message, elapsedMs, null, null);
+    }
+
+    private Map<String, Object> degraded(String workflowCode, String workflowVersion, Map<String, Object> inputs,
+                                         DifyWorkflowTemplate template, String errorCode, String message,
+                                         long elapsedMs, Integer attempts, Integer retryCount) {
         Map<String, Object> outputs = new LinkedHashMap<String, Object>();
         if (template != null && template.getDegradedOutputs() != null && !template.getDegradedOutputs().isEmpty()) {
             outputs.putAll(template.getDegradedOutputs());
@@ -206,6 +236,12 @@ public class DifyService {
         result.put("error_code", errorCode);
         result.put("outputs", outputs);
         result.put("template_applied", template != null);
+        if (attempts != null) {
+            result.put("attempts", attempts);
+        }
+        if (retryCount != null) {
+            result.put("retry_count", retryCount);
+        }
         audit(workflowCode, workflowVersion, inputs, result);
         return result;
     }
@@ -252,6 +288,8 @@ public class DifyService {
         detail.put("message", result.get("message"));
         detail.put("error_code", result.get("error_code"));
         detail.put("elapsed_ms", result.get("elapsed_ms"));
+        detail.put("attempts", result.get("attempts"));
+        detail.put("retry_count", result.get("retry_count"));
         try {
             persistenceService.saveAuditLog("DIFY", "WORKFLOW_RUN", "WORKFLOW", workflowCode,
                     patientId(inputs), encounterId(inputs), string(inputs.get("operator_id"), null), detail);
@@ -495,6 +533,32 @@ public class DifyService {
         return merged;
     }
 
+    private Map<String, Object> applyInputMappings(Map<String, Object> inputs, DifyWorkflowTemplate template,
+                                                   Map<String, Object> request) {
+        Map<String, Object> mapped = new LinkedHashMap<String, Object>();
+        if (inputs != null) {
+            mapped.putAll(inputs);
+        }
+        if (template.getInputMappings() == null || template.getInputMappings().isEmpty()) {
+            return mapped;
+        }
+        for (Map.Entry<String, String> entry : template.getInputMappings().entrySet()) {
+            String targetField = string(entry.getKey(), null);
+            String sourcePath = string(entry.getValue(), null);
+            if (targetField == null || sourcePath == null || hasValue(mapped.get(targetField))) {
+                continue;
+            }
+            Object value = readPath(inputs, sourcePath);
+            if (value == null) {
+                value = readPath(request, sourcePath);
+            }
+            if (value != null) {
+                mapped.put(targetField, value);
+            }
+        }
+        return mapped;
+    }
+
     private List<String> missingRequiredInputs(Map<String, Object> inputs, DifyWorkflowTemplate template) {
         List<String> missing = new ArrayList<String>();
         if (template.getRequiredInputs() == null) {
@@ -548,10 +612,24 @@ public class DifyService {
         if (timeout instanceof Number) {
             template.setTimeoutMs(((Number) timeout).intValue());
         }
+        Object retryCount = entry.get("retry_count");
+        if (retryCount instanceof Number) {
+            template.setRetryCount(((Number) retryCount).intValue());
+        }
 
         Object defaults = entry.get("input_defaults");
         if (defaults instanceof Map) {
             template.setInputDefaults(new LinkedHashMap<String, Object>((Map<String, Object>) defaults));
+        }
+        Object mappings = entry.get("input_mappings");
+        if (mappings instanceof Map) {
+            Map<String, String> mappingConfig = new LinkedHashMap<String, String>();
+            for (Map.Entry<String, Object> mapping : ((Map<String, Object>) mappings).entrySet()) {
+                if (mapping.getKey() != null && mapping.getValue() != null) {
+                    mappingConfig.put(mapping.getKey(), String.valueOf(mapping.getValue()));
+                }
+            }
+            template.setInputMappings(mappingConfig);
         }
         Object required = entry.get("required_inputs");
         if (required instanceof Collection) {
@@ -622,6 +700,66 @@ public class DifyService {
 
     private String key(String workflowCode, String workflowVersion) {
         return workflowCode + "::" + (workflowVersion == null ? "1.0.0" : workflowVersion);
+    }
+
+    private int retryCount(DifyWorkflowTemplate template) {
+        if (template == null || template.getRetryCount() == null || template.getRetryCount() < 0) {
+            return 0;
+        }
+        return Math.min(template.getRetryCount(), 3);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object readPath(Map<String, Object> source, String path) {
+        if (source == null || path == null) {
+            return null;
+        }
+        String normalized = path.trim();
+        if (normalized.startsWith("$.")) {
+            normalized = normalized.substring(2);
+        }
+        if (normalized.startsWith("request.")) {
+            normalized = normalized.substring("request.".length());
+        }
+        if (normalized.startsWith("inputs.")) {
+            normalized = normalized.substring("inputs.".length());
+        }
+        if (normalized.isEmpty()) {
+            return null;
+        }
+
+        Object current = source;
+        for (String token : normalized.split("\\.")) {
+            if (current instanceof Map) {
+                current = ((Map<String, Object>) current).get(token);
+            } else if (current instanceof List && isInteger(token)) {
+                List<?> list = (List<?>) current;
+                int index = Integer.parseInt(token);
+                current = index >= 0 && index < list.size() ? list.get(index) : null;
+            } else {
+                return null;
+            }
+            if (current == null) {
+                return null;
+            }
+        }
+        return current;
+    }
+
+    private boolean hasValue(Object value) {
+        return value != null && (!(value instanceof String) || !((String) value).trim().isEmpty());
+    }
+
+    private boolean isInteger(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            Integer.parseInt(text);
+            return true;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
     }
 
     private String filterValue(Map<String, String> filters, String key) {

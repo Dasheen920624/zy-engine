@@ -12,7 +12,9 @@ public class DifyWorkflowTemplate {
     private String description;
     private String difyAppCode;
     private Integer timeoutMs;
+    private Integer retryCount;
     private Map<String, Object> inputDefaults = new LinkedHashMap<String, Object>();
+    private Map<String, String> inputMappings = new LinkedHashMap<String, String>();
     private List<String> requiredInputs = new ArrayList<String>();
     private Map<String, Object> degradedOutputs = new LinkedHashMap<String, Object>();
 
@@ -64,12 +66,28 @@ public class DifyWorkflowTemplate {
         this.timeoutMs = timeoutMs;
     }
 
+    public Integer getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(Integer retryCount) {
+        this.retryCount = retryCount;
+    }
+
     public Map<String, Object> getInputDefaults() {
         return inputDefaults;
     }
 
     public void setInputDefaults(Map<String, Object> inputDefaults) {
         this.inputDefaults = inputDefaults;
+    }
+
+    public Map<String, String> getInputMappings() {
+        return inputMappings;
+    }
+
+    public void setInputMappings(Map<String, String> inputMappings) {
+        this.inputMappings = inputMappings;
     }
 
     public List<String> getRequiredInputs() {

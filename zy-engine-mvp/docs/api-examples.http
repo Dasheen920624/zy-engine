@@ -413,6 +413,28 @@ X-Trace-Id: trace-demo-dify-workflow
   }
 }
 
+### Dify workflow run with template input mappings
+POST http://localhost:18080/zy-engine/api/dify/workflows/run
+Content-Type: application/json
+X-Trace-Id: trace-demo-dify-workflow-mapping
+
+{
+  "workflow_code": "WF_AMI_ENTRY_EXPLAIN",
+  "workflow_version": "1.0.0",
+  "trace_id": "trace-demo-dify-workflow-mapping",
+  "patient_context": {
+    "patient": {
+      "patient_id": "P_AMI_001"
+    },
+    "encounter": {
+      "encounter_id": "E_AMI_001"
+    }
+  },
+  "recommendation": {
+    "target_code": "AMI_STEMI"
+  }
+}
+
 ### Dify workflow invocation stats
 GET http://localhost:18080/zy-engine/api/dify/workflows/stats?workflowCode=WF_AMI_ENTRY_EXPLAIN
 X-Trace-Id: trace-demo-dify-workflow-stats

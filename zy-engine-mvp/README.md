@@ -10,7 +10,7 @@
 - 路径版本差异对比：`GET /pathways/{pathwayCode}/diff?from=1.0.0&to=draft` 输出元数据字段变化、节点增删改、任务与流转目标的增删，配置发布前的 review 可一眼看到变更规模。
 - 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架；执行日志可按 `ruleCode/traceId/patientId/hit/resultStatus` 过滤查询，最近 500 条保留在内存环形缓冲，并支持 `/exec-logs/summary` 按规则/严重级别/结果状态聚合 hit_rate 与 average_elapsed_ms。
 - 图谱引擎：候选疾病召回、证据查询、Neo4j 可配置查询和不可用时降级返回；图谱版本/证据/节点/关系均可注册与查询，Neo4j 关闭时 `disease-candidates` 与 `evidence` 接口优先使用已注册节点+关系召回（`graph_source=REGISTERED_FALLBACK`），未注册才回退到内置 AMI 启发式。
-- Dify 适配：保留工作流调用入口，支持配置真实 Dify 调用、超时降级和审计记录；工作流模板可导入并绑定 `required_inputs`、`input_defaults`、`timeout_ms`、`degraded_outputs`，调用时按模板补全缺省入参并在缺失必填字段时返回 `VALIDATION_ERROR`。
+- Dify 适配：保留工作流调用入口，支持配置真实 Dify 调用、超时降级、重试和审计记录；工作流模板可导入并绑定 `required_inputs`、`input_mappings`、`input_defaults`、`timeout_ms`、`retry_count`、`degraded_outputs`，调用时按模板抽取上下文、补全缺省入参并在缺失必填字段时返回 `VALIDATION_ERROR`。
 - 字典映射：提供第三方系统编码到平台标准概念的标准化接口，未命中项会返回待治理状态；支持映射配置导入、列表与版本回查，校验失败返回 `VALIDATION_ERROR`。
 - 适配器中心：提供 REST/SQL/WebService 风格的第三方取数 Mock，返回统一行集和标准码映射结果；支持适配器查询定义导入、列表与单项查询，导入未内置 Mock 的查询会返回 `SUCCESS` 但 `row_count=0`，提示后续接入真实取数。
 - 路径任务取数：任务配置了 `source.adapter_code/query_code` 时，完成任务会自动调用适配器 Mock 并保存取数结果。
@@ -278,7 +278,7 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 - 路径变异：任务跳过和医生主动记录均可保存原因。
 - 图谱降级：`CHEST_PAIN` + `ST_ELEVATION_CONTIGUOUS_LEADS` 可返回 `AMI_STEMI` 和 `EV_AMI_001`；`sample_graph_versions.json` 中包含 2 条版本 + 3 条证据，通过 `POST /graph/versions` 与 `POST /graph/evidences` 导入后 `evidence` 接口会改返回 `REGISTERED_FALLBACK` 证据集。
 - Dify 降级：未配置真实 Dify 时返回 `DEGRADED`，不影响路径核心状态。
-- Dify 工作流模板：`sample_dify_workflows.json` 可通过 `POST /dify/workflows` 导入，`POST /dify/workflows/run` 调用已注册工作流时会按模板补全 `input_defaults`、校验 `required_inputs`，并在降级时返回模板的 `degraded_outputs`。
+- Dify 工作流模板：`sample_dify_workflows.json` 可通过 `POST /dify/workflows` 导入，`POST /dify/workflows/run` 调用已注册工作流时会按模板应用 `input_mappings`、补全 `input_defaults`、校验 `required_inputs`，并在降级时返回模板的 `degraded_outputs`；真实 Dify 调用失败时会按 `retry_count` 重试，当前最多 3 次。
 - Dify 调用统计：`GET /dify/workflows/stats?workflowCode=WF_AMI_ENTRY_EXPLAIN` 返回 `total_calls/success_calls/degraded_calls/validation_error_calls/average_elapsed_ms`，并按工作流、状态、provider 聚合。
 - 字典映射：`HIS/I21.3/DIAGNOSIS` 可标准化为 `AMI_STEMI`，未知编码会返回 `UNMAPPED` 和 `PENDING_MAPPING`；`sample_dictionary_mappings.json` 可通过 `POST /terminology/mappings` 导入并经 `GET /terminology/mappings` 回查。
 - 适配器 Mock：`ECG_ADAPTER`、`LIS_ADAPTER`、`HIS_ADAPTER`、`EMR_WS_ADAPTER` 可返回 AMI 样例第三方数据；`sample_adapter_definitions.json` 可通过 `POST /adapters/definitions` 导入，未内置 Mock 的 `PACS_ADAPTER/QUERY_CHEST_CT` 调用会返回 `SUCCESS` 且 `row_count=0`。
@@ -293,5 +293,5 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 - 规则 DSL 解析器、热更新、规则包审核发布、规则模拟器。
 - 院内字典映射配置界面和第三方适配器 SDK。
 - 图谱证据版本管理和图谱发布流程。
-- Dify 工作流参数映射、重试和业务级调用模板管理。
+- Dify 工作流业务级调用模板管理、真实 Dify 鉴权策略和更细粒度调用监控。
 - 登录鉴权、租户隔离、操作审计、监控告警和国产化部署脚本。

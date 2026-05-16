@@ -7,11 +7,17 @@
       "description": "在医生工作站显示 AMI/STEMI 候选路径时，调用 Dify 生成结合证据与禁忌证的解释卡。",
       "dify_app_code": "ami-entry-explain",
       "timeout_ms": 5000,
+      "retry_count": 1,
       "required_inputs": [
         "patient_id",
         "encounter_id",
         "target_code"
       ],
+      "input_mappings": {
+        "patient_id": "patient_context.patient.patient_id",
+        "encounter_id": "patient_context.encounter.encounter_id",
+        "target_code": "recommendation.target_code"
+      },
       "input_defaults": {
         "scenario": "PATHWAY_ENTRY",
         "language": "zh-CN",
@@ -31,10 +37,16 @@
       "description": "再灌注评估节点调用 Dify 生成 PCI vs 溶栓的策略提示，附禁忌证检查。",
       "dify_app_code": "ami-reperfusion-hint",
       "timeout_ms": 8000,
+      "retry_count": 1,
       "required_inputs": [
         "patient_id",
         "encounter_id"
       ],
+      "input_mappings": {
+        "patient_id": "patient_context.patient.patient_id",
+        "encounter_id": "patient_context.encounter.encounter_id",
+        "current_node_code": "pathway.current_node_code"
+      },
       "input_defaults": {
         "scenario": "PATHWAY_REPERFUSION",
         "language": "zh-CN"
