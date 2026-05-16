@@ -162,19 +162,25 @@ public class EnginePersistenceService {
             return;
         }
         String sql = "MERGE INTO pe_patient_instance t " +
-                "USING (SELECT ? encounter_id, ? pathway_code, 'ACTIVE' status FROM dual) s " +
-                "ON (t.encounter_id=s.encounter_id AND t.pathway_code=s.pathway_code AND t.status=s.status) " +
+                "USING (SELECT ? tenant_id, ? org_code, ? encounter_id, ? pathway_code, 'ACTIVE' status FROM dual) s " +
+                "ON (t.tenant_id=s.tenant_id AND t.org_code=s.org_code AND t.encounter_id=s.encounter_id AND t.pathway_code=s.pathway_code AND t.status=s.status) " +
                 "WHEN MATCHED THEN UPDATE SET t.current_node_code=?, t.updated_time=SYSTIMESTAMP " +
                 "WHEN NOT MATCHED THEN INSERT (id, tenant_id, org_code, patient_id, encounter_id, pathway_code, version_no, status, current_node_code, admitted_by, admission_time, created_time) " +
-                "VALUES (?, 'default', 'ZYHOSPITAL', ?, ?, ?, ?, 'ACTIVE', ?, ?, SYSTIMESTAMP, SYSTIMESTAMP)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, SYSTIMESTAMP, SYSTIMESTAMP)";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             long id = extractNumericId(instance.getInstanceId());
+            String tenantId = string(instance.getTenantId(), "default");
+            String orgCode = string(instance.getLegacyOrgCode(), string(instance.getHospitalCode(), "ZYHOSPITAL"));
             int i = 1;
+            ps.setString(i++, tenantId);
+            ps.setString(i++, orgCode);
             ps.setString(i++, instance.getEncounterId());
             ps.setString(i++, instance.getPathwayCode());
             ps.setString(i++, instance.getCurrentNodeCode());
             ps.setLong(i++, id);
+            ps.setString(i++, tenantId);
+            ps.setString(i++, orgCode);
             ps.setString(i++, instance.getPatientId());
             ps.setString(i++, instance.getEncounterId());
             ps.setString(i++, instance.getPathwayCode());
@@ -384,6 +390,14 @@ public class EnginePersistenceService {
         String patientId = filterValue(filters, "patientId");
         String encounterId = filterValue(filters, "encounterId");
         String operatorId = filterValue(filters, "operatorId");
+        String tenantId = filterValue(filters, "tenantId");
+        String groupCode = filterValue(filters, "groupCode");
+        String hospitalCode = filterValue(filters, "hospitalCode");
+        String campusCode = filterValue(filters, "campusCode");
+        String siteCode = filterValue(filters, "siteCode");
+        String departmentCode = filterValue(filters, "departmentCode");
+        String scopeLevel = filterValue(filters, "scopeLevel");
+        String scopeCode = filterValue(filters, "scopeCode");
         int limit = filterInt(filters, "limit", 100);
         if (limit <= 0) {
             limit = 100;
@@ -421,6 +435,30 @@ public class EnginePersistenceService {
             if (operatorId != null && !operatorId.equals(string(record.get("operator_id"), null))) {
                 continue;
             }
+            if (tenantId != null && !tenantId.equals(string(record.get("tenant_id"), null))) {
+                continue;
+            }
+            if (groupCode != null && !groupCode.equals(string(record.get("group_code"), null))) {
+                continue;
+            }
+            if (hospitalCode != null && !hospitalCode.equals(string(record.get("hospital_code"), null))) {
+                continue;
+            }
+            if (campusCode != null && !campusCode.equals(string(record.get("campus_code"), null))) {
+                continue;
+            }
+            if (siteCode != null && !siteCode.equals(string(record.get("site_code"), null))) {
+                continue;
+            }
+            if (departmentCode != null && !departmentCode.equals(string(record.get("department_code"), null))) {
+                continue;
+            }
+            if (scopeLevel != null && !scopeLevel.equalsIgnoreCase(string(record.get("scope_level"), null))) {
+                continue;
+            }
+            if (scopeCode != null && !scopeCode.equals(string(record.get("scope_code"), null))) {
+                continue;
+            }
             matched.add(new LinkedHashMap<String, Object>(record));
             if (matched.size() >= limit) {
                 break;
@@ -441,6 +479,8 @@ public class EnginePersistenceService {
         summary.put("by_engine_type", aggregateAudit(records, "engine_type"));
         summary.put("by_action_type", aggregateAudit(records, "action_type"));
         summary.put("by_target_type", aggregateAudit(records, "target_type"));
+        summary.put("by_hospital_code", aggregateAudit(records, "hospital_code"));
+        summary.put("by_scope_level", aggregateAudit(records, "scope_level"));
         return summary;
     }
 
@@ -457,6 +497,15 @@ public class EnginePersistenceService {
         record.put("operator_id", operatorId);
         record.put("detail", detail == null
                 ? new LinkedHashMap<String, Object>() : new LinkedHashMap<String, Object>(detail));
+        record.put("tenant_id", orgValue(detail, "tenant_id", "tenantId"));
+        record.put("group_code", orgValue(detail, "group_code", "groupCode"));
+        record.put("hospital_code", orgValue(detail, "hospital_code", "hospitalCode"));
+        record.put("campus_code", orgValue(detail, "campus_code", "campusCode"));
+        record.put("site_code", orgValue(detail, "site_code", "siteCode"));
+        record.put("department_code", orgValue(detail, "department_code", "departmentCode"));
+        record.put("scope_level", orgValue(detail, "scope_level", "scopeLevel"));
+        record.put("scope_code", orgValue(detail, "scope_code", "scopeCode"));
+        record.put("org_source", orgValue(detail, "org_source", "orgSource"));
         record.put("created_time", nowText());
         synchronized (auditRecords) {
             auditRecords.add(record);
@@ -464,6 +513,17 @@ public class EnginePersistenceService {
                 auditRecords.remove(0);
             }
         }
+    }
+
+    private String orgValue(Map<String, Object> detail, String snakeKey, String camelKey) {
+        if (detail == null) {
+            return null;
+        }
+        String value = string(detail.get(snakeKey), null);
+        if (value == null) {
+            value = string(detail.get(camelKey), null);
+        }
+        return value;
     }
 
     private List<Map<String, Object>> aggregateAudit(List<Map<String, Object>> records, String dimension) {

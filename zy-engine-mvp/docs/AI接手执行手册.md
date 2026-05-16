@@ -255,7 +255,7 @@ git push origin main
 下一批做：
 
 - 组织目录 Oracle 持久化。
-- 路径、规则、质控、审计查询逐步接入组织上下文。
+- `/api/rules/*`、规则执行日志与更多配置查询继续接入组织上下文。
 
 ### TERM-001 医嘱标准化
 
@@ -302,6 +302,12 @@ ORG-001 第三批已织入第三方规则引擎接口：
 - `/api/rule-engine/evaluate` 与 `/batch-evaluate` 通过 `OrganizationContextService.resolveWithBody` 解析组织上下文，Header（`X-Tenant-Id/X-Group-Code/X-Hospital-Code/X-Campus-Code/X-Site-Code/X-Department-Code/X-Org-Code`）与 Query 提供默认，Body 字段（同名）优先覆盖。
 - 评估记录与审计明细均带 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`；`org_source` 取值 `HEADER/QUERY/BODY/DEFAULT/NONE`。
 - `GET /api/rule-engine/results` 扩展 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤项，便于多医院/多院区聚合复盘。
+
+ORG-001 第四批已织入路径运行、质控和审计查询：
+
+- `/api/patient-pathways/admit` 通过 Header/Query/Body 合并组织上下文，患者路径实例落 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode/orgSource`。
+- `/api/pathway-instances*`、`/api/pathway-variations*`、`/api/quality/metrics` 和 `/api/audit-logs*` 支持显式 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤。
+- `PE_PATIENT_INSTANCE` 的活动实例唯一约束已从 encounter/pathway/status 扩展为 tenant/org/encounter/pathway/status，避免多医院同就诊号互相覆盖。
 
 Oracle/达梦持久化、异步任务与同步任务状态留给 RULE-001 第三批继续推进。
 

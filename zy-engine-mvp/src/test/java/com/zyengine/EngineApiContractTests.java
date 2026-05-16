@@ -1221,6 +1221,80 @@ class EngineApiContractTests {
     }
 
     @Test
+    void pathwayQualityAndAuditQueriesFilterByOrgContext() throws Exception {
+        Map<String, Object> pathwayConfig = samplePathwayConfig("AMI_ORG_TEST", "AMI组织上下文测试路径");
+        invokePost("/api/pathways", pathwayConfig);
+        invokePost("/api/pathways/AMI_ORG_TEST/publish", new LinkedHashMap<String, Object>());
+
+        Map<String, Object> alphaAdmit = new LinkedHashMap<String, Object>();
+        alphaAdmit.put("tenant_id", "TENANT_PATH_ORG");
+        alphaAdmit.put("group_code", "GROUP_PATH");
+        alphaAdmit.put("hospital_code", "HOSPITAL_ALPHA");
+        alphaAdmit.put("campus_code", "CAMPUS_ALPHA");
+        alphaAdmit.put("department_code", "DEPT_ALPHA");
+        alphaAdmit.put("patient_id", "P_ORG_ALPHA");
+        alphaAdmit.put("encounter_id", "E_ORG_ALPHA");
+        alphaAdmit.put("pathway_code", "AMI_ORG_TEST");
+        alphaAdmit.put("version_no", "1.0.0");
+        alphaAdmit.put("doctor_id", "ORG_DOC");
+        Map<String, Object> alphaResp = invokePost("/api/patient-pathways/admit", alphaAdmit);
+        Map<String, Object> alpha = asMap(alphaResp.get("data"));
+        assertEquals("TENANT_PATH_ORG", alpha.get("tenantId"));
+        assertEquals("HOSPITAL_ALPHA", alpha.get("hospitalCode"));
+        assertEquals("DEPARTMENT", alpha.get("scopeLevel"));
+        assertEquals("DEPT_ALPHA", alpha.get("scopeCode"));
+        assertEquals("BODY", alpha.get("orgSource"));
+        String alphaInstanceId = (String) alpha.get("instanceId");
+
+        Map<String, Object> betaAdmit = new LinkedHashMap<String, Object>();
+        betaAdmit.put("tenant_id", "TENANT_PATH_ORG");
+        betaAdmit.put("group_code", "GROUP_PATH");
+        betaAdmit.put("hospital_code", "HOSPITAL_BETA");
+        betaAdmit.put("campus_code", "CAMPUS_BETA");
+        betaAdmit.put("department_code", "DEPT_BETA");
+        betaAdmit.put("patient_id", "P_ORG_BETA");
+        betaAdmit.put("encounter_id", "E_ORG_BETA");
+        betaAdmit.put("pathway_code", "AMI_ORG_TEST");
+        betaAdmit.put("version_no", "1.0.0");
+        betaAdmit.put("doctor_id", "ORG_DOC");
+        invokePost("/api/patient-pathways/admit", betaAdmit);
+
+        Map<String, Object> skipBody = new LinkedHashMap<String, Object>();
+        skipBody.put("operator_id", "ORG_DOC");
+        skipBody.put("variation_type", "ORG_FILTER_TEST");
+        skipBody.put("reason", "组织过滤测试：Alpha 院区变异。");
+        invokePost("/api/patient-pathways/" + alphaInstanceId + "/nodes/NODE_IDENTIFY/tasks/TASK_TRIAGE/skip", skipBody);
+
+        Map<String, Object> alphaListResp = invokeGet("/api/pathway-instances?pathwayCode=AMI_ORG_TEST&hospitalCode=HOSPITAL_ALPHA");
+        List<Map<String, Object>> alphaInstances = asListOfMap(alphaListResp.get("data"));
+        assertEquals(1, alphaInstances.size());
+        assertEquals("HOSPITAL_ALPHA", alphaInstances.get(0).get("hospitalCode"));
+
+        Map<String, Object> betaListResp = invokeGet("/api/pathway-instances?pathwayCode=AMI_ORG_TEST&hospitalCode=HOSPITAL_BETA");
+        List<Map<String, Object>> betaInstances = asListOfMap(betaListResp.get("data"));
+        assertEquals(1, betaInstances.size());
+        assertEquals("HOSPITAL_BETA", betaInstances.get(0).get("hospitalCode"));
+
+        Map<String, Object> variationResp = invokeGet("/api/pathway-variations?pathwayCode=AMI_ORG_TEST"
+                + "&scopeLevel=DEPARTMENT&scopeCode=DEPT_ALPHA");
+        List<Map<String, Object>> variations = asListOfMap(variationResp.get("data"));
+        assertEquals(1, variations.size());
+        assertEquals("DEPT_ALPHA", variations.get(0).get("scopeCode"));
+
+        Map<String, Object> metricsResp = invokeGet("/api/quality/metrics?pathwayCode=AMI_ORG_TEST&hospitalCode=HOSPITAL_ALPHA");
+        Map<String, Object> metrics = asMap(metricsResp.get("data"));
+        assertEquals(1, ((Number) asMap(metrics.get("instance_summary")).get("total")).intValue());
+        assertEquals(1, ((Number) asMap(metrics.get("variation_summary")).get("total")).intValue());
+
+        Map<String, Object> auditResp = invokeGet("/api/audit-logs?engineType=PATHWAY&actionType=ADMIT"
+                + "&hospitalCode=HOSPITAL_ALPHA&limit=10");
+        List<Map<String, Object>> auditRecords = asListOfMap(auditResp.get("data"));
+        assertFalse(auditRecords.isEmpty(), "org-scoped admit audit should be queryable");
+        assertEquals("HOSPITAL_ALPHA", auditRecords.get(0).get("hospital_code"));
+        assertEquals("DEPT_ALPHA", auditRecords.get(0).get("scope_code"));
+    }
+
+    @Test
     void pathwayVariationsListAndSummary() throws Exception {
         Map<String, Object> pathwayConfig = samplePathwayConfig("AMI_VAR_TEST", "AMI变异聚合测试路径");
         invokePost("/api/pathways", pathwayConfig);

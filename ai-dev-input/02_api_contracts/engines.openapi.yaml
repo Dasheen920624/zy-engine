@@ -124,7 +124,17 @@ paths:
     post:
       tags: [PathwayEngine]
       summary: 医生确认患者入径
+      description: |
+        组织上下文可通过 Header/Query/Body 传入；Body 中的 tenant_id/group_code/hospital_code/campus_code/site_code/department_code 优先覆盖 Header/Query。
+        返回的患者路径实例会带组织字段，后续路径实例、变异、质控和审计查询可按组织维度过滤。
       operationId: admitPatientPathway
+      parameters:
+        - $ref: '#/components/parameters/HeaderTenantId'
+        - $ref: '#/components/parameters/HeaderGroupCode'
+        - $ref: '#/components/parameters/HeaderHospitalCode'
+        - $ref: '#/components/parameters/HeaderCampusCode'
+        - $ref: '#/components/parameters/HeaderSiteCode'
+        - $ref: '#/components/parameters/HeaderDepartmentCode'
       requestBody:
         required: true
         content:
@@ -144,6 +154,18 @@ paths:
                 doctor_id:
                   type: string
                 recommendation_id:
+                  type: string
+                tenant_id:
+                  type: string
+                group_code:
+                  type: string
+                hospital_code:
+                  type: string
+                campus_code:
+                  type: string
+                site_code:
+                  type: string
+                department_code:
                   type: string
       responses:
         '200':
@@ -872,6 +894,24 @@ components:
         status:
           type: string
         current_node_code:
+          type: string
+        tenant_id:
+          type: string
+        group_code:
+          type: string
+        hospital_code:
+          type: string
+        campus_code:
+          type: string
+        site_code:
+          type: string
+        department_code:
+          type: string
+        scope_level:
+          type: string
+        scope_code:
+          type: string
+        org_source:
           type: string
     GraphDiseaseCandidateRequest:
       type: object

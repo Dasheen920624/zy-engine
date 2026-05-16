@@ -561,7 +561,8 @@ Provider 影响：
 - 默认上下文兼容当前历史 `default/ZYHOSPITAL`，并返回配置继承顺序：科室、站点、院区、医院、集团、系统内置默认（产品基线配置）。
 - 第二批已落地组织目录导入、列表、详情、树形回查和 `ORG_UNIT` DDL；`PLATFORM` 不可导入为真实组织。
 - 第三批新增 `OrganizationContextService.resolveWithBody`，Header/Query/Body 三方合并（Body 优先），首先织入 `/api/rule-engine/*`：评估记录与审计写 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`，`GET /api/rule-engine/results` 支持按多个组织维度过滤。
-- 后续继续补组织目录 Oracle 持久化、配置包组织继承/覆盖计算、路径/质控接口组织隔离。
+- 第四批已织入路径运行、质控和审计查询：患者入径实例落组织字段，路径实例、变异、质控指标和审计日志支持 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤。
+- 后续继续补组织目录 Oracle 持久化、配置包组织继承/覆盖计算、`/api/rules/*` 配置管理组织隔离。
 
 产出：
 

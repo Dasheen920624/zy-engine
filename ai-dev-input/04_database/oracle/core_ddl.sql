@@ -70,7 +70,7 @@ CREATE TABLE pe_patient_instance (
   lock_version NUMBER(10) DEFAULT 0 NOT NULL,
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_time TIMESTAMP,
-  CONSTRAINT uk_pe_active_instance UNIQUE (encounter_id, pathway_code, status)
+  CONSTRAINT uk_pe_active_instance UNIQUE (tenant_id, org_code, encounter_id, pathway_code, status)
 );
 
 CREATE TABLE pe_patient_node_state (

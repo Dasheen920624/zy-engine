@@ -131,6 +131,11 @@ Content-Type: application/json
 X-Trace-Id: trace-demo-ami-admit
 
 {
+  "tenant_id": "TENANT_DEMO",
+  "group_code": "GROUP_DEMO",
+  "hospital_code": "HOSPITAL_DEMO",
+  "campus_code": "CAMPUS_EAST",
+  "department_code": "DEPT_CARDIOLOGY",
   "patient_id": "P_AMI_001",
   "encounter_id": "E_AMI_001",
   "pathway_code": "AMI_STEMI",
@@ -209,9 +214,17 @@ X-Trace-Id: trace-demo-variation-summary
 GET http://localhost:18080/zy-engine/api/pathway-instances?pathwayCode=AMI_STEMI&limit=20
 X-Trace-Id: trace-demo-instance-list
 
+### List active pathway instances by hospital scope
+GET http://localhost:18080/zy-engine/api/pathway-instances?pathwayCode=AMI_STEMI&hospitalCode=HOSPITAL_DEMO&limit=20
+X-Trace-Id: trace-demo-instance-list-org
+
 ### Pathway instance aggregation summary
 GET http://localhost:18080/zy-engine/api/pathway-instances/summary?pathwayCode=AMI_STEMI
 X-Trace-Id: trace-demo-instance-summary
+
+### Pathway variation aggregation by department scope
+GET http://localhost:18080/zy-engine/api/pathway-variations/summary?pathwayCode=AMI_STEMI&scopeLevel=DEPARTMENT&scopeCode=DEPT_CARDIOLOGY
+X-Trace-Id: trace-demo-variation-summary-org
 
 ### Pathway node completion metrics (per-node & per-task)
 GET http://localhost:18080/zy-engine/api/pathway-instances/node-completion?pathwayCode=AMI_STEMI
@@ -225,9 +238,17 @@ X-Trace-Id: trace-demo-node-stay-duration
 GET http://localhost:18080/zy-engine/api/quality/metrics?pathwayCode=AMI_STEMI&workflowCode=WF_AMI_ENTRY_EXPLAIN
 X-Trace-Id: trace-demo-quality-metrics
 
+### Quality dashboard aggregate metrics by hospital
+GET http://localhost:18080/zy-engine/api/quality/metrics?pathwayCode=AMI_STEMI&hospitalCode=HOSPITAL_DEMO&workflowCode=WF_AMI_ENTRY_EXPLAIN
+X-Trace-Id: trace-demo-quality-metrics-org
+
 ### List audit logs
 GET http://localhost:18080/zy-engine/api/audit-logs?engineType=PATHWAY&limit=20
 X-Trace-Id: trace-demo-audit-list
+
+### List audit logs by hospital
+GET http://localhost:18080/zy-engine/api/audit-logs?engineType=PATHWAY&hospitalCode=HOSPITAL_DEMO&limit=20
+X-Trace-Id: trace-demo-audit-list-org
 
 ### Audit log summary
 GET http://localhost:18080/zy-engine/api/audit-logs/summary?engineType=PATHWAY

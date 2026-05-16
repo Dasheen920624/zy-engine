@@ -66,6 +66,45 @@ public class OrganizationContextService {
         return context;
     }
 
+    public void applyExplicitFilters(Map<String, String> filters, HttpServletRequest request) {
+        if (filters == null || request == null) {
+            return;
+        }
+        putFilter(filters, "tenantId", explicitValue(request, "tenant_id", "tenantId", HEADER_TENANT_ID));
+        putFilter(filters, "groupCode", explicitValue(request, "group_code", "groupCode", HEADER_GROUP_CODE));
+        String hospitalCode = explicitValue(request, "hospital_code", "hospitalCode", HEADER_HOSPITAL_CODE);
+        String legacyOrgCode = explicitValue(request, "org_code", "orgCode", HEADER_ORG_CODE);
+        putFilter(filters, "hospitalCode", hospitalCode == null ? legacyOrgCode : hospitalCode);
+        putFilter(filters, "legacyOrgCode", legacyOrgCode);
+        putFilter(filters, "campusCode", explicitValue(request, "campus_code", "campusCode", HEADER_CAMPUS_CODE));
+        putFilter(filters, "siteCode", explicitValue(request, "site_code", "siteCode", HEADER_SITE_CODE));
+        putFilter(filters, "departmentCode", explicitValue(request, "department_code", "departmentCode", HEADER_DEPARTMENT_CODE));
+        putFilter(filters, "scopeLevel", explicitParam(request, "scope_level", "scopeLevel"));
+        putFilter(filters, "scopeCode", explicitParam(request, "scope_code", "scopeCode"));
+    }
+
+    private void putFilter(Map<String, String> filters, String key, String value) {
+        if (value != null) {
+            filters.put(key, value);
+        }
+    }
+
+    private String explicitValue(HttpServletRequest request, String snakeParam, String camelParam, String headerName) {
+        String value = explicitParam(request, snakeParam, camelParam);
+        if (value == null) {
+            value = clean(request.getHeader(headerName));
+        }
+        return value;
+    }
+
+    private String explicitParam(HttpServletRequest request, String snakeParam, String camelParam) {
+        String value = clean(request.getParameter(snakeParam));
+        if (value == null) {
+            value = clean(request.getParameter(camelParam));
+        }
+        return value;
+    }
+
     private boolean applyBody(OrganizationContext context, Map<String, Object> body) {
         boolean applied = false;
         String tenant = bodyField(body, "tenant_id", "tenantId");

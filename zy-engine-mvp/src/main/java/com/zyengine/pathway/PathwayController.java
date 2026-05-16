@@ -6,6 +6,8 @@ import com.zyengine.dto.PatientPathwayInstance;
 import com.zyengine.dto.PatientTaskState;
 import com.zyengine.dto.PathwayVariationRecord;
 import com.zyengine.dto.RecommendationCard;
+import com.zyengine.organization.OrganizationContext;
+import com.zyengine.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -21,9 +24,12 @@ import java.util.Map;
 @RequestMapping("/api")
 public class PathwayController {
     private final PathwayService pathwayService;
+    private final OrganizationContextService organizationContextService;
 
-    public PathwayController(PathwayService pathwayService) {
+    public PathwayController(PathwayService pathwayService,
+                             OrganizationContextService organizationContextService) {
         this.pathwayService = pathwayService;
+        this.organizationContextService = organizationContextService;
     }
 
     @PostMapping("/pathways")
@@ -67,8 +73,10 @@ public class PathwayController {
     }
 
     @PostMapping("/patient-pathways/admit")
-    public ApiResult<PatientPathwayInstance> admit(@RequestBody Map<String, Object> request) {
-        return ApiResult.success(pathwayService.admit(request));
+    public ApiResult<PatientPathwayInstance> admit(@RequestBody Map<String, Object> request,
+                                                   HttpServletRequest httpRequest) {
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        return ApiResult.success(pathwayService.admit(request, orgContext));
     }
 
     @GetMapping("/patient-pathways/{instanceId}")
@@ -117,7 +125,8 @@ public class PathwayController {
                                                                   @RequestParam(required = false) String patientId,
                                                                   @RequestParam(required = false) String encounterId,
                                                                   @RequestParam(required = false) String currentNodeCode,
-                                                                  @RequestParam(required = false) String limit) {
+                                                                  @RequestParam(required = false) String limit,
+                                                                  HttpServletRequest request) {
         Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
         filters.put("pathwayCode", pathwayCode);
         filters.put("status", status);
@@ -125,6 +134,7 @@ public class PathwayController {
         filters.put("encounterId", encounterId);
         filters.put("currentNodeCode", currentNodeCode);
         filters.put("limit", limit);
+        addOrgFilters(filters, request);
         return ApiResult.success(pathwayService.listInstances(filters));
     }
 
@@ -133,13 +143,15 @@ public class PathwayController {
                                                           @RequestParam(required = false) String status,
                                                           @RequestParam(required = false) String patientId,
                                                           @RequestParam(required = false) String encounterId,
-                                                          @RequestParam(required = false) String currentNodeCode) {
+                                                          @RequestParam(required = false) String currentNodeCode,
+                                                          HttpServletRequest request) {
         Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
         filters.put("pathwayCode", pathwayCode);
         filters.put("status", status);
         filters.put("patientId", patientId);
         filters.put("encounterId", encounterId);
         filters.put("currentNodeCode", currentNodeCode);
+        addOrgFilters(filters, request);
         return ApiResult.success(pathwayService.summarizeInstances(filters));
     }
 
@@ -147,12 +159,14 @@ public class PathwayController {
     public ApiResult<Map<String, Object>> nodeCompletion(@RequestParam(required = false) String pathwayCode,
                                                          @RequestParam(required = false) String status,
                                                          @RequestParam(required = false) String patientId,
-                                                         @RequestParam(required = false) String encounterId) {
+                                                         @RequestParam(required = false) String encounterId,
+                                                         HttpServletRequest request) {
         Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
         filters.put("pathwayCode", pathwayCode);
         filters.put("status", status);
         filters.put("patientId", patientId);
         filters.put("encounterId", encounterId);
+        addOrgFilters(filters, request);
         return ApiResult.success(pathwayService.summarizeNodeCompletion(filters));
     }
 
@@ -160,12 +174,14 @@ public class PathwayController {
     public ApiResult<Map<String, Object>> nodeStayDuration(@RequestParam(required = false) String pathwayCode,
                                                            @RequestParam(required = false) String status,
                                                            @RequestParam(required = false) String patientId,
-                                                           @RequestParam(required = false) String encounterId) {
+                                                           @RequestParam(required = false) String encounterId,
+                                                           HttpServletRequest request) {
         Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
         filters.put("pathwayCode", pathwayCode);
         filters.put("status", status);
         filters.put("patientId", patientId);
         filters.put("encounterId", encounterId);
+        addOrgFilters(filters, request);
         return ApiResult.success(pathwayService.summarizeNodeStayDuration(filters));
     }
 
@@ -176,9 +192,12 @@ public class PathwayController {
                                                                   @RequestParam(required = false) String variationType,
                                                                   @RequestParam(required = false) String nodeCode,
                                                                   @RequestParam(required = false) String instanceId,
-                                                                  @RequestParam(required = false) String limit) {
-        return ApiResult.success(pathwayService.listVariations(filterMap(pathwayCode, patientId, encounterId,
-                variationType, nodeCode, instanceId, limit)));
+                                                                  @RequestParam(required = false) String limit,
+                                                                  HttpServletRequest request) {
+        Map<String, String> filters = filterMap(pathwayCode, patientId, encounterId,
+                variationType, nodeCode, instanceId, limit);
+        addOrgFilters(filters, request);
+        return ApiResult.success(pathwayService.listVariations(filters));
     }
 
     @GetMapping("/pathway-variations/summary")
@@ -187,9 +206,12 @@ public class PathwayController {
                                                            @RequestParam(required = false) String encounterId,
                                                            @RequestParam(required = false) String variationType,
                                                            @RequestParam(required = false) String nodeCode,
-                                                           @RequestParam(required = false) String instanceId) {
-        return ApiResult.success(pathwayService.summarizeVariations(filterMap(pathwayCode, patientId, encounterId,
-                variationType, nodeCode, instanceId, null)));
+                                                           @RequestParam(required = false) String instanceId,
+                                                           HttpServletRequest request) {
+        Map<String, String> filters = filterMap(pathwayCode, patientId, encounterId,
+                variationType, nodeCode, instanceId, null);
+        addOrgFilters(filters, request);
+        return ApiResult.success(pathwayService.summarizeVariations(filters));
     }
 
     private Map<String, String> filterMap(String pathwayCode, String patientId, String encounterId,
@@ -203,5 +225,9 @@ public class PathwayController {
         filters.put("instanceId", instanceId);
         filters.put("limit", limit);
         return filters;
+    }
+
+    private void addOrgFilters(Map<String, String> filters, HttpServletRequest request) {
+        organizationContextService.applyExplicitFilters(filters, request);
     }
 }

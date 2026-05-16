@@ -5,6 +5,7 @@
 ## 当前能力
 
 - 路径引擎：路径草稿、版本发布、候选路径识别、医生确认入径、节点流转、节点任务状态、路径变异记录；变异支持跨实例查询和按变异类型/路径/节点/患者四维聚合统计，为质控看板提供基础数据。
+- 路径运行组织上下文：`/patient-pathways/admit` 支持 Header/Query/Body 合并组织上下文并写入实例；`/pathway-instances`、`/pathway-variations`、`/quality/metrics`、`/audit-logs` 支持按 tenant/集团/医院/院区/站点/科室/scope 显式过滤。
 - 路径配置校验：导入路径时校验路径编码、版本、节点、任务、任务数据源和流转目标，错误配置返回 `VALIDATION_ERROR`。
 - 路径配置回查：支持查询路径清单和指定版本配置原文，便于配置页面预览和验收追溯。
 - 路径版本差异对比：`GET /pathways/{pathwayCode}/diff?from=1.0.0&to=draft` 输出元数据字段变化、节点增删改、任务与流转目标的增删，配置发布前的 review 可一眼看到变更规模。
@@ -289,15 +290,15 @@ GET  /zy-engine/api/rules/exec-logs/summary?ruleCode=&traceId=&patientId=&encoun
 GET  /zy-engine/api/rules/exec-logs/{logId}
 GET  /zy-engine/api/rules/packages/{packageCode}/review?packageVersion=2026.05
 POST /zy-engine/api/rules/packages/{packageCode}/publish
-GET  /zy-engine/api/pathway-variations?pathwayCode=&patientId=&encounterId=&variationType=&nodeCode=&instanceId=&limit=100
-GET  /zy-engine/api/pathway-variations/summary?pathwayCode=&patientId=&encounterId=&variationType=&nodeCode=&instanceId=
-GET  /zy-engine/api/pathway-instances?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=&limit=100
-GET  /zy-engine/api/pathway-instances/summary?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=
-GET  /zy-engine/api/pathway-instances/node-completion?pathwayCode=&status=&patientId=&encounterId=
-GET  /zy-engine/api/pathway-instances/node-stay-duration?pathwayCode=&status=&patientId=&encounterId=
-GET  /zy-engine/api/quality/metrics?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=&workflowCode=
-GET  /zy-engine/api/audit-logs?engineType=&actionType=&targetType=&targetCode=&patientId=&encounterId=&traceId=&limit=100
-GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targetCode=&patientId=&encounterId=&traceId=
+GET  /zy-engine/api/pathway-variations?pathwayCode=&patientId=&encounterId=&variationType=&nodeCode=&instanceId=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=&limit=100
+GET  /zy-engine/api/pathway-variations/summary?pathwayCode=&patientId=&encounterId=&variationType=&nodeCode=&instanceId=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=
+GET  /zy-engine/api/pathway-instances?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=&limit=100
+GET  /zy-engine/api/pathway-instances/summary?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=
+GET  /zy-engine/api/pathway-instances/node-completion?pathwayCode=&status=&patientId=&encounterId=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=
+GET  /zy-engine/api/pathway-instances/node-stay-duration?pathwayCode=&status=&patientId=&encounterId=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=
+GET  /zy-engine/api/quality/metrics?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=&workflowCode=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=
+GET  /zy-engine/api/audit-logs?engineType=&actionType=&targetType=&targetCode=&patientId=&encounterId=&traceId=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=&limit=100
+GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targetCode=&patientId=&encounterId=&traceId=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=
 ```
 
 已验证结果：
@@ -306,6 +307,7 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 - 规则包审核发布：`sample_ami_rules.json` 已带 `package_code/package_version`，导入后可通过 `GET /rules/packages/PKG_AMI_CORE/review?packageVersion=2026.05` 查看规则数量、状态分布和 DSL 问题，再通过 `POST /rules/packages/PKG_AMI_CORE/publish` 批量发布。
 - 路径变异聚合：`GET /pathway-variations?pathwayCode=AMI_STEMI` 返回跨实例变异；`GET /pathway-variations/summary?pathwayCode=AMI_STEMI` 返回按变异类型/路径/节点/患者的计数桶，已被 JUnit 覆盖。
 - 路径实例聚合：`GET /pathway-instances?pathwayCode=AMI_STEMI` 跨实例返回；`GET /pathway-instances/summary?pathwayCode=AMI_STEMI` 同时输出 `total/by_pathway_code/by_status/by_current_node/variation_total/variation_by_type`，质控看板可一次拿到在径数与变异数全景。
+- 路径组织过滤：`POST /patient-pathways/admit` 写入 `tenantId/hospitalCode/campusCode/departmentCode/scopeLevel/scopeCode/orgSource`；`GET /pathway-instances?hospitalCode=HOSPITAL_ALPHA`、`GET /pathway-variations?scopeLevel=DEPARTMENT&scopeCode=DEPT_ALPHA`、`GET /quality/metrics?hospitalCode=...` 与 `GET /audit-logs?hospitalCode=...` 已覆盖组织过滤契约测试。
 - 路径节点完成率：`GET /pathway-instances/node-completion?pathwayCode=AMI_STEMI` 输出每个节点的 `entered/completed/running/waiting/completion_rate` 与节点内任务的 `total/completed/skipped/pending/completion_rate`，搭配实例与变异聚合形成质控看板第一版完整指标。
 - 路径节点滞留时长：`GET /pathway-instances/node-stay-duration?pathwayCode=AMI_STEMI` 输出每个节点的 `average_stay_ms/min_stay_ms/max_stay_ms/timeout_count/timeout_rate`，用于发现运行中节点卡点。
 - 质控指标聚合：`GET /quality/metrics?pathwayCode=AMI_STEMI` 一次返回实例摘要、变异摘要、节点完成率、节点滞留时长和 Dify 调用统计，作为质控看板后端聚合入口。

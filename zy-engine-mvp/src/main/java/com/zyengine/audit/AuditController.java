@@ -1,12 +1,14 @@
 package com.zyengine.audit;
 
 import com.zyengine.common.ApiResult;
+import com.zyengine.organization.OrganizationContextService;
 import com.zyengine.persistence.EnginePersistenceService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,9 +17,12 @@ import java.util.Map;
 @RequestMapping("/api/audit-logs")
 public class AuditController {
     private final EnginePersistenceService persistenceService;
+    private final OrganizationContextService organizationContextService;
 
-    public AuditController(EnginePersistenceService persistenceService) {
+    public AuditController(EnginePersistenceService persistenceService,
+                           OrganizationContextService organizationContextService) {
         this.persistenceService = persistenceService;
+        this.organizationContextService = organizationContextService;
     }
 
     @GetMapping
@@ -29,9 +34,12 @@ public class AuditController {
                                                      @RequestParam(required = false) String patientId,
                                                      @RequestParam(required = false) String encounterId,
                                                      @RequestParam(required = false) String operatorId,
-                                                     @RequestParam(required = false) String limit) {
-        return ApiResult.success(persistenceService.listAuditLogs(filters(traceId, engineType, actionType,
-                targetType, targetCode, patientId, encounterId, operatorId, limit)));
+                                                     @RequestParam(required = false) String limit,
+                                                     HttpServletRequest request) {
+        Map<String, String> filters = filters(traceId, engineType, actionType,
+                targetType, targetCode, patientId, encounterId, operatorId, limit);
+        organizationContextService.applyExplicitFilters(filters, request);
+        return ApiResult.success(persistenceService.listAuditLogs(filters));
     }
 
     @GetMapping("/summary")
@@ -42,9 +50,12 @@ public class AuditController {
                                                   @RequestParam(required = false) String targetCode,
                                                   @RequestParam(required = false) String patientId,
                                                   @RequestParam(required = false) String encounterId,
-                                                  @RequestParam(required = false) String operatorId) {
-        return ApiResult.success(persistenceService.summarizeAuditLogs(filters(traceId, engineType, actionType,
-                targetType, targetCode, patientId, encounterId, operatorId, null)));
+                                                  @RequestParam(required = false) String operatorId,
+                                                  HttpServletRequest request) {
+        Map<String, String> filters = filters(traceId, engineType, actionType,
+                targetType, targetCode, patientId, encounterId, operatorId, null);
+        organizationContextService.applyExplicitFilters(filters, request);
+        return ApiResult.success(persistenceService.summarizeAuditLogs(filters));
     }
 
     private Map<String, String> filters(String traceId, String engineType, String actionType,

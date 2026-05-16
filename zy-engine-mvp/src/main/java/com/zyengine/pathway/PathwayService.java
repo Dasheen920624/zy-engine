@@ -7,6 +7,7 @@ import com.zyengine.dto.PatientTaskState;
 import com.zyengine.dto.PathwayVariationRecord;
 import com.zyengine.dto.RecommendationCard;
 import com.zyengine.dto.RuleResult;
+import com.zyengine.organization.OrganizationContext;
 import com.zyengine.persistence.EnginePersistenceService;
 import com.zyengine.rule.RuleService;
 import com.zyengine.util.ClinicalFactUtils;
@@ -428,11 +429,17 @@ public class PathwayService {
     }
 
     public PatientPathwayInstance admit(Map<String, Object> request) {
+        return admit(request, null);
+    }
+
+    public PatientPathwayInstance admit(Map<String, Object> request, OrganizationContext orgContext) {
         String encounterId = String.valueOf(request.get("encounter_id"));
         String pathwayCode = String.valueOf(request.get("pathway_code"));
         String versionNo = string(request.get("version_no"), activeVersion(pathwayCode, "1.0.0"));
         Map<String, Object> config = publishedPathways.get(pathwayKey(pathwayCode, versionNo));
-        String key = encounterId + "::" + pathwayCode;
+        PatientPathwayInstance orgProbe = new PatientPathwayInstance();
+        applyOrganization(orgProbe, orgContext, request);
+        String key = instanceKey(orgProbe, encounterId, pathwayCode);
         PatientPathwayInstance existing = activeInstances.get(key);
         if (existing != null) {
             return existing;
@@ -448,6 +455,7 @@ public class PathwayService {
         instance.setVersionNo(versionNo);
         instance.setStatus("ACTIVE");
         instance.setCurrentNodeCode(firstNodeCode);
+        applyOrganization(instance, orgContext, request);
         activeInstances.put(key, instance);
 
         persistenceService.savePatientInstance(instance, String.valueOf(request.get("doctor_id")));
@@ -653,6 +661,7 @@ public class PathwayService {
         variation.setReason(variationReason(request));
         variation.setOperatorId(string(request == null ? null : request.get("operator_id"), null));
         variation.setCreatedTime(nowText());
+        copyOrganization(instance, variation);
         variations(instance.getInstanceId()).add(variation);
         persistenceService.saveVariationRecord(variation);
         Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
@@ -671,6 +680,14 @@ public class PathwayService {
         String patientId = filterValue(filters, "patientId");
         String encounterId = filterValue(filters, "encounterId");
         String currentNodeCode = filterValue(filters, "currentNodeCode");
+        String tenantId = filterValue(filters, "tenantId");
+        String groupCode = filterValue(filters, "groupCode");
+        String hospitalCode = filterValue(filters, "hospitalCode");
+        String campusCode = filterValue(filters, "campusCode");
+        String siteCode = filterValue(filters, "siteCode");
+        String departmentCode = filterValue(filters, "departmentCode");
+        String scopeLevel = filterValue(filters, "scopeLevel");
+        String scopeCode = filterValue(filters, "scopeCode");
         int limit = filterInt(filters, "limit", 100);
         if (limit <= 0) {
             limit = 100;
@@ -702,6 +719,10 @@ public class PathwayService {
                 continue;
             }
             if (currentNodeCode != null && !currentNodeCode.equalsIgnoreCase(instance.getCurrentNodeCode())) {
+                continue;
+            }
+            if (!matchesOrg(instance, tenantId, groupCode, hospitalCode, campusCode,
+                    siteCode, departmentCode, scopeLevel, scopeCode)) {
                 continue;
             }
             matched.add(instance);
@@ -979,6 +1000,8 @@ public class PathwayService {
         summary.put("by_pathway_code", aggregateInstances(instances, "pathway_code"));
         summary.put("by_status", aggregateInstances(instances, "status"));
         summary.put("by_current_node", aggregateInstances(instances, "current_node_code"));
+        summary.put("by_hospital_code", aggregateInstances(instances, "hospital_code"));
+        summary.put("by_scope", aggregateInstances(instances, "scope"));
 
         // 联动变异统计：在同一过滤上下文下统计相关变异，便于看板一次拿到“路径在径数 + 变异数”全景。
         Map<String, String> variationFilters = new LinkedHashMap<String, String>();
@@ -995,6 +1018,14 @@ public class PathwayService {
             if (encounterId != null) {
                 variationFilters.put("encounterId", encounterId);
             }
+            copyFilter(filters, variationFilters, "tenantId");
+            copyFilter(filters, variationFilters, "groupCode");
+            copyFilter(filters, variationFilters, "hospitalCode");
+            copyFilter(filters, variationFilters, "campusCode");
+            copyFilter(filters, variationFilters, "siteCode");
+            copyFilter(filters, variationFilters, "departmentCode");
+            copyFilter(filters, variationFilters, "scopeLevel");
+            copyFilter(filters, variationFilters, "scopeCode");
         }
         variationFilters.put("limit", String.valueOf(Integer.MAX_VALUE));
         List<PathwayVariationRecord> variations = listVariations(variationFilters);
@@ -1041,6 +1072,12 @@ public class PathwayService {
         if ("current_node_code".equals(dimension)) {
             return instance.getCurrentNodeCode();
         }
+        if ("hospital_code".equals(dimension)) {
+            return instance.getHospitalCode();
+        }
+        if ("scope".equals(dimension)) {
+            return scopeKey(instance.getScopeLevel(), instance.getScopeCode());
+        }
         return null;
     }
 
@@ -1051,6 +1088,14 @@ public class PathwayService {
         String variationType = filterValue(filters, "variationType");
         String nodeCode = filterValue(filters, "nodeCode");
         String instanceId = filterValue(filters, "instanceId");
+        String tenantId = filterValue(filters, "tenantId");
+        String groupCode = filterValue(filters, "groupCode");
+        String hospitalCode = filterValue(filters, "hospitalCode");
+        String campusCode = filterValue(filters, "campusCode");
+        String siteCode = filterValue(filters, "siteCode");
+        String departmentCode = filterValue(filters, "departmentCode");
+        String scopeLevel = filterValue(filters, "scopeLevel");
+        String scopeCode = filterValue(filters, "scopeCode");
         int limit = filterInt(filters, "limit", 100);
         if (limit <= 0) {
             limit = 100;
@@ -1099,6 +1144,10 @@ public class PathwayService {
             if (instanceId != null && !instanceId.equals(record.getInstanceId())) {
                 continue;
             }
+            if (!matchesOrg(record, tenantId, groupCode, hospitalCode, campusCode,
+                    siteCode, departmentCode, scopeLevel, scopeCode)) {
+                continue;
+            }
             matched.add(record);
             if (matched.size() >= limit) {
                 break;
@@ -1115,6 +1164,8 @@ public class PathwayService {
         summary.put("by_pathway_code", aggregate(records, "pathway_code"));
         summary.put("by_node_code", aggregate(records, "node_code"));
         summary.put("by_patient_id", aggregate(records, "patient_id"));
+        summary.put("by_hospital_code", aggregate(records, "hospital_code"));
+        summary.put("by_scope", aggregate(records, "scope"));
         return summary;
     }
 
@@ -1159,7 +1210,178 @@ public class PathwayService {
         if ("patient_id".equals(dimension)) {
             return record.getPatientId();
         }
+        if ("hospital_code".equals(dimension)) {
+            return record.getHospitalCode();
+        }
+        if ("scope".equals(dimension)) {
+            return scopeKey(record.getScopeLevel(), record.getScopeCode());
+        }
         return null;
+    }
+
+    private void applyOrganization(PatientPathwayInstance instance, OrganizationContext orgContext,
+                                   Map<String, Object> request) {
+        if (orgContext != null) {
+            instance.setTenantId(orgContext.getTenantId());
+            instance.setGroupCode(orgContext.getGroupCode());
+            instance.setHospitalCode(orgContext.getHospitalCode());
+            instance.setCampusCode(orgContext.getCampusCode());
+            instance.setSiteCode(orgContext.getSiteCode());
+            instance.setDepartmentCode(orgContext.getDepartmentCode());
+            instance.setLegacyOrgCode(orgContext.getLegacyOrgCode());
+            instance.setScopeLevel(orgContext.getEffectiveScopeLevel());
+            instance.setScopeCode(orgContext.getEffectiveScopeCode());
+            instance.setOrgSource(orgContext.getSource());
+            return;
+        }
+
+        String tenantId = bodyString(request, "tenant_id", "tenantId", "default");
+        String groupCode = bodyString(request, "group_code", "groupCode", null);
+        String hospitalCode = bodyString(request, "hospital_code", "hospitalCode", null);
+        String campusCode = bodyString(request, "campus_code", "campusCode", null);
+        String siteCode = bodyString(request, "site_code", "siteCode", null);
+        String departmentCode = bodyString(request, "department_code", "departmentCode", null);
+        String legacyOrgCode = bodyString(request, "org_code", "orgCode", null);
+        if (hospitalCode == null && legacyOrgCode != null) {
+            hospitalCode = legacyOrgCode;
+        }
+        if (hospitalCode == null) {
+            hospitalCode = "ZYHOSPITAL";
+        }
+        if (legacyOrgCode == null) {
+            legacyOrgCode = hospitalCode;
+        }
+
+        instance.setTenantId(tenantId);
+        instance.setGroupCode(groupCode);
+        instance.setHospitalCode(hospitalCode);
+        instance.setCampusCode(campusCode);
+        instance.setSiteCode(siteCode);
+        instance.setDepartmentCode(departmentCode);
+        instance.setLegacyOrgCode(legacyOrgCode);
+        applyEffectiveScope(instance);
+        instance.setOrgSource(hasBodyOrg(request) ? "BODY" : "DEFAULT");
+    }
+
+    private void applyEffectiveScope(PatientPathwayInstance instance) {
+        if (present(instance.getDepartmentCode())) {
+            instance.setScopeLevel("DEPARTMENT");
+            instance.setScopeCode(instance.getDepartmentCode());
+            return;
+        }
+        if (present(instance.getSiteCode())) {
+            instance.setScopeLevel("SITE");
+            instance.setScopeCode(instance.getSiteCode());
+            return;
+        }
+        if (present(instance.getCampusCode())) {
+            instance.setScopeLevel("CAMPUS");
+            instance.setScopeCode(instance.getCampusCode());
+            return;
+        }
+        if (present(instance.getHospitalCode())) {
+            instance.setScopeLevel("HOSPITAL");
+            instance.setScopeCode(instance.getHospitalCode());
+            return;
+        }
+        if (present(instance.getGroupCode())) {
+            instance.setScopeLevel("GROUP");
+            instance.setScopeCode(instance.getGroupCode());
+            return;
+        }
+        instance.setScopeLevel("PLATFORM");
+        instance.setScopeCode("DEFAULT");
+    }
+
+    private void copyOrganization(PatientPathwayInstance instance, PathwayVariationRecord variation) {
+        variation.setTenantId(instance.getTenantId());
+        variation.setGroupCode(instance.getGroupCode());
+        variation.setHospitalCode(instance.getHospitalCode());
+        variation.setCampusCode(instance.getCampusCode());
+        variation.setSiteCode(instance.getSiteCode());
+        variation.setDepartmentCode(instance.getDepartmentCode());
+        variation.setLegacyOrgCode(instance.getLegacyOrgCode());
+        variation.setScopeLevel(instance.getScopeLevel());
+        variation.setScopeCode(instance.getScopeCode());
+        variation.setOrgSource(instance.getOrgSource());
+    }
+
+    private String instanceKey(PatientPathwayInstance instance, String encounterId, String pathwayCode) {
+        return string(instance.getTenantId(), "default") + "::"
+                + string(instance.getScopeLevel(), "HOSPITAL") + "::"
+                + string(instance.getScopeCode(), string(instance.getHospitalCode(), "ZYHOSPITAL")) + "::"
+                + encounterId + "::" + pathwayCode;
+    }
+
+    private boolean matchesOrg(PatientPathwayInstance instance, String tenantId, String groupCode,
+                               String hospitalCode, String campusCode, String siteCode, String departmentCode,
+                               String scopeLevel, String scopeCode) {
+        return matches(tenantId, instance.getTenantId(), false)
+                && matches(groupCode, instance.getGroupCode(), false)
+                && matches(hospitalCode, instance.getHospitalCode(), false)
+                && matches(campusCode, instance.getCampusCode(), false)
+                && matches(siteCode, instance.getSiteCode(), false)
+                && matches(departmentCode, instance.getDepartmentCode(), false)
+                && matches(scopeLevel, instance.getScopeLevel(), true)
+                && matches(scopeCode, instance.getScopeCode(), false);
+    }
+
+    private boolean matchesOrg(PathwayVariationRecord record, String tenantId, String groupCode,
+                               String hospitalCode, String campusCode, String siteCode, String departmentCode,
+                               String scopeLevel, String scopeCode) {
+        return matches(tenantId, record.getTenantId(), false)
+                && matches(groupCode, record.getGroupCode(), false)
+                && matches(hospitalCode, record.getHospitalCode(), false)
+                && matches(campusCode, record.getCampusCode(), false)
+                && matches(siteCode, record.getSiteCode(), false)
+                && matches(departmentCode, record.getDepartmentCode(), false)
+                && matches(scopeLevel, record.getScopeLevel(), true)
+                && matches(scopeCode, record.getScopeCode(), false);
+    }
+
+    private boolean matches(String expected, String actual, boolean ignoreCase) {
+        if (expected == null) {
+            return true;
+        }
+        if (actual == null) {
+            return false;
+        }
+        return ignoreCase ? expected.equalsIgnoreCase(actual) : expected.equals(actual);
+    }
+
+    private String scopeKey(String scopeLevel, String scopeCode) {
+        if (scopeLevel == null && scopeCode == null) {
+            return null;
+        }
+        return string(scopeLevel, "UNKNOWN") + ":" + string(scopeCode, "UNKNOWN");
+    }
+
+    private void copyFilter(Map<String, String> source, Map<String, String> target, String key) {
+        String value = source.get(key);
+        if (value != null) {
+            target.put(key, value);
+        }
+    }
+
+    private String bodyString(Map<String, Object> request, String snakeKey, String camelKey, String defaultValue) {
+        if (request == null) {
+            return defaultValue;
+        }
+        String value = string(request.get(snakeKey), null);
+        if (value == null) {
+            value = string(request.get(camelKey), null);
+        }
+        return value == null ? defaultValue : value;
+    }
+
+    private boolean hasBodyOrg(Map<String, Object> request) {
+        return bodyString(request, "tenant_id", "tenantId", null) != null
+                || bodyString(request, "group_code", "groupCode", null) != null
+                || bodyString(request, "hospital_code", "hospitalCode", null) != null
+                || bodyString(request, "campus_code", "campusCode", null) != null
+                || bodyString(request, "site_code", "siteCode", null) != null
+                || bodyString(request, "department_code", "departmentCode", null) != null
+                || bodyString(request, "org_code", "orgCode", null) != null;
     }
 
     private Map<String, String> merge(Map<String, String> filters, String key, String value) {
@@ -1435,14 +1657,33 @@ public class PathwayService {
     private void audit(String actionType, String targetType, String targetCode, PatientPathwayInstance instance,
                        Map<String, Object> detail, String operatorId) {
         try {
+            Map<String, Object> auditDetail = detail == null
+                    ? new LinkedHashMap<String, Object>() : new LinkedHashMap<String, Object>(detail);
+            enrichOrgDetail(auditDetail, instance);
             persistenceService.saveAuditLog("PATHWAY", actionType, targetType, targetCode,
                     instance == null ? null : instance.getPatientId(),
                     instance == null ? null : instance.getEncounterId(),
                     operatorId,
-                    detail == null ? new LinkedHashMap<String, Object>() : detail);
+                    auditDetail);
         } catch (RuntimeException ignored) {
             // 路径核心状态变更不能因为审计落库失败中断。
         }
+    }
+
+    private void enrichOrgDetail(Map<String, Object> detail, PatientPathwayInstance instance) {
+        if (instance == null) {
+            return;
+        }
+        detail.put("tenant_id", instance.getTenantId());
+        detail.put("group_code", instance.getGroupCode());
+        detail.put("hospital_code", instance.getHospitalCode());
+        detail.put("campus_code", instance.getCampusCode());
+        detail.put("site_code", instance.getSiteCode());
+        detail.put("department_code", instance.getDepartmentCode());
+        detail.put("legacy_org_code", instance.getLegacyOrgCode());
+        detail.put("scope_level", instance.getScopeLevel());
+        detail.put("scope_code", instance.getScopeCode());
+        detail.put("org_source", instance.getOrgSource());
     }
 
     private String required(Map<String, Object> map, String key) {
@@ -1459,6 +1700,10 @@ public class PathwayService {
         }
         String text = String.valueOf(value);
         return text.trim().isEmpty() ? defaultValue : text;
+    }
+
+    private boolean present(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     private String variationReason(Map<String, Object> request) {
