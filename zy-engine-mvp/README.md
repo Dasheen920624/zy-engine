@@ -15,6 +15,7 @@
 - 适配器中心：提供 REST/SQL/WebService 风格的第三方取数 Mock，返回统一行集和标准码映射结果；支持适配器查询定义导入、列表与单项查询，导入未内置 Mock 的查询会返回 `SUCCESS` 但 `row_count=0`，提示后续接入真实取数。
 - 路径任务取数：任务配置了 `source.adapter_code/query_code` 时，完成任务会自动调用适配器 Mock 并保存取数结果。
 - Oracle 持久化：可选开启，已验证可写入 `ZYENGINE` 用户下的核心表。
+- 运行模式探测：`GET /system/providers` 返回数据库、Neo4j、Dify 当前 Provider、ready 状态和降级原因，便于 DB-only 测试环境和内网集成环境使用同一套验收口径。
 
 ## 编码约定
 
@@ -244,6 +245,7 @@ POST /zy-engine/api/dify/workflows
 GET  /zy-engine/api/dify/workflows
 GET  /zy-engine/api/dify/workflows/stats?workflowCode=&workflowVersion=&status=&provider=&patientId=&encounterId=&limit=500
 GET  /zy-engine/api/dify/workflows/{workflowCode}?workflowVersion=1.0.0
+GET  /zy-engine/api/system/providers
 GET  /zy-engine/api/rules/exec-logs?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=&limit=100
 GET  /zy-engine/api/rules/exec-logs/summary?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=
 GET  /zy-engine/api/rules/exec-logs/{logId}
@@ -287,6 +289,7 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 - 适配器 Mock：`ECG_ADAPTER`、`LIS_ADAPTER`、`HIS_ADAPTER`、`EMR_WS_ADAPTER` 可返回 AMI 样例第三方数据；`sample_adapter_definitions.json` 可通过 `POST /adapters/definitions` 导入，未内置 Mock 的 `PACS_ADAPTER/QUERY_CHEST_CT` 调用会返回 `SUCCESS` 且 `row_count=0`。
 - Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录均可写入。
 - 审计日志查询：`GET /audit-logs?engineType=PATHWAY` 与 `GET /audit-logs/summary?engineType=PATHWAY` 可查询内存审计环形缓冲；Oracle 开启时仍会同步写入 `ENGINE_AUDIT_LOG`。
+- Provider 状态：`GET /system/providers` 可返回 `run_mode=DB_ONLY/HYBRID/FULL_INTEGRATION/IN_MEMORY_DEMO`，并说明 Neo4j/Dify 未配置时的 fallback Provider。
 
 ## 当前边界
 

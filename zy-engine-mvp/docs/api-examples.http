@@ -2,6 +2,10 @@
 GET http://localhost:18080/zy-engine/api/health
 X-Trace-Id: trace-demo-health
 
+### Provider runtime status
+GET http://localhost:18080/zy-engine/api/system/providers
+X-Trace-Id: trace-demo-system-providers
+
 ### AMI candidate pathway recognition
 POST http://localhost:18080/zy-engine/api/patient-pathways/candidates
 Content-Type: application/json

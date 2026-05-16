@@ -41,6 +41,28 @@ class EngineApiContractTests {
     }
 
     @Test
+    void systemProvidersExposeDbOnlyFallbackMode() throws Exception {
+        Map<String, Object> result = invokeGet("/api/system/providers");
+        assertEquals(Boolean.TRUE, result.get("success"));
+        Map<String, Object> data = asMap(result.get("data"));
+        assertEquals("zy-engine-mvp", data.get("service"));
+        assertEquals(Boolean.TRUE, data.get("db_only_supported"));
+        assertEquals(Boolean.FALSE, data.get("external_graph_required"));
+        assertEquals(Boolean.FALSE, data.get("external_dify_required"));
+
+        Map<String, Object> providers = asMap(data.get("providers"));
+        Map<String, Object> database = asMap(providers.get("database"));
+        Map<String, Object> graph = asMap(providers.get("graph"));
+        Map<String, Object> dify = asMap(providers.get("dify"));
+        assertEquals("CONFIG_PRIMARY_STORE", database.get("role"));
+        assertEquals("GRAPH_QUERY_PROVIDER", graph.get("role"));
+        assertEquals("WORKFLOW_PROVIDER", dify.get("role"));
+        assertNotNull(data.get("run_mode"));
+        assertNotNull(graph.get("provider"));
+        assertNotNull(dify.get("provider"));
+    }
+
+    @Test
     void ruleExecLogSummaryAggregates() throws Exception {
         // 导入并发布两条规则（一条总命中，一条总不命中），多次模拟后调用 summary 接口
         Map<String, Object> hitRule = ruleDefinition("R_SUM_HIT", "命中规则");
