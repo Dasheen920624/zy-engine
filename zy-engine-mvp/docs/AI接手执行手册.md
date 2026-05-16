@@ -8,9 +8,10 @@
 
 1. 本文。
 2. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-3. 根目录 `README.md`
-4. `zy-engine-mvp/README.md`
-5. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
+3. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+4. 根目录 `README.md`
+5. `zy-engine-mvp/README.md`
+6. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
 
 ## 2. 当前项目一句话
 
@@ -22,13 +23,14 @@
 
 ```powershell
 git status -sb
-rg -n "当前优先任务池|Definition of Done|PKG-001|ORG-001|TERM-001|RULE-001" zy-engine-mvp/docs
+rg -n "当前优先任务池|Definition of Done|PKG-001|ORG-001|TERM-001|RULE-001|FE-001|FE-003" zy-engine-mvp/docs
 ```
 
 再阅读：
 
 ```text
 zy-engine-mvp/docs/产品化方案与AI开发编排.md
+zy-engine-mvp/docs/前端配置平台规划与开发验证.md
 zy-engine-mvp/README.md
 ai-dev-input/09_ai_task_cards/ai_system_prompt.md
 ai-dev-input/09_ai_task_cards/task_card_template.md
@@ -45,8 +47,9 @@ ai-dev-input/09_ai_task_cards/task_card_template.md
 
 每次开始前必须明确：
 
-- 任务编号，例如 `ORG-001`、`PKG-001`、`TERM-001`。
+- 任务编号，例如 `ORG-001`、`PKG-001`、`TERM-001`、`FE-001`。
 - 所属模块。
+- 若涉及前端，必须确认配置界面、演示界面、规则校验工作台或质控看板的页面范围。
 - 是否涉及组织隔离。
 - 是否涉及配置版本。
 - 是否涉及 Provider。
@@ -68,6 +71,7 @@ GRAPH-xxx   图谱引擎
 DIFY-xxx    Dify/AI 工作流
 ADAPT-xxx   第三方适配器
 QC-xxx      质控指标
+FE-xxx      前端配置、演示校验和可视化验收
 AUDIT-xxx   审计日志
 OPS-xxx     运维部署
 SEC-xxx     安全权限
@@ -188,10 +192,13 @@ git diff --cached --stat
 2. `ORG-001` 组织模型和组织上下文。
 3. `TERM-001` 医嘱标准化。
 4. `RULE-001` 第三方规则引擎 API。
-5. `GRAPH-001` 图谱包发布与同步。
-6. `DIFY-001` Dify 契约绑定。
-7. `SEC-001` 接口鉴权、签名和组织权限。
-8. `OPS-001` 离线部署和运维看板。
+5. `FE-001` 前端信息架构、高保真原型和演示脚本。
+6. `FE-002` 前端工程脚手架。
+7. `FE-003` 功能演示与规则校验工作台。
+8. `GRAPH-001` 图谱包发布与同步。
+9. `DIFY-001` Dify 契约绑定。
+10. `SEC-001` 接口鉴权、签名和组织权限。
+11. `OPS-001` 离线部署和运维看板。
 
 若用户没有指定任务，优先从 `PKG-001` 或 `ORG-001` 开始，因为它们是产品化底座。
 
@@ -240,6 +247,38 @@ POST /api/rule-engine/evaluate
 - 返回标准 `results`
 
 异步和批量后续再做。
+
+### FE-001 前端信息架构与高保真原型
+
+第一批只做：
+
+- 管理台导航。
+- 工作台。
+- 演示与校验工作台。
+- 配置包中心。
+- 路径/规则配置器原型。
+- AMI、病历质控、医保质控、医嘱安全演示脚本。
+
+### FE-002 前端工程脚手架
+
+第一批只做：
+
+- React + TypeScript 工程。
+- Layout、路由、菜单。
+- API client 和统一错误处理。
+- Provider 状态页。
+- mock 数据和基础测试。
+
+### FE-003 功能演示与规则校验工作台
+
+第一批只做：
+
+- 演示场景库。
+- 患者上下文构建器。
+- `POST /api/rules/simulate` 和后续 `POST /api/rule-engine/evaluate` 的结果展示组件。
+- `EMR_QC`、`INSURANCE_QC`、`ORDER_SAFETY` 场景入口。
+- 命中条件、证据、建议动作、标准化差异、traceId 展示。
+- DB-only mock/degraded 演示闭环。
 
 ## 10. 禁止事项
 

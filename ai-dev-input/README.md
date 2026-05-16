@@ -6,7 +6,8 @@
 
 1. `../zy-engine-mvp/docs/AI接手执行手册.md`
 2. `../zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-3. `09_ai_task_cards/ai_system_prompt.md`
+3. `../zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+4. `09_ai_task_cards/ai_system_prompt.md`
 
 ## 目录内容
 
@@ -37,11 +38,12 @@
 
 1. 阅读 `../zy-engine-mvp/docs/AI接手执行手册.md`。
 2. 阅读 `../zy-engine-mvp/docs/产品化方案与AI开发编排.md`。
-3. 阅读 `09_ai_task_cards/ai_system_prompt.md`。
-4. 根据用户需求或总纲中的当前优先任务池选择任务编号。
-5. 使用 `09_ai_task_cards/task_card_template.md` 补全任务卡。
-6. 开发时同步修改后端代码、测试、样例、API 示例和文档。
-7. 使用 `../zy-engine-mvp/scripts/run-tests.ps1`、`../zy-engine-mvp/scripts/build.ps1`、`git diff --check` 验证。
+3. 若涉及前端，阅读 `../zy-engine-mvp/docs/前端配置平台规划与开发验证.md`。
+4. 阅读 `09_ai_task_cards/ai_system_prompt.md`。
+5. 根据用户需求或总纲中的当前优先任务池选择任务编号。
+6. 使用 `09_ai_task_cards/task_card_template.md` 补全任务卡。
+7. 开发时同步修改后端代码、测试、样例、API 示例和文档。
+8. 使用 `../zy-engine-mvp/scripts/run-tests.ps1`、`../zy-engine-mvp/scripts/build.ps1`、`git diff --check` 验证。
 
 ## 当前优先任务池
 
@@ -53,6 +55,9 @@
 - `RULE-001` 第三方规则引擎 API。
 - `GRAPH-001` 图谱包发布与 Oracle 到 Neo4j 同步。
 - `DIFY-001` Dify 契约绑定和调用回放。
+- `FE-001` 前端信息架构、高保真原型和演示脚本。
+- `FE-002` 前端工程脚手架。
+- `FE-003` 功能演示与规则校验工作台。
 
 ## 关键边界
 
@@ -73,6 +78,7 @@
 ```text
 ../zy-engine-mvp/docs/产品化方案与AI开发编排.md
 ../zy-engine-mvp/docs/AI接手执行手册.md
+../zy-engine-mvp/docs/前端配置平台规划与开发验证.md
 ```
 
 为准。

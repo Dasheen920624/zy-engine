@@ -10,11 +10,12 @@
 
 1. [AI接手执行手册](zy-engine-mvp/docs/AI接手执行手册.md)
 2. [产品化方案与AI开发编排](zy-engine-mvp/docs/产品化方案与AI开发编排.md)
-3. [后端 MVP README](zy-engine-mvp/README.md)
-4. [AI研发输入包 README](ai-dev-input/README.md)
-5. [AI开发系统提示词](ai-dev-input/09_ai_task_cards/ai_system_prompt.md)
+3. [前端配置平台规划与开发验证](zy-engine-mvp/docs/前端配置平台规划与开发验证.md)
+4. [后端 MVP README](zy-engine-mvp/README.md)
+5. [AI研发输入包 README](ai-dev-input/README.md)
+6. [AI开发系统提示词](ai-dev-input/09_ai_task_cards/ai_system_prompt.md)
 
-其中 `产品化方案与AI开发编排.md` 是产品和架构总纲，`AI接手执行手册.md` 是后续 AI 的执行入口。
+其中 `产品化方案与AI开发编排.md` 是产品和架构总纲，`AI接手执行手册.md` 是后续 AI 的执行入口，`前端配置平台规划与开发验证.md` 是前端配置、演示、规则校验和可视化操作的设计入口。
 
 ## 当前产品原则
 
@@ -25,12 +26,13 @@
 - 医院差异必须通过组织范围、配置包、字典映射、适配器绑定和 Provider 实现。
 - 路径、规则、图谱、Dify 模板、字典、适配器都必须版本化、可审核、可发布、可回滚。
 - 临床建议必须可解释，并由医生最终确认。
+- 前端必须同时支持配置管理、功能演示、规则校验、质控运营和运维追溯；演示和 dry-run 默认不写正式业务状态。
 
 ## 目录说明
 
 - [zy-engine-mvp](zy-engine-mvp/README.md)：后端 MVP 工程，包含 Java/Spring Boot 代码、测试、脚本、运行说明。
 - [ai-dev-input](ai-dev-input/README.md)：AI 可执行规格包，包含 OpenAPI、JSON Schema、DDL、样例数据、测试矩阵和任务卡。
-- [zy-engine-mvp/docs](zy-engine-mvp/docs)：产品化总纲、AI 接手手册、API 示例、编码规范、研发任务拆解。
+- [zy-engine-mvp/docs](zy-engine-mvp/docs)：产品化总纲、AI 接手手册、前端配置平台规划、API 示例、编码规范、研发任务拆解。
 - [ai-dev-input/09_ai_task_cards](ai-dev-input/09_ai_task_cards)：AI 系统提示词、后端提示词模板、任务卡模板、历史 P0 任务。
 - [docs/legacy-materials](docs/legacy-materials/README.md)：早期产品方案、演示原型、总控计划和历史说明，仅用于理解业务背景，不能替代当前开发约定。
 
@@ -84,6 +86,9 @@ http://localhost:18080/zy-engine/api/system/providers
 4. `RULE-001` 第三方规则引擎 API，支持病历质控、医保质控、医嘱安全拦截。
 5. `GRAPH-001` 图谱包发布与 Oracle 到 Neo4j 同步。
 6. `DIFY-001` Dify 契约绑定和调用回放。
+7. `FE-001` 前端信息架构、高保真原型和演示脚本。
+8. `FE-002` 前端工程脚手架。
+9. `FE-003` 功能演示与规则校验工作台。
 
 ## 每批开发硬性流程
 
