@@ -8,11 +8,12 @@
 
 1. 本文。
 2. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-3. `zy-engine-mvp/docs/多角色评审与执行计划.md`
-4. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
-5. 根目录 `README.md`
-6. `zy-engine-mvp/README.md`
-7. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
+3. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
+4. `zy-engine-mvp/docs/多角色评审与执行计划.md`
+5. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+6. 根目录 `README.md`
+7. `zy-engine-mvp/README.md`
+8. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
 
 ## 2. 当前项目一句话
 
@@ -24,13 +25,14 @@
 
 ```powershell
 git status -sb
-rg -n "当前优先任务池|Definition of Done|PKG-001|ORG-001|TERM-001|RULE-001|FE-001|FE-003" zy-engine-mvp/docs
+rg -n "当前优先任务池|Definition of Done|PROV-001|PKG-001|ORG-001|TERM-001|RULE-001|FE-001|FE-003" zy-engine-mvp/docs
 ```
 
 再阅读：
 
 ```text
 zy-engine-mvp/docs/产品化方案与AI开发编排.md
+zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
 zy-engine-mvp/docs/前端配置平台规划与开发验证.md
 zy-engine-mvp/README.md
 ai-dev-input/09_ai_task_cards/ai_system_prompt.md
@@ -53,6 +55,7 @@ ai-dev-input/09_ai_task_cards/task_card_template.md
 - 若涉及前端，必须确认配置界面、演示界面、规则校验工作台或质控看板的页面范围。
 - 是否涉及组织隔离。
 - 是否涉及配置版本。
+- 是否涉及来源追溯、引用片段、医学/医保/质控依据。
 - 是否涉及 Provider。
 - 是否需要 Oracle/达梦 DDL。
 - DB-only 模式如何验收。
@@ -72,6 +75,7 @@ GRAPH-xxx   图谱引擎
 DIFY-xxx    Dify/AI 工作流
 ADAPT-xxx   第三方适配器
 QC-xxx      质控指标
+PROV-xxx    来源、证据、引用和可追溯性
 FE-xxx      前端配置、演示校验和可视化验收
 AUDIT-xxx   审计日志
 OPS-xxx     运维部署
@@ -203,17 +207,18 @@ git push origin main
 
 1. `PKG-001` 配置包统一模型。
 2. `ORG-001` 组织模型和组织上下文。
-3. `TERM-001` 医嘱标准化。
-4. `RULE-001` 第三方规则引擎 API。
-5. `FE-001` 前端信息架构、高保真原型和演示脚本。
-6. `FE-002` 前端工程脚手架。
-7. `FE-003` 功能演示与规则校验工作台。
-8. `GRAPH-001` 图谱包发布与同步。
-9. `DIFY-001` Dify 契约绑定。
-10. `SEC-001` 接口鉴权、签名和组织权限。
-11. `OPS-001` 离线部署和运维看板。
+3. `PROV-001` 来源文档、引用片段和资产绑定底座。
+4. `TERM-001` 医嘱标准化。
+5. `RULE-001` 第三方规则引擎 API。
+6. `FE-001` 前端信息架构、高保真原型和演示脚本。
+7. `FE-002` 前端工程脚手架。
+8. `FE-003` 功能演示与规则校验工作台。
+9. `GRAPH-001` 图谱包发布与同步。
+10. `DIFY-001` Dify 契约绑定。
+11. `SEC-001` 接口鉴权、签名和组织权限。
+12. `OPS-001` 离线部署和运维看板。
 
-若用户没有指定任务，优先从 `PKG-001` 或 `ORG-001` 开始，因为它们是产品化底座。
+若用户没有指定任务，优先从 `PKG-001` 或 `ORG-001` 开始，因为它们是产品化底座。若任务涉及规则、知识、路径、图谱、Dify、字典、适配器或质控结论，必须同步检查 `全功能蓝图与并行开发计划.md`。
 
 ## 9. 推荐任务切片
 
@@ -265,6 +270,21 @@ git push origin main
 - 单条医嘱标准化。
 - 未映射返回 `PENDING_MAPPING`。
 - 样例覆盖同药不同名称/规格。
+
+### PROV-001 来源追溯底座
+
+第一批只做：
+
+- `SRC_DOCUMENT`、`SRC_CITATION`、`SRC_ASSET_BINDING`、`SRC_REVIEW_RECORD`、`SRC_RUNTIME_EVIDENCE` 的 Oracle/达梦 DDL 草案与迁移脚本。
+- 来源样例 JSON、API 契约草案和测试矩阵。
+- 配置包 review 增加 `source_review` 输出结构。
+- 规则发布预留缺来源、过期来源、未审核来源的阻断点。
+
+本批暂不做：
+
+- 文件二进制存储。
+- 全文检索。
+- 前端页面。
 
 ### RULE-001 第三方规则引擎 API
 
@@ -364,6 +384,7 @@ DB-ORG-001 已补齐组织上下文落库：
 - 禁止直接让外部系统传任意 SQL/Cypher 到引擎执行。
 - 禁止 Neo4j/Dify 不可用时导致核心路径/规则接口不可用。
 - 禁止绕过 review/publish 直接激活配置。
+- 禁止发布缺来源、来源过期或来源未审核的医学/医保/质控配置。
 - 禁止配置发布后静默覆盖同版本。
 - 禁止在日志中输出数据库密码、Dify API Key、患者完整隐私明文。
 - 禁止回滚用户或其他 AI 的未提交改动。

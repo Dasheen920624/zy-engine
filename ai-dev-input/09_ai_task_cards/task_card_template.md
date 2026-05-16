@@ -21,6 +21,7 @@ GRAPH-xxx   图谱引擎
 DIFY-xxx    Dify/AI 工作流
 ADAPT-xxx   第三方适配器
 QC-xxx      质控指标
+PROV-xxx    来源、证据、引用和可追溯性
 FE-xxx      前端配置、演示校验和可视化验收
 AUDIT-xxx   审计日志
 OPS-xxx     运维部署
@@ -85,6 +86,8 @@ DOC-xxx     文档
 - 测试用例：
 - 相关接口：
 - 相关历史提交：
+- 来源资料：
+- 引用片段：
 
 ## 功能要求
 
@@ -105,6 +108,7 @@ DOC-xxx     文档
 7. 配置有版本、状态、review/publish/rollback 设计。
 8. 数据库访问考虑 Oracle/达梦兼容。
 9. 日志不输出密钥和患者完整隐私明文。
+10. 规则、知识、图谱证据、Dify解释、字典映射、适配器口径和质控结论必须可查来源。
 
 ## 数据模型变更
 
@@ -115,6 +119,19 @@ DOC-xxx     文档
 - 索引：
 - Oracle/达梦差异：
 - 是否需要迁移脚本：
+
+## 来源追溯影响
+
+说明：
+
+- 是否新增来源文档：
+- 是否新增引用片段：
+- 是否新增资产来源绑定：
+- 是否影响发布来源检查：
+- 是否影响运行结果 provenance：
+- 来源缺失时如何阻断：
+- 来源过期时如何处理：
+- 医学/医保/质控审核角色：
 
 ## 接口变更
 
@@ -175,6 +192,7 @@ DOC-xxx     文档
 3. DB-only 场景。
 4. 异常/降级场景。
 5. 需要时补 smoke 脚本。
+6. 涉及来源追溯时补缺来源、过期来源、未审核来源测试。
 
 ## 文档要求
 
@@ -183,6 +201,7 @@ DOC-xxx     文档
 - `zy-engine-mvp/README.md`
 - `zy-engine-mvp/docs/api-examples.http`
 - `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+- `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
 - `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
 - `ai-dev-input/README.md`
 - 样例 JSON

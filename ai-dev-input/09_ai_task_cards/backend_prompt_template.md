@@ -4,19 +4,21 @@
 
 - `zy-engine-mvp/docs/AI接手执行手册.md`
 - `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+- `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
 - `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
 
 ## 模块
 
-【填写：配置包 / 组织模型 / 路径引擎 / 规则引擎 / 图谱引擎 / Dify 工作流 / 标准化中心 / 适配器中心 / 审计运维 / 安全权限】
+【填写：配置包 / 组织模型 / 来源追溯 / 路径引擎 / 规则引擎 / 图谱引擎 / Dify 工作流 / 标准化中心 / 适配器中心 / 审计运维 / 安全权限】
 
 ## 任务编号
 
-【填写任务编号，如 PKG-001、ORG-001、TERM-001、RULE-001】
+【填写任务编号，如 PKG-001、ORG-001、PROV-001、TERM-001、RULE-001】
 
 ## 输入资料
 
 - 产品总纲：`zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+- 全功能蓝图：`zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
 - 接手手册：`zy-engine-mvp/docs/AI接手执行手册.md`
 - OpenAPI：`ai-dev-input/02_api_contracts/engines.openapi.yaml`
 - JSON Schema：`ai-dev-input/03_data_models/...`
@@ -36,7 +38,8 @@
 8. 不允许把医院差异、规则、路径、字典硬编码在业务代码中。
 9. 新增外部依赖必须说明降级策略。
 10. 新增关键操作必须写审计或说明暂不写的原因。
-11. 补充契约测试和必要集成测试。
+11. 涉及医学、医保、质控依据的配置，必须支持来源追溯；缺来源、来源过期或来源未审核时不得发布。
+12. 补充契约测试和必要集成测试。
 
 ## 必须输出
 
