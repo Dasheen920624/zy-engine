@@ -45,6 +45,18 @@ public class RuleController {
         return ApiResult.success(ruleService.publish(ruleCode, request));
     }
 
+    @GetMapping("/packages/{packageCode}/review")
+    public ApiResult<Map<String, Object>> reviewPackage(@PathVariable String packageCode,
+                                                        @RequestParam(required = false) String packageVersion) {
+        return ApiResult.success(ruleService.reviewPackage(packageCode, packageVersion));
+    }
+
+    @PostMapping("/packages/{packageCode}/publish")
+    public ApiResult<Map<String, Object>> publishPackage(@PathVariable String packageCode,
+                                                         @RequestBody(required = false) Map<String, Object> request) {
+        return ApiResult.success(ruleService.publishPackage(packageCode, request));
+    }
+
     @PostMapping("/evaluate")
     public ApiResult<List<RuleResult>> evaluate(@RequestBody Map<String, Object> request) {
         return ApiResult.success(ruleService.evaluate(request));

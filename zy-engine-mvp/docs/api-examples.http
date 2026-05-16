@@ -180,7 +180,22 @@ POST http://localhost:18080/zy-engine/api/rules
 Content-Type: application/json
 X-Trace-Id: trace-demo-rule-import
 
-< ../ai-dev-input/06_samples/sample_ami_rules.json
+< ../../ai-dev-input/06_samples/sample_ami_rules.json
+
+### Review AMI rule package before publish
+GET http://localhost:18080/zy-engine/api/rules/packages/PKG_AMI_CORE/review?packageVersion=2026.05
+X-Trace-Id: trace-demo-rule-package-review
+
+### Publish AMI rule package
+POST http://localhost:18080/zy-engine/api/rules/packages/PKG_AMI_CORE/publish
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-package-publish
+
+{
+  "package_version": "2026.05",
+  "approved_by": "D001",
+  "comment": "AMI样例规则包发布"
+}
 
 ### Publish AMI STEMI candidate rule
 POST http://localhost:18080/zy-engine/api/rules/R_AMI_STEMI_CANDIDATE/publish

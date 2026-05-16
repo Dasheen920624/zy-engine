@@ -30,15 +30,18 @@ if (-not $imported.success -or $imported.data.Count -lt 3) {
   throw "Rule import failed."
 }
 
-foreach ($rule in $imported.data) {
-  $publishBody = @{
-    version_no = $rule.versionNo
-    approved_by = "SMOKE_TEST"
-  } | ConvertTo-Json -Depth 10
-  $published = Invoke-RestMethod -Uri "$BaseUrl/rules/$($rule.ruleCode)/publish" -Method Post -ContentType "application/json; charset=utf-8" -Body $publishBody
-  if (-not $published.success -or $published.data.status -ne "PUBLISHED") {
-    throw "Rule publish failed: $($rule.ruleCode)"
-  }
+$review = Invoke-RestMethod -Uri "$BaseUrl/rules/packages/PKG_AMI_CORE/review?packageVersion=2026.05" -Method Get
+if (-not $review.success -or -not $review.data.ready_to_publish -or $review.data.total_rules -lt 3) {
+  throw "Rule package review failed."
+}
+
+$packagePublishBody = @{
+  package_version = "2026.05"
+  approved_by = "SMOKE_TEST"
+} | ConvertTo-Json -Depth 10
+$packagePublished = Invoke-RestMethod -Uri "$BaseUrl/rules/packages/PKG_AMI_CORE/publish" -Method Post -ContentType "application/json; charset=utf-8" -Body $packagePublishBody
+if (-not $packagePublished.success -or $packagePublished.data.published_count -lt 3) {
+  throw "Rule package publish failed."
 }
 
 $simulateBody = @{
@@ -80,6 +83,7 @@ if (-not $logDetail.success -or $logDetail.data.logId -ne $firstLog.logId) {
 
 Write-Host "Rule smoke test passed."
 Write-Host "Imported rules: $($imported.data.Count)"
+Write-Host "Published rule package: $($packagePublished.data.package_code)@$($packagePublished.data.package_version), count=$($packagePublished.data.published_count)"
 Write-Host "Simulate rule: $($simulate.data.ruleCode), hit=$($simulate.data.hit)"
 Write-Host "Evaluated rules: $($evaluate.data.Count)"
 Write-Host "Exec logs total recent: $($logsAll.data.Count); STEMI hit logs: $($logsForCandidate.data.Count); first logId=$($firstLog.logId), elapsedMs=$($firstLog.elapsedMs)"

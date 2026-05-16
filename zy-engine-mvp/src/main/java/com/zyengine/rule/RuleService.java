@@ -54,9 +54,46 @@ public class RuleService {
         if (definition == null) {
             throw new IllegalArgumentException("rule not found: " + ruleCode + "@" + versionNo);
         }
-        definition.setStatus("PUBLISHED");
-        persistenceService.saveRuleDefinition(definition, string(request.get("approved_by"), null));
+        String approvedBy = string(request.get("approved_by"), null);
+        markPublished(definition, approvedBy);
+        persistenceService.saveRuleDefinition(definition, approvedBy);
+        auditRuleChange("PUBLISH", "RULE", definition.getRuleCode(), approvedBy,
+                packageReviewForAudit(definition.getPackageCode(), definition.getPackageVersion(), 1));
         return definition;
+    }
+
+    public Map<String, Object> reviewPackage(String packageCode, String packageVersion) {
+        List<RuleDefinition> rules = rulesInPackage(packageCode, packageVersion);
+        if (rules.isEmpty()) {
+            throw new IllegalArgumentException("rule package not found: " + packageCode);
+        }
+        return buildPackageReview(packageCode, packageVersion, rules);
+    }
+
+    public Map<String, Object> publishPackage(String packageCode, Map<String, Object> request) {
+        String packageVersion = string(request == null ? null : request.get("package_version"), null);
+        String approvedBy = string(request == null ? null : request.get("approved_by"), null);
+        List<RuleDefinition> rules = rulesInPackage(packageCode, packageVersion);
+        if (rules.isEmpty()) {
+            throw new IllegalArgumentException("rule package not found: " + packageCode);
+        }
+
+        Map<String, Object> review = buildPackageReview(packageCode, packageVersion, rules);
+        if (!Boolean.TRUE.equals(review.get("ready_to_publish"))) {
+            throw new IllegalArgumentException("rule package is not ready to publish: " + review.get("issues"));
+        }
+
+        int published = 0;
+        for (RuleDefinition definition : rules) {
+            markPublished(definition, approvedBy);
+            persistenceService.saveRuleDefinition(definition, approvedBy);
+            published++;
+        }
+        Map<String, Object> result = buildPackageReview(packageCode, packageVersion, rules);
+        result.put("published_count", published);
+        result.put("published_by", approvedBy);
+        auditRuleChange("PUBLISH_PACKAGE", "RULE_PACKAGE", packageCode, approvedBy, result);
+        return result;
     }
 
     public List<RuleDefinition> listRules() {
@@ -68,6 +105,169 @@ public class RuleService {
             }
         });
         return list;
+    }
+
+    private List<RuleDefinition> rulesInPackage(String packageCode, String packageVersion) {
+        String code = string(packageCode, null);
+        if (code == null) {
+            throw new IllegalArgumentException("packageCode is required");
+        }
+        List<RuleDefinition> rules = new ArrayList<RuleDefinition>();
+        for (RuleDefinition definition : ruleStore.values()) {
+            if (!code.equals(definition.getPackageCode())) {
+                continue;
+            }
+            if (packageVersion != null && !packageVersion.equals(definition.getPackageVersion())) {
+                continue;
+            }
+            rules.add(definition);
+        }
+        Collections.sort(rules, new Comparator<RuleDefinition>() {
+            @Override
+            public int compare(RuleDefinition left, RuleDefinition right) {
+                Integer leftPriority = integer(left.getRuleJson().get("priority"), 0);
+                Integer rightPriority = integer(right.getRuleJson().get("priority"), 0);
+                int byPriority = rightPriority.compareTo(leftPriority);
+                return byPriority != 0 ? byPriority : left.getRuleCode().compareTo(right.getRuleCode());
+            }
+        });
+        return rules;
+    }
+
+    private Map<String, Object> buildPackageReview(String packageCode, String packageVersion, List<RuleDefinition> rules) {
+        Map<String, Integer> byType = new LinkedHashMap<String, Integer>();
+        Map<String, Integer> byStatus = new LinkedHashMap<String, Integer>();
+        List<Map<String, Object>> issues = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> ruleSummaries = new ArrayList<Map<String, Object>>();
+
+        int enabledRules = 0;
+        int draftRules = 0;
+        int publishedRules = 0;
+        int disabledRules = 0;
+        String resolvedPackageVersion = packageVersion;
+        for (RuleDefinition definition : rules) {
+            if (resolvedPackageVersion == null) {
+                resolvedPackageVersion = definition.getPackageVersion();
+            } else if (definition.getPackageVersion() != null && !resolvedPackageVersion.equals(definition.getPackageVersion())) {
+                resolvedPackageVersion = "MIXED";
+            }
+            if (definition.isEnabled()) {
+                enabledRules++;
+            } else {
+                disabledRules++;
+            }
+            if ("DRAFT".equalsIgnoreCase(definition.getStatus())) {
+                draftRules++;
+            }
+            if ("PUBLISHED".equalsIgnoreCase(definition.getStatus())) {
+                publishedRules++;
+            }
+            increment(byType, definition.getRuleType());
+            increment(byStatus, definition.getStatus());
+            collectDslIssues(definition, issues);
+            ruleSummaries.add(ruleSummary(definition));
+        }
+
+        Map<String, Object> review = new LinkedHashMap<String, Object>();
+        review.put("package_code", packageCode);
+        review.put("package_version", resolvedPackageVersion);
+        review.put("total_rules", rules.size());
+        review.put("enabled_rules", enabledRules);
+        review.put("draft_rules", draftRules);
+        review.put("published_rules", publishedRules);
+        review.put("disabled_rules", disabledRules);
+        review.put("ready_to_publish", !rules.isEmpty() && issues.isEmpty());
+        review.put("issues", issues);
+        review.put("by_type", bucketsToList(byType, "rule_type"));
+        review.put("by_status", bucketsToList(byStatus, "status"));
+        review.put("rules", ruleSummaries);
+        return review;
+    }
+
+    private Map<String, Object> ruleSummary(RuleDefinition definition) {
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("rule_code", definition.getRuleCode());
+        summary.put("rule_name", definition.getRuleName());
+        summary.put("version_no", definition.getVersionNo());
+        summary.put("rule_type", definition.getRuleType());
+        summary.put("status", definition.getStatus());
+        summary.put("enabled", definition.isEnabled());
+        summary.put("severity", definition.getSeverity());
+        summary.put("priority", integer(definition.getRuleJson().get("priority"), 0));
+        return summary;
+    }
+
+    private void collectDslIssues(RuleDefinition definition, List<Map<String, Object>> issues) {
+        collectDslIssues(definition.getRuleCode(), definition.getRuleJson().get("condition"), "condition", issues);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void collectDslIssues(String ruleCode, Object node, String path, List<Map<String, Object>> issues) {
+        if (!(node instanceof Map)) {
+            issues.add(issue(ruleCode, path, "condition must be an object"));
+            return;
+        }
+        Map<String, Object> condition = (Map<String, Object>) node;
+        Object all = condition.get("all");
+        Object any = condition.get("any");
+        if (all instanceof Collection || any instanceof Collection) {
+            Collection<?> children = all instanceof Collection ? (Collection<?>) all : (Collection<?>) any;
+            String childKey = all instanceof Collection ? "all" : "any";
+            if (children.isEmpty()) {
+                issues.add(issue(ruleCode, path + "." + childKey, "condition group must not be empty"));
+            }
+            int index = 0;
+            for (Object child : children) {
+                collectDslIssues(ruleCode, child, path + "." + childKey + "[" + index + "]", issues);
+                index++;
+            }
+            return;
+        }
+
+        String fact = string(condition.get("fact"), null);
+        String operator = string(condition.get("operator"), null);
+        if (fact == null) {
+            issues.add(issue(ruleCode, path + ".fact", "fact is required"));
+        }
+        if (operator == null) {
+            issues.add(issue(ruleCode, path + ".operator", "operator is required"));
+            return;
+        }
+        if (!supportedOperator(operator)) {
+            issues.add(issue(ruleCode, path + ".operator", "unsupported operator: " + operator));
+            return;
+        }
+        if ("in".equals(operator) && !(condition.get("value") instanceof Collection)) {
+            issues.add(issue(ruleCode, path + ".value", "operator in requires collection value"));
+        }
+        if ("within_minutes_from".equals(operator)) {
+            Object value = condition.get("value");
+            if (!(value instanceof Map)) {
+                issues.add(issue(ruleCode, path + ".value", "within_minutes_from requires window object"));
+            } else {
+                Map<String, Object> window = (Map<String, Object>) value;
+                if (string(window.get("from"), null) == null || integer(window.get("minutes"), -1) < 0) {
+                    issues.add(issue(ruleCode, path + ".value", "within_minutes_from requires from and minutes"));
+                }
+            }
+        }
+    }
+
+    private Map<String, Object> issue(String ruleCode, String field, String message) {
+        Map<String, Object> issue = new LinkedHashMap<String, Object>();
+        issue.put("rule_code", ruleCode);
+        issue.put("severity", "ERROR");
+        issue.put("field", field);
+        issue.put("message", message);
+        return issue;
+    }
+
+    private boolean supportedOperator(String operator) {
+        return "exists".equals(operator)
+                || "equals".equals(operator)
+                || "in".equals(operator)
+                || "contains".equals(operator)
+                || "within_minutes_from".equals(operator);
     }
 
     public RuleDefinition getRule(String ruleCode, String versionNo) {
@@ -371,6 +571,33 @@ public class RuleService {
         }
     }
 
+    private void markPublished(RuleDefinition definition, String approvedBy) {
+        definition.setStatus("PUBLISHED");
+        definition.setPublishedBy(approvedBy);
+        definition.setPublishedTime(nowText());
+        definition.getRuleJson().put("status", "PUBLISHED");
+        definition.getRuleJson().put("published_by", approvedBy);
+        definition.getRuleJson().put("published_time", definition.getPublishedTime());
+    }
+
+    private Map<String, Object> packageReviewForAudit(String packageCode, String packageVersion, int ruleCount) {
+        Map<String, Object> detail = new LinkedHashMap<String, Object>();
+        detail.put("package_code", packageCode);
+        detail.put("package_version", packageVersion);
+        detail.put("rule_count", ruleCount);
+        return detail;
+    }
+
+    private void auditRuleChange(String actionType, String targetType, String targetCode,
+                                 String operatorId, Map<String, Object> detail) {
+        try {
+            persistenceService.saveAuditLog("RULE", actionType, targetType, targetCode,
+                    null, null, operatorId, detail);
+        } catch (RuntimeException ignored) {
+            // 规则发布主流程不因审计落库失败而中断。
+        }
+    }
+
     private RuleResult evaluateStemiCandidate(Map<String, Object> context) {
         boolean hit = ClinicalFactUtils.hasChestPain(context) && ClinicalFactUtils.hasStElevation(context);
         RuleResult result = new RuleResult();
@@ -413,7 +640,25 @@ public class RuleService {
             Map<String, Object> map = (Map<String, Object>) request;
             Object nested = map.get("rules");
             if (nested instanceof List) {
-                return normalizeRules(nested);
+                List<Map<String, Object>> nestedRules = normalizeRules(nested);
+                String packageCode = string(map.get("package_code"), string(map.get("packageCode"), null));
+                String packageVersion = string(map.get("package_version"), string(map.get("packageVersion"), null));
+                if (packageCode == null && packageVersion == null) {
+                    return nestedRules;
+                }
+                List<Map<String, Object>> inherited = new ArrayList<Map<String, Object>>();
+                for (Map<String, Object> rule : nestedRules) {
+                    Map<String, Object> copy = new LinkedHashMap<String, Object>(rule);
+                    if (packageCode != null && string(copy.get("package_code"), string(copy.get("packageCode"), null)) == null) {
+                        copy.put("package_code", packageCode);
+                    }
+                    if (packageVersion != null
+                            && string(copy.get("package_version"), string(copy.get("packageVersion"), null)) == null) {
+                        copy.put("package_version", packageVersion);
+                    }
+                    inherited.add(copy);
+                }
+                return inherited;
             }
             rules.add(map);
         }
@@ -430,9 +675,13 @@ public class RuleService {
         definition.setRuleName(string(rule.get("rule_name"), ruleCode));
         definition.setRuleType(string(rule.get("rule_type"), "GENERAL"));
         definition.setVersionNo(string(rule.get("version_no"), "1.0.0"));
+        definition.setPackageCode(string(rule.get("package_code"), string(rule.get("packageCode"), null)));
+        definition.setPackageVersion(string(rule.get("package_version"), string(rule.get("packageVersion"), null)));
         definition.setStatus(string(rule.get("status"), defaultStatus));
         definition.setSeverity(string(rule.get("severity"), "HIGH"));
         definition.setEnabled(booleanValue(rule.get("enabled"), true));
+        definition.setPublishedBy(string(rule.get("published_by"), string(rule.get("publishedBy"), null)));
+        definition.setPublishedTime(string(rule.get("published_time"), string(rule.get("publishedTime"), null)));
         definition.setRuleJson(new LinkedHashMap<String, Object>(rule));
         return definition;
     }

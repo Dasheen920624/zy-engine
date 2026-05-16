@@ -121,6 +121,53 @@ class EngineApiContractTests {
     }
 
     @Test
+    void rulePackageReviewAndPublishBatch() throws Exception {
+        Map<String, Object> hitRule = ruleDefinition("R_PKG_STEMI_HIT", "规则包STEMI命中规则");
+        hitRule.put("priority", 120);
+        Map<String, Object> qcRule = ruleDefinition("R_PKG_STEMI_QC", "规则包质控规则");
+        qcRule.put("rule_type", "TIME_LIMIT_QC");
+        qcRule.put("priority", 80);
+
+        Map<String, Object> packageBody = new LinkedHashMap<String, Object>();
+        packageBody.put("package_code", "PKG_AMI_JUNIT");
+        packageBody.put("package_version", "2026.05");
+        packageBody.put("rules", Arrays.asList(hitRule, qcRule));
+        Map<String, Object> imported = invokePost("/api/rules", packageBody);
+        List<Map<String, Object>> importedRules = asListOfMap(imported.get("data"));
+        assertEquals(2, importedRules.size());
+        assertEquals("PKG_AMI_JUNIT", importedRules.get(0).get("packageCode"));
+
+        Map<String, Object> reviewResp = invokeGet("/api/rules/packages/PKG_AMI_JUNIT/review?packageVersion=2026.05");
+        Map<String, Object> review = asMap(reviewResp.get("data"));
+        assertEquals(2, ((Number) review.get("total_rules")).intValue());
+        assertEquals(2, ((Number) review.get("draft_rules")).intValue());
+        assertEquals(Boolean.TRUE, review.get("ready_to_publish"));
+        assertTrue(asList(review.get("issues")).isEmpty());
+
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("package_version", "2026.05");
+        publishBody.put("approved_by", "JUNIT_PACKAGE_APPROVER");
+        Map<String, Object> publishResp = invokePost("/api/rules/packages/PKG_AMI_JUNIT/publish", publishBody);
+        Map<String, Object> published = asMap(publishResp.get("data"));
+        assertEquals(2, ((Number) published.get("published_count")).intValue());
+        assertEquals(2, ((Number) published.get("published_rules")).intValue());
+
+        Map<String, Object> getResp = invokeGet("/api/rules/R_PKG_STEMI_HIT?versionNo=1.0.0");
+        Map<String, Object> stored = asMap(getResp.get("data"));
+        assertEquals("PUBLISHED", stored.get("status"));
+        assertEquals("PKG_AMI_JUNIT", stored.get("packageCode"));
+        assertEquals("JUNIT_PACKAGE_APPROVER", stored.get("publishedBy"));
+
+        Map<String, Object> simulateBody = new LinkedHashMap<String, Object>();
+        simulateBody.put("rule_code", "R_PKG_STEMI_HIT");
+        simulateBody.put("version_no", "1.0.0");
+        simulateBody.put("patient_context", samplePatientContext());
+        Map<String, Object> simulate = invokePost("/api/rules/simulate", simulateBody);
+        Map<String, Object> simulateData = asMap(simulate.get("data"));
+        assertEquals(Boolean.TRUE, simulateData.get("hit"));
+    }
+
+    @Test
     void pathwayImportPublishAdmitAndComplete() throws Exception {
         Map<String, Object> pathwayConfig = samplePathwayConfig("AMI_TEST", "AMI测试路径");
         Map<String, Object> created = invokePost("/api/pathways", pathwayConfig);

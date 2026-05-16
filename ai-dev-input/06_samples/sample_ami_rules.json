@@ -1,108 +1,112 @@
-[
-  {
-    "rule_code": "R_AMI_STEMI_CANDIDATE",
-    "rule_name": "AMI/STEMI候选入径规则",
-    "rule_type": "PATHWAY_ENTRY",
-    "priority": 100,
-    "enabled": true,
-    "description": "当患者存在胸痛主诉并且心电图提示相邻导联ST段抬高时，生成AMI/STEMI路径候选推荐。",
-    "condition": {
-      "all": [
-        {
-          "fact": "chief_complaints.code",
-          "operator": "in",
-          "value": [
-            "CHEST_PAIN"
-          ]
-        },
-        {
-          "fact": "exams.finding_codes",
-          "operator": "contains",
-          "value": "ST_ELEVATION_CONTIGUOUS_LEADS"
-        }
-      ]
-    },
-    "actions": [
-      {
-        "type": "CREATE_RECOMMENDATION",
-        "target": "AMI_STEMI"
-      },
-      {
-        "type": "PUSH_TO_DOCTOR",
-        "level": "STRONG_ALERT"
-      }
-    ],
-    "message_template": "疑似STEMI，建议医生评估是否启动急性心肌梗死诊疗路径。"
-  },
-  {
-    "rule_code": "R_AMI_ECG_TIMELY",
-    "rule_name": "胸痛患者10分钟内完成心电图",
-    "rule_type": "TIME_LIMIT_QC",
-    "priority": 90,
-    "enabled": true,
-    "description": "用于急诊胸痛患者心电图完成时限质控。",
-    "condition": {
-      "all": [
-        {
-          "fact": "encounter.visit_type",
-          "operator": "equals",
-          "value": "EMERGENCY"
-        },
-        {
-          "fact": "chief_complaints.code",
-          "operator": "in",
-          "value": [
-            "CHEST_PAIN"
-          ]
-        },
-        {
-          "fact": "exams.ECG_12_LEAD.report_time",
-          "operator": "within_minutes_from",
-          "value": {
-            "from": "encounter.arrival_time",
-            "minutes": 10
+{
+  "package_code": "PKG_AMI_CORE",
+  "package_version": "2026.05",
+  "rules": [
+    {
+      "rule_code": "R_AMI_STEMI_CANDIDATE",
+      "rule_name": "AMI/STEMI候选入径规则",
+      "rule_type": "PATHWAY_ENTRY",
+      "priority": 100,
+      "enabled": true,
+      "description": "当患者存在胸痛主诉并且心电图提示相邻导联ST段抬高时，生成AMI/STEMI路径候选推荐。",
+      "condition": {
+        "all": [
+          {
+            "fact": "chief_complaints.code",
+            "operator": "in",
+            "value": [
+              "CHEST_PAIN"
+            ]
+          },
+          {
+            "fact": "exams.finding_codes",
+            "operator": "contains",
+            "value": "ST_ELEVATION_CONTIGUOUS_LEADS"
           }
-        }
-      ]
-    },
-    "actions": [
-      {
-        "type": "QC_PASS"
-      }
-    ],
-    "message_template": "心电图已在要求时限内完成。"
-  },
-  {
-    "rule_code": "R_AMI_THROMBOLYSIS_CONTRA_BLOCK",
-    "rule_name": "存在溶栓禁忌证时拦截溶栓医嘱",
-    "rule_type": "SAFETY_BLOCK",
-    "priority": 120,
-    "enabled": true,
-    "description": "当结构化表单记录存在主要出血风险或颅内出血病史时，拦截溶栓相关医嘱或要求上级医师确认。",
-    "condition": {
-      "any": [
+        ]
+      },
+      "actions": [
         {
-          "fact": "forms.thrombolysis_contra.major_bleeding",
-          "operator": "equals",
-          "value": true
+          "type": "CREATE_RECOMMENDATION",
+          "target": "AMI_STEMI"
         },
         {
-          "fact": "forms.thrombolysis_contra.intracranial_bleeding_history",
-          "operator": "equals",
-          "value": true
+          "type": "PUSH_TO_DOCTOR",
+          "level": "STRONG_ALERT"
         }
-      ]
+      ],
+      "message_template": "疑似STEMI，建议医生评估是否启动急性心肌梗死诊疗路径。"
     },
-    "actions": [
-      {
-        "type": "BLOCK_ORDER",
-        "order_category": "THROMBOLYSIS"
+    {
+      "rule_code": "R_AMI_ECG_TIMELY",
+      "rule_name": "胸痛患者10分钟内完成心电图",
+      "rule_type": "TIME_LIMIT_QC",
+      "priority": 90,
+      "enabled": true,
+      "description": "用于急诊胸痛患者心电图完成时限质控。",
+      "condition": {
+        "all": [
+          {
+            "fact": "encounter.visit_type",
+            "operator": "equals",
+            "value": "EMERGENCY"
+          },
+          {
+            "fact": "chief_complaints.code",
+            "operator": "in",
+            "value": [
+              "CHEST_PAIN"
+            ]
+          },
+          {
+            "fact": "exams.ECG_12_LEAD.report_time",
+            "operator": "within_minutes_from",
+            "value": {
+              "from": "encounter.arrival_time",
+              "minutes": 10
+            }
+          }
+        ]
       },
-      {
-        "type": "PUSH_TO_DOCTOR",
-        "level": "SAFETY_BLOCK"
-      }
-    ],
-    "message_template": "存在溶栓禁忌证，请暂停相关医嘱并进行上级医师确认。"
-  }
-]
+      "actions": [
+        {
+          "type": "QC_PASS"
+        }
+      ],
+      "message_template": "心电图已在要求时限内完成。"
+    },
+    {
+      "rule_code": "R_AMI_THROMBOLYSIS_CONTRA_BLOCK",
+      "rule_name": "存在溶栓禁忌证时拦截溶栓医嘱",
+      "rule_type": "SAFETY_BLOCK",
+      "priority": 120,
+      "enabled": true,
+      "description": "当结构化表单记录存在主要出血风险或颅内出血病史时，拦截溶栓相关医嘱或要求上级医师确认。",
+      "condition": {
+        "any": [
+          {
+            "fact": "forms.thrombolysis_contra.major_bleeding",
+            "operator": "equals",
+            "value": true
+          },
+          {
+            "fact": "forms.thrombolysis_contra.intracranial_bleeding_history",
+            "operator": "equals",
+            "value": true
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "BLOCK_ORDER",
+          "order_category": "THROMBOLYSIS"
+        },
+        {
+          "type": "PUSH_TO_DOCTOR",
+          "level": "SAFETY_BLOCK"
+        }
+      ],
+      "message_template": "存在溶栓禁忌证，请暂停相关医嘱并进行上级医师确认。"
+    }
+  ]
+}

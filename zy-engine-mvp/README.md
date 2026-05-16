@@ -8,7 +8,7 @@
 - 路径配置校验：导入路径时校验路径编码、版本、节点、任务、任务数据源和流转目标，错误配置返回 `VALIDATION_ERROR`。
 - 路径配置回查：支持查询路径清单和指定版本配置原文，便于配置页面预览和验收追溯。
 - 路径版本差异对比：`GET /pathways/{pathwayCode}/diff?from=1.0.0&to=draft` 输出元数据字段变化、节点增删改、任务与流转目标的增删，配置发布前的 review 可一眼看到变更规模。
-- 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架；执行日志可按 `ruleCode/traceId/patientId/hit/resultStatus` 过滤查询，最近 500 条保留在内存环形缓冲，并支持 `/exec-logs/summary` 按规则/严重级别/结果状态聚合 hit_rate 与 average_elapsed_ms。
+- 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架；支持规则包导入、包级审核和批量发布；执行日志可按 `ruleCode/traceId/patientId/hit/resultStatus` 过滤查询，最近 500 条保留在内存环形缓冲，并支持 `/exec-logs/summary` 按规则/严重级别/结果状态聚合 hit_rate 与 average_elapsed_ms。
 - 图谱引擎：候选疾病召回、证据查询、Neo4j 可配置查询和不可用时降级返回；图谱版本/证据/节点/关系均可注册与查询，Neo4j 关闭时 `disease-candidates` 与 `evidence` 接口优先使用已注册节点+关系召回（`graph_source=REGISTERED_FALLBACK`），未注册才回退到内置 AMI 启发式。
 - Dify 适配：保留工作流调用入口，支持配置真实 Dify 调用、超时降级、重试和审计记录；工作流模板可导入并绑定 `required_inputs`、`input_mappings`、`input_defaults`、`timeout_ms`、`retry_count`、`degraded_outputs`，调用时按模板抽取上下文、补全缺省入参并在缺失必填字段时返回 `VALIDATION_ERROR`。
 - 字典映射：提供第三方系统编码到平台标准概念的标准化接口，未命中项会返回待治理状态；支持映射配置导入、列表与版本回查，校验失败返回 `VALIDATION_ERROR`。
@@ -247,6 +247,8 @@ GET  /zy-engine/api/dify/workflows/{workflowCode}?workflowVersion=1.0.0
 GET  /zy-engine/api/rules/exec-logs?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=&limit=100
 GET  /zy-engine/api/rules/exec-logs/summary?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=
 GET  /zy-engine/api/rules/exec-logs/{logId}
+GET  /zy-engine/api/rules/packages/{packageCode}/review?packageVersion=2026.05
+POST /zy-engine/api/rules/packages/{packageCode}/publish
 GET  /zy-engine/api/pathway-variations?pathwayCode=&patientId=&encounterId=&variationType=&nodeCode=&instanceId=&limit=100
 GET  /zy-engine/api/pathway-variations/summary?pathwayCode=&patientId=&encounterId=&variationType=&nodeCode=&instanceId=
 GET  /zy-engine/api/pathway-instances?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=&limit=100
@@ -261,6 +263,7 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 已验证结果：
 
 - 规则执行日志：`GET /rules/exec-logs?ruleCode=R_AMI_STEMI_CANDIDATE&hit=true` 可在 simulate/evaluate 调用后查询命中记录，`GET /rules/exec-logs/{logId}` 可获取详情。
+- 规则包审核发布：`sample_ami_rules.json` 已带 `package_code/package_version`，导入后可通过 `GET /rules/packages/PKG_AMI_CORE/review?packageVersion=2026.05` 查看规则数量、状态分布和 DSL 问题，再通过 `POST /rules/packages/PKG_AMI_CORE/publish` 批量发布。
 - 路径变异聚合：`GET /pathway-variations?pathwayCode=AMI_STEMI` 返回跨实例变异；`GET /pathway-variations/summary?pathwayCode=AMI_STEMI` 返回按变异类型/路径/节点/患者的计数桶，已被 JUnit 覆盖。
 - 路径实例聚合：`GET /pathway-instances?pathwayCode=AMI_STEMI` 跨实例返回；`GET /pathway-instances/summary?pathwayCode=AMI_STEMI` 同时输出 `total/by_pathway_code/by_status/by_current_node/variation_total/variation_by_type`，质控看板可一次拿到在径数与变异数全景。
 - 路径节点完成率：`GET /pathway-instances/node-completion?pathwayCode=AMI_STEMI` 输出每个节点的 `entered/completed/running/waiting/completion_rate` 与节点内任务的 `total/completed/skipped/pending/completion_rate`，搭配实例与变异聚合形成质控看板第一版完整指标。
@@ -290,7 +293,7 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 这是可运行工程骨架，不是最终生产版本。后续开发需要继续补齐：
 
 - 可视化路径配置器、路径 DSL 校验和版本差异对比。
-- 规则 DSL 解析器、热更新、规则包审核发布、规则模拟器。
+- 规则 DSL 更多操作符、热更新、规则包灰度发布和可视化模拟器。
 - 院内字典映射配置界面和第三方适配器 SDK。
 - 图谱证据版本管理和图谱发布流程。
 - Dify 工作流业务级调用模板管理、真实 Dify 鉴权策略和更细粒度调用监控。

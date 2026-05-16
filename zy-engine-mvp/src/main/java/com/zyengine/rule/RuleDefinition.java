@@ -8,9 +8,13 @@ public class RuleDefinition {
     private String ruleName;
     private String ruleType;
     private String versionNo;
+    private String packageCode;
+    private String packageVersion;
     private String status;
     private String severity;
     private boolean enabled;
+    private String publishedBy;
+    private String publishedTime;
     private Map<String, Object> ruleJson = new LinkedHashMap<String, Object>();
 
     public String getRuleCode() {
@@ -45,6 +49,22 @@ public class RuleDefinition {
         this.versionNo = versionNo;
     }
 
+    public String getPackageCode() {
+        return packageCode;
+    }
+
+    public void setPackageCode(String packageCode) {
+        this.packageCode = packageCode;
+    }
+
+    public String getPackageVersion() {
+        return packageVersion;
+    }
+
+    public void setPackageVersion(String packageVersion) {
+        this.packageVersion = packageVersion;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -67,6 +87,22 @@ public class RuleDefinition {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getPublishedBy() {
+        return publishedBy;
+    }
+
+    public void setPublishedBy(String publishedBy) {
+        this.publishedBy = publishedBy;
+    }
+
+    public String getPublishedTime() {
+        return publishedTime;
+    }
+
+    public void setPublishedTime(String publishedTime) {
+        this.publishedTime = publishedTime;
     }
 
     public Map<String, Object> getRuleJson() {
