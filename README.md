@@ -1,22 +1,33 @@
 # 集团化医疗智能引擎平台
 
-本仓库用于管理“专科诊疗路径智能管理平台 / 医疗智能引擎平台”的产品方案、AI 研发输入包、后端 MVP、数据库脚本、接口示例、测试和交接文档。
+本仓库用于管理"专科诊疗路径智能管理平台 / 医疗智能引擎平台"的产品方案、AI 研发输入包、后端 MVP、数据库脚本、接口示例、测试和交接文档。
 
 项目目标是把路径引擎、规则引擎、图谱引擎、Dify/AI 工作流、字典标准化、适配器中心、质控审计能力产品化，支持单医院、集团化医院、多院区、卫生所/站点等多组织形态部署。
 
-## 最高优先级入口
+## AI 首读（任何能力、任何时刻接手前先读这一份）
 
-后续任何 AI 或开发者接手前，必须按顺序阅读：
+> 本仓库面向 **多 AI 并行开发**。接手前请先打开下面 1 份"总入口"文档，按它的导航跳转，不要凭记忆翻阅其它文档。
 
-1. [AI接手执行手册](zy-engine-mvp/docs/AI接手执行手册.md)
-2. [产品化方案与AI开发编排](zy-engine-mvp/docs/产品化方案与AI开发编排.md)
-3. [多角色评审与执行计划](zy-engine-mvp/docs/多角色评审与执行计划.md)
-4. [前端配置平台规划与开发验证](zy-engine-mvp/docs/前端配置平台规划与开发验证.md)
-5. [后端 MVP README](zy-engine-mvp/README.md)
-6. [AI研发输入包 README](ai-dev-input/README.md)
-7. [AI开发系统提示词](ai-dev-input/09_ai_task_cards/ai_system_prompt.md)
+**唯一首读**：[zy-engine-mvp/docs/00_总入口与AI接手导航.md](zy-engine-mvp/docs/00_总入口与AI接手导航.md)
 
-其中 `产品化方案与AI开发编排.md` 是产品和架构总纲，`AI接手执行手册.md` 是后续 AI 的执行入口，`前端配置平台规划与开发验证.md` 是前端配置、演示、规则校验和可视化操作的设计入口。
+总入口配套 4 份高密度索引：
+
+1. [01_多角色诉求矩阵](zy-engine-mvp/docs/01_多角色诉求矩阵.md) — 9 角色 × 必看/必交付/否决项/验收口径
+2. [02_任务台账](zy-engine-mvp/docs/02_任务台账.md) — 唯一权威任务表，领任务前必读必改
+3. [03_AI能力分级与并行冲突规约](zy-engine-mvp/docs/03_AI能力分级与并行冲突规约.md) — 初/中/高级 AI 边界 + 文件冲突仲裁
+4. [04_客户验收剧本与报告模板](zy-engine-mvp/docs/04_客户验收剧本与报告模板.md) — 6 类剧本 + 院方签字报告
+
+## 详情文档（按需深入）
+
+- 产品/架构总纲：[产品化方案与AI开发编排](zy-engine-mvp/docs/产品化方案与AI开发编排.md)
+- 多角色评审与并行泳道：[顶级多角色评审与AI并行开发总控](zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md)
+- 全功能蓝图：[全功能蓝图与并行开发计划](zy-engine-mvp/docs/全功能蓝图与并行开发计划.md)
+- 前端方案：[前端配置平台规划与开发验证](zy-engine-mvp/docs/前端配置平台规划与开发验证.md)
+- 旧入口（仍有效）：[AI接手执行手册](zy-engine-mvp/docs/AI接手执行手册.md)
+- 早期评审：[多角色评审与执行计划](zy-engine-mvp/docs/多角色评审与执行计划.md)
+- 后端工程：[后端 MVP README](zy-engine-mvp/README.md)
+- 研发输入包：[AI研发输入包 README](ai-dev-input/README.md)
+- AI 系统提示词：[AI开发系统提示词](ai-dev-input/09_ai_task_cards/ai_system_prompt.md)
 
 ## 当前产品原则
 

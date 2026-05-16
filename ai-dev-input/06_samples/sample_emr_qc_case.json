@@ -1,0 +1,113 @@
+{
+  "scenario_code": "EMR_QC",
+  "case_id": "EMR_QC_MISSING_FIELDS_001",
+  "case_name": "入院24小时病历缺项与时限超时",
+  "rule_package_code": "PKG_EMR_QC",
+  "rule_package_version": "2026.05",
+  "organization": {
+    "tenant_id": "TENANT_DEMO",
+    "hospital_code": "HOSPITAL_DEMO",
+    "department_code": "DEPT_CARDIOLOGY"
+  },
+  "patient_context": {
+    "patient": {
+      "patient_id": "P_EMR_001",
+      "gender": "F",
+      "age": 71
+    },
+    "encounter": {
+      "encounter_id": "E_EMR_001",
+      "visit_type": "INPATIENT",
+      "department_code": "DEPT_CARDIOLOGY",
+      "admit_time": "2026-05-14T09:00:00+08:00",
+      "discharge_time": null
+    },
+    "facts": {
+      "emr": {
+        "admission_record": {
+          "submitted": false,
+          "submit_time": null,
+          "first_word_time": "2026-05-15T10:30:00+08:00"
+        },
+        "chief_complaint": {
+          "filled": false,
+          "text": ""
+        },
+        "present_illness": {
+          "filled": true,
+          "text": "胸闷",
+          "word_count": 12
+        },
+        "past_history": {
+          "filled": false,
+          "text": ""
+        },
+        "physical_exam": {
+          "filled": true,
+          "completeness": 0.75
+        },
+        "discharge_summary": {
+          "chief_complaint_filled": false,
+          "diagnosis_filled": true,
+          "discharge_orders_filled": false
+        }
+      },
+      "diagnoses": [
+        {
+          "code": "I20.0",
+          "standard_code": "UA",
+          "name": "不稳定性心绞痛",
+          "is_primary": true
+        }
+      ]
+    }
+  },
+  "expected_hits": [
+    {
+      "rule_code": "R_EMR_CHIEF_COMPLAINT_MISSING",
+      "severity": "HIGH",
+      "evidence_fact": "emr.chief_complaint.filled=false",
+      "action_mode": "REMIND"
+    },
+    {
+      "rule_code": "R_EMR_ADMISSION_RECORD_TIMELY",
+      "severity": "HIGH",
+      "evidence_fact": "admission_record 未在 24 小时内提交",
+      "action_mode": "STRONG_REMIND"
+    },
+    {
+      "rule_code": "R_EMR_PRESENT_ILLNESS_TOO_SHORT",
+      "severity": "MEDIUM",
+      "evidence_fact": "present_illness.word_count=12 < 50",
+      "action_mode": "REMIND"
+    },
+    {
+      "rule_code": "R_EMR_PAST_HISTORY_MISSING",
+      "severity": "MEDIUM",
+      "evidence_fact": "past_history.filled=false",
+      "action_mode": "REMIND"
+    }
+  ],
+  "expected_summary": {
+    "evaluated_count_min": 4,
+    "hit_count": 4,
+    "severity_distribution": {
+      "HIGH": 2,
+      "MEDIUM": 2
+    },
+    "must_have_fields_in_each_hit": [
+      "rule_code",
+      "severity",
+      "message",
+      "actions",
+      "evidence",
+      "rule_version",
+      "rule_package_version",
+      "reference_title",
+      "reference_section",
+      "reviewed_by",
+      "trace_id"
+    ]
+  },
+  "note": "本样例用于病历质控演示与契约测试。可读字段使用中文，规则判断使用结构化 facts 字段。规则包必须事先填写医学/院内制度来源（reference_title/reference_section/reviewed_by），否则发布阶段会被 PROV-004 阻断。dry-run 默认不写正式患者状态。"
+}

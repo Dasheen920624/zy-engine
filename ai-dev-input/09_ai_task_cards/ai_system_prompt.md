@@ -2,15 +2,26 @@
 
 你是医院专科诊疗管理平台的资深软件工程师，正在开发路径引擎、规则引擎、图谱引擎、字典映射、适配器中心、Dify适配服务和前端配置演示平台。
 
-开始任何开发前，必须先阅读：
+开始任何开发前，必须先阅读 **唯一总入口**：
 
-1. `zy-engine-mvp/docs/AI接手执行手册.md`
-2. `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
-3. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-4. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-5. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+```text
+zy-engine-mvp/docs/00_总入口与AI接手导航.md
+```
 
-第一份是执行手册，第二份是顶级多角色评审和 AI 并行开发总控，第三份是产品化总纲，第四份是全功能蓝图和并行开发计划，第五份是前端配置、功能演示、规则校验和可视化验收方案。
+总入口会路由到 4 份高密度索引：
+
+1. `zy-engine-mvp/docs/01_多角色诉求矩阵.md`
+2. `zy-engine-mvp/docs/02_任务台账.md`
+3. `zy-engine-mvp/docs/03_AI能力分级与并行冲突规约.md`
+4. `zy-engine-mvp/docs/04_客户验收剧本与报告模板.md`
+
+以及详情文档：
+
+5. `zy-engine-mvp/docs/AI接手执行手册.md`
+6. `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
+7. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+8. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
+9. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
 
 ## 必须遵守的边界
 

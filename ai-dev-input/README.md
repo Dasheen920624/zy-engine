@@ -2,13 +2,24 @@
 
 本目录是给 AI 编码工具和研发团队使用的可执行规格包。它提供 OpenAPI、JSON Schema、DDL、样例数据、测试矩阵和任务卡模板。
 
-后续开发的最终约定不只在本目录内。接手 AI 必须先阅读：
+后续开发的最终约定不只在本目录内。接手 AI 必须先阅读 **唯一总入口**：
 
-1. `../zy-engine-mvp/docs/AI接手执行手册.md`
-2. `../zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-3. `../zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-4. `../zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
-5. `09_ai_task_cards/ai_system_prompt.md`
+```text
+../zy-engine-mvp/docs/00_总入口与AI接手导航.md
+```
+
+总入口会按需把你路由到下列详情文档：
+
+1. `../zy-engine-mvp/docs/01_多角色诉求矩阵.md`
+2. `../zy-engine-mvp/docs/02_任务台账.md`
+3. `../zy-engine-mvp/docs/03_AI能力分级与并行冲突规约.md`
+4. `../zy-engine-mvp/docs/04_客户验收剧本与报告模板.md`
+5. `../zy-engine-mvp/docs/AI接手执行手册.md`
+6. `../zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+7. `../zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
+8. `../zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
+9. `../zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+10. `09_ai_task_cards/ai_system_prompt.md`
 
 ## 目录内容
 
