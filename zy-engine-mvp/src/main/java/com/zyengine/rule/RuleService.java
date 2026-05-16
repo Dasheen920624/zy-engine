@@ -29,6 +29,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RuleService {
     private static final int EXEC_LOG_RING_CAPACITY = 500;
     private static final int EVALUATION_RING_CAPACITY = 500;
+    private static final String DEFAULT_TENANT_ID = "default";
+    private static final String DEFAULT_HOSPITAL_CODE = "ZYHOSPITAL";
+    private static final String DEFAULT_SCOPE_LEVEL = "HOSPITAL";
 
     // 第三方规则引擎对外开放的标准场景码，与产品化方案/前端规则校验工作台保持一致。
     private static final Set<String> SUPPORTED_RULE_ENGINE_SCENARIOS = new LinkedHashSet<String>(Arrays.asList(
@@ -63,11 +66,16 @@ public class RuleService {
     }
 
     public List<RuleDefinition> importRules(Object request) {
+        return importRules(request, null);
+    }
+
+    public List<RuleDefinition> importRules(Object request, OrganizationContext orgContext) {
         List<Map<String, Object>> rules = normalizeRules(request);
         List<RuleDefinition> imported = new ArrayList<RuleDefinition>();
         for (Map<String, Object> rule : rules) {
             RuleDefinition definition = toDefinition(rule, "DRAFT");
-            ruleStore.put(key(definition.getRuleCode(), definition.getVersionNo()), definition);
+            applyOrganization(definition, orgContext);
+            ruleStore.put(key(definition), definition);
             persistenceService.saveRuleDefinition(definition, null);
             imported.add(definition);
         }
@@ -75,8 +83,12 @@ public class RuleService {
     }
 
     public RuleDefinition publish(String ruleCode, Map<String, Object> request) {
+        return publish(ruleCode, request, null);
+    }
+
+    public RuleDefinition publish(String ruleCode, Map<String, Object> request, OrganizationContext orgContext) {
         String versionNo = string(request.get("version_no"), "1.0.0");
-        RuleDefinition definition = ruleStore.get(key(ruleCode, versionNo));
+        RuleDefinition definition = findRule(ruleCode, versionNo, orgContext);
         if (definition == null) {
             throw new IllegalArgumentException("rule not found: " + ruleCode + "@" + versionNo);
         }
@@ -84,12 +96,16 @@ public class RuleService {
         markPublished(definition, approvedBy);
         persistenceService.saveRuleDefinition(definition, approvedBy);
         auditRuleChange("PUBLISH", "RULE", definition.getRuleCode(), approvedBy,
-                packageReviewForAudit(definition.getPackageCode(), definition.getPackageVersion(), 1));
+                packageReviewForAudit(definition.getPackageCode(), definition.getPackageVersion(), 1, definition));
         return definition;
     }
 
     public Map<String, Object> reviewPackage(String packageCode, String packageVersion) {
-        List<RuleDefinition> rules = rulesInPackage(packageCode, packageVersion);
+        return reviewPackage(packageCode, packageVersion, null);
+    }
+
+    public Map<String, Object> reviewPackage(String packageCode, String packageVersion, OrganizationContext orgContext) {
+        List<RuleDefinition> rules = rulesInPackage(packageCode, packageVersion, orgContext);
         if (rules.isEmpty()) {
             throw new IllegalArgumentException("rule package not found: " + packageCode);
         }
@@ -97,9 +113,14 @@ public class RuleService {
     }
 
     public Map<String, Object> publishPackage(String packageCode, Map<String, Object> request) {
+        return publishPackage(packageCode, request, null);
+    }
+
+    public Map<String, Object> publishPackage(String packageCode, Map<String, Object> request,
+                                              OrganizationContext orgContext) {
         String packageVersion = string(request == null ? null : request.get("package_version"), null);
         String approvedBy = string(request == null ? null : request.get("approved_by"), null);
-        List<RuleDefinition> rules = rulesInPackage(packageCode, packageVersion);
+        List<RuleDefinition> rules = rulesInPackage(packageCode, packageVersion, orgContext);
         if (rules.isEmpty()) {
             throw new IllegalArgumentException("rule package not found: " + packageCode);
         }
@@ -123,17 +144,31 @@ public class RuleService {
     }
 
     public List<RuleDefinition> listRules() {
+        return listRules(null);
+    }
+
+    public List<RuleDefinition> listRules(Map<String, String> filters) {
         List<RuleDefinition> list = new ArrayList<RuleDefinition>(ruleStore.values());
+        list = filterRulesByOrg(list, filters);
         Collections.sort(list, new Comparator<RuleDefinition>() {
             @Override
             public int compare(RuleDefinition left, RuleDefinition right) {
-                return left.getRuleCode().compareTo(right.getRuleCode());
+                int byRule = left.getRuleCode().compareTo(right.getRuleCode());
+                if (byRule != 0) {
+                    return byRule;
+                }
+                return string(left.getScopeCode(), "").compareTo(string(right.getScopeCode(), ""));
             }
         });
         return list;
     }
 
     private List<RuleDefinition> rulesInPackage(String packageCode, String packageVersion) {
+        return rulesInPackage(packageCode, packageVersion, null);
+    }
+
+    private List<RuleDefinition> rulesInPackage(String packageCode, String packageVersion,
+                                                OrganizationContext orgContext) {
         String code = string(packageCode, null);
         if (code == null) {
             throw new IllegalArgumentException("packageCode is required");
@@ -144,6 +179,9 @@ public class RuleService {
                 continue;
             }
             if (packageVersion != null && !packageVersion.equals(definition.getPackageVersion())) {
+                continue;
+            }
+            if (!matchesDefinitionContext(definition, orgContext)) {
                 continue;
             }
             rules.add(definition);
@@ -197,6 +235,9 @@ public class RuleService {
         Map<String, Object> review = new LinkedHashMap<String, Object>();
         review.put("package_code", packageCode);
         review.put("package_version", resolvedPackageVersion);
+        if (!rules.isEmpty()) {
+            putOrgFields(review, rules.get(0));
+        }
         review.put("total_rules", rules.size());
         review.put("enabled_rules", enabledRules);
         review.put("draft_rules", draftRules);
@@ -220,6 +261,10 @@ public class RuleService {
         summary.put("enabled", definition.isEnabled());
         summary.put("severity", definition.getSeverity());
         summary.put("priority", integer(definition.getRuleJson().get("priority"), 0));
+        summary.put("tenant_id", definition.getTenantId());
+        summary.put("hospital_code", definition.getHospitalCode());
+        summary.put("scope_level", definition.getScopeLevel());
+        summary.put("scope_code", definition.getScopeCode());
         return summary;
     }
 
@@ -297,24 +342,47 @@ public class RuleService {
     }
 
     public RuleDefinition getRule(String ruleCode, String versionNo) {
+        return getRule(ruleCode, versionNo, null);
+    }
+
+    public RuleDefinition getRule(String ruleCode, String versionNo, OrganizationContext orgContext) {
+        return findRule(ruleCode, versionNo, orgContext);
+    }
+
+    private RuleDefinition findRule(String ruleCode, String versionNo, OrganizationContext orgContext) {
         if (versionNo != null && !versionNo.trim().isEmpty()) {
-            return ruleStore.get(key(ruleCode, versionNo));
+            RuleDefinition exact = ruleStore.get(key(orgContext, ruleCode, versionNo));
+            if (exact != null) {
+                return exact;
+            }
+            return ruleStore.get(legacyKey(ruleCode, versionNo));
         }
         RuleDefinition latest = null;
         for (RuleDefinition definition : ruleStore.values()) {
-            if (ruleCode.equals(definition.getRuleCode())) {
+            if (ruleCode.equals(definition.getRuleCode()) && matchesDefinitionContext(definition, orgContext)) {
                 latest = definition;
+            }
+        }
+        if (latest == null && orgContext != null) {
+            for (RuleDefinition definition : ruleStore.values()) {
+                if (ruleCode.equals(definition.getRuleCode()) && isLegacyDefault(definition)) {
+                    latest = definition;
+                }
             }
         }
         return latest;
     }
 
     public List<RuleResult> evaluate(Map<String, Object> request) {
+        return evaluate(request, null);
+    }
+
+    public List<RuleResult> evaluate(Map<String, Object> request, OrganizationContext orgContext) {
         Map<String, Object> patientContext = getPatientContext(request);
-        List<RuleDefinition> published = publishedRules();
+        List<RuleDefinition> published = publishedRules(orgContext);
         if (published.isEmpty()) {
             // 未导入规则时保留内置AMI规则，保证旧演示和健康验证不被配置化改造打断。
-            return evaluateBuiltInRules(patientContext);
+            return evaluateBuiltInRules(patientContext, orgContext);
         }
 
         List<RuleResult> results = new ArrayList<RuleResult>();
@@ -335,8 +403,7 @@ public class RuleService {
     public Map<String, Object> evaluateForScenario(Map<String, Object> request, OrganizationContext orgContext) {
         ScenarioInvocation invocation = parseInvocation(request, orgContext);
         Map<String, Object> patientContext = requirePatientContext(request.get("patient_context"));
-        ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation.scenarioCode, invocation.packageCode,
-                invocation.packageVersion, invocation.ruleCodeFilter, patientContext);
+        ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation, patientContext);
 
         Map<String, Object> evaluation = recordEvaluation("SINGLE", null, null,
                 invocation, patientContext, outcome);
@@ -384,8 +451,7 @@ public class RuleService {
             }
             String caseId = string(itemMap.get("case_id"), null);
 
-            ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation.scenarioCode, invocation.packageCode,
-                    invocation.packageVersion, invocation.ruleCodeFilter, patientContext);
+            ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation, patientContext);
             Map<String, Object> evaluation = recordEvaluation("BATCH", batchId, caseId,
                     invocation, patientContext, outcome);
             evaluations.add(evaluation);
@@ -537,8 +603,11 @@ public class RuleService {
             invocation.scopeCode = orgContext.getEffectiveScopeCode();
             invocation.orgSource = orgContext.getSource();
         } else {
-            invocation.tenantId = string(request.get("tenant_id"), null);
-            invocation.orgSource = "NONE";
+            invocation.tenantId = string(request.get("tenant_id"), DEFAULT_TENANT_ID);
+            invocation.hospitalCode = string(request.get("hospital_code"), DEFAULT_HOSPITAL_CODE);
+            invocation.scopeLevel = DEFAULT_SCOPE_LEVEL;
+            invocation.scopeCode = invocation.hospitalCode;
+            invocation.orgSource = "DEFAULT";
         }
         return invocation;
     }
@@ -556,18 +625,16 @@ public class RuleService {
         return context;
     }
 
-    private ScenarioPipelineOutcome runScenarioPipeline(String scenarioCode, String packageCode,
-                                                       String packageVersion, List<String> ruleCodeFilter,
+    private ScenarioPipelineOutcome runScenarioPipeline(ScenarioInvocation invocation,
                                                        Map<String, Object> patientContext) {
         long started = System.currentTimeMillis();
-        List<RuleDefinition> candidates = scenarioCandidates(scenarioCode, packageCode,
-                packageVersion, ruleCodeFilter);
+        List<RuleDefinition> candidates = scenarioCandidates(invocation);
 
         List<Map<String, Object>> resultEntries = new ArrayList<Map<String, Object>>();
         List<Map<String, Object>> warnings = new ArrayList<Map<String, Object>>();
         int hitCount = 0;
         for (RuleDefinition definition : candidates) {
-            Map<String, Object> entry = executeForScenario(definition, scenarioCode, patientContext);
+            Map<String, Object> entry = executeForScenario(definition, invocation.scenarioCode, patientContext);
             if (Boolean.TRUE.equals(entry.get("hit"))) {
                 hitCount++;
             }
@@ -706,26 +773,38 @@ public class RuleService {
         List<Map<String, Object>> warnings = Collections.emptyList();
     }
 
-    private List<RuleDefinition> scenarioCandidates(String scenarioCode, String packageCode,
-                                                    String packageVersion, List<String> ruleCodeFilter) {
-        List<RuleDefinition> candidates = new ArrayList<RuleDefinition>();
+    private List<RuleDefinition> scenarioCandidates(ScenarioInvocation invocation) {
+        List<RuleDefinition> allCandidates = new ArrayList<RuleDefinition>();
+        List<RuleDefinition> exactCandidates = new ArrayList<RuleDefinition>();
+        List<RuleDefinition> legacyCandidates = new ArrayList<RuleDefinition>();
         for (RuleDefinition definition : publishedRules()) {
-            if (packageCode != null && !packageCode.equalsIgnoreCase(definition.getPackageCode())) {
+            if (invocation.packageCode != null && !invocation.packageCode.equalsIgnoreCase(definition.getPackageCode())) {
                 continue;
             }
-            if (packageVersion != null && !packageVersion.equalsIgnoreCase(definition.getPackageVersion())) {
+            if (invocation.packageVersion != null && !invocation.packageVersion.equalsIgnoreCase(definition.getPackageVersion())) {
                 continue;
             }
-            if (!ruleCodeFilter.isEmpty() && !ruleCodeFilter.contains(definition.getRuleCode())) {
+            if (!invocation.ruleCodeFilter.isEmpty() && !invocation.ruleCodeFilter.contains(definition.getRuleCode())) {
                 continue;
             }
-            if (!scenariosOf(definition).contains(scenarioCode)) {
+            if (!scenariosOf(definition).contains(invocation.scenarioCode)) {
                 continue;
             }
-            candidates.add(definition);
+            allCandidates.add(definition);
+            if (matchesInvocationScope(definition, invocation)) {
+                exactCandidates.add(definition);
+            }
+            if (isLegacyDefault(definition)) {
+                legacyCandidates.add(definition);
+            }
         }
-        // publishedRules 已按优先级降序排好序，这里保持稳定顺序即可。
-        return candidates;
+        if (!exactCandidates.isEmpty()) {
+            return exactCandidates;
+        }
+        if (!legacyCandidates.isEmpty()) {
+            return legacyCandidates;
+        }
+        return hasOrgInvocation(invocation) ? Collections.<RuleDefinition>emptyList() : allCandidates;
     }
 
     private Set<String> scenariosOf(RuleDefinition definition) {
@@ -763,6 +842,10 @@ public class RuleService {
         entry.put("package_code", definition.getPackageCode());
         entry.put("package_version", definition.getPackageVersion());
         entry.put("version_no", definition.getVersionNo());
+        entry.put("tenant_id", definition.getTenantId());
+        entry.put("hospital_code", definition.getHospitalCode());
+        entry.put("scope_level", definition.getScopeLevel());
+        entry.put("scope_code", definition.getScopeCode());
 
         RuleResult result = new RuleResult();
         result.setRuleCode(definition.getRuleCode());
@@ -776,7 +859,8 @@ public class RuleService {
             long elapsed = System.currentTimeMillis() - start;
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
                     elapsed, "SUCCESS", null, null);
-            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "SUCCESS", null, null);
+            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed,
+                    "SUCCESS", null, null, definition, null);
 
             entry.put("hit", result.isHit());
             entry.put("severity", result.getSeverity());
@@ -795,7 +879,7 @@ public class RuleService {
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
                     elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
             recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "ERROR",
-                    "RULE_EXEC_ERROR", ex.getMessage());
+                    "RULE_EXEC_ERROR", ex.getMessage(), definition, null);
 
             entry.put("hit", false);
             entry.put("severity", "ERROR");
@@ -813,22 +897,29 @@ public class RuleService {
 
     @SuppressWarnings("unchecked")
     public RuleResult simulate(Map<String, Object> request) {
+        return simulate(request, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public RuleResult simulate(Map<String, Object> request, OrganizationContext orgContext) {
         Map<String, Object> patientContext = getPatientContext(request);
         Object inlineRule = request.get("rule");
         if (inlineRule instanceof Map) {
             RuleDefinition definition = toDefinition((Map<String, Object>) inlineRule, "SIMULATION");
+            applyOrganization(definition, orgContext);
             return executeDefinition(definition, patientContext);
         }
 
         String ruleCode = string(request.get("rule_code"), null);
         String versionNo = string(request.get("version_no"), null);
-        RuleDefinition definition = ruleCode == null ? firstPublishedRule() : getRule(ruleCode, versionNo);
+        RuleDefinition definition = ruleCode == null ? firstPublishedRule(orgContext) : getRule(ruleCode, versionNo, orgContext);
         if (definition != null) {
             return executeDefinition(definition, patientContext);
         }
         long start = System.currentTimeMillis();
         RuleResult result = evaluateStemiCandidate(patientContext);
-        recordExecLog(result, "BUILT_IN", patientContext, System.currentTimeMillis() - start, "SUCCESS", null, null);
+        recordExecLog(result, "BUILT_IN", patientContext, System.currentTimeMillis() - start,
+                "SUCCESS", null, null, null, orgContext);
         return result;
     }
 
@@ -838,6 +929,14 @@ public class RuleService {
         String patientId = filterValue(filters, "patientId");
         String encounterId = filterValue(filters, "encounterId");
         String resultStatus = filterValue(filters, "resultStatus");
+        String tenantId = filterValue(filters, "tenantId");
+        String groupCode = filterValue(filters, "groupCode");
+        String hospitalCode = filterValue(filters, "hospitalCode");
+        String campusCode = filterValue(filters, "campusCode");
+        String siteCode = filterValue(filters, "siteCode");
+        String departmentCode = filterValue(filters, "departmentCode");
+        String scopeLevel = upper(filterValue(filters, "scopeLevel"));
+        String scopeCode = filterValue(filters, "scopeCode");
         Boolean hit = filterBoolean(filters, "hit");
         int limit = filterInt(filters, "limit", 100);
         if (limit <= 0 || limit > EXEC_LOG_RING_CAPACITY) {
@@ -865,6 +964,10 @@ public class RuleService {
                 continue;
             }
             if (hit != null && hit.booleanValue() != entry.isHit()) {
+                continue;
+            }
+            if (!matchesLogOrg(entry, tenantId, groupCode, hospitalCode, campusCode,
+                    siteCode, departmentCode, scopeLevel, scopeCode)) {
                 continue;
             }
             matched.add(entry);
@@ -927,6 +1030,8 @@ public class RuleService {
         summary.put("by_rule", aggregatesToList(byRule));
         summary.put("by_severity", bucketsToList(bySeverity, "severity"));
         summary.put("by_result_status", bucketsToList(byResultStatus, "result_status"));
+        summary.put("by_hospital_code", aggregateExecLogs(entries, "hospital_code"));
+        summary.put("by_scope", aggregateExecLogs(entries, "scope"));
         return summary;
     }
 
@@ -1008,16 +1113,18 @@ public class RuleService {
         throw new IllegalArgumentException("rule exec log not found: " + logId);
     }
 
-    private List<RuleResult> evaluateBuiltInRules(Map<String, Object> patientContext) {
+    private List<RuleResult> evaluateBuiltInRules(Map<String, Object> patientContext, OrganizationContext orgContext) {
         List<RuleResult> results = new ArrayList<RuleResult>();
         long stemiStart = System.currentTimeMillis();
         RuleResult stemi = evaluateStemiCandidate(patientContext);
-        recordExecLog(stemi, "BUILT_IN", patientContext, System.currentTimeMillis() - stemiStart, "SUCCESS", null, null);
+        recordExecLog(stemi, "BUILT_IN", patientContext, System.currentTimeMillis() - stemiStart,
+                "SUCCESS", null, null, null, orgContext);
         results.add(stemi);
 
         long ecgStart = System.currentTimeMillis();
         RuleResult ecg = evaluateEcgTimely(patientContext);
-        recordExecLog(ecg, "BUILT_IN", patientContext, System.currentTimeMillis() - ecgStart, "SUCCESS", null, null);
+        recordExecLog(ecg, "BUILT_IN", patientContext, System.currentTimeMillis() - ecgStart,
+                "SUCCESS", null, null, null, orgContext);
         results.add(ecg);
         return results;
     }
@@ -1043,7 +1150,8 @@ public class RuleService {
             long elapsed = System.currentTimeMillis() - start;
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
                     elapsed, "SUCCESS", null, null);
-            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "SUCCESS", null, null);
+            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed,
+                    "SUCCESS", null, null, definition, null);
             return result;
         } catch (RuntimeException ex) {
             result.setHit(false);
@@ -1052,13 +1160,15 @@ public class RuleService {
             long elapsed = System.currentTimeMillis() - start;
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
                     elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
-            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
+            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed,
+                    "ERROR", "RULE_EXEC_ERROR", ex.getMessage(), definition, null);
             throw ex;
         }
     }
 
     private void recordExecLog(RuleResult result, String ruleVersion, Map<String, Object> patientContext,
-                               long elapsedMs, String resultStatus, String errorCode, String errorMessage) {
+                               long elapsedMs, String resultStatus, String errorCode, String errorMessage,
+                               RuleDefinition definition, OrganizationContext orgContext) {
         RuleExecLogEntry entry = new RuleExecLogEntry();
         entry.setLogId("rxl-" + execLogSequence.incrementAndGet());
         entry.setTraceId(TraceContext.getTraceId());
@@ -1076,6 +1186,7 @@ public class RuleService {
         entry.setActions(new ArrayList<String>(result.getActions()));
         entry.setEvidence(new ArrayList<Map<String, Object>>(result.getEvidence()));
         entry.setCreatedTime(nowText());
+        applyOrganization(entry, definition, orgContext);
 
         // 内存环形缓冲优先保留最近 EXEC_LOG_RING_CAPACITY 条记录，长期归档仍依赖 RE_RULE_EXEC_LOG。
         execLogs.addLast(entry);
@@ -1093,12 +1204,29 @@ public class RuleService {
         definition.getRuleJson().put("published_time", definition.getPublishedTime());
     }
 
-    private Map<String, Object> packageReviewForAudit(String packageCode, String packageVersion, int ruleCount) {
+    private Map<String, Object> packageReviewForAudit(String packageCode, String packageVersion, int ruleCount,
+                                                      RuleDefinition definition) {
         Map<String, Object> detail = new LinkedHashMap<String, Object>();
         detail.put("package_code", packageCode);
         detail.put("package_version", packageVersion);
         detail.put("rule_count", ruleCount);
+        putOrgFields(detail, definition);
         return detail;
+    }
+
+    private void putOrgFields(Map<String, Object> target, RuleDefinition definition) {
+        if (definition == null) {
+            return;
+        }
+        target.put("tenant_id", definition.getTenantId());
+        target.put("group_code", definition.getGroupCode());
+        target.put("hospital_code", definition.getHospitalCode());
+        target.put("campus_code", definition.getCampusCode());
+        target.put("site_code", definition.getSiteCode());
+        target.put("department_code", definition.getDepartmentCode());
+        target.put("scope_level", definition.getScopeLevel());
+        target.put("scope_code", definition.getScopeCode());
+        target.put("org_source", definition.getOrgSource());
     }
 
     private void auditRuleChange(String actionType, String targetType, String targetCode,
@@ -1206,6 +1334,31 @@ public class RuleService {
                 list.add(definition);
             }
         }
+        sortRulesByPriority(list);
+        return list;
+    }
+
+    private List<RuleDefinition> publishedRules(OrganizationContext orgContext) {
+        List<RuleDefinition> list = new ArrayList<RuleDefinition>();
+        for (RuleDefinition definition : ruleStore.values()) {
+            if (definition.isEnabled() && "PUBLISHED".equals(definition.getStatus())
+                    && matchesDefinitionContext(definition, orgContext)) {
+                list.add(definition);
+            }
+        }
+        if (list.isEmpty() && orgContext != null) {
+            for (RuleDefinition definition : ruleStore.values()) {
+                if (definition.isEnabled() && "PUBLISHED".equals(definition.getStatus())
+                        && isLegacyDefault(definition)) {
+                    list.add(definition);
+                }
+            }
+        }
+        sortRulesByPriority(list);
+        return list;
+    }
+
+    private void sortRulesByPriority(List<RuleDefinition> list) {
         Collections.sort(list, new Comparator<RuleDefinition>() {
             @Override
             public int compare(RuleDefinition left, RuleDefinition right) {
@@ -1214,11 +1367,14 @@ public class RuleService {
                 return rightPriority.compareTo(leftPriority);
             }
         });
-        return list;
     }
 
     private RuleDefinition firstPublishedRule() {
-        List<RuleDefinition> published = publishedRules();
+        return firstPublishedRule(null);
+    }
+
+    private RuleDefinition firstPublishedRule(OrganizationContext orgContext) {
+        List<RuleDefinition> published = publishedRules(orgContext);
         return published.isEmpty() ? null : published.get(0);
     }
 
@@ -1282,8 +1438,267 @@ public class RuleService {
         return map;
     }
 
-    private String key(String ruleCode, String versionNo) {
-        return ruleCode + "::" + versionNo;
+    private List<RuleDefinition> filterRulesByOrg(List<RuleDefinition> rules, Map<String, String> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return rules;
+        }
+        String tenantId = filterValue(filters, "tenantId");
+        String groupCode = filterValue(filters, "groupCode");
+        String hospitalCode = filterValue(filters, "hospitalCode");
+        String campusCode = filterValue(filters, "campusCode");
+        String siteCode = filterValue(filters, "siteCode");
+        String departmentCode = filterValue(filters, "departmentCode");
+        String scopeLevel = upper(filterValue(filters, "scopeLevel"));
+        String scopeCode = filterValue(filters, "scopeCode");
+        List<RuleDefinition> matched = new ArrayList<RuleDefinition>();
+        for (RuleDefinition definition : rules) {
+            if (matchesRuleOrg(definition, tenantId, groupCode, hospitalCode, campusCode,
+                    siteCode, departmentCode, scopeLevel, scopeCode)) {
+                matched.add(definition);
+            }
+        }
+        return matched;
+    }
+
+    private void applyOrganization(RuleDefinition definition, OrganizationContext orgContext) {
+        if (orgContext != null) {
+            definition.setTenantId(orgContext.getTenantId());
+            definition.setGroupCode(orgContext.getGroupCode());
+            definition.setHospitalCode(orgContext.getHospitalCode());
+            definition.setCampusCode(orgContext.getCampusCode());
+            definition.setSiteCode(orgContext.getSiteCode());
+            definition.setDepartmentCode(orgContext.getDepartmentCode());
+            definition.setLegacyOrgCode(orgContext.getLegacyOrgCode());
+            definition.setScopeLevel(orgContext.getEffectiveScopeLevel());
+            definition.setScopeCode(orgContext.getEffectiveScopeCode());
+            definition.setOrgSource(orgContext.getSource());
+        } else {
+            definition.setTenantId(ruleJsonString(definition, "tenant_id", "tenantId", DEFAULT_TENANT_ID));
+            definition.setGroupCode(ruleJsonString(definition, "group_code", "groupCode", null));
+            String hospitalCode = ruleJsonString(definition, "hospital_code", "hospitalCode", null);
+            String legacyOrgCode = ruleJsonString(definition, "org_code", "orgCode", null);
+            if (hospitalCode == null && legacyOrgCode != null) {
+                hospitalCode = legacyOrgCode;
+            }
+            if (hospitalCode == null) {
+                hospitalCode = DEFAULT_HOSPITAL_CODE;
+            }
+            if (legacyOrgCode == null) {
+                legacyOrgCode = hospitalCode;
+            }
+            definition.setHospitalCode(hospitalCode);
+            definition.setLegacyOrgCode(legacyOrgCode);
+            definition.setCampusCode(ruleJsonString(definition, "campus_code", "campusCode", null));
+            definition.setSiteCode(ruleJsonString(definition, "site_code", "siteCode", null));
+            definition.setDepartmentCode(ruleJsonString(definition, "department_code", "departmentCode", null));
+            applyEffectiveScope(definition);
+            definition.setOrgSource(hasRuleJsonOrg(definition) ? "BODY" : "DEFAULT");
+        }
+        syncOrgToRuleJson(definition);
+    }
+
+    private void applyEffectiveScope(RuleDefinition definition) {
+        if (present(definition.getDepartmentCode())) {
+            definition.setScopeLevel("DEPARTMENT");
+            definition.setScopeCode(definition.getDepartmentCode());
+            return;
+        }
+        if (present(definition.getSiteCode())) {
+            definition.setScopeLevel("SITE");
+            definition.setScopeCode(definition.getSiteCode());
+            return;
+        }
+        if (present(definition.getCampusCode())) {
+            definition.setScopeLevel("CAMPUS");
+            definition.setScopeCode(definition.getCampusCode());
+            return;
+        }
+        if (present(definition.getHospitalCode())) {
+            definition.setScopeLevel("HOSPITAL");
+            definition.setScopeCode(definition.getHospitalCode());
+            return;
+        }
+        if (present(definition.getGroupCode())) {
+            definition.setScopeLevel("GROUP");
+            definition.setScopeCode(definition.getGroupCode());
+            return;
+        }
+        definition.setScopeLevel("PLATFORM");
+        definition.setScopeCode("DEFAULT");
+    }
+
+    private void syncOrgToRuleJson(RuleDefinition definition) {
+        definition.getRuleJson().put("tenant_id", definition.getTenantId());
+        definition.getRuleJson().put("group_code", definition.getGroupCode());
+        definition.getRuleJson().put("hospital_code", definition.getHospitalCode());
+        definition.getRuleJson().put("campus_code", definition.getCampusCode());
+        definition.getRuleJson().put("site_code", definition.getSiteCode());
+        definition.getRuleJson().put("department_code", definition.getDepartmentCode());
+        definition.getRuleJson().put("scope_level", definition.getScopeLevel());
+        definition.getRuleJson().put("scope_code", definition.getScopeCode());
+        definition.getRuleJson().put("org_source", definition.getOrgSource());
+    }
+
+    private void applyOrganization(RuleExecLogEntry entry, RuleDefinition definition,
+                                   OrganizationContext orgContext) {
+        if (definition != null) {
+            entry.setTenantId(definition.getTenantId());
+            entry.setGroupCode(definition.getGroupCode());
+            entry.setHospitalCode(definition.getHospitalCode());
+            entry.setCampusCode(definition.getCampusCode());
+            entry.setSiteCode(definition.getSiteCode());
+            entry.setDepartmentCode(definition.getDepartmentCode());
+            entry.setScopeLevel(definition.getScopeLevel());
+            entry.setScopeCode(definition.getScopeCode());
+            entry.setOrgSource(definition.getOrgSource());
+            return;
+        }
+        if (orgContext != null) {
+            entry.setTenantId(orgContext.getTenantId());
+            entry.setGroupCode(orgContext.getGroupCode());
+            entry.setHospitalCode(orgContext.getHospitalCode());
+            entry.setCampusCode(orgContext.getCampusCode());
+            entry.setSiteCode(orgContext.getSiteCode());
+            entry.setDepartmentCode(orgContext.getDepartmentCode());
+            entry.setScopeLevel(orgContext.getEffectiveScopeLevel());
+            entry.setScopeCode(orgContext.getEffectiveScopeCode());
+            entry.setOrgSource(orgContext.getSource());
+            return;
+        }
+        entry.setTenantId(DEFAULT_TENANT_ID);
+        entry.setHospitalCode(DEFAULT_HOSPITAL_CODE);
+        entry.setScopeLevel(DEFAULT_SCOPE_LEVEL);
+        entry.setScopeCode(DEFAULT_HOSPITAL_CODE);
+        entry.setOrgSource("DEFAULT");
+    }
+
+    private boolean matchesDefinitionContext(RuleDefinition definition, OrganizationContext orgContext) {
+        if (orgContext == null) {
+            return isLegacyDefault(definition);
+        }
+        return matches(orgContext.getTenantId(), definition.getTenantId(), false)
+                && matches(orgContext.getEffectiveScopeLevel(), definition.getScopeLevel(), true)
+                && matches(orgContext.getEffectiveScopeCode(), definition.getScopeCode(), false);
+    }
+
+    private boolean matchesInvocationScope(RuleDefinition definition, ScenarioInvocation invocation) {
+        return matches(invocation.tenantId, definition.getTenantId(), false)
+                && matches(invocation.scopeLevel, definition.getScopeLevel(), true)
+                && matches(invocation.scopeCode, definition.getScopeCode(), false);
+    }
+
+    private boolean matchesRuleOrg(RuleDefinition definition, String tenantId, String groupCode,
+                                   String hospitalCode, String campusCode, String siteCode,
+                                   String departmentCode, String scopeLevel, String scopeCode) {
+        return matches(tenantId, definition.getTenantId(), false)
+                && matches(groupCode, definition.getGroupCode(), false)
+                && matches(hospitalCode, definition.getHospitalCode(), false)
+                && matches(campusCode, definition.getCampusCode(), false)
+                && matches(siteCode, definition.getSiteCode(), false)
+                && matches(departmentCode, definition.getDepartmentCode(), false)
+                && matches(scopeLevel, definition.getScopeLevel(), true)
+                && matches(scopeCode, definition.getScopeCode(), false);
+    }
+
+    private boolean matchesLogOrg(RuleExecLogEntry entry, String tenantId, String groupCode,
+                                  String hospitalCode, String campusCode, String siteCode,
+                                  String departmentCode, String scopeLevel, String scopeCode) {
+        return matches(tenantId, entry.getTenantId(), false)
+                && matches(groupCode, entry.getGroupCode(), false)
+                && matches(hospitalCode, entry.getHospitalCode(), false)
+                && matches(campusCode, entry.getCampusCode(), false)
+                && matches(siteCode, entry.getSiteCode(), false)
+                && matches(departmentCode, entry.getDepartmentCode(), false)
+                && matches(scopeLevel, entry.getScopeLevel(), true)
+                && matches(scopeCode, entry.getScopeCode(), false);
+    }
+
+    private boolean matches(String expected, String actual, boolean ignoreCase) {
+        if (expected == null) {
+            return true;
+        }
+        if (actual == null) {
+            return false;
+        }
+        return ignoreCase ? expected.equalsIgnoreCase(actual) : expected.equals(actual);
+    }
+
+    private boolean isLegacyDefault(RuleDefinition definition) {
+        return DEFAULT_TENANT_ID.equals(definition.getTenantId())
+                && DEFAULT_SCOPE_LEVEL.equalsIgnoreCase(string(definition.getScopeLevel(), null))
+                && DEFAULT_HOSPITAL_CODE.equals(definition.getScopeCode());
+    }
+
+    private boolean hasOrgInvocation(ScenarioInvocation invocation) {
+        return invocation != null && (present(invocation.tenantId)
+                || present(invocation.scopeLevel) || present(invocation.scopeCode));
+    }
+
+    private String key(RuleDefinition definition) {
+        return string(definition.getTenantId(), DEFAULT_TENANT_ID) + "::"
+                + string(definition.getScopeLevel(), DEFAULT_SCOPE_LEVEL) + "::"
+                + string(definition.getScopeCode(), DEFAULT_HOSPITAL_CODE) + "::"
+                + definition.getRuleCode() + "::" + definition.getVersionNo();
+    }
+
+    private String key(OrganizationContext orgContext, String ruleCode, String versionNo) {
+        if (orgContext == null) {
+            return legacyKey(ruleCode, versionNo);
+        }
+        return string(orgContext.getTenantId(), DEFAULT_TENANT_ID) + "::"
+                + string(orgContext.getEffectiveScopeLevel(), DEFAULT_SCOPE_LEVEL) + "::"
+                + string(orgContext.getEffectiveScopeCode(), DEFAULT_HOSPITAL_CODE) + "::"
+                + ruleCode + "::" + versionNo;
+    }
+
+    private String legacyKey(String ruleCode, String versionNo) {
+        return DEFAULT_TENANT_ID + "::" + DEFAULT_SCOPE_LEVEL + "::"
+                + DEFAULT_HOSPITAL_CODE + "::" + ruleCode + "::" + versionNo;
+    }
+
+    private List<Map<String, Object>> aggregateExecLogs(List<RuleExecLogEntry> entries, String dimension) {
+        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
+        for (RuleExecLogEntry entry : entries) {
+            String key = execLogDimension(entry, dimension);
+            if (key == null) {
+                continue;
+            }
+            Integer value = counts.get(key);
+            counts.put(key, value == null ? 1 : value + 1);
+        }
+        return bucketsToList(counts, dimension);
+    }
+
+    private String execLogDimension(RuleExecLogEntry entry, String dimension) {
+        if ("hospital_code".equals(dimension)) {
+            return entry.getHospitalCode();
+        }
+        if ("scope".equals(dimension)) {
+            return string(entry.getScopeLevel(), "UNKNOWN") + ":" + string(entry.getScopeCode(), "UNKNOWN");
+        }
+        return null;
+    }
+
+    private String ruleJsonString(RuleDefinition definition, String snakeKey, String camelKey, String defaultValue) {
+        String value = string(definition.getRuleJson().get(snakeKey), null);
+        if (value == null) {
+            value = string(definition.getRuleJson().get(camelKey), null);
+        }
+        return value == null ? defaultValue : value;
+    }
+
+    private boolean hasRuleJsonOrg(RuleDefinition definition) {
+        return ruleJsonString(definition, "tenant_id", "tenantId", null) != null
+                || ruleJsonString(definition, "group_code", "groupCode", null) != null
+                || ruleJsonString(definition, "hospital_code", "hospitalCode", null) != null
+                || ruleJsonString(definition, "campus_code", "campusCode", null) != null
+                || ruleJsonString(definition, "site_code", "siteCode", null) != null
+                || ruleJsonString(definition, "department_code", "departmentCode", null) != null
+                || ruleJsonString(definition, "org_code", "orgCode", null) != null;
+    }
+
+    private boolean present(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     private String string(Object value, String defaultValue) {

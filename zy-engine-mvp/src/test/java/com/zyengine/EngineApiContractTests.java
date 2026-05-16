@@ -396,6 +396,85 @@ class EngineApiContractTests {
     }
 
     @Test
+    void rulesConfigAndExecLogsFilterByOrgContext() throws Exception {
+        Map<String, Object> alphaRule = ruleDefinition("R_RULE_ORG_SCOPE", "Alpha医院入径规则");
+        alphaRule.put("message_template", "Alpha医院规则命中。");
+        Map<String, Object> alphaPackage = rulePackage("PKG_RULE_ORG_SCOPE", "2026.05", alphaRule);
+        alphaPackage.put("tenant_id", "TENANT_RULE_ORG");
+        alphaPackage.put("hospital_code", "HOSPITAL_ALPHA");
+        alphaPackage.put("department_code", "DEPT_ALPHA");
+        Map<String, Object> alphaImport = invokePost("/api/rules", alphaPackage);
+        Map<String, Object> alphaImported = asListOfMap(alphaImport.get("data")).get(0);
+        assertEquals("HOSPITAL_ALPHA", alphaImported.get("hospitalCode"));
+        assertEquals("DEPARTMENT", alphaImported.get("scopeLevel"));
+
+        Map<String, Object> betaRule = ruleDefinition("R_RULE_ORG_SCOPE", "Beta医院入径规则");
+        betaRule.put("message_template", "Beta医院规则命中。");
+        Map<String, Object> betaPackage = rulePackage("PKG_RULE_ORG_SCOPE", "2026.05", betaRule);
+        betaPackage.put("tenant_id", "TENANT_RULE_ORG");
+        betaPackage.put("hospital_code", "HOSPITAL_BETA");
+        betaPackage.put("department_code", "DEPT_BETA");
+        invokePost("/api/rules", betaPackage);
+
+        Map<String, Object> alphaPublish = new LinkedHashMap<String, Object>();
+        alphaPublish.put("package_version", "2026.05");
+        alphaPublish.put("tenant_id", "TENANT_RULE_ORG");
+        alphaPublish.put("hospital_code", "HOSPITAL_ALPHA");
+        alphaPublish.put("department_code", "DEPT_ALPHA");
+        alphaPublish.put("approved_by", "ORG_RULE_APPROVER");
+        invokePost("/api/rules/packages/PKG_RULE_ORG_SCOPE/publish", alphaPublish);
+
+        Map<String, Object> betaPublish = new LinkedHashMap<String, Object>();
+        betaPublish.put("package_version", "2026.05");
+        betaPublish.put("tenant_id", "TENANT_RULE_ORG");
+        betaPublish.put("hospital_code", "HOSPITAL_BETA");
+        betaPublish.put("department_code", "DEPT_BETA");
+        betaPublish.put("approved_by", "ORG_RULE_APPROVER");
+        invokePost("/api/rules/packages/PKG_RULE_ORG_SCOPE/publish", betaPublish);
+
+        Map<String, Object> alphaRulesResp = invokeGet("/api/rules?tenantId=TENANT_RULE_ORG&hospitalCode=HOSPITAL_ALPHA");
+        List<Map<String, Object>> alphaRules = asListOfMap(alphaRulesResp.get("data"));
+        assertEquals(1, alphaRules.size());
+        assertEquals("Alpha医院入径规则", alphaRules.get(0).get("ruleName"));
+
+        Map<String, Object> betaGetResp = invokeGet("/api/rules/R_RULE_ORG_SCOPE?tenantId=TENANT_RULE_ORG"
+                + "&hospitalCode=HOSPITAL_BETA&departmentCode=DEPT_BETA");
+        Map<String, Object> betaStored = asMap(betaGetResp.get("data"));
+        assertEquals("Beta医院入径规则", betaStored.get("ruleName"));
+        assertEquals("DEPT_BETA", betaStored.get("scopeCode"));
+
+        Map<String, Object> alphaSim = new LinkedHashMap<String, Object>();
+        alphaSim.put("tenant_id", "TENANT_RULE_ORG");
+        alphaSim.put("hospital_code", "HOSPITAL_ALPHA");
+        alphaSim.put("department_code", "DEPT_ALPHA");
+        alphaSim.put("rule_code", "R_RULE_ORG_SCOPE");
+        alphaSim.put("patient_context", samplePatientContext());
+        Map<String, Object> alphaSimResp = invokePost("/api/rules/simulate", alphaSim);
+        assertEquals("Alpha医院规则命中。", asMap(alphaSimResp.get("data")).get("message"));
+
+        Map<String, Object> betaSim = new LinkedHashMap<String, Object>();
+        betaSim.put("tenant_id", "TENANT_RULE_ORG");
+        betaSim.put("hospital_code", "HOSPITAL_BETA");
+        betaSim.put("department_code", "DEPT_BETA");
+        betaSim.put("rule_code", "R_RULE_ORG_SCOPE");
+        betaSim.put("patient_context", samplePatientContext());
+        Map<String, Object> betaSimResp = invokePost("/api/rules/simulate", betaSim);
+        assertEquals("Beta医院规则命中。", asMap(betaSimResp.get("data")).get("message"));
+
+        Map<String, Object> alphaLogsResp = invokeGet("/api/rules/exec-logs?ruleCode=R_RULE_ORG_SCOPE"
+                + "&tenantId=TENANT_RULE_ORG&hospitalCode=HOSPITAL_ALPHA&scopeLevel=DEPARTMENT&scopeCode=DEPT_ALPHA");
+        List<Map<String, Object>> alphaLogs = asListOfMap(alphaLogsResp.get("data"));
+        assertEquals(1, alphaLogs.size());
+        assertEquals("HOSPITAL_ALPHA", alphaLogs.get(0).get("hospitalCode"));
+        assertEquals("DEPT_ALPHA", alphaLogs.get(0).get("scopeCode"));
+
+        Map<String, Object> alphaSummaryResp = invokeGet("/api/rules/exec-logs/summary?ruleCode=R_RULE_ORG_SCOPE"
+                + "&tenantId=TENANT_RULE_ORG&hospitalCode=HOSPITAL_ALPHA");
+        Map<String, Object> alphaSummary = asMap(alphaSummaryResp.get("data"));
+        assertEquals(1, ((Number) alphaSummary.get("total")).intValue());
+    }
+
+    @Test
     void ruleEngineEvaluateRoutesByScenarioAndPackage() throws Exception {
         Map<String, Object> packageBody = ruleEngineScenarioPackage();
         Map<String, Object> imported = invokePost("/api/rules", packageBody);
@@ -1698,6 +1777,14 @@ class EngineApiContractTests {
         rule.put("actions", Arrays.asList(actionMap("CREATE_RECOMMENDATION")));
         rule.put("message_template", "命中STEMI候选入径规则。");
         return rule;
+    }
+
+    private Map<String, Object> rulePackage(String packageCode, String packageVersion, Map<String, Object> rule) {
+        Map<String, Object> body = new LinkedHashMap<String, Object>();
+        body.put("package_code", packageCode);
+        body.put("package_version", packageVersion);
+        body.put("rules", Arrays.asList(rule));
+        return body;
     }
 
     private Map<String, Object> actionMap(String type) {

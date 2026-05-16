@@ -286,6 +286,37 @@ X-Trace-Id: trace-demo-rule-import
 
 < ../../ai-dev-input/06_samples/sample_ami_rules.json
 
+### Import AMI rules into a hospital/department scope
+POST http://localhost:18080/zy-engine/api/rules
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-import-org
+
+{
+  "tenant_id": "TENANT_DEMO",
+  "hospital_code": "HOSPITAL_DEMO",
+  "department_code": "DEPT_CARDIOLOGY",
+  "package_code": "PKG_AMI_CORE",
+  "package_version": "2026.05",
+  "rules": [
+    {
+      "rule_code": "R_AMI_STEMI_CANDIDATE",
+      "rule_name": "AMI STEMI候选规则（心内科覆盖）",
+      "rule_type": "PATHWAY_ENTRY",
+      "version_no": "1.0.0",
+      "severity": "HIGH",
+      "enabled": true,
+      "condition": {
+        "all": [
+          {"fact": "chief_complaints.code", "operator": "in", "value": ["CHEST_PAIN"]},
+          {"fact": "exams.finding_codes", "operator": "contains", "value": "ST_ELEVATION_CONTIGUOUS_LEADS"}
+        ]
+      },
+      "actions": [{"type": "CREATE_RECOMMENDATION"}],
+      "message_template": "心内科覆盖规则命中STEMI候选入径。"
+    }
+  ]
+}
+
 ### Review AMI rule package before publish
 GET http://localhost:18080/zy-engine/api/rules/packages/PKG_AMI_CORE/review?packageVersion=2026.05
 X-Trace-Id: trace-demo-rule-package-review
@@ -299,6 +330,20 @@ X-Trace-Id: trace-demo-rule-package-publish
   "package_version": "2026.05",
   "approved_by": "D001",
   "comment": "AMI样例规则包发布"
+}
+
+### Publish AMI rule package in department scope
+POST http://localhost:18080/zy-engine/api/rules/packages/PKG_AMI_CORE/publish
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-package-publish-org
+
+{
+  "tenant_id": "TENANT_DEMO",
+  "hospital_code": "HOSPITAL_DEMO",
+  "department_code": "DEPT_CARDIOLOGY",
+  "package_version": "2026.05",
+  "approved_by": "D001",
+  "comment": "心内科覆盖规则包发布"
 }
 
 ### Publish AMI STEMI candidate rule
@@ -316,9 +361,17 @@ X-Trace-Id: trace-demo-rule-publish
 GET http://localhost:18080/zy-engine/api/rules
 X-Trace-Id: trace-demo-rule-list
 
+### List rules by hospital scope
+GET http://localhost:18080/zy-engine/api/rules?tenantId=TENANT_DEMO&hospitalCode=HOSPITAL_DEMO&scopeLevel=DEPARTMENT&scopeCode=DEPT_CARDIOLOGY
+X-Trace-Id: trace-demo-rule-list-org
+
 ### List recent rule exec logs (filter by ruleCode and hit)
 GET http://localhost:18080/zy-engine/api/rules/exec-logs?ruleCode=R_AMI_STEMI_CANDIDATE&hit=true&limit=20
 X-Trace-Id: trace-demo-rule-execlog-list
+
+### List recent rule exec logs by hospital scope
+GET http://localhost:18080/zy-engine/api/rules/exec-logs?ruleCode=R_AMI_STEMI_CANDIDATE&tenantId=TENANT_DEMO&hospitalCode=HOSPITAL_DEMO&scopeLevel=DEPARTMENT&scopeCode=DEPT_CARDIOLOGY
+X-Trace-Id: trace-demo-rule-execlog-list-org
 
 ### Get a specific rule exec log
 GET http://localhost:18080/zy-engine/api/rules/exec-logs/rxl-1

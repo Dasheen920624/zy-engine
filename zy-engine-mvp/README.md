@@ -10,6 +10,7 @@
 - 路径配置回查：支持查询路径清单和指定版本配置原文，便于配置页面预览和验收追溯。
 - 路径版本差异对比：`GET /pathways/{pathwayCode}/diff?from=1.0.0&to=draft` 输出元数据字段变化、节点增删改、任务与流转目标的增删，配置发布前的 review 可一眼看到变更规模。
 - 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架；支持规则包导入、包级审核和批量发布；执行日志可按 `ruleCode/traceId/patientId/hit/resultStatus` 过滤查询，最近 500 条保留在内存环形缓冲，并支持 `/exec-logs/summary` 按规则/严重级别/结果状态聚合 hit_rate 与 average_elapsed_ms。
+- 规则配置组织上下文：`/rules` 导入、`/rules/{ruleCode}` 回查、规则/规则包发布、`/rules/simulate` 和执行日志支持 `tenant/group/hospital/campus/site/department/scope`，同一规则编码可在不同组织范围独立覆盖。
 - 第三方规则引擎入口：`POST /api/rule-engine/evaluate` 按 `scenario_code` 路由（`PATHWAY_ENTRY/EMR_QC/INSURANCE_QC/ORDER_SAFETY/DRUG_INDICATION/EXAM_RATIONALITY`），可选 `rule_package_code/rule_package_version/rule_codes` 过滤，输出 `evaluated_count/hit_count/elapsed_ms/results/warnings` 标准信封，未命中规则时返回 `NO_RULES_MATCHED` 警告而非异常，调用入口写入 `RULE_ENGINE/EVALUATE_SCENARIO` 审计。
 - 第三方规则引擎批量与回查：`POST /api/rule-engine/batch-evaluate` 共享 scenario 过滤，每条 `items` 返回独立 `result_id` 并写入 `RULE_ENGINE/BATCH_EVALUATE_SCENARIO`；`GET /api/rule-engine/results` 支持 `scenarioCode/packageCode/batchId/source/patientId/encounterId/limit/offset` 过滤返回摘要，`GET /api/rule-engine/results/{resultId}` 返回完整 envelope；评估在内存环形缓冲（容量 500）保留最近调用，未找到 result_id 返回 `VALIDATION_ERROR`。
 - 第三方规则引擎组织上下文：`/api/rule-engine/evaluate` 与 `/batch-evaluate` 通过 `OrganizationContextService.resolveWithBody` 合并 Header/Query/Body（Body 优先），评估记录与审计同时记录 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`；`GET /api/rule-engine/results` 新增 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤项，集团化复盘开箱可用。
@@ -285,8 +286,9 @@ POST /zy-engine/api/organizations
 GET  /zy-engine/api/organizations?tenantId=&level=&parentLevel=&parentCode=&status=&limit=
 GET  /zy-engine/api/organizations/tree?tenantId=&rootLevel=&rootCode=
 GET  /zy-engine/api/organizations/{level}/{code}?tenantId=
-GET  /zy-engine/api/rules/exec-logs?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=&limit=100
-GET  /zy-engine/api/rules/exec-logs/summary?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=
+GET  /zy-engine/api/rules?tenantId=&hospitalCode=&scopeLevel=&scopeCode=
+GET  /zy-engine/api/rules/exec-logs?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=&limit=100
+GET  /zy-engine/api/rules/exec-logs/summary?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=&tenantId=&hospitalCode=&scopeLevel=&scopeCode=
 GET  /zy-engine/api/rules/exec-logs/{logId}
 GET  /zy-engine/api/rules/packages/{packageCode}/review?packageVersion=2026.05
 POST /zy-engine/api/rules/packages/{packageCode}/publish
@@ -305,6 +307,7 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 
 - 规则执行日志：`GET /rules/exec-logs?ruleCode=R_AMI_STEMI_CANDIDATE&hit=true` 可在 simulate/evaluate 调用后查询命中记录，`GET /rules/exec-logs/{logId}` 可获取详情。
 - 规则包审核发布：`sample_ami_rules.json` 已带 `package_code/package_version`，导入后可通过 `GET /rules/packages/PKG_AMI_CORE/review?packageVersion=2026.05` 查看规则数量、状态分布和 DSL 问题，再通过 `POST /rules/packages/PKG_AMI_CORE/publish` 批量发布。
+- 规则组织隔离：规则导入、发布、回查和模拟会记录 `tenantId/hospitalCode/scopeLevel/scopeCode/orgSource`；同一 `rule_code/version_no` 可在不同医院或科室独立存在，`GET /rules?hospitalCode=...` 与 `GET /rules/exec-logs?hospitalCode=...` 已由 JUnit 覆盖。
 - 路径变异聚合：`GET /pathway-variations?pathwayCode=AMI_STEMI` 返回跨实例变异；`GET /pathway-variations/summary?pathwayCode=AMI_STEMI` 返回按变异类型/路径/节点/患者的计数桶，已被 JUnit 覆盖。
 - 路径实例聚合：`GET /pathway-instances?pathwayCode=AMI_STEMI` 跨实例返回；`GET /pathway-instances/summary?pathwayCode=AMI_STEMI` 同时输出 `total/by_pathway_code/by_status/by_current_node/variation_total/variation_by_type`，质控看板可一次拿到在径数与变异数全景。
 - 路径组织过滤：`POST /patient-pathways/admit` 写入 `tenantId/hospitalCode/campusCode/departmentCode/scopeLevel/scopeCode/orgSource`；`GET /pathway-instances?hospitalCode=HOSPITAL_ALPHA`、`GET /pathway-variations?scopeLevel=DEPARTMENT&scopeCode=DEPT_ALPHA`、`GET /quality/metrics?hospitalCode=...` 与 `GET /audit-logs?hospitalCode=...` 已覆盖组织过滤契约测试。

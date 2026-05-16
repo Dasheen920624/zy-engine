@@ -562,7 +562,8 @@ Provider 影响：
 - 第二批已落地组织目录导入、列表、详情、树形回查和 `ORG_UNIT` DDL；`PLATFORM` 不可导入为真实组织。
 - 第三批新增 `OrganizationContextService.resolveWithBody`，Header/Query/Body 三方合并（Body 优先），首先织入 `/api/rule-engine/*`：评估记录与审计写 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`，`GET /api/rule-engine/results` 支持按多个组织维度过滤。
 - 第四批已织入路径运行、质控和审计查询：患者入径实例落组织字段，路径实例、变异、质控指标和审计日志支持 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤。
-- 后续继续补组织目录 Oracle 持久化、配置包组织继承/覆盖计算、`/api/rules/*` 配置管理组织隔离。
+- 第五批已织入规则配置管理：同一 `rule_code/version_no` 可在不同组织范围独立导入、发布、回查和模拟，执行日志支持组织过滤；第三方规则引擎在无专属规则时回退 legacy 基线规则。
+- 后续继续补组织目录 Oracle 持久化、配置包组织继承/覆盖计算、路径配置/图谱配置/Dify 模板/适配器绑定组织隔离。
 
 产出：
 

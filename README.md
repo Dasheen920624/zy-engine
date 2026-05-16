@@ -61,6 +61,7 @@ zy-engine-mvp/
 - 第三方规则引擎批量与回查：`POST /api/rule-engine/batch-evaluate` 共享场景过滤批量评估，`GET /api/rule-engine/results` 列摘要、`GET /api/rule-engine/results/{resultId}` 取详情；评估结果在内存环形缓冲中保留最近 500 条，便于规则校验工作台抽样复演。
 - 规则引擎接入组织上下文：`/api/rule-engine/*` 通过 Header/Query/Body 三方合并（Body 优先）解析集团/医院/院区/站点/科室，评估记录与审计落组织字段，列表查询支持按医院、院区、scope 等过滤。
 - 路径运行接入组织上下文：`/api/patient-pathways/admit` 写入 tenant/医院/院区/科室/scope，路径实例、变异、质控指标和审计查询支持显式组织过滤。
+- 规则配置接入组织上下文：`/api/rules/*` 支持同一规则编码在不同医院/科室独立导入、发布、回查、模拟和执行日志过滤。
 - 图谱版本、节点、边、证据导入与查询，Neo4j 不可用时降级。
 - Dify 工作流模板、参数映射、重试、降级输出、调用统计。
 - 字典映射和适配器 Mock。

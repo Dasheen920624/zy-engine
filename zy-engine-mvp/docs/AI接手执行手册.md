@@ -255,7 +255,7 @@ git push origin main
 下一批做：
 
 - 组织目录 Oracle 持久化。
-- `/api/rules/*`、规则执行日志与更多配置查询继续接入组织上下文。
+- 更多配置查询继续接入组织上下文，尤其是路径配置、图谱配置、Dify 模板和适配器绑定。
 
 ### TERM-001 医嘱标准化
 
@@ -308,6 +308,14 @@ ORG-001 第四批已织入路径运行、质控和审计查询：
 - `/api/patient-pathways/admit` 通过 Header/Query/Body 合并组织上下文，患者路径实例落 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode/orgSource`。
 - `/api/pathway-instances*`、`/api/pathway-variations*`、`/api/quality/metrics` 和 `/api/audit-logs*` 支持显式 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤。
 - `PE_PATIENT_INSTANCE` 的活动实例唯一约束已从 encounter/pathway/status 扩展为 tenant/org/encounter/pathway/status，避免多医院同就诊号互相覆盖。
+
+ORG-001 第五批已织入规则配置与内部执行日志：
+
+- `/api/rules` 导入、`/api/rules/{ruleCode}` 回查、规则/规则包发布、`/api/rules/evaluate`、`/api/rules/simulate` 支持 Header/Query/Body 组织上下文。
+- `RuleDefinition` 与 `RuleExecLogEntry` 带 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode/orgSource`。
+- 内存规则存储键已扩展为 `tenant + scope + rule_code + version_no`，同一规则编码/版本可在不同医院或科室独立覆盖。
+- 若第三方 `/api/rule-engine/*` 显式组织下没有专属规则，会回退到 legacy `default/ZYHOSPITAL` 规则，保持旧演示和基线规则可用。
+- `GET /api/rules` 与 `GET /api/rules/exec-logs*` 支持显式组织过滤。
 
 Oracle/达梦持久化、异步任务与同步任务状态留给 RULE-001 第三批继续推进。
 

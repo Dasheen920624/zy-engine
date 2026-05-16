@@ -283,16 +283,20 @@ public class EnginePersistenceService {
             return;
         }
         String sql = "MERGE INTO re_rule_def t " +
-                "USING (SELECT 'default' tenant_id, 'ZYHOSPITAL' org_code, ? rule_code, ? version_no FROM dual) s " +
+                "USING (SELECT ? tenant_id, ? org_code, ? rule_code, ? version_no FROM dual) s " +
                 "ON (t.tenant_id=s.tenant_id AND t.org_code=s.org_code AND t.rule_code=s.rule_code AND t.version_no=s.version_no) " +
                 "WHEN MATCHED THEN UPDATE SET t.rule_name=?, t.rule_type=?, t.status=?, t.severity=?, t.rule_json=?, t.approved_by=?, " +
                 "t.approved_time=CASE WHEN ?='PUBLISHED' THEN SYSTIMESTAMP ELSE t.approved_time END " +
                 "WHEN NOT MATCHED THEN INSERT (id, tenant_id, org_code, rule_code, rule_name, rule_type, version_no, status, severity, rule_json, created_time, approved_by, approved_time) " +
-                "VALUES (?, 'default', 'ZYHOSPITAL', ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, ?, CASE WHEN ?='PUBLISHED' THEN SYSTIMESTAMP ELSE NULL END)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, ?, CASE WHEN ?='PUBLISHED' THEN SYSTIMESTAMP ELSE NULL END)";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             String json = toJson(definition.getRuleJson());
+            String tenantId = string(definition.getTenantId(), "default");
+            String orgCode = string(definition.getLegacyOrgCode(), string(definition.getHospitalCode(), "ZYHOSPITAL"));
             int i = 1;
+            ps.setString(i++, tenantId);
+            ps.setString(i++, orgCode);
             ps.setString(i++, definition.getRuleCode());
             ps.setString(i++, definition.getVersionNo());
             ps.setString(i++, definition.getRuleName());
@@ -303,6 +307,8 @@ public class EnginePersistenceService {
             ps.setString(i++, approvedBy);
             ps.setString(i++, definition.getStatus());
             ps.setLong(i++, Ids.next());
+            ps.setString(i++, tenantId);
+            ps.setString(i++, orgCode);
             ps.setString(i++, definition.getRuleCode());
             ps.setString(i++, definition.getRuleName());
             ps.setString(i++, definition.getRuleType());

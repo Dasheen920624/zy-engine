@@ -221,7 +221,16 @@ paths:
     post:
       tags: [RuleEngine]
       summary: 执行规则
+      description: |
+        内部规则执行入口。组织上下文可通过 Header/Query/Body 传入，执行日志会记录 tenant/group/hospital/campus/site/department/scope。
       operationId: evaluateRules
+      parameters:
+        - $ref: '#/components/parameters/HeaderTenantId'
+        - $ref: '#/components/parameters/HeaderGroupCode'
+        - $ref: '#/components/parameters/HeaderHospitalCode'
+        - $ref: '#/components/parameters/HeaderCampusCode'
+        - $ref: '#/components/parameters/HeaderSiteCode'
+        - $ref: '#/components/parameters/HeaderDepartmentCode'
       requestBody:
         required: true
         content:
@@ -236,6 +245,18 @@ paths:
                   type: array
                   items:
                     type: string
+                tenant_id:
+                  type: string
+                group_code:
+                  type: string
+                hospital_code:
+                  type: string
+                campus_code:
+                  type: string
+                site_code:
+                  type: string
+                department_code:
+                  type: string
                 patient_context:
                   $ref: '#/components/schemas/PatientContext'
                 event:
@@ -258,7 +279,16 @@ paths:
     post:
       tags: [RuleEngine]
       summary: 规则模拟执行
+      description: |
+        配置台 dry-run 入口。传 rule_code 时会按组织上下文优先选择专属规则；没有专属规则时回退 legacy default/ZYHOSPITAL 基线规则。
       operationId: simulateRule
+      parameters:
+        - $ref: '#/components/parameters/HeaderTenantId'
+        - $ref: '#/components/parameters/HeaderGroupCode'
+        - $ref: '#/components/parameters/HeaderHospitalCode'
+        - $ref: '#/components/parameters/HeaderCampusCode'
+        - $ref: '#/components/parameters/HeaderSiteCode'
+        - $ref: '#/components/parameters/HeaderDepartmentCode'
       requestBody:
         required: true
         content:
@@ -269,6 +299,20 @@ paths:
               properties:
                 rule_config:
                   $ref: '#/components/schemas/RuleDsl'
+                rule_code:
+                  type: string
+                tenant_id:
+                  type: string
+                group_code:
+                  type: string
+                hospital_code:
+                  type: string
+                campus_code:
+                  type: string
+                site_code:
+                  type: string
+                department_code:
+                  type: string
                 patient_context:
                   $ref: '#/components/schemas/PatientContext'
       responses:
