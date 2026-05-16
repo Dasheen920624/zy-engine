@@ -13,6 +13,8 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,9 +27,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class DifyService {
+    private static final int MAX_INVOCATION_RECORDS = 500;
+
     private final DifyProperties properties;
     private final EnginePersistenceService persistenceService;
     private final Map<String, DifyWorkflowTemplate> templates = new ConcurrentHashMap<String, DifyWorkflowTemplate>();
+    private final List<Map<String, Object>> invocationRecords =
+            Collections.synchronizedList(new ArrayList<Map<String, Object>>());
 
     public DifyService(DifyProperties properties, EnginePersistenceService persistenceService) {
         this.properties = properties;
@@ -97,12 +103,14 @@ public class DifyService {
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> runWorkflow(Map<String, Object> request) {
+        Map<String, Object> safeRequest = request == null
+                ? new LinkedHashMap<String, Object>() : request;
         long start = System.currentTimeMillis();
-        String workflowCode = string(request.get("workflow_code"), "WF_UNKNOWN");
-        String workflowVersion = string(request.get("workflow_version"), null);
-        Map<String, Object> inputs = map(request.get("inputs"));
+        String workflowCode = string(safeRequest.get("workflow_code"), "WF_UNKNOWN");
+        String workflowVersion = string(safeRequest.get("workflow_version"), null);
+        Map<String, Object> inputs = map(safeRequest.get("inputs"));
         if (inputs.isEmpty()) {
-            inputs = new LinkedHashMap<String, Object>(request);
+            inputs = new LinkedHashMap<String, Object>(safeRequest);
         }
 
         DifyWorkflowTemplate template = findTemplate(workflowCode, workflowVersion);
@@ -114,7 +122,16 @@ public class DifyService {
             inputs = applyInputDefaults(inputs, template);
             List<String> missing = missingRequiredInputs(inputs, template);
             if (!missing.isEmpty()) {
-                throw new IllegalArgumentException("dify workflow inputs missing required fields: " + missing);
+                String message = "dify workflow inputs missing required fields: " + missing;
+                Map<String, Object> result = baseResult(workflowCode, workflowVersion,
+                        System.currentTimeMillis() - start);
+                result.put("status", "VALIDATION_ERROR");
+                result.put("provider", "LOCAL_VALIDATION");
+                result.put("message", message);
+                result.put("error_code", ErrorCode.VALIDATION_ERROR.getCode());
+                result.put("template_applied", true);
+                audit(workflowCode, workflowVersion, inputs, result);
+                throw new IllegalArgumentException(message);
             }
         }
 
@@ -128,7 +145,7 @@ public class DifyService {
             Map<String, Object> difyRequest = new LinkedHashMap<String, Object>();
             difyRequest.put("inputs", inputs);
             difyRequest.put("response_mode", "blocking");
-            difyRequest.put("user", string(request.get("user"), string(properties.getUser(), "zy-engine-mvp")));
+            difyRequest.put("user", string(safeRequest.get("user"), string(properties.getUser(), "zy-engine-mvp")));
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -226,6 +243,8 @@ public class DifyService {
     }
 
     private void audit(String workflowCode, String workflowVersion, Map<String, Object> inputs, Map<String, Object> result) {
+        recordInvocation(workflowCode, workflowVersion, inputs, result);
+
         Map<String, Object> detail = new LinkedHashMap<String, Object>();
         detail.put("workflow_version", workflowVersion);
         detail.put("status", result.get("status"));
@@ -238,6 +257,208 @@ public class DifyService {
                     patientId(inputs), encounterId(inputs), string(inputs.get("operator_id"), null), detail);
         } catch (RuntimeException ignored) {
             // 审计写入失败不应影响Dify降级策略。
+        }
+    }
+
+    public Map<String, Object> summarizeInvocations(Map<String, String> filters) {
+        List<Map<String, Object>> records = filterInvocationRecords(filters);
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("total_calls", records.size());
+        summary.put("success_calls", countStatus(records, "SUCCESS"));
+        summary.put("degraded_calls", countStatus(records, "DEGRADED"));
+        summary.put("validation_error_calls", countStatus(records, "VALIDATION_ERROR"));
+        summary.put("error_calls", countOtherStatuses(records));
+        summary.put("average_elapsed_ms", averageElapsed(records));
+        summary.put("by_workflow", aggregateByWorkflow(records));
+        summary.put("by_status", aggregateByDimension(records, "status"));
+        summary.put("by_provider", aggregateByDimension(records, "provider"));
+        return summary;
+    }
+
+    private void recordInvocation(String workflowCode, String workflowVersion, Map<String, Object> inputs,
+                                  Map<String, Object> result) {
+        Map<String, Object> record = new LinkedHashMap<String, Object>();
+        record.put("workflow_code", workflowCode);
+        record.put("workflow_version", workflowVersion);
+        record.put("status", result.get("status"));
+        record.put("provider", result.get("provider"));
+        record.put("error_code", result.get("error_code"));
+        record.put("elapsed_ms", result.get("elapsed_ms"));
+        record.put("trace_id", result.get("trace_id"));
+        record.put("patient_id", patientId(inputs));
+        record.put("encounter_id", encounterId(inputs));
+        record.put("created_time", nowText());
+        synchronized (invocationRecords) {
+            invocationRecords.add(record);
+            while (invocationRecords.size() > MAX_INVOCATION_RECORDS) {
+                invocationRecords.remove(0);
+            }
+        }
+    }
+
+    private List<Map<String, Object>> filterInvocationRecords(Map<String, String> filters) {
+        String workflowCode = filterValue(filters, "workflowCode");
+        String workflowVersion = filterValue(filters, "workflowVersion");
+        String status = filterValue(filters, "status");
+        String provider = filterValue(filters, "provider");
+        String patientId = filterValue(filters, "patientId");
+        String encounterId = filterValue(filters, "encounterId");
+        int limit = filterInt(filters, "limit", MAX_INVOCATION_RECORDS);
+        if (limit <= 0) {
+            limit = MAX_INVOCATION_RECORDS;
+        }
+
+        List<Map<String, Object>> snapshot;
+        synchronized (invocationRecords) {
+            snapshot = new ArrayList<Map<String, Object>>(invocationRecords);
+        }
+        Collections.reverse(snapshot);
+
+        List<Map<String, Object>> matched = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> record : snapshot) {
+            if (workflowCode != null && !workflowCode.equalsIgnoreCase(string(record.get("workflow_code"), null))) {
+                continue;
+            }
+            if (workflowVersion != null && !workflowVersion.equalsIgnoreCase(string(record.get("workflow_version"), null))) {
+                continue;
+            }
+            if (status != null && !status.equalsIgnoreCase(string(record.get("status"), null))) {
+                continue;
+            }
+            if (provider != null && !provider.equalsIgnoreCase(string(record.get("provider"), null))) {
+                continue;
+            }
+            if (patientId != null && !patientId.equals(string(record.get("patient_id"), null))) {
+                continue;
+            }
+            if (encounterId != null && !encounterId.equals(string(record.get("encounter_id"), null))) {
+                continue;
+            }
+            matched.add(record);
+            if (matched.size() >= limit) {
+                break;
+            }
+        }
+        return matched;
+    }
+
+    private int countStatus(List<Map<String, Object>> records, String status) {
+        int count = 0;
+        for (Map<String, Object> record : records) {
+            if (status.equals(record.get("status"))) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int countOtherStatuses(List<Map<String, Object>> records) {
+        int count = 0;
+        for (Map<String, Object> record : records) {
+            Object status = record.get("status");
+            if (!"SUCCESS".equals(status) && !"DEGRADED".equals(status) && !"VALIDATION_ERROR".equals(status)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private double averageElapsed(List<Map<String, Object>> records) {
+        if (records.isEmpty()) {
+            return 0.0;
+        }
+        long total = 0L;
+        for (Map<String, Object> record : records) {
+            total += longValue(record.get("elapsed_ms"), 0L);
+        }
+        return Math.round((total * 100.0 / records.size())) / 100.0;
+    }
+
+    private List<Map<String, Object>> aggregateByWorkflow(List<Map<String, Object>> records) {
+        Map<String, WorkflowAggregate> aggregates = new LinkedHashMap<String, WorkflowAggregate>();
+        for (Map<String, Object> record : records) {
+            String workflowCode = string(record.get("workflow_code"), "WF_UNKNOWN");
+            String workflowVersion = string(record.get("workflow_version"), null);
+            String key = workflowCode + "::" + string(workflowVersion, "");
+            WorkflowAggregate aggregate = aggregates.get(key);
+            if (aggregate == null) {
+                aggregate = new WorkflowAggregate(workflowCode, workflowVersion);
+                aggregates.put(key, aggregate);
+            }
+            aggregate.record(string(record.get("status"), "UNKNOWN"), longValue(record.get("elapsed_ms"), 0L));
+        }
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (WorkflowAggregate aggregate : aggregates.values()) {
+            result.add(aggregate.toView());
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> aggregateByDimension(List<Map<String, Object>> records, String dimension) {
+        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
+        for (Map<String, Object> record : records) {
+            String key = string(record.get(dimension), "UNKNOWN");
+            Integer count = counts.get(key);
+            counts.put(key, count == null ? 1 : count + 1);
+        }
+        List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(counts.entrySet());
+        Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
+            @Override
+            public int compare(Map.Entry<String, Integer> left, Map.Entry<String, Integer> right) {
+                int byCount = right.getValue().compareTo(left.getValue());
+                return byCount != 0 ? byCount : left.getKey().compareTo(right.getKey());
+            }
+        });
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (Map.Entry<String, Integer> entry : entries) {
+            Map<String, Object> bucket = new LinkedHashMap<String, Object>();
+            bucket.put(dimension, entry.getKey());
+            bucket.put("count", entry.getValue());
+            result.add(bucket);
+        }
+        return result;
+    }
+
+    private static class WorkflowAggregate {
+        private final String workflowCode;
+        private final String workflowVersion;
+        private int total;
+        private int success;
+        private int degraded;
+        private int validationError;
+        private int error;
+        private long totalElapsedMs;
+
+        WorkflowAggregate(String workflowCode, String workflowVersion) {
+            this.workflowCode = workflowCode;
+            this.workflowVersion = workflowVersion;
+        }
+
+        void record(String status, long elapsedMs) {
+            total++;
+            totalElapsedMs += elapsedMs;
+            if ("SUCCESS".equals(status)) {
+                success++;
+            } else if ("DEGRADED".equals(status)) {
+                degraded++;
+            } else if ("VALIDATION_ERROR".equals(status)) {
+                validationError++;
+            } else {
+                error++;
+            }
+        }
+
+        Map<String, Object> toView() {
+            Map<String, Object> view = new LinkedHashMap<String, Object>();
+            view.put("workflow_code", workflowCode);
+            view.put("workflow_version", workflowVersion);
+            view.put("total_calls", total);
+            view.put("success_calls", success);
+            view.put("degraded_calls", degraded);
+            view.put("validation_error_calls", validationError);
+            view.put("error_calls", error);
+            view.put("average_elapsed_ms", total == 0 ? 0.0 : Math.round((totalElapsedMs * 100.0 / total)) / 100.0);
+            return view;
         }
     }
 
@@ -401,5 +622,43 @@ public class DifyService {
 
     private String key(String workflowCode, String workflowVersion) {
         return workflowCode + "::" + (workflowVersion == null ? "1.0.0" : workflowVersion);
+    }
+
+    private String filterValue(Map<String, String> filters, String key) {
+        if (filters == null) {
+            return null;
+        }
+        String value = filters.get(key);
+        return value == null || value.trim().isEmpty() ? null : value.trim();
+    }
+
+    private int filterInt(Map<String, String> filters, String key, int defaultValue) {
+        String value = filterValue(filters, key);
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private long longValue(Object value, long defaultValue) {
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private String nowText() {
+        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
     }
 }

@@ -217,6 +217,7 @@ POST /zy-engine/api/patient-pathways/{instanceId}/variations
 GET  /zy-engine/api/pathways
 GET  /zy-engine/api/pathways/{pathwayCode}?versionNo=1.0.0
 GET  /zy-engine/api/pathways/{pathwayCode}/diff?from=1.0.0&to=draft
+POST /zy-engine/api/pathways/{pathwayCode}/rollback
 POST /zy-engine/api/graph/disease-candidates
 POST /zy-engine/api/graph/evidence
 POST /zy-engine/api/graph/versions
@@ -241,6 +242,7 @@ GET  /zy-engine/api/adapters/definitions/{adapterCode}/{queryCode}
 POST /zy-engine/api/dify/workflows/run
 POST /zy-engine/api/dify/workflows
 GET  /zy-engine/api/dify/workflows
+GET  /zy-engine/api/dify/workflows/stats?workflowCode=&workflowVersion=&status=&provider=&patientId=&encounterId=&limit=500
 GET  /zy-engine/api/dify/workflows/{workflowCode}?workflowVersion=1.0.0
 GET  /zy-engine/api/rules/exec-logs?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=&limit=100
 GET  /zy-engine/api/rules/exec-logs/summary?ruleCode=&traceId=&patientId=&encounterId=&resultStatus=&hit=
@@ -250,6 +252,7 @@ GET  /zy-engine/api/pathway-variations/summary?pathwayCode=&patientId=&encounter
 GET  /zy-engine/api/pathway-instances?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=&limit=100
 GET  /zy-engine/api/pathway-instances/summary?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=
 GET  /zy-engine/api/pathway-instances/node-completion?pathwayCode=&status=&patientId=&encounterId=
+GET  /zy-engine/api/pathway-instances/node-stay-duration?pathwayCode=&status=&patientId=&encounterId=
 ```
 
 已验证结果：
@@ -258,11 +261,13 @@ GET  /zy-engine/api/pathway-instances/node-completion?pathwayCode=&status=&patie
 - 路径变异聚合：`GET /pathway-variations?pathwayCode=AMI_STEMI` 返回跨实例变异；`GET /pathway-variations/summary?pathwayCode=AMI_STEMI` 返回按变异类型/路径/节点/患者的计数桶，已被 JUnit 覆盖。
 - 路径实例聚合：`GET /pathway-instances?pathwayCode=AMI_STEMI` 跨实例返回；`GET /pathway-instances/summary?pathwayCode=AMI_STEMI` 同时输出 `total/by_pathway_code/by_status/by_current_node/variation_total/variation_by_type`，质控看板可一次拿到在径数与变异数全景。
 - 路径节点完成率：`GET /pathway-instances/node-completion?pathwayCode=AMI_STEMI` 输出每个节点的 `entered/completed/running/waiting/completion_rate` 与节点内任务的 `total/completed/skipped/pending/completion_rate`，搭配实例与变异聚合形成质控看板第一版完整指标。
+- 路径节点滞留时长：`GET /pathway-instances/node-stay-duration?pathwayCode=AMI_STEMI` 输出每个节点的 `average_stay_ms/min_stay_ms/max_stay_ms/timeout_count/timeout_rate`，用于发现运行中节点卡点。
 - 候选路径：`AMI_STEMI`
 - 推荐评分：`90.45`
 - 置信度：`HIGH`
 - 路径导入校验：错误流转目标会返回 `VALIDATION_ERROR`，不会写入草稿。
 - 路径配置回查：`GET /pathways/AMI_STEMI?versionNo=1.0.0` 可返回发布配置原文。
+- 路径发布回滚：`POST /pathways/AMI_STEMI/rollback` 可把当前激活发布版本切回 `target_version`，之后未指定版本号的新入径会使用回滚后的激活版本。
 - 入径后首节点：`AMI_CHEST_PAIN_IDENTIFY`
 - 完成首节点后当前节点：`AMI_REPERFUSION_EVAL`
 - 首节点任务：`TASK_ECG` 可初始化并完成，完成时会通过 `ECG_ADAPTER/QUERY_ECG_REPORT` 自动拉取心电图 Mock 数据。
@@ -270,6 +275,7 @@ GET  /zy-engine/api/pathway-instances/node-completion?pathwayCode=&status=&patie
 - 图谱降级：`CHEST_PAIN` + `ST_ELEVATION_CONTIGUOUS_LEADS` 可返回 `AMI_STEMI` 和 `EV_AMI_001`；`sample_graph_versions.json` 中包含 2 条版本 + 3 条证据，通过 `POST /graph/versions` 与 `POST /graph/evidences` 导入后 `evidence` 接口会改返回 `REGISTERED_FALLBACK` 证据集。
 - Dify 降级：未配置真实 Dify 时返回 `DEGRADED`，不影响路径核心状态。
 - Dify 工作流模板：`sample_dify_workflows.json` 可通过 `POST /dify/workflows` 导入，`POST /dify/workflows/run` 调用已注册工作流时会按模板补全 `input_defaults`、校验 `required_inputs`，并在降级时返回模板的 `degraded_outputs`。
+- Dify 调用统计：`GET /dify/workflows/stats?workflowCode=WF_AMI_ENTRY_EXPLAIN` 返回 `total_calls/success_calls/degraded_calls/validation_error_calls/average_elapsed_ms`，并按工作流、状态、provider 聚合。
 - 字典映射：`HIS/I21.3/DIAGNOSIS` 可标准化为 `AMI_STEMI`，未知编码会返回 `UNMAPPED` 和 `PENDING_MAPPING`；`sample_dictionary_mappings.json` 可通过 `POST /terminology/mappings` 导入并经 `GET /terminology/mappings` 回查。
 - 适配器 Mock：`ECG_ADAPTER`、`LIS_ADAPTER`、`HIS_ADAPTER`、`EMR_WS_ADAPTER` 可返回 AMI 样例第三方数据；`sample_adapter_definitions.json` 可通过 `POST /adapters/definitions` 导入，未内置 Mock 的 `PACS_ADAPTER/QUERY_CHEST_CT` 调用会返回 `SUCCESS` 且 `row_count=0`。
 - Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录均可写入。

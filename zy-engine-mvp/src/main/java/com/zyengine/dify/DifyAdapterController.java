@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +35,25 @@ public class DifyAdapterController {
     @GetMapping("/workflows")
     public ApiResult<List<DifyWorkflowTemplate>> listTemplates() {
         return ApiResult.success(difyService.listTemplates());
+    }
+
+    @GetMapping("/workflows/stats")
+    public ApiResult<Map<String, Object>> invocationStats(@RequestParam(required = false) String workflowCode,
+                                                          @RequestParam(required = false) String workflowVersion,
+                                                          @RequestParam(required = false) String status,
+                                                          @RequestParam(required = false) String provider,
+                                                          @RequestParam(required = false) String patientId,
+                                                          @RequestParam(required = false) String encounterId,
+                                                          @RequestParam(required = false) String limit) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        filters.put("workflowCode", workflowCode);
+        filters.put("workflowVersion", workflowVersion);
+        filters.put("status", status);
+        filters.put("provider", provider);
+        filters.put("patientId", patientId);
+        filters.put("encounterId", encounterId);
+        filters.put("limit", limit);
+        return ApiResult.success(difyService.summarizeInvocations(filters));
     }
 
     @GetMapping("/workflows/{workflowCode}")

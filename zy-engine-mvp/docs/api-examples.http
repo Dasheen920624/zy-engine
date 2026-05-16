@@ -134,6 +134,10 @@ X-Trace-Id: trace-demo-instance-summary
 GET http://localhost:18080/zy-engine/api/pathway-instances/node-completion?pathwayCode=AMI_STEMI
 X-Trace-Id: trace-demo-node-completion
 
+### Pathway node stay duration metrics
+GET http://localhost:18080/zy-engine/api/pathway-instances/node-stay-duration?pathwayCode=AMI_STEMI
+X-Trace-Id: trace-demo-node-stay-duration
+
 ### Rule simulate
 POST http://localhost:18080/zy-engine/api/rules/simulate
 Content-Type: application/json
@@ -204,6 +208,17 @@ X-Trace-Id: trace-demo-pathway-config
 ### Diff pathway versions (compare published 1.0.0 vs draft)
 GET http://localhost:18080/zy-engine/api/pathways/AMI_STEMI/diff?from=1.0.0&to=draft
 X-Trace-Id: trace-demo-pathway-diff
+
+### Roll back active published pathway version
+POST http://localhost:18080/zy-engine/api/pathways/AMI_STEMI/rollback
+Content-Type: application/json
+X-Trace-Id: trace-demo-pathway-rollback
+
+{
+  "target_version": "1.0.0",
+  "operator_id": "D001",
+  "reason": "回滚到上一稳定路径配置"
+}
 
 ### Graph disease candidates
 POST http://localhost:18080/zy-engine/api/graph/disease-candidates
@@ -385,3 +400,7 @@ X-Trace-Id: trace-demo-dify-workflow
     "evidence_refs": ["EV_AMI_001"]
   }
 }
+
+### Dify workflow invocation stats
+GET http://localhost:18080/zy-engine/api/dify/workflows/stats?workflowCode=WF_AMI_ENTRY_EXPLAIN
+X-Trace-Id: trace-demo-dify-workflow-stats

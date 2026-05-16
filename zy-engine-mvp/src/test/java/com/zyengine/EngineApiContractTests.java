@@ -299,6 +299,49 @@ class EngineApiContractTests {
     }
 
     @Test
+    void pathwayPublishRollbackSwitchesActiveVersion() throws Exception {
+        Map<String, Object> v1 = samplePathwayConfig("AMI_ROLLBACK_TEST", "AMI回滚初版");
+        invokePost("/api/pathways", v1);
+        invokePost("/api/pathways/AMI_ROLLBACK_TEST/publish", new LinkedHashMap<String, Object>());
+
+        Map<String, Object> v2 = samplePathwayConfig("AMI_ROLLBACK_TEST", "AMI回滚新版");
+        v2.put("version_no", "2.0.0");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> stages = (List<Map<String, Object>>) v2.get("stages");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> nodes = (List<Map<String, Object>>) stages.get(0).get("nodes");
+        nodes.get(0).put("node_name", "识别新版");
+        invokePost("/api/pathways", v2);
+        invokePost("/api/pathways/AMI_ROLLBACK_TEST/publish", new LinkedHashMap<String, Object>());
+
+        Map<String, Object> latest = invokeGet("/api/pathways/AMI_ROLLBACK_TEST");
+        assertEquals("2.0.0", asMap(latest.get("data")).get("selected_version"));
+
+        Map<String, Object> rollbackBody = new LinkedHashMap<String, Object>();
+        rollbackBody.put("target_version", "1.0.0");
+        rollbackBody.put("operator_id", "ROLLBACK_DOC");
+        rollbackBody.put("reason", "JUnit 回滚验证。");
+        Map<String, Object> rollback = invokePost("/api/pathways/AMI_ROLLBACK_TEST/rollback", rollbackBody);
+        Map<String, Object> rollbackData = asMap(rollback.get("data"));
+        assertEquals("ROLLED_BACK", rollbackData.get("status"));
+        assertEquals("2.0.0", rollbackData.get("previous_active_version"));
+        assertEquals("1.0.0", rollbackData.get("active_version"));
+
+        Map<String, Object> afterRollback = invokeGet("/api/pathways/AMI_ROLLBACK_TEST");
+        Map<String, Object> data = asMap(afterRollback.get("data"));
+        assertEquals("1.0.0", data.get("selected_version"));
+        assertEquals("1.0.0", data.get("active_published_version"));
+
+        Map<String, Object> admitBody = new LinkedHashMap<String, Object>();
+        admitBody.put("patient_id", "P_ROLLBACK_001");
+        admitBody.put("encounter_id", "E_ROLLBACK_001");
+        admitBody.put("pathway_code", "AMI_ROLLBACK_TEST");
+        admitBody.put("doctor_id", "ROLLBACK_DOC");
+        Map<String, Object> admitted = invokePost("/api/patient-pathways/admit", admitBody);
+        assertEquals("1.0.0", asMap(admitted.get("data")).get("versionNo"));
+    }
+
+    @Test
     void pathwayNodeCompletionMetrics() throws Exception {
         Map<String, Object> pathwayConfig = samplePathwayConfig("AMI_NODE_TEST", "AMI节点完成率测试路径");
         invokePost("/api/pathways", pathwayConfig);
@@ -368,6 +411,57 @@ class EngineApiContractTests {
         assertEquals(1, ((Number) treatment.get("entered")).intValue());
         // 治疗节点没有任务，instance1 进入后保持 RUNNING（completeNode 自动进入下一节点但未完成）
         assertEquals(0, ((Number) treatment.get("completed")).intValue());
+    }
+
+    @Test
+    void pathwayNodeStayDurationMetrics() throws Exception {
+        Map<String, Object> pathwayConfig = samplePathwayConfig("AMI_STAY_TEST", "AMI节点滞留时长测试路径");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> stages = (List<Map<String, Object>>) pathwayConfig.get("stages");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> nodes = (List<Map<String, Object>>) stages.get(0).get("nodes");
+        nodes.get(0).put("expected_minutes", 30);
+        invokePost("/api/pathways", pathwayConfig);
+        invokePost("/api/pathways/AMI_STAY_TEST/publish", new LinkedHashMap<String, Object>());
+
+        Map<String, Object> admit1 = new LinkedHashMap<String, Object>();
+        admit1.put("patient_id", "P_STAY_001");
+        admit1.put("encounter_id", "E_STAY_001");
+        admit1.put("pathway_code", "AMI_STAY_TEST");
+        admit1.put("version_no", "1.0.0");
+        admit1.put("doctor_id", "STAY_DOC");
+        Map<String, Object> admitted1 = invokePost("/api/patient-pathways/admit", admit1);
+        String instance1 = (String) asMap(admitted1.get("data")).get("instanceId");
+
+        Map<String, Object> completeNode = new LinkedHashMap<String, Object>();
+        completeNode.put("operator_id", "STAY_DOC");
+        invokePost("/api/patient-pathways/" + instance1 + "/nodes/NODE_IDENTIFY/complete", completeNode);
+
+        Map<String, Object> admit2 = new LinkedHashMap<String, Object>();
+        admit2.put("patient_id", "P_STAY_002");
+        admit2.put("encounter_id", "E_STAY_002");
+        admit2.put("pathway_code", "AMI_STAY_TEST");
+        admit2.put("version_no", "1.0.0");
+        admit2.put("doctor_id", "STAY_DOC");
+        invokePost("/api/patient-pathways/admit", admit2);
+
+        Map<String, Object> resp = invokeGet("/api/pathway-instances/node-stay-duration?pathwayCode=AMI_STAY_TEST");
+        Map<String, Object> data = asMap(resp.get("data"));
+        assertEquals(2, ((Number) data.get("total_instances")).intValue());
+        assertEquals(3, ((Number) data.get("total_node_entries")).intValue());
+        assertTrue(((Number) data.get("average_stay_ms")).doubleValue() >= 0.0);
+
+        List<Map<String, Object>> durationNodes = asListOfMap(data.get("nodes"));
+        Map<String, Map<String, Object>> byNode = new LinkedHashMap<String, Map<String, Object>>();
+        for (Map<String, Object> node : durationNodes) {
+            byNode.put((String) node.get("node_code"), node);
+        }
+        Map<String, Object> identify = byNode.get("NODE_IDENTIFY");
+        assertEquals(2, ((Number) identify.get("entered")).intValue());
+        assertEquals(1, ((Number) identify.get("completed")).intValue());
+        assertEquals(1, ((Number) identify.get("running")).intValue());
+        assertEquals(30, ((Number) identify.get("expected_minutes")).intValue());
+        assertTrue(((Number) identify.get("max_stay_ms")).longValue() >= ((Number) identify.get("min_stay_ms")).longValue());
     }
 
     @Test
@@ -530,6 +624,45 @@ class EngineApiContractTests {
         Map<String, Object> outputs = asMap(data.get("outputs"));
         assertEquals("JUnit 模板降级输出。", outputs.get("explanation"));
         assertEquals("AMI_STEMI", outputs.get("target_code"));
+    }
+
+    @Test
+    void difyWorkflowInvocationStatsAggregateByTemplate() throws Exception {
+        Map<String, Object> template = new LinkedHashMap<String, Object>();
+        template.put("workflow_code", "WF_JUNIT_STATS");
+        template.put("workflow_name", "JUnit 统计工作流");
+        template.put("workflow_version", "1.0.0");
+        template.put("required_inputs", Arrays.asList("patient_id", "target_code"));
+        Map<String, Object> importBody = new LinkedHashMap<String, Object>();
+        importBody.put("templates", Arrays.asList(template));
+        invokePost("/api/dify/workflows", importBody);
+
+        Map<String, Object> missingRun = new LinkedHashMap<String, Object>();
+        missingRun.put("workflow_code", "WF_JUNIT_STATS");
+        missingRun.put("inputs", new LinkedHashMap<String, Object>());
+        Map<String, Object> validation = invokePostExpectingClientError("/api/dify/workflows/run", missingRun);
+        assertEquals("VALIDATION_ERROR", validation.get("code"));
+
+        Map<String, Object> runBody = new LinkedHashMap<String, Object>();
+        runBody.put("workflow_code", "WF_JUNIT_STATS");
+        Map<String, Object> inputs = new LinkedHashMap<String, Object>();
+        inputs.put("patient_id", "P_DIFY_STATS_001");
+        inputs.put("encounter_id", "E_DIFY_STATS_001");
+        inputs.put("target_code", "AMI_STEMI");
+        runBody.put("inputs", inputs);
+        invokePost("/api/dify/workflows/run", runBody);
+
+        Map<String, Object> statsResp = invokeGet("/api/dify/workflows/stats?workflowCode=WF_JUNIT_STATS");
+        Map<String, Object> stats = asMap(statsResp.get("data"));
+        assertEquals(2, ((Number) stats.get("total_calls")).intValue());
+        assertEquals(1, ((Number) stats.get("degraded_calls")).intValue());
+        assertEquals(1, ((Number) stats.get("validation_error_calls")).intValue());
+        assertTrue(((Number) stats.get("average_elapsed_ms")).doubleValue() >= 0.0);
+
+        List<Map<String, Object>> byWorkflow = asListOfMap(stats.get("by_workflow"));
+        assertEquals(1, byWorkflow.size());
+        assertEquals("WF_JUNIT_STATS", byWorkflow.get(0).get("workflow_code"));
+        assertEquals(2, ((Number) byWorkflow.get(0).get("total_calls")).intValue());
     }
 
     @Test

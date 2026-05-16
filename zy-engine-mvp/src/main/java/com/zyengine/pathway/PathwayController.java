@@ -55,6 +55,12 @@ public class PathwayController {
         return ApiResult.success(pathwayService.publish(pathwayCode, request));
     }
 
+    @PostMapping("/pathways/{pathwayCode}/rollback")
+    public ApiResult<Map<String, Object>> rollbackPathway(@PathVariable String pathwayCode,
+                                                          @RequestBody(required = false) Map<String, Object> request) {
+        return ApiResult.success(pathwayService.rollback(pathwayCode, request));
+    }
+
     @PostMapping("/patient-pathways/candidates")
     public ApiResult<List<RecommendationCard>> candidates(@RequestBody Map<String, Object> patientContext) {
         return ApiResult.success(pathwayService.candidates(patientContext));
@@ -148,6 +154,19 @@ public class PathwayController {
         filters.put("patientId", patientId);
         filters.put("encounterId", encounterId);
         return ApiResult.success(pathwayService.summarizeNodeCompletion(filters));
+    }
+
+    @GetMapping("/pathway-instances/node-stay-duration")
+    public ApiResult<Map<String, Object>> nodeStayDuration(@RequestParam(required = false) String pathwayCode,
+                                                           @RequestParam(required = false) String status,
+                                                           @RequestParam(required = false) String patientId,
+                                                           @RequestParam(required = false) String encounterId) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("pathwayCode", pathwayCode);
+        filters.put("status", status);
+        filters.put("patientId", patientId);
+        filters.put("encounterId", encounterId);
+        return ApiResult.success(pathwayService.summarizeNodeStayDuration(filters));
     }
 
     @GetMapping("/pathway-variations")

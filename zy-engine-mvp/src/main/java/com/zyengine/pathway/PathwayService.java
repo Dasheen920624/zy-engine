@@ -12,6 +12,7 @@ import com.zyengine.rule.RuleService;
 import com.zyengine.util.ClinicalFactUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class PathwayService {
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
     private final Map<String, Map<String, Object>> pathwayDrafts = new ConcurrentHashMap<String, Map<String, Object>>();
     private final Map<String, Map<String, Object>> publishedPathways = new ConcurrentHashMap<String, Map<String, Object>>();
+    private final Map<String, String> activePublishedVersions = new ConcurrentHashMap<String, String>();
     private final Map<String, Map<String, PatientNodeState>> nodeStates = new ConcurrentHashMap<String, Map<String, PatientNodeState>>();
     private final Map<String, List<PathwayVariationRecord>> variationRecords = new ConcurrentHashMap<String, List<PathwayVariationRecord>>();
 
@@ -72,6 +74,7 @@ public class PathwayService {
             config.put("version", versionNo);
         }
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
+        activePublishedVersions.put(pathwayCode, versionNo);
         persistenceService.savePathwayVersion(pathwayCode, versionNo, "PUBLISHED", config);
         persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED");
 
@@ -79,6 +82,39 @@ public class PathwayService {
         result.put("pathway_code", pathwayCode);
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
+        result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
+        return result;
+    }
+
+    public Map<String, Object> rollback(String pathwayCode, Map<String, Object> request) {
+        String targetVersion = string(request == null ? null : request.get("target_version"), null);
+        if (targetVersion == null) {
+            targetVersion = string(request == null ? null : request.get("rollback_to_version"), null);
+        }
+        if (targetVersion == null) {
+            targetVersion = string(request == null ? null : request.get("version_no"), null);
+        }
+        if (targetVersion == null) {
+            throw new IllegalArgumentException("target_version is required");
+        }
+
+        Map<String, Object> targetConfig = publishedPathways.get(pathwayKey(pathwayCode, targetVersion));
+        if (targetConfig == null) {
+            throw new IllegalArgumentException("pathway version not found: " + pathwayCode + "@" + targetVersion);
+        }
+
+        String previousVersion = activeVersion(pathwayCode, null);
+        activePublishedVersions.put(pathwayCode, targetVersion);
+        persistenceService.savePathwayVersion(pathwayCode, targetVersion, "PUBLISHED", targetConfig);
+        persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED");
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("previous_active_version", previousVersion);
+        result.put("active_version", targetVersion);
+        result.put("status", "ROLLED_BACK");
+        result.put("operator_id", string(request == null ? null : request.get("operator_id"), null));
+        result.put("reason", string(request == null ? null : request.get("reason"), null));
         result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
         return result;
     }
@@ -98,6 +134,7 @@ public class PathwayService {
             List<String> versions = publishedVersions(pathwayCode);
             item.put("published_versions", versions);
             item.put("latest_published_version", versions.isEmpty() ? null : versions.get(versions.size() - 1));
+            item.put("active_published_version", activeVersion(pathwayCode, versions.isEmpty() ? null : versions.get(versions.size() - 1)));
             list.add(item);
         }
         return list;
@@ -345,7 +382,7 @@ public class PathwayService {
     public Map<String, Object> getPathway(String pathwayCode, String versionNo) {
         Map<String, Object> draft = pathwayDrafts.get(pathwayCode);
         List<String> versions = publishedVersions(pathwayCode);
-        String selectedVersion = string(versionNo, versions.isEmpty() ? null : versions.get(versions.size() - 1));
+        String selectedVersion = string(versionNo, activeVersion(pathwayCode, versions.isEmpty() ? null : versions.get(versions.size() - 1)));
         Map<String, Object> published = selectedVersion == null ? null
                 : publishedPathways.get(pathwayKey(pathwayCode, selectedVersion));
 
@@ -357,6 +394,7 @@ public class PathwayService {
         result.put("pathway_code", pathwayCode);
         result.put("draft_status", draft == null ? "NONE" : "DRAFT");
         result.put("published_versions", versions);
+        result.put("active_published_version", activeVersion(pathwayCode, versions.isEmpty() ? null : versions.get(versions.size() - 1)));
         result.put("selected_version", selectedVersion);
         result.put("draft_config", draft);
         result.put("published_config", published);
@@ -387,7 +425,7 @@ public class PathwayService {
     public PatientPathwayInstance admit(Map<String, Object> request) {
         String encounterId = String.valueOf(request.get("encounter_id"));
         String pathwayCode = String.valueOf(request.get("pathway_code"));
-        String versionNo = string(request.get("version_no"), "1.0.0");
+        String versionNo = string(request.get("version_no"), activeVersion(pathwayCode, "1.0.0"));
         Map<String, Object> config = publishedPathways.get(pathwayKey(pathwayCode, versionNo));
         String key = encounterId + "::" + pathwayCode;
         PatientPathwayInstance existing = activeInstances.get(key);
@@ -688,6 +726,116 @@ public class PathwayService {
                 ? 0.0 : Math.round((totalCompleted * 10000.0 / totalEntered)) / 100.0);
         summary.put("nodes", nodes);
         return summary;
+    }
+
+    public Map<String, Object> summarizeNodeStayDuration(Map<String, String> filters) {
+        List<PatientPathwayInstance> instances = listInstances(merge(filters, "limit", String.valueOf(Integer.MAX_VALUE)));
+        Map<String, NodeDurationAggregate> aggregates = new LinkedHashMap<String, NodeDurationAggregate>();
+        OffsetDateTime now = OffsetDateTime.now();
+        for (PatientPathwayInstance instance : instances) {
+            Map<String, PatientNodeState> states = nodeStates.get(instance.getInstanceId());
+            if (states == null) {
+                continue;
+            }
+            Map<String, Object> config = publishedConfig(instance);
+            for (PatientNodeState nodeState : states.values()) {
+                String nodeCode = nodeState.getNodeCode();
+                NodeDurationAggregate agg = aggregates.get(nodeCode);
+                if (agg == null) {
+                    agg = new NodeDurationAggregate(nodeCode, nodeState.getNodeName(),
+                            expectedMinutes(config, nodeCode));
+                    aggregates.put(nodeCode, agg);
+                }
+                agg.record(nodeState, stayMillis(nodeState, now));
+            }
+        }
+
+        List<Map<String, Object>> nodes = new ArrayList<Map<String, Object>>();
+        List<String> orderedKeys = new ArrayList<String>(aggregates.keySet());
+        Collections.sort(orderedKeys);
+        int totalEntries = 0;
+        int totalCompleted = 0;
+        int totalRunning = 0;
+        long totalStayMs = 0L;
+        for (String nodeCode : orderedKeys) {
+            NodeDurationAggregate agg = aggregates.get(nodeCode);
+            nodes.add(agg.toView());
+            totalEntries += agg.entered;
+            totalCompleted += agg.completed;
+            totalRunning += agg.running;
+            totalStayMs += agg.totalStayMs;
+        }
+
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("total_instances", instances.size());
+        summary.put("total_node_entries", totalEntries);
+        summary.put("completed_node_entries", totalCompleted);
+        summary.put("running_node_entries", totalRunning);
+        summary.put("average_stay_ms", totalEntries == 0 ? 0.0 : Math.round((totalStayMs * 100.0 / totalEntries)) / 100.0);
+        summary.put("average_stay_minutes", totalEntries == 0 ? 0.0
+                : Math.round((totalStayMs / 60000.0 * 100.0 / totalEntries)) / 100.0);
+        summary.put("nodes", nodes);
+        return summary;
+    }
+
+    private static class NodeDurationAggregate {
+        private final String nodeCode;
+        private final String nodeName;
+        private final Integer expectedMinutes;
+        private int entered;
+        private int completed;
+        private int running;
+        private int waiting;
+        private int timeout;
+        private long totalStayMs;
+        private long minStayMs = Long.MAX_VALUE;
+        private long maxStayMs;
+
+        NodeDurationAggregate(String nodeCode, String nodeName, Integer expectedMinutes) {
+            this.nodeCode = nodeCode;
+            this.nodeName = nodeName;
+            this.expectedMinutes = expectedMinutes;
+        }
+
+        void record(PatientNodeState nodeState, long stayMs) {
+            entered++;
+            totalStayMs += stayMs;
+            minStayMs = Math.min(minStayMs, stayMs);
+            maxStayMs = Math.max(maxStayMs, stayMs);
+            if ("COMPLETED".equals(nodeState.getStatus())) {
+                completed++;
+            } else if ("RUNNING".equals(nodeState.getStatus())) {
+                running++;
+            } else {
+                waiting++;
+            }
+            if (isTimeout(stayMs)) {
+                timeout++;
+            }
+        }
+
+        private boolean isTimeout(long stayMs) {
+            return expectedMinutes != null && expectedMinutes > 0 && stayMs > expectedMinutes * 60000L;
+        }
+
+        Map<String, Object> toView() {
+            Map<String, Object> view = new LinkedHashMap<String, Object>();
+            view.put("node_code", nodeCode);
+            view.put("node_name", nodeName);
+            view.put("expected_minutes", expectedMinutes);
+            view.put("entered", entered);
+            view.put("completed", completed);
+            view.put("running", running);
+            view.put("waiting", waiting);
+            view.put("timeout_count", timeout);
+            view.put("timeout_rate", entered == 0 ? 0.0 : Math.round((timeout * 10000.0 / entered)) / 100.0);
+            view.put("average_stay_ms", entered == 0 ? 0.0 : Math.round((totalStayMs * 100.0 / entered)) / 100.0);
+            view.put("average_stay_minutes", entered == 0 ? 0.0
+                    : Math.round((totalStayMs / 60000.0 * 100.0 / entered)) / 100.0);
+            view.put("min_stay_ms", entered == 0 ? 0L : minStayMs);
+            view.put("max_stay_ms", maxStayMs);
+            return view;
+        }
     }
 
     private static class NodeAggregate {
@@ -1199,6 +1347,58 @@ public class PathwayService {
         }
         Collections.sort(versions);
         return versions;
+    }
+
+    private String activeVersion(String pathwayCode, String defaultValue) {
+        String active = activePublishedVersions.get(pathwayCode);
+        if (active != null && publishedPathways.containsKey(pathwayKey(pathwayCode, active))) {
+            return active;
+        }
+        return defaultValue;
+    }
+
+    private Integer expectedMinutes(Map<String, Object> config, String nodeCode) {
+        Map<String, Object> node = configSupport.findNode(config, nodeCode);
+        if (node == null) {
+            return null;
+        }
+        Object value = node.get("expected_minutes");
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private long stayMillis(PatientNodeState nodeState, OffsetDateTime now) {
+        OffsetDateTime enter = parseTime(nodeState.getEnterTime());
+        if (enter == null) {
+            return 0L;
+        }
+        OffsetDateTime end = "COMPLETED".equals(nodeState.getStatus())
+                ? parseTime(nodeState.getCompleteTime()) : now;
+        if (end == null || end.isBefore(enter)) {
+            end = now;
+        }
+        long millis = Duration.between(enter, end).toMillis();
+        return Math.max(0L, millis);
+    }
+
+    private OffsetDateTime parseTime(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(text);
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 
     private String required(Map<String, Object> map, String key) {
