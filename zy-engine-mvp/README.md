@@ -39,6 +39,12 @@ docs/编码与中文备注规范.md
 docs/产品化方案与AI开发编排.md
 ```
 
+其它 AI 接手执行流程见：
+
+```text
+docs/AI接手执行手册.md
+```
+
 ## 推荐命令行
 
 本机已验证可使用 PowerShell 7。后续建议使用 Windows Terminal 打开 PowerShell 7，命令为：

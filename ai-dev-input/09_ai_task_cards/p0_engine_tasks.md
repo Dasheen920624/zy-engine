@@ -1,5 +1,7 @@
 # P0开发任务清单
 
+> 说明：本文是早期 MVP 阶段的历史任务清单，用于理解项目起点。后续产品化开发请以 `zy-engine-mvp/docs/AI接手执行手册.md` 和 `zy-engine-mvp/docs/产品化方案与AI开发编排.md` 为准。若任务编号或验收口径冲突，以最新产品化总纲为准。
+
 ## 公共基础
 
 ### COMMON-001 统一ApiResult、错误码、trace_id
@@ -129,4 +131,3 @@
 
 验收：
 - 模拟Dify超时时返回DIFY_TIMEOUT，不影响路径候选识别。
-
