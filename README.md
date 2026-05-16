@@ -32,8 +32,7 @@
 - [ai-dev-input](ai-dev-input/README.md)：AI 可执行规格包，包含 OpenAPI、JSON Schema、DDL、样例数据、测试矩阵和任务卡。
 - [zy-engine-mvp/docs](zy-engine-mvp/docs)：产品化总纲、AI 接手手册、API 示例、编码规范、研发任务拆解。
 - [ai-dev-input/09_ai_task_cards](ai-dev-input/09_ai_task_cards)：AI 系统提示词、后端提示词模板、任务卡模板、历史 P0 任务。
-- [项目总控计划.md](项目总控计划.md)：早期总控计划，后续以 `zy-engine-mvp/docs` 下的最新总纲为准。
-- 早期产品方案和原型 HTML：用于理解业务背景，不能替代当前开发约定。
+- [docs/legacy-materials](docs/legacy-materials/README.md)：早期产品方案、演示原型、总控计划和历史说明，仅用于理解业务背景，不能替代当前开发约定。
 
 ## 当前后端能力
 
