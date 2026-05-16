@@ -138,6 +138,18 @@ X-Trace-Id: trace-demo-node-completion
 GET http://localhost:18080/zy-engine/api/pathway-instances/node-stay-duration?pathwayCode=AMI_STEMI
 X-Trace-Id: trace-demo-node-stay-duration
 
+### Quality dashboard aggregate metrics
+GET http://localhost:18080/zy-engine/api/quality/metrics?pathwayCode=AMI_STEMI&workflowCode=WF_AMI_ENTRY_EXPLAIN
+X-Trace-Id: trace-demo-quality-metrics
+
+### List audit logs
+GET http://localhost:18080/zy-engine/api/audit-logs?engineType=PATHWAY&limit=20
+X-Trace-Id: trace-demo-audit-list
+
+### Audit log summary
+GET http://localhost:18080/zy-engine/api/audit-logs/summary?engineType=PATHWAY
+X-Trace-Id: trace-demo-audit-summary
+
 ### Rule simulate
 POST http://localhost:18080/zy-engine/api/rules/simulate
 Content-Type: application/json

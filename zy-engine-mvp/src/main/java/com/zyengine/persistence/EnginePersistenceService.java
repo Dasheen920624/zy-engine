@@ -17,12 +17,23 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class EnginePersistenceService {
+    private static final int MAX_AUDIT_RECORDS = 500;
+
     private final EnginePersistenceProperties properties;
     private final ObjectMapper objectMapper;
+    private final List<Map<String, Object>> auditRecords =
+            Collections.synchronizedList(new ArrayList<Map<String, Object>>());
 
     public EnginePersistenceService(EnginePersistenceProperties properties, ObjectMapper objectMapper) {
         this.properties = properties;
@@ -336,6 +347,9 @@ public class EnginePersistenceService {
 
     public void saveAuditLog(String engineType, String actionType, String targetType, String targetCode,
                              String patientId, String encounterId, String operatorId, Map<String, Object> detail) {
+        String traceId = TraceContext.getTraceId();
+        recordAuditLog(traceId, engineType, actionType, targetType, targetCode,
+                patientId, encounterId, operatorId, detail);
         if (!enabled()) {
             return;
         }
@@ -346,7 +360,7 @@ public class EnginePersistenceService {
              PreparedStatement ps = connection.prepareStatement(sql)) {
             int i = 1;
             ps.setLong(i++, Ids.next());
-            ps.setString(i++, TraceContext.getTraceId());
+            ps.setString(i++, traceId);
             ps.setString(i++, engineType);
             ps.setString(i++, actionType);
             ps.setString(i++, targetType);
@@ -359,6 +373,122 @@ public class EnginePersistenceService {
         } catch (SQLException ex) {
             throw new IllegalStateException("save audit log failed: " + ex.getMessage(), ex);
         }
+    }
+
+    public List<Map<String, Object>> listAuditLogs(Map<String, String> filters) {
+        String traceId = filterValue(filters, "traceId");
+        String engineType = filterValue(filters, "engineType");
+        String actionType = filterValue(filters, "actionType");
+        String targetType = filterValue(filters, "targetType");
+        String targetCode = filterValue(filters, "targetCode");
+        String patientId = filterValue(filters, "patientId");
+        String encounterId = filterValue(filters, "encounterId");
+        String operatorId = filterValue(filters, "operatorId");
+        int limit = filterInt(filters, "limit", 100);
+        if (limit <= 0) {
+            limit = 100;
+        }
+
+        List<Map<String, Object>> snapshot;
+        synchronized (auditRecords) {
+            snapshot = new ArrayList<Map<String, Object>>(auditRecords);
+        }
+        Collections.reverse(snapshot);
+
+        List<Map<String, Object>> matched = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> record : snapshot) {
+            if (traceId != null && !traceId.equals(string(record.get("trace_id"), null))) {
+                continue;
+            }
+            if (engineType != null && !engineType.equalsIgnoreCase(string(record.get("engine_type"), null))) {
+                continue;
+            }
+            if (actionType != null && !actionType.equalsIgnoreCase(string(record.get("action_type"), null))) {
+                continue;
+            }
+            if (targetType != null && !targetType.equalsIgnoreCase(string(record.get("target_type"), null))) {
+                continue;
+            }
+            if (targetCode != null && !targetCode.equalsIgnoreCase(string(record.get("target_code"), null))) {
+                continue;
+            }
+            if (patientId != null && !patientId.equals(string(record.get("patient_id"), null))) {
+                continue;
+            }
+            if (encounterId != null && !encounterId.equals(string(record.get("encounter_id"), null))) {
+                continue;
+            }
+            if (operatorId != null && !operatorId.equals(string(record.get("operator_id"), null))) {
+                continue;
+            }
+            matched.add(new LinkedHashMap<String, Object>(record));
+            if (matched.size() >= limit) {
+                break;
+            }
+        }
+        return matched;
+    }
+
+    public Map<String, Object> summarizeAuditLogs(Map<String, String> filters) {
+        Map<String, String> merged = new LinkedHashMap<String, String>();
+        if (filters != null) {
+            merged.putAll(filters);
+        }
+        merged.put("limit", String.valueOf(Integer.MAX_VALUE));
+        List<Map<String, Object>> records = listAuditLogs(merged);
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("total", records.size());
+        summary.put("by_engine_type", aggregateAudit(records, "engine_type"));
+        summary.put("by_action_type", aggregateAudit(records, "action_type"));
+        summary.put("by_target_type", aggregateAudit(records, "target_type"));
+        return summary;
+    }
+
+    private void recordAuditLog(String traceId, String engineType, String actionType, String targetType, String targetCode,
+                                String patientId, String encounterId, String operatorId, Map<String, Object> detail) {
+        Map<String, Object> record = new LinkedHashMap<String, Object>();
+        record.put("trace_id", traceId);
+        record.put("engine_type", engineType);
+        record.put("action_type", actionType);
+        record.put("target_type", targetType);
+        record.put("target_code", targetCode);
+        record.put("patient_id", patientId);
+        record.put("encounter_id", encounterId);
+        record.put("operator_id", operatorId);
+        record.put("detail", detail == null
+                ? new LinkedHashMap<String, Object>() : new LinkedHashMap<String, Object>(detail));
+        record.put("created_time", nowText());
+        synchronized (auditRecords) {
+            auditRecords.add(record);
+            while (auditRecords.size() > MAX_AUDIT_RECORDS) {
+                auditRecords.remove(0);
+            }
+        }
+    }
+
+    private List<Map<String, Object>> aggregateAudit(List<Map<String, Object>> records, String dimension) {
+        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
+        for (Map<String, Object> record : records) {
+            String key = string(record.get(dimension), "UNKNOWN");
+            Integer count = counts.get(key);
+            counts.put(key, count == null ? 1 : count + 1);
+        }
+        List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(counts.entrySet());
+        Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
+            @Override
+            public int compare(Map.Entry<String, Integer> left, Map.Entry<String, Integer> right) {
+                int byCount = right.getValue().compareTo(left.getValue());
+                return byCount != 0 ? byCount : left.getKey().compareTo(right.getKey());
+            }
+        });
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (Map.Entry<String, Integer> entry : entries) {
+            Map<String, Object> bucket = new LinkedHashMap<String, Object>();
+            bucket.put(dimension, entry.getKey());
+            bucket.put("count", entry.getValue());
+            result.add(bucket);
+        }
+        return result;
     }
 
     private Connection connection() throws SQLException {
@@ -397,6 +527,30 @@ public class EnginePersistenceService {
         }
         String text = String.valueOf(value);
         return text.trim().isEmpty() ? defaultValue : text;
+    }
+
+    private String filterValue(Map<String, String> filters, String key) {
+        if (filters == null) {
+            return null;
+        }
+        String value = filters.get(key);
+        return value == null || value.trim().isEmpty() ? null : value.trim();
+    }
+
+    private int filterInt(Map<String, String> filters, String key, int defaultValue) {
+        String value = filterValue(filters, key);
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private String nowText() {
+        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
     }
 
     private String truncate(String text, int maxLength) {

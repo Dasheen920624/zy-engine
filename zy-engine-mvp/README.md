@@ -253,6 +253,9 @@ GET  /zy-engine/api/pathway-instances?pathwayCode=&status=&patientId=&encounterI
 GET  /zy-engine/api/pathway-instances/summary?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=
 GET  /zy-engine/api/pathway-instances/node-completion?pathwayCode=&status=&patientId=&encounterId=
 GET  /zy-engine/api/pathway-instances/node-stay-duration?pathwayCode=&status=&patientId=&encounterId=
+GET  /zy-engine/api/quality/metrics?pathwayCode=&status=&patientId=&encounterId=&currentNodeCode=&workflowCode=
+GET  /zy-engine/api/audit-logs?engineType=&actionType=&targetType=&targetCode=&patientId=&encounterId=&traceId=&limit=100
+GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targetCode=&patientId=&encounterId=&traceId=
 ```
 
 已验证结果：
@@ -262,6 +265,7 @@ GET  /zy-engine/api/pathway-instances/node-stay-duration?pathwayCode=&status=&pa
 - 路径实例聚合：`GET /pathway-instances?pathwayCode=AMI_STEMI` 跨实例返回；`GET /pathway-instances/summary?pathwayCode=AMI_STEMI` 同时输出 `total/by_pathway_code/by_status/by_current_node/variation_total/variation_by_type`，质控看板可一次拿到在径数与变异数全景。
 - 路径节点完成率：`GET /pathway-instances/node-completion?pathwayCode=AMI_STEMI` 输出每个节点的 `entered/completed/running/waiting/completion_rate` 与节点内任务的 `total/completed/skipped/pending/completion_rate`，搭配实例与变异聚合形成质控看板第一版完整指标。
 - 路径节点滞留时长：`GET /pathway-instances/node-stay-duration?pathwayCode=AMI_STEMI` 输出每个节点的 `average_stay_ms/min_stay_ms/max_stay_ms/timeout_count/timeout_rate`，用于发现运行中节点卡点。
+- 质控指标聚合：`GET /quality/metrics?pathwayCode=AMI_STEMI` 一次返回实例摘要、变异摘要、节点完成率、节点滞留时长和 Dify 调用统计，作为质控看板后端聚合入口。
 - 候选路径：`AMI_STEMI`
 - 推荐评分：`90.45`
 - 置信度：`HIGH`
@@ -279,6 +283,7 @@ GET  /zy-engine/api/pathway-instances/node-stay-duration?pathwayCode=&status=&pa
 - 字典映射：`HIS/I21.3/DIAGNOSIS` 可标准化为 `AMI_STEMI`，未知编码会返回 `UNMAPPED` 和 `PENDING_MAPPING`；`sample_dictionary_mappings.json` 可通过 `POST /terminology/mappings` 导入并经 `GET /terminology/mappings` 回查。
 - 适配器 Mock：`ECG_ADAPTER`、`LIS_ADAPTER`、`HIS_ADAPTER`、`EMR_WS_ADAPTER` 可返回 AMI 样例第三方数据；`sample_adapter_definitions.json` 可通过 `POST /adapters/definitions` 导入，未内置 Mock 的 `PACS_ADAPTER/QUERY_CHEST_CT` 调用会返回 `SUCCESS` 且 `row_count=0`。
 - Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录均可写入。
+- 审计日志查询：`GET /audit-logs?engineType=PATHWAY` 与 `GET /audit-logs/summary?engineType=PATHWAY` 可查询内存审计环形缓冲；Oracle 开启时仍会同步写入 `ENGINE_AUDIT_LOG`。
 
 ## 当前边界
 

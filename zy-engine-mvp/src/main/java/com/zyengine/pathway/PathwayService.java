@@ -62,6 +62,7 @@ public class PathwayService {
         result.put("status", "DRAFT");
         result.put("validation", "PASSED");
         result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
+        audit("CREATE_DRAFT", "PATHWAY", pathwayCode, null, result, null);
         return result;
     }
 
@@ -83,6 +84,8 @@ public class PathwayService {
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
         result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
+        audit("PUBLISH", "PATHWAY", pathwayCode, null, result,
+                string(request == null ? null : request.get("approved_by"), null));
         return result;
     }
 
@@ -116,6 +119,8 @@ public class PathwayService {
         result.put("operator_id", string(request == null ? null : request.get("operator_id"), null));
         result.put("reason", string(request == null ? null : request.get("reason"), null));
         result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
+        audit("ROLLBACK", "PATHWAY", pathwayCode, null, result,
+                string(request == null ? null : request.get("operator_id"), null));
         return result;
     }
 
@@ -447,6 +452,12 @@ public class PathwayService {
 
         persistenceService.savePatientInstance(instance, String.valueOf(request.get("doctor_id")));
         enterNode(instance, config, firstNodeCode);
+        Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
+        auditDetail.put("pathway_code", pathwayCode);
+        auditDetail.put("version_no", versionNo);
+        auditDetail.put("current_node_code", firstNodeCode);
+        audit("ADMIT", "PATIENT_PATHWAY", pathwayCode, instance, auditDetail,
+                string(request.get("doctor_id"), null));
         return instance;
     }
 
@@ -512,6 +523,12 @@ public class PathwayService {
                     enterNode(instance, config, nextNodeCode);
                 }
                 persistenceService.savePatientInstance(instance, null);
+                Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
+                auditDetail.put("node_code", nodeCode);
+                auditDetail.put("next_node_code", nextNodeCode);
+                auditDetail.put("status", "COMPLETED");
+                audit("COMPLETE_NODE", "PATHWAY_NODE", nodeCode, instance, auditDetail,
+                        string(request == null ? null : request.get("operator_id"), null));
                 return instance;
             }
         }
@@ -561,6 +578,13 @@ public class PathwayService {
         taskState.setUpdatedTime(nowText());
         taskState.setResult(resultSnapshot(request, taskConfig, instance, nodeCode, taskCode, status));
         persistenceService.saveTaskState(taskState);
+        Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
+        auditDetail.put("node_code", nodeCode);
+        auditDetail.put("task_code", taskCode);
+        auditDetail.put("status", status);
+        audit(("COMPLETED".equals(status) ? "COMPLETE_TASK" : "SKIP_TASK"), "PATHWAY_TASK",
+                nodeCode + "." + taskCode, instance, auditDetail,
+                string(request == null ? null : request.get("operator_id"), null));
         return taskState;
     }
 
@@ -631,6 +655,13 @@ public class PathwayService {
         variation.setCreatedTime(nowText());
         variations(instance.getInstanceId()).add(variation);
         persistenceService.saveVariationRecord(variation);
+        Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
+        auditDetail.put("variation_id", variation.getVariationId());
+        auditDetail.put("node_code", variation.getNodeCode());
+        auditDetail.put("variation_type", variation.getVariationType());
+        auditDetail.put("reason", variation.getReason());
+        audit("RECORD_VARIATION", "PATHWAY_VARIATION", variation.getVariationId(), instance, auditDetail,
+                variation.getOperatorId());
         return variation;
     }
 
@@ -1398,6 +1429,19 @@ public class PathwayService {
             return OffsetDateTime.parse(text);
         } catch (RuntimeException ex) {
             return null;
+        }
+    }
+
+    private void audit(String actionType, String targetType, String targetCode, PatientPathwayInstance instance,
+                       Map<String, Object> detail, String operatorId) {
+        try {
+            persistenceService.saveAuditLog("PATHWAY", actionType, targetType, targetCode,
+                    instance == null ? null : instance.getPatientId(),
+                    instance == null ? null : instance.getEncounterId(),
+                    operatorId,
+                    detail == null ? new LinkedHashMap<String, Object>() : detail);
+        } catch (RuntimeException ignored) {
+            // 路径核心状态变更不能因为审计落库失败中断。
         }
     }
 

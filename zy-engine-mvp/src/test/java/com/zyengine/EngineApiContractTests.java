@@ -575,6 +575,46 @@ class EngineApiContractTests {
     }
 
     @Test
+    void qualityMetricsAndAuditLogsExposeOperationalView() throws Exception {
+        Map<String, Object> pathwayConfig = samplePathwayConfig("AMI_QC_TEST", "AMI质控聚合测试路径");
+        invokePost("/api/pathways", pathwayConfig);
+        invokePost("/api/pathways/AMI_QC_TEST/publish", new LinkedHashMap<String, Object>());
+
+        Map<String, Object> admitBody = new LinkedHashMap<String, Object>();
+        admitBody.put("patient_id", "P_QC_001");
+        admitBody.put("encounter_id", "E_QC_001");
+        admitBody.put("pathway_code", "AMI_QC_TEST");
+        admitBody.put("version_no", "1.0.0");
+        admitBody.put("doctor_id", "QC_DOC");
+        Map<String, Object> admitted = invokePost("/api/patient-pathways/admit", admitBody);
+        String instanceId = (String) asMap(admitted.get("data")).get("instanceId");
+
+        Map<String, Object> skipBody = new LinkedHashMap<String, Object>();
+        skipBody.put("operator_id", "QC_DOC");
+        skipBody.put("variation_type", "RESOURCE_LIMIT");
+        skipBody.put("reason", "质控聚合测试：资源等待。");
+        invokePost("/api/patient-pathways/" + instanceId + "/nodes/NODE_IDENTIFY/tasks/TASK_TRIAGE/skip", skipBody);
+
+        Map<String, Object> metricsResp = invokeGet("/api/quality/metrics?pathwayCode=AMI_QC_TEST");
+        Map<String, Object> metrics = asMap(metricsResp.get("data"));
+        assertEquals("AMI_QC_TEST", metrics.get("pathway_code"));
+        assertEquals(1, ((Number) asMap(metrics.get("instance_summary")).get("total")).intValue());
+        assertEquals(1, ((Number) asMap(metrics.get("variation_summary")).get("total")).intValue());
+        assertEquals(1, ((Number) asMap(metrics.get("node_completion")).get("total_instances")).intValue());
+        assertTrue(((Number) asMap(metrics.get("node_stay_duration")).get("total_node_entries")).intValue() >= 1);
+
+        Map<String, Object> publishAudit = invokeGet("/api/audit-logs?engineType=PATHWAY&actionType=PUBLISH&targetCode=AMI_QC_TEST");
+        List<Map<String, Object>> publishRecords = asListOfMap(publishAudit.get("data"));
+        assertFalse(publishRecords.isEmpty(), "publish audit log should be queryable");
+        assertEquals("PATHWAY", publishRecords.get(0).get("engine_type"));
+        assertEquals("PUBLISH", publishRecords.get(0).get("action_type"));
+
+        Map<String, Object> auditSummaryResp = invokeGet("/api/audit-logs/summary?engineType=PATHWAY&targetCode=AMI_QC_TEST");
+        Map<String, Object> auditSummary = asMap(auditSummaryResp.get("data"));
+        assertTrue(((Number) auditSummary.get("total")).intValue() >= 2);
+    }
+
+    @Test
     void difyWorkflowTemplateImportAndDegradedRun() throws Exception {
         Map<String, Object> template = new LinkedHashMap<String, Object>();
         template.put("workflow_code", "WF_JUNIT_EXPLAIN");
