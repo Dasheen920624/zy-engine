@@ -33,6 +33,12 @@ Oracle 中文表备注和字段备注推荐执行 `db/oracle/zyengine_comments_u
 docs/编码与中文备注规范.md
 ```
 
+产品化总纲、集团化医院支持方案、跨环境一致性、AI 协作开发约定见：
+
+```text
+docs/产品化方案与AI开发编排.md
+```
+
 ## 推荐命令行
 
 本机已验证可使用 PowerShell 7。后续建议使用 Windows Terminal 打开 PowerShell 7，命令为：
