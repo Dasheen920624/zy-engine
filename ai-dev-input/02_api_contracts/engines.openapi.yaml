@@ -378,6 +378,127 @@ paths:
                                   type: string
                                 message:
                                   type: string
+                          result_id:
+                            type: string
+                          source:
+                            type: string
+                          created_time:
+                            type: string
+                          operator_id:
+                            type: string
+                            nullable: true
+                          tenant_id:
+                            type: string
+                            nullable: true
+                          patient_id:
+                            type: string
+                            nullable: true
+                          encounter_id:
+                            type: string
+                            nullable: true
+  /rule-engine/batch-evaluate:
+    post:
+      tags: [RuleEngine]
+      summary: 第三方规则引擎批量评估
+      description: |
+        items 内每条 patient_context 共享 scenario_code/rule_package_code 过滤条件，
+        每条独立返回 result_id 并落入评估环形缓冲，整次调用共享同一个 batch_id 便于聚合回查。
+      operationId: ruleEngineBatchEvaluate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scenario_code, items]
+              properties:
+                scenario_code:
+                  type: string
+                  enum: [PATHWAY_ENTRY, EMR_QC, INSURANCE_QC, ORDER_SAFETY, DRUG_INDICATION, EXAM_RATIONALITY]
+                rule_package_code:
+                  type: string
+                rule_package_version:
+                  type: string
+                rule_codes:
+                  type: array
+                  items:
+                    type: string
+                tenant_id:
+                  type: string
+                operator_id:
+                  type: string
+                items:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [patient_context]
+                    properties:
+                      case_id:
+                        type: string
+                      patient_context:
+                        $ref: '#/components/schemas/PatientContext'
+      responses:
+        '200':
+          description: 批量评估结果信封
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /rule-engine/results:
+    get:
+      tags: [RuleEngine]
+      summary: 查询第三方规则引擎评估结果列表
+      operationId: ruleEngineListResults
+      parameters:
+        - in: query
+          name: scenarioCode
+          schema: {type: string}
+        - in: query
+          name: packageCode
+          schema: {type: string}
+        - in: query
+          name: batchId
+          schema: {type: string}
+        - in: query
+          name: source
+          schema: {type: string, enum: [SINGLE, BATCH]}
+        - in: query
+          name: patientId
+          schema: {type: string}
+        - in: query
+          name: encounterId
+          schema: {type: string}
+        - in: query
+          name: limit
+          schema: {type: integer, default: 100}
+        - in: query
+          name: offset
+          schema: {type: integer, default: 0}
+      responses:
+        '200':
+          description: 评估结果摘要列表（不包含 results/warnings 详情）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
+  /rule-engine/results/{resultId}:
+    get:
+      tags: [RuleEngine]
+      summary: 查询单次评估的完整结果
+      operationId: ruleEngineGetResult
+      parameters:
+        - in: path
+          name: resultId
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: 评估结果详情（包含 results/warnings）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResult'
   /graph/disease-candidates:
     post:
       tags: [GraphEngine]

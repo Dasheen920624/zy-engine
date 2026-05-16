@@ -420,6 +420,16 @@ class EngineApiContractTests {
         assertEquals("EMR_QC", emrData.get("scenario_code"));
         assertEquals(1, ((Number) emrData.get("evaluated_count")).intValue());
         assertEquals(1, ((Number) emrData.get("hit_count")).intValue());
+        assertEquals("SINGLE", emrData.get("source"));
+        assertEquals("JUNIT_QC_OFFICER", emrData.get("operator_id"));
+        assertNotNull(emrData.get("result_id"));
+        assertNotNull(emrData.get("created_time"));
+        String emrResultId = (String) emrData.get("result_id");
+        Map<String, Object> emrLookup = invokeGet("/api/rule-engine/results/" + emrResultId);
+        Map<String, Object> emrLookupData = asMap(emrLookup.get("data"));
+        assertEquals(emrResultId, emrLookupData.get("result_id"));
+        assertEquals(1, ((Number) emrLookupData.get("hit_count")).intValue());
+        assertEquals(1, asListOfMap(emrLookupData.get("results")).size());
         List<Map<String, Object>> emrResults = asListOfMap(emrData.get("results"));
         assertEquals("R_EMR_DISCHARGE_SUMMARY_COMPLETE", emrResults.get(0).get("rule_code"));
         assertEquals(Boolean.TRUE, emrResults.get(0).get("hit"));
@@ -470,6 +480,100 @@ class EngineApiContractTests {
         missingPatient.put("scenario_code", "EMR_QC");
         Map<String, Object> noPatientResp = invokePostExpectingClientError("/api/rule-engine/evaluate", missingPatient);
         assertEquals("VALIDATION_ERROR", noPatientResp.get("code"));
+    }
+
+    @Test
+    void ruleEngineBatchEvaluatePersistsPerItemResults() throws Exception {
+        invokePost("/api/rules", ruleEngineScenarioPackage());
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("package_version", "2026.05");
+        publishBody.put("approved_by", "JUNIT_RULE_ENGINE_BATCH");
+        invokePost("/api/rules/packages/PKG_RULE_ENGINE_SCENARIOS/publish", publishBody);
+
+        Map<String, Object> hitItem = new LinkedHashMap<String, Object>();
+        hitItem.put("case_id", "CASE_HIT");
+        hitItem.put("patient_context", ruleEnginePatientContext(false, true, true));
+        Map<String, Object> missItem = new LinkedHashMap<String, Object>();
+        missItem.put("case_id", "CASE_MISS");
+        missItem.put("patient_context", ruleEnginePatientContext(true, true, true));
+
+        Map<String, Object> batchReq = new LinkedHashMap<String, Object>();
+        batchReq.put("scenario_code", "EMR_QC");
+        batchReq.put("rule_package_code", "PKG_RULE_ENGINE_SCENARIOS");
+        batchReq.put("operator_id", "JUNIT_BATCH_OFFICER");
+        batchReq.put("items", Arrays.asList(hitItem, missItem));
+
+        Map<String, Object> batchResp = invokePost("/api/rule-engine/batch-evaluate", batchReq);
+        Map<String, Object> batchData = asMap(batchResp.get("data"));
+        assertEquals("EMR_QC", batchData.get("scenario_code"));
+        assertEquals(2, ((Number) batchData.get("total_items")).intValue());
+        assertEquals(2, ((Number) batchData.get("total_evaluated")).intValue());
+        assertEquals(1, ((Number) batchData.get("total_hits")).intValue());
+        String batchId = (String) batchData.get("batch_id");
+        assertNotNull(batchId);
+
+        List<Map<String, Object>> evaluations = asListOfMap(batchData.get("evaluations"));
+        assertEquals(2, evaluations.size());
+        Map<String, Object> evalHit = evaluations.get(0);
+        assertEquals("CASE_HIT", evalHit.get("case_id"));
+        assertEquals(batchId, evalHit.get("batch_id"));
+        assertEquals(1, ((Number) evalHit.get("hit_count")).intValue());
+        assertNotNull(evalHit.get("result_id"));
+
+        Map<String, Object> evalMiss = evaluations.get(1);
+        assertEquals("CASE_MISS", evalMiss.get("case_id"));
+        assertEquals(0, ((Number) evalMiss.get("hit_count")).intValue());
+
+        // 列表按 batchId 回查应返回两条独立 result_id 摘要。
+        Map<String, Object> listResp = invokeGet("/api/rule-engine/results?batchId=" + batchId);
+        List<Map<String, Object>> listData = asListOfMap(listResp.get("data"));
+        assertEquals(2, listData.size());
+        for (Map<String, Object> summary : listData) {
+            assertEquals("BATCH", summary.get("source"));
+            assertEquals(batchId, summary.get("batch_id"));
+            // 列表摘要不应包含 results 详情，避免 payload 过大。
+            assertFalse(summary.containsKey("results"), "list view must not include results detail");
+        }
+
+        // 单条 result_id 详情查询。
+        String firstResultId = (String) evalHit.get("result_id");
+        Map<String, Object> detail = invokeGet("/api/rule-engine/results/" + firstResultId);
+        Map<String, Object> detailData = asMap(detail.get("data"));
+        assertEquals(firstResultId, detailData.get("result_id"));
+        assertEquals(batchId, detailData.get("batch_id"));
+        assertEquals("CASE_HIT", detailData.get("case_id"));
+        assertEquals(1, asListOfMap(detailData.get("results")).size());
+    }
+
+    @Test
+    void ruleEngineBatchEvaluateRejectsEmptyItems() throws Exception {
+        Map<String, Object> emptyItems = new LinkedHashMap<String, Object>();
+        emptyItems.put("scenario_code", "EMR_QC");
+        emptyItems.put("items", new java.util.ArrayList<Object>());
+        Map<String, Object> resp = invokePostExpectingClientError("/api/rule-engine/batch-evaluate", emptyItems);
+        assertEquals("VALIDATION_ERROR", resp.get("code"));
+
+        Map<String, Object> noItems = new LinkedHashMap<String, Object>();
+        noItems.put("scenario_code", "EMR_QC");
+        Map<String, Object> resp2 = invokePostExpectingClientError("/api/rule-engine/batch-evaluate", noItems);
+        assertEquals("VALIDATION_ERROR", resp2.get("code"));
+
+        Map<String, Object> badItem = new LinkedHashMap<String, Object>();
+        badItem.put("case_id", "X");
+        Map<String, Object> missingPatient = new LinkedHashMap<String, Object>();
+        missingPatient.put("scenario_code", "EMR_QC");
+        missingPatient.put("items", Arrays.asList(badItem));
+        Map<String, Object> resp3 = invokePostExpectingClientError("/api/rule-engine/batch-evaluate", missingPatient);
+        assertEquals("VALIDATION_ERROR", resp3.get("code"));
+    }
+
+    @Test
+    void ruleEngineGetEvaluationReturns4xxForUnknownResult() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(get("/api/rule-engine/results/reval-not-exist")).andReturn();
+        assertTrue(mvcResult.getResponse().getStatus() >= 400,
+                "GET unknown resultId expected 4xx but got " + mvcResult.getResponse().getStatus());
+        Map<String, Object> body = parse(mvcResult);
+        assertEquals("VALIDATION_ERROR", body.get("code"));
     }
 
     @Test

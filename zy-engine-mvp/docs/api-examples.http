@@ -393,6 +393,64 @@ X-Trace-Id: trace-demo-rule-engine-order-safety
   }
 }
 
+### RULE-001 批量评估：EMR_QC 多病例（每条返回独立 result_id，共享 batch_id）
+POST http://localhost:18080/zy-engine/api/rule-engine/batch-evaluate
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-engine-batch-emr
+
+{
+  "scenario_code": "EMR_QC",
+  "rule_package_code": "PKG_RULE_ENGINE_SCENARIOS",
+  "rule_package_version": "2026.05",
+  "operator_id": "QC_OFFICER",
+  "items": [
+    {
+      "case_id": "CASE_EMR_MISS_001",
+      "patient_context": {
+        "patient": {"patient_id": "P_EMR_M01"},
+        "encounter": {"encounter_id": "E_EMR_M01"},
+        "facts": {
+          "emr": {
+            "discharge_summary": {
+              "chief_complaint_filled": false,
+              "diagnosis_filled": true,
+              "discharge_orders_filled": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "case_id": "CASE_EMR_PASS_002",
+      "patient_context": {
+        "patient": {"patient_id": "P_EMR_M02"},
+        "encounter": {"encounter_id": "E_EMR_M02"},
+        "facts": {
+          "emr": {
+            "discharge_summary": {
+              "chief_complaint_filled": true,
+              "diagnosis_filled": true,
+              "discharge_orders_filled": true
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+
+### RULE-001 评估结果列表（按 scenarioCode 过滤）
+GET http://localhost:18080/zy-engine/api/rule-engine/results?scenarioCode=EMR_QC&limit=20
+X-Trace-Id: trace-demo-rule-engine-results-list
+
+### RULE-001 评估结果列表（按 batchId 过滤）
+GET http://localhost:18080/zy-engine/api/rule-engine/results?batchId=rebatch-1
+X-Trace-Id: trace-demo-rule-engine-results-by-batch
+
+### RULE-001 评估结果详情回查
+GET http://localhost:18080/zy-engine/api/rule-engine/results/reval-1
+X-Trace-Id: trace-demo-rule-engine-result-detail
+
 ### List pathway definitions
 GET http://localhost:18080/zy-engine/api/pathways
 X-Trace-Id: trace-demo-pathway-list

@@ -590,6 +590,8 @@ Provider 影响：
 - 规则可声明 `scenario_codes` 数组同时归属多个场景；老规则按 `rule_type`（如 `SAFETY_BLOCK`→`ORDER_SAFETY`、`TIME_LIMIT_QC`→`EMR_QC`）自动推断兼容。
 - 返回标准 `results[]`，包含 `rule_code/rule_name/rule_type/scenario_code/package_code/package_version/version_no/hit/severity/message/actions/evidence/missing_facts`；同时写入 `RULE_ENGINE/EVALUATE_SCENARIO` 审计与每条规则的执行日志。
 - 第三方调用入口与 `/api/rules/*` 配置管理与内部演示接口解耦，便于后续灰度、限流和审计治理。
+- 第二批已落地批量同步 `POST /api/rule-engine/batch-evaluate` 与结果回查 `GET /api/rule-engine/results`、`GET /api/rule-engine/results/{resultId}`：批量调用返回共享 `batch_id` 和每条独立 `result_id`，所有评估都落入容量 500 的内存环形缓冲，列表支持 `scenarioCode/packageCode/batchId/source/patientId/encounterId/limit/offset` 过滤并仅返回摘要字段。
+- 第二批写入 `RULE_ENGINE/BATCH_EVALUATE_SCENARIO` 审计，详情接口包含完整 `results/warnings`，列表接口剔除大字段；Oracle/达梦持久化与异步入口留给第三批。
 
 产出：
 

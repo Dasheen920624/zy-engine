@@ -284,7 +284,20 @@ POST /api/rule-engine/evaluate
 - 写入 `RULE_ENGINE/EVALUATE_SCENARIO` 审计与每条规则执行日志。
 - 规则可通过 `scenario_codes` 数组同时挂载多个场景（如医保限定药品同时归入 `INSURANCE_QC` 与 `DRUG_INDICATION`）；老规则在缺失声明时按 `rule_type` 自动推断。
 
-异步、批量与 `/api/rule-engine/results/{resultId}` 按 RULE-001 第二批继续推进。
+第二批已落地批量同步与结果回查：
+
+```http
+POST /api/rule-engine/batch-evaluate
+GET  /api/rule-engine/results
+GET  /api/rule-engine/results/{resultId}
+```
+
+- `batch-evaluate`：`items[]` 每条带可选 `case_id` 和必填 `patient_context`，共享 scenario 过滤条件，整次调用返回 `batch_id` + 每条独立 `result_id`，并写入 `RULE_ENGINE/BATCH_EVALUATE_SCENARIO` 审计。
+- 单次 `/evaluate` 和 batch 内每条结果都落入内存评估环形缓冲（容量 500），`source` 字段区分 `SINGLE/BATCH`。
+- `GET /results` 支持 `scenarioCode/packageCode/batchId/source/patientId/encounterId/limit/offset` 过滤，仅返回摘要字段，不带 `results/warnings` 详情。
+- `GET /results/{resultId}` 返回完整 envelope，未找到返回 `VALIDATION_ERROR`。
+
+Oracle/达梦持久化、异步任务与同步任务状态留给 RULE-001 第三批继续推进。
 
 ### FE-001 前端信息架构与高保真原型
 

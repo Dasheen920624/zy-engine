@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class RuleService {
     private static final int EXEC_LOG_RING_CAPACITY = 500;
+    private static final int EVALUATION_RING_CAPACITY = 500;
 
     // 第三方规则引擎对外开放的标准场景码，与产品化方案/前端规则校验工作台保持一致。
     private static final Set<String> SUPPORTED_RULE_ENGINE_SCENARIOS = new LinkedHashSet<String>(Arrays.asList(
@@ -36,11 +37,23 @@ public class RuleService {
     // 历史规则只声明 rule_type 时的默认场景路由，避免老规则需要立刻补 scenario_codes 才能被第三方调用。
     private static final Map<String, Set<String>> DEFAULT_RULE_TYPE_SCENARIOS = defaultRuleTypeScenarios();
 
+    // 暴露给列表/详情接口的摘要字段，列表返回不包含 results/warnings 详情，避免大 payload。
+    private static final List<String> EVALUATION_SUMMARY_FIELDS = Arrays.asList(
+            "result_id", "batch_id", "case_id", "scenario_code",
+            "rule_package_code", "rule_package_version", "source",
+            "evaluated_count", "hit_count", "elapsed_ms",
+            "trace_id", "operator_id", "tenant_id",
+            "patient_id", "encounter_id", "created_time");
+
     private final EnginePersistenceService persistenceService;
     private final RuleDslEvaluator dslEvaluator = new RuleDslEvaluator();
     private final Map<String, RuleDefinition> ruleStore = new ConcurrentHashMap<String, RuleDefinition>();
     private final Deque<RuleExecLogEntry> execLogs = new ConcurrentLinkedDeque<RuleExecLogEntry>();
     private final AtomicLong execLogSequence = new AtomicLong();
+    // 第三方规则引擎评估结果环形缓冲；后续可接 Oracle/达梦持久化，但单批先保证 DB-only 也能回查。
+    private final Deque<Map<String, Object>> evaluationStore = new ConcurrentLinkedDeque<Map<String, Object>>();
+    private final AtomicLong evaluationSequence = new AtomicLong();
+    private final AtomicLong batchSequence = new AtomicLong();
 
     public RuleService(EnginePersistenceService persistenceService) {
         this.persistenceService = persistenceService;
@@ -310,9 +323,148 @@ public class RuleService {
 
     /**
      * RULE-001 第三方规则引擎 API：通过 scenario_code + rule_package_code 路由到已发布规则，
-     * 输出标准化结果信封并写入审计。批量与异步入口由后续批次补齐。
+     * 输出标准化结果信封并写入审计。第二批补齐：分配 result_id 并落入评估环形缓冲供回查。
      */
     public Map<String, Object> evaluateForScenario(Map<String, Object> request) {
+        ScenarioInvocation invocation = parseInvocation(request);
+        Map<String, Object> patientContext = requirePatientContext(request.get("patient_context"));
+        ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation.scenarioCode, invocation.packageCode,
+                invocation.packageVersion, invocation.ruleCodeFilter, patientContext);
+
+        Map<String, Object> evaluation = recordEvaluation("SINGLE", null, null,
+                invocation, patientContext, outcome);
+
+        auditEvaluation("EVALUATE_SCENARIO", invocation, patientContext, outcome,
+                Collections.singletonList(String.valueOf(evaluation.get("result_id"))), null);
+        return evaluation;
+    }
+
+    /**
+     * RULE-001 第二批：批量同步评估。items 内每个 patient_context 共享同一个 scenario_code/package 过滤条件，
+     * 每条独立写入 evaluation ring 并返回单独的 result_id，便于 UI 工作台批量复演与抽样回查。
+     */
+    public Map<String, Object> batchEvaluateForScenario(Map<String, Object> request) {
+        ScenarioInvocation invocation = parseInvocation(request);
+        Object itemsRaw = request == null ? null : request.get("items");
+        if (!(itemsRaw instanceof Collection) || ((Collection<?>) itemsRaw).isEmpty()) {
+            throw new IllegalArgumentException("items must be a non-empty array");
+        }
+
+        String batchId = "rebatch-" + batchSequence.incrementAndGet();
+        String createdTime = nowText();
+        long batchStarted = System.currentTimeMillis();
+        List<Map<String, Object>> evaluations = new ArrayList<Map<String, Object>>();
+        List<String> resultIds = new ArrayList<String>();
+        int totalEvaluated = 0;
+        int totalHits = 0;
+        int index = 0;
+
+        for (Object item : (Collection<?>) itemsRaw) {
+            if (!(item instanceof Map)) {
+                throw new IllegalArgumentException("items[" + index + "] must be an object with patient_context");
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> itemMap = (Map<String, Object>) item;
+            Map<String, Object> patientContext;
+            try {
+                patientContext = requirePatientContext(itemMap.get("patient_context"));
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalArgumentException("items[" + index + "]: " + ex.getMessage());
+            }
+            String caseId = string(itemMap.get("case_id"), null);
+
+            ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation.scenarioCode, invocation.packageCode,
+                    invocation.packageVersion, invocation.ruleCodeFilter, patientContext);
+            Map<String, Object> evaluation = recordEvaluation("BATCH", batchId, caseId,
+                    invocation, patientContext, outcome);
+            evaluations.add(evaluation);
+            resultIds.add(String.valueOf(evaluation.get("result_id")));
+            totalEvaluated += outcome.candidatesCount;
+            totalHits += outcome.hitCount;
+            index++;
+        }
+
+        long elapsed = System.currentTimeMillis() - batchStarted;
+
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+        response.put("trace_id", TraceContext.getTraceId());
+        response.put("batch_id", batchId);
+        response.put("scenario_code", invocation.scenarioCode);
+        response.put("rule_package_code", invocation.packageCode);
+        response.put("rule_package_version", invocation.packageVersion);
+        response.put("total_items", evaluations.size());
+        response.put("total_evaluated", totalEvaluated);
+        response.put("total_hits", totalHits);
+        response.put("elapsed_ms", elapsed);
+        response.put("created_time", createdTime);
+        response.put("evaluations", evaluations);
+
+        auditEvaluation("BATCH_EVALUATE_SCENARIO", invocation, null,
+                aggregatePipelineOutcome(totalEvaluated, totalHits, elapsed), resultIds, batchId);
+        return response;
+    }
+
+    public Map<String, Object> getEvaluation(String resultId) {
+        if (resultId == null || resultId.trim().isEmpty()) {
+            throw new IllegalArgumentException("resultId is required");
+        }
+        for (Map<String, Object> evaluation : evaluationStore) {
+            if (resultId.equals(evaluation.get("result_id"))) {
+                return new LinkedHashMap<String, Object>(evaluation);
+            }
+        }
+        throw new IllegalArgumentException("rule engine evaluation not found: " + resultId);
+    }
+
+    public List<Map<String, Object>> listEvaluations(Map<String, String> filters) {
+        String scenarioCode = upper(filterValue(filters, "scenarioCode"));
+        String packageCode = filterValue(filters, "packageCode");
+        String batchId = filterValue(filters, "batchId");
+        String source = upper(filterValue(filters, "source"));
+        String patientId = filterValue(filters, "patientId");
+        String encounterId = filterValue(filters, "encounterId");
+        int limit = filterInt(filters, "limit", 100);
+        int offset = filterInt(filters, "offset", 0);
+        if (limit <= 0 || limit > EVALUATION_RING_CAPACITY) {
+            limit = EVALUATION_RING_CAPACITY;
+        }
+        if (offset < 0) {
+            offset = 0;
+        }
+
+        List<Map<String, Object>> matched = new ArrayList<Map<String, Object>>();
+        int skipped = 0;
+        java.util.Iterator<Map<String, Object>> iterator = evaluationStore.descendingIterator();
+        while (iterator.hasNext() && matched.size() < limit) {
+            Map<String, Object> evaluation = iterator.next();
+            if (scenarioCode != null && !scenarioCode.equalsIgnoreCase(string(evaluation.get("scenario_code"), null))) {
+                continue;
+            }
+            if (packageCode != null && !packageCode.equalsIgnoreCase(string(evaluation.get("rule_package_code"), null))) {
+                continue;
+            }
+            if (batchId != null && !batchId.equals(evaluation.get("batch_id"))) {
+                continue;
+            }
+            if (source != null && !source.equalsIgnoreCase(string(evaluation.get("source"), null))) {
+                continue;
+            }
+            if (patientId != null && !patientId.equals(evaluation.get("patient_id"))) {
+                continue;
+            }
+            if (encounterId != null && !encounterId.equals(evaluation.get("encounter_id"))) {
+                continue;
+            }
+            if (skipped < offset) {
+                skipped++;
+                continue;
+            }
+            matched.add(evaluationSummary(evaluation));
+        }
+        return matched;
+    }
+
+    private ScenarioInvocation parseInvocation(Map<String, Object> request) {
         if (request == null) {
             throw new IllegalArgumentException("request body is required");
         }
@@ -324,23 +476,32 @@ public class RuleService {
             throw new IllegalArgumentException("unsupported scenario_code: " + scenarioCode
                     + "; supported: " + SUPPORTED_RULE_ENGINE_SCENARIOS);
         }
+        ScenarioInvocation invocation = new ScenarioInvocation();
+        invocation.scenarioCode = scenarioCode;
+        invocation.packageCode = string(request.get("rule_package_code"), null);
+        invocation.packageVersion = string(request.get("rule_package_version"), null);
+        invocation.ruleCodeFilter = stringList(request.get("rule_codes"));
+        invocation.operatorId = string(request.get("operator_id"), null);
+        invocation.tenantId = string(request.get("tenant_id"), null);
+        return invocation;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> requirePatientContext(Object raw) {
         // 第三方接入要求显式声明 patient_context，以避免把 scenario_code 这种控制参数误当作上下文事实。
-        Object patientContextRaw = request.get("patient_context");
-        if (!(patientContextRaw instanceof Map)) {
+        if (!(raw instanceof Map)) {
             throw new IllegalArgumentException("patient_context is required");
         }
-        @SuppressWarnings("unchecked")
-        Map<String, Object> patientContext = (Map<String, Object>) patientContextRaw;
-        if (patientContext.isEmpty()) {
+        Map<String, Object> context = (Map<String, Object>) raw;
+        if (context.isEmpty()) {
             throw new IllegalArgumentException("patient_context is required");
         }
+        return context;
+    }
 
-        String packageCode = string(request.get("rule_package_code"), null);
-        String packageVersion = string(request.get("rule_package_version"), null);
-        List<String> ruleCodeFilter = stringList(request.get("rule_codes"));
-        String operatorId = string(request.get("operator_id"), null);
-        String tenantId = string(request.get("tenant_id"), null);
-
+    private ScenarioPipelineOutcome runScenarioPipeline(String scenarioCode, String packageCode,
+                                                       String packageVersion, List<String> ruleCodeFilter,
+                                                       Map<String, Object> patientContext) {
         long started = System.currentTimeMillis();
         List<RuleDefinition> candidates = scenarioCandidates(scenarioCode, packageCode,
                 packageVersion, ruleCodeFilter);
@@ -363,36 +524,105 @@ public class RuleService {
             warning.put("message", "未找到匹配的已发布规则，请确认 scenario_code/rule_package_code 配置。");
             warnings.add(warning);
         }
-        long elapsed = System.currentTimeMillis() - started;
 
-        Map<String, Object> response = new LinkedHashMap<String, Object>();
-        response.put("trace_id", TraceContext.getTraceId());
-        response.put("scenario_code", scenarioCode);
-        response.put("rule_package_code", packageCode);
-        response.put("rule_package_version", packageVersion);
-        response.put("evaluated_count", candidates.size());
-        response.put("hit_count", hitCount);
-        response.put("elapsed_ms", elapsed);
-        response.put("results", resultEntries);
-        response.put("warnings", warnings);
+        ScenarioPipelineOutcome outcome = new ScenarioPipelineOutcome();
+        outcome.candidatesCount = candidates.size();
+        outcome.hitCount = hitCount;
+        outcome.elapsedMs = System.currentTimeMillis() - started;
+        outcome.resultEntries = resultEntries;
+        outcome.warnings = warnings;
+        return outcome;
+    }
 
+    private Map<String, Object> recordEvaluation(String source, String batchId, String caseId,
+                                                 ScenarioInvocation invocation, Map<String, Object> patientContext,
+                                                 ScenarioPipelineOutcome outcome) {
+        String resultId = "reval-" + evaluationSequence.incrementAndGet();
+        Map<String, Object> evaluation = new LinkedHashMap<String, Object>();
+        evaluation.put("trace_id", TraceContext.getTraceId());
+        evaluation.put("result_id", resultId);
+        evaluation.put("batch_id", batchId);
+        evaluation.put("case_id", caseId);
+        evaluation.put("scenario_code", invocation.scenarioCode);
+        evaluation.put("rule_package_code", invocation.packageCode);
+        evaluation.put("rule_package_version", invocation.packageVersion);
+        evaluation.put("source", source);
+        evaluation.put("evaluated_count", outcome.candidatesCount);
+        evaluation.put("hit_count", outcome.hitCount);
+        evaluation.put("elapsed_ms", outcome.elapsedMs);
+        evaluation.put("operator_id", invocation.operatorId);
+        evaluation.put("tenant_id", invocation.tenantId);
+        evaluation.put("patient_id", ClinicalFactUtils.patientId(patientContext));
+        evaluation.put("encounter_id", ClinicalFactUtils.encounterId(patientContext));
+        evaluation.put("created_time", nowText());
+        evaluation.put("results", outcome.resultEntries);
+        evaluation.put("warnings", outcome.warnings);
+
+        // 落入评估环形缓冲；存储的是详情副本，list/get 接口都基于它再分发。
+        evaluationStore.addLast(new LinkedHashMap<String, Object>(evaluation));
+        while (evaluationStore.size() > EVALUATION_RING_CAPACITY) {
+            evaluationStore.pollFirst();
+        }
+        return evaluation;
+    }
+
+    private Map<String, Object> evaluationSummary(Map<String, Object> evaluation) {
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        for (String field : EVALUATION_SUMMARY_FIELDS) {
+            summary.put(field, evaluation.get(field));
+        }
+        return summary;
+    }
+
+    private void auditEvaluation(String actionType, ScenarioInvocation invocation,
+                                 Map<String, Object> patientContext, ScenarioPipelineOutcome outcome,
+                                 List<String> resultIds, String batchId) {
         Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
-        auditDetail.put("scenario_code", scenarioCode);
-        auditDetail.put("rule_package_code", packageCode);
-        auditDetail.put("rule_package_version", packageVersion);
-        auditDetail.put("rule_codes_filter", ruleCodeFilter);
-        auditDetail.put("evaluated_count", candidates.size());
-        auditDetail.put("hit_count", hitCount);
-        auditDetail.put("elapsed_ms", elapsed);
-        auditDetail.put("tenant_id", tenantId);
+        auditDetail.put("scenario_code", invocation.scenarioCode);
+        auditDetail.put("rule_package_code", invocation.packageCode);
+        auditDetail.put("rule_package_version", invocation.packageVersion);
+        auditDetail.put("rule_codes_filter", invocation.ruleCodeFilter);
+        auditDetail.put("evaluated_count", outcome.candidatesCount);
+        auditDetail.put("hit_count", outcome.hitCount);
+        auditDetail.put("elapsed_ms", outcome.elapsedMs);
+        auditDetail.put("tenant_id", invocation.tenantId);
+        auditDetail.put("result_ids", resultIds);
+        auditDetail.put("batch_id", batchId);
         try {
-            persistenceService.saveAuditLog("RULE_ENGINE", "EVALUATE_SCENARIO", "SCENARIO",
-                    scenarioCode, ClinicalFactUtils.patientId(patientContext),
-                    ClinicalFactUtils.encounterId(patientContext), operatorId, auditDetail);
+            String patientId = patientContext == null ? null : ClinicalFactUtils.patientId(patientContext);
+            String encounterId = patientContext == null ? null : ClinicalFactUtils.encounterId(patientContext);
+            persistenceService.saveAuditLog("RULE_ENGINE", actionType, "SCENARIO",
+                    invocation.scenarioCode, patientId, encounterId, invocation.operatorId, auditDetail);
         } catch (RuntimeException ignored) {
             // 第三方调用主流程不能因审计落库失败中断，审计降级在内存环形日志中可继续观测。
         }
-        return response;
+    }
+
+    private ScenarioPipelineOutcome aggregatePipelineOutcome(int evaluatedCount, int hitCount, long elapsedMs) {
+        ScenarioPipelineOutcome aggregate = new ScenarioPipelineOutcome();
+        aggregate.candidatesCount = evaluatedCount;
+        aggregate.hitCount = hitCount;
+        aggregate.elapsedMs = elapsedMs;
+        aggregate.resultEntries = Collections.emptyList();
+        aggregate.warnings = Collections.emptyList();
+        return aggregate;
+    }
+
+    private static class ScenarioInvocation {
+        String scenarioCode;
+        String packageCode;
+        String packageVersion;
+        List<String> ruleCodeFilter = Collections.emptyList();
+        String operatorId;
+        String tenantId;
+    }
+
+    private static class ScenarioPipelineOutcome {
+        int candidatesCount;
+        int hitCount;
+        long elapsedMs;
+        List<Map<String, Object>> resultEntries = Collections.emptyList();
+        List<Map<String, Object>> warnings = Collections.emptyList();
     }
 
     private List<RuleDefinition> scenarioCandidates(String scenarioCode, String packageCode,
