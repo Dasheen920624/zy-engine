@@ -10,6 +10,12 @@
 zy-engine-mvp/docs/AI接手执行手册.md
 ```
 
+顶级多角色评审、优化决策、并行开发泳道、不同能力 AI 执行边界和产品级验收剧本见：
+
+```text
+zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md
+```
+
 前端配置、功能演示、规则校验和可视化验收的详细方案见：
 
 ```text
@@ -56,15 +62,15 @@ zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
 后续设计不机械照搬外部标准，但原则上向这些成熟做法靠拢：
 
 - HL7 FHIR：医疗数据交换资源模型和 REST API 思路。参考：`https://hl7.org/fhir/overview.html`
-- SMART on FHIR：医疗应用和 EHR 安全启动、授权、上下文传递。参考：`https://build.fhir.org/ig/HL7/smart-app-launch/branches/main/conformance.html`
-- CDS Hooks：在医嘱、病历、开单等工作流节点嵌入临床决策支持。参考：`https://cds-hooks.hl7.org/1.0/`
+- SMART on FHIR：医疗应用和 EHR 安全启动、授权、上下文传递。参考：`https://hl7.org/fhir/smart-app-launch/`
+- CDS Hooks：在医嘱、病历、开单等工作流节点嵌入临床决策支持。参考：`https://hl7.github.io/cds-hooks-hl7-site/2.0/`
 - HL7 CQL：临床质量和决策支持表达语言。参考：`https://cql.hl7.org/`
 - IHE Profiles：用角色、事务、内容约束描述真实医疗集成场景。参考：`https://www.ihe.net/resources/profiles/`
 - SNOMED CT：临床术语标准化思路。参考：`https://www.nlm.nih.gov/healthit/snomedct/snomed_overview.html`
 - LOINC：检验、观测、文书编码标准化思路。参考：`https://loinc.org/`
 - ISO 13485：医疗软件质量管理、设计控制、验证确认和变更控制思路。参考：`https://www.iso.org/iso-13485-medical-devices.html`
 - OWASP ASVS：Web/API 安全验证要求。参考：`https://owasp.org/www-project-application-security-verification-standard/`
-- NIST CSF：网络安全风险管理框架。参考：`https://www.nist.gov/publications/nist-cybersecurity-framework-csf-20`
+- NIST CSF 2.0：网络安全风险管理框架。参考：`https://www.nist.gov/cyberframework`
 
 ## 4. 组织模型约定
 

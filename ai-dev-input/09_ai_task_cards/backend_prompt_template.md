@@ -3,6 +3,7 @@
 请基于以下资料实现指定后端任务。开始前必须先阅读：
 
 - `zy-engine-mvp/docs/AI接手执行手册.md`
+- `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
 - `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
 - `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
 - `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
@@ -19,6 +20,7 @@
 
 - 产品总纲：`zy-engine-mvp/docs/产品化方案与AI开发编排.md`
 - 全功能蓝图：`zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
+- 顶级总控：`zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
 - 接手手册：`zy-engine-mvp/docs/AI接手执行手册.md`
 - OpenAPI：`ai-dev-input/02_api_contracts/engines.openapi.yaml`
 - JSON Schema：`ai-dev-input/03_data_models/...`

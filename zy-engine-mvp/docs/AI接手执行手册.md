@@ -7,13 +7,14 @@
 接手 AI 必读顺序：
 
 1. 本文。
-2. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-3. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-4. `zy-engine-mvp/docs/多角色评审与执行计划.md`
-5. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
-6. 根目录 `README.md`
-7. `zy-engine-mvp/README.md`
-8. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
+2. `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
+3. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+4. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
+5. `zy-engine-mvp/docs/多角色评审与执行计划.md`
+6. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+7. 根目录 `README.md`
+8. `zy-engine-mvp/README.md`
+9. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
 
 ## 2. 当前项目一句话
 
@@ -31,6 +32,7 @@ rg -n "当前优先任务池|Definition of Done|PROV-001|PKG-001|ORG-001|TERM-00
 再阅读：
 
 ```text
+zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md
 zy-engine-mvp/docs/产品化方案与AI开发编排.md
 zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
 zy-engine-mvp/docs/前端配置平台规划与开发验证.md
@@ -59,6 +61,8 @@ ai-dev-input/09_ai_task_cards/task_card_template.md
 - 是否涉及 Provider。
 - 是否需要 Oracle/达梦 DDL。
 - 是否涉及 Oracle 表结构、索引、迁移脚本、持久化 SQL 或落库行为；若涉及，必须同步真实 Oracle 并跑 Oracle 版本 smoke。
+- 是否属于 `顶级多角色评审与AI并行开发总控.md` 中的某条并行泳道，是否会与其它 AI 的写入范围冲突。
+- 目标用户是谁：医生、质控、医保、信息科、院领导、实施工程师或第三方系统。
 - DB-only 模式如何验收。
 - 需要更新哪些测试、样例和文档。
 
@@ -233,6 +237,8 @@ git push origin main
 12. `OPS-001` 离线部署和运维看板。
 
 若用户没有指定任务，优先从 `PKG-001` 或 `ORG-001` 开始，因为它们是产品化底座。若任务涉及规则、知识、路径、图谱、Dify、字典、适配器或质控结论，必须同步检查 `全功能蓝图与并行开发计划.md`。
+
+若用户要求进入多 AI 并行开发或交付前总控评审，必须优先按 `顶级多角色评审与AI并行开发总控.md` 的“当前最高优先级执行顺序”和“并行开发泳道”拆分任务。
 
 ## 9. 推荐任务切片
 
