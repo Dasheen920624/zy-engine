@@ -307,6 +307,92 @@ X-Trace-Id: trace-demo-rule-execlog-get
 GET http://localhost:18080/zy-engine/api/rules/exec-logs/summary
 X-Trace-Id: trace-demo-rule-execlog-summary
 
+### Import rule-engine 多场景示例规则包（EMR_QC / INSURANCE_QC / ORDER_SAFETY）
+POST http://localhost:18080/zy-engine/api/rules
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-engine-import
+
+< ../../ai-dev-input/06_samples/sample_rule_engine_scenarios.json
+
+### Publish rule-engine 多场景示例规则包
+POST http://localhost:18080/zy-engine/api/rules/packages/PKG_RULE_ENGINE_SCENARIOS/publish
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-engine-publish
+
+{
+  "package_version": "2026.05",
+  "approved_by": "D001",
+  "comment": "rule-engine 多场景示例规则包发布"
+}
+
+### RULE-001 第三方调用：病历质控（EMR_QC）
+POST http://localhost:18080/zy-engine/api/rule-engine/evaluate
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-engine-emr-qc
+
+{
+  "scenario_code": "EMR_QC",
+  "rule_package_code": "PKG_RULE_ENGINE_SCENARIOS",
+  "rule_package_version": "2026.05",
+  "operator_id": "QC_OFFICER",
+  "patient_context": {
+    "patient": {"patient_id": "P_EMR_001"},
+    "encounter": {"encounter_id": "E_EMR_001", "visit_type": "INPATIENT"},
+    "facts": {
+      "emr": {
+        "discharge_summary": {
+          "chief_complaint_filled": false,
+          "diagnosis_filled": true,
+          "discharge_orders_filled": true
+        }
+      }
+    }
+  }
+}
+
+### RULE-001 第三方调用：医保质控（INSURANCE_QC）
+POST http://localhost:18080/zy-engine/api/rule-engine/evaluate
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-engine-insurance-qc
+
+{
+  "scenario_code": "INSURANCE_QC",
+  "rule_package_code": "PKG_RULE_ENGINE_SCENARIOS",
+  "rule_package_version": "2026.05",
+  "operator_id": "INSURANCE_OFFICER",
+  "patient_context": {
+    "patient": {"patient_id": "P_INS_001"},
+    "encounter": {"encounter_id": "E_INS_001"},
+    "facts": {
+      "orders": {
+        "insurance_restricted_drug_used": true,
+        "insurance_restricted_drug_indication_matched": false
+      }
+    }
+  }
+}
+
+### RULE-001 第三方调用：医嘱安全（ORDER_SAFETY）
+POST http://localhost:18080/zy-engine/api/rule-engine/evaluate
+Content-Type: application/json
+X-Trace-Id: trace-demo-rule-engine-order-safety
+
+{
+  "scenario_code": "ORDER_SAFETY",
+  "rule_package_code": "PKG_RULE_ENGINE_SCENARIOS",
+  "rule_package_version": "2026.05",
+  "operator_id": "PHARMACIST",
+  "patient_context": {
+    "patient": {"patient_id": "P_ORD_001"},
+    "encounter": {"encounter_id": "E_ORD_001"},
+    "facts": {
+      "orders": {
+        "antibiotic_duplicate_within_48h": true
+      }
+    }
+  }
+}
+
 ### List pathway definitions
 GET http://localhost:18080/zy-engine/api/pathways
 X-Trace-Id: trace-demo-pathway-list

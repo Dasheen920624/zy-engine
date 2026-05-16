@@ -16,8 +16,10 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicLong;
@@ -25,6 +27,14 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class RuleService {
     private static final int EXEC_LOG_RING_CAPACITY = 500;
+
+    // 第三方规则引擎对外开放的标准场景码，与产品化方案/前端规则校验工作台保持一致。
+    private static final Set<String> SUPPORTED_RULE_ENGINE_SCENARIOS = new LinkedHashSet<String>(Arrays.asList(
+            "PATHWAY_ENTRY", "EMR_QC", "INSURANCE_QC", "ORDER_SAFETY",
+            "DRUG_INDICATION", "EXAM_RATIONALITY"));
+
+    // 历史规则只声明 rule_type 时的默认场景路由，避免老规则需要立刻补 scenario_codes 才能被第三方调用。
+    private static final Map<String, Set<String>> DEFAULT_RULE_TYPE_SCENARIOS = defaultRuleTypeScenarios();
 
     private final EnginePersistenceService persistenceService;
     private final RuleDslEvaluator dslEvaluator = new RuleDslEvaluator();
@@ -296,6 +306,198 @@ public class RuleService {
             results.add(executeDefinition(definition, patientContext));
         }
         return results;
+    }
+
+    /**
+     * RULE-001 第三方规则引擎 API：通过 scenario_code + rule_package_code 路由到已发布规则，
+     * 输出标准化结果信封并写入审计。批量与异步入口由后续批次补齐。
+     */
+    public Map<String, Object> evaluateForScenario(Map<String, Object> request) {
+        if (request == null) {
+            throw new IllegalArgumentException("request body is required");
+        }
+        String scenarioCode = upper(string(request.get("scenario_code"), null));
+        if (scenarioCode == null) {
+            throw new IllegalArgumentException("scenario_code is required");
+        }
+        if (!SUPPORTED_RULE_ENGINE_SCENARIOS.contains(scenarioCode)) {
+            throw new IllegalArgumentException("unsupported scenario_code: " + scenarioCode
+                    + "; supported: " + SUPPORTED_RULE_ENGINE_SCENARIOS);
+        }
+        // 第三方接入要求显式声明 patient_context，以避免把 scenario_code 这种控制参数误当作上下文事实。
+        Object patientContextRaw = request.get("patient_context");
+        if (!(patientContextRaw instanceof Map)) {
+            throw new IllegalArgumentException("patient_context is required");
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> patientContext = (Map<String, Object>) patientContextRaw;
+        if (patientContext.isEmpty()) {
+            throw new IllegalArgumentException("patient_context is required");
+        }
+
+        String packageCode = string(request.get("rule_package_code"), null);
+        String packageVersion = string(request.get("rule_package_version"), null);
+        List<String> ruleCodeFilter = stringList(request.get("rule_codes"));
+        String operatorId = string(request.get("operator_id"), null);
+        String tenantId = string(request.get("tenant_id"), null);
+
+        long started = System.currentTimeMillis();
+        List<RuleDefinition> candidates = scenarioCandidates(scenarioCode, packageCode,
+                packageVersion, ruleCodeFilter);
+
+        List<Map<String, Object>> resultEntries = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> warnings = new ArrayList<Map<String, Object>>();
+        int hitCount = 0;
+        for (RuleDefinition definition : candidates) {
+            Map<String, Object> entry = executeForScenario(definition, scenarioCode, patientContext);
+            if (Boolean.TRUE.equals(entry.get("hit"))) {
+                hitCount++;
+            }
+            resultEntries.add(entry);
+        }
+        if (candidates.isEmpty()) {
+            // 没有匹配规则时不抛异常，避免第三方系统被规则尚未配置的情况打断；返回 warning 即可。
+            Map<String, Object> warning = new LinkedHashMap<String, Object>();
+            warning.put("severity", "INFO");
+            warning.put("code", "NO_RULES_MATCHED");
+            warning.put("message", "未找到匹配的已发布规则，请确认 scenario_code/rule_package_code 配置。");
+            warnings.add(warning);
+        }
+        long elapsed = System.currentTimeMillis() - started;
+
+        Map<String, Object> response = new LinkedHashMap<String, Object>();
+        response.put("trace_id", TraceContext.getTraceId());
+        response.put("scenario_code", scenarioCode);
+        response.put("rule_package_code", packageCode);
+        response.put("rule_package_version", packageVersion);
+        response.put("evaluated_count", candidates.size());
+        response.put("hit_count", hitCount);
+        response.put("elapsed_ms", elapsed);
+        response.put("results", resultEntries);
+        response.put("warnings", warnings);
+
+        Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
+        auditDetail.put("scenario_code", scenarioCode);
+        auditDetail.put("rule_package_code", packageCode);
+        auditDetail.put("rule_package_version", packageVersion);
+        auditDetail.put("rule_codes_filter", ruleCodeFilter);
+        auditDetail.put("evaluated_count", candidates.size());
+        auditDetail.put("hit_count", hitCount);
+        auditDetail.put("elapsed_ms", elapsed);
+        auditDetail.put("tenant_id", tenantId);
+        try {
+            persistenceService.saveAuditLog("RULE_ENGINE", "EVALUATE_SCENARIO", "SCENARIO",
+                    scenarioCode, ClinicalFactUtils.patientId(patientContext),
+                    ClinicalFactUtils.encounterId(patientContext), operatorId, auditDetail);
+        } catch (RuntimeException ignored) {
+            // 第三方调用主流程不能因审计落库失败中断，审计降级在内存环形日志中可继续观测。
+        }
+        return response;
+    }
+
+    private List<RuleDefinition> scenarioCandidates(String scenarioCode, String packageCode,
+                                                    String packageVersion, List<String> ruleCodeFilter) {
+        List<RuleDefinition> candidates = new ArrayList<RuleDefinition>();
+        for (RuleDefinition definition : publishedRules()) {
+            if (packageCode != null && !packageCode.equalsIgnoreCase(definition.getPackageCode())) {
+                continue;
+            }
+            if (packageVersion != null && !packageVersion.equalsIgnoreCase(definition.getPackageVersion())) {
+                continue;
+            }
+            if (!ruleCodeFilter.isEmpty() && !ruleCodeFilter.contains(definition.getRuleCode())) {
+                continue;
+            }
+            if (!scenariosOf(definition).contains(scenarioCode)) {
+                continue;
+            }
+            candidates.add(definition);
+        }
+        // publishedRules 已按优先级降序排好序，这里保持稳定顺序即可。
+        return candidates;
+    }
+
+    private Set<String> scenariosOf(RuleDefinition definition) {
+        Set<String> set = new LinkedHashSet<String>();
+        Object declaredList = definition.getRuleJson().get("scenario_codes");
+        if (declaredList instanceof Collection) {
+            for (Object item : (Collection<?>) declaredList) {
+                String value = upper(string(item, null));
+                if (value != null) {
+                    set.add(value);
+                }
+            }
+        }
+        String declaredSingle = upper(string(definition.getRuleJson().get("scenario_code"), null));
+        if (declaredSingle != null) {
+            set.add(declaredSingle);
+        }
+        if (set.isEmpty()) {
+            Set<String> derived = DEFAULT_RULE_TYPE_SCENARIOS.get(upper(definition.getRuleType()));
+            if (derived != null) {
+                set.addAll(derived);
+            }
+        }
+        return set;
+    }
+
+    private Map<String, Object> executeForScenario(RuleDefinition definition, String scenarioCode,
+                                                    Map<String, Object> patientContext) {
+        long start = System.currentTimeMillis();
+        Map<String, Object> entry = new LinkedHashMap<String, Object>();
+        entry.put("rule_code", definition.getRuleCode());
+        entry.put("rule_name", definition.getRuleName());
+        entry.put("rule_type", definition.getRuleType());
+        entry.put("scenario_code", scenarioCode);
+        entry.put("package_code", definition.getPackageCode());
+        entry.put("package_version", definition.getPackageVersion());
+        entry.put("version_no", definition.getVersionNo());
+
+        RuleResult result = new RuleResult();
+        result.setRuleCode(definition.getRuleCode());
+        try {
+            RuleDslEvaluator.EvaluationOutcome outcome = dslEvaluator.evaluate(definition.getRuleJson(), patientContext);
+            result.setHit(outcome.isHit());
+            result.setSeverity(outcome.isHit() ? severity(definition) : "INFO");
+            result.setMessage(message(definition, outcome));
+            result.setActions(actions(definition));
+            result.setEvidence(new ArrayList<Map<String, Object>>(outcome.getEvidence()));
+            long elapsed = System.currentTimeMillis() - start;
+            persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
+                    elapsed, "SUCCESS", null, null);
+            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "SUCCESS", null, null);
+
+            entry.put("hit", result.isHit());
+            entry.put("severity", result.getSeverity());
+            entry.put("message", result.getMessage());
+            entry.put("actions", result.getActions());
+            entry.put("evidence", result.getEvidence());
+            entry.put("missing_facts", new ArrayList<String>(outcome.getMissingFacts()));
+            entry.put("elapsed_ms", elapsed);
+            entry.put("result_status", "SUCCESS");
+            return entry;
+        } catch (RuntimeException ex) {
+            long elapsed = System.currentTimeMillis() - start;
+            result.setHit(false);
+            result.setSeverity("ERROR");
+            result.setMessage("规则执行异常：" + ex.getMessage());
+            persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
+                    elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
+            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "ERROR",
+                    "RULE_EXEC_ERROR", ex.getMessage());
+
+            entry.put("hit", false);
+            entry.put("severity", "ERROR");
+            entry.put("message", result.getMessage());
+            entry.put("actions", new ArrayList<String>());
+            entry.put("evidence", new ArrayList<Map<String, Object>>());
+            entry.put("missing_facts", new ArrayList<String>());
+            entry.put("elapsed_ms", elapsed);
+            entry.put("result_status", "ERROR");
+            entry.put("error_code", "RULE_EXEC_ERROR");
+            entry.put("error_message", ex.getMessage());
+            return entry;
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -832,5 +1034,35 @@ public class RuleService {
 
     private String nowText() {
         return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
+    }
+
+    private String upper(String value) {
+        return value == null ? null : value.trim().toUpperCase();
+    }
+
+    private List<String> stringList(Object value) {
+        List<String> list = new ArrayList<String>();
+        if (value instanceof Collection) {
+            for (Object item : (Collection<?>) value) {
+                String text = string(item, null);
+                if (text != null) {
+                    list.add(text);
+                }
+            }
+        }
+        return list;
+    }
+
+    private static Map<String, Set<String>> defaultRuleTypeScenarios() {
+        Map<String, Set<String>> map = new LinkedHashMap<String, Set<String>>();
+        map.put("PATHWAY_ENTRY", new LinkedHashSet<String>(Arrays.asList("PATHWAY_ENTRY")));
+        map.put("TIME_LIMIT_QC", new LinkedHashSet<String>(Arrays.asList("EMR_QC")));
+        map.put("SAFETY_BLOCK", new LinkedHashSet<String>(Arrays.asList("ORDER_SAFETY")));
+        map.put("EMR_QC", new LinkedHashSet<String>(Arrays.asList("EMR_QC")));
+        map.put("INSURANCE_QC", new LinkedHashSet<String>(Arrays.asList("INSURANCE_QC")));
+        map.put("ORDER_SAFETY", new LinkedHashSet<String>(Arrays.asList("ORDER_SAFETY")));
+        map.put("DRUG_INDICATION", new LinkedHashSet<String>(Arrays.asList("DRUG_INDICATION")));
+        map.put("EXAM_RATIONALITY", new LinkedHashSet<String>(Arrays.asList("EXAM_RATIONALITY")));
+        return map;
     }
 }

@@ -396,6 +396,227 @@ class EngineApiContractTests {
     }
 
     @Test
+    void ruleEngineEvaluateRoutesByScenarioAndPackage() throws Exception {
+        Map<String, Object> packageBody = ruleEngineScenarioPackage();
+        Map<String, Object> imported = invokePost("/api/rules", packageBody);
+        List<Map<String, Object>> importedRules = asListOfMap(imported.get("data"));
+        assertEquals(3, importedRules.size());
+
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("package_version", "2026.05");
+        publishBody.put("approved_by", "JUNIT_RULE_ENGINE");
+        Map<String, Object> publishResp = invokePost("/api/rules/packages/PKG_RULE_ENGINE_SCENARIOS/publish", publishBody);
+        assertEquals(3, ((Number) asMap(publishResp.get("data")).get("published_count")).intValue());
+
+        // EMR_QC 场景：出院小结主诉缺失 → 命中。
+        Map<String, Object> emrReq = new LinkedHashMap<String, Object>();
+        emrReq.put("scenario_code", "EMR_QC");
+        emrReq.put("rule_package_code", "PKG_RULE_ENGINE_SCENARIOS");
+        emrReq.put("rule_package_version", "2026.05");
+        emrReq.put("operator_id", "JUNIT_QC_OFFICER");
+        emrReq.put("patient_context", ruleEnginePatientContext(false, false, false));
+        Map<String, Object> emrResp = invokePost("/api/rule-engine/evaluate", emrReq);
+        Map<String, Object> emrData = asMap(emrResp.get("data"));
+        assertEquals("EMR_QC", emrData.get("scenario_code"));
+        assertEquals(1, ((Number) emrData.get("evaluated_count")).intValue());
+        assertEquals(1, ((Number) emrData.get("hit_count")).intValue());
+        List<Map<String, Object>> emrResults = asListOfMap(emrData.get("results"));
+        assertEquals("R_EMR_DISCHARGE_SUMMARY_COMPLETE", emrResults.get(0).get("rule_code"));
+        assertEquals(Boolean.TRUE, emrResults.get(0).get("hit"));
+        assertEquals("EMR_QC", emrResults.get(0).get("scenario_code"));
+        assertEquals("PKG_RULE_ENGINE_SCENARIOS", emrResults.get(0).get("package_code"));
+        assertNotNull(emrData.get("trace_id"));
+        assertTrue(asList(emrData.get("warnings")).isEmpty());
+
+        // ORDER_SAFETY 场景：48小时重复抗菌药物 → 命中拦截动作。
+        Map<String, Object> safetyReq = new LinkedHashMap<String, Object>();
+        safetyReq.put("scenario_code", "ORDER_SAFETY");
+        safetyReq.put("patient_context", ruleEnginePatientContextWithDuplicateAntibiotic());
+        Map<String, Object> safetyResp = invokePost("/api/rule-engine/evaluate", safetyReq);
+        Map<String, Object> safetyData = asMap(safetyResp.get("data"));
+        assertEquals(1, ((Number) safetyData.get("evaluated_count")).intValue());
+        assertEquals(1, ((Number) safetyData.get("hit_count")).intValue());
+        List<Map<String, Object>> safetyResults = asListOfMap(safetyData.get("results"));
+        Map<String, Object> safetyHit = safetyResults.get(0);
+        assertEquals("R_ORDER_SAFETY_DUP_ANTIBIOTIC", safetyHit.get("rule_code"));
+        assertEquals("CRITICAL", safetyHit.get("severity"));
+        assertTrue(asList(safetyHit.get("actions")).contains("BLOCK_ORDER"));
+
+        // DRUG_INDICATION 通过多场景声明也能复用同一规则。
+        Map<String, Object> drugReq = new LinkedHashMap<String, Object>();
+        drugReq.put("scenario_code", "DRUG_INDICATION");
+        drugReq.put("patient_context", ruleEnginePatientContextWithInsuranceMismatch());
+        Map<String, Object> drugResp = invokePost("/api/rule-engine/evaluate", drugReq);
+        Map<String, Object> drugData = asMap(drugResp.get("data"));
+        assertEquals(1, ((Number) drugData.get("evaluated_count")).intValue());
+        assertEquals(1, ((Number) drugData.get("hit_count")).intValue());
+        assertEquals("DRUG_INDICATION", asListOfMap(drugData.get("results")).get(0).get("scenario_code"));
+    }
+
+    @Test
+    void ruleEngineEvaluateRejectsInvalidRequests() throws Exception {
+        Map<String, Object> missingScenario = new LinkedHashMap<String, Object>();
+        missingScenario.put("patient_context", ruleEnginePatientContext(true, true, true));
+        Map<String, Object> noScenarioResp = invokePostExpectingClientError("/api/rule-engine/evaluate", missingScenario);
+        assertEquals("VALIDATION_ERROR", noScenarioResp.get("code"));
+
+        Map<String, Object> unsupportedScenario = new LinkedHashMap<String, Object>();
+        unsupportedScenario.put("scenario_code", "NOT_A_SCENARIO");
+        unsupportedScenario.put("patient_context", ruleEnginePatientContext(true, true, true));
+        Map<String, Object> badScenarioResp = invokePostExpectingClientError("/api/rule-engine/evaluate", unsupportedScenario);
+        assertEquals("VALIDATION_ERROR", badScenarioResp.get("code"));
+
+        Map<String, Object> missingPatient = new LinkedHashMap<String, Object>();
+        missingPatient.put("scenario_code", "EMR_QC");
+        Map<String, Object> noPatientResp = invokePostExpectingClientError("/api/rule-engine/evaluate", missingPatient);
+        assertEquals("VALIDATION_ERROR", noPatientResp.get("code"));
+    }
+
+    @Test
+    void ruleEngineEvaluateUnmatchedReturnsWarning() throws Exception {
+        Map<String, Object> request = new LinkedHashMap<String, Object>();
+        request.put("scenario_code", "EXAM_RATIONALITY");
+        request.put("rule_package_code", "PKG_UNKNOWN_PACKAGE");
+        request.put("patient_context", ruleEnginePatientContext(true, true, true));
+        Map<String, Object> response = invokePost("/api/rule-engine/evaluate", request);
+        Map<String, Object> data = asMap(response.get("data"));
+        assertEquals(0, ((Number) data.get("evaluated_count")).intValue());
+        assertEquals(0, ((Number) data.get("hit_count")).intValue());
+        assertTrue(asListOfMap(data.get("results")).isEmpty());
+        List<Map<String, Object>> warnings = asListOfMap(data.get("warnings"));
+        assertEquals(1, warnings.size());
+        assertEquals("NO_RULES_MATCHED", warnings.get(0).get("code"));
+    }
+
+    private Map<String, Object> ruleEngineScenarioPackage() {
+        Map<String, Object> emrRule = new LinkedHashMap<String, Object>();
+        emrRule.put("rule_code", "R_EMR_DISCHARGE_SUMMARY_COMPLETE");
+        emrRule.put("rule_name", "出院小结主诉与诊断必须完整");
+        emrRule.put("rule_type", "EMR_QC");
+        emrRule.put("scenario_codes", Arrays.asList("EMR_QC"));
+        emrRule.put("severity", "MEDIUM");
+        emrRule.put("priority", 90);
+        emrRule.put("enabled", true);
+        Map<String, Object> emrChief = new LinkedHashMap<String, Object>();
+        emrChief.put("fact", "emr.discharge_summary.chief_complaint_filled");
+        emrChief.put("operator", "equals");
+        emrChief.put("value", false);
+        Map<String, Object> emrDiagnosis = new LinkedHashMap<String, Object>();
+        emrDiagnosis.put("fact", "emr.discharge_summary.diagnosis_filled");
+        emrDiagnosis.put("operator", "equals");
+        emrDiagnosis.put("value", false);
+        Map<String, Object> emrOrders = new LinkedHashMap<String, Object>();
+        emrOrders.put("fact", "emr.discharge_summary.discharge_orders_filled");
+        emrOrders.put("operator", "equals");
+        emrOrders.put("value", false);
+        Map<String, Object> emrCondition = new LinkedHashMap<String, Object>();
+        emrCondition.put("any", Arrays.asList(emrChief, emrDiagnosis, emrOrders));
+        emrRule.put("condition", emrCondition);
+        emrRule.put("actions", Arrays.asList(actionMap("EMR_QC_FAIL")));
+        emrRule.put("message_template", "出院小结存在必填项缺失，请补全。");
+
+        Map<String, Object> insRule = new LinkedHashMap<String, Object>();
+        insRule.put("rule_code", "R_INS_DRUG_INDICATION_MISMATCH");
+        insRule.put("rule_name", "医保限定适应症与诊断不一致");
+        insRule.put("rule_type", "INSURANCE_QC");
+        insRule.put("scenario_codes", Arrays.asList("INSURANCE_QC", "DRUG_INDICATION"));
+        insRule.put("severity", "HIGH");
+        insRule.put("priority", 110);
+        insRule.put("enabled", true);
+        Map<String, Object> insUsed = new LinkedHashMap<String, Object>();
+        insUsed.put("fact", "orders.insurance_restricted_drug_used");
+        insUsed.put("operator", "equals");
+        insUsed.put("value", true);
+        Map<String, Object> insMismatch = new LinkedHashMap<String, Object>();
+        insMismatch.put("fact", "orders.insurance_restricted_drug_indication_matched");
+        insMismatch.put("operator", "equals");
+        insMismatch.put("value", false);
+        Map<String, Object> insCondition = new LinkedHashMap<String, Object>();
+        insCondition.put("all", Arrays.asList(insUsed, insMismatch));
+        insRule.put("condition", insCondition);
+        insRule.put("actions", Arrays.asList(actionMap("INSURANCE_QC_FAIL"), actionMap("REQUEST_PRE_AUTH")));
+        insRule.put("message_template", "存在医保限定适应症与诊断不匹配的药品。");
+
+        Map<String, Object> safetyRule = new LinkedHashMap<String, Object>();
+        safetyRule.put("rule_code", "R_ORDER_SAFETY_DUP_ANTIBIOTIC");
+        safetyRule.put("rule_name", "重复抗菌药物医嘱拦截");
+        safetyRule.put("rule_type", "SAFETY_BLOCK");
+        safetyRule.put("scenario_codes", Arrays.asList("ORDER_SAFETY"));
+        safetyRule.put("severity", "CRITICAL");
+        safetyRule.put("priority", 130);
+        safetyRule.put("enabled", true);
+        Map<String, Object> safetyAtom = new LinkedHashMap<String, Object>();
+        safetyAtom.put("fact", "orders.antibiotic_duplicate_within_48h");
+        safetyAtom.put("operator", "equals");
+        safetyAtom.put("value", true);
+        Map<String, Object> safetyCondition = new LinkedHashMap<String, Object>();
+        safetyCondition.put("all", Arrays.asList(safetyAtom));
+        safetyRule.put("condition", safetyCondition);
+        safetyRule.put("actions", Arrays.asList(actionMap("BLOCK_ORDER"), actionMap("PUSH_TO_DOCTOR")));
+        safetyRule.put("message_template", "48小时内重复开立抗菌药物，请上级医师确认。");
+
+        Map<String, Object> body = new LinkedHashMap<String, Object>();
+        body.put("package_code", "PKG_RULE_ENGINE_SCENARIOS");
+        body.put("package_version", "2026.05");
+        body.put("rules", Arrays.asList(emrRule, insRule, safetyRule));
+        return body;
+    }
+
+    private Map<String, Object> ruleEnginePatientContext(boolean chiefFilled, boolean diagnosisFilled, boolean ordersFilled) {
+        Map<String, Object> patient = new LinkedHashMap<String, Object>();
+        patient.put("patient_id", "P_QC_001");
+        Map<String, Object> encounter = new LinkedHashMap<String, Object>();
+        encounter.put("encounter_id", "E_QC_001");
+        encounter.put("visit_type", "INPATIENT");
+        Map<String, Object> discharge = new LinkedHashMap<String, Object>();
+        discharge.put("chief_complaint_filled", chiefFilled);
+        discharge.put("diagnosis_filled", diagnosisFilled);
+        discharge.put("discharge_orders_filled", ordersFilled);
+        Map<String, Object> emr = new LinkedHashMap<String, Object>();
+        emr.put("discharge_summary", discharge);
+        Map<String, Object> facts = new LinkedHashMap<String, Object>();
+        facts.put("emr", emr);
+        Map<String, Object> context = new LinkedHashMap<String, Object>();
+        context.put("patient", patient);
+        context.put("encounter", encounter);
+        context.put("facts", facts);
+        return context;
+    }
+
+    private Map<String, Object> ruleEnginePatientContextWithDuplicateAntibiotic() {
+        Map<String, Object> orders = new LinkedHashMap<String, Object>();
+        orders.put("antibiotic_duplicate_within_48h", true);
+        Map<String, Object> facts = new LinkedHashMap<String, Object>();
+        facts.put("orders", orders);
+        Map<String, Object> patient = new LinkedHashMap<String, Object>();
+        patient.put("patient_id", "P_QC_SAFETY");
+        Map<String, Object> encounter = new LinkedHashMap<String, Object>();
+        encounter.put("encounter_id", "E_QC_SAFETY");
+        Map<String, Object> context = new LinkedHashMap<String, Object>();
+        context.put("patient", patient);
+        context.put("encounter", encounter);
+        context.put("facts", facts);
+        return context;
+    }
+
+    private Map<String, Object> ruleEnginePatientContextWithInsuranceMismatch() {
+        Map<String, Object> orders = new LinkedHashMap<String, Object>();
+        orders.put("insurance_restricted_drug_used", true);
+        orders.put("insurance_restricted_drug_indication_matched", false);
+        Map<String, Object> facts = new LinkedHashMap<String, Object>();
+        facts.put("orders", orders);
+        Map<String, Object> patient = new LinkedHashMap<String, Object>();
+        patient.put("patient_id", "P_QC_INSURANCE");
+        Map<String, Object> encounter = new LinkedHashMap<String, Object>();
+        encounter.put("encounter_id", "E_QC_INSURANCE");
+        Map<String, Object> context = new LinkedHashMap<String, Object>();
+        context.put("patient", patient);
+        context.put("encounter", encounter);
+        context.put("facts", facts);
+        return context;
+    }
+
+    @Test
     void pathwayImportPublishAdmitAndComplete() throws Exception {
         Map<String, Object> pathwayConfig = samplePathwayConfig("AMI_TEST", "AMI测试路径");
         Map<String, Object> created = invokePost("/api/pathways", pathwayConfig);

@@ -584,6 +584,13 @@ Provider 影响：
 
 目标：支持病历质控、医保质控、医嘱安全拦截等第三方独立调用。
 
+当前进展：
+
+- 第一批已落地同步接口 `POST /api/rule-engine/evaluate`：支持 `scenario_code`、`rule_package_code/rule_package_version`、`rule_codes` 白名单与显式 `patient_context`，未命中规则时返回 `NO_RULES_MATCHED` 警告而非异常。
+- 规则可声明 `scenario_codes` 数组同时归属多个场景；老规则按 `rule_type`（如 `SAFETY_BLOCK`→`ORDER_SAFETY`、`TIME_LIMIT_QC`→`EMR_QC`）自动推断兼容。
+- 返回标准 `results[]`，包含 `rule_code/rule_name/rule_type/scenario_code/package_code/package_version/version_no/hit/severity/message/actions/evidence/missing_facts`；同时写入 `RULE_ENGINE/EVALUATE_SCENARIO` 审计与每条规则的执行日志。
+- 第三方调用入口与 `/api/rules/*` 配置管理与内部演示接口解耦，便于后续灰度、限流和审计治理。
+
 产出：
 
 - `/api/rule-engine/evaluate`

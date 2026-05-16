@@ -268,7 +268,7 @@ git push origin main
 
 ### RULE-001 第三方规则引擎 API
 
-第一批只做同步接口：
+第一批已落地同步接口：
 
 ```http
 POST /api/rule-engine/evaluate
@@ -276,12 +276,15 @@ POST /api/rule-engine/evaluate
 
 支持：
 
-- `scenario_code`
-- `rule_package_code`
-- `patient_context`
-- 返回标准 `results`
+- `scenario_code`：限 `PATHWAY_ENTRY`、`EMR_QC`、`INSURANCE_QC`、`ORDER_SAFETY`、`DRUG_INDICATION`、`EXAM_RATIONALITY`。
+- `rule_package_code` / `rule_package_version`：可选包过滤，未提供时按场景从全部已发布规则中匹配。
+- `rule_codes`：可选规则编码白名单。
+- `patient_context`：必填，须显式传入 `patient`、`encounter`、`facts`。
+- 返回 `evaluated_count`、`hit_count`、`elapsed_ms`、`results[]`、`warnings[]`，未命中规则时给 `NO_RULES_MATCHED` 警告而非异常。
+- 写入 `RULE_ENGINE/EVALUATE_SCENARIO` 审计与每条规则执行日志。
+- 规则可通过 `scenario_codes` 数组同时挂载多个场景（如医保限定药品同时归入 `INSURANCE_QC` 与 `DRUG_INDICATION`）；老规则在缺失声明时按 `rule_type` 自动推断。
 
-异步和批量后续再做。
+异步、批量与 `/api/rule-engine/results/{resultId}` 按 RULE-001 第二批继续推进。
 
 ### FE-001 前端信息架构与高保真原型
 

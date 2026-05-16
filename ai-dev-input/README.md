@@ -52,7 +52,7 @@
 - `PKG-001` 配置包统一模型（第一批已补 `sample_config_package.json` 和后端契约测试）。
 - `ORG-001` 集团/医院/院区/站点/科室组织模型（已补 `sample_org_context.json`、`sample_org_units.json`、`/api/system/org-context` 和 `/api/organizations`）。
 - `TERM-001` 医嘱标准化和未映射治理。
-- `RULE-001` 第三方规则引擎 API。
+- `RULE-001` 第三方规则引擎 API（第一批已补 `sample_rule_engine_scenarios.json` 与 `POST /api/rule-engine/evaluate`）。
 - `GRAPH-001` 图谱包发布与 Oracle 到 Neo4j 同步。
 - `DIFY-001` Dify 契约绑定和调用回放。
 - `FE-001` 前端信息架构、高保真原型和演示脚本。

@@ -57,6 +57,7 @@ zy-engine-mvp/
 - 路径版本发布、diff、回滚。
 - 路径变异、节点完成率、节点滞留时长、质控聚合指标。
 - 规则 DSL、规则包导入、包级 review、批量发布、执行日志和统计。
+- 第三方规则引擎 API：`POST /api/rule-engine/evaluate`，按 `scenario_code`（PATHWAY_ENTRY/EMR_QC/INSURANCE_QC/ORDER_SAFETY/DRUG_INDICATION/EXAM_RATIONALITY）路由到已发布规则，支持 `rule_package_code/rule_package_version/rule_codes` 过滤，未匹配规则时返回 `NO_RULES_MATCHED` 警告而不报错。
 - 图谱版本、节点、边、证据导入与查询，Neo4j 不可用时降级。
 - Dify 工作流模板、参数映射、重试、降级输出、调用统计。
 - 字典映射和适配器 Mock。

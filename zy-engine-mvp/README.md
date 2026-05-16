@@ -9,6 +9,7 @@
 - 路径配置回查：支持查询路径清单和指定版本配置原文，便于配置页面预览和验收追溯。
 - 路径版本差异对比：`GET /pathways/{pathwayCode}/diff?from=1.0.0&to=draft` 输出元数据字段变化、节点增删改、任务与流转目标的增删，配置发布前的 review 可一眼看到变更规模。
 - 规则引擎：AMI/STEMI 候选规则、时限质控规则骨架、安全拦截规则骨架；支持规则包导入、包级审核和批量发布；执行日志可按 `ruleCode/traceId/patientId/hit/resultStatus` 过滤查询，最近 500 条保留在内存环形缓冲，并支持 `/exec-logs/summary` 按规则/严重级别/结果状态聚合 hit_rate 与 average_elapsed_ms。
+- 第三方规则引擎入口：`POST /api/rule-engine/evaluate` 按 `scenario_code` 路由（`PATHWAY_ENTRY/EMR_QC/INSURANCE_QC/ORDER_SAFETY/DRUG_INDICATION/EXAM_RATIONALITY`），可选 `rule_package_code/rule_package_version/rule_codes` 过滤，输出 `evaluated_count/hit_count/elapsed_ms/results/warnings` 标准信封，未命中规则时返回 `NO_RULES_MATCHED` 警告而非异常，调用入口写入 `RULE_ENGINE/EVALUATE_SCENARIO` 审计。
 - 图谱引擎：候选疾病召回、证据查询、Neo4j 可配置查询和不可用时降级返回；图谱版本/证据/节点/关系均可注册与查询，Neo4j 关闭时 `disease-candidates` 与 `evidence` 接口优先使用已注册节点+关系召回（`graph_source=REGISTERED_FALLBACK`），未注册才回退到内置 AMI 启发式。
 - Dify 适配：保留工作流调用入口，支持配置真实 Dify 调用、超时降级、重试和审计记录；工作流模板可导入并绑定 `required_inputs`、`input_mappings`、`input_defaults`、`timeout_ms`、`retry_count`、`degraded_outputs`，调用时按模板抽取上下文、补全缺省入参并在缺失必填字段时返回 `VALIDATION_ERROR`。
 - 字典映射：提供第三方系统编码到平台标准概念的标准化接口，未命中项会返回待治理状态；支持映射配置导入、列表与版本回查，校验失败返回 `VALIDATION_ERROR`。

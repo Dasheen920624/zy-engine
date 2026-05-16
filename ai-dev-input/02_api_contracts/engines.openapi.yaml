@@ -256,6 +256,128 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResult'
+  /rule-engine/evaluate:
+    post:
+      tags: [RuleEngine]
+      summary: 第三方规则引擎按场景执行
+      description: |
+        第三方系统（病历质控、医保质控、医嘱安全等）按 scenario_code 与可选 rule_package_code/rule_package_version 路由到已发布规则，
+        返回标准结果信封。RULE-001 第一批仅支持同步入口，未命中任意规则时返回空 results 与 NO_RULES_MATCHED 提示，不抛异常。
+      operationId: ruleEngineEvaluate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scenario_code, patient_context]
+              properties:
+                scenario_code:
+                  type: string
+                  enum:
+                    - PATHWAY_ENTRY
+                    - EMR_QC
+                    - INSURANCE_QC
+                    - ORDER_SAFETY
+                    - DRUG_INDICATION
+                    - EXAM_RATIONALITY
+                rule_package_code:
+                  type: string
+                rule_package_version:
+                  type: string
+                rule_codes:
+                  type: array
+                  items:
+                    type: string
+                tenant_id:
+                  type: string
+                operator_id:
+                  type: string
+                patient_context:
+                  $ref: '#/components/schemas/PatientContext'
+      responses:
+        '200':
+          description: 场景化规则评估结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResult'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          trace_id:
+                            type: string
+                          scenario_code:
+                            type: string
+                          rule_package_code:
+                            type: string
+                            nullable: true
+                          rule_package_version:
+                            type: string
+                            nullable: true
+                          evaluated_count:
+                            type: integer
+                          hit_count:
+                            type: integer
+                          elapsed_ms:
+                            type: integer
+                          results:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                rule_code:
+                                  type: string
+                                rule_name:
+                                  type: string
+                                rule_type:
+                                  type: string
+                                scenario_code:
+                                  type: string
+                                package_code:
+                                  type: string
+                                  nullable: true
+                                package_version:
+                                  type: string
+                                  nullable: true
+                                version_no:
+                                  type: string
+                                hit:
+                                  type: boolean
+                                severity:
+                                  type: string
+                                message:
+                                  type: string
+                                actions:
+                                  type: array
+                                  items:
+                                    type: string
+                                evidence:
+                                  type: array
+                                  items:
+                                    type: object
+                                missing_facts:
+                                  type: array
+                                  items:
+                                    type: string
+                                elapsed_ms:
+                                  type: integer
+                                result_status:
+                                  type: string
+                          warnings:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                severity:
+                                  type: string
+                                code:
+                                  type: string
+                                message:
+                                  type: string
   /graph/disease-candidates:
     post:
       tags: [GraphEngine]
