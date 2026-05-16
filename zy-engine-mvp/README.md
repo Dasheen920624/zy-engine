@@ -180,7 +180,15 @@ $env:ZYENGINE_DB_PASSWORD='数据库密码'
 .\scripts\run-oracle-ddl.cmd
 ```
 
-脚本会创建核心表、索引、表备注和字段备注。表已存在时会跳过建表，不会删除已有数据。为避免中文备注乱码，脚本会在建表后再次执行 `zyengine_comments_unistr.sql` 覆盖写入中文备注。
+脚本会创建核心表、索引、表备注和字段备注，并执行 `zyengine_org_context_migration.sql` 补齐已有库的组织上下文字段和索引。表已存在时会跳过建表，不会删除已有数据；迁移脚本会把 `PE_PATIENT_INSTANCE` 活动实例唯一约束升级为 `tenant_id + org_code + encounter_id + pathway_code + status`。为避免中文备注乱码，脚本会在建表和迁移后再次执行 `zyengine_comments_unistr.sql` 覆盖写入中文备注。
+
+Oracle 模式真实落表烟测：
+
+```powershell
+.\scripts\run-oracle-org-smoke.cmd
+```
+
+该脚本会通过 API 导入/发布/执行一条带组织上下文的规则，并用 SQLPlus 校验 `RE_RULE_DEF`、`RE_RULE_EXEC_LOG`、`ENGINE_AUDIT_LOG` 已写入对应 `tenant_id/hospital_code/scope_level/scope_code`。常规 `run-tests.cmd` 仍只跑 Maven/JUnit，默认不连接 Oracle。
 
 ## 核心表
 
@@ -333,8 +341,8 @@ GET  /zy-engine/api/audit-logs/summary?engineType=&actionType=&targetType=&targe
 - 组织目录：`sample_org_units.json` 可通过 `POST /organizations` 导入，`GET /organizations/tree?tenantId=TENANT_DEMO` 返回组织树；导入 `PLATFORM` 会返回 `VALIDATION_ERROR`，避免把系统内置默认误建成真实组织。
 - 字典映射：`HIS/I21.3/DIAGNOSIS` 可标准化为 `AMI_STEMI`，未知编码会返回 `UNMAPPED` 和 `PENDING_MAPPING`；`sample_dictionary_mappings.json` 可通过 `POST /terminology/mappings` 导入并经 `GET /terminology/mappings` 回查。
 - 适配器 Mock：`ECG_ADAPTER`、`LIS_ADAPTER`、`HIS_ADAPTER`、`EMR_WS_ADAPTER` 可返回 AMI 样例第三方数据；`sample_adapter_definitions.json` 可通过 `POST /adapters/definitions` 导入，未内置 Mock 的 `PACS_ADAPTER/QUERY_CHEST_CT` 调用会返回 `SUCCESS` 且 `row_count=0`。
-- Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录均可写入。
-- 审计日志查询：`GET /audit-logs?engineType=PATHWAY` 与 `GET /audit-logs/summary?engineType=PATHWAY` 可查询内存审计环形缓冲；Oracle 开启时仍会同步写入 `ENGINE_AUDIT_LOG`。
+- Oracle 落表：推荐记录、患者路径实例、节点状态、任务状态、变异记录、规则定义、规则执行日志和审计日志均可写入；变异记录、规则执行日志、审计日志已带结构化组织字段。
+- 审计日志查询：`GET /audit-logs?engineType=PATHWAY` 与 `GET /audit-logs/summary?engineType=PATHWAY` 可查询内存审计环形缓冲；Oracle 开启时仍会同步写入 `ENGINE_AUDIT_LOG`，并可通过 `run-oracle-org-smoke.cmd` 做真实落库校验。
 - Provider 状态：`GET /system/providers` 可返回 `run_mode=DB_ONLY/HYBRID/FULL_INTEGRATION/IN_MEMORY_DEMO`，并说明 Neo4j/Dify 未配置时的 fallback Provider。
 
 ## 当前边界

@@ -858,7 +858,7 @@ public class RuleService {
             result.setEvidence(new ArrayList<Map<String, Object>>(outcome.getEvidence()));
             long elapsed = System.currentTimeMillis() - start;
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
-                    elapsed, "SUCCESS", null, null);
+                    elapsed, "SUCCESS", null, null, orgFields(definition));
             recordExecLog(result, definition.getVersionNo(), patientContext, elapsed,
                     "SUCCESS", null, null, definition, null);
 
@@ -877,7 +877,7 @@ public class RuleService {
             result.setSeverity("ERROR");
             result.setMessage("规则执行异常：" + ex.getMessage());
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
-                    elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
+                    elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage(), orgFields(definition));
             recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "ERROR",
                     "RULE_EXEC_ERROR", ex.getMessage(), definition, null);
 
@@ -1149,7 +1149,7 @@ public class RuleService {
             }
             long elapsed = System.currentTimeMillis() - start;
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
-                    elapsed, "SUCCESS", null, null);
+                    elapsed, "SUCCESS", null, null, orgFields(definition));
             recordExecLog(result, definition.getVersionNo(), patientContext, elapsed,
                     "SUCCESS", null, null, definition, null);
             return result;
@@ -1159,7 +1159,7 @@ public class RuleService {
             result.setMessage("规则执行异常：" + ex.getMessage());
             long elapsed = System.currentTimeMillis() - start;
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
-                    elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
+                    elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage(), orgFields(definition));
             recordExecLog(result, definition.getVersionNo(), patientContext, elapsed,
                     "ERROR", "RULE_EXEC_ERROR", ex.getMessage(), definition, null);
             throw ex;
@@ -1227,6 +1227,12 @@ public class RuleService {
         target.put("scope_level", definition.getScopeLevel());
         target.put("scope_code", definition.getScopeCode());
         target.put("org_source", definition.getOrgSource());
+    }
+
+    private Map<String, Object> orgFields(RuleDefinition definition) {
+        Map<String, Object> fields = new LinkedHashMap<String, Object>();
+        putOrgFields(fields, definition);
+        return fields;
     }
 
     private void auditRuleChange(String actionType, String targetType, String targetCode,

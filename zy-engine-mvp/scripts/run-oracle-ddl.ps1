@@ -21,10 +21,14 @@ if ([string]::IsNullOrWhiteSpace($Password)) {
 $sqlplus = (Get-Command sqlplus -ErrorAction Stop).Source
 $root = Split-Path -Parent $PSScriptRoot
 $ddl = Join-Path $root "db\oracle\zyengine_core_ddl_with_comments.sql"
+$orgMigration = Join-Path $root "db\oracle\zyengine_org_context_migration.sql"
 $comments = Join-Path $root "db\oracle\zyengine_comments_unistr.sql"
 
 if (!(Test-Path -LiteralPath $ddl)) {
   throw "DDL file not found: $ddl"
+}
+if (!(Test-Path -LiteralPath $orgMigration)) {
+  throw "Migration file not found: $orgMigration"
 }
 if (!(Test-Path -LiteralPath $comments)) {
   throw "Comment file not found: $comments"
@@ -34,6 +38,7 @@ $sql = @"
 CONNECT $Username/$Password@$Connect
 WHENEVER SQLERROR EXIT SQL.SQLCODE
 @$ddl
+@$orgMigration
 @$comments
 SELECT table_name, comments
   FROM user_tab_comments

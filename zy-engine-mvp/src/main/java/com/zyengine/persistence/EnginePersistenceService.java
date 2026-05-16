@@ -259,10 +259,15 @@ public class EnginePersistenceService {
             return;
         }
         String sql = "INSERT INTO pe_variation_record " +
-                "(id, instance_id, patient_id, encounter_id, node_code, variation_type, reason, operator_id, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
+                "(id, instance_id, patient_id, encounter_id, node_code, variation_type, reason, operator_id, " +
+                "tenant_id, group_code, hospital_code, campus_code, site_code, department_code, scope_level, scope_code, org_source, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
+            String tenantId = string(variation.getTenantId(), "default");
+            String hospitalCode = string(variation.getHospitalCode(), string(variation.getLegacyOrgCode(), "ZYHOSPITAL"));
+            String scopeLevel = string(variation.getScopeLevel(), "HOSPITAL");
+            String scopeCode = string(variation.getScopeCode(), hospitalCode);
             int i = 1;
             ps.setLong(i++, Ids.next());
             ps.setLong(i++, extractNumericId(variation.getInstanceId()));
@@ -272,6 +277,15 @@ public class EnginePersistenceService {
             ps.setString(i++, variation.getVariationType());
             ps.setString(i++, truncate(variation.getReason(), 1000));
             ps.setString(i++, variation.getOperatorId());
+            ps.setString(i++, tenantId);
+            ps.setString(i++, variation.getGroupCode());
+            ps.setString(i++, hospitalCode);
+            ps.setString(i++, variation.getCampusCode());
+            ps.setString(i++, variation.getSiteCode());
+            ps.setString(i++, variation.getDepartmentCode());
+            ps.setString(i++, scopeLevel);
+            ps.setString(i++, scopeCode);
+            ps.setString(i++, variation.getOrgSource());
             ps.executeUpdate();
         } catch (SQLException ex) {
             throw new IllegalStateException("save variation record failed: " + ex.getMessage(), ex);
@@ -326,12 +340,20 @@ public class EnginePersistenceService {
 
     public void saveRuleExecLog(RuleResult result, String ruleVersion, Map<String, Object> patientContext,
                                 long elapsedMs, String resultStatus, String errorCode, String errorMessage) {
+        saveRuleExecLog(result, ruleVersion, patientContext, elapsedMs, resultStatus, errorCode, errorMessage, null);
+    }
+
+    public void saveRuleExecLog(RuleResult result, String ruleVersion, Map<String, Object> patientContext,
+                                long elapsedMs, String resultStatus, String errorCode, String errorMessage,
+                                Map<String, Object> orgFields) {
         if (!enabled()) {
             return;
         }
         String sql = "INSERT INTO re_rule_exec_log " +
-                "(id, trace_id, rule_code, rule_version, patient_id, encounter_id, event_id, hit_flag, severity, message, input_snapshot, output_snapshot, elapsed_ms, result_status, error_code, error_message, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
+                "(id, trace_id, rule_code, rule_version, patient_id, encounter_id, event_id, hit_flag, severity, message, " +
+                "input_snapshot, output_snapshot, elapsed_ms, result_status, error_code, error_message, " +
+                "tenant_id, group_code, hospital_code, campus_code, site_code, department_code, scope_level, scope_code, org_source, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             int i = 1;
@@ -351,6 +373,15 @@ public class EnginePersistenceService {
             ps.setString(i++, resultStatus);
             ps.setString(i++, errorCode);
             ps.setString(i++, truncate(errorMessage, 1000));
+            ps.setString(i++, orgValue(orgFields, "tenant_id", "tenantId"));
+            ps.setString(i++, orgValue(orgFields, "group_code", "groupCode"));
+            ps.setString(i++, orgValue(orgFields, "hospital_code", "hospitalCode"));
+            ps.setString(i++, orgValue(orgFields, "campus_code", "campusCode"));
+            ps.setString(i++, orgValue(orgFields, "site_code", "siteCode"));
+            ps.setString(i++, orgValue(orgFields, "department_code", "departmentCode"));
+            ps.setString(i++, orgValue(orgFields, "scope_level", "scopeLevel"));
+            ps.setString(i++, orgValue(orgFields, "scope_code", "scopeCode"));
+            ps.setString(i++, orgValue(orgFields, "org_source", "orgSource"));
             ps.executeUpdate();
         } catch (SQLException ex) {
             throw new IllegalStateException("save rule exec log failed: " + ex.getMessage(), ex);
@@ -366,8 +397,9 @@ public class EnginePersistenceService {
             return;
         }
         String sql = "INSERT INTO engine_audit_log " +
-                "(id, trace_id, engine_type, action_type, target_type, target_code, patient_id, encounter_id, operator_id, detail_json, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
+                "(id, trace_id, engine_type, action_type, target_type, target_code, patient_id, encounter_id, operator_id, " +
+                "tenant_id, group_code, hospital_code, campus_code, site_code, department_code, scope_level, scope_code, org_source, detail_json, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             int i = 1;
@@ -380,6 +412,15 @@ public class EnginePersistenceService {
             ps.setString(i++, patientId);
             ps.setString(i++, encounterId);
             ps.setString(i++, operatorId);
+            ps.setString(i++, orgValue(detail, "tenant_id", "tenantId"));
+            ps.setString(i++, orgValue(detail, "group_code", "groupCode"));
+            ps.setString(i++, orgValue(detail, "hospital_code", "hospitalCode"));
+            ps.setString(i++, orgValue(detail, "campus_code", "campusCode"));
+            ps.setString(i++, orgValue(detail, "site_code", "siteCode"));
+            ps.setString(i++, orgValue(detail, "department_code", "departmentCode"));
+            ps.setString(i++, orgValue(detail, "scope_level", "scopeLevel"));
+            ps.setString(i++, orgValue(detail, "scope_code", "scopeCode"));
+            ps.setString(i++, orgValue(detail, "org_source", "orgSource"));
             ps.setString(i++, toJson(detail));
             ps.executeUpdate();
         } catch (SQLException ex) {

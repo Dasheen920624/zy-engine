@@ -101,6 +101,15 @@ CREATE TABLE pe_variation_record (
   variation_type VARCHAR(64) NOT NULL,
   reason VARCHAR(1000),
   operator_id VARCHAR(64),
+  tenant_id VARCHAR(64),
+  group_code VARCHAR(64),
+  hospital_code VARCHAR(64),
+  campus_code VARCHAR(64),
+  site_code VARCHAR(64),
+  department_code VARCHAR(64),
+  scope_level VARCHAR(32),
+  scope_code VARCHAR(64),
+  org_source VARCHAR(32),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
@@ -139,6 +148,15 @@ CREATE TABLE re_rule_exec_log (
   result_status VARCHAR(32) NOT NULL,
   error_code VARCHAR(64),
   error_message VARCHAR(1000),
+  tenant_id VARCHAR(64),
+  group_code VARCHAR(64),
+  hospital_code VARCHAR(64),
+  campus_code VARCHAR(64),
+  site_code VARCHAR(64),
+  department_code VARCHAR(64),
+  scope_level VARCHAR(32),
+  scope_code VARCHAR(64),
+  org_source VARCHAR(32),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
@@ -210,6 +228,15 @@ CREATE TABLE engine_audit_log (
   patient_id VARCHAR(64),
   encounter_id VARCHAR(64),
   operator_id VARCHAR(64),
+  tenant_id VARCHAR(64),
+  group_code VARCHAR(64),
+  hospital_code VARCHAR(64),
+  campus_code VARCHAR(64),
+  site_code VARCHAR(64),
+  department_code VARCHAR(64),
+  scope_level VARCHAR(32),
+  scope_code VARCHAR(64),
+  org_source VARCHAR(32),
   detail_json CLOB,
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
@@ -217,6 +244,9 @@ CREATE TABLE engine_audit_log (
 CREATE INDEX idx_pe_instance_patient ON pe_patient_instance(patient_id, encounter_id);
 CREATE INDEX idx_org_parent ON org_unit(tenant_id, parent_level_code, parent_org_code);
 CREATE INDEX idx_pe_node_instance ON pe_patient_node_state(instance_id, node_code);
+CREATE INDEX idx_pe_variation_org ON pe_variation_record(tenant_id, hospital_code, scope_level, scope_code);
 CREATE INDEX idx_re_log_trace ON re_rule_exec_log(trace_id);
 CREATE INDEX idx_re_log_patient ON re_rule_exec_log(patient_id, encounter_id);
+CREATE INDEX idx_re_log_org ON re_rule_exec_log(tenant_id, hospital_code, scope_level, scope_code);
 CREATE INDEX idx_audit_trace ON engine_audit_log(trace_id);
+CREATE INDEX idx_audit_org ON engine_audit_log(tenant_id, hospital_code, scope_level, scope_code);

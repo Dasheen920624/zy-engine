@@ -596,6 +596,7 @@ Provider 影响：
 - 第二批已落地批量同步 `POST /api/rule-engine/batch-evaluate` 与结果回查 `GET /api/rule-engine/results`、`GET /api/rule-engine/results/{resultId}`：批量调用返回共享 `batch_id` 和每条独立 `result_id`，所有评估都落入容量 500 的内存环形缓冲，列表支持 `scenarioCode/packageCode/batchId/source/patientId/encounterId/limit/offset` 过滤并仅返回摘要字段。
 - 第二批写入 `RULE_ENGINE/BATCH_EVALUATE_SCENARIO` 审计，详情接口包含完整 `results/warnings`，列表接口剔除大字段；Oracle/达梦持久化与异步入口留给第三批。
 - ORG-001 第三批已把组织上下文织入 `/rule-engine/evaluate` 与 `/batch-evaluate`：通过 `OrganizationContextService.resolveWithBody` Header/Query/Body 三方合并（Body 优先），评估记录与审计明细均落 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`；列表查询新增 `tenantId/groupCode/hospitalCode/campusCode/siteCode/departmentCode/scopeLevel/scopeCode` 过滤，集团化医院/多院区聚合复盘开箱可用。
+- DB-ORG-001 已补齐 Oracle/达梦表结构与应用写入：`PE_VARIATION_RECORD`、`RE_RULE_EXEC_LOG`、`ENGINE_AUDIT_LOG` 增加组织字段和索引，Oracle 迁移脚本 `zyengine_org_context_migration.sql` 可重复执行，`run-oracle-org-smoke.cmd` 可通过 API + SQLPlus 校验规则定义、规则执行日志、审计日志真实落 Oracle。
 
 产出：
 

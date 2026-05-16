@@ -14,6 +14,44 @@ DECLARE
         RAISE;
       END IF;
   END;
+
+  PROCEDURE add_column_if_missing(p_table VARCHAR2, p_column VARCHAR2, p_definition VARCHAR2) IS
+    v_count NUMBER;
+  BEGIN
+    SELECT COUNT(*)
+      INTO v_count
+      FROM user_tab_columns
+     WHERE table_name = UPPER(p_table)
+       AND column_name = UPPER(p_column);
+
+    IF v_count = 0 THEN
+      EXECUTE IMMEDIATE 'ALTER TABLE ' || p_table || ' ADD (' || p_column || ' ' || p_definition || ')';
+    END IF;
+  END;
+
+  FUNCTION constraint_signature(p_constraint VARCHAR2) RETURN VARCHAR2 IS
+    v_signature VARCHAR2(4000);
+  BEGIN
+    SELECT LISTAGG(column_name, ',') WITHIN GROUP (ORDER BY position)
+      INTO v_signature
+      FROM user_cons_columns
+     WHERE constraint_name = UPPER(p_constraint);
+    RETURN v_signature;
+  END;
+
+  PROCEDURE drop_constraint_if_exists(p_table VARCHAR2, p_constraint VARCHAR2) IS
+    v_count NUMBER;
+  BEGIN
+    SELECT COUNT(*)
+      INTO v_count
+      FROM user_constraints
+     WHERE table_name = UPPER(p_table)
+       AND constraint_name = UPPER(p_constraint);
+
+    IF v_count > 0 THEN
+      EXECUTE IMMEDIATE 'ALTER TABLE ' || p_table || ' DROP CONSTRAINT ' || p_constraint;
+    END IF;
+  END;
 BEGIN
   create_ignore('CREATE TABLE org_unit (
     id NUMBER(20) PRIMARY KEY,
@@ -78,7 +116,7 @@ BEGIN
     lock_version NUMBER(10) DEFAULT 0 NOT NULL,
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_time TIMESTAMP,
-    CONSTRAINT uk_pe_active_instance UNIQUE (encounter_id, pathway_code, status)
+    CONSTRAINT uk_pe_active_instance UNIQUE (tenant_id, org_code, encounter_id, pathway_code, status)
   )');
 
   create_ignore('CREATE TABLE pe_patient_node_state (
@@ -115,6 +153,15 @@ BEGIN
     variation_type VARCHAR2(64) NOT NULL,
     reason VARCHAR2(1000),
     operator_id VARCHAR2(64),
+    tenant_id VARCHAR2(64),
+    group_code VARCHAR2(64),
+    hospital_code VARCHAR2(64),
+    campus_code VARCHAR2(64),
+    site_code VARCHAR2(64),
+    department_code VARCHAR2(64),
+    scope_level VARCHAR2(32),
+    scope_code VARCHAR2(64),
+    org_source VARCHAR2(32),
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
   )');
 
@@ -170,6 +217,15 @@ BEGIN
     result_status VARCHAR2(32) NOT NULL,
     error_code VARCHAR2(64),
     error_message VARCHAR2(1000),
+    tenant_id VARCHAR2(64),
+    group_code VARCHAR2(64),
+    hospital_code VARCHAR2(64),
+    campus_code VARCHAR2(64),
+    site_code VARCHAR2(64),
+    department_code VARCHAR2(64),
+    scope_level VARCHAR2(32),
+    scope_code VARCHAR2(64),
+    org_source VARCHAR2(32),
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
   )');
 
@@ -241,17 +297,65 @@ BEGIN
     patient_id VARCHAR2(64),
     encounter_id VARCHAR2(64),
     operator_id VARCHAR2(64),
+    tenant_id VARCHAR2(64),
+    group_code VARCHAR2(64),
+    hospital_code VARCHAR2(64),
+    campus_code VARCHAR2(64),
+    site_code VARCHAR2(64),
+    department_code VARCHAR2(64),
+    scope_level VARCHAR2(32),
+    scope_code VARCHAR2(64),
+    org_source VARCHAR2(32),
     detail_json CLOB,
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
   )');
+
+  add_column_if_missing('pe_variation_record', 'tenant_id', 'VARCHAR2(64)');
+  add_column_if_missing('pe_variation_record', 'group_code', 'VARCHAR2(64)');
+  add_column_if_missing('pe_variation_record', 'hospital_code', 'VARCHAR2(64)');
+  add_column_if_missing('pe_variation_record', 'campus_code', 'VARCHAR2(64)');
+  add_column_if_missing('pe_variation_record', 'site_code', 'VARCHAR2(64)');
+  add_column_if_missing('pe_variation_record', 'department_code', 'VARCHAR2(64)');
+  add_column_if_missing('pe_variation_record', 'scope_level', 'VARCHAR2(32)');
+  add_column_if_missing('pe_variation_record', 'scope_code', 'VARCHAR2(64)');
+  add_column_if_missing('pe_variation_record', 'org_source', 'VARCHAR2(32)');
+
+  add_column_if_missing('re_rule_exec_log', 'tenant_id', 'VARCHAR2(64)');
+  add_column_if_missing('re_rule_exec_log', 'group_code', 'VARCHAR2(64)');
+  add_column_if_missing('re_rule_exec_log', 'hospital_code', 'VARCHAR2(64)');
+  add_column_if_missing('re_rule_exec_log', 'campus_code', 'VARCHAR2(64)');
+  add_column_if_missing('re_rule_exec_log', 'site_code', 'VARCHAR2(64)');
+  add_column_if_missing('re_rule_exec_log', 'department_code', 'VARCHAR2(64)');
+  add_column_if_missing('re_rule_exec_log', 'scope_level', 'VARCHAR2(32)');
+  add_column_if_missing('re_rule_exec_log', 'scope_code', 'VARCHAR2(64)');
+  add_column_if_missing('re_rule_exec_log', 'org_source', 'VARCHAR2(32)');
+
+  add_column_if_missing('engine_audit_log', 'tenant_id', 'VARCHAR2(64)');
+  add_column_if_missing('engine_audit_log', 'group_code', 'VARCHAR2(64)');
+  add_column_if_missing('engine_audit_log', 'hospital_code', 'VARCHAR2(64)');
+  add_column_if_missing('engine_audit_log', 'campus_code', 'VARCHAR2(64)');
+  add_column_if_missing('engine_audit_log', 'site_code', 'VARCHAR2(64)');
+  add_column_if_missing('engine_audit_log', 'department_code', 'VARCHAR2(64)');
+  add_column_if_missing('engine_audit_log', 'scope_level', 'VARCHAR2(32)');
+  add_column_if_missing('engine_audit_log', 'scope_code', 'VARCHAR2(64)');
+  add_column_if_missing('engine_audit_log', 'org_source', 'VARCHAR2(32)');
+
+  IF NVL(constraint_signature('uk_pe_active_instance'), 'NONE')
+        <> 'TENANT_ID,ORG_CODE,ENCOUNTER_ID,PATHWAY_CODE,STATUS' THEN
+    drop_constraint_if_exists('pe_patient_instance', 'uk_pe_active_instance');
+    EXECUTE IMMEDIATE 'ALTER TABLE pe_patient_instance ADD CONSTRAINT uk_pe_active_instance UNIQUE (tenant_id, org_code, encounter_id, pathway_code, status)';
+  END IF;
 
   create_ignore('CREATE INDEX idx_pe_instance_patient ON pe_patient_instance(patient_id, encounter_id)');
   create_ignore('CREATE INDEX idx_org_parent ON org_unit(tenant_id, parent_level_code, parent_org_code)');
   create_ignore('CREATE INDEX idx_pe_node_instance ON pe_patient_node_state(instance_id, node_code)');
   create_ignore('CREATE INDEX idx_pe_task_instance ON pe_patient_task_state(instance_id, node_code)');
+  create_ignore('CREATE INDEX idx_pe_variation_org ON pe_variation_record(tenant_id, hospital_code, scope_level, scope_code)');
   create_ignore('CREATE INDEX idx_re_log_trace ON re_rule_exec_log(trace_id)');
   create_ignore('CREATE INDEX idx_re_log_patient ON re_rule_exec_log(patient_id, encounter_id)');
+  create_ignore('CREATE INDEX idx_re_log_org ON re_rule_exec_log(tenant_id, hospital_code, scope_level, scope_code)');
   create_ignore('CREATE INDEX idx_audit_trace ON engine_audit_log(trace_id)');
+  create_ignore('CREATE INDEX idx_audit_org ON engine_audit_log(tenant_id, hospital_code, scope_level, scope_code)');
 END;
 /
 
@@ -286,6 +390,8 @@ COMMENT ON COLUMN pe_pathway_version.approved_by IS '审核发布人';
 COMMENT ON COLUMN pe_pathway_version.approved_time IS '审核发布时间';
 
 COMMENT ON TABLE pe_patient_instance IS '路径引擎-患者路径实例表，保存患者入径后的路径状态和当前节点';
+COMMENT ON COLUMN pe_patient_instance.tenant_id IS '租户ID';
+COMMENT ON COLUMN pe_patient_instance.org_code IS '组织编码，兼容历史单医院口径';
 COMMENT ON COLUMN pe_patient_instance.patient_id IS '患者ID';
 COMMENT ON COLUMN pe_patient_instance.encounter_id IS '就诊ID';
 COMMENT ON COLUMN pe_patient_instance.pathway_code IS '路径编码';
@@ -321,6 +427,15 @@ COMMENT ON COLUMN pe_variation_record.instance_id IS '患者路径实例ID';
 COMMENT ON COLUMN pe_variation_record.variation_type IS '变异类型';
 COMMENT ON COLUMN pe_variation_record.reason IS '变异原因说明';
 COMMENT ON COLUMN pe_variation_record.operator_id IS '记录人';
+COMMENT ON COLUMN pe_variation_record.tenant_id IS '租户ID';
+COMMENT ON COLUMN pe_variation_record.group_code IS '集团编码';
+COMMENT ON COLUMN pe_variation_record.hospital_code IS '医院编码';
+COMMENT ON COLUMN pe_variation_record.campus_code IS '院区编码';
+COMMENT ON COLUMN pe_variation_record.site_code IS '站点/卫生所编码';
+COMMENT ON COLUMN pe_variation_record.department_code IS '科室编码';
+COMMENT ON COLUMN pe_variation_record.scope_level IS '组织作用域层级';
+COMMENT ON COLUMN pe_variation_record.scope_code IS '组织作用域编码';
+COMMENT ON COLUMN pe_variation_record.org_source IS '组织上下文来源';
 
 COMMENT ON TABLE pe_recommendation_record IS '路径引擎-推荐卡片记录表，保存候选路径、风险预警、治疗建议等推荐结果';
 COMMENT ON COLUMN pe_recommendation_record.recommendation_id IS '推荐ID';
@@ -350,6 +465,15 @@ COMMENT ON COLUMN re_rule_exec_log.input_snapshot IS '规则输入快照';
 COMMENT ON COLUMN re_rule_exec_log.output_snapshot IS '规则输出快照';
 COMMENT ON COLUMN re_rule_exec_log.elapsed_ms IS '执行耗时毫秒';
 COMMENT ON COLUMN re_rule_exec_log.result_status IS '执行状态：SUCCESS/FAILED/TIMEOUT等';
+COMMENT ON COLUMN re_rule_exec_log.tenant_id IS '租户ID';
+COMMENT ON COLUMN re_rule_exec_log.group_code IS '集团编码';
+COMMENT ON COLUMN re_rule_exec_log.hospital_code IS '医院编码';
+COMMENT ON COLUMN re_rule_exec_log.campus_code IS '院区编码';
+COMMENT ON COLUMN re_rule_exec_log.site_code IS '站点/卫生所编码';
+COMMENT ON COLUMN re_rule_exec_log.department_code IS '科室编码';
+COMMENT ON COLUMN re_rule_exec_log.scope_level IS '组织作用域层级';
+COMMENT ON COLUMN re_rule_exec_log.scope_code IS '组织作用域编码';
+COMMENT ON COLUMN re_rule_exec_log.org_source IS '组织上下文来源';
 
 COMMENT ON TABLE tm_standard_concept IS '字典映射-平台标准概念表，保存疾病、检验、检查、药品、文书等统一编码';
 COMMENT ON COLUMN tm_standard_concept.concept_code IS '标准概念编码';
@@ -396,6 +520,15 @@ COMMENT ON COLUMN engine_audit_log.target_code IS '操作对象编码';
 COMMENT ON COLUMN engine_audit_log.patient_id IS '患者ID';
 COMMENT ON COLUMN engine_audit_log.encounter_id IS '就诊ID';
 COMMENT ON COLUMN engine_audit_log.operator_id IS '操作人';
+COMMENT ON COLUMN engine_audit_log.tenant_id IS '租户ID';
+COMMENT ON COLUMN engine_audit_log.group_code IS '集团编码';
+COMMENT ON COLUMN engine_audit_log.hospital_code IS '医院编码';
+COMMENT ON COLUMN engine_audit_log.campus_code IS '院区编码';
+COMMENT ON COLUMN engine_audit_log.site_code IS '站点/卫生所编码';
+COMMENT ON COLUMN engine_audit_log.department_code IS '科室编码';
+COMMENT ON COLUMN engine_audit_log.scope_level IS '组织作用域层级';
+COMMENT ON COLUMN engine_audit_log.scope_code IS '组织作用域编码';
+COMMENT ON COLUMN engine_audit_log.org_source IS '组织上下文来源';
 COMMENT ON COLUMN engine_audit_log.detail_json IS '操作详情JSON';
 
 PROMPT ZYENGINE core tables and comments are ready.

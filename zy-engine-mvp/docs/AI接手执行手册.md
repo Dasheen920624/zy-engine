@@ -317,7 +317,14 @@ ORG-001 第五批已织入规则配置与内部执行日志：
 - 若第三方 `/api/rule-engine/*` 显式组织下没有专属规则，会回退到 legacy `default/ZYHOSPITAL` 规则，保持旧演示和基线规则可用。
 - `GET /api/rules` 与 `GET /api/rules/exec-logs*` 支持显式组织过滤。
 
-Oracle/达梦持久化、异步任务与同步任务状态留给 RULE-001 第三批继续推进。
+DB-ORG-001 已补齐组织上下文落库：
+
+- `zy-engine-mvp/db/oracle/zyengine_core_ddl_with_comments.sql`、`ai-dev-input/04_database/oracle/core_ddl.sql`、`ai-dev-input/04_database/dm/core_ddl.sql` 已为 `PE_VARIATION_RECORD`、`RE_RULE_EXEC_LOG`、`ENGINE_AUDIT_LOG` 增加结构化组织字段和组织过滤索引。
+- `db/oracle/zyengine_org_context_migration.sql` 可重复执行，用于已有 Oracle 库补列、建索引并升级 `UK_PE_ACTIVE_INSTANCE`。
+- `EnginePersistenceService` 写入变异记录、规则执行日志和审计日志时已同步写 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code/scope_level/scope_code/org_source`。
+- 常规 `run-tests.cmd` 仍不连接 Oracle；真实落库验证使用 `scripts/run-oracle-org-smoke.cmd`，需先配置 `ZYENGINE_DB_CONNECT/ZYENGINE_DB_USERNAME/ZYENGINE_DB_PASSWORD` 并启动 Oracle 模式。
+
+规则评估结果持久化、异步任务与同步任务状态留给 RULE-001 第三批继续推进。
 
 ### FE-001 前端信息架构与高保真原型
 

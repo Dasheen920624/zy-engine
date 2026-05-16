@@ -14,6 +14,7 @@
 .\scripts\verify-encoding.cmd
 .\scripts\run-rule-smoke.cmd
 .\scripts\run-pathway-smoke.cmd
+.\scripts\run-oracle-org-smoke.cmd
 .\scripts\run-graph-dify-smoke.cmd
 .\scripts\run-terminology-adapter-smoke.cmd
 .\scripts\stop-local.cmd
@@ -31,10 +32,11 @@
 | `build.cmd` / `build.ps1` | 使用 Maven 构建 JDK 1.8 后端工程 |
 | `start-memory.cmd` / `start-memory.ps1` | 启动内存演示模式，默认端口 `18080` |
 | `start-oracle.cmd` / `start-oracle.ps1` | 启动 Oracle 持久化模式，默认端口 `18081` |
-| `run-oracle-ddl.cmd` / `run-oracle-ddl.ps1` | 初始化 Oracle 核心表、索引、中文表备注和字段备注 |
+| `run-oracle-ddl.cmd` / `run-oracle-ddl.ps1` | 初始化 Oracle 核心表、索引、组织上下文迁移、中文表备注和字段备注 |
 | `verify-encoding.cmd` / `verify-encoding.ps1` | 校验常见乱码特征，并验证 JSON 样例可解析 |
 | `run-rule-smoke.cmd` / `run-rule-smoke.ps1` | 导入、发布并模拟执行 AMI 样例规则 |
 | `run-pathway-smoke.cmd` / `run-pathway-smoke.ps1` | 导入、发布并执行 AMI 样例路径闭环 |
+| `run-oracle-org-smoke.cmd` / `run-oracle-org-smoke.ps1` | 在 Oracle 模式下通过 API 执行规则，并用 SQLPlus 校验组织字段真实落表 |
 | `run-graph-dify-smoke.cmd` / `run-graph-dify-smoke.ps1` | 验证图谱候选召回、证据查询和 Dify 降级调用 |
 | `run-terminology-adapter-smoke.cmd` / `run-terminology-adapter-smoke.ps1` | 验证字典映射和第三方适配器 Mock 查询 |
 | `stop-local.cmd` / `stop-local.ps1` | 停止本地 `18080` 和 `18081` 演示服务 |
@@ -58,6 +60,16 @@ $env:ZYENGINE_DB_USERNAME='ZYENGINE'
 $env:ZYENGINE_DB_PASSWORD='数据库密码'
 .\scripts\run-oracle-ddl.cmd
 ```
+
+已有库会额外执行 `db/oracle/zyengine_org_context_migration.sql`，补齐 `PE_VARIATION_RECORD`、`RE_RULE_EXEC_LOG`、`ENGINE_AUDIT_LOG` 的组织字段与索引，并把 `PE_PATIENT_INSTANCE` 活动实例唯一约束升级为 `tenant_id + org_code + encounter_id + pathway_code + status`。
+
+Oracle 真实落库校验需要先启动 Oracle 模式，再执行：
+
+```powershell
+.\scripts\run-oracle-org-smoke.cmd
+```
+
+普通 `run-tests.cmd` 只运行 Maven/JUnit，默认不连接 Oracle；需要跨实例落表验证时使用上述 Oracle smoke。
 
 ## 端口
 
