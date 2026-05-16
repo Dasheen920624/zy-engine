@@ -3,6 +3,8 @@ package com.zyengine.dto;
 public class PathwayVariationRecord {
     private String variationId;
     private String instanceId;
+    private String pathwayCode;
+    private String versionNo;
     private String patientId;
     private String encounterId;
     private String nodeCode;
@@ -25,6 +27,22 @@ public class PathwayVariationRecord {
 
     public void setInstanceId(String instanceId) {
         this.instanceId = instanceId;
+    }
+
+    public String getPathwayCode() {
+        return pathwayCode;
+    }
+
+    public void setPathwayCode(String pathwayCode) {
+        this.pathwayCode = pathwayCode;
+    }
+
+    public String getVersionNo() {
+        return versionNo;
+    }
+
+    public void setVersionNo(String versionNo) {
+        this.versionNo = versionNo;
     }
 
     public String getPatientId() {

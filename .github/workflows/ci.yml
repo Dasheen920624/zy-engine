@@ -31,3 +31,6 @@ jobs:
 
       - name: Build backend MVP
         run: .\zy-engine-mvp\scripts\build.cmd
+
+      - name: Run JUnit contract tests
+        run: .\zy-engine-mvp\scripts\run-tests.cmd

@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -100,6 +101,245 @@ public class PathwayService {
             list.add(item);
         }
         return list;
+    }
+
+    public Map<String, Object> diffPathway(String pathwayCode, String fromVersion, String toVersion) {
+        Map<String, Object> fromConfig = loadVersionConfig(pathwayCode, fromVersion);
+        Map<String, Object> toConfig = loadVersionConfig(pathwayCode, toVersion);
+        if (fromConfig == null) {
+            throw new IllegalArgumentException("pathway version not found: " + pathwayCode + "@" + fromVersion);
+        }
+        if (toConfig == null) {
+            throw new IllegalArgumentException("pathway version not found: " + pathwayCode + "@" + toVersion);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("from_version", fromVersion);
+        result.put("to_version", toVersion);
+
+        List<Map<String, Object>> metadataChanges = new ArrayList<Map<String, Object>>();
+        for (String field : new String[] {"pathway_name", "specialty_code", "disease_code", "description"}) {
+            String fromValue = string(fromConfig.get(field), null);
+            String toValue = string(toConfig.get(field), null);
+            if (!equalsNullable(fromValue, toValue)) {
+                Map<String, Object> change = new LinkedHashMap<String, Object>();
+                change.put("field", field);
+                change.put("from", fromValue);
+                change.put("to", toValue);
+                metadataChanges.add(change);
+            }
+        }
+        result.put("metadata_changes", metadataChanges);
+
+        Map<String, Map<String, Object>> fromNodes = indexNodes(fromConfig);
+        Map<String, Map<String, Object>> toNodes = indexNodes(toConfig);
+
+        List<String> nodesAdded = new ArrayList<String>();
+        List<String> nodesRemoved = new ArrayList<String>();
+        List<Map<String, Object>> nodesModified = new ArrayList<Map<String, Object>>();
+
+        for (String nodeCode : toNodes.keySet()) {
+            if (!fromNodes.containsKey(nodeCode)) {
+                nodesAdded.add(nodeCode);
+            }
+        }
+        for (String nodeCode : fromNodes.keySet()) {
+            if (!toNodes.containsKey(nodeCode)) {
+                nodesRemoved.add(nodeCode);
+                continue;
+            }
+            Map<String, Object> nodeDiff = diffNode(nodeCode, fromNodes.get(nodeCode), toNodes.get(nodeCode));
+            if (nodeDiff != null) {
+                nodesModified.add(nodeDiff);
+            }
+        }
+        Collections.sort(nodesAdded);
+        Collections.sort(nodesRemoved);
+
+        result.put("nodes_added", nodesAdded);
+        result.put("nodes_removed", nodesRemoved);
+        result.put("nodes_modified", nodesModified);
+
+        // 顶层 summary 让看板与 PR 评审能一眼看到变更规模。
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("metadata_changed", metadataChanges.size());
+        summary.put("nodes_added", nodesAdded.size());
+        summary.put("nodes_removed", nodesRemoved.size());
+        summary.put("nodes_modified", nodesModified.size());
+        result.put("summary", summary);
+
+        return result;
+    }
+
+    private Map<String, Object> loadVersionConfig(String pathwayCode, String versionNo) {
+        if (versionNo == null || versionNo.trim().isEmpty() || "draft".equalsIgnoreCase(versionNo)) {
+            return pathwayDrafts.get(pathwayCode);
+        }
+        return publishedPathways.get(pathwayKey(pathwayCode, versionNo));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Map<String, Object>> indexNodes(Map<String, Object> config) {
+        Map<String, Map<String, Object>> map = new LinkedHashMap<String, Map<String, Object>>();
+        Object stages = config == null ? null : config.get("stages");
+        if (!(stages instanceof java.util.Collection)) {
+            return map;
+        }
+        for (Object stageObject : (java.util.Collection<?>) stages) {
+            if (!(stageObject instanceof Map)) {
+                continue;
+            }
+            Object nodes = ((Map<String, Object>) stageObject).get("nodes");
+            if (!(nodes instanceof java.util.Collection)) {
+                continue;
+            }
+            for (Object nodeObject : (java.util.Collection<?>) nodes) {
+                if (nodeObject instanceof Map) {
+                    Map<String, Object> node = (Map<String, Object>) nodeObject;
+                    String nodeCode = string(node.get("node_code"), null);
+                    if (nodeCode != null) {
+                        map.put(nodeCode, node);
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> diffNode(String nodeCode, Map<String, Object> fromNode, Map<String, Object> toNode) {
+        List<Map<String, Object>> fieldChanges = new ArrayList<Map<String, Object>>();
+        for (String field : new String[] {"node_name", "node_type", "owner_role", "expected_minutes"}) {
+            String fromValue = string(fromNode.get(field), null);
+            String toValue = string(toNode.get(field), null);
+            if (!equalsNullable(fromValue, toValue)) {
+                Map<String, Object> change = new LinkedHashMap<String, Object>();
+                change.put("field", field);
+                change.put("from", fromValue);
+                change.put("to", toValue);
+                fieldChanges.add(change);
+            }
+        }
+
+        Map<String, Map<String, Object>> fromTasks = indexByCode(fromNode.get("tasks"), "task_code");
+        Map<String, Map<String, Object>> toTasks = indexByCode(toNode.get("tasks"), "task_code");
+        List<String> tasksAdded = new ArrayList<String>();
+        List<String> tasksRemoved = new ArrayList<String>();
+        List<Map<String, Object>> tasksModified = new ArrayList<Map<String, Object>>();
+        for (String code : toTasks.keySet()) {
+            if (!fromTasks.containsKey(code)) {
+                tasksAdded.add(code);
+            }
+        }
+        for (String code : fromTasks.keySet()) {
+            if (!toTasks.containsKey(code)) {
+                tasksRemoved.add(code);
+                continue;
+            }
+            List<Map<String, Object>> taskFieldChanges = diffFields(fromTasks.get(code), toTasks.get(code),
+                    new String[] {"task_name", "task_type", "required", "source.adapter_code", "source.query_code"});
+            if (!taskFieldChanges.isEmpty()) {
+                Map<String, Object> taskDiff = new LinkedHashMap<String, Object>();
+                taskDiff.put("task_code", code);
+                taskDiff.put("fields", taskFieldChanges);
+                tasksModified.add(taskDiff);
+            }
+        }
+        Collections.sort(tasksAdded);
+        Collections.sort(tasksRemoved);
+
+        Map<String, Map<String, Object>> fromTransitions = indexByCode(fromNode.get("transitions"), "to_node");
+        Map<String, Map<String, Object>> toTransitions = indexByCode(toNode.get("transitions"), "to_node");
+        List<String> transitionsAdded = new ArrayList<String>();
+        List<String> transitionsRemoved = new ArrayList<String>();
+        for (String code : toTransitions.keySet()) {
+            if (!fromTransitions.containsKey(code)) {
+                transitionsAdded.add(code);
+            }
+        }
+        for (String code : fromTransitions.keySet()) {
+            if (!toTransitions.containsKey(code)) {
+                transitionsRemoved.add(code);
+            }
+        }
+        Collections.sort(transitionsAdded);
+        Collections.sort(transitionsRemoved);
+
+        if (fieldChanges.isEmpty() && tasksAdded.isEmpty() && tasksRemoved.isEmpty()
+                && tasksModified.isEmpty() && transitionsAdded.isEmpty() && transitionsRemoved.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Object> nodeDiff = new LinkedHashMap<String, Object>();
+        nodeDiff.put("node_code", nodeCode);
+        nodeDiff.put("fields", fieldChanges);
+        nodeDiff.put("tasks_added", tasksAdded);
+        nodeDiff.put("tasks_removed", tasksRemoved);
+        nodeDiff.put("tasks_modified", tasksModified);
+        nodeDiff.put("transitions_added", transitionsAdded);
+        nodeDiff.put("transitions_removed", transitionsRemoved);
+        return nodeDiff;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Map<String, Object>> indexByCode(Object collection, String codeField) {
+        Map<String, Map<String, Object>> map = new LinkedHashMap<String, Map<String, Object>>();
+        if (!(collection instanceof java.util.Collection)) {
+            return map;
+        }
+        for (Object item : (java.util.Collection<?>) collection) {
+            if (item instanceof Map) {
+                Map<String, Object> entry = (Map<String, Object>) item;
+                String code = string(entry.get(codeField), null);
+                if (code != null) {
+                    map.put(code, entry);
+                }
+            }
+        }
+        return map;
+    }
+
+    private List<Map<String, Object>> diffFields(Map<String, Object> fromMap, Map<String, Object> toMap, String[] fields) {
+        List<Map<String, Object>> changes = new ArrayList<Map<String, Object>>();
+        for (String field : fields) {
+            String fromValue = readNested(fromMap, field);
+            String toValue = readNested(toMap, field);
+            if (!equalsNullable(fromValue, toValue)) {
+                Map<String, Object> change = new LinkedHashMap<String, Object>();
+                change.put("field", field);
+                change.put("from", fromValue);
+                change.put("to", toValue);
+                changes.add(change);
+            }
+        }
+        return changes;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String readNested(Map<String, Object> map, String path) {
+        if (map == null) {
+            return null;
+        }
+        String[] parts = path.split("\\.");
+        Object current = map;
+        for (String part : parts) {
+            if (!(current instanceof Map)) {
+                return null;
+            }
+            current = ((Map<String, Object>) current).get(part);
+        }
+        return current == null ? null : String.valueOf(current);
+    }
+
+    private boolean equalsNullable(String left, String right) {
+        if (left == null && right == null) {
+            return true;
+        }
+        if (left == null || right == null) {
+            return false;
+        }
+        return left.equals(right);
     }
 
     public Map<String, Object> getPathway(String pathwayCode, String versionNo) {
@@ -341,6 +581,9 @@ public class PathwayService {
         PathwayVariationRecord variation = new PathwayVariationRecord();
         variation.setVariationId("var-" + UUID.randomUUID().toString().replace("-", ""));
         variation.setInstanceId(instance.getInstanceId());
+        // 路径编码与版本来自实例，便于跨实例按路径聚合变异统计；Oracle 落库表暂不存这两列。
+        variation.setPathwayCode(instance.getPathwayCode());
+        variation.setVersionNo(instance.getVersionNo());
         variation.setPatientId(instance.getPatientId());
         variation.setEncounterId(instance.getEncounterId());
         variation.setNodeCode(string(request == null ? null : request.get("node_code"), instance.getCurrentNodeCode()));
@@ -351,6 +594,422 @@ public class PathwayService {
         variations(instance.getInstanceId()).add(variation);
         persistenceService.saveVariationRecord(variation);
         return variation;
+    }
+
+    public List<PatientPathwayInstance> listInstances(Map<String, String> filters) {
+        String pathwayCode = filterValue(filters, "pathwayCode");
+        String status = filterValue(filters, "status");
+        String patientId = filterValue(filters, "patientId");
+        String encounterId = filterValue(filters, "encounterId");
+        String currentNodeCode = filterValue(filters, "currentNodeCode");
+        int limit = filterInt(filters, "limit", 100);
+        if (limit <= 0) {
+            limit = 100;
+        }
+
+        List<PatientPathwayInstance> all = new ArrayList<PatientPathwayInstance>(activeInstances.values());
+        Collections.sort(all, new Comparator<PatientPathwayInstance>() {
+            @Override
+            public int compare(PatientPathwayInstance left, PatientPathwayInstance right) {
+                // instanceId 内含 UUID hex，没有时间戳；按 encounterId 字典序倒序兜底保持稳定顺序。
+                String l = left.getEncounterId() == null ? "" : left.getEncounterId();
+                String r = right.getEncounterId() == null ? "" : right.getEncounterId();
+                return r.compareTo(l);
+            }
+        });
+
+        List<PatientPathwayInstance> matched = new ArrayList<PatientPathwayInstance>();
+        for (PatientPathwayInstance instance : all) {
+            if (pathwayCode != null && !pathwayCode.equalsIgnoreCase(instance.getPathwayCode())) {
+                continue;
+            }
+            if (status != null && !status.equalsIgnoreCase(instance.getStatus())) {
+                continue;
+            }
+            if (patientId != null && !patientId.equals(instance.getPatientId())) {
+                continue;
+            }
+            if (encounterId != null && !encounterId.equals(instance.getEncounterId())) {
+                continue;
+            }
+            if (currentNodeCode != null && !currentNodeCode.equalsIgnoreCase(instance.getCurrentNodeCode())) {
+                continue;
+            }
+            matched.add(instance);
+            if (matched.size() >= limit) {
+                break;
+            }
+        }
+        return matched;
+    }
+
+    public Map<String, Object> summarizeNodeCompletion(Map<String, String> filters) {
+        List<PatientPathwayInstance> instances = listInstances(merge(filters, "limit", String.valueOf(Integer.MAX_VALUE)));
+        Map<String, NodeAggregate> aggregates = new LinkedHashMap<String, NodeAggregate>();
+        for (PatientPathwayInstance instance : instances) {
+            Map<String, PatientNodeState> states = nodeStates.get(instance.getInstanceId());
+            if (states == null) {
+                continue;
+            }
+            for (PatientNodeState nodeState : states.values()) {
+                String nodeCode = nodeState.getNodeCode();
+                NodeAggregate agg = aggregates.get(nodeCode);
+                if (agg == null) {
+                    agg = new NodeAggregate(nodeCode, nodeState.getNodeName());
+                    aggregates.put(nodeCode, agg);
+                }
+                agg.recordEnter();
+                agg.recordStatus(nodeState.getStatus());
+                for (PatientTaskState taskState : nodeState.getTasks()) {
+                    agg.recordTask(taskState.getTaskCode(), taskState.getTaskName(),
+                            taskState.getStatus(), taskState.isRequired());
+                }
+            }
+        }
+
+        List<Map<String, Object>> nodes = new ArrayList<Map<String, Object>>();
+        int totalEntered = 0;
+        int totalCompleted = 0;
+        List<String> orderedKeys = new ArrayList<String>(aggregates.keySet());
+        Collections.sort(orderedKeys);
+        for (String nodeCode : orderedKeys) {
+            NodeAggregate agg = aggregates.get(nodeCode);
+            nodes.add(agg.toView());
+            totalEntered += agg.entered;
+            totalCompleted += agg.completed;
+        }
+
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("total_instances", instances.size());
+        summary.put("total_nodes", nodes.size());
+        summary.put("total_node_entries", totalEntered);
+        summary.put("total_node_completions", totalCompleted);
+        summary.put("average_node_completion_rate", totalEntered == 0
+                ? 0.0 : Math.round((totalCompleted * 10000.0 / totalEntered)) / 100.0);
+        summary.put("nodes", nodes);
+        return summary;
+    }
+
+    private static class NodeAggregate {
+        private final String nodeCode;
+        private final String nodeName;
+        private int entered;
+        private int completed;
+        private int running;
+        private int waiting;
+        private int otherStatus;
+        private final Map<String, TaskAggregate> tasks = new LinkedHashMap<String, TaskAggregate>();
+
+        NodeAggregate(String nodeCode, String nodeName) {
+            this.nodeCode = nodeCode;
+            this.nodeName = nodeName;
+        }
+
+        void recordEnter() {
+            entered++;
+        }
+
+        void recordStatus(String status) {
+            if ("COMPLETED".equals(status)) {
+                completed++;
+            } else if ("RUNNING".equals(status)) {
+                running++;
+            } else if ("WAITING".equals(status) || status == null) {
+                waiting++;
+            } else {
+                otherStatus++;
+            }
+        }
+
+        void recordTask(String taskCode, String taskName, String status, boolean required) {
+            if (taskCode == null) {
+                return;
+            }
+            TaskAggregate task = tasks.get(taskCode);
+            if (task == null) {
+                task = new TaskAggregate(taskCode, taskName, required);
+                tasks.put(taskCode, task);
+            }
+            task.total++;
+            if ("COMPLETED".equals(status)) {
+                task.completed++;
+            } else if ("SKIPPED".equals(status)) {
+                task.skipped++;
+            } else {
+                task.pending++;
+            }
+        }
+
+        Map<String, Object> toView() {
+            Map<String, Object> view = new LinkedHashMap<String, Object>();
+            view.put("node_code", nodeCode);
+            view.put("node_name", nodeName);
+            view.put("entered", entered);
+            view.put("completed", completed);
+            view.put("running", running);
+            view.put("waiting", waiting);
+            view.put("other_status", otherStatus);
+            view.put("completion_rate", entered == 0
+                    ? 0.0 : Math.round((completed * 10000.0 / entered)) / 100.0);
+
+            List<Map<String, Object>> taskViews = new ArrayList<Map<String, Object>>();
+            List<String> sortedTaskKeys = new ArrayList<String>(tasks.keySet());
+            Collections.sort(sortedTaskKeys);
+            for (String key : sortedTaskKeys) {
+                taskViews.add(tasks.get(key).toView());
+            }
+            view.put("tasks", taskViews);
+            return view;
+        }
+    }
+
+    private static class TaskAggregate {
+        private final String taskCode;
+        private final String taskName;
+        private final boolean required;
+        private int total;
+        private int completed;
+        private int skipped;
+        private int pending;
+
+        TaskAggregate(String taskCode, String taskName, boolean required) {
+            this.taskCode = taskCode;
+            this.taskName = taskName;
+            this.required = required;
+        }
+
+        Map<String, Object> toView() {
+            Map<String, Object> view = new LinkedHashMap<String, Object>();
+            view.put("task_code", taskCode);
+            view.put("task_name", taskName);
+            view.put("required", required);
+            view.put("total", total);
+            view.put("completed", completed);
+            view.put("skipped", skipped);
+            view.put("pending", pending);
+            view.put("completion_rate", total == 0
+                    ? 0.0 : Math.round((completed * 10000.0 / total)) / 100.0);
+            return view;
+        }
+    }
+
+    public Map<String, Object> summarizeInstances(Map<String, String> filters) {
+        List<PatientPathwayInstance> instances = listInstances(merge(filters, "limit", String.valueOf(Integer.MAX_VALUE)));
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("total", instances.size());
+        summary.put("by_pathway_code", aggregateInstances(instances, "pathway_code"));
+        summary.put("by_status", aggregateInstances(instances, "status"));
+        summary.put("by_current_node", aggregateInstances(instances, "current_node_code"));
+
+        // 联动变异统计：在同一过滤上下文下统计相关变异，便于看板一次拿到“路径在径数 + 变异数”全景。
+        Map<String, String> variationFilters = new LinkedHashMap<String, String>();
+        if (filters != null) {
+            String pathwayCode = filters.get("pathwayCode");
+            if (pathwayCode != null) {
+                variationFilters.put("pathwayCode", pathwayCode);
+            }
+            String patientId = filters.get("patientId");
+            if (patientId != null) {
+                variationFilters.put("patientId", patientId);
+            }
+            String encounterId = filters.get("encounterId");
+            if (encounterId != null) {
+                variationFilters.put("encounterId", encounterId);
+            }
+        }
+        variationFilters.put("limit", String.valueOf(Integer.MAX_VALUE));
+        List<PathwayVariationRecord> variations = listVariations(variationFilters);
+        summary.put("variation_total", variations.size());
+        summary.put("variation_by_type", aggregate(variations, "variation_type"));
+        return summary;
+    }
+
+    private List<Map<String, Object>> aggregateInstances(List<PatientPathwayInstance> instances, String dimension) {
+        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
+        for (PatientPathwayInstance instance : instances) {
+            String key = instanceDimensionKey(instance, dimension);
+            if (key == null) {
+                continue;
+            }
+            Integer count = counts.get(key);
+            counts.put(key, count == null ? 1 : count + 1);
+        }
+        List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(counts.entrySet());
+        Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
+            @Override
+            public int compare(Map.Entry<String, Integer> left, Map.Entry<String, Integer> right) {
+                int byCount = right.getValue().compareTo(left.getValue());
+                return byCount != 0 ? byCount : left.getKey().compareTo(right.getKey());
+            }
+        });
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (Map.Entry<String, Integer> entry : entries) {
+            Map<String, Object> bucket = new LinkedHashMap<String, Object>();
+            bucket.put(dimension, entry.getKey());
+            bucket.put("count", entry.getValue());
+            result.add(bucket);
+        }
+        return result;
+    }
+
+    private String instanceDimensionKey(PatientPathwayInstance instance, String dimension) {
+        if ("pathway_code".equals(dimension)) {
+            return instance.getPathwayCode();
+        }
+        if ("status".equals(dimension)) {
+            return instance.getStatus();
+        }
+        if ("current_node_code".equals(dimension)) {
+            return instance.getCurrentNodeCode();
+        }
+        return null;
+    }
+
+    public List<PathwayVariationRecord> listVariations(Map<String, String> filters) {
+        String pathwayCode = filterValue(filters, "pathwayCode");
+        String patientId = filterValue(filters, "patientId");
+        String encounterId = filterValue(filters, "encounterId");
+        String variationType = filterValue(filters, "variationType");
+        String nodeCode = filterValue(filters, "nodeCode");
+        String instanceId = filterValue(filters, "instanceId");
+        int limit = filterInt(filters, "limit", 100);
+        if (limit <= 0) {
+            limit = 100;
+        }
+
+        List<PathwayVariationRecord> all = new ArrayList<PathwayVariationRecord>();
+        for (List<PathwayVariationRecord> bucket : variationRecords.values()) {
+            all.addAll(bucket);
+        }
+        Collections.sort(all, new Comparator<PathwayVariationRecord>() {
+            @Override
+            public int compare(PathwayVariationRecord left, PathwayVariationRecord right) {
+                // 按 createdTime 倒序展示，最新变异优先暴露给质控看板。
+                String l = left.getCreatedTime();
+                String r = right.getCreatedTime();
+                if (l == null && r == null) {
+                    return 0;
+                }
+                if (l == null) {
+                    return 1;
+                }
+                if (r == null) {
+                    return -1;
+                }
+                return r.compareTo(l);
+            }
+        });
+
+        List<PathwayVariationRecord> matched = new ArrayList<PathwayVariationRecord>();
+        for (PathwayVariationRecord record : all) {
+            if (pathwayCode != null && !pathwayCode.equalsIgnoreCase(record.getPathwayCode())) {
+                continue;
+            }
+            if (patientId != null && !patientId.equals(record.getPatientId())) {
+                continue;
+            }
+            if (encounterId != null && !encounterId.equals(record.getEncounterId())) {
+                continue;
+            }
+            if (variationType != null && !variationType.equalsIgnoreCase(record.getVariationType())) {
+                continue;
+            }
+            if (nodeCode != null && !nodeCode.equalsIgnoreCase(record.getNodeCode())) {
+                continue;
+            }
+            if (instanceId != null && !instanceId.equals(record.getInstanceId())) {
+                continue;
+            }
+            matched.add(record);
+            if (matched.size() >= limit) {
+                break;
+            }
+        }
+        return matched;
+    }
+
+    public Map<String, Object> summarizeVariations(Map<String, String> filters) {
+        List<PathwayVariationRecord> records = listVariations(merge(filters, "limit", String.valueOf(Integer.MAX_VALUE)));
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("total", records.size());
+        summary.put("by_variation_type", aggregate(records, "variation_type"));
+        summary.put("by_pathway_code", aggregate(records, "pathway_code"));
+        summary.put("by_node_code", aggregate(records, "node_code"));
+        summary.put("by_patient_id", aggregate(records, "patient_id"));
+        return summary;
+    }
+
+    private List<Map<String, Object>> aggregate(List<PathwayVariationRecord> records, String dimension) {
+        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
+        for (PathwayVariationRecord record : records) {
+            String key = dimensionKey(record, dimension);
+            if (key == null) {
+                continue;
+            }
+            Integer count = counts.get(key);
+            counts.put(key, count == null ? 1 : count + 1);
+        }
+        List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(counts.entrySet());
+        Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
+            @Override
+            public int compare(Map.Entry<String, Integer> left, Map.Entry<String, Integer> right) {
+                int byCount = right.getValue().compareTo(left.getValue());
+                return byCount != 0 ? byCount : left.getKey().compareTo(right.getKey());
+            }
+        });
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (Map.Entry<String, Integer> entry : entries) {
+            Map<String, Object> bucket = new LinkedHashMap<String, Object>();
+            bucket.put(dimension, entry.getKey());
+            bucket.put("count", entry.getValue());
+            result.add(bucket);
+        }
+        return result;
+    }
+
+    private String dimensionKey(PathwayVariationRecord record, String dimension) {
+        if ("variation_type".equals(dimension)) {
+            return record.getVariationType();
+        }
+        if ("pathway_code".equals(dimension)) {
+            return record.getPathwayCode();
+        }
+        if ("node_code".equals(dimension)) {
+            return record.getNodeCode();
+        }
+        if ("patient_id".equals(dimension)) {
+            return record.getPatientId();
+        }
+        return null;
+    }
+
+    private Map<String, String> merge(Map<String, String> filters, String key, String value) {
+        Map<String, String> merged = new LinkedHashMap<String, String>();
+        if (filters != null) {
+            merged.putAll(filters);
+        }
+        merged.put(key, value);
+        return merged;
+    }
+
+    private String filterValue(Map<String, String> filters, String key) {
+        if (filters == null) {
+            return null;
+        }
+        String value = filters.get(key);
+        return value == null || value.trim().isEmpty() ? null : value.trim();
+    }
+
+    private int filterInt(Map<String, String> filters, String key, int defaultValue) {
+        String value = filterValue(filters, key);
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
     }
 
     private boolean hasVariation(Map<String, Object> request) {

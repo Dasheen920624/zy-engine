@@ -59,7 +59,27 @@ if (-not $evaluate.success -or $evaluate.data.Count -lt 3) {
   throw "Rule evaluation failed."
 }
 
+$logsAll = Invoke-RestMethod -Uri "$BaseUrl/rules/exec-logs?limit=50" -Method Get
+if (-not $logsAll.success -or $logsAll.data.Count -lt 1) {
+  throw "Rule exec logs query failed."
+}
+
+$logsForCandidate = Invoke-RestMethod -Uri "$BaseUrl/rules/exec-logs?ruleCode=R_AMI_STEMI_CANDIDATE&hit=true&limit=10" -Method Get
+if (-not $logsForCandidate.success -or $logsForCandidate.data.Count -lt 1) {
+  throw "Rule exec logs filter by ruleCode/hit failed."
+}
+$firstLog = $logsForCandidate.data[0]
+if ($firstLog.ruleCode -ne "R_AMI_STEMI_CANDIDATE" -or -not $firstLog.hit) {
+  throw "Rule exec log filter returned unexpected entries."
+}
+
+$logDetail = Invoke-RestMethod -Uri "$BaseUrl/rules/exec-logs/$($firstLog.logId)" -Method Get
+if (-not $logDetail.success -or $logDetail.data.logId -ne $firstLog.logId) {
+  throw "Rule exec log detail query failed."
+}
+
 Write-Host "Rule smoke test passed."
 Write-Host "Imported rules: $($imported.data.Count)"
 Write-Host "Simulate rule: $($simulate.data.ruleCode), hit=$($simulate.data.hit)"
 Write-Host "Evaluated rules: $($evaluate.data.Count)"
+Write-Host "Exec logs total recent: $($logsAll.data.Count); STEMI hit logs: $($logsForCandidate.data.Count); first logId=$($firstLog.logId), elapsedMs=$($firstLog.elapsedMs)"

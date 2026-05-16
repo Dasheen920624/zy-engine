@@ -42,6 +42,13 @@ public class PathwayController {
         return ApiResult.success(pathwayService.getPathway(pathwayCode, versionNo));
     }
 
+    @GetMapping("/pathways/{pathwayCode}/diff")
+    public ApiResult<Map<String, Object>> diffPathway(@PathVariable String pathwayCode,
+                                                      @RequestParam(name = "from") String fromVersion,
+                                                      @RequestParam(name = "to") String toVersion) {
+        return ApiResult.success(pathwayService.diffPathway(pathwayCode, fromVersion, toVersion));
+    }
+
     @PostMapping("/pathways/{pathwayCode}/publish")
     public ApiResult<Map<String, Object>> publishPathway(@PathVariable String pathwayCode,
                                                          @RequestBody Map<String, Object> request) {
@@ -96,5 +103,86 @@ public class PathwayController {
                                                           @PathVariable String nodeCode,
                                                           @RequestBody(required = false) Map<String, Object> request) {
         return ApiResult.success(pathwayService.completeNode(instanceId, nodeCode, request));
+    }
+
+    @GetMapping("/pathway-instances")
+    public ApiResult<List<PatientPathwayInstance>> listInstances(@RequestParam(required = false) String pathwayCode,
+                                                                  @RequestParam(required = false) String status,
+                                                                  @RequestParam(required = false) String patientId,
+                                                                  @RequestParam(required = false) String encounterId,
+                                                                  @RequestParam(required = false) String currentNodeCode,
+                                                                  @RequestParam(required = false) String limit) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("pathwayCode", pathwayCode);
+        filters.put("status", status);
+        filters.put("patientId", patientId);
+        filters.put("encounterId", encounterId);
+        filters.put("currentNodeCode", currentNodeCode);
+        filters.put("limit", limit);
+        return ApiResult.success(pathwayService.listInstances(filters));
+    }
+
+    @GetMapping("/pathway-instances/summary")
+    public ApiResult<Map<String, Object>> instanceSummary(@RequestParam(required = false) String pathwayCode,
+                                                          @RequestParam(required = false) String status,
+                                                          @RequestParam(required = false) String patientId,
+                                                          @RequestParam(required = false) String encounterId,
+                                                          @RequestParam(required = false) String currentNodeCode) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("pathwayCode", pathwayCode);
+        filters.put("status", status);
+        filters.put("patientId", patientId);
+        filters.put("encounterId", encounterId);
+        filters.put("currentNodeCode", currentNodeCode);
+        return ApiResult.success(pathwayService.summarizeInstances(filters));
+    }
+
+    @GetMapping("/pathway-instances/node-completion")
+    public ApiResult<Map<String, Object>> nodeCompletion(@RequestParam(required = false) String pathwayCode,
+                                                         @RequestParam(required = false) String status,
+                                                         @RequestParam(required = false) String patientId,
+                                                         @RequestParam(required = false) String encounterId) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("pathwayCode", pathwayCode);
+        filters.put("status", status);
+        filters.put("patientId", patientId);
+        filters.put("encounterId", encounterId);
+        return ApiResult.success(pathwayService.summarizeNodeCompletion(filters));
+    }
+
+    @GetMapping("/pathway-variations")
+    public ApiResult<List<PathwayVariationRecord>> listVariations(@RequestParam(required = false) String pathwayCode,
+                                                                  @RequestParam(required = false) String patientId,
+                                                                  @RequestParam(required = false) String encounterId,
+                                                                  @RequestParam(required = false) String variationType,
+                                                                  @RequestParam(required = false) String nodeCode,
+                                                                  @RequestParam(required = false) String instanceId,
+                                                                  @RequestParam(required = false) String limit) {
+        return ApiResult.success(pathwayService.listVariations(filterMap(pathwayCode, patientId, encounterId,
+                variationType, nodeCode, instanceId, limit)));
+    }
+
+    @GetMapping("/pathway-variations/summary")
+    public ApiResult<Map<String, Object>> variationSummary(@RequestParam(required = false) String pathwayCode,
+                                                           @RequestParam(required = false) String patientId,
+                                                           @RequestParam(required = false) String encounterId,
+                                                           @RequestParam(required = false) String variationType,
+                                                           @RequestParam(required = false) String nodeCode,
+                                                           @RequestParam(required = false) String instanceId) {
+        return ApiResult.success(pathwayService.summarizeVariations(filterMap(pathwayCode, patientId, encounterId,
+                variationType, nodeCode, instanceId, null)));
+    }
+
+    private Map<String, String> filterMap(String pathwayCode, String patientId, String encounterId,
+                                          String variationType, String nodeCode, String instanceId, String limit) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("pathwayCode", pathwayCode);
+        filters.put("patientId", patientId);
+        filters.put("encounterId", encounterId);
+        filters.put("variationType", variationType);
+        filters.put("nodeCode", nodeCode);
+        filters.put("instanceId", instanceId);
+        filters.put("limit", limit);
+        return filters;
     }
 }

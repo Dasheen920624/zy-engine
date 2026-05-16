@@ -114,6 +114,26 @@ X-Trace-Id: trace-demo-variation
   "operator_id": "D001"
 }
 
+### List variations across instances (filter by pathway)
+GET http://localhost:18080/zy-engine/api/pathway-variations?pathwayCode=AMI_STEMI&limit=20
+X-Trace-Id: trace-demo-variation-list
+
+### Variation aggregation summary
+GET http://localhost:18080/zy-engine/api/pathway-variations/summary?pathwayCode=AMI_STEMI
+X-Trace-Id: trace-demo-variation-summary
+
+### List active pathway instances (filter by pathway)
+GET http://localhost:18080/zy-engine/api/pathway-instances?pathwayCode=AMI_STEMI&limit=20
+X-Trace-Id: trace-demo-instance-list
+
+### Pathway instance aggregation summary
+GET http://localhost:18080/zy-engine/api/pathway-instances/summary?pathwayCode=AMI_STEMI
+X-Trace-Id: trace-demo-instance-summary
+
+### Pathway node completion metrics (per-node & per-task)
+GET http://localhost:18080/zy-engine/api/pathway-instances/node-completion?pathwayCode=AMI_STEMI
+X-Trace-Id: trace-demo-node-completion
+
 ### Rule simulate
 POST http://localhost:18080/zy-engine/api/rules/simulate
 Content-Type: application/json
@@ -161,6 +181,18 @@ X-Trace-Id: trace-demo-rule-publish
 GET http://localhost:18080/zy-engine/api/rules
 X-Trace-Id: trace-demo-rule-list
 
+### List recent rule exec logs (filter by ruleCode and hit)
+GET http://localhost:18080/zy-engine/api/rules/exec-logs?ruleCode=R_AMI_STEMI_CANDIDATE&hit=true&limit=20
+X-Trace-Id: trace-demo-rule-execlog-list
+
+### Get a specific rule exec log
+GET http://localhost:18080/zy-engine/api/rules/exec-logs/rxl-1
+X-Trace-Id: trace-demo-rule-execlog-get
+
+### Rule exec log summary (hit_rate per rule / severity / result_status)
+GET http://localhost:18080/zy-engine/api/rules/exec-logs/summary
+X-Trace-Id: trace-demo-rule-execlog-summary
+
 ### List pathway definitions
 GET http://localhost:18080/zy-engine/api/pathways
 X-Trace-Id: trace-demo-pathway-list
@@ -168,6 +200,10 @@ X-Trace-Id: trace-demo-pathway-list
 ### Get pathway config
 GET http://localhost:18080/zy-engine/api/pathways/AMI_STEMI?versionNo=1.0.0
 X-Trace-Id: trace-demo-pathway-config
+
+### Diff pathway versions (compare published 1.0.0 vs draft)
+GET http://localhost:18080/zy-engine/api/pathways/AMI_STEMI/diff?from=1.0.0&to=draft
+X-Trace-Id: trace-demo-pathway-diff
 
 ### Graph disease candidates
 POST http://localhost:18080/zy-engine/api/graph/disease-candidates
@@ -193,6 +229,59 @@ X-Trace-Id: trace-demo-graph-evidence
   "graph_version": "AMI_GRAPH_2026_01"
 }
 
+### Import graph versions and evidences from sample file
+POST http://localhost:18080/zy-engine/api/graph/versions
+Content-Type: application/json
+X-Trace-Id: trace-demo-graph-version-import
+
+< ../../ai-dev-input/06_samples/sample_graph_versions.json
+
+### Import graph evidences only (same sample file)
+POST http://localhost:18080/zy-engine/api/graph/evidences
+Content-Type: application/json
+X-Trace-Id: trace-demo-graph-evidence-import
+
+< ../../ai-dev-input/06_samples/sample_graph_versions.json
+
+### Activate a graph version
+POST http://localhost:18080/zy-engine/api/graph/versions/AMI_GRAPH_2026_01/activate
+Content-Type: application/json
+X-Trace-Id: trace-demo-graph-version-activate
+
+{
+  "published_by": "GRAPH_OPS"
+}
+
+### List graph evidences (filter by target)
+GET http://localhost:18080/zy-engine/api/graph/evidences?targetCode=AMI_STEMI
+X-Trace-Id: trace-demo-graph-evidence-list
+
+### Import graph nodes from sample file
+POST http://localhost:18080/zy-engine/api/graph/nodes
+Content-Type: application/json
+X-Trace-Id: trace-demo-graph-node-import
+
+< ../../ai-dev-input/06_samples/sample_graph_versions.json
+
+### Import graph edges (relations) from sample file
+POST http://localhost:18080/zy-engine/api/graph/edges
+Content-Type: application/json
+X-Trace-Id: trace-demo-graph-edge-import
+
+< ../../ai-dev-input/06_samples/sample_graph_versions.json
+
+### List graph nodes (filter by type)
+GET http://localhost:18080/zy-engine/api/graph/nodes?graphVersion=AMI_GRAPH_2026_01&type=DISEASE
+X-Trace-Id: trace-demo-graph-node-list
+
+### List graph edges (filter by target)
+GET http://localhost:18080/zy-engine/api/graph/edges?graphVersion=AMI_GRAPH_2026_01&toCode=AMI_STEMI
+X-Trace-Id: trace-demo-graph-edge-list
+
+### Get one graph evidence
+GET http://localhost:18080/zy-engine/api/graph/evidences/EV_AMI_001
+X-Trace-Id: trace-demo-graph-evidence-get
+
 ### Terminology normalize diagnosis code
 POST http://localhost:18080/zy-engine/api/terminology/normalize
 Content-Type: application/json
@@ -206,6 +295,21 @@ X-Trace-Id: trace-demo-terminology-normalize
   "patient_id": "P_AMI_001",
   "encounter_id": "E_AMI_001"
 }
+
+### Import terminology mappings from sample file
+POST http://localhost:18080/zy-engine/api/terminology/mappings
+Content-Type: application/json
+X-Trace-Id: trace-demo-terminology-import
+
+< ../../ai-dev-input/06_samples/sample_dictionary_mappings.json
+
+### List terminology mappings
+GET http://localhost:18080/zy-engine/api/terminology/mappings
+X-Trace-Id: trace-demo-terminology-list
+
+### Get one terminology mapping
+GET http://localhost:18080/zy-engine/api/terminology/mappings/HIS/I21.3?conceptType=DIAGNOSIS
+X-Trace-Id: trace-demo-terminology-get
 
 ### Adapter query ECG report mock
 POST http://localhost:18080/zy-engine/api/adapters/query
@@ -234,6 +338,36 @@ X-Trace-Id: trace-demo-adapter-webservice
     "encounter_id": "E_AMI_001"
   }
 }
+
+### Import adapter query definitions from sample file
+POST http://localhost:18080/zy-engine/api/adapters/definitions
+Content-Type: application/json
+X-Trace-Id: trace-demo-adapter-import
+
+< ../../ai-dev-input/06_samples/sample_adapter_definitions.json
+
+### List adapter query definitions
+GET http://localhost:18080/zy-engine/api/adapters/definitions
+X-Trace-Id: trace-demo-adapter-list
+
+### Get one adapter query definition
+GET http://localhost:18080/zy-engine/api/adapters/definitions/ECG_ADAPTER/QUERY_ECG_REPORT
+X-Trace-Id: trace-demo-adapter-get
+
+### Import Dify workflow templates from sample file
+POST http://localhost:18080/zy-engine/api/dify/workflows
+Content-Type: application/json
+X-Trace-Id: trace-demo-dify-template-import
+
+< ../../ai-dev-input/06_samples/sample_dify_workflows.json
+
+### List Dify workflow templates
+GET http://localhost:18080/zy-engine/api/dify/workflows
+X-Trace-Id: trace-demo-dify-template-list
+
+### Get one Dify workflow template
+GET http://localhost:18080/zy-engine/api/dify/workflows/WF_AMI_ENTRY_EXPLAIN?workflowVersion=1.0.0
+X-Trace-Id: trace-demo-dify-template-get
 
 ### Dify workflow run
 POST http://localhost:18080/zy-engine/api/dify/workflows/run

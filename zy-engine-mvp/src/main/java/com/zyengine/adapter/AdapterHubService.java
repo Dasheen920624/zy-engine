@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,59 @@ public class AdapterHubService {
         return result;
     }
 
+    public List<Map<String, Object>> importDefinitions(Object request) {
+        List<Map<String, Object>> entries = normalizeDefinitions(request);
+        if (entries.isEmpty()) {
+            throw new IllegalArgumentException("adapter definitions list is empty");
+        }
+        List<String> errors = new ArrayList<String>();
+        List<AdapterQueryDefinition> staged = new ArrayList<AdapterQueryDefinition>();
+        for (int index = 0; index < entries.size(); index++) {
+            Map<String, Object> entry = entries.get(index);
+            try {
+                staged.add(toDefinition(entry));
+            } catch (IllegalArgumentException ex) {
+                errors.add("definitions[" + index + "]: " + ex.getMessage());
+            }
+        }
+        if (!errors.isEmpty()) {
+            // 与路径配置导入一致，校验失败时整体回退，不污染已注册的适配器查询定义。
+            throw new IllegalArgumentException("adapter definitions invalid: " + errors);
+        }
+
+        List<Map<String, Object>> imported = new ArrayList<Map<String, Object>>();
+        for (AdapterQueryDefinition definition : staged) {
+            queryDefinitions.put(key(definition.adapterCode, definition.queryCode), definition);
+            imported.add(view(definition));
+        }
+        return imported;
+    }
+
+    public List<Map<String, Object>> listDefinitions() {
+        List<AdapterQueryDefinition> list = new ArrayList<AdapterQueryDefinition>(queryDefinitions.values());
+        Collections.sort(list, new Comparator<AdapterQueryDefinition>() {
+            @Override
+            public int compare(AdapterQueryDefinition left, AdapterQueryDefinition right) {
+                int byAdapter = left.adapterCode.compareTo(right.adapterCode);
+                return byAdapter != 0 ? byAdapter : left.queryCode.compareTo(right.queryCode);
+            }
+        });
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (AdapterQueryDefinition definition : list) {
+            result.add(view(definition));
+        }
+        return result;
+    }
+
+    public Map<String, Object> getDefinition(String adapterCode, String queryCode) {
+        AdapterQueryDefinition definition = queryDefinitions.get(key(adapterCode, queryCode));
+        if (definition == null) {
+            throw new IllegalArgumentException("adapter definition not found: "
+                    + canonical(adapterCode) + "/" + canonical(queryCode));
+        }
+        return view(definition);
+    }
+
     private Map<String, Object> success(AdapterQueryDefinition definition, Map<String, Object> params, long elapsedMs) {
         List<Map<String, Object>> rows = rows(definition, params);
         Map<String, Object> result = base(definition.adapterCode, definition.queryCode);
@@ -47,7 +102,9 @@ public class AdapterHubService {
         result.put("source_system", definition.sourceSystem);
         result.put("query_name", definition.queryName);
         result.put("mock", true);
-        result.put("message", definition.description);
+        result.put("message", rows.isEmpty()
+                ? "适配器查询已注册但暂无 Mock 行数据，请在 import 时通过 sample_rows 或后续 SDK 接入真实取数。"
+                : definition.description);
         result.put("elapsed_ms", elapsedMs);
         result.put("row_count", rows.size());
         result.put("rows", rows);
@@ -80,6 +137,10 @@ public class AdapterHubService {
     }
 
     private List<Map<String, Object>> rows(AdapterQueryDefinition definition, Map<String, Object> params) {
+        if (definition.sampleRows != null && !definition.sampleRows.isEmpty()) {
+            // 导入定义时如果带 sample_rows，则优先用配置数据，便于规则/路径联调时控制Mock返回。
+            return rowsWithPatientContext(definition.sampleRows, params);
+        }
         String adapterCode = definition.adapterCode;
         String queryCode = definition.queryCode;
         if ("ECG_ADAPTER".equals(adapterCode) && "QUERY_ECG_REPORT".equals(queryCode)) {
@@ -180,26 +241,43 @@ public class AdapterHubService {
         row.put(prefix + "_mapping_confidence", normalized.get("confidence"));
     }
 
+    private List<Map<String, Object>> rowsWithPatientContext(List<Map<String, Object>> templateRows,
+                                                              Map<String, Object> params) {
+        List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> template : templateRows) {
+            Map<String, Object> row = new LinkedHashMap<String, Object>(patientRow(params));
+            row.putAll(template);
+            rows.add(row);
+        }
+        return rows;
+    }
+
     private void seedDefinitions() {
         register("ECG_ADAPTER", "ECG适配器", "REST", "ECG", "QUERY_ECG_REPORT",
                 "查询心电图报告", "返回AMI样例患者十二导联心电图报告。",
-                Arrays.asList("patient_id", "encounter_id", "exam_code", "finding_codes", "report_time"));
+                Arrays.asList("patient_id", "encounter_id", "exam_code", "finding_codes", "report_time"),
+                null);
         register("LIS_ADAPTER", "LIS检验适配器", "SQL", "LIS", "QUERY_TROPONIN",
                 "查询肌钙蛋白结果", "返回AMI样例患者肌钙蛋白结果。",
-                Arrays.asList("patient_id", "encounter_id", "source_lab_code", "value", "unit", "report_time"));
+                Arrays.asList("patient_id", "encounter_id", "source_lab_code", "value", "unit", "report_time"),
+                null);
         register("HIS_ADAPTER", "HIS诊断适配器", "REST", "HIS", "QUERY_DIAGNOSES",
                 "查询诊断", "返回AMI样例患者HIS诊断。",
-                Arrays.asList("patient_id", "encounter_id", "source_diagnosis_code", "standard_code"));
+                Arrays.asList("patient_id", "encounter_id", "source_diagnosis_code", "standard_code"),
+                null);
         register("EMR_ADAPTER", "EMR病历适配器", "REST", "EMR", "QUERY_CHIEF_COMPLAINTS",
                 "查询主诉", "返回AMI样例患者主诉。",
-                Arrays.asList("patient_id", "encounter_id", "source_symptom_code", "text"));
+                Arrays.asList("patient_id", "encounter_id", "source_symptom_code", "text"),
+                null);
         register("EMR_WS_ADAPTER", "EMR WebService适配器", "WEBSERVICE", "EMR", "QUERY_ADMISSION_NOTE",
                 "查询入院记录", "模拟老系统SOAP接口返回病历文书。",
-                Arrays.asList("patient_id", "encounter_id", "document_id", "document_text"));
+                Arrays.asList("patient_id", "encounter_id", "document_id", "document_text"),
+                null);
     }
 
     private void register(String adapterCode, String adapterName, String adapterType, String sourceSystem,
-                          String queryCode, String queryName, String description, Collection<String> schema) {
+                          String queryCode, String queryName, String description,
+                          Collection<String> schema, List<Map<String, Object>> sampleRows) {
         AdapterQueryDefinition definition = new AdapterQueryDefinition();
         definition.adapterCode = canonical(adapterCode);
         definition.adapterName = adapterName;
@@ -208,7 +286,9 @@ public class AdapterHubService {
         definition.queryCode = canonical(queryCode);
         definition.queryName = queryName;
         definition.description = description;
-        definition.schema = new ArrayList<String>(schema);
+        definition.schema = schema == null ? new ArrayList<String>() : new ArrayList<String>(schema);
+        definition.sampleRows = sampleRows;
+        definition.source = "BUILT_IN_SAMPLE";
         queryDefinitions.put(key(definition.adapterCode, definition.queryCode), definition);
     }
 
@@ -224,6 +304,21 @@ public class AdapterHubService {
             list.add(item);
         }
         return list;
+    }
+
+    private Map<String, Object> view(AdapterQueryDefinition definition) {
+        Map<String, Object> view = new LinkedHashMap<String, Object>();
+        view.put("adapter_code", definition.adapterCode);
+        view.put("adapter_name", definition.adapterName);
+        view.put("adapter_type", definition.adapterType);
+        view.put("source_system", definition.sourceSystem);
+        view.put("query_code", definition.queryCode);
+        view.put("query_name", definition.queryName);
+        view.put("description", definition.description);
+        view.put("schema", definition.schema);
+        view.put("source", definition.source);
+        view.put("has_sample_rows", definition.sampleRows != null && !definition.sampleRows.isEmpty());
+        return view;
     }
 
     private List<Map<String, Object>> single(Map<String, Object> row) {
@@ -253,6 +348,68 @@ public class AdapterHubService {
     }
 
     @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> normalizeDefinitions(Object request) {
+        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        if (request instanceof List) {
+            for (Object item : (List<?>) request) {
+                if (item instanceof Map) {
+                    list.add((Map<String, Object>) item);
+                }
+            }
+            return list;
+        }
+        if (request instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) request;
+            Object nested = map.get("definitions");
+            if (nested instanceof List) {
+                return normalizeDefinitions(nested);
+            }
+            Object alternative = map.get("queries");
+            if (alternative instanceof List) {
+                return normalizeDefinitions(alternative);
+            }
+            if (map.containsKey("adapter_code") || map.containsKey("query_code")) {
+                list.add(map);
+            }
+        }
+        return list;
+    }
+
+    @SuppressWarnings("unchecked")
+    private AdapterQueryDefinition toDefinition(Map<String, Object> entry) {
+        AdapterQueryDefinition definition = new AdapterQueryDefinition();
+        definition.adapterCode = canonical(requireField(entry, "adapter_code"));
+        definition.adapterName = string(entry.get("adapter_name"), definition.adapterCode);
+        definition.adapterType = canonical(string(entry.get("adapter_type"), "REST"));
+        definition.sourceSystem = canonical(string(entry.get("source_system"), definition.adapterCode));
+        definition.queryCode = canonical(requireField(entry, "query_code"));
+        definition.queryName = string(entry.get("query_name"), definition.queryCode);
+        definition.description = string(entry.get("description"), null);
+        Object schema = entry.get("schema");
+        List<String> schemaList = new ArrayList<String>();
+        if (schema instanceof Collection) {
+            for (Object item : (Collection<?>) schema) {
+                if (item != null) {
+                    schemaList.add(String.valueOf(item));
+                }
+            }
+        }
+        definition.schema = schemaList;
+        Object sampleRows = entry.get("sample_rows");
+        if (sampleRows instanceof Collection) {
+            List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
+            for (Object row : (Collection<?>) sampleRows) {
+                if (row instanceof Map) {
+                    rows.add((Map<String, Object>) row);
+                }
+            }
+            definition.sampleRows = rows;
+        }
+        definition.source = string(entry.get("source"), "IMPORTED");
+        return definition;
+    }
+
+    @SuppressWarnings("unchecked")
     private Map<String, Object> map(Object value) {
         if (value instanceof Map) {
             return (Map<String, Object>) value;
@@ -262,6 +419,14 @@ public class AdapterHubService {
 
     private String required(Map<String, Object> request, String field) {
         String value = string(request.get(field), null);
+        if (value == null) {
+            throw new IllegalArgumentException(field + " is required");
+        }
+        return value;
+    }
+
+    private String requireField(Map<String, Object> entry, String field) {
+        String value = string(entry.get(field), null);
         if (value == null) {
             throw new IllegalArgumentException(field + " is required");
         }
@@ -293,5 +458,7 @@ public class AdapterHubService {
         private String queryName;
         private String description;
         private List<String> schema;
+        private List<Map<String, Object>> sampleRows;
+        private String source;
     }
 }

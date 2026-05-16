@@ -13,18 +13,86 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class DifyService {
     private final DifyProperties properties;
     private final EnginePersistenceService persistenceService;
+    private final Map<String, DifyWorkflowTemplate> templates = new ConcurrentHashMap<String, DifyWorkflowTemplate>();
 
     public DifyService(DifyProperties properties, EnginePersistenceService persistenceService) {
         this.properties = properties;
         this.persistenceService = persistenceService;
+    }
+
+    public List<DifyWorkflowTemplate> importTemplates(Object request) {
+        List<Map<String, Object>> entries = normalizeTemplates(request);
+        if (entries.isEmpty()) {
+            throw new IllegalArgumentException("dify workflow templates list is empty");
+        }
+        List<String> errors = new ArrayList<String>();
+        List<DifyWorkflowTemplate> staged = new ArrayList<DifyWorkflowTemplate>();
+        for (int index = 0; index < entries.size(); index++) {
+            try {
+                staged.add(toTemplate(entries.get(index)));
+            } catch (IllegalArgumentException ex) {
+                errors.add("templates[" + index + "]: " + ex.getMessage());
+            }
+        }
+        if (!errors.isEmpty()) {
+            // 与其他配置导入一致，校验失败整体回退。
+            throw new IllegalArgumentException("dify workflow templates invalid: " + errors);
+        }
+
+        List<DifyWorkflowTemplate> imported = new ArrayList<DifyWorkflowTemplate>();
+        for (DifyWorkflowTemplate template : staged) {
+            templates.put(key(template.getWorkflowCode(), template.getWorkflowVersion()), template);
+            imported.add(template);
+        }
+        return imported;
+    }
+
+    public List<DifyWorkflowTemplate> listTemplates() {
+        List<DifyWorkflowTemplate> list = new ArrayList<DifyWorkflowTemplate>(templates.values());
+        Collections.sort(list, new Comparator<DifyWorkflowTemplate>() {
+            @Override
+            public int compare(DifyWorkflowTemplate left, DifyWorkflowTemplate right) {
+                int byCode = left.getWorkflowCode().compareTo(right.getWorkflowCode());
+                return byCode != 0 ? byCode : left.getWorkflowVersion().compareTo(right.getWorkflowVersion());
+            }
+        });
+        return list;
+    }
+
+    public DifyWorkflowTemplate getTemplate(String workflowCode, String workflowVersion) {
+        if (workflowVersion != null && !workflowVersion.trim().isEmpty()) {
+            DifyWorkflowTemplate template = templates.get(key(workflowCode, workflowVersion));
+            if (template == null) {
+                throw new IllegalArgumentException("dify workflow template not found: " + workflowCode + "@" + workflowVersion);
+            }
+            return template;
+        }
+        DifyWorkflowTemplate latest = null;
+        for (DifyWorkflowTemplate template : templates.values()) {
+            if (workflowCode.equals(template.getWorkflowCode())) {
+                if (latest == null || template.getWorkflowVersion().compareTo(latest.getWorkflowVersion()) > 0) {
+                    latest = template;
+                }
+            }
+        }
+        if (latest == null) {
+            throw new IllegalArgumentException("dify workflow template not found: " + workflowCode);
+        }
+        return latest;
     }
 
     @SuppressWarnings("unchecked")
@@ -37,9 +105,22 @@ public class DifyService {
             inputs = new LinkedHashMap<String, Object>(request);
         }
 
+        DifyWorkflowTemplate template = findTemplate(workflowCode, workflowVersion);
+        if (template != null) {
+            // 模板存在时按 input_defaults 填充缺省值，并校验 required_inputs。版本号也同步用模板里的。
+            if (workflowVersion == null) {
+                workflowVersion = template.getWorkflowVersion();
+            }
+            inputs = applyInputDefaults(inputs, template);
+            List<String> missing = missingRequiredInputs(inputs, template);
+            if (!missing.isEmpty()) {
+                throw new IllegalArgumentException("dify workflow inputs missing required fields: " + missing);
+            }
+        }
+
         try {
             if (!properties.ready()) {
-                return degraded(workflowCode, workflowVersion, inputs, "DIFY_DISABLED",
+                return degraded(workflowCode, workflowVersion, inputs, template, "DIFY_DISABLED",
                         properties.isEnabled() ? "Dify配置不完整，返回本地降级解释。" : "Dify未启用，返回本地降级解释。",
                         System.currentTimeMillis() - start);
             }
@@ -53,7 +134,7 @@ public class DifyService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + properties.getApiKey());
 
-            RestTemplate restTemplate = restTemplate();
+            RestTemplate restTemplate = restTemplate(template);
             ResponseEntity<Map> response = restTemplate.postForEntity(workflowUrl(),
                     new HttpEntity<Map<String, Object>>(difyRequest, headers), Map.class);
             Map<String, Object> body = response.getBody() == null
@@ -62,10 +143,10 @@ public class DifyService {
             audit(workflowCode, workflowVersion, inputs, result);
             return result;
         } catch (ResourceAccessException ex) {
-            return degraded(workflowCode, workflowVersion, inputs, ErrorCode.DIFY_TIMEOUT.getCode(),
+            return degraded(workflowCode, workflowVersion, inputs, template, ErrorCode.DIFY_TIMEOUT.getCode(),
                     "Dify调用超时或网络不可达，已返回本地降级解释。", System.currentTimeMillis() - start);
         } catch (RestClientException ex) {
-            return degraded(workflowCode, workflowVersion, inputs, "DIFY_ERROR",
+            return degraded(workflowCode, workflowVersion, inputs, template, "DIFY_ERROR",
                     "Dify调用失败，已返回本地降级解释：" + ex.getClass().getSimpleName(), System.currentTimeMillis() - start);
         }
     }
@@ -89,11 +170,17 @@ public class DifyService {
     }
 
     private Map<String, Object> degraded(String workflowCode, String workflowVersion, Map<String, Object> inputs,
-                                         String errorCode, String message, long elapsedMs) {
+                                         DifyWorkflowTemplate template, String errorCode, String message, long elapsedMs) {
         Map<String, Object> outputs = new LinkedHashMap<String, Object>();
-        outputs.put("explanation", "已基于规则和图谱证据生成降级解释，请医生结合病历确认。");
-        outputs.put("recommended_action", "保留路径推荐与人工确认，待Dify恢复后可补充更完整说明。");
-        outputs.put("target_code", string(inputs.get("target_code"), string(inputs.get("pathway_code"), null)));
+        if (template != null && template.getDegradedOutputs() != null && !template.getDegradedOutputs().isEmpty()) {
+            outputs.putAll(template.getDegradedOutputs());
+        } else {
+            outputs.put("explanation", "已基于规则和图谱证据生成降级解释，请医生结合病历确认。");
+            outputs.put("recommended_action", "保留路径推荐与人工确认，待Dify恢复后可补充更完整说明。");
+        }
+        if (!outputs.containsKey("target_code")) {
+            outputs.put("target_code", string(inputs.get("target_code"), string(inputs.get("pathway_code"), null)));
+        }
 
         Map<String, Object> result = baseResult(workflowCode, workflowVersion, elapsedMs);
         result.put("status", "DEGRADED");
@@ -101,6 +188,7 @@ public class DifyService {
         result.put("message", message);
         result.put("error_code", errorCode);
         result.put("outputs", outputs);
+        result.put("template_applied", template != null);
         audit(workflowCode, workflowVersion, inputs, result);
         return result;
     }
@@ -114,10 +202,12 @@ public class DifyService {
         return result;
     }
 
-    private RestTemplate restTemplate() {
+    private RestTemplate restTemplate(DifyWorkflowTemplate template) {
+        int timeout = template != null && template.getTimeoutMs() != null && template.getTimeoutMs() > 0
+                ? template.getTimeoutMs() : properties.getTimeoutMs();
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(properties.getTimeoutMs());
-        factory.setReadTimeout(properties.getTimeoutMs());
+        factory.setConnectTimeout(timeout);
+        factory.setReadTimeout(timeout);
         return new RestTemplate(factory);
     }
 
@@ -149,6 +239,114 @@ public class DifyService {
         } catch (RuntimeException ignored) {
             // 审计写入失败不应影响Dify降级策略。
         }
+    }
+
+    private DifyWorkflowTemplate findTemplate(String workflowCode, String workflowVersion) {
+        if (workflowCode == null || templates.isEmpty()) {
+            return null;
+        }
+        if (workflowVersion != null && !workflowVersion.trim().isEmpty()) {
+            return templates.get(key(workflowCode, workflowVersion));
+        }
+        DifyWorkflowTemplate latest = null;
+        for (DifyWorkflowTemplate template : templates.values()) {
+            if (workflowCode.equals(template.getWorkflowCode())) {
+                if (latest == null || template.getWorkflowVersion().compareTo(latest.getWorkflowVersion()) > 0) {
+                    latest = template;
+                }
+            }
+        }
+        return latest;
+    }
+
+    private Map<String, Object> applyInputDefaults(Map<String, Object> inputs, DifyWorkflowTemplate template) {
+        Map<String, Object> merged = new LinkedHashMap<String, Object>();
+        if (template.getInputDefaults() != null) {
+            merged.putAll(template.getInputDefaults());
+        }
+        if (inputs != null) {
+            for (Map.Entry<String, Object> entry : inputs.entrySet()) {
+                if (entry.getValue() != null) {
+                    merged.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        return merged;
+    }
+
+    private List<String> missingRequiredInputs(Map<String, Object> inputs, DifyWorkflowTemplate template) {
+        List<String> missing = new ArrayList<String>();
+        if (template.getRequiredInputs() == null) {
+            return missing;
+        }
+        for (String field : template.getRequiredInputs()) {
+            if (field == null || field.trim().isEmpty()) {
+                continue;
+            }
+            Object value = inputs == null ? null : inputs.get(field);
+            if (value == null || (value instanceof String && ((String) value).trim().isEmpty())) {
+                missing.add(field);
+            }
+        }
+        return missing;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> normalizeTemplates(Object request) {
+        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        if (request instanceof List) {
+            for (Object item : (List<?>) request) {
+                if (item instanceof Map) {
+                    list.add((Map<String, Object>) item);
+                }
+            }
+            return list;
+        }
+        if (request instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) request;
+            Object nested = map.get("templates");
+            if (nested instanceof List) {
+                return normalizeTemplates(nested);
+            }
+            if (map.containsKey("workflow_code")) {
+                list.add(map);
+            }
+        }
+        return list;
+    }
+
+    @SuppressWarnings("unchecked")
+    private DifyWorkflowTemplate toTemplate(Map<String, Object> entry) {
+        DifyWorkflowTemplate template = new DifyWorkflowTemplate();
+        template.setWorkflowCode(requireField(entry, "workflow_code"));
+        template.setWorkflowName(string(entry.get("workflow_name"), template.getWorkflowCode()));
+        template.setWorkflowVersion(string(entry.get("workflow_version"), "1.0.0"));
+        template.setDescription(string(entry.get("description"), null));
+        template.setDifyAppCode(string(entry.get("dify_app_code"), null));
+        Object timeout = entry.get("timeout_ms");
+        if (timeout instanceof Number) {
+            template.setTimeoutMs(((Number) timeout).intValue());
+        }
+
+        Object defaults = entry.get("input_defaults");
+        if (defaults instanceof Map) {
+            template.setInputDefaults(new LinkedHashMap<String, Object>((Map<String, Object>) defaults));
+        }
+        Object required = entry.get("required_inputs");
+        if (required instanceof Collection) {
+            List<String> requiredList = new ArrayList<String>();
+            for (Object item : (Collection<?>) required) {
+                if (item != null) {
+                    requiredList.add(String.valueOf(item));
+                }
+            }
+            template.setRequiredInputs(requiredList);
+        }
+        Object degraded = entry.get("degraded_outputs");
+        if (degraded instanceof Map) {
+            template.setDegradedOutputs(new LinkedHashMap<String, Object>((Map<String, Object>) degraded));
+        }
+        return template;
     }
 
     @SuppressWarnings("unchecked")
@@ -191,5 +389,17 @@ public class DifyService {
         }
         String text = String.valueOf(value);
         return text.trim().isEmpty() ? defaultValue : text;
+    }
+
+    private String requireField(Map<String, Object> entry, String field) {
+        String value = string(entry.get(field), null);
+        if (value == null) {
+            throw new IllegalArgumentException(field + " is required");
+        }
+        return value;
+    }
+
+    private String key(String workflowCode, String workflowVersion) {
+        return workflowCode + "::" + (workflowVersion == null ? "1.0.0" : workflowVersion);
     }
 }

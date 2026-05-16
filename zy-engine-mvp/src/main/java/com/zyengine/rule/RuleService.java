@@ -1,26 +1,36 @@
 package com.zyengine.rule;
 
+import com.zyengine.common.TraceContext;
 import com.zyengine.dto.RuleResult;
 import com.zyengine.persistence.EnginePersistenceService;
 import com.zyengine.util.ClinicalFactUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class RuleService {
+    private static final int EXEC_LOG_RING_CAPACITY = 500;
+
     private final EnginePersistenceService persistenceService;
     private final RuleDslEvaluator dslEvaluator = new RuleDslEvaluator();
     private final Map<String, RuleDefinition> ruleStore = new ConcurrentHashMap<String, RuleDefinition>();
+    private final Deque<RuleExecLogEntry> execLogs = new ConcurrentLinkedDeque<RuleExecLogEntry>();
+    private final AtomicLong execLogSequence = new AtomicLong();
 
     public RuleService(EnginePersistenceService persistenceService) {
         this.persistenceService = persistenceService;
@@ -103,13 +113,199 @@ public class RuleService {
         if (definition != null) {
             return executeDefinition(definition, patientContext);
         }
-        return evaluateStemiCandidate(patientContext);
+        long start = System.currentTimeMillis();
+        RuleResult result = evaluateStemiCandidate(patientContext);
+        recordExecLog(result, "BUILT_IN", patientContext, System.currentTimeMillis() - start, "SUCCESS", null, null);
+        return result;
+    }
+
+    public List<RuleExecLogEntry> listExecLogs(Map<String, String> filters) {
+        String ruleCode = filterValue(filters, "ruleCode");
+        String traceId = filterValue(filters, "traceId");
+        String patientId = filterValue(filters, "patientId");
+        String encounterId = filterValue(filters, "encounterId");
+        String resultStatus = filterValue(filters, "resultStatus");
+        Boolean hit = filterBoolean(filters, "hit");
+        int limit = filterInt(filters, "limit", 100);
+        if (limit <= 0 || limit > EXEC_LOG_RING_CAPACITY) {
+            limit = EXEC_LOG_RING_CAPACITY;
+        }
+
+        List<RuleExecLogEntry> matched = new ArrayList<RuleExecLogEntry>();
+        // ConcurrentLinkedDeque 的 descendingIterator 返回最新写入的元素，便于按时间倒序返回执行日志。
+        java.util.Iterator<RuleExecLogEntry> iterator = execLogs.descendingIterator();
+        while (iterator.hasNext() && matched.size() < limit) {
+            RuleExecLogEntry entry = iterator.next();
+            if (ruleCode != null && !ruleCode.equalsIgnoreCase(entry.getRuleCode())) {
+                continue;
+            }
+            if (traceId != null && !traceId.equals(entry.getTraceId())) {
+                continue;
+            }
+            if (patientId != null && !patientId.equals(entry.getPatientId())) {
+                continue;
+            }
+            if (encounterId != null && !encounterId.equals(entry.getEncounterId())) {
+                continue;
+            }
+            if (resultStatus != null && !resultStatus.equalsIgnoreCase(entry.getResultStatus())) {
+                continue;
+            }
+            if (hit != null && hit.booleanValue() != entry.isHit()) {
+                continue;
+            }
+            matched.add(entry);
+        }
+        return matched;
+    }
+
+    public Map<String, Object> summarizeExecLogs(Map<String, String> filters) {
+        Map<String, String> effective = new LinkedHashMap<String, String>();
+        if (filters != null) {
+            effective.putAll(filters);
+        }
+        effective.put("limit", String.valueOf(Integer.MAX_VALUE));
+        List<RuleExecLogEntry> entries = listExecLogs(effective);
+
+        int total = entries.size();
+        int totalHits = 0;
+        long totalElapsed = 0;
+        int errorCount = 0;
+        Map<String, RuleAggregate> byRule = new LinkedHashMap<String, RuleAggregate>();
+        Map<String, Integer> bySeverity = new LinkedHashMap<String, Integer>();
+        Map<String, Integer> byResultStatus = new LinkedHashMap<String, Integer>();
+
+        for (RuleExecLogEntry entry : entries) {
+            if (entry.isHit()) {
+                totalHits++;
+            }
+            totalElapsed += entry.getElapsedMs();
+            if ("ERROR".equalsIgnoreCase(entry.getResultStatus())) {
+                errorCount++;
+            }
+            increment(bySeverity, entry.getSeverity());
+            increment(byResultStatus, entry.getResultStatus());
+
+            String ruleCode = entry.getRuleCode();
+            if (ruleCode == null) {
+                continue;
+            }
+            RuleAggregate agg = byRule.get(ruleCode);
+            if (agg == null) {
+                agg = new RuleAggregate(ruleCode);
+                byRule.put(ruleCode, agg);
+            }
+            agg.total++;
+            if (entry.isHit()) {
+                agg.hits++;
+            }
+            if ("ERROR".equalsIgnoreCase(entry.getResultStatus())) {
+                agg.errors++;
+            }
+            agg.totalElapsed += entry.getElapsedMs();
+        }
+
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("total", total);
+        summary.put("total_hits", totalHits);
+        summary.put("hit_rate", total == 0 ? 0.0 : Math.round(totalHits * 10000.0 / total) / 100.0);
+        summary.put("error_count", errorCount);
+        summary.put("average_elapsed_ms", total == 0 ? 0.0 : Math.round(totalElapsed * 100.0 / total) / 100.0);
+        summary.put("by_rule", aggregatesToList(byRule));
+        summary.put("by_severity", bucketsToList(bySeverity, "severity"));
+        summary.put("by_result_status", bucketsToList(byResultStatus, "result_status"));
+        return summary;
+    }
+
+    private void increment(Map<String, Integer> counts, String key) {
+        if (key == null) {
+            return;
+        }
+        Integer value = counts.get(key);
+        counts.put(key, value == null ? 1 : value + 1);
+    }
+
+    private List<Map<String, Object>> aggregatesToList(Map<String, RuleAggregate> aggregates) {
+        List<RuleAggregate> list = new ArrayList<RuleAggregate>(aggregates.values());
+        Collections.sort(list, new Comparator<RuleAggregate>() {
+            @Override
+            public int compare(RuleAggregate left, RuleAggregate right) {
+                int byTotal = Integer.compare(right.total, left.total);
+                return byTotal != 0 ? byTotal : left.ruleCode.compareTo(right.ruleCode);
+            }
+        });
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (RuleAggregate agg : list) {
+            result.add(agg.toView());
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> bucketsToList(Map<String, Integer> counts, String key) {
+        List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(counts.entrySet());
+        Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
+            @Override
+            public int compare(Map.Entry<String, Integer> left, Map.Entry<String, Integer> right) {
+                int byCount = right.getValue().compareTo(left.getValue());
+                return byCount != 0 ? byCount : left.getKey().compareTo(right.getKey());
+            }
+        });
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (Map.Entry<String, Integer> entry : entries) {
+            Map<String, Object> bucket = new LinkedHashMap<String, Object>();
+            bucket.put(key, entry.getKey());
+            bucket.put("count", entry.getValue());
+            result.add(bucket);
+        }
+        return result;
+    }
+
+    private static class RuleAggregate {
+        private final String ruleCode;
+        private int total;
+        private int hits;
+        private int errors;
+        private long totalElapsed;
+
+        RuleAggregate(String ruleCode) {
+            this.ruleCode = ruleCode;
+        }
+
+        Map<String, Object> toView() {
+            Map<String, Object> view = new LinkedHashMap<String, Object>();
+            view.put("rule_code", ruleCode);
+            view.put("total", total);
+            view.put("hits", hits);
+            view.put("errors", errors);
+            view.put("hit_rate", total == 0 ? 0.0 : Math.round(hits * 10000.0 / total) / 100.0);
+            view.put("average_elapsed_ms", total == 0 ? 0.0 : Math.round(totalElapsed * 100.0 / total) / 100.0);
+            return view;
+        }
+    }
+
+    public RuleExecLogEntry getExecLog(String logId) {
+        if (logId == null) {
+            throw new IllegalArgumentException("logId is required");
+        }
+        for (RuleExecLogEntry entry : execLogs) {
+            if (logId.equals(entry.getLogId())) {
+                return entry;
+            }
+        }
+        throw new IllegalArgumentException("rule exec log not found: " + logId);
     }
 
     private List<RuleResult> evaluateBuiltInRules(Map<String, Object> patientContext) {
         List<RuleResult> results = new ArrayList<RuleResult>();
-        results.add(evaluateStemiCandidate(patientContext));
-        results.add(evaluateEcgTimely(patientContext));
+        long stemiStart = System.currentTimeMillis();
+        RuleResult stemi = evaluateStemiCandidate(patientContext);
+        recordExecLog(stemi, "BUILT_IN", patientContext, System.currentTimeMillis() - stemiStart, "SUCCESS", null, null);
+        results.add(stemi);
+
+        long ecgStart = System.currentTimeMillis();
+        RuleResult ecg = evaluateEcgTimely(patientContext);
+        recordExecLog(ecg, "BUILT_IN", patientContext, System.currentTimeMillis() - ecgStart, "SUCCESS", null, null);
+        results.add(ecg);
         return results;
     }
 
@@ -131,16 +327,47 @@ public class RuleService {
                 missing.put("facts", outcome.getMissingFacts());
                 result.getEvidence().add(missing);
             }
+            long elapsed = System.currentTimeMillis() - start;
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
-                    System.currentTimeMillis() - start, "SUCCESS", null, null);
+                    elapsed, "SUCCESS", null, null);
+            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "SUCCESS", null, null);
             return result;
         } catch (RuntimeException ex) {
             result.setHit(false);
             result.setSeverity("ERROR");
             result.setMessage("规则执行异常：" + ex.getMessage());
+            long elapsed = System.currentTimeMillis() - start;
             persistenceService.saveRuleExecLog(result, definition.getVersionNo(), patientContext,
-                    System.currentTimeMillis() - start, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
+                    elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
+            recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage());
             throw ex;
+        }
+    }
+
+    private void recordExecLog(RuleResult result, String ruleVersion, Map<String, Object> patientContext,
+                               long elapsedMs, String resultStatus, String errorCode, String errorMessage) {
+        RuleExecLogEntry entry = new RuleExecLogEntry();
+        entry.setLogId("rxl-" + execLogSequence.incrementAndGet());
+        entry.setTraceId(TraceContext.getTraceId());
+        entry.setRuleCode(result.getRuleCode());
+        entry.setRuleVersion(ruleVersion);
+        entry.setPatientId(ClinicalFactUtils.patientId(patientContext));
+        entry.setEncounterId(ClinicalFactUtils.encounterId(patientContext));
+        entry.setHit(result.isHit());
+        entry.setSeverity(result.getSeverity());
+        entry.setMessage(result.getMessage());
+        entry.setElapsedMs(elapsedMs);
+        entry.setResultStatus(resultStatus);
+        entry.setErrorCode(errorCode);
+        entry.setErrorMessage(errorMessage);
+        entry.setActions(new ArrayList<String>(result.getActions()));
+        entry.setEvidence(new ArrayList<Map<String, Object>>(result.getEvidence()));
+        entry.setCreatedTime(nowText());
+
+        // 内存环形缓冲优先保留最近 EXEC_LOG_RING_CAPACITY 条记录，长期归档仍依赖 RE_RULE_EXEC_LOG。
+        execLogs.addLast(entry);
+        while (execLogs.size() > EXEC_LOG_RING_CAPACITY) {
+            execLogs.pollFirst();
         }
     }
 
@@ -324,5 +551,37 @@ public class RuleService {
         } catch (NumberFormatException ex) {
             return defaultValue;
         }
+    }
+
+    private String filterValue(Map<String, String> filters, String key) {
+        if (filters == null) {
+            return null;
+        }
+        String value = filters.get(key);
+        return value == null || value.trim().isEmpty() ? null : value.trim();
+    }
+
+    private Boolean filterBoolean(Map<String, String> filters, String key) {
+        String value = filterValue(filters, key);
+        if (value == null) {
+            return null;
+        }
+        return Boolean.valueOf(value);
+    }
+
+    private int filterInt(Map<String, String> filters, String key, int defaultValue) {
+        String value = filterValue(filters, key);
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private String nowText() {
+        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
     }
 }

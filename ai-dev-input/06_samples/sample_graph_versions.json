@@ -1,0 +1,74 @@
+{
+  "versions": [
+    {
+      "graph_version": "AMI_GRAPH_2026_01",
+      "name": "AMI 院内图谱 2026-01",
+      "status": "ACTIVE",
+      "description": "急性心肌梗死专科图谱：含 STEMI/NSTEMI、再灌注禁忌证、并发症及证据链。",
+      "source_uri": "neo4j://internal/ami_graph_2026_01",
+      "published_by": "GRAPH_OPS"
+    },
+    {
+      "graph_version": "AMI_GRAPH_2026_02_DRAFT",
+      "name": "AMI 院内图谱 2026-02 草稿",
+      "status": "DRAFT",
+      "description": "新增 PCI 术后并发症与高危出血评估关系，待专家二轮评审。",
+      "source_uri": "neo4j://internal/ami_graph_2026_02_draft"
+    }
+  ],
+  "nodes": [
+    {"code": "CHEST_PAIN", "name": "胸痛", "type": "SYMPTOM", "graph_version": "AMI_GRAPH_2026_01"},
+    {"code": "ST_ELEVATION_CONTIGUOUS_LEADS", "name": "相邻导联ST段抬高", "type": "FINDING", "graph_version": "AMI_GRAPH_2026_01"},
+    {"code": "DIABETES", "name": "糖尿病", "type": "RISK_FACTOR", "graph_version": "AMI_GRAPH_2026_01"},
+    {"code": "HYPERTENSION", "name": "高血压", "type": "RISK_FACTOR", "graph_version": "AMI_GRAPH_2026_01"},
+    {"code": "AMI_STEMI", "name": "急性ST段抬高型心肌梗死", "type": "DISEASE", "graph_version": "AMI_GRAPH_2026_01"},
+    {"code": "DYSPNEA", "name": "呼吸困难", "type": "SYMPTOM", "graph_version": "AMI_GRAPH_2026_01"},
+    {"code": "BNP_HIGH", "name": "BNP升高", "type": "FINDING", "graph_version": "AMI_GRAPH_2026_01"},
+    {"code": "HEART_FAILURE", "name": "心力衰竭", "type": "DISEASE", "graph_version": "AMI_GRAPH_2026_01"}
+  ],
+  "edges": [
+    {"from_code": "CHEST_PAIN", "to_code": "AMI_STEMI", "relation_type": "HAS_CORE_SYMPTOM", "weight": 1.0, "graph_version": "AMI_GRAPH_2026_01"},
+    {"from_code": "ST_ELEVATION_CONTIGUOUS_LEADS", "to_code": "AMI_STEMI", "relation_type": "HAS_EXAM_FINDING", "weight": 1.0, "graph_version": "AMI_GRAPH_2026_01"},
+    {"from_code": "DIABETES", "to_code": "AMI_STEMI", "relation_type": "HAS_RISK_FACTOR", "weight": 0.45, "graph_version": "AMI_GRAPH_2026_01"},
+    {"from_code": "HYPERTENSION", "to_code": "AMI_STEMI", "relation_type": "HAS_RISK_FACTOR", "weight": 0.45, "graph_version": "AMI_GRAPH_2026_01"},
+    {"from_code": "DYSPNEA", "to_code": "HEART_FAILURE", "relation_type": "HAS_CORE_SYMPTOM", "weight": 0.8, "graph_version": "AMI_GRAPH_2026_01"},
+    {"from_code": "BNP_HIGH", "to_code": "HEART_FAILURE", "relation_type": "HAS_EXAM_FINDING", "weight": 0.9, "graph_version": "AMI_GRAPH_2026_01"}
+  ],
+  "evidences": [
+    {
+      "evidence_id": "EV_AMI_001",
+      "graph_version": "AMI_GRAPH_2026_01",
+      "target_code": "AMI_STEMI",
+      "target_type": "PATHWAY",
+      "evidence_type": "GUIDELINE",
+      "title": "AMI 院内路径专家审核证据",
+      "summary": "院内 AMI 路径 V1.0 经心血管内科专家组评审通过，含再灌注首选策略与禁忌证清单。",
+      "source": "院内AMI路径 V1.0",
+      "reference_url": "https://internal.example/ami-pathway-v1",
+      "confidence": 0.95
+    },
+    {
+      "evidence_id": "EV_AMI_002",
+      "graph_version": "AMI_GRAPH_2026_01",
+      "target_code": "AMI_STEMI",
+      "target_type": "PATHWAY",
+      "evidence_type": "LITERATURE",
+      "title": "2024 ESC STEMI 管理指南摘录",
+      "summary": "推荐 90 分钟内 PCI；溶栓适用于无 PCI 条件且无禁忌证患者。",
+      "source": "ESC 2024 Guidelines",
+      "reference_url": "https://www.escardio.org/Guidelines",
+      "confidence": 0.98
+    },
+    {
+      "evidence_id": "EV_HF_001",
+      "graph_version": "AMI_GRAPH_2026_01",
+      "target_code": "HEART_FAILURE",
+      "target_type": "DISEASE",
+      "evidence_type": "GUIDELINE",
+      "title": "心力衰竭管理院内证据",
+      "summary": "覆盖 BNP/NT-proBNP 阈值、利尿剂使用与随访周期。",
+      "source": "院内心衰路径 V0.9",
+      "confidence": 0.9
+    }
+  ]
+}
