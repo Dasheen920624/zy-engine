@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>原型导航 · 医疗智能引擎平台</title>
+  <link rel="stylesheet" href="styles/base.css" />
+  <style>
+    body { background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 100%); min-height: 100vh; }
+    .landing {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 56px 32px;
+    }
+    .landing h1 { font-size: 32px; margin-bottom: 12px; color: var(--color-text-primary); }
+    .landing .lead { font-size: 16px; color: var(--color-text-secondary); margin-bottom: 8px; max-width: 800px; }
+    .landing .note {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin: 24px 0;
+      max-width: 800px;
+    }
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+    .nav-card {
+      background: #fff;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: var(--shadow-1);
+      transition: all 0.15s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .nav-card:hover { box-shadow: var(--shadow-3); transform: translateY(-2px); text-decoration: none; border-color: var(--color-brand); }
+    .nav-card .seq { display: inline-block; background: var(--color-brand); color: #fff; font-family: var(--font-mono); padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 8px; }
+    .nav-card h3 { margin-bottom: 6px; color: var(--color-text-primary); }
+    .nav-card p { color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+    .nav-card .meta { color: var(--color-text-tertiary); font-size: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .nav-card .meta .tag { font-size: 11px; }
+    .footer-doc-links {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      font-size: 13px;
+    }
+    .footer-doc-links h3 { margin-bottom: 12px; }
+    .footer-doc-links ul { list-style: none; padding: 0; line-height: 2; }
+    .footer-doc-links code { background: #fff; padding: 1px 6px; border-radius: 2px; border: 1px solid var(--color-border); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main class="landing">
+    <h1>医疗智能引擎平台 · 内网管理台高保真原型</h1>
+    <p class="lead">面向集团化医院、多院区、卫生所/站点和科室的医疗智能引擎平台。本目录是 <strong>FE-001 信息架构与高保真原型</strong> 的可视化交付物，用于客户走查、内部评审和 FE-002 前端工程脚手架的设计参考。</p>
+
+    <div class="note">
+      <strong>原型说明</strong>：本目录为纯静态 HTML+CSS，不连接真实后端，仅作为设计/交互参考。所有数据为演示性占位。正式前端工程在 <code>../frontend/</code>（FE-002 落地后）。设计参考体系：Ant Design Pro（结构）+ IBM Carbon（密度）+ NHS（医疗可读性）+ GOV.UK（错误恢复）。
+    </div>
+
+    <h2 style="margin-top:32px;">页面导航</h2>
+    <div class="nav-grid">
+      <a class="nav-card" href="workbench.html">
+        <span class="seq">01</span>
+        <h3>工作台（首屏）</h3>
+        <p>登录后首屏，密集展示 Provider 状态、待审核配置包、同步失败、未映射字典、规则异常、Dify 降级率。不是营销页。</p>
+        <div class="meta">
+          <span class="tag tag-info">所有用户</span>
+          <span class="tag tag-default">P0</span>
+        </div>
+      </a>
+
+      <a class="nav-card" href="demo-validation.html">
+        <span class="seq">02</span>
+        <h3>演示与校验工作台</h3>
+        <p>面向质控办 / 医保办 / 临床专家 / 实施人员，可视化运行 AMI 推荐、病历质控、医保质控、医嘱安全 dry-run；展示命中规则、来源卡片、traceId。</p>
+        <div class="meta">
+          <span class="tag tag-info">质控/医保/临床</span>
+          <span class="tag tag-warning">核心剧本</span>
+        </div>
+      </a>
+
+      <a class="nav-card" href="config-package-center.html">
+        <span class="seq">03</span>
+        <h3>配置包中心</h3>
+        <p>路径、规则、图谱、Dify、字典、适配器统一包列表；支持 review、diff、hash 校验、publish、export、rollback。</p>
+        <div class="meta">
+          <span class="tag tag-info">信息科</span>
+          <span class="tag tag-default">P0</span>
+        </div>
+      </a>
+
+      <a class="nav-card" href="provenance.html">
+        <span class="seq">04</span>
+        <h3>来源追溯</h3>
+        <p>规则、知识、路径、图谱、Dify、字典、适配器和质控结论的来源文档、引用片段、资产绑定、审核记录和影响分析。</p>
+        <div class="meta">
+          <span class="tag tag-info">医学审核/质控</span>
+          <span class="tag tag-warning">客户明示需求</span>
+        </div>
+      </a>
+
+      <a class="nav-card" href="hospital-dashboard.html">
+        <span class="seq">05</span>
+        <h3>院级驾驶舱</h3>
+        <p>多组织运营指标、路径执行、规则命中、医保风险、质控缺陷、规则忽略率、发布台账。支持集团→医院→院区→科室→医生下钻。</p>
+        <div class="meta">
+          <span class="tag tag-info">院领导</span>
+          <span class="tag tag-default">P1</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="footer-doc-links">
+      <h3>配套文档</h3>
+      <ul>
+        <li>设计方案：<code>../zy-engine-mvp/docs/前端配置平台规划与开发验证.md</code></li>
+        <li>9 角色诉求：<code>../zy-engine-mvp/docs/01_多角色诉求矩阵.md</code></li>
+        <li>客户验收剧本：<code>../zy-engine-mvp/docs/04_客户验收剧本与报告模板.md</code></li>
+        <li>任务台账（FE-001/FE-002/FE-003）：<code>../zy-engine-mvp/docs/02_任务台账.md</code></li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>来源追溯 · 医疗智能引擎平台</title>
+  <link rel="stylesheet" href="styles/base.css" />
+  <style>
+    .prov-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) { .prov-layout { grid-template-columns: 1fr; } }
+    .doc-item {
+      padding: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      background: #fff;
+    }
+    .doc-item:hover { border-color: var(--color-brand); }
+    .doc-item.active { background: var(--color-brand-light); border-color: var(--color-brand); }
+    .doc-item .title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .doc-item .meta { color: var(--color-text-tertiary); font-size: 12px; line-height:1.6; }
+    .doc-item .meta strong { color: var(--color-text-secondary); margin-right: 4px; font-weight: 500; }
+    .citation {
+      background: var(--color-surface-alt);
+      border-left: 3px solid var(--color-brand);
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      border-radius: 0 2px 2px 0;
+    }
+    .citation .loc { color: var(--color-text-tertiary); font-size: 12px; margin-bottom: 4px; }
+    .impact-asset {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--color-border);
+      align-items: center;
+    }
+    .impact-asset:last-child { border-bottom: none; }
+    .impact-asset .icon-type {
+      width: 28px; height: 28px; border-radius: 4px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; color:#fff;
+    }
+    .impact-asset .icon-type.RULE { background: var(--color-brand); }
+    .impact-asset .icon-type.PATH { background: var(--color-success); }
+    .impact-asset .icon-type.GRAPH { background: #7c3aed; }
+    .impact-asset .icon-type.DIFY { background: #db2777; }
+    .impact-asset .icon-type.TERM { background: var(--color-warning); }
+    .impact-asset .info { flex: 1; min-width: 0; }
+    .impact-asset .info .name { font-size: 13px; font-weight: 500; }
+    .impact-asset .info .desc { color: var(--color-text-tertiary); font-size: 12px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="app-sidebar">
+    <div class="brand">医疗智能引擎平台<small>zy-engine v0.1</small></div>
+    <nav>
+      <ul>
+        <li><a href="workbench.html">工作台</a></li>
+        <li><a href="demo-validation.html">演示与校验</a></li>
+        <li class="group">配置治理</li>
+        <li><a href="config-package-center.html">配置包中心</a></li>
+        <li><a href="provenance.html" class="active">来源追溯</a></li>
+        <li><a href="#">路径配置</a></li>
+        <li><a href="#">规则配置</a></li>
+        <li><a href="#">图谱配置</a></li>
+        <li><a href="#">Dify 工作流</a></li>
+        <li><a href="#">标准化中心</a></li>
+        <li><a href="#">适配器中心</a></li>
+        <li class="group">运营治理</li>
+        <li><a href="hospital-dashboard.html">院级驾驶舱</a></li>
+        <li><a href="#">质控运营</a></li>
+        <li><a href="#">发布与同步</a></li>
+        <li><a href="#">审计与运维</a></li>
+        <li class="group">系统</li>
+        <li><a href="#">组织与权限</a></li>
+        <li><a href="#">系统设置</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <header class="app-header">
+    <div class="breadcrumb">首页 <strong>/</strong> 配置治理 <strong>/</strong> 来源追溯</div>
+    <div class="actions">
+      <span class="org-context"><span>医院</span><strong>HOSPITAL_DEMO</strong></span>
+      <span class="trace-id">trace: 9b41ce72</span>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <section class="page-header">
+      <div>
+        <h1>来源追溯</h1>
+        <div class="subtitle">规则 / 路径 / 图谱 / Dify / 字典 / 适配器 / 质控结论 的医学指南、专家共识、医保政策、院内制度来源管理 · 客户明示需求</div>
+      </div>
+      <div class="actions">
+        <button class="btn">导入来源文档</button>
+        <button class="btn">影响分析</button>
+        <button class="btn btn-primary">新增来源</button>
+      </div>
+    </section>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="label">已纳管来源文档</div>
+        <div class="value">128</div>
+        <div class="delta">指南 62 · 共识 18 · 政策 24 · 院内 24</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">引用片段</div>
+        <div class="value">874</div>
+        <div class="delta">章节级 612 · 条款级 262</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">资产绑定数</div>
+        <div class="value">1,243</div>
+        <div class="delta">规则 712 · 路径 218 · 图谱 246 · 其它 67</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">来源完整率</div>
+        <div class="value">97.4%</div>
+        <div class="delta down">缺 32 条 → 阻断发布</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">过期来源</div>
+        <div class="value">5</div>
+        <div class="delta down">需医学审核续期</div>
+      </div>
+    </div>
+
+    <div class="prov-layout">
+
+      <!-- 左：来源文档列表 -->
+      <div>
+        <div class="card mb-3">
+          <div class="card-header"><h3>来源文档</h3><span class="extra">共 128 条</span></div>
+          <div class="card-body">
+            <input class="input mb-3" placeholder="标题 / 机构 / 关键词" />
+            <div class="flex gap-2 mb-3" style="flex-wrap:wrap;">
+              <button class="btn btn-sm btn-primary">全部</button>
+              <button class="btn btn-sm">指南</button>
+              <button class="btn btn-sm">共识</button>
+              <button class="btn btn-sm">医保政策</button>
+              <button class="btn btn-sm">药品说明书</button>
+              <button class="btn btn-sm">院内制度</button>
+            </div>
+
+            <div class="doc-item active">
+              <div class="title">2017 ESC STEMI Management Guidelines</div>
+              <div class="meta">
+                <strong>机构</strong>European Society of Cardiology<br/>
+                <strong>类型</strong>GUIDELINE · <strong>版本</strong>2017
+                <span class="tag tag-success">已审核</span>
+              </div>
+            </div>
+            <div class="doc-item">
+              <div class="title">病历书写基本规范</div>
+              <div class="meta">
+                <strong>机构</strong>国家卫健委 · <strong>类型</strong>POLICY<br/>
+                <strong>版本</strong>2010 卫医政发〔2010〕11号
+                <span class="tag tag-success">已审核</span>
+              </div>
+            </div>
+            <div class="doc-item">
+              <div class="title">国家医保药品目录 2024 限定支付范围</div>
+              <div class="meta">
+                <strong>机构</strong>国家医保局 · <strong>类型</strong>POLICY<br/>
+                <strong>版本</strong>2024.01
+                <span class="tag tag-success">已审核</span>
+              </div>
+            </div>
+            <div class="doc-item">
+              <div class="title">普萘洛尔片说明书</div>
+              <div class="meta">
+                <strong>机构</strong>药品监督管理局 · <strong>类型</strong>DRUG_LABEL<br/>
+                <strong>版本</strong>2022.07 修订
+                <span class="tag tag-warning">即将过期</span>
+              </div>
+            </div>
+            <div class="doc-item">
+              <div class="title">演示医院抗菌药物管理制度</div>
+              <div class="meta">
+                <strong>机构</strong>演示医院药事会 · <strong>类型</strong>HOSPITAL_RULE<br/>
+                <strong>版本</strong>v2025.01
+                <span class="tag tag-danger">已过期</span>
+              </div>
+            </div>
+            <div class="doc-item">
+              <div class="title">2020 ACC/AHA NSTE-ACS 指南</div>
+              <div class="meta">
+                <strong>机构</strong>ACC/AHA · <strong>类型</strong>GUIDELINE<br/>
+                <strong>版本</strong>2020
+                <span class="tag tag-success">已审核</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：详情 -->
+      <div>
+        <div class="card mb-3">
+          <div class="card-header">
+            <h3>2017 ESC STEMI Management Guidelines</h3>
+            <div class="flex gap-2">
+              <span class="tag tag-info">GUIDELINE</span>
+              <span class="tag tag-success">已审核</span>
+              <button class="btn btn-sm">编辑</button>
+              <button class="btn btn-sm">影响分析</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <dl class="publish-form" style="display:grid; grid-template-columns:140px 1fr; gap:8px 16px; margin:0; font-size:13px;">
+              <dt class="text-muted">机构 reference_org</dt><dd>European Society of Cardiology (ESC)</dd>
+              <dt class="text-muted">类型 reference_type</dt><dd>GUIDELINE</dd>
+              <dt class="text-muted">版本 reference_version</dt><dd>2017 · 下次版本预计 2027</dd>
+              <dt class="text-muted">发布日期</dt><dd>2017-08-26</dd>
+              <dt class="text-muted">DOI / URL</dt><dd class="text-mono">10.1093/eurheartj/ehx393</dd>
+              <dt class="text-muted">适用人群</dt><dd>成人 STEMI 患者</dd>
+              <dt class="text-muted">证据等级</dt><dd>Class I / Level A 等级体系</dd>
+              <dt class="text-muted">推荐强度</dt><dd>STRONG</dd>
+              <dt class="text-muted">审核人</dt><dd>MEDICAL_DR_ZHAO · 2026-02-14</dd>
+              <dt class="text-muted">下次复审</dt><dd>2027-02-14（医学审核）</dd>
+              <dt class="text-muted">适用组织</dt><dd>GROUP_DEMO 全集团（继承到所有医院/科室）</dd>
+            </dl>
+          </div>
+        </div>
+
+        <!-- 引用片段 -->
+        <div class="card mb-3">
+          <div class="card-header"><h3>引用片段（4 条）</h3><button class="btn btn-sm">新增片段</button></div>
+          <div class="card-body">
+
+            <div class="citation">
+              <div class="loc"><strong>第 4.2 节 心电图诊断标准</strong> · 页 124-126 · CITATION_001</div>
+              <div>"在相邻 2 个或以上导联出现新发 ST 段抬高（V2-V3 ≥ 2mm 男性 / ≥ 1.5mm 女性，其它导联 ≥ 1mm），或新发左束支阻滞，符合 STEMI 诊断。"</div>
+              <div class="mt-2 text-muted" style="font-size:12px;">已绑定 <strong>2 个</strong>资产 · 见下方"绑定资产"</div>
+            </div>
+
+            <div class="citation">
+              <div class="loc"><strong>第 5.1 节 再灌注治疗时间窗</strong> · 页 132 · CITATION_002</div>
+              <div>"首次医疗接触至导丝通过梗死相关血管 ≤ 90 分钟（若初诊医院具备 PCI 能力）。"</div>
+              <div class="mt-2 text-muted" style="font-size:12px;">已绑定 <strong>1 个</strong>资产</div>
+            </div>
+
+            <div class="citation">
+              <div class="loc"><strong>第 6.3 节 双联抗血小板治疗</strong> · 页 138-141 · CITATION_003</div>
+              <div>"PCI 术后患者应给予阿司匹林联合 P2Y12 受体拮抗剂双联抗血小板治疗，疗程通常 12 个月。"</div>
+              <div class="mt-2 text-muted" style="font-size:12px;">已绑定 <strong>3 个</strong>资产</div>
+            </div>
+
+            <div class="citation">
+              <div class="loc"><strong>表 4 STEMI 患者风险评分</strong> · 页 130 · CITATION_004</div>
+              <div>TIMI 风险评分表（结构化数据 + 表 4 截图）</div>
+              <div class="mt-2 text-muted" style="font-size:12px;">已绑定 <strong>0 个</strong>资产 · <span class="tag tag-warning">未使用</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 绑定资产 -->
+        <div class="card mb-3">
+          <div class="card-header"><h3>绑定资产（6 个）</h3><span class="extra">规则 / 路径 / 图谱 / Dify / 字典 / 适配器</span></div>
+          <div class="card-body">
+
+            <div class="impact-asset">
+              <span class="icon-type RULE">R</span>
+              <div class="info">
+                <div class="name">R_AMI_STEMI_CANDIDATE v3</div>
+                <div class="desc">规则 · scenario=PATHWAY_ENTRY · 引用 CITATION_001 · 绑定包 PKG_AMI_RULE_CONFIG@2026.05.01</div>
+              </div>
+              <span class="tag tag-success">ACTIVE</span>
+            </div>
+
+            <div class="impact-asset">
+              <span class="icon-type RULE">R</span>
+              <div class="info">
+                <div class="name">R_AMI_DOOR_TO_BALLOON_90 v1</div>
+                <div class="desc">规则 · 引用 CITATION_002</div>
+              </div>
+              <span class="tag tag-success">ACTIVE</span>
+            </div>
+
+            <div class="impact-asset">
+              <span class="icon-type PATH">P</span>
+              <div class="info">
+                <div class="name">AMI_STEMI 路径 v1.0.0</div>
+                <div class="desc">路径 · 节点 AMI_REPERFUSION_EVAL 引用 CITATION_002</div>
+              </div>
+              <span class="tag tag-success">ACTIVE</span>
+            </div>
+
+            <div class="impact-asset">
+              <span class="icon-type GRAPH">G</span>
+              <div class="info">
+                <div class="name">KG_2026_05 · 节点 AMI_STEMI</div>
+                <div class="desc">图谱 · 证据 EV_AMI_001 引用 CITATION_001</div>
+              </div>
+              <span class="tag tag-info">PUBLISHED</span>
+            </div>
+
+            <div class="impact-asset">
+              <span class="icon-type DIFY">D</span>
+              <div class="info">
+                <div class="name">WF_AMI_ENTRY_EXPLAIN v1.0.0</div>
+                <div class="desc">Dify 工作流 · 解释模板引用 CITATION_001 / CITATION_003</div>
+              </div>
+              <span class="tag tag-success">ACTIVE</span>
+            </div>
+
+            <div class="impact-asset">
+              <span class="icon-type RULE">R</span>
+              <div class="info">
+                <div class="name">R_ACS_DAPT_REQUIRED v2</div>
+                <div class="desc">规则 · scenario=ORDER_SAFETY · 引用 CITATION_003</div>
+              </div>
+              <span class="tag tag-warning">REVIEWED</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 影响分析 -->
+        <div class="card">
+          <div class="card-header">
+            <h3>影响分析（若本文档更新到新版本）</h3>
+            <span class="extra">PROV-006</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-3 text-muted" style="font-size:13px;">假设此指南升级为 <strong>2027 ESC STEMI</strong>，下列资产将进入"需医学复审"状态：</p>
+            <div class="row row-3">
+              <div class="card" style="background:var(--color-surface-alt);"><div class="card-body" style="text-align:center;"><div class="kpi-card" style="border:none; padding:0;"><div class="label">规则</div><div class="value">3</div></div></div></div>
+              <div class="card" style="background:var(--color-surface-alt);"><div class="card-body" style="text-align:center;"><div class="kpi-card" style="border:none; padding:0;"><div class="label">路径节点</div><div class="value">2</div></div></div></div>
+              <div class="card" style="background:var(--color-surface-alt);"><div class="card-body" style="text-align:center;"><div class="kpi-card" style="border:none; padding:0;"><div class="label">Dify 模板</div><div class="value">1</div></div></div></div>
+            </div>
+            <p class="mt-3 text-muted" style="font-size:12px;">合计 6 个资产 · 影响范围：DEPT_CARDIOLOGY / DEPT_ER · 预计每日 65 次评估 · 涉及 28 位医生</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>
