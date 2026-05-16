@@ -58,6 +58,7 @@ ai-dev-input/09_ai_task_cards/task_card_template.md
 - 是否涉及来源追溯、引用片段、医学/医保/质控依据。
 - 是否涉及 Provider。
 - 是否需要 Oracle/达梦 DDL。
+- 是否涉及 Oracle 表结构、索引、迁移脚本、持久化 SQL 或落库行为；若涉及，必须同步真实 Oracle 并跑 Oracle 版本 smoke。
 - DB-only 模式如何验收。
 - 需要更新哪些测试、样例和文档。
 
@@ -145,6 +146,18 @@ git log -1 --pretty=format:%H%n%s
 git diff --check
 ```
 
+若任务涉及 Oracle/达梦 DDL、Oracle 迁移脚本、持久化 SQL、表字段、索引、约束或 Oracle 落库行为，还必须执行真实 Oracle 验证：
+
+```powershell
+.\zy-engine-mvp\scripts\run-oracle-ddl.ps1
+.\zy-engine-mvp\scripts\build.ps1
+.\zy-engine-mvp\scripts\start-oracle.ps1
+# 另开终端或后台启动后执行：
+.\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
+```
+
+Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 已提交用于说明 Oracle 连接目标；真实 `.env.oracle.local` 只存本机 Oracle 凭据，已被 `.gitignore` 忽略，禁止提交。若当前任务新增了新的 Oracle 业务链路，应补对应 Oracle smoke；如果不能连接客户 Oracle，最终回复必须明确说明未验证原因和风险，不能只用内存/JUnit 代替。
+
 若只改文档，仍建议运行完整测试和构建，除非用户明确要求快速文档修改。
 
 ### Step 7：提交
@@ -194,6 +207,7 @@ git push origin main
 - `run-tests.ps1` 通过。
 - `build.ps1` 通过。
 - `git diff --check` 通过。
+- 涉及数据库表结构、索引、约束、迁移或持久化 SQL 的任务，已执行 `run-oracle-ddl.ps1` 同步真实 Oracle，并通过 Oracle 版本 smoke；若未执行，必须说明原因和残留风险。
 - 已提交本任务相关文件。
 - 已推送到远端当前分支，或明确说明无法推送的原因。
 - DB-only 模式仍可运行。

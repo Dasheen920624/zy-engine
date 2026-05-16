@@ -8,6 +8,18 @@ $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 $env:NLS_LANG = "AMERICAN_AMERICA.AL32UTF8"
 
+. (Join-Path $PSScriptRoot "oracle-env.ps1")
+Import-ZyEngineOracleLocalEnv -ScriptRoot $PSScriptRoot
+
+if ([string]::IsNullOrWhiteSpace($Connect)) {
+  $Connect = $env:ZYENGINE_DB_CONNECT
+}
+if ([string]::IsNullOrWhiteSpace($Username)) {
+  $Username = $env:ZYENGINE_DB_USERNAME
+}
+if ([string]::IsNullOrWhiteSpace($Password)) {
+  $Password = $env:ZYENGINE_DB_PASSWORD
+}
 if ([string]::IsNullOrWhiteSpace($Connect)) {
   $Connect = "//192.168.4.25:1521/ORCL"
 }

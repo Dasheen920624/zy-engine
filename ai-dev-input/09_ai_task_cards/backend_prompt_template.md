@@ -39,7 +39,8 @@
 9. 新增外部依赖必须说明降级策略。
 10. 新增关键操作必须写审计或说明暂不写的原因。
 11. 涉及医学、医保、质控依据的配置，必须支持来源追溯；缺来源、来源过期或来源未审核时不得发布。
-12. 补充契约测试和必要集成测试。
+12. 涉及 Oracle 表结构、索引、约束、迁移脚本、持久化 SQL 或落库行为时，必须同步真实 Oracle 并执行 Oracle 版本 smoke，不能只用内存/JUnit 验收。
+13. 补充契约测试和必要集成测试。
 
 ## 必须输出
 
@@ -60,6 +61,15 @@
 .\zy-engine-mvp\scripts\build.ps1
 git diff --check
 ```
+
+若任务涉及 Oracle 落库，还必须执行：
+
+```powershell
+.\zy-engine-mvp\scripts\run-oracle-ddl.ps1
+.\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
+```
+
+Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 已提交用于说明连接目标；真实 `.env.oracle.local` 仅为本地忽略文件，不允许提交。若无法连接 Oracle，必须说明未验证原因、影响范围和补验计划。
 
 若命令失败，必须说明失败原因、影响范围和修复计划。
 

@@ -14,6 +14,7 @@ target/
 # Local environment and secrets
 .env
 .env.*
+!.env.oracle.local.example
 *.local
 application-local.yml
 application-secret.yml

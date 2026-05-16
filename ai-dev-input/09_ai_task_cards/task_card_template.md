@@ -119,6 +119,8 @@ DOC-xxx     文档
 - 索引：
 - Oracle/达梦差异：
 - 是否需要迁移脚本：
+- 是否必须同步真实 Oracle：
+- Oracle smoke 脚本：
 
 ## 来源追溯影响
 
@@ -193,6 +195,7 @@ DOC-xxx     文档
 4. 异常/降级场景。
 5. 需要时补 smoke 脚本。
 6. 涉及来源追溯时补缺来源、过期来源、未审核来源测试。
+7. 涉及表结构、索引、约束、迁移或持久化 SQL 时，必须执行真实 Oracle DDL/迁移和 Oracle 版本 smoke，不能只跑内存/JUnit。
 
 ## 文档要求
 
@@ -220,6 +223,15 @@ DOC-xxx     文档
 .\zy-engine-mvp\scripts\build.ps1
 git diff --check
 ```
+
+若任务涉及 Oracle 落库，还必须通过：
+
+```powershell
+.\zy-engine-mvp\scripts\run-oracle-ddl.ps1
+.\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
+```
+
+Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 为可提交模板，记录 Oracle 连接目标；真实 `.env.oracle.local` 为本地忽略文件，只记录本机 Oracle 凭据，禁止提交。
 
 提交与推送：
 

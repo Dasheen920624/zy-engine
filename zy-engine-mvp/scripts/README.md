@@ -43,6 +43,8 @@
 
 ## Oracle 模式
 
+仓库根目录已提供 `.env.oracle.local.example` 说明 Oracle 连接目标。本地可复制为 `.env.oracle.local` 并填写真实密码，该文件已被 `.gitignore` 忽略，禁止提交。Oracle 相关脚本会自动读取仓库根目录的 `.env.oracle.local`。
+
 启动 Oracle 模式前设置环境变量：
 
 ```powershell
@@ -70,6 +72,8 @@ Oracle 真实落库校验需要先启动 Oracle 模式，再执行：
 ```
 
 普通 `run-tests.cmd` 只运行 Maven/JUnit，默认不连接 Oracle；需要跨实例落表验证时使用上述 Oracle smoke。
+
+约定：凡是修改 Oracle/达梦 DDL、Oracle 迁移脚本、表字段、索引、约束、持久化 SQL 或新增落库链路的任务，完成前必须先执行 `run-oracle-ddl.cmd` 同步真实 Oracle，再启动 Oracle 模式并执行对应 Oracle smoke。若缺少专项 smoke，先补脚本或在最终交接中明确未覆盖风险。
 
 ## 端口
 

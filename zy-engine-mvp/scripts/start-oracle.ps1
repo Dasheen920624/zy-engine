@@ -9,11 +9,23 @@ $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 $env:NLS_LANG = "AMERICAN_AMERICA.AL32UTF8"
 
+. (Join-Path $PSScriptRoot "oracle-env.ps1")
+Import-ZyEngineOracleLocalEnv -ScriptRoot $PSScriptRoot
+
 $engineRoot = Split-Path -Parent $PSScriptRoot
 $jar = Join-Path $engineRoot "target\zy-engine-mvp-0.1.0-SNAPSHOT.jar"
 
 if (!(Test-Path -LiteralPath $jar)) {
   throw "Jar not found. Run scripts/build.ps1 first."
+}
+if ([string]::IsNullOrWhiteSpace($DbUrl)) {
+  $DbUrl = $env:ZYENGINE_DB_URL
+}
+if ([string]::IsNullOrWhiteSpace($DbUsername)) {
+  $DbUsername = $env:ZYENGINE_DB_USERNAME
+}
+if ([string]::IsNullOrWhiteSpace($DbPassword)) {
+  $DbPassword = $env:ZYENGINE_DB_PASSWORD
 }
 if ([string]::IsNullOrWhiteSpace($DbUrl)) {
   $DbUrl = "jdbc:oracle:thin:@//192.168.4.25:1521/ORCL"
