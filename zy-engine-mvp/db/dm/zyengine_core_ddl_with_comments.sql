@@ -388,6 +388,56 @@ CREATE TABLE IF NOT EXISTS src_runtime_evidence (
 COMMENT ON TABLE src_runtime_evidence IS '来源追溯-运行时证据链表';
 
 -- ============================================================================
+-- 配置包管理
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS cfg_config_package (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  package_code VARCHAR(128) NOT NULL,
+  package_version VARCHAR(64) NOT NULL,
+  asset_type VARCHAR(64) NOT NULL,
+  scope_level VARCHAR(32) NOT NULL,
+  scope_code VARCHAR(64) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  base_version VARCHAR(64),
+  target_version VARCHAR(64),
+  content_hash VARCHAR(128),
+  declared_content_hash VARCHAR(128),
+  manifest_json CLOB,
+  diff_json CLOB,
+  full_snapshot_json CLOB NOT NULL,
+  created_by VARCHAR(64),
+  reviewed_by VARCHAR(64),
+  approved_by VARCHAR(64),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  reviewed_time TIMESTAMP,
+  published_time TIMESTAMP,
+  CONSTRAINT uk_cfg_config_package UNIQUE (tenant_id, package_code, package_version, asset_type, scope_level, scope_code)
+);
+COMMENT ON TABLE cfg_config_package IS '配置包管理-配置包主表，保存配置包元数据、版本、状态和完整快照';
+COMMENT ON COLUMN cfg_config_package.id IS '主键ID，由应用层生成';
+COMMENT ON COLUMN cfg_config_package.tenant_id IS '租户ID';
+COMMENT ON COLUMN cfg_config_package.package_code IS '配置包编码';
+COMMENT ON COLUMN cfg_config_package.package_version IS '配置包版本号';
+COMMENT ON COLUMN cfg_config_package.asset_type IS '资产类型：RULE/PATHWAY/GRAPH/TERMINOLOGY/ADAPTER';
+COMMENT ON COLUMN cfg_config_package.scope_level IS '组织作用域层级：GROUP/HOSPITAL/CAMPUS/SITE/DEPARTMENT';
+COMMENT ON COLUMN cfg_config_package.scope_code IS '组织作用域编码';
+COMMENT ON COLUMN cfg_config_package.status IS '配置包状态：DRAFT/REVIEWING/PUBLISHED/REJECTED/ARCHIVED';
+COMMENT ON COLUMN cfg_config_package.base_version IS '基准版本号（用于增量包）';
+COMMENT ON COLUMN cfg_config_package.target_version IS '目标版本号（用于增量包）';
+COMMENT ON COLUMN cfg_config_package.content_hash IS '内容SHA-256哈希值';
+COMMENT ON COLUMN cfg_config_package.declared_content_hash IS '声明的内容哈希值（导入时校验）';
+COMMENT ON COLUMN cfg_config_package.manifest_json IS '清单JSON，包含资产清单和依赖声明';
+COMMENT ON COLUMN cfg_config_package.diff_json IS '差异JSON，增量包与基准版本的差异';
+COMMENT ON COLUMN cfg_config_package.full_snapshot_json IS '完整快照JSON，配置包的完整内容';
+COMMENT ON COLUMN cfg_config_package.created_by IS '创建人';
+COMMENT ON COLUMN cfg_config_package.reviewed_by IS '审核人';
+COMMENT ON COLUMN cfg_config_package.approved_by IS '审批人';
+COMMENT ON COLUMN cfg_config_package.created_time IS '创建时间';
+COMMENT ON COLUMN cfg_config_package.reviewed_time IS '审核时间';
+COMMENT ON COLUMN cfg_config_package.published_time IS '发布时间';
+
+-- ============================================================================
 -- 索引
 -- ============================================================================
 CREATE INDEX IF NOT EXISTS idx_pe_instance_patient ON pe_patient_instance (patient_id, encounter_id);
@@ -404,3 +454,5 @@ CREATE INDEX IF NOT EXISTS idx_src_citation_doc ON src_citation (tenant_id, docu
 CREATE INDEX IF NOT EXISTS idx_src_binding_asset ON src_asset_binding (tenant_id, asset_type, asset_code, asset_version);
 CREATE INDEX IF NOT EXISTS idx_src_review_target ON src_review_record (tenant_id, target_type, target_code, target_version);
 CREATE INDEX IF NOT EXISTS idx_src_runtime_trace ON src_runtime_evidence (trace_id, engine_type);
+CREATE INDEX IF NOT EXISTS idx_cfg_pkg_tenant ON cfg_config_package (tenant_id, package_code, status);
+CREATE INDEX IF NOT EXISTS idx_cfg_pkg_asset ON cfg_config_package (tenant_id, asset_type, scope_level, scope_code);

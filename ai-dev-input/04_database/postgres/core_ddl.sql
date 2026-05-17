@@ -379,3 +379,34 @@ CREATE INDEX IF NOT EXISTS idx_src_citation_doc ON src_citation (tenant_id, docu
 CREATE INDEX IF NOT EXISTS idx_src_binding_asset ON src_asset_binding (tenant_id, asset_type, asset_code, asset_version);
 CREATE INDEX IF NOT EXISTS idx_src_review_target ON src_review_record (tenant_id, target_type, target_code, target_version);
 CREATE INDEX IF NOT EXISTS idx_src_runtime_trace ON src_runtime_evidence (trace_id, engine_type);
+
+-- ============================================================================
+-- 配置包
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS cfg_config_package (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  package_code VARCHAR(128) NOT NULL,
+  package_version VARCHAR(64) NOT NULL,
+  asset_type VARCHAR(64) NOT NULL,
+  scope_level VARCHAR(32) NOT NULL,
+  scope_code VARCHAR(64) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  base_version VARCHAR(64),
+  target_version VARCHAR(64),
+  content_hash VARCHAR(128),
+  declared_content_hash VARCHAR(128),
+  manifest_json TEXT,
+  diff_json TEXT,
+  full_snapshot_json TEXT NOT NULL,
+  created_by VARCHAR(64),
+  reviewed_by VARCHAR(64),
+  approved_by VARCHAR(64),
+  created_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_time TIMESTAMP,
+  published_time TIMESTAMP,
+  CONSTRAINT uk_cfg_config_package UNIQUE (tenant_id, package_code, package_version, asset_type, scope_level, scope_code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cfg_pkg_tenant ON cfg_config_package (tenant_id, asset_type, status);
+CREATE INDEX IF NOT EXISTS idx_cfg_pkg_code ON cfg_config_package (tenant_id, package_code, package_version);

@@ -34,14 +34,17 @@ public class ConfigPackageService {
     private final ObjectMapper canonicalMapper;
     private final EnginePersistenceService persistenceService;
     private final OrganizationDirectoryService organizationDirectoryService;
+    private final ConfigPackageRepository configPackageRepository;
     private final Map<String, ConfigPackage> packageStore = new ConcurrentHashMap<String, ConfigPackage>();
 
     public ConfigPackageService(ObjectMapper objectMapper, EnginePersistenceService persistenceService,
-                                OrganizationDirectoryService organizationDirectoryService) {
+                                OrganizationDirectoryService organizationDirectoryService,
+                                ConfigPackageRepository configPackageRepository) {
         this.canonicalMapper = objectMapper.copy();
         this.canonicalMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         this.persistenceService = persistenceService;
         this.organizationDirectoryService = organizationDirectoryService;
+        this.configPackageRepository = configPackageRepository;
     }
 
     public List<Map<String, Object>> importPackages(Object request) {
@@ -55,17 +58,27 @@ public class ConfigPackageService {
             ConfigPackage configPackage = toConfigPackage(payload);
             String storeKey = key(configPackage.getTenantId(), configPackage.getPackageCode(),
                     configPackage.getPackageVersion());
-            ConfigPackage existing = packageStore.get(storeKey);
-            if (existing != null && !existing.getContentHash().equals(configPackage.getContentHash())) {
-                throw new IllegalArgumentException("config package version already exists with different content_hash: "
-                        + configPackage.getPackageCode() + "@" + configPackage.getPackageVersion());
-            }
-            if (existing == null) {
+
+            // Check if package already exists in database
+            ConfigPackageEntity existingEntity = configPackageRepository.findByUniqueKey(
+                    configPackage.getTenantId(), configPackage.getPackageCode(),
+                    configPackage.getPackageVersion(), configPackage.getAssetType(),
+                    configPackage.getScopeLevel(), configPackage.getScopeCode());
+
+            if (existingEntity != null) {
+                ConfigPackage existing = existingEntity.toConfigPackage();
+                if (!existing.getContentHash().equals(configPackage.getContentHash())) {
+                    throw new IllegalArgumentException("config package version already exists with different content_hash: "
+                            + configPackage.getPackageCode() + "@" + configPackage.getPackageVersion());
+                }
+                imported.add(summary(existing));
+            } else {
+                // Save to database
+                saveToDatabase(configPackage);
+                // Also keep in memory store for backward compatibility
                 packageStore.put(storeKey, configPackage);
                 audit("IMPORT", configPackage, configPackage.getCreatedBy(), summary(configPackage));
                 imported.add(summary(configPackage));
-            } else {
-                imported.add(summary(existing));
             }
         }
         return imported;
@@ -78,7 +91,23 @@ public class ConfigPackageService {
         String scopeLevel = filterValue(filters, "scopeLevel");
         String scopeCode = filterValue(filters, "scopeCode");
 
-        List<ConfigPackage> packages = new ArrayList<ConfigPackage>(packageStore.values());
+        // Try to load from database first
+        List<ConfigPackageEntity> entities = configPackageRepository.findList(
+                tenantId, null, assetType, status, scopeLevel, scopeCode);
+
+        List<ConfigPackage> packages = new ArrayList<ConfigPackage>();
+        for (ConfigPackageEntity entity : entities) {
+            ConfigPackage configPackage = entity.toConfigPackage();
+            // Load JSON fields from database
+            loadJsonFields(configPackage, entity);
+            packages.add(configPackage);
+        }
+
+        // If database is not enabled, fall back to in-memory store
+        if (packages.isEmpty() && !persistenceService.enabled()) {
+            packages.addAll(packageStore.values());
+        }
+
         Collections.sort(packages, new Comparator<ConfigPackage>() {
             @Override
             public int compare(ConfigPackage left, ConfigPackage right) {
@@ -123,6 +152,8 @@ public class ConfigPackageService {
             configPackage.setStatus("REVIEWED");
             configPackage.setReviewedBy(reviewedBy);
             configPackage.setReviewedTime(nowText());
+            // Update database
+            updateDatabase(configPackage);
             review = buildReview(configPackage);
             audit("REVIEW", configPackage, reviewedBy, review);
         }
@@ -149,6 +180,9 @@ public class ConfigPackageService {
         configPackage.setStatus("PUBLISHED");
         configPackage.setApprovedBy(approvedBy);
         configPackage.setPublishedTime(nowText());
+
+        // Update database
+        updateDatabase(configPackage);
 
         Map<String, Object> result = detail(configPackage);
         audit("PUBLISH", configPackage, approvedBy, result);
@@ -309,18 +343,57 @@ public class ConfigPackageService {
     private ConfigPackage findPackage(String packageCode, String packageVersion, String tenantId) {
         String resolvedTenant = string(tenantId, DEFAULT_TENANT_ID);
         String resolvedVersion = string(packageVersion, null);
+
+        // Try to find from database first
         if (resolvedVersion != null) {
-            ConfigPackage configPackage = packageStore.get(key(resolvedTenant, packageCode, resolvedVersion));
+            List<ConfigPackageEntity> entities = configPackageRepository.findList(
+                    resolvedTenant, packageCode, null, null, null, null);
+            for (ConfigPackageEntity entity : entities) {
+                if (resolvedVersion.equals(entity.getPackageVersion())) {
+                    ConfigPackage configPackage = entity.toConfigPackage();
+                    loadJsonFields(configPackage, entity);
+                    return configPackage;
+                }
+            }
+            throw new IllegalArgumentException("config package not found: "
+                    + resolvedTenant + "/" + packageCode + "@" + resolvedVersion);
+        }
+
+        // Find latest version from database
+        List<ConfigPackageEntity> entities = configPackageRepository.findList(
+                resolvedTenant, packageCode, null, null, null, null);
+        ConfigPackage latest = null;
+        for (ConfigPackageEntity entity : entities) {
+            ConfigPackage configPackage = entity.toConfigPackage();
+            loadJsonFields(configPackage, entity);
+            if (latest == null || configPackage.getPackageVersion().compareTo(latest.getPackageVersion()) > 0) {
+                latest = configPackage;
+            }
+        }
+
+        if (latest == null) {
+            // Fall back to in-memory store if database is not enabled
+            if (!persistenceService.enabled()) {
+                return findPackageFromMemory(packageCode, resolvedVersion, resolvedTenant);
+            }
+            throw new IllegalArgumentException("config package not found: " + resolvedTenant + "/" + packageCode);
+        }
+        return latest;
+    }
+
+    private ConfigPackage findPackageFromMemory(String packageCode, String packageVersion, String tenantId) {
+        if (packageVersion != null) {
+            ConfigPackage configPackage = packageStore.get(key(tenantId, packageCode, packageVersion));
             if (configPackage == null) {
                 throw new IllegalArgumentException("config package not found: "
-                        + resolvedTenant + "/" + packageCode + "@" + resolvedVersion);
+                        + tenantId + "/" + packageCode + "@" + packageVersion);
             }
             return configPackage;
         }
 
         ConfigPackage latest = null;
         for (ConfigPackage configPackage : packageStore.values()) {
-            if (!resolvedTenant.equals(configPackage.getTenantId())) {
+            if (!tenantId.equals(configPackage.getTenantId())) {
                 continue;
             }
             if (!packageCode.equals(configPackage.getPackageCode())) {
@@ -331,7 +404,7 @@ public class ConfigPackageService {
             }
         }
         if (latest == null) {
-            throw new IllegalArgumentException("config package not found: " + resolvedTenant + "/" + packageCode);
+            throw new IllegalArgumentException("config package not found: " + tenantId + "/" + packageCode);
         }
         return latest;
     }
@@ -533,6 +606,94 @@ public class ConfigPackageService {
             builder.append(text);
         }
         return builder.toString();
+    }
+
+    private void saveToDatabase(ConfigPackage configPackage) {
+        try {
+            ConfigPackageEntity entity = ConfigPackageEntity.fromConfigPackage(configPackage);
+            // Serialize JSON fields
+            entity.setManifestJson(serializeJson(configPackage.getManifest()));
+            entity.setDiffJson(serializeJson(configPackage.getDiff()));
+            entity.setFullSnapshotJson(serializeJson(configPackage.getFullSnapshot()));
+            configPackageRepository.save(entity);
+        } catch (RuntimeException ex) {
+            // Log error but don't fail the operation
+            System.err.println("Failed to save config package to database: " + ex.getMessage());
+        }
+    }
+
+    private void updateDatabase(ConfigPackage configPackage) {
+        try {
+            // Find existing entity to get the ID
+            List<ConfigPackageEntity> entities = configPackageRepository.findList(
+                    configPackage.getTenantId(), configPackage.getPackageCode(),
+                    null, null, null, null);
+            for (ConfigPackageEntity entity : entities) {
+                if (entity.getPackageVersion().equals(configPackage.getPackageVersion())) {
+                    entity.setStatus(configPackage.getStatus());
+                    entity.setReviewedBy(configPackage.getReviewedBy());
+                    entity.setApprovedBy(configPackage.getApprovedBy());
+                    entity.setReviewedTime(parseDateTime(configPackage.getReviewedTime()));
+                    entity.setPublishedTime(parseDateTime(configPackage.getPublishedTime()));
+                    configPackageRepository.save(entity);
+                    break;
+                }
+            }
+        } catch (RuntimeException ex) {
+            // Log error but don't fail the operation
+            System.err.println("Failed to update config package in database: " + ex.getMessage());
+        }
+    }
+
+    private void loadJsonFields(ConfigPackage configPackage, ConfigPackageEntity entity) {
+        try {
+            if (entity.getManifestJson() != null) {
+                configPackage.setManifest(deserializeJson(entity.getManifestJson()));
+            }
+            if (entity.getDiffJson() != null) {
+                configPackage.setDiff(deserializeJson(entity.getDiffJson()));
+            }
+            if (entity.getFullSnapshotJson() != null) {
+                configPackage.setFullSnapshot(deserializeJson(entity.getFullSnapshotJson()));
+            }
+        } catch (RuntimeException ex) {
+            // Log error but don't fail the operation
+            System.err.println("Failed to load JSON fields from database: " + ex.getMessage());
+        }
+    }
+
+    private String serializeJson(Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return null;
+        }
+        try {
+            return canonicalMapper.writeValueAsString(map);
+        } catch (JsonProcessingException ex) {
+            throw new RuntimeException("Failed to serialize JSON", ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> deserializeJson(String json) {
+        if (json == null || json.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+        try {
+            return canonicalMapper.readValue(json, Map.class);
+        } catch (JsonProcessingException ex) {
+            throw new RuntimeException("Failed to deserialize JSON", ex);
+        }
+    }
+
+    private java.time.LocalDateTime parseDateTime(String dateTimeStr) {
+        if (dateTimeStr == null || dateTimeStr.isEmpty()) {
+            return null;
+        }
+        try {
+            return java.time.OffsetDateTime.parse(dateTimeStr).toLocalDateTime();
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private void audit(String actionType, ConfigPackage configPackage, String operatorId, Map<String, Object> detail) {
