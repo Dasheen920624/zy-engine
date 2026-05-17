@@ -1,0 +1,51 @@
+[Unit]
+Description=ZY Engine backend (Spring Boot)
+Documentation=https://github.com/Dasheen920624/zy-engine
+After=network.target
+# 如本机直连数据库且 DB 同机：取消下一行注释
+# Requires=oracle.service
+
+[Service]
+Type=simple
+User=zyengine
+Group=zyengine
+WorkingDirectory=/opt/zy-engine
+
+# 加载环境变量（数据库凭据、端口、JAVA_OPTS 等）
+EnvironmentFile=/opt/zy-engine/conf/zyengine.env
+
+# 默认 JAVA_OPTS（zyengine.env 可覆盖）
+Environment="JAVA_OPTS=-server -Xms2g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/opt/zy-engine/logs/heap.hprof -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Duser.timezone=Asia/Shanghai -Djava.security.egd=file:/dev/./urandom"
+
+# 启动命令：用 PATH 中 java，或 EnvironmentFile 中 JAVA_HOME
+ExecStart=/bin/bash -c 'exec "${JAVA_HOME:-/usr}/bin/java" $JAVA_OPTS -jar /opt/zy-engine/lib/zy-engine.jar --spring.config.location=optional:file:/opt/zy-engine/conf/application.yml,optional:file:/opt/zy-engine/conf/application-local.yml'
+
+# 优雅停止：先 SIGTERM，30 秒后 SIGKILL
+ExecStop=/bin/kill -TERM $MAINPID
+TimeoutStopSec=30
+KillMode=process
+
+Restart=on-failure
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=5
+
+# 资源约束
+LimitNOFILE=65535
+LimitNPROC=4096
+MemoryHigh=6G
+MemoryMax=8G
+
+# 安全加固
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/zy-engine/logs /opt/zy-engine.bak
+
+# 日志
+StandardOutput=append:/opt/zy-engine/logs/stdout.log
+StandardError=append:/opt/zy-engine/logs/stderr.log
+
+[Install]
+WantedBy=multi-user.target
