@@ -2710,4 +2710,303 @@ class EngineApiContractTests {
         assertEquals("CIT_EVAL_REF", result.get("reference_citation_id"));
         assertEquals("EVIDENCE", result.get("reference_binding_type"));
     }
+
+    @Test
+    void regressionOrgScopeDepartmentLevel() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_DEPT_SCOPE_001");
+        rule.put("rule_name", "科室级规则");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("package_code", "PKG_DEPT_SCOPE");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("department_code", "DEPT_CARDIOLOGY");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> publishBody = new LinkedHashMap<>();
+        publishBody.put("approved_by", "ADMIN");
+        invokePost("/api/rules/packages/PKG_DEPT_SCOPE/publish", publishBody);
+
+        Map<String, Object> evalBody = new LinkedHashMap<>();
+        evalBody.put("scenario_code", "EMR_QC");
+        evalBody.put("rule_package_code", "PKG_DEPT_SCOPE");
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("diagnosis_code", "I21.0");
+        evalBody.put("patient_context", patientContext);
+        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalData = asMap(evalResp.get("data"));
+        List<Map<String, Object>> results = asListOfMap(evalData.get("results"));
+        assertFalse(results.isEmpty());
+        assertEquals("DEPARTMENT", results.get(0).get("scope_level"));
+        assertEquals("DEPT_CARDIOLOGY", results.get(0).get("scope_code"));
+    }
+
+    @Test
+    void regressionOrgScopeCampusLevel() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_CAMPUS_SCOPE_001");
+        rule.put("rule_name", "院区级规则");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("package_code", "PKG_CAMPUS_SCOPE");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("campus_code", "CAMPUS_EAST");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> listResp = invokeGet("/api/rules?ruleCode=R_CAMPUS_SCOPE_001");
+        List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
+        assertFalse(rules.isEmpty());
+        assertEquals("CAMPUS", rules.get(0).get("scope_level"));
+        assertEquals("CAMPUS_EAST", rules.get(0).get("scope_code"));
+    }
+
+    @Test
+    void regressionOrgScopeSiteLevel() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_SITE_SCOPE_001");
+        rule.put("rule_name", "站点级规则");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("package_code", "PKG_SITE_SCOPE");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("site_code", "SITE_EMERGENCY");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> listResp = invokeGet("/api/rules?ruleCode=R_SITE_SCOPE_001");
+        List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
+        assertFalse(rules.isEmpty());
+        assertEquals("SITE", rules.get(0).get("scope_level"));
+        assertEquals("SITE_EMERGENCY", rules.get(0).get("scope_code"));
+    }
+
+    @Test
+    void regressionSourceMissingBlocksPublish() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_NO_SRC_BLOCK");
+        rule.put("rule_name", "无来源阻断测试");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("package_code", "PKG_NO_SRC_BLOCK");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> reviewResp = invokeGet("/api/rules/packages/PKG_NO_SRC_BLOCK/review");
+        Map<String, Object> review = asMap(reviewResp.get("data"));
+        assertEquals(false, review.get("ready_to_publish"));
+
+        boolean hasMissingSource = false;
+        for (Map<String, Object> issue : asListOfMap(review.get("issues"))) {
+            if ("reference_document_code".equals(issue.get("field")) && "ERROR".equals(issue.get("severity"))) {
+                hasMissingSource = true;
+            }
+        }
+        assertTrue(hasMissingSource);
+    }
+
+    @Test
+    void regressionSourceBoundAllowsPublish() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_SRC_ALLOW");
+        rule.put("rule_name", "有来源允许发布");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("package_code", "PKG_SRC_ALLOW");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("reference_binding_type", "EVIDENCE");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> publishBody = new LinkedHashMap<>();
+        publishBody.put("approved_by", "ADMIN");
+        Map<String, Object> publishResp = invokePost("/api/rules/packages/PKG_SRC_ALLOW/publish", publishBody);
+        Map<String, Object> publishData = asMap(publishResp.get("data"));
+        assertTrue(((Number) publishData.get("published_count")).intValue() > 0);
+    }
+
+    @Test
+    void regressionDraftRuleNotEvaluated() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_DRAFT_EVAL");
+        rule.put("rule_name", "草稿规则不可评估");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("package_code", "PKG_DRAFT_EVAL");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> listResp = invokeGet("/api/rules?ruleCode=R_DRAFT_EVAL");
+        List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
+        assertFalse(rules.isEmpty());
+        assertEquals("DRAFT", rules.get(0).get("status"));
+    }
+
+    @Test
+    void regressionPublishedRuleCanBeEvaluated() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_PUB_EVAL");
+        rule.put("rule_name", "已发布规则可评估");
+        rule.put("rule_type", "PATHWAY_ENTRY");
+        rule.put("package_code", "PKG_PUB_EVAL");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> publishBody = new LinkedHashMap<>();
+        publishBody.put("approved_by", "ADMIN");
+        invokePost("/api/rules/packages/PKG_PUB_EVAL/publish", publishBody);
+
+        Map<String, Object> evalBody = new LinkedHashMap<>();
+        evalBody.put("scenario_code", "PATHWAY_ENTRY");
+        evalBody.put("rule_package_code", "PKG_PUB_EVAL");
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("diagnosis_code", "I21.0");
+        evalBody.put("patient_context", patientContext);
+        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalData = asMap(evalResp.get("data"));
+        List<Map<String, Object>> results = asListOfMap(evalData.get("results"));
+        assertFalse(results.isEmpty());
+        assertEquals("R_PUB_EVAL", results.get(0).get("rule_code"));
+    }
+
+    @Test
+    void regressionDegradedWhenNoRulesMatched() throws Exception {
+        Map<String, Object> evalBody = new LinkedHashMap<>();
+        evalBody.put("scenario_code", "DRUG_INDICATION");
+        evalBody.put("rule_package_code", "PKG_NONEXISTENT_DEGRADE");
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("drug_code", "ASPIRIN");
+        evalBody.put("patient_context", patientContext);
+        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalData = asMap(evalResp.get("data"));
+        List<Map<String, Object>> warnings = asListOfMap(evalData.get("warnings"));
+        boolean hasNoRulesWarning = false;
+        for (Map<String, Object> warning : warnings) {
+            if ("NO_RULES_MATCHED".equals(warning.get("code"))) {
+                hasNoRulesWarning = true;
+            }
+        }
+        assertTrue(hasNoRulesWarning, "should return NO_RULES_MATCHED warning when no rules configured");
+    }
+
+    @Test
+    void regressionInputMissingRequiredField() throws Exception {
+        Map<String, Object> badBody = new LinkedHashMap<>();
+        Map<String, Object> response = invokePostExpectingClientError("/api/rules", badBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+    }
+
+    @Test
+    void regressionInputUnknownScenarioCode() throws Exception {
+        Map<String, Object> evalBody = new LinkedHashMap<>();
+        evalBody.put("scenario_code", "INVALID_SCENARIO");
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("diagnosis_code", "I21.0");
+        evalBody.put("patient_context", patientContext);
+        Map<String, Object> response = invokePostExpectingClientError("/api/rules/engine/evaluate", evalBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertTrue(String.valueOf(response.get("message")).contains("scenario_code"));
+    }
+
+    @Test
+    void regressionAuditTrailOnRuleHit() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_AUDIT_HIT");
+        rule.put("rule_name", "审计命中测试");
+        rule.put("rule_type", "PATHWAY_ENTRY");
+        rule.put("package_code", "PKG_AUDIT_HIT");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> publishBody = new LinkedHashMap<>();
+        publishBody.put("approved_by", "ADMIN");
+        invokePost("/api/rules/packages/PKG_AUDIT_HIT/publish", publishBody);
+
+        Map<String, Object> evalBody = new LinkedHashMap<>();
+        evalBody.put("scenario_code", "PATHWAY_ENTRY");
+        evalBody.put("rule_package_code", "PKG_AUDIT_HIT");
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("diagnosis_code", "I21.0");
+        evalBody.put("patient_context", patientContext);
+        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalData = asMap(evalResp.get("data"));
+        assertNotNull(evalData.get("trace_id"));
+        assertFalse(String.valueOf(evalData.get("trace_id")).isEmpty());
+    }
+
+    @Test
+    void regressionAuditTrailOnRuleError() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_AUDIT_ERR");
+        rule.put("rule_name", "审计错误测试");
+        rule.put("rule_type", "PATHWAY_ENTRY");
+        rule.put("package_code", "PKG_AUDIT_ERR");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "within_minutes_from"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> listResp = invokeGet("/api/rules?ruleCode=R_AUDIT_ERR");
+        List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
+        assertFalse(rules.isEmpty());
+    }
+
+    @Test
+    void regressionTraceIdPropagation() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_TRACE_PROP");
+        rule.put("rule_name", "traceId传播测试");
+        rule.put("rule_type", "PATHWAY_ENTRY");
+        rule.put("package_code", "PKG_TRACE_PROP");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> publishBody = new LinkedHashMap<>();
+        publishBody.put("approved_by", "ADMIN");
+        invokePost("/api/rules/packages/PKG_TRACE_PROP/publish", publishBody);
+
+        Map<String, Object> evalBody = new LinkedHashMap<>();
+        evalBody.put("scenario_code", "PATHWAY_ENTRY");
+        evalBody.put("rule_package_code", "PKG_TRACE_PROP");
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("diagnosis_code", "I21.0");
+        evalBody.put("patient_context", patientContext);
+        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalData = asMap(evalResp.get("data"));
+
+        String traceId = String.valueOf(evalData.get("trace_id"));
+        assertNotNull(traceId);
+        assertFalse(traceId.isEmpty());
+
+        List<Map<String, Object>> results = asListOfMap(evalData.get("results"));
+        assertFalse(results.isEmpty());
+    }
 }
