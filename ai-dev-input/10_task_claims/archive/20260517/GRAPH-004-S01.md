@@ -6,7 +6,7 @@ slice: 图谱版本回滚
 title: GRAPH-004 图谱版本回滚（回滚到指定版本 + 测试）
 owner: AI-Codex-20260517
 role: Backend AI
-status: ACTIVE
+status: DONE
 branch: main
 database_mode: LOCAL_H2_FILE
 oracle_available: false
