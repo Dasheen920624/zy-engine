@@ -2331,4 +2331,120 @@ class EngineApiContractTests {
         int after = ((Number) asMap(countAfter.get("data")).get("entry_count")).intValue();
         assertEquals(before + 1, after);
     }
+
+    @Test
+    void sourceCitationImportListAndGet() throws Exception {
+        Map<String, Object> importDoc = sampleSourceDocumentImport("TENANT_CITATION");
+        invokePost("/api/provenance/source-documents", importDoc);
+
+        Map<String, Object> pageCitation = new LinkedHashMap<>();
+        pageCitation.put("document_code", "SRC_GUIDELINE_AMI_2025");
+        pageCitation.put("citation_type", "PAGE");
+        pageCitation.put("page", "15");
+        pageCitation.put("section", "3.2");
+        pageCitation.put("quote_text", "急性STEMI患者应在首次医疗接触后90分钟内完成球囊扩张。");
+        pageCitation.put("description", "STEMI再灌注时间窗要求");
+
+        Map<String, Object> clauseCitation = new LinkedHashMap<>();
+        clauseCitation.put("document_code", "SRC_GUIDELINE_AMI_2025");
+        clauseCitation.put("citation_type", "CLAUSE");
+        clauseCitation.put("clause", "4.1.2");
+        clauseCitation.put("section", "4");
+        clauseCitation.put("quote_text", "对于无法在规定时间内行PCI的STEMI患者，可考虑溶栓治疗。");
+        clauseCitation.put("description", "溶栓适应证条款");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_CITATION");
+        importBody.put("operator_id", "JUNIT_CITATION_ADMIN");
+        importBody.put("citations", Arrays.asList(pageCitation, clauseCitation));
+
+        Map<String, Object> importResp = invokePost("/api/provenance/citations", importBody);
+        Map<String, Object> imported = asMap(importResp.get("data"));
+        assertEquals("TENANT_CITATION", imported.get("tenant_id"));
+        assertEquals(2, ((Number) imported.get("imported_count")).intValue());
+        assertTrue(asListOfMap(imported.get("warnings")).isEmpty());
+
+        List<Map<String, Object>> citationsList = asListOfMap(imported.get("citations"));
+        assertEquals(2, citationsList.size());
+        assertNotNull(citationsList.get(0).get("citation_id"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", citationsList.get(0).get("document_code"));
+        assertEquals("PAGE", citationsList.get(0).get("citation_type"));
+        assertEquals("15", citationsList.get(0).get("page"));
+
+        Map<String, Object> listResp = invokeGet("/api/provenance/citations?tenantId=TENANT_CITATION"
+                + "&documentCode=SRC_GUIDELINE_AMI_2025&citationType=CLAUSE");
+        List<Map<String, Object>> filtered = asListOfMap(listResp.get("data"));
+        assertEquals(1, filtered.size());
+        assertEquals("CLAUSE", filtered.get(0).get("citation_type"));
+        assertEquals("4.1.2", filtered.get(0).get("clause"));
+
+        String citationId = (String) citationsList.get(0).get("citation_id");
+        Map<String, Object> getResp = invokeGet("/api/provenance/citations/" + citationId
+                + "?tenantId=TENANT_CITATION");
+        Map<String, Object> citation = asMap(getResp.get("data"));
+        assertEquals(citationId, citation.get("citation_id"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", citation.get("document_code"));
+    }
+
+    @Test
+    void sourceCitationGetByDocument() throws Exception {
+        Map<String, Object> importDoc = sampleSourceDocumentImport("TENANT_CIT_BY_DOC");
+        invokePost("/api/provenance/source-documents", importDoc);
+
+        Map<String, Object> citation1 = new LinkedHashMap<>();
+        citation1.put("document_code", "SRC_GUIDELINE_AMI_2025");
+        citation1.put("citation_type", "SECTION");
+        citation1.put("section", "2");
+        citation1.put("description", "诊断标准章节");
+
+        Map<String, Object> citation2 = new LinkedHashMap<>();
+        citation2.put("document_code", "SRC_CONSENSUS_STEMI_2024");
+        citation2.put("citation_type", "PAGE");
+        citation2.put("page", "8");
+        citation2.put("description", "绿色通道流程图");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_CIT_BY_DOC");
+        importBody.put("citations", Arrays.asList(citation1, citation2));
+        invokePost("/api/provenance/citations", importBody);
+
+        Map<String, Object> byDocResp = invokeGet("/api/provenance/source-documents/SRC_GUIDELINE_AMI_2025/citations"
+                + "?tenantId=TENANT_CIT_BY_DOC");
+        List<Map<String, Object>> byDoc = asListOfMap(byDocResp.get("data"));
+        assertEquals(1, byDoc.size());
+        assertEquals("SRC_GUIDELINE_AMI_2025", byDoc.get(0).get("document_code"));
+        assertEquals("SECTION", byDoc.get(0).get("citation_type"));
+    }
+
+    @Test
+    void sourceCitationImportRejectsMissingDocumentCode() throws Exception {
+        Map<String, Object> badCitation = new LinkedHashMap<>();
+        badCitation.put("citation_type", "PAGE");
+        badCitation.put("page", "10");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("citations", Arrays.asList(badCitation));
+
+        Map<String, Object> response = invokePostExpectingClientError("/api/provenance/citations", importBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertTrue(String.valueOf(response.get("message")).contains("document_code"));
+    }
+
+    @Test
+    void sourceCitationImportWarnsOnNoLocation() throws Exception {
+        Map<String, Object> noLocation = new LinkedHashMap<>();
+        noLocation.put("document_code", "DOC_NO_LOC");
+        noLocation.put("citation_type", "SECTION");
+        noLocation.put("description", "无位置引用的条目");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_CIT_WARN");
+        importBody.put("citations", Arrays.asList(noLocation));
+
+        Map<String, Object> importResp = invokePost("/api/provenance/citations", importBody);
+        Map<String, Object> imported = asMap(importResp.get("data"));
+        List<Map<String, Object>> warnings = asListOfMap(imported.get("warnings"));
+        assertEquals(1, warnings.size());
+        assertEquals("location", warnings.get(0).get("field"));
+    }
 }
