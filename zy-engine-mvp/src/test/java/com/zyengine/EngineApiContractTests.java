@@ -3,6 +3,8 @@ package com.zyengine;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zyengine.persistence.EnginePersistenceProperties;
 import com.zyengine.persistence.EnginePersistenceService;
+import com.zyengine.persistence.OrganizationPersistenceService;
+import com.zyengine.organization.OrganizationUnit;
 import com.zyengine.provenance.SourceDocument;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -137,6 +139,69 @@ class EngineApiContractTests {
         assertEquals("JUNIT_PROV_ADMIN", persisted.getCreatedBy());
         assertEquals("DEVELOPMENT_LOCAL", persisted.getMetadata().get("database_role"));
         assertEquals(1, service.listSourceDocuments().size());
+    }
+
+    @Test
+    void localFileDatabasePersistsOrganizationUnits() {
+        EnginePersistenceProperties properties = new EnginePersistenceProperties();
+        properties.setEnabled(true);
+        properties.setRole("development");
+        properties.setDialect("h2");
+        properties.setUrl("jdbc:h2:file:./target/zyengine-org-contract-" + System.nanoTime()
+                + ";MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_ON_EXIT=FALSE");
+        properties.setUsername("sa");
+        properties.setPassword("");
+        properties.setInitSchema(true);
+
+        EnginePersistenceService engineService = new EnginePersistenceService(properties, objectMapper);
+        engineService.initializeLocalSchema();
+
+        OrganizationPersistenceService orgService = new OrganizationPersistenceService(properties);
+        assertTrue(orgService.enabled());
+
+        OrganizationUnit group = new OrganizationUnit();
+        group.setTenantId("TENANT_ORG_DB");
+        group.setLevel("GROUP");
+        group.setCode("GROUP_JUNIT");
+        group.setName("JUNIT测试集团");
+        group.setStatus("ACTIVE");
+        group.setDisplayOrder(0);
+        group.setCreatedBy("JUNIT_ADMIN");
+
+        OrganizationUnit hospital = new OrganizationUnit();
+        hospital.setTenantId("TENANT_ORG_DB");
+        hospital.setLevel("HOSPITAL");
+        hospital.setCode("HOSPITAL_JUNIT");
+        hospital.setName("JUNIT测试医院");
+        hospital.setParentLevel("GROUP");
+        hospital.setParentCode("GROUP_JUNIT");
+        hospital.setStatus("ACTIVE");
+        hospital.setDisplayOrder(1);
+        hospital.setCreatedBy("JUNIT_ADMIN");
+
+        orgService.saveOrganizationUnit(group);
+        orgService.saveOrganizationUnit(hospital);
+
+        List<OrganizationUnit> loaded = orgService.loadAllOrganizationUnits();
+        assertEquals(2, loaded.size());
+
+        List<OrganizationUnit> byTenant = orgService.loadOrganizationUnitsByTenant("TENANT_ORG_DB");
+        assertEquals(2, byTenant.size());
+        assertEquals("GROUP_JUNIT", byTenant.get(0).getCode());
+        assertEquals("HOSPITAL_JUNIT", byTenant.get(1).getCode());
+
+        // UPSERT: re-save with updated name
+        hospital.setName("JUNIT测试医院-更新");
+        orgService.saveOrganizationUnit(hospital);
+        List<OrganizationUnit> reloaded = orgService.loadOrganizationUnitsByTenant("TENANT_ORG_DB");
+        assertEquals(2, reloaded.size());
+        assertEquals("JUNIT测试医院-更新", reloaded.get(1).getName());
+
+        // DELETE
+        orgService.deleteOrganizationUnit("TENANT_ORG_DB", "HOSPITAL", "HOSPITAL_JUNIT");
+        List<OrganizationUnit> afterDelete = orgService.loadOrganizationUnitsByTenant("TENANT_ORG_DB");
+        assertEquals(1, afterDelete.size());
+        assertEquals("GROUP_JUNIT", afterDelete.get(0).getCode());
     }
 
     @Test

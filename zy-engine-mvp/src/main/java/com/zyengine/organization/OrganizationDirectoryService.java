@@ -1,8 +1,12 @@
 package com.zyengine.organization;
 
 import com.zyengine.persistence.EnginePersistenceService;
+import com.zyengine.persistence.OrganizationPersistenceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -17,17 +21,42 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class OrganizationDirectoryService {
+    private static final Logger log = LoggerFactory.getLogger(OrganizationDirectoryService.class);
     private static final String DEFAULT_TENANT_ID = "default";
     private static final List<String> REAL_ORG_LEVELS = Arrays.asList(
             "GROUP", "HOSPITAL", "CAMPUS", "SITE", "DEPARTMENT");
     private static final Map<String, String> EXPECTED_PARENT = expectedParentMap();
 
     private final EnginePersistenceService persistenceService;
+    private final OrganizationPersistenceService orgPersistenceService;
     private final Map<String, OrganizationUnit> organizationStore =
             new ConcurrentHashMap<String, OrganizationUnit>();
 
-    public OrganizationDirectoryService(EnginePersistenceService persistenceService) {
+    public OrganizationDirectoryService(EnginePersistenceService persistenceService,
+                                        OrganizationPersistenceService orgPersistenceService) {
         this.persistenceService = persistenceService;
+        this.orgPersistenceService = orgPersistenceService;
+    }
+
+    /**
+     * 启动时从数据库加载组织目录到内存缓存。
+     * 数据库不可用时保持空内存态，不影响内存演示。
+     */
+    @PostConstruct
+    public void loadFromDatabase() {
+        if (!orgPersistenceService.enabled()) {
+            log.info("organization persistence disabled, starting with empty in-memory store");
+            return;
+        }
+        try {
+            List<OrganizationUnit> units = orgPersistenceService.loadAllOrganizationUnits();
+            for (OrganizationUnit unit : units) {
+                organizationStore.put(key(unit.getTenantId(), unit.getLevel(), unit.getCode()), unit);
+            }
+            log.info("loaded {} organization units from database into memory cache", units.size());
+        } catch (RuntimeException ex) {
+            log.warn("failed to load organization units from database, starting with empty store: {}", ex.getMessage());
+        }
     }
 
     public Map<String, Object> importUnits(Object request) {
@@ -48,6 +77,7 @@ public class OrganizationDirectoryService {
                 unit.setUpdatedTime(now);
             }
             organizationStore.put(key(unit.getTenantId(), unit.getLevel(), unit.getCode()), unit);
+            persistUnit(unit);
             imported.add(toView(unit));
         }
 
@@ -438,6 +468,18 @@ public class OrganizationDirectoryService {
                     null, null, operatorId, detail);
         } catch (RuntimeException ignored) {
             // 组织目录导入在 DB-only 内存态下不能因审计落库失败中断。
+        }
+    }
+
+    /**
+     * 将组织单元写入持久化层。持久化失败不阻断内存操作，仅记录警告。
+     */
+    private void persistUnit(OrganizationUnit unit) {
+        try {
+            orgPersistenceService.saveOrganizationUnit(unit);
+        } catch (RuntimeException ex) {
+            log.warn("persist organization unit failed, in-memory store still valid: {}/{} - {}",
+                    unit.getLevel(), unit.getCode(), ex.getMessage());
         }
     }
 
