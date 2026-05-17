@@ -7,6 +7,7 @@
 优先使用 `.cmd` 入口：
 
 ```powershell
+.\scripts\check-env.cmd
 .\scripts\build.cmd
 .\scripts\detect-db-env.cmd
 .\scripts\start-memory.cmd
@@ -31,6 +32,7 @@
 
 | 脚本 | 用途 |
 |---|---|
+| `check-env.cmd` / `check-env.ps1` | 初始化检查 + 环境诊断（JDK/sqlplus/Oracle/端口/项目文件） |
 | `build.cmd` / `build.ps1` | 使用 Maven 构建 JDK 1.8 后端工程 |
 | `detect-db-env.cmd` / `detect-db-env.ps1` | 识别当前 AI 环境应使用 Oracle 还是本地 H2 文件库 |
 | `start-memory.cmd` / `start-memory.ps1` | 启动内存演示模式，默认端口 `18080` |
