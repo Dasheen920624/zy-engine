@@ -256,7 +256,9 @@ CREATE TABLE src_document (
   reviewed_time TIMESTAMP,
   content_hash VARCHAR(128),
   metadata_json CLOB,
+  created_by VARCHAR(64),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   CONSTRAINT uk_src_document UNIQUE (tenant_id, document_code)
 );
 

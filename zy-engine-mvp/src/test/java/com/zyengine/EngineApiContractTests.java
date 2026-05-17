@@ -335,6 +335,48 @@ class EngineApiContractTests {
     }
 
     @Test
+    void sourceDocumentImportListAndGet() throws Exception {
+        Map<String, Object> importBody = sampleSourceDocumentImport("TENANT_SRC_JUNIT");
+        Map<String, Object> importResp = invokePost("/api/provenance/source-documents", importBody);
+        Map<String, Object> imported = asMap(importResp.get("data"));
+        assertEquals("TENANT_SRC_JUNIT", imported.get("tenant_id"));
+        assertEquals(2, ((Number) imported.get("imported_count")).intValue());
+        assertTrue(asListOfMap(imported.get("warnings")).isEmpty());
+
+        Map<String, Object> listResp = invokeGet("/api/provenance/source-documents?tenant_id=TENANT_SRC_JUNIT"
+                + "&review_status=REVIEWED");
+        List<Map<String, Object>> reviewed = asListOfMap(listResp.get("data"));
+        assertEquals(1, reviewed.size());
+        assertEquals("SRC_GUIDELINE_AMI_2025", reviewed.get(0).get("document_code"));
+        assertEquals(Boolean.FALSE, reviewed.get(0).get("expired"));
+
+        Map<String, Object> getResp = invokeGet(
+                "/api/provenance/source-documents/SRC_CONSENSUS_STEMI_2024?tenantId=TENANT_SRC_JUNIT");
+        Map<String, Object> document = asMap(getResp.get("data"));
+        assertEquals("TENANT_SRC_JUNIT", document.get("tenant_id"));
+        assertEquals("CONSENSUS", document.get("source_type"));
+        assertEquals("DRAFT", document.get("review_status"));
+        assertEquals("急诊 STEMI 绿色通道专家共识", document.get("title"));
+        assertEquals("JUNIT_PROV_ADMIN", document.get("created_by"));
+    }
+
+    @Test
+    void sourceDocumentImportRejectsMissingDocumentCode() throws Exception {
+        Map<String, Object> badDocument = new LinkedHashMap<String, Object>();
+        badDocument.put("title", "缺少编码的来源文档");
+        badDocument.put("source_type", "GUIDELINE");
+        badDocument.put("review_status", "DRAFT");
+
+        Map<String, Object> importBody = new LinkedHashMap<String, Object>();
+        importBody.put("tenant_id", "TENANT_SRC_BAD");
+        importBody.put("documents", Arrays.asList(badDocument));
+
+        Map<String, Object> response = invokePostExpectingClientError("/api/provenance/source-documents", importBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertTrue(String.valueOf(response.get("message")).contains("document_code"));
+    }
+
+    @Test
     void ruleExecLogSummaryAggregates() throws Exception {
         // 导入并发布两条规则（一条总命中，一条总不命中），多次模拟后调用 summary 接口
         Map<String, Object> hitRule = ruleDefinition("R_SUM_HIT", "命中规则");
@@ -1941,6 +1983,41 @@ class EngineApiContractTests {
         configPackage.put("manifest", manifest);
         configPackage.put("full_snapshot", snapshot);
         return configPackage;
+    }
+
+    private Map<String, Object> sampleSourceDocumentImport(String tenantId) {
+        Map<String, Object> guideline = new LinkedHashMap<String, Object>();
+        guideline.put("document_code", "SRC_GUIDELINE_AMI_2025");
+        guideline.put("title", "急性ST段抬高型心肌梗死诊疗指南（2025版）");
+        guideline.put("source_type", "GUIDELINE");
+        guideline.put("source_uri", "https://example.org/guidelines/ami-stemi-2025");
+        guideline.put("publisher", "中华医学会心血管病学分会");
+        guideline.put("effective_date", "2025-01-01");
+        guideline.put("expiry_date", "2028-12-31");
+        guideline.put("review_status", "REVIEWED");
+        guideline.put("reviewed_by", "PROV_REVIEWER");
+        guideline.put("reviewed_time", "2026-05-17T10:30:00+08:00");
+        guideline.put("content_hash", "sha256:guideline-ami-2025");
+        Map<String, Object> guidelineMetadata = new LinkedHashMap<String, Object>();
+        guidelineMetadata.put("specialty", "CARDIOLOGY");
+        guidelineMetadata.put("region", "CN");
+        guideline.put("metadata", guidelineMetadata);
+
+        Map<String, Object> consensus = new LinkedHashMap<String, Object>();
+        consensus.put("document_code", "SRC_CONSENSUS_STEMI_2024");
+        consensus.put("title", "急诊 STEMI 绿色通道专家共识");
+        consensus.put("source_type", "CONSENSUS");
+        consensus.put("source_uri", "https://example.org/consensus/stemi-er-2024");
+        consensus.put("publisher", "国家胸痛中心");
+        consensus.put("effective_date", "2024-06-01");
+        consensus.put("expiry_date", "2027-05-31");
+        consensus.put("review_status", "DRAFT");
+
+        Map<String, Object> importBody = new LinkedHashMap<String, Object>();
+        importBody.put("tenant_id", tenantId);
+        importBody.put("operator_id", "JUNIT_PROV_ADMIN");
+        importBody.put("documents", Arrays.asList(guideline, consensus));
+        return importBody;
     }
 
     private Map<String, Object> sampleOrganizationImport(String tenantId) {

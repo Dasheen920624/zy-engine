@@ -1,0 +1,38 @@
+{
+  "tenant_id": "TENANT_DEMO",
+  "operator_id": "PROV_ADMIN",
+  "documents": [
+    {
+      "document_code": "SRC_GUIDELINE_AMI_2025",
+      "title": "急性ST段抬高型心肌梗死诊疗指南（2025版）",
+      "source_type": "GUIDELINE",
+      "source_uri": "https://example.org/guidelines/ami-stemi-2025",
+      "publisher": "中华医学会心血管病学分会",
+      "effective_date": "2025-01-01",
+      "expiry_date": "2028-12-31",
+      "review_status": "REVIEWED",
+      "reviewed_by": "CHIEF_REVIEWER",
+      "reviewed_time": "2026-05-17T09:30:00+08:00",
+      "content_hash": "sha256:ami-guideline-2025-v1",
+      "metadata": {
+        "specialty": "CARDIOLOGY",
+        "language": "zh-CN",
+        "source_level": "NATIONAL"
+      }
+    },
+    {
+      "document_code": "SRC_CONSENSUS_STEMI_2024",
+      "title": "急诊 STEMI 绿色通道专家共识",
+      "source_type": "CONSENSUS",
+      "source_uri": "https://example.org/consensus/stemi-er-2024",
+      "publisher": "国家胸痛中心",
+      "effective_date": "2024-06-01",
+      "expiry_date": "2027-05-31",
+      "review_status": "DRAFT",
+      "metadata": {
+        "specialty": "EMERGENCY",
+        "workflow": "CHEST_PAIN_CENTER"
+      }
+    }
+  ]
+}

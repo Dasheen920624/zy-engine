@@ -106,6 +106,21 @@ X-Trace-Id: trace-demo-config-package-export
 
 {}
 
+### Import provenance source documents
+POST http://localhost:18080/zy-engine/api/provenance/source-documents
+Content-Type: application/json
+X-Trace-Id: trace-demo-provenance-import
+
+< ../../ai-dev-input/06_samples/sample_source_documents.json
+
+### List provenance source documents
+GET http://localhost:18080/zy-engine/api/provenance/source-documents?tenantId=TENANT_DEMO&reviewStatus=REVIEWED
+X-Trace-Id: trace-demo-provenance-list
+
+### Get one provenance source document
+GET http://localhost:18080/zy-engine/api/provenance/source-documents/SRC_GUIDELINE_AMI_2025?tenantId=TENANT_DEMO
+X-Trace-Id: trace-demo-provenance-get
+
 ### AMI candidate pathway recognition
 POST http://localhost:18080/zy-engine/api/patient-pathways/candidates
 Content-Type: application/json
