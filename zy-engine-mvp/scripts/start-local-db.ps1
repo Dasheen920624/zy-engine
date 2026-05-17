@@ -21,6 +21,7 @@ if ([string]::IsNullOrWhiteSpace($DbFile)) {
 
 $dbFileForJdbc = $DbFile.Replace("\", "/")
 $env:ZYENGINE_DB_ENABLED = "true"
+$env:ZYENGINE_DB_ROLE = "development"
 $env:ZYENGINE_DB_DIALECT = "h2"
 $env:ZYENGINE_DB_URL = "jdbc:h2:file:$dbFileForJdbc;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_ON_EXIT=FALSE"
 $env:ZYENGINE_DB_USERNAME = "sa"
@@ -36,6 +37,7 @@ if (Test-Path -LiteralPath $java8) {
 Set-Location $engineRoot
 & $java "-Dfile.encoding=UTF-8" -jar $jar "--server.port=$Port" `
   "--zyengine.database.enabled=true" `
+  "--zyengine.database.role=development" `
   "--zyengine.database.dialect=h2" `
   "--zyengine.database.url=$env:ZYENGINE_DB_URL" `
   "--zyengine.database.username=sa" `

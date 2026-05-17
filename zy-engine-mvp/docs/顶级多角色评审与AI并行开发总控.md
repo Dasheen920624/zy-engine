@@ -166,8 +166,8 @@ AuditProvider         审计、trace 和脱敏
 后续开发必须坚持：
 
 - 新增接口先写请求/响应样例，再实现代码。
-- 新增表先写 Oracle/达梦 DDL、迁移脚本、中文备注，再接应用。
-- 新增持久化必须有 Oracle smoke 或可被现有 smoke 覆盖。
+- 新增表先写生产库 DDL（Oracle/达梦/PostgreSQL-Kingbase）、开发库 DDL（LOCAL_H2_FILE）、迁移脚本、中文备注，再接应用。
+- 新增持久化必须有 LOCAL_H2_FILE 开发库验证；有生产库环境时必须有对应生产库 smoke，没环境时必须写明补验计划。
 - 新增配置资产必须进入配置包 review。
 - 新增医学/医保/质控配置必须接来源追溯检查。
 - 新增前端页面必须接真实 API 或明确 mock 契约，不能只画静态页面。
@@ -206,7 +206,7 @@ UAT 剧本：非开发人员按页面或脚本完成验收
 - 来源状态：缺来源、未审核、已审核、过期、被替换。
 - 发布状态：DRAFT、REVIEWED、PUBLISHED、SYNCED、ACTIVE、RETIRED。
 - Provider 状态：DB-only、Neo4j 可用/不可用、Dify 可用/不可用、适配器超时。
-- 数据库：内存/JUnit、Oracle、达梦 DDL 兼容。
+- 数据库：内存/JUnit、LOCAL_H2_FILE 开发库、Oracle/达梦/PostgreSQL-Kingbase 生产库 DDL 兼容。
 - 安全：匿名、低权限、越权组织、错误签名、重复 nonce。
 
 ## 7. 顶级工程人员评审
@@ -673,7 +673,7 @@ git push origin main
 交付要求：
 
 - 每批任务必须可被脚本验证。
-- 无 Oracle 的 AI 必须使用 `LOCAL_H2_FILE` 完成 DB-only 等价验证；Oracle 是生产权威，Oracle smoke 由有内网环境的 AI 或集成 AI 补齐。
+- 无生产库环境的 AI 必须使用 `LOCAL_H2_FILE` 完成 DB-only 等价验证；Oracle 是当前生产权威，达梦/PostgreSQL/KingbaseES 是生产兼容交付库，生产库 smoke 由有内网环境的 AI 或集成 AI 补齐。
 - 安全凭据不能进入日志和 Git。
 - 生产问题必须能通过 traceId 查链路。
 - 升级失败必须有回滚手段。

@@ -79,8 +79,11 @@ public class HealthController {
         provider.put("ready", ready);
         provider.put("status", ready ? "READY" : "DISABLED");
         provider.put("dialect", text(databaseProperties.getDialect(), "oracle"));
+        provider.put("database_role", databaseProperties.roleName());
         provider.put("provider", persistenceService.providerName());
         provider.put("production_authority", "ORACLE");
+        provider.put("development_store", "LOCAL_H2_FILE");
+        provider.put("production_ready", ready && databaseProperties.productionAuthority());
         provider.put("schema_init", databaseProperties.isInitSchema());
         provider.put("degraded_reason", ready ? null : "数据库持久化未启用或凭据不完整，当前使用内存态运行。");
         return provider;

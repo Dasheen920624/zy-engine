@@ -116,7 +116,8 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 
 - 本任务 claim_id：
 - 自主运行 run_id：
-- 数据库模式：ORACLE / LOCAL_H2 / IN_MEMORY
+- 数据库模式：ORACLE / DM / POSTGRES / KINGBASE / LOCAL_H2 / IN_MEMORY
+- 数据库角色：PRODUCTION_AUTHORITY / PRODUCTION_COMPATIBLE / DEVELOPMENT_LOCAL / IN_MEMORY_DEMO
 - Oracle 是否可用：
 - 本地 H2 是否已验证：
 - 本任务写入范围：
@@ -179,7 +180,7 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 5. Neo4j/Dify/第三方系统不可用时有降级策略。
 6. 不硬编码医院逻辑。
 7. 配置有版本、状态、review/publish/rollback 设计。
-8. 数据库访问考虑 Oracle/达梦兼容。
+8. 数据库访问考虑 Oracle/达梦/PostgreSQL-Kingbase 生产兼容，并区分 LOCAL_H2_FILE 开发库。
 9. 日志不输出密钥和患者完整隐私明文。
 10. 规则、知识、图谱证据、Dify解释、字典映射、适配器口径和质控结论必须可查来源。
 
@@ -190,12 +191,14 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 - 新增表：
 - 新增字段：
 - 索引：
-- Oracle/达梦差异：
+- 生产库 DDL（Oracle/达梦/PostgreSQL-Kingbase）：
+- 开发库 DDL（LOCAL_H2_FILE）：
+- Oracle/达梦/PostgreSQL-Kingbase 差异：
 - H2 本地库差异：
 - 是否需要迁移脚本：
-- 是否必须同步真实 Oracle：
-- 无 Oracle 时是否必须用 LOCAL_H2 验证：
-- Oracle smoke 脚本：
+- 是否必须同步真实生产库：
+- 无生产库时是否必须用 LOCAL_H2_FILE 验证：
+- 生产库 smoke 脚本：
 
 ## 来源追溯影响
 
@@ -270,7 +273,7 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 4. 异常/降级场景。
 5. 需要时补 smoke 脚本。
 6. 涉及来源追溯时补缺来源、过期来源、未审核来源测试。
-7. 涉及表结构、索引、约束、迁移或持久化 SQL 时，必须执行真实 Oracle DDL/迁移和 Oracle 版本 smoke，不能只跑内存/JUnit。
+7. 涉及表结构、索引、约束、迁移或持久化 SQL 时，必须同步生产库 DDL（Oracle/达梦/PostgreSQL-Kingbase）和开发库 DDL（LOCAL_H2_FILE）；有生产库环境时执行对应 smoke，无生产库时至少执行 LOCAL_H2_FILE 验证，不能只跑内存/JUnit。
 
 ## 质量评审要求
 
@@ -343,14 +346,21 @@ claim.status=READY_TO_SUBMIT
 git diff --check
 ```
 
-若任务涉及 Oracle 落库，还必须通过：
+若任务涉及落库，必须说明生产库和开发库验证结果。无生产库环境时至少通过：
+
+```powershell
+.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+.\zy-engine-mvp\scripts\start-local-db.ps1
+```
+
+有 Oracle 生产权威库时还必须通过：
 
 ```powershell
 .\zy-engine-mvp\scripts\run-oracle-ddl.ps1
 .\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
 ```
 
-Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 为可提交模板，记录 Oracle 连接目标；真实 `.env.oracle.local` 为本地忽略文件，只记录本机 Oracle 凭据，禁止提交。
+Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 为可提交模板，记录 Oracle 连接目标；真实 `.env.oracle.local` 为本地忽略文件，只记录本机 Oracle 凭据，禁止提交。达梦/PostgreSQL/Kingbase 若无真实环境，必须提交 DDL 同步和补验计划。
 
 提交与推送：
 

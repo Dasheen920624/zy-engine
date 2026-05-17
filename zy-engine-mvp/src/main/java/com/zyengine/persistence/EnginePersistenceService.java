@@ -7,6 +7,7 @@ import com.zyengine.dto.PatientPathwayInstance;
 import com.zyengine.dto.PatientTaskState;
 import com.zyengine.dto.PathwayVariationRecord;
 import com.zyengine.dto.RecommendationCard;
+import com.zyengine.provenance.SourceDocument;
 import com.zyengine.dto.RuleResult;
 import com.zyengine.rule.RuleDefinition;
 import com.zyengine.util.ClinicalFactUtils;
@@ -20,11 +21,14 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -438,6 +442,91 @@ public class EnginePersistenceService {
         }
     }
 
+    public void saveSourceDocument(SourceDocument document) {
+        if (!enabled()) {
+            return;
+        }
+        if (properties.localFileDatabase()) {
+            saveSourceDocumentLocal(document);
+            return;
+        }
+        String sql = "MERGE INTO src_document t " +
+                "USING (SELECT ? AS tenant_id, ? AS document_code FROM dual) s " +
+                "ON (t.tenant_id=s.tenant_id AND t.document_code=s.document_code) " +
+                "WHEN MATCHED THEN UPDATE SET t.title=?, t.source_type=?, t.source_uri=?, t.publisher=?, " +
+                "t.effective_date=?, t.expiry_date=?, t.review_status=?, t.reviewed_by=?, t.reviewed_time=?, " +
+                "t.content_hash=?, t.metadata_json=?, t.created_by=COALESCE(?, t.created_by), t.updated_time=SYSTIMESTAMP " +
+                "WHEN NOT MATCHED THEN INSERT (id, tenant_id, document_code, title, source_type, source_uri, publisher, " +
+                "effective_date, expiry_date, review_status, reviewed_by, reviewed_time, content_hash, metadata_json, " +
+                "created_by, created_time, updated_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            int i = 1;
+            ps.setString(i++, string(document.getTenantId(), "default"));
+            ps.setString(i++, document.getDocumentCode());
+            setSourceDocumentUpdateValues(ps, document, i);
+            i += 12;
+            ps.setLong(i++, Ids.next());
+            ps.setString(i++, string(document.getTenantId(), "default"));
+            ps.setString(i++, document.getDocumentCode());
+            ps.setString(i++, document.getTitle());
+            ps.setString(i++, document.getSourceType());
+            ps.setString(i++, document.getSourceUri());
+            ps.setString(i++, document.getPublisher());
+            ps.setDate(i++, parseSqlDate(document.getEffectiveDate()));
+            ps.setDate(i++, parseSqlDate(document.getExpiryDate()));
+            ps.setString(i++, document.getReviewStatus());
+            ps.setString(i++, document.getReviewedBy());
+            ps.setTimestamp(i++, parseTimestamp(document.getReviewedTime()));
+            ps.setString(i++, document.getContentHash());
+            ps.setString(i++, toJson(document.getMetadata()));
+            ps.setString(i++, document.getCreatedBy());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save source document failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    public List<SourceDocument> listSourceDocuments() {
+        if (!enabled()) {
+            return new ArrayList<SourceDocument>();
+        }
+        String sql = "SELECT tenant_id, document_code, title, source_type, source_uri, publisher, effective_date, " +
+                "expiry_date, review_status, reviewed_by, reviewed_time, content_hash, metadata_json, created_by, " +
+                "created_time, updated_time FROM src_document ORDER BY tenant_id, document_code, updated_time";
+        List<SourceDocument> documents = new ArrayList<SourceDocument>();
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                documents.add(toSourceDocument(rs));
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("list source documents failed: " + ex.getMessage(), ex);
+        }
+        return documents;
+    }
+
+    public SourceDocument findSourceDocument(String tenantId, String documentCode) {
+        if (!enabled()) {
+            return null;
+        }
+        String sql = "SELECT tenant_id, document_code, title, source_type, source_uri, publisher, effective_date, " +
+                "expiry_date, review_status, reviewed_by, reviewed_time, content_hash, metadata_json, created_by, " +
+                "created_time, updated_time FROM src_document WHERE tenant_id=? AND document_code=?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, string(tenantId, "default"));
+            ps.setString(2, documentCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? toSourceDocument(rs) : null;
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("find source document failed: " + ex.getMessage(), ex);
+        }
+    }
+
     public void saveAuditLog(String engineType, String actionType, String targetType, String targetCode,
                              String patientId, String encounterId, String operatorId, Map<String, Object> detail) {
         String traceId = TraceContext.getTraceId();
@@ -782,6 +871,97 @@ public class EnginePersistenceService {
         }
     }
 
+    private void saveSourceDocumentLocal(SourceDocument document) {
+        String updateSql = "UPDATE src_document SET title=?, source_type=?, source_uri=?, publisher=?, " +
+                "effective_date=?, expiry_date=?, review_status=?, reviewed_by=?, reviewed_time=?, content_hash=?, " +
+                "metadata_json=?, created_by=COALESCE(?, created_by), updated_time=CURRENT_TIMESTAMP " +
+                "WHERE tenant_id=? AND document_code=?";
+        String insertSql = "INSERT INTO src_document (id, tenant_id, document_code, title, source_type, source_uri, " +
+                "publisher, effective_date, expiry_date, review_status, reviewed_by, reviewed_time, content_hash, " +
+                "metadata_json, created_by, created_time, updated_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                setSourceDocumentUpdateValues(ps, document, i);
+                i += 12;
+                ps.setString(i++, string(document.getTenantId(), "default"));
+                ps.setString(i++, document.getDocumentCode());
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, Ids.next());
+                    ps.setString(i++, string(document.getTenantId(), "default"));
+                    ps.setString(i++, document.getDocumentCode());
+                    ps.setString(i++, document.getTitle());
+                    ps.setString(i++, document.getSourceType());
+                    ps.setString(i++, document.getSourceUri());
+                    ps.setString(i++, document.getPublisher());
+                    ps.setDate(i++, parseSqlDate(document.getEffectiveDate()));
+                    ps.setDate(i++, parseSqlDate(document.getExpiryDate()));
+                    ps.setString(i++, document.getReviewStatus());
+                    ps.setString(i++, document.getReviewedBy());
+                    ps.setTimestamp(i++, parseTimestamp(document.getReviewedTime()));
+                    ps.setString(i++, document.getContentHash());
+                    ps.setString(i++, toJson(document.getMetadata()));
+                    ps.setString(i++, document.getCreatedBy());
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local source document failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void setSourceDocumentUpdateValues(PreparedStatement ps, SourceDocument document, int startIndex)
+            throws SQLException {
+        int i = startIndex;
+        ps.setString(i++, document.getTitle());
+        ps.setString(i++, document.getSourceType());
+        ps.setString(i++, document.getSourceUri());
+        ps.setString(i++, document.getPublisher());
+        ps.setDate(i++, parseSqlDate(document.getEffectiveDate()));
+        ps.setDate(i++, parseSqlDate(document.getExpiryDate()));
+        ps.setString(i++, document.getReviewStatus());
+        ps.setString(i++, document.getReviewedBy());
+        ps.setTimestamp(i++, parseTimestamp(document.getReviewedTime()));
+        ps.setString(i++, document.getContentHash());
+        ps.setString(i++, toJson(document.getMetadata()));
+        ps.setString(i++, document.getCreatedBy());
+    }
+
+    @SuppressWarnings("unchecked")
+    private SourceDocument toSourceDocument(ResultSet rs) throws SQLException {
+        SourceDocument document = new SourceDocument();
+        document.setTenantId(rs.getString("tenant_id"));
+        document.setDocumentCode(rs.getString("document_code"));
+        document.setTitle(rs.getString("title"));
+        document.setSourceType(rs.getString("source_type"));
+        document.setSourceUri(rs.getString("source_uri"));
+        document.setPublisher(rs.getString("publisher"));
+        document.setEffectiveDate(formatDate(rs.getDate("effective_date")));
+        document.setExpiryDate(formatDate(rs.getDate("expiry_date")));
+        document.setReviewStatus(rs.getString("review_status"));
+        document.setReviewedBy(rs.getString("reviewed_by"));
+        document.setReviewedTime(formatTimestamp(rs.getTimestamp("reviewed_time")));
+        document.setContentHash(rs.getString("content_hash"));
+        String metadataJson = rs.getString("metadata_json");
+        if (metadataJson != null && !metadataJson.trim().isEmpty()) {
+            try {
+                document.setMetadata(objectMapper.readValue(metadataJson, LinkedHashMap.class));
+            } catch (IOException ex) {
+                document.setMetadata(new LinkedHashMap<String, Object>());
+            }
+        }
+        document.setCreatedBy(rs.getString("created_by"));
+        document.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
+        document.setUpdatedTime(formatTimestamp(rs.getTimestamp("updated_time")));
+        return document;
+    }
+
     private void recordAuditLog(String traceId, String engineType, String actionType, String targetType, String targetCode,
                                 String patientId, String encounterId, String operatorId, Map<String, Object> detail) {
         Map<String, Object> record = new LinkedHashMap<String, Object>();
@@ -948,6 +1128,43 @@ public class EnginePersistenceService {
             return text;
         }
         return text.substring(0, maxLength);
+    }
+
+    private java.sql.Date parseSqlDate(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return java.sql.Date.valueOf(LocalDate.parse(value.trim()));
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private Timestamp parseTimestamp(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        String text = value.trim();
+        try {
+            return Timestamp.from(OffsetDateTime.parse(text).toInstant());
+        } catch (RuntimeException ignored) {
+            try {
+                return Timestamp.valueOf(text.replace('T', ' '));
+            } catch (RuntimeException ex) {
+                return null;
+            }
+        }
+    }
+
+    private String formatDate(java.sql.Date value) {
+        return value == null ? null : value.toLocalDate().toString();
+    }
+
+    private String formatTimestamp(Timestamp value) {
+        return value == null
+                ? null
+                : DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(value.toInstant().atOffset(ZoneOffset.UTC));
     }
 
     private boolean shouldRetryConnection(SQLException ex) {

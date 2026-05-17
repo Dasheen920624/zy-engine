@@ -100,7 +100,7 @@ http://localhost:18082/zy-engine/api/health
 http://localhost:18082/zy-engine/api/system/providers
 ```
 
-本地库文件位于 `zy-engine-mvp/data/local-db/`，已被 `.gitignore` 忽略。H2 只作为 AI/离线开发 Provider，Oracle 仍是生产权威库；任何 DDL 变更必须同步维护 Oracle、达梦和 H2 三份结构文件。
+本地库文件位于 `zy-engine-mvp/data/local-db/`，已被 `.gitignore` 忽略。H2 只作为 AI/离线开发 Provider，属于开发库；Oracle 是当前生产权威库，达梦、PostgreSQL、KingbaseES 是生产兼容交付库。任何 DDL 变更必须同步维护 Oracle、达梦、PostgreSQL-Kingbase 和 LOCAL_H2_FILE 结构文件。
 
 ## 端口
 

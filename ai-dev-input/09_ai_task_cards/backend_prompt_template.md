@@ -30,7 +30,7 @@
 - 接手手册：`zy-engine-mvp/docs/AI接手执行手册.md`
 - OpenAPI：`ai-dev-input/02_api_contracts/engines.openapi.yaml`
 - JSON Schema：`ai-dev-input/03_data_models/...`
-- DDL：`ai-dev-input/04_database/oracle/core_ddl.sql`、`ai-dev-input/04_database/dm/core_ddl.sql`
+- DDL：`ai-dev-input/04_database/oracle/core_ddl.sql`、`ai-dev-input/04_database/dm/core_ddl.sql`、`ai-dev-input/04_database/postgres/core_ddl.sql`、`ai-dev-input/04_database/local/h2_core_ddl.sql`
 - 样例数据：`ai-dev-input/06_samples/...`
 - 测试用例：`ai-dev-input/07_tests/...`
 
@@ -40,14 +40,14 @@
 2. 所有接口返回统一 `ApiResult`。
 3. 所有调用链透传 `traceId`。
 4. 所有核心配置支持版本、状态、审核、发布、回滚和审计。
-5. Oracle/关系型数据库是主数据源；Neo4j、Dify、第三方系统是 Provider 或 Adapter。
+5. 生产库与开发库必须分离：Oracle 是当前生产权威库；达梦、PostgreSQL、KingbaseES 是生产交付兼容库；LOCAL_H2_FILE 只作为 AI/离线开发本地文件库。
 6. DB-only 模式必须可运行，不能强依赖 Neo4j 或 Dify。
-7. 数据库访问需考虑 Oracle 和达梦兼容。
+7. 数据库访问需考虑 Oracle、达梦、PostgreSQL/Kingbase 兼容；无生产库环境时必须走 LOCAL_H2_FILE 开发库验证。
 8. 不允许把医院差异、规则、路径、字典硬编码在业务代码中。
 9. 新增外部依赖必须说明降级策略。
 10. 新增关键操作必须写审计或说明暂不写的原因。
 11. 涉及医学、医保、质控依据的配置，必须支持来源追溯；缺来源、来源过期或来源未审核时不得发布。
-12. 涉及 Oracle 表结构、索引、约束、迁移脚本、持久化 SQL 或落库行为时，必须同步真实 Oracle 并执行 Oracle 版本 smoke，不能只用内存/JUnit 验收。
+12. 涉及表结构、索引、约束、迁移脚本、持久化 SQL 或落库行为时，必须同步 Oracle/达梦/PostgreSQL-Kingbase/LOCAL_H2_FILE DDL；有生产库环境时执行对应生产库 smoke，无生产库环境时至少执行 LOCAL_H2_FILE 开发库验证，不能只用内存/JUnit 验收。
 13. 补充契约测试和必要集成测试。
 
 ## 必须输出
@@ -71,14 +71,21 @@
 git diff --check
 ```
 
-若任务涉及 Oracle 落库，还必须执行：
+若任务涉及落库，还必须先区分生产库和开发库。无 Oracle/内网环境时执行：
+
+```powershell
+.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+.\zy-engine-mvp\scripts\start-local-db.ps1
+```
+
+有 Oracle 生产权威库时执行：
 
 ```powershell
 .\zy-engine-mvp\scripts\run-oracle-ddl.ps1
 .\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
 ```
 
-Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 已提交用于说明连接目标；真实 `.env.oracle.local` 仅为本地忽略文件，不允许提交。若无法连接 Oracle，必须说明未验证原因、影响范围和补验计划。
+Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 已提交用于说明连接目标；真实 `.env.oracle.local` 仅为本地忽略文件，不允许提交。若无法连接生产库，必须说明已完成的 LOCAL_H2_FILE 开发库验证、未验证原因、影响范围和补验计划。
 
 若命令失败，必须说明失败原因、影响范围和修复计划。
 

@@ -45,7 +45,7 @@ public class ProvenanceService {
             SourceDocument document = toDocument(payload, envelope, now);
             collectWarnings(document, warnings);
             String key = key(document.getTenantId(), document.getDocumentCode());
-            SourceDocument existing = documentStore.get(key);
+            SourceDocument existing = findStoredDocument(document.getTenantId(), document.getDocumentCode());
             if (existing != null && existing.getCreatedTime() != null) {
                 document.setCreatedTime(existing.getCreatedTime());
                 document.setUpdatedTime(now);
@@ -53,6 +53,7 @@ public class ProvenanceService {
                     document.setCreatedBy(existing.getCreatedBy());
                 }
             }
+            persistenceService.saveSourceDocument(document);
             documentStore.put(key, document);
             imported.add(toView(document));
         }
@@ -77,7 +78,7 @@ public class ProvenanceService {
             limit = 100;
         }
 
-        List<SourceDocument> documents = sortedDocuments();
+        List<SourceDocument> documents = storedDocuments();
         List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
         for (SourceDocument document : documents) {
             if (!matches(tenantId, document.getTenantId(), false)) {
@@ -106,7 +107,7 @@ public class ProvenanceService {
 
     public Map<String, Object> getDocument(String documentCode, String tenantId) {
         String resolvedTenantId = string(tenantId, DEFAULT_TENANT_ID);
-        SourceDocument document = documentStore.get(key(resolvedTenantId, documentCode));
+        SourceDocument document = findStoredDocument(resolvedTenantId, documentCode);
         if (document == null) {
             throw new IllegalArgumentException("source document not found: " + documentCode);
         }
@@ -171,8 +172,21 @@ public class ProvenanceService {
         return document;
     }
 
-    private List<SourceDocument> sortedDocuments() {
-        List<SourceDocument> documents = new ArrayList<SourceDocument>(documentStore.values());
+    private SourceDocument findStoredDocument(String tenantId, String documentCode) {
+        if (persistenceService.enabled()) {
+            return persistenceService.findSourceDocument(tenantId, documentCode);
+        }
+        return documentStore.get(key(tenantId, documentCode));
+    }
+
+    private List<SourceDocument> storedDocuments() {
+        if (persistenceService.enabled()) {
+            return persistenceService.listSourceDocuments();
+        }
+        return sortedDocuments(new ArrayList<SourceDocument>(documentStore.values()));
+    }
+
+    private List<SourceDocument> sortedDocuments(List<SourceDocument> documents) {
         Collections.sort(documents, new Comparator<SourceDocument>() {
             @Override
             public int compare(SourceDocument left, SourceDocument right) {

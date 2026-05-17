@@ -296,6 +296,98 @@ CREATE TABLE IF NOT EXISTS engine_audit_log (
 COMMENT ON TABLE engine_audit_log IS '引擎审计日志（与 traceId 串联）';
 
 -- ============================================================================
+-- 来源追溯
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS src_document (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  document_code VARCHAR(128) NOT NULL,
+  title VARCHAR(500) NOT NULL,
+  source_type VARCHAR(64) NOT NULL,
+  source_uri VARCHAR(1000),
+  publisher VARCHAR(200),
+  effective_date DATE,
+  expiry_date DATE,
+  review_status VARCHAR(32) NOT NULL,
+  reviewed_by VARCHAR(64),
+  reviewed_time TIMESTAMP,
+  content_hash VARCHAR(128),
+  metadata_json CLOB,
+  created_by VARCHAR(64),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_src_document UNIQUE (tenant_id, document_code)
+);
+COMMENT ON TABLE src_document IS '来源追溯-来源文档主表';
+
+CREATE TABLE IF NOT EXISTS src_citation (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  citation_code VARCHAR(128) NOT NULL,
+  document_code VARCHAR(128) NOT NULL,
+  section_code VARCHAR(128),
+  clause_no VARCHAR(128),
+  page_no VARCHAR(64),
+  excerpt_text CLOB,
+  summary_text VARCHAR(1000),
+  evidence_level VARCHAR(64),
+  status VARCHAR(32) NOT NULL,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_src_citation UNIQUE (tenant_id, citation_code)
+);
+COMMENT ON TABLE src_citation IS '来源追溯-文献引用片段表';
+
+CREATE TABLE IF NOT EXISTS src_asset_binding (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  asset_type VARCHAR(64) NOT NULL,
+  asset_code VARCHAR(128) NOT NULL,
+  asset_version VARCHAR(64),
+  citation_code VARCHAR(128) NOT NULL,
+  binding_role VARCHAR(64) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_by VARCHAR(64),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_src_asset_binding UNIQUE (tenant_id, asset_type, asset_code, asset_version, citation_code, binding_role)
+);
+COMMENT ON TABLE src_asset_binding IS '来源追溯-业务资产与引用绑定表';
+
+CREATE TABLE IF NOT EXISTS src_review_record (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  review_code VARCHAR(128) NOT NULL,
+  target_type VARCHAR(64) NOT NULL,
+  target_code VARCHAR(128) NOT NULL,
+  target_version VARCHAR(64),
+  missing_count INT DEFAULT 0 NOT NULL,
+  expired_count INT DEFAULT 0 NOT NULL,
+  unreviewed_count INT DEFAULT 0 NOT NULL,
+  review_result VARCHAR(32) NOT NULL,
+  review_message VARCHAR(1000),
+  reviewed_by VARCHAR(64),
+  reviewed_time TIMESTAMP,
+  detail_json CLOB,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_src_review_record UNIQUE (tenant_id, review_code)
+);
+COMMENT ON TABLE src_review_record IS '来源追溯-发布前来源审核记录表';
+
+CREATE TABLE IF NOT EXISTS src_runtime_evidence (
+  id BIGINT PRIMARY KEY,
+  trace_id VARCHAR(128) NOT NULL,
+  tenant_id VARCHAR(64),
+  engine_type VARCHAR(32) NOT NULL,
+  action_type VARCHAR(64) NOT NULL,
+  target_type VARCHAR(64) NOT NULL,
+  target_code VARCHAR(128) NOT NULL,
+  target_version VARCHAR(64),
+  citation_code VARCHAR(128),
+  evidence_summary VARCHAR(1000),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+COMMENT ON TABLE src_runtime_evidence IS '来源追溯-运行时证据链表';
+
+-- ============================================================================
 -- 索引
 -- ============================================================================
 CREATE INDEX IF NOT EXISTS idx_pe_instance_patient ON pe_patient_instance (patient_id, encounter_id);
@@ -307,3 +399,8 @@ CREATE INDEX IF NOT EXISTS idx_re_log_patient ON re_rule_exec_log (patient_id, e
 CREATE INDEX IF NOT EXISTS idx_re_log_org ON re_rule_exec_log (tenant_id, hospital_code, scope_level, scope_code);
 CREATE INDEX IF NOT EXISTS idx_audit_trace ON engine_audit_log (trace_id);
 CREATE INDEX IF NOT EXISTS idx_audit_org ON engine_audit_log (tenant_id, hospital_code, scope_level, scope_code);
+CREATE INDEX IF NOT EXISTS idx_src_doc_review ON src_document (tenant_id, review_status, expiry_date);
+CREATE INDEX IF NOT EXISTS idx_src_citation_doc ON src_citation (tenant_id, document_code);
+CREATE INDEX IF NOT EXISTS idx_src_binding_asset ON src_asset_binding (tenant_id, asset_type, asset_code, asset_version);
+CREATE INDEX IF NOT EXISTS idx_src_review_target ON src_review_record (tenant_id, target_type, target_code, target_version);
+CREATE INDEX IF NOT EXISTS idx_src_runtime_trace ON src_runtime_evidence (trace_id, engine_type);

@@ -154,7 +154,7 @@ RV-DB-ORG-001-S01-R01
 - 医学建议是否有来源、适用人群、排除条件。
 - 医保规则是否有政策版本和适用组织。
 - 质控结论是否可复核、可追责。
-- 数据库 DDL 是否保持 Oracle/达梦/H2 一致。
+- 数据库 DDL 是否保持生产库（Oracle/达梦/PostgreSQL-Kingbase）与开发库（LOCAL_H2_FILE）一致。
 - 安全变更是否覆盖鉴权、越权、日志脱敏和密钥泄漏。
 
 ## 6. 评审触发条件
@@ -162,7 +162,7 @@ RV-DB-ORG-001-S01-R01
 所有任务都需要至少一次自检。以下任务必须有独立评审：
 
 - 修改 Java 业务代码、持久化代码、接口契约或测试基座。
-- 修改 Oracle/达梦/H2 DDL、迁移脚本、索引、约束或表备注。
+- 修改 Oracle/达梦/PostgreSQL-Kingbase/LOCAL_H2_FILE DDL、迁移脚本、索引、约束或表备注。
 - 修改配置发布、review、publish、rollback、active 指针或来源阻断逻辑。
 - 修改医学、医保、病历质控、医嘱安全、路径推荐、Dify 解释等高风险逻辑。
 - 修改认证、授权、审计、日志、脱敏、密钥、签名或租户隔离。
@@ -189,7 +189,8 @@ claim write_scope 是否与实际 diff 一致：
 是否保持 DB-only 可运行：
 是否避免 Neo4j/Dify 强依赖：
 是否避免硬编码医院逻辑：
-是否同步 Oracle/达梦/H2 DDL：
+是否同步 Oracle/达梦/PostgreSQL-Kingbase/LOCAL_H2_FILE DDL：
+是否区分生产库与开发库：
 是否执行 run-tests：
 是否执行 build：
 是否执行 git diff --check：
@@ -225,7 +226,7 @@ Reviewer AI 必须按以下维度审查，不适用项写 `N/A`。
 
 ### 8.4 数据库一致性
 
-- Oracle/达梦/H2 结构是否同步。
+- 生产库（Oracle/达梦/PostgreSQL-Kingbase）和开发库（LOCAL_H2_FILE）结构是否同步。
 - 表、字段、索引、约束、备注是否完整。
 - 迁移脚本是否可重复执行。
 - 无 Oracle 环境是否有 LOCAL_H2 等价验证。
@@ -454,7 +455,7 @@ Reviewer 如果要直接修改代码，必须：
 
 - 执行 `detect-db-env.ps1 -BootstrapLocal`。
 - 使用 `LOCAL_H2_FILE` 完成等价验证。
-- 同步维护 Oracle、达梦和 H2 DDL。
+- 同步维护 Oracle、达梦、PostgreSQL-Kingbase 和 LOCAL_H2_FILE DDL。
 - 在 review 中写明 `oracle_smoke_status: PENDING_IN_INTRANET_ENV`。
 
 有 Oracle 的集成 AI 后续必须补：

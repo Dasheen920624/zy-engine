@@ -681,8 +681,9 @@ ai-dev-input/11_ai_reviews/archive
 - `recommended_mode=ORACLE`：优先使用 Oracle，涉及 DDL/持久化时跑 Oracle DDL 和 Oracle smoke。
 - `recommended_mode=LOCAL_H2`：使用 `.\zy-engine-mvp\scripts\start-local-db.ps1` 启动本地 H2 文件库，端口 `18082`。
 - `IN_MEMORY_DEMO` 只用于快速演示，不作为持久化验收。
-- 无 Oracle 的 AI 修改表结构时，必须同步维护 Oracle、达梦、H2 三份结构文件。
-- Oracle smoke 可由有内网环境的 AI 或集成 AI 最终补跑，但无 Oracle AI 不能跳过 LOCAL_H2 验证。
+- 生产库和开发库必须分离：Oracle 是当前生产权威库；达梦、PostgreSQL、KingbaseES 是生产兼容交付库；LOCAL_H2_FILE 只作为开发本地文件库。
+- 无生产库环境的 AI 修改表结构时，必须同步维护 Oracle、达梦、PostgreSQL-Kingbase、LOCAL_H2_FILE 结构文件。
+- 生产库 smoke 可由有内网环境的 AI 或集成 AI 最终补跑，但无生产库 AI 不能跳过 LOCAL_H2_FILE 开发库验证。
 
 ### 11.8 每批代码 Definition of Done
 
@@ -719,7 +720,7 @@ ai-dev-input/11_ai_reviews/archive
 
 - 第一批已落地配置包内存态模型、导入、列表、详情、review、hash 校验、publish、export、审计、样例和契约测试。
 - 第二批已接入组织目录：配置包增加 `tenant_id`，列表可按组织范围过滤，review/publish 会校验 `scope_level/scope_code` 是否存在；`PLATFORM/DEFAULT` 仍作为系统内置默认基线。
-- 后续继续补 Oracle/达梦表、跨环境导入导出、发布包回滚、同步任务和前端配置包中心。
+- 后续继续补生产库（Oracle/达梦/PostgreSQL-Kingbase）表、开发库 LOCAL_H2_FILE 等价链路、跨环境导入导出、发布包回滚、同步任务和前端配置包中心。
 
 产出：
 

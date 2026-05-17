@@ -27,6 +27,9 @@ if ($BootstrapLocal -and !(Test-Path -LiteralPath $localDbDir)) {
 }
 
 $result = [ordered]@{
+  production_db = "ORACLE"
+  development_db = "LOCAL_H2_FILE"
+  db_role_rule = "PRODUCTION_AUTHORITY for Oracle/DM/PostgreSQL/Kingbase; DEVELOPMENT_LOCAL for LOCAL_H2_FILE"
   oracle_config_file = (Test-Path -LiteralPath $oracleEnv)
   oracle_env_ready = $oracleConfigured
   local_db_dir = $localDbDir

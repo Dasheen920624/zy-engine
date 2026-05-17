@@ -38,6 +38,7 @@ if ([string]::IsNullOrWhiteSpace($DbPassword)) {
 }
 
 $env:ZYENGINE_DB_ENABLED = "true"
+$env:ZYENGINE_DB_ROLE = "production"
 $env:ZYENGINE_DB_URL = $DbUrl
 $env:ZYENGINE_DB_USERNAME = $DbUsername
 $env:ZYENGINE_DB_PASSWORD = $DbPassword
@@ -49,4 +50,4 @@ if (Test-Path -LiteralPath $java8) {
 }
 
 Set-Location $engineRoot
-& $java "-Dfile.encoding=UTF-8" -jar $jar "--server.port=$Port" "--zyengine.database.enabled=true"
+& $java "-Dfile.encoding=UTF-8" -jar $jar "--server.port=$Port" "--zyengine.database.enabled=true" "--zyengine.database.role=production"

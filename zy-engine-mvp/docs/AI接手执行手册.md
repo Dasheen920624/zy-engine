@@ -23,7 +23,7 @@
 
 ## 2. 当前项目一句话
 
-这是面向集团化医院、多院区、卫生所/站点的医疗智能引擎平台。Oracle/关系型数据库是配置主数据源；Neo4j 是图谱查询投影；Dify 是 AI 工作流执行目标；没有 Neo4j 和 Dify 时，DB-only 测试环境也必须可完整验收。
+这是面向集团化医院、多院区、卫生所/站点的医疗智能引擎平台。生产库和开发库必须分离：Oracle 是当前生产权威库，达梦 / PostgreSQL / KingbaseES 是生产兼容交付库，LOCAL_H2_FILE 是 AI/离线开发本地文件库；Neo4j 是图谱查询投影；Dify 是 AI 工作流执行目标；没有 Neo4j 和 Dify 时，DB-only 测试环境也必须可完整验收。
 
 ## 3. 接手后 10 分钟检查
 
@@ -137,7 +137,7 @@ ai-dev-input/11_ai_reviews/pending/<review_id>.md
 
 - 医学、医保、病历质控、医嘱安全、路径推荐和 Dify 解释。
 - 配置发布、review、publish、rollback、active 指针。
-- Oracle/达梦/H2 DDL、迁移、索引、约束和持久化 SQL。
+- Oracle/达梦/PostgreSQL-Kingbase/LOCAL_H2_FILE DDL、迁移、索引、约束和持久化 SQL。
 - 权限、安全、审计、日志脱敏和租户隔离。
 - 前端配置发布、规则校验、质控看板和客户验收主流程。
 
@@ -155,6 +155,7 @@ ai-dev-input/11_ai_reviews/pending/<review_id>.md
 - 任务编号，例如 `ORG-001`、`PKG-001`、`TERM-001`、`FE-001`。
 - 任务认领编号 `claim_id`，例如 `PROV-001-S03`。
 - 当前数据库模式：`ORACLE`、`LOCAL_H2` 或 `IN_MEMORY`。
+- 当前数据库角色：`PRODUCTION_AUTHORITY`、`PRODUCTION_COMPATIBLE`、`DEVELOPMENT_LOCAL` 或 `IN_MEMORY_DEMO`。
 - 若没有 Oracle，是否已使用 `start-local-db.ps1` 启动本地 H2 文件库。
 - 所属模块。
 - 若涉及前端，必须确认配置界面、演示界面、规则校验工作台或质控看板的页面范围。
@@ -162,9 +163,9 @@ ai-dev-input/11_ai_reviews/pending/<review_id>.md
 - 是否涉及配置版本。
 - 是否涉及来源追溯、引用片段、医学/医保/质控依据。
 - 是否涉及 Provider。
-- 是否需要 Oracle/达梦 DDL。
-- 是否涉及 Oracle 表结构、索引、迁移脚本、持久化 SQL 或落库行为；若涉及，必须同步真实 Oracle 并跑 Oracle 版本 smoke。
-- 无 Oracle 的 AI 修改 DDL 或持久化链路时，必须同步维护 Oracle、达梦、H2 三份结构文件，并用 LOCAL_H2 完整验证。
+- 是否需要生产库 DDL（Oracle/达梦/PostgreSQL-Kingbase）和开发库 DDL（LOCAL_H2_FILE）。
+- 是否涉及生产库表结构、索引、迁移脚本、持久化 SQL 或落库行为；若涉及，有生产库环境时必须同步真实生产库并跑对应 smoke。
+- 无生产库环境的 AI 修改 DDL 或持久化链路时，必须同步维护 Oracle、达梦、PostgreSQL-Kingbase、LOCAL_H2_FILE 结构文件，并用 LOCAL_H2_FILE 完整验证。
 - 是否属于 `顶级多角色评审与AI并行开发总控.md` 中的某条并行泳道，是否会与其它 AI 的写入范围冲突。
 - 目标用户是谁：医生、质控、医保、信息科、院领导、实施工程师或第三方系统。
 - DB-only 模式如何验收。
@@ -262,7 +263,13 @@ rg -n "run_id:|status: ACTIVE|current_claim|next_action" ai-dev-input/12_autonom
 git diff --check
 ```
 
-若任务涉及 Oracle/达梦 DDL、Oracle 迁移脚本、持久化 SQL、表字段、索引、约束或 Oracle 落库行为，还必须执行真实 Oracle 验证：
+若任务涉及生产库/开发库 DDL、迁移脚本、持久化 SQL、表字段、索引、约束或落库行为，还必须先区分验证目标：
+
+```powershell
+.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+```
+
+无生产库环境时必须执行 LOCAL_H2_FILE 开发库验证；有 Oracle 生产权威库时还必须执行真实 Oracle 验证：
 
 ```powershell
 .\zy-engine-mvp\scripts\run-oracle-ddl.ps1
@@ -272,7 +279,7 @@ git diff --check
 .\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
 ```
 
-Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 已提交用于说明 Oracle 连接目标；真实 `.env.oracle.local` 只存本机 Oracle 凭据，已被 `.gitignore` 忽略，禁止提交。若当前任务新增了新的 Oracle 业务链路，应补对应 Oracle smoke；如果不能连接客户 Oracle，最终回复必须明确说明未验证原因和风险，不能只用内存/JUnit 代替。
+Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 已提交用于说明 Oracle 连接目标；真实 `.env.oracle.local` 只存本机 Oracle 凭据，已被 `.gitignore` 忽略，禁止提交。若当前任务新增了新的生产库业务链路，应补对应 smoke；如果不能连接生产库，最终回复必须明确说明已完成的 LOCAL_H2_FILE 开发库验证、未验证原因和风险，不能只用内存/JUnit 代替。
 
 若当前 AI 无法连接公司内网 Oracle，必须使用本地 H2 文件库完成等价开发验证：
 
@@ -287,7 +294,7 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 http://localhost:18082/zy-engine/api
 ```
 
-无 Oracle 的最终回复必须写明：`LOCAL_H2` 已验证、Oracle smoke 待有内网环境的 AI 或集成 AI 执行。
+无生产库环境的最终回复必须写明：`LOCAL_H2_FILE` 开发库已验证、生产库 smoke 待有内网环境的 AI 或集成 AI 执行。
 
 若只改文档，仍建议运行完整测试和构建，除非用户明确要求快速文档修改。
 
@@ -354,8 +361,8 @@ git push origin main
 - `review_status=APPROVED`。
 - `open_findings=0`。
 - 自主开发时，已更新 run log。
-- 涉及数据库表结构、索引、约束、迁移或持久化 SQL 的任务，已执行 `run-oracle-ddl.ps1` 同步真实 Oracle，并通过 Oracle 版本 smoke；若未执行，必须说明原因和残留风险。
-- 无 Oracle 环境时，已使用 `LOCAL_H2_FILE` 完成等价 smoke，并同步维护 Oracle/达梦/H2 结构文件。
+- 涉及数据库表结构、索引、约束、迁移或持久化 SQL 的任务，已同步 Oracle/达梦/PostgreSQL-Kingbase/LOCAL_H2_FILE 结构；有生产库环境时已执行对应 smoke；若未执行，必须说明原因和残留风险。
+- 无生产库环境时，已使用 `LOCAL_H2_FILE` 完成开发库等价 smoke，并标明生产库补验计划。
 - 已提交本任务相关文件。
 - 已推送到远端当前分支，或明确说明无法推送的原因。
 - 当前 claim 和 review 已更新并归档，或明确说明仍处于 `BLOCKED/HANDOFF/CHANGES_REQUESTED` 的原因。
@@ -440,7 +447,7 @@ git push origin main
 
 第一批只做：
 
-- `SRC_DOCUMENT`、`SRC_CITATION`、`SRC_ASSET_BINDING`、`SRC_REVIEW_RECORD`、`SRC_RUNTIME_EVIDENCE` 的 Oracle/达梦 DDL 草案与迁移脚本。
+- `SRC_DOCUMENT`、`SRC_CITATION`、`SRC_ASSET_BINDING`、`SRC_REVIEW_RECORD`、`SRC_RUNTIME_EVIDENCE` 的 Oracle/达梦/PostgreSQL-Kingbase/LOCAL_H2_FILE DDL 草案与迁移脚本。
 - 来源样例 JSON、API 契约草案和测试矩阵。
 - 配置包 review 增加 `source_review` 输出结构。
 - 规则发布预留缺来源、过期来源、未审核来源的阻断点。

@@ -325,7 +325,9 @@ BEGIN
     reviewed_time TIMESTAMP,
     content_hash VARCHAR2(128),
     metadata_json CLOB,
+    created_by VARCHAR2(64),
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT uk_src_document UNIQUE (tenant_id, document_code)
   )');
 
@@ -421,6 +423,9 @@ BEGIN
   add_column_if_missing('engine_audit_log', 'scope_level', 'VARCHAR2(32)');
   add_column_if_missing('engine_audit_log', 'scope_code', 'VARCHAR2(64)');
   add_column_if_missing('engine_audit_log', 'org_source', 'VARCHAR2(32)');
+
+  add_column_if_missing('src_document', 'created_by', 'VARCHAR2(64)');
+  add_column_if_missing('src_document', 'updated_time', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL');
 
   IF NVL(constraint_signature('uk_pe_active_instance'), 'NONE')
         <> 'TENANT_ID,ORG_CODE,ENCOUNTER_ID,PATHWAY_CODE,STATUS' THEN

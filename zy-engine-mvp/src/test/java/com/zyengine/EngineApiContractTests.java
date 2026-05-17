@@ -3,6 +3,7 @@ package com.zyengine;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zyengine.persistence.EnginePersistenceProperties;
 import com.zyengine.persistence.EnginePersistenceService;
+import com.zyengine.provenance.SourceDocument;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -57,6 +58,7 @@ class EngineApiContractTests {
         Map<String, Object> graph = asMap(providers.get("graph"));
         Map<String, Object> dify = asMap(providers.get("dify"));
         assertEquals("CONFIG_PRIMARY_STORE", database.get("role"));
+        assertEquals("PRODUCTION_AUTHORITY", database.get("database_role"));
         assertEquals("GRAPH_QUERY_PROVIDER", graph.get("role"));
         assertEquals("WORKFLOW_PROVIDER", dify.get("role"));
         assertNotNull(data.get("run_mode"));
@@ -76,6 +78,7 @@ class EngineApiContractTests {
         assertTrue(properties.localFileDatabase());
         assertTrue(properties.hasRequiredCredentials());
         assertEquals("LOCAL_H2_FILE", properties.providerName());
+        assertEquals("DEVELOPMENT_LOCAL", properties.roleName());
     }
 
     @Test
@@ -94,6 +97,46 @@ class EngineApiContractTests {
                 new LinkedHashMap<String, Object>());
 
         assertEquals("LOCAL_H2_FILE", service.providerName());
+    }
+
+    @Test
+    void localFileDatabasePersistsSourceDocuments() {
+        EnginePersistenceProperties properties = new EnginePersistenceProperties();
+        properties.setEnabled(true);
+        properties.setRole("development");
+        properties.setDialect("h2");
+        properties.setUrl("jdbc:h2:file:./target/zyengine-src-contract-" + System.nanoTime()
+                + ";MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_ON_EXIT=FALSE");
+        properties.setUsername("sa");
+        properties.setPassword("");
+        properties.setInitSchema(true);
+
+        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper);
+        service.initializeLocalSchema();
+
+        SourceDocument document = new SourceDocument();
+        document.setTenantId("TENANT_SRC_DB");
+        document.setDocumentCode("SRC_DB_CONTRACT");
+        document.setTitle("本地开发库来源文档");
+        document.setSourceType("GUIDELINE");
+        document.setPublisher("JUNIT");
+        document.setEffectiveDate("2026-01-01");
+        document.setExpiryDate("2027-01-01");
+        document.setReviewStatus("REVIEWED");
+        document.setReviewedBy("JUNIT_REVIEWER");
+        document.setCreatedBy("JUNIT_PROV_ADMIN");
+        Map<String, Object> metadata = new LinkedHashMap<String, Object>();
+        metadata.put("database_role", "DEVELOPMENT_LOCAL");
+        document.setMetadata(metadata);
+
+        service.saveSourceDocument(document);
+
+        SourceDocument persisted = service.findSourceDocument("TENANT_SRC_DB", "SRC_DB_CONTRACT");
+        assertNotNull(persisted);
+        assertEquals("本地开发库来源文档", persisted.getTitle());
+        assertEquals("JUNIT_PROV_ADMIN", persisted.getCreatedBy());
+        assertEquals("DEVELOPMENT_LOCAL", persisted.getMetadata().get("database_role"));
+        assertEquals(1, service.listSourceDocuments().size());
     }
 
     @Test

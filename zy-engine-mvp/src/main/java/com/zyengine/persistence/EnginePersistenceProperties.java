@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 public class EnginePersistenceProperties {
     private boolean enabled;
     private boolean initSchema = true;
+    private String role = "production";
     private String dialect;
     private String url;
     private String username;
@@ -27,6 +28,14 @@ public class EnginePersistenceProperties {
 
     public void setInitSchema(boolean initSchema) {
         this.initSchema = initSchema;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public String getDialect() {
@@ -75,6 +84,31 @@ public class EnginePersistenceProperties {
     }
 
     public String providerName() {
-        return localFileDatabase() ? "LOCAL_H2_FILE" : "ORACLE";
+        if (localFileDatabase()) {
+            return "LOCAL_H2_FILE";
+        }
+        String value = dialect == null ? "" : dialect.trim().toLowerCase();
+        if ("dm".equals(value) || "dameng".equals(value)) {
+            return "DM";
+        }
+        if ("postgres".equals(value) || "postgresql".equals(value) || "pg".equals(value)) {
+            return "POSTGRESQL";
+        }
+        if ("kingbase".equals(value) || "kingbasees".equals(value)) {
+            return "KINGBASE";
+        }
+        return "ORACLE";
+    }
+
+    public String roleName() {
+        String value = role == null ? "" : role.trim().toLowerCase();
+        if (localFileDatabase() || "dev".equals(value) || "development".equals(value) || "local".equals(value)) {
+            return "DEVELOPMENT_LOCAL";
+        }
+        return "PRODUCTION_AUTHORITY";
+    }
+
+    public boolean productionAuthority() {
+        return "PRODUCTION_AUTHORITY".equals(roleName());
     }
 }

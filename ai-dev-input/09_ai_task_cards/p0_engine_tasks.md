@@ -29,7 +29,7 @@
 - DAO层不直接硬编码分页方言。
 
 验收：
-- Oracle/达梦DDL均可初始化。
+- 生产库 Oracle/达梦/PostgreSQL-Kingbase DDL 与开发库 LOCAL_H2_FILE DDL 均可初始化或有明确补验计划。
 
 ## 路径引擎
 
