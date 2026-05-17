@@ -3212,4 +3212,49 @@ class EngineApiContractTests {
         List<Map<String, Object>> warnings = asListOfMap(data.get("reference_warnings"));
         assertTrue(warnings.isEmpty());
     }
+
+    @Test
+    void graphEvidenceWithReferenceFields() throws Exception {
+        Map<String, Object> evidence = new LinkedHashMap<>();
+        evidence.put("evidence_id", "EV_GRAPH_REF_001");
+        evidence.put("graph_version", "AMI_GRAPH_REF_2026_01");
+        evidence.put("target_code", "AMI_STEMI");
+        evidence.put("target_type", "DISEASE");
+        evidence.put("evidence_type", "GUIDELINE");
+        evidence.put("title", "STEMI再灌注时间窗证据");
+        evidence.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        evidence.put("reference_binding_type", "EVIDENCE");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("evidences", Arrays.asList(evidence));
+        invokePost("/api/graph/evidences", importBody);
+
+        Map<String, Object> getResp = invokeGet("/api/graph/evidences/EV_GRAPH_REF_001");
+        Map<String, Object> data = asMap(getResp.get("data"));
+        assertEquals("EV_GRAPH_REF_001", data.get("evidence_id"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", data.get("reference_document_code"));
+        assertEquals("EVIDENCE", data.get("reference_binding_type"));
+    }
+
+    @Test
+    void graphEvidenceQueryByTarget() throws Exception {
+        Map<String, Object> evidence = new LinkedHashMap<>();
+        evidence.put("evidence_id", "EV_GRAPH_QUERY_001");
+        evidence.put("graph_version", "AMI_GRAPH_QUERY_2026_01");
+        evidence.put("target_code", "AMI_NSTEMI");
+        evidence.put("target_type", "DISEASE");
+        evidence.put("evidence_type", "CONSENSUS");
+        evidence.put("title", "NSTEMI抗栓策略证据");
+        evidence.put("reference_document_code", "SRC_CONSENSUS_STEMI_2024");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("evidences", Arrays.asList(evidence));
+        invokePost("/api/graph/evidences", importBody);
+
+        Map<String, Object> listResp = invokeGet("/api/graph/evidences?targetCode=AMI_NSTEMI");
+        List<Map<String, Object>> evidences = asListOfMap(listResp.get("data"));
+        assertFalse(evidences.isEmpty());
+        assertEquals("AMI_NSTEMI", evidences.get(0).get("target_code"));
+        assertEquals("SRC_CONSENSUS_STEMI_2024", evidences.get(0).get("reference_document_code"));
+    }
 }

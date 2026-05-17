@@ -843,6 +843,8 @@ public class GraphService {
         view.put("title", string(entry.get("title"), String.valueOf(view.get("evidence_id"))));
         view.put("summary", string(entry.get("summary"), null));
         view.put("source", string(entry.get("source"), null));
+        view.put("reference_document_code", string(entry.get("reference_document_code"), null));
+        view.put("reference_binding_type", string(entry.get("reference_binding_type"), null));
         view.put("reference_url", string(entry.get("reference_url"), null));
         Object confidence = entry.get("confidence");
         if (confidence instanceof Number) {
