@@ -3009,4 +3009,144 @@ class EngineApiContractTests {
         List<Map<String, Object>> results = asListOfMap(evalData.get("results"));
         assertFalse(results.isEmpty());
     }
+
+    @Test
+    void pathwayNodeReferenceFieldsInDetail() throws Exception {
+        Map<String, Object> nodeWithRef = new LinkedHashMap<>();
+        nodeWithRef.put("node_code", "REF_NODE_1");
+        nodeWithRef.put("node_name", "有来源节点");
+        nodeWithRef.put("node_type", "EVALUATION");
+        nodeWithRef.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        nodeWithRef.put("reference_citation_id", "CIT_PATHWAY_REF");
+        nodeWithRef.put("reference_binding_type", "EVIDENCE");
+        nodeWithRef.put("tasks", Arrays.asList());
+        nodeWithRef.put("transitions", Arrays.asList());
+
+        Map<String, Object> nodeWithoutRef = new LinkedHashMap<>();
+        nodeWithoutRef.put("node_code", "NO_REF_NODE");
+        nodeWithoutRef.put("node_name", "无来源节点");
+        nodeWithoutRef.put("node_type", "TREATMENT");
+        nodeWithoutRef.put("tasks", Arrays.asList());
+        nodeWithoutRef.put("transitions", Arrays.asList());
+
+        Map<String, Object> stage = new LinkedHashMap<>();
+        stage.put("stage_code", "S1");
+        stage.put("stage_name", "阶段一");
+        stage.put("nodes", Arrays.asList(nodeWithRef, nodeWithoutRef));
+
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put("pathway_code", "PW_REF_TEST");
+        config.put("pathway_name", "来源引用测试路径");
+        config.put("version", "1.0.0");
+        config.put("stages", Arrays.asList(stage));
+
+        invokePost("/api/pathways", config);
+
+        Map<String, Object> detailResp = invokeGet("/api/pathways/PW_REF_TEST");
+        Map<String, Object> detail = asMap(detailResp.get("data"));
+
+        List<Map<String, Object>> refSources = asListOfMap(detail.get("reference_sources"));
+        assertEquals(1, refSources.size());
+        assertEquals("NODE", refSources.get(0).get("element_type"));
+        assertEquals("REF_NODE_1", refSources.get(0).get("element_code"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", refSources.get(0).get("reference_document_code"));
+        assertEquals("CIT_PATHWAY_REF", refSources.get(0).get("reference_citation_id"));
+        assertEquals("EVIDENCE", refSources.get(0).get("reference_binding_type"));
+
+        List<Map<String, Object>> refWarnings = asListOfMap(detail.get("reference_warnings"));
+        assertEquals(1, refWarnings.size());
+        assertEquals("NO_REF_NODE", refWarnings.get(0).get("element_code"));
+        assertEquals("WARN", refWarnings.get(0).get("severity"));
+    }
+
+    @Test
+    void pathwayTransitionReferenceFields() throws Exception {
+        Map<String, Object> transition = new LinkedHashMap<>();
+        transition.put("to_node", "NODE_B");
+        transition.put("priority", 1);
+        transition.put("reference_document_code", "SRC_CONSENSUS_STEMI_2024");
+        transition.put("reference_binding_type", "REFERENCE");
+
+        Map<String, Object> nodeA = new LinkedHashMap<>();
+        nodeA.put("node_code", "NODE_A");
+        nodeA.put("node_name", "节点A");
+        nodeA.put("node_type", "EVALUATION");
+        nodeA.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        nodeA.put("reference_binding_type", "EVIDENCE");
+        nodeA.put("tasks", Arrays.asList());
+        nodeA.put("transitions", Arrays.asList(transition));
+
+        Map<String, Object> nodeB = new LinkedHashMap<>();
+        nodeB.put("node_code", "NODE_B");
+        nodeB.put("node_name", "节点B");
+        nodeB.put("node_type", "TREATMENT");
+        nodeB.put("reference_document_code", "SRC_CONSENSUS_STEMI_2024");
+        nodeB.put("reference_binding_type", "DERIVATION");
+        nodeB.put("tasks", Arrays.asList());
+        nodeB.put("transitions", Arrays.asList());
+
+        Map<String, Object> stage = new LinkedHashMap<>();
+        stage.put("stage_code", "S1");
+        stage.put("stage_name", "阶段一");
+        stage.put("nodes", Arrays.asList(nodeA, nodeB));
+
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put("pathway_code", "PW_TRANS_REF");
+        config.put("pathway_name", "流转来源测试路径");
+        config.put("version", "1.0.0");
+        config.put("stages", Arrays.asList(stage));
+
+        invokePost("/api/pathways", config);
+
+        Map<String, Object> detailResp = invokeGet("/api/pathways/PW_TRANS_REF");
+        Map<String, Object> detail = asMap(detailResp.get("data"));
+
+        List<Map<String, Object>> refSources = asListOfMap(detail.get("reference_sources"));
+        assertEquals(3, refSources.size());
+
+        boolean hasTransitionRef = false;
+        for (Map<String, Object> ref : refSources) {
+            if ("TRANSITION".equals(ref.get("element_type"))) {
+                hasTransitionRef = true;
+                assertEquals("NODE_A->NODE_B", ref.get("element_code"));
+                assertEquals("SRC_CONSENSUS_STEMI_2024", ref.get("reference_document_code"));
+                assertEquals("REFERENCE", ref.get("reference_binding_type"));
+            }
+        }
+        assertTrue(hasTransitionRef, "should have transition reference");
+    }
+
+    @Test
+    void pathwayPublishReportsMissingReferences() throws Exception {
+        Map<String, Object> node = new LinkedHashMap<>();
+        node.put("node_code", "UNBOUND_NODE");
+        node.put("node_name", "未绑定来源节点");
+        node.put("node_type", "EVALUATION");
+        node.put("tasks", Arrays.asList());
+        node.put("transitions", Arrays.asList());
+
+        Map<String, Object> stage = new LinkedHashMap<>();
+        stage.put("stage_code", "S1");
+        stage.put("stage_name", "阶段一");
+        stage.put("nodes", Arrays.asList(node));
+
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put("pathway_code", "PW_NO_REF");
+        config.put("pathway_name", "无来源路径");
+        config.put("version", "1.0.0");
+        config.put("stages", Arrays.asList(stage));
+
+        invokePost("/api/pathways", config);
+
+        Map<String, Object> publishBody = new LinkedHashMap<>();
+        publishBody.put("approved_by", "ADMIN");
+        Map<String, Object> publishResp = invokePost("/api/pathways/PW_NO_REF/publish", publishBody);
+        Map<String, Object> publishData = asMap(publishResp.get("data"));
+        assertEquals("PUBLISHED", publishData.get("status"));
+
+        List<Map<String, Object>> warnings = asListOfMap(publishData.get("reference_warnings"));
+        assertFalse(warnings.isEmpty());
+        assertEquals("UNBOUND_NODE", warnings.get(0).get("element_code"));
+        assertEquals("WARN", warnings.get(0).get("severity"));
+    }
 }

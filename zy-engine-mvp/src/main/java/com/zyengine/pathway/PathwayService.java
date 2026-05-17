@@ -132,6 +132,7 @@ public class PathwayService {
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
         result.put("persistence", persistenceService.providerName());
+        result.put("reference_warnings", configSupport.collectMissingReferences(config));
         audit("PUBLISH", "PATHWAY", pathwayCode, null, result,
                 string(request == null ? null : request.get("approved_by"), null));
         return result;
@@ -452,6 +453,10 @@ public class PathwayService {
         result.put("selected_version", selectedVersion);
         result.put("draft_config", draft);
         result.put("published_config", published);
+        result.put("reference_sources", configSupport.collectNodeReferences(
+                published != null ? published : draft));
+        result.put("reference_warnings", configSupport.collectMissingReferences(
+                published != null ? published : draft));
         return result;
     }
 

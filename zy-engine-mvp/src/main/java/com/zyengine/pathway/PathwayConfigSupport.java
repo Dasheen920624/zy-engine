@@ -116,7 +116,6 @@ public class PathwayConfigSupport {
             return null;
         }
 
-        // P1阶段先按配置中的优先级选择第一个流转目标；后续会把condition接入规则上下文判断。
         List<Map<String, Object>> transitions = maps(currentNode.get("transitions"));
         Collections.sort(transitions, new Comparator<Map<String, Object>>() {
             @Override
@@ -131,6 +130,72 @@ public class PathwayConfigSupport {
             }
         }
         return null;
+    }
+
+    public Map<String, Object> nodeReferenceInfo(Map<String, Object> config, String nodeCode) {
+        Map<String, Object> node = findNode(config, nodeCode);
+        Map<String, Object> ref = new java.util.LinkedHashMap<String, Object>();
+        if (node == null) {
+            return ref;
+        }
+        ref.put("reference_document_code", string(node.get("reference_document_code"), null));
+        ref.put("reference_citation_id", string(node.get("reference_citation_id"), null));
+        ref.put("reference_binding_type", string(node.get("reference_binding_type"), null));
+        return ref;
+    }
+
+    public List<Map<String, Object>> collectNodeReferences(Map<String, Object> config) {
+        List<Map<String, Object>> references = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> node : allNodes(config)) {
+            String nodeCode = string(node.get("node_code"), null);
+            if (nodeCode == null) {
+                continue;
+            }
+            String docCode = string(node.get("reference_document_code"), null);
+            if (docCode != null) {
+                Map<String, Object> ref = new java.util.LinkedHashMap<String, Object>();
+                ref.put("element_type", "NODE");
+                ref.put("element_code", nodeCode);
+                ref.put("reference_document_code", docCode);
+                ref.put("reference_citation_id", string(node.get("reference_citation_id"), null));
+                ref.put("reference_binding_type", string(node.get("reference_binding_type"), null));
+                references.add(ref);
+            }
+            for (Map<String, Object> transition : maps(node.get("transitions"))) {
+                String transDocCode = string(transition.get("reference_document_code"), null);
+                if (transDocCode != null) {
+                    Map<String, Object> ref = new java.util.LinkedHashMap<String, Object>();
+                    ref.put("element_type", "TRANSITION");
+                    ref.put("element_code", nodeCode + "->" + string(transition.get("to_node"), "?"));
+                    ref.put("reference_document_code", transDocCode);
+                    ref.put("reference_citation_id", string(transition.get("reference_citation_id"), null));
+                    ref.put("reference_binding_type", string(transition.get("reference_binding_type"), null));
+                    references.add(ref);
+                }
+            }
+        }
+        return references;
+    }
+
+    public List<Map<String, Object>> collectMissingReferences(Map<String, Object> config) {
+        List<Map<String, Object>> warnings = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> node : allNodes(config)) {
+            String nodeCode = string(node.get("node_code"), null);
+            if (nodeCode == null) {
+                continue;
+            }
+            String docCode = string(node.get("reference_document_code"), null);
+            if (docCode == null) {
+                Map<String, Object> warning = new java.util.LinkedHashMap<String, Object>();
+                warning.put("element_type", "NODE");
+                warning.put("element_code", nodeCode);
+                warning.put("field", "reference_document_code");
+                warning.put("severity", "WARN");
+                warning.put("message", "节点缺少来源文档绑定（reference_document_code）");
+                warnings.add(warning);
+            }
+        }
+        return warnings;
     }
 
     @SuppressWarnings("unchecked")
