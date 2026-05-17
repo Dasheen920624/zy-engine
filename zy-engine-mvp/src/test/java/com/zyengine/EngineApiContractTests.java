@@ -2155,4 +2155,180 @@ class EngineApiContractTests {
     private List<Map<String, Object>> asListOfMap(Object value) {
         return value instanceof List ? (List<Map<String, Object>>) value : java.util.Collections.<Map<String, Object>>emptyList();
     }
+
+    @Test
+    void orgOverrideImportAndComputeInheritance() throws Exception {
+        invokePost("/api/organizations", sampleOrganizationImport("TENANT_OVERRIDE"));
+
+        Map<String, Object> hospitalOverride = new LinkedHashMap<>();
+        hospitalOverride.put("scope_level", "HOSPITAL");
+        hospitalOverride.put("scope_code", "HOSPITAL_JUNIT");
+        hospitalOverride.put("asset_type", "RULE");
+        hospitalOverride.put("override_key", "max_execution_timeout_ms");
+        hospitalOverride.put("override_value", 30000);
+        hospitalOverride.put("description", "医院级规则执行超时");
+
+        Map<String, Object> groupOverride = new LinkedHashMap<>();
+        groupOverride.put("scope_level", "GROUP");
+        groupOverride.put("scope_code", "GROUP_JUNIT");
+        groupOverride.put("asset_type", "RULE");
+        groupOverride.put("override_key", "max_execution_timeout_ms");
+        groupOverride.put("override_value", 60000);
+        groupOverride.put("description", "集团级规则执行超时");
+
+        Map<String, Object> platformOverride = new LinkedHashMap<>();
+        platformOverride.put("scope_level", "PLATFORM");
+        platformOverride.put("scope_code", "DEFAULT");
+        platformOverride.put("asset_type", "RULE");
+        platformOverride.put("override_key", "max_execution_timeout_ms");
+        platformOverride.put("override_value", 15000);
+        platformOverride.put("description", "系统默认超时");
+
+        Map<String, Object> deptThreshold = new LinkedHashMap<>();
+        deptThreshold.put("scope_level", "DEPARTMENT");
+        deptThreshold.put("scope_code", "DEPT_CARDIOLOGY");
+        deptThreshold.put("asset_type", "RULE");
+        deptThreshold.put("override_key", "qc_score_threshold");
+        deptThreshold.put("override_value", 85);
+        deptThreshold.put("description", "心内科质控分数阈值");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_OVERRIDE");
+        importBody.put("operator_id", "JUNIT_OVERRIDE_ADMIN");
+        importBody.put("entries", Arrays.asList(hospitalOverride, groupOverride, platformOverride, deptThreshold));
+
+        Map<String, Object> imported = invokePost("/api/organizations/override/entries", importBody);
+        assertEquals(4, asList(imported.get("data")).size());
+
+        Map<String, Object> listResp = invokeGet("/api/organizations/override/entries?tenantId=TENANT_OVERRIDE&scopeLevel=HOSPITAL");
+        List<Map<String, Object>> hospitalEntries = asListOfMap(listResp.get("data"));
+        assertEquals(1, hospitalEntries.size());
+        assertEquals("HOSPITAL_JUNIT", hospitalEntries.get(0).get("scope_code"));
+    }
+
+    @Test
+    void orgOverrideComputeInheritanceChain() throws Exception {
+        invokePost("/api/organizations", sampleOrganizationImport("TENANT_INHERIT"));
+
+        Map<String, Object> deptEntry = new LinkedHashMap<>();
+        deptEntry.put("scope_level", "DEPARTMENT");
+        deptEntry.put("scope_code", "DEPT_CARDIOLOGY");
+        deptEntry.put("asset_type", "PATHWAY");
+        deptEntry.put("override_key", "auto_complete_enabled");
+        deptEntry.put("override_value", true);
+
+        Map<String, Object> hospitalEntry = new LinkedHashMap<>();
+        hospitalEntry.put("scope_level", "HOSPITAL");
+        hospitalEntry.put("scope_code", "HOSPITAL_JUNIT");
+        hospitalEntry.put("asset_type", "PATHWAY");
+        hospitalEntry.put("override_key", "auto_complete_enabled");
+        deptEntry.put("override_value", false);
+        hospitalEntry.put("override_key", "notification_enabled");
+        hospitalEntry.put("override_value", true);
+
+        Map<String, Object> platformEntry = new LinkedHashMap<>();
+        platformEntry.put("scope_level", "PLATFORM");
+        platformEntry.put("scope_code", "DEFAULT");
+        platformEntry.put("asset_type", "PATHWAY");
+        platformEntry.put("override_key", "notification_enabled");
+        platformEntry.put("override_value", false);
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_INHERIT");
+        importBody.put("entries", Arrays.asList(deptEntry, hospitalEntry, platformEntry));
+        invokePost("/api/organizations/override/entries", importBody);
+
+        Map<String, Object> computeBody = new LinkedHashMap<>();
+        computeBody.put("tenant_id", "TENANT_INHERIT");
+        computeBody.put("hospital_code", "HOSPITAL_JUNIT");
+        computeBody.put("department_code", "DEPT_CARDIOLOGY");
+        computeBody.put("asset_type", "PATHWAY");
+        Map<String, Object> computed = invokePost("/api/organizations/override/compute", computeBody);
+        Map<String, Object> data = asMap(computed.get("data"));
+
+        Map<String, Object> effective = asMap(data.get("effective"));
+        assertEquals(true, effective.get("auto_complete_enabled"));
+        assertEquals(true, effective.get("notification_enabled"));
+
+        List<Map<String, Object>> sources = asListOfMap(data.get("resolved_sources"));
+        assertEquals(2, sources.size());
+
+        Map<String, Object> autoCompleteSource = null;
+        Map<String, Object> notificationSource = null;
+        for (Map<String, Object> source : sources) {
+            if ("auto_complete_enabled".equals(source.get("override_key"))) {
+                autoCompleteSource = source;
+            }
+            if ("notification_enabled".equals(source.get("override_key"))) {
+                notificationSource = source;
+            }
+        }
+        assertNotNull(autoCompleteSource);
+        assertEquals("DEPARTMENT/DEPT_CARDIOLOGY", autoCompleteSource.get("resolved_from"));
+        assertEquals("DEPARTMENT", autoCompleteSource.get("resolved_level"));
+
+        assertNotNull(notificationSource);
+        assertEquals("HOSPITAL/HOSPITAL_JUNIT", notificationSource.get("resolved_from"));
+        assertEquals("HOSPITAL", notificationSource.get("resolved_level"));
+
+        List<Map<String, Object>> chain = asListOfMap(data.get("inheritance_chain"));
+        assertTrue(chain.size() >= 2);
+    }
+
+    @Test
+    void orgOverrideResolveSingleKey() throws Exception {
+        invokePost("/api/organizations", sampleOrganizationImport("TENANT_RESOLVE"));
+
+        Map<String, Object> platformEntry = new LinkedHashMap<>();
+        platformEntry.put("scope_level", "PLATFORM");
+        platformEntry.put("scope_code", "DEFAULT");
+        platformEntry.put("asset_type", "RULE");
+        platformEntry.put("override_key", "default_priority");
+        platformEntry.put("override_value", 100);
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_RESOLVE");
+        importBody.put("entries", Arrays.asList(platformEntry));
+        invokePost("/api/organizations/override/entries", importBody);
+
+        Map<String, Object> resolved = invokeGet("/api/organizations/override/resolve?overrideKey=default_priority"
+                + "&tenantId=TENANT_RESOLVE&hospitalCode=HOSPITAL_JUNIT");
+        Map<String, Object> data = asMap(resolved.get("data"));
+        assertEquals("default_priority", data.get("override_key"));
+        assertEquals(100, ((Number) data.get("resolved_value")).intValue());
+        assertEquals("PLATFORM/DEFAULT", data.get("resolved_from"));
+        assertEquals("PLATFORM", data.get("resolved_level"));
+    }
+
+    @Test
+    void orgOverrideComputeReturnsEmptyWhenNoOverrides() throws Exception {
+        Map<String, Object> computeBody = new LinkedHashMap<>();
+        computeBody.put("tenant_id", "TENANT_EMPTY");
+        computeBody.put("hospital_code", "HOSPITAL_TEST");
+        computeBody.put("asset_type", "RULE");
+        Map<String, Object> computed = invokePost("/api/organizations/override/compute", computeBody);
+        Map<String, Object> data = asMap(computed.get("data"));
+        assertEquals(0, ((Number) data.get("source_resolved_count")).intValue());
+        assertTrue(asMap(data.get("effective")).isEmpty());
+    }
+
+    @Test
+    void orgOverrideEntryCount() throws Exception {
+        Map<String, Object> countBefore = invokeGet("/api/organizations/override/count");
+        int before = ((Number) asMap(countBefore.get("data")).get("entry_count")).intValue();
+
+        Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("scope_level", "PLATFORM");
+        entry.put("scope_code", "DEFAULT");
+        entry.put("asset_type", "TEST");
+        entry.put("override_key", "test_key_" + System.nanoTime());
+        entry.put("override_value", "test_value");
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("entries", Arrays.asList(entry));
+        invokePost("/api/organizations/override/entries", importBody);
+
+        Map<String, Object> countAfter = invokeGet("/api/organizations/override/count");
+        int after = ((Number) asMap(countAfter.get("data")).get("entry_count")).intValue();
+        assertEquals(before + 1, after);
+    }
 }
