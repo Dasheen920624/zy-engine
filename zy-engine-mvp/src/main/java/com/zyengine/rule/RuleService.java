@@ -52,6 +52,7 @@ public class RuleService {
             "patient_id", "encounter_id", "created_time");
 
     private final EnginePersistenceService persistenceService;
+    private final RuleEvalResultRepository ruleEvalResultRepository;
     private final RuleDslEvaluator dslEvaluator = new RuleDslEvaluator();
     private final Map<String, RuleDefinition> ruleStore = new ConcurrentHashMap<String, RuleDefinition>();
     private final Deque<RuleExecLogEntry> execLogs = new ConcurrentLinkedDeque<RuleExecLogEntry>();
@@ -61,8 +62,10 @@ public class RuleService {
     private final AtomicLong evaluationSequence = new AtomicLong();
     private final AtomicLong batchSequence = new AtomicLong();
 
-    public RuleService(EnginePersistenceService persistenceService) {
+    public RuleService(EnginePersistenceService persistenceService,
+                       RuleEvalResultRepository ruleEvalResultRepository) {
         this.persistenceService = persistenceService;
+        this.ruleEvalResultRepository = ruleEvalResultRepository;
     }
 
     public List<RuleDefinition> importRules(Object request) {
@@ -695,7 +698,63 @@ public class RuleService {
         while (evaluationStore.size() > EVALUATION_RING_CAPACITY) {
             evaluationStore.pollFirst();
         }
+
+        // RULE-008：把每条规则结果落库以支持跨实例查询。
+        // 持久化失败不影响主返回；环形缓冲仍可在内存中查询，开发库/生产库下能补充长周期回查。
+        persistEvaluationResults(resultId, invocation, patientContext, outcome);
         return evaluation;
+    }
+
+    private void persistEvaluationResults(String resultId, ScenarioInvocation invocation,
+                                          Map<String, Object> patientContext,
+                                          ScenarioPipelineOutcome outcome) {
+        if (ruleEvalResultRepository == null || !ruleEvalResultRepository.enabled()) {
+            return;
+        }
+        if (outcome.resultEntries == null || outcome.resultEntries.isEmpty()) {
+            return;
+        }
+        for (Map<String, Object> entry : outcome.resultEntries) {
+            try {
+                RuleEvalResultEntity entity = new RuleEvalResultEntity();
+                entity.setEvalId(resultId);
+                entity.setRuleCode(string(entry.get("rule_code"), null));
+                entity.setRuleVersion(string(entry.get("version_no"), null));
+                entity.setPatientId(ClinicalFactUtils.patientId(patientContext));
+                entity.setEncounterId(ClinicalFactUtils.encounterId(patientContext));
+                entity.setHit(Boolean.TRUE.equals(entry.get("hit")));
+                entity.setSeverity(string(entry.get("severity"), null));
+                entity.setMessage(string(entry.get("message"), null));
+                entity.setActionsJson(persistenceService.toJsonOrNull(entry.get("actions")));
+                entity.setEvidenceJson(persistenceService.toJsonOrNull(entry.get("evidence")));
+                entity.setInputSnapshotJson(persistenceService.toJsonOrNull(patientContext));
+                entity.setOutputSnapshotJson(persistenceService.toJsonOrNull(entry));
+                Object elapsedRaw = entry.get("elapsed_ms");
+                if (elapsedRaw instanceof Number) {
+                    entity.setElapsedMs(((Number) elapsedRaw).longValue());
+                }
+                entity.setResultStatus(entry.get("error") == null ? "SUCCESS" : "ERROR");
+                if (entry.get("error") != null) {
+                    entity.setErrorCode("RULE_EXEC_ERROR");
+                    entity.setErrorMessage(string(entry.get("error"), null));
+                }
+                entity.setTenantId(invocation.tenantId);
+                entity.setGroupCode(invocation.groupCode);
+                entity.setHospitalCode(invocation.hospitalCode);
+                entity.setCampusCode(invocation.campusCode);
+                entity.setSiteCode(invocation.siteCode);
+                entity.setDepartmentCode(invocation.departmentCode);
+                entity.setScopeLevel(invocation.scopeLevel);
+                entity.setScopeCode(invocation.scopeCode);
+                entity.setOrgSource(invocation.orgSource);
+                ruleEvalResultRepository.save(entity);
+            } catch (RuntimeException ex) {
+                // 持久化错误降级到日志，不阻断主链路。
+                org.slf4j.LoggerFactory.getLogger(RuleService.class)
+                        .warn("[traceId={}] persist rule eval result failed: resultId={}, ruleCode={}, err={}",
+                                TraceContext.getTraceId(), resultId, entry.get("rule_code"), ex.getMessage());
+            }
+        }
     }
 
     private Map<String, Object> evaluationSummary(Map<String, Object> evaluation) {

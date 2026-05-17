@@ -154,17 +154,96 @@ public class EnginePersistenceService {
         }
     }
 
+    /**
+     * 启动期/重启后用于从 DB 重建 PathwayService 的内存索引。
+     * 返回所有路径主表条目，键为 pathway_code，值为最小化的 config Map（包含 tenant_id/org_code/pathway_name/status 等元数据）。
+     * 配合 loadAllPathwayPublishedVersions 一起使用，避免重启导致已发布路径在 list/get 接口中"消失"。
+     */
+    public Map<String, Map<String, Object>> loadAllPathwayDrafts() {
+        Map<String, Map<String, Object>> result = new LinkedHashMap<String, Map<String, Object>>();
+        if (!enabled()) {
+            return result;
+        }
+        String sql = "SELECT tenant_id, org_code, pathway_code, pathway_name, specialty_code, disease_code, status " +
+                "FROM pe_pathway_def";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> config = new LinkedHashMap<String, Object>();
+                config.put("tenant_id", rs.getString("tenant_id"));
+                config.put("org_code", rs.getString("org_code"));
+                config.put("pathway_code", rs.getString("pathway_code"));
+                config.put("pathway_name", rs.getString("pathway_name"));
+                config.put("specialty_code", rs.getString("specialty_code"));
+                config.put("disease_code", rs.getString("disease_code"));
+                config.put("status", rs.getString("status"));
+                result.put(rs.getString("pathway_code"), config);
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("load pathway drafts failed: " + ex.getMessage(), ex);
+        }
+        return result;
+    }
+
+    /**
+     * 加载所有路径版本，返回 List 以保留 (pathway_code, version_no) 顺序。
+     * 每项包含 pathway_code/version_no/status/config（来自 config_json 反序列化）。
+     */
+    public List<Map<String, Object>> loadAllPathwayPublishedVersions() {
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        if (!enabled()) {
+            return result;
+        }
+        String sql = "SELECT pathway_code, version_no, status, config_json FROM pe_pathway_version " +
+                "ORDER BY pathway_code, created_time";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new LinkedHashMap<String, Object>();
+                row.put("pathway_code", rs.getString("pathway_code"));
+                row.put("version_no", rs.getString("version_no"));
+                row.put("status", rs.getString("status"));
+                String configJson = rs.getString("config_json");
+                if (configJson != null && !configJson.isEmpty()) {
+                    try {
+                        Map<String, Object> config = objectMapper.readValue(configJson, LinkedHashMap.class);
+                        row.put("config", config);
+                    } catch (IOException ex) {
+                        // 单条解析失败不阻断整体重建，记录占位即可，业务侧 list 仍能看到版本号。
+                        row.put("config", new LinkedHashMap<String, Object>());
+                    }
+                } else {
+                    row.put("config", new LinkedHashMap<String, Object>());
+                }
+                result.add(row);
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("load pathway versions failed: " + ex.getMessage(), ex);
+        }
+        return result;
+    }
+
     public void updatePathwayStatus(String pathwayCode, String status) {
+        updatePathwayStatus(pathwayCode, status, null, null);
+    }
+
+    public void updatePathwayStatus(String pathwayCode, String status, String tenantId, String orgCode) {
         if (!enabled()) {
             return;
         }
+        String resolvedTenant = string(tenantId, com.zyengine.common.OrgDefaults.DEFAULT_TENANT_ID);
+        String resolvedOrg = string(orgCode, com.zyengine.common.OrgDefaults.DEFAULT_HOSPITAL_CODE);
         String sql = "UPDATE pe_pathway_def SET status=?, updated_time=SYSTIMESTAMP " +
-                "WHERE tenant_id='default' AND org_code='ZYHOSPITAL' AND pathway_code=?";
+                "WHERE tenant_id=? AND org_code=? AND pathway_code=?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             // 路径主表用于配置中心筛选当前可用路径，发布版本时需要同步主表状态。
             ps.setString(1, status);
-            ps.setString(2, pathwayCode);
+            ps.setString(2, resolvedTenant);
+            ps.setString(3, resolvedOrg);
+            ps.setString(4, pathwayCode);
             ps.executeUpdate();
         } catch (SQLException ex) {
             throw new IllegalStateException("update pathway status failed: " + ex.getMessage(), ex);
@@ -1057,9 +1136,22 @@ public class EnginePersistenceService {
     }
 
     private List<String> loadLocalSchemaStatements() {
-        InputStream stream = EnginePersistenceService.class.getResourceAsStream("/db/local/h2_core_ddl.sql");
+        // 按顺序加载本地开发库 DDL：核心表 + 业务追加表。新增 DDL 需要在此显式注册。
+        String[] resources = new String[] {
+                "/db/local/h2_core_ddl.sql",
+                "/db/local/re_rule_eval_result_ddl.sql"
+        };
+        List<String> statements = new ArrayList<String>();
+        for (String resource : resources) {
+            statements.addAll(loadLocalSchemaResource(resource));
+        }
+        return statements;
+    }
+
+    private List<String> loadLocalSchemaResource(String resource) {
+        InputStream stream = EnginePersistenceService.class.getResourceAsStream(resource);
         if (stream == null) {
-            throw new IllegalStateException("local database schema resource not found: /db/local/h2_core_ddl.sql");
+            throw new IllegalStateException("local database schema resource not found: " + resource);
         }
         StringBuilder sql = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
@@ -1071,7 +1163,7 @@ public class EnginePersistenceService {
                 }
             }
         } catch (IOException ex) {
-            throw new IllegalStateException("read local database schema failed", ex);
+            throw new IllegalStateException("read local database schema failed: " + resource, ex);
         }
         List<String> statements = new ArrayList<String>();
         String[] parts = sql.toString().split(";");
@@ -1088,6 +1180,21 @@ public class EnginePersistenceService {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException("JSON serialization failed", ex);
+        }
+    }
+
+    /**
+     * 提供给其他 Service 复用的安全 JSON 序列化：null 返回 null，序列化异常返回 null 不抛出，
+     * 避免持久化层因输入异常打断业务主链路。
+     */
+    public String toJsonOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException ex) {
+            return null;
         }
     }
 

@@ -344,41 +344,38 @@ public class ConfigPackageService {
         String resolvedTenant = string(tenantId, DEFAULT_TENANT_ID);
         String resolvedVersion = string(packageVersion, null);
 
-        // Try to find from database first
-        if (resolvedVersion != null) {
-            List<ConfigPackageEntity> entities = configPackageRepository.findList(
-                    resolvedTenant, packageCode, null, null, null, null);
-            for (ConfigPackageEntity entity : entities) {
-                if (resolvedVersion.equals(entity.getPackageVersion())) {
-                    ConfigPackage configPackage = entity.toConfigPackage();
-                    loadJsonFields(configPackage, entity);
-                    return configPackage;
+        // DB 优先：仅在 DB enabled 时尝试查 DB，否则直接走内存（避免在 DB-only=false 时空查询后误判 not found）。
+        if (persistenceService.enabled()) {
+            if (resolvedVersion != null) {
+                List<ConfigPackageEntity> entities = configPackageRepository.findList(
+                        resolvedTenant, packageCode, null, null, null, null);
+                for (ConfigPackageEntity entity : entities) {
+                    if (resolvedVersion.equals(entity.getPackageVersion())) {
+                        ConfigPackage configPackage = entity.toConfigPackage();
+                        loadJsonFields(configPackage, entity);
+                        return configPackage;
+                    }
                 }
-            }
-            throw new IllegalArgumentException("config package not found: "
-                    + resolvedTenant + "/" + packageCode + "@" + resolvedVersion);
-        }
-
-        // Find latest version from database
-        List<ConfigPackageEntity> entities = configPackageRepository.findList(
-                resolvedTenant, packageCode, null, null, null, null);
-        ConfigPackage latest = null;
-        for (ConfigPackageEntity entity : entities) {
-            ConfigPackage configPackage = entity.toConfigPackage();
-            loadJsonFields(configPackage, entity);
-            if (latest == null || configPackage.getPackageVersion().compareTo(latest.getPackageVersion()) > 0) {
-                latest = configPackage;
-            }
-        }
-
-        if (latest == null) {
-            // Fall back to in-memory store if database is not enabled
-            if (!persistenceService.enabled()) {
+                // DB 未命中时也允许 fall back 到内存：导入操作仍在 packageStore 中保留副本。
                 return findPackageFromMemory(packageCode, resolvedVersion, resolvedTenant);
             }
-            throw new IllegalArgumentException("config package not found: " + resolvedTenant + "/" + packageCode);
+
+            List<ConfigPackageEntity> entities = configPackageRepository.findList(
+                    resolvedTenant, packageCode, null, null, null, null);
+            ConfigPackage latest = null;
+            for (ConfigPackageEntity entity : entities) {
+                ConfigPackage configPackage = entity.toConfigPackage();
+                loadJsonFields(configPackage, entity);
+                if (latest == null || configPackage.getPackageVersion().compareTo(latest.getPackageVersion()) > 0) {
+                    latest = configPackage;
+                }
+            }
+            if (latest != null) {
+                return latest;
+            }
         }
-        return latest;
+
+        return findPackageFromMemory(packageCode, resolvedVersion, resolvedTenant);
     }
 
     private ConfigPackage findPackageFromMemory(String packageCode, String packageVersion, String tenantId) {

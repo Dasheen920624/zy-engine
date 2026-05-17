@@ -9,13 +9,13 @@ CREATE TABLE IF NOT EXISTS re_rule_eval_result (
   rule_version VARCHAR(32),
   patient_id VARCHAR(64),
   encounter_id VARCHAR(64),
-  hit_flag BOOLEAN NOT NULL,
+  hit_flag SMALLINT NOT NULL,
   severity VARCHAR(32),
   message VARCHAR(1000),
-  actions JSONB,
-  evidence JSONB,
-  input_snapshot JSONB,
-  output_snapshot JSONB,
+  actions TEXT,
+  evidence TEXT,
+  input_snapshot TEXT,
+  output_snapshot TEXT,
   elapsed_ms INTEGER,
   result_status VARCHAR(32) NOT NULL,
   error_code VARCHAR(64),
@@ -43,13 +43,13 @@ COMMENT ON COLUMN re_rule_eval_result.rule_code IS '规则编码';
 COMMENT ON COLUMN re_rule_eval_result.rule_version IS '规则版本';
 COMMENT ON COLUMN re_rule_eval_result.patient_id IS '患者ID';
 COMMENT ON COLUMN re_rule_eval_result.encounter_id IS '就诊ID';
-COMMENT ON COLUMN re_rule_eval_result.hit_flag IS '是否命中，0=未命中，1=命中';
+COMMENT ON COLUMN re_rule_eval_result.hit_flag IS '是否命中，0=未命中，1=命中（统一为数字编码，跨方言一致）';
 COMMENT ON COLUMN re_rule_eval_result.severity IS '严重程度';
 COMMENT ON COLUMN re_rule_eval_result.message IS '评估消息';
-COMMENT ON COLUMN re_rule_eval_result.actions IS '建议操作，JSON数组';
-COMMENT ON COLUMN re_rule_eval_result.evidence IS '证据，JSON数组';
-COMMENT ON COLUMN re_rule_eval_result.input_snapshot IS '输入快照，JSON';
-COMMENT ON COLUMN re_rule_eval_result.output_snapshot IS '输出快照，JSON';
+COMMENT ON COLUMN re_rule_eval_result.actions IS '建议操作，JSON 字符串（TEXT 存储以跨方言）';
+COMMENT ON COLUMN re_rule_eval_result.evidence IS '证据，JSON 字符串（TEXT 存储以跨方言）';
+COMMENT ON COLUMN re_rule_eval_result.input_snapshot IS '输入快照，JSON 字符串';
+COMMENT ON COLUMN re_rule_eval_result.output_snapshot IS '输出快照，JSON 字符串';
 COMMENT ON COLUMN re_rule_eval_result.elapsed_ms IS '耗时（毫秒）';
 COMMENT ON COLUMN re_rule_eval_result.result_status IS '结果状态，SUCCESS/FAIL/ERROR';
 COMMENT ON COLUMN re_rule_eval_result.error_code IS '错误编码';

@@ -7,6 +7,7 @@ import com.zyengine.persistence.Ids;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -261,7 +262,14 @@ public class ConfigPackageRepository {
     }
 
     private Connection connection() throws SQLException {
-        return properties.getConnection();
+        // PKG-004 历史调用 properties.getConnection() 实际不存在，REVIEW-FIX-001 改为与项目其他 Repository 一致的 DriverManager 直连。
+        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
+        try {
+            Class.forName(driverClass);
+        } catch (ClassNotFoundException ex) {
+            throw new SQLException(driverClass + " not found", ex);
+        }
+        return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
     }
 
     private ConfigPackageEntity mapResultSet(ResultSet rs) throws SQLException {

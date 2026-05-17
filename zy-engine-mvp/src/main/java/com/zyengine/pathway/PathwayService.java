@@ -11,8 +11,11 @@ import com.zyengine.organization.OrganizationContext;
 import com.zyengine.persistence.EnginePersistenceService;
 import com.zyengine.rule.RuleService;
 import com.zyengine.util.ClinicalFactUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class PathwayService {
+    private static final Logger log = LoggerFactory.getLogger(PathwayService.class);
     private final RuleService ruleService;
     private final AdapterHubService adapterHubService;
     private final EnginePersistenceService persistenceService;
@@ -47,6 +51,48 @@ public class PathwayService {
         this.ruleService = ruleService;
         this.adapterHubService = adapterHubService;
         this.persistenceService = persistenceService;
+    }
+
+    /**
+     * 启动时从 DB 重建路径草稿、已发布版本和活动版本索引，避免进程重启后内存清空导致
+     * 已发布路径在 list/get 接口上"消失"，与产品原则"Oracle 是配置/版本的主数据源"对齐。
+     *
+     * 仅在 EnginePersistenceService.enabled() 时执行；DB-only 不可用时回到纯内存模式，
+     * 保持 LOCAL_H2 与 Oracle 双模式行为一致。
+     */
+    @PostConstruct
+    public void rebuildFromPersistence() {
+        if (!persistenceService.enabled()) {
+            return;
+        }
+        try {
+            Map<String, Map<String, Object>> drafts = persistenceService.loadAllPathwayDrafts();
+            for (Map.Entry<String, Map<String, Object>> entry : drafts.entrySet()) {
+                pathwayDrafts.putIfAbsent(entry.getKey(), entry.getValue());
+            }
+            List<Map<String, Object>> versions = persistenceService.loadAllPathwayPublishedVersions();
+            for (Map<String, Object> row : versions) {
+                String code = string(row.get("pathway_code"), null);
+                String versionNo = string(row.get("version_no"), null);
+                String status = string(row.get("status"), null);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> config = (Map<String, Object>) row.get("config");
+                if (code == null || versionNo == null) {
+                    continue;
+                }
+                publishedPathways.putIfAbsent(pathwayKey(code, versionNo),
+                        config == null ? new LinkedHashMap<String, Object>() : config);
+                // 沿用"最后一次写入的版本作为 active"的语义；ORDER BY created_time 保证最新版本在后。
+                if ("PUBLISHED".equals(status)) {
+                    activePublishedVersions.put(code, versionNo);
+                }
+            }
+            log.info("PathwayService rebuilt from persistence: drafts={}, versions={}, active={}",
+                    drafts.size(), versions.size(), activePublishedVersions.size());
+        } catch (RuntimeException ex) {
+            // 启动期 DB 异常不阻止应用启动，仅记录日志；内存仍可工作，后续可以通过手动重启或运维介入处理。
+            log.warn("PathwayService rebuild from persistence failed: {}", ex.getMessage(), ex);
+        }
     }
 
     public Map<String, Object> createPathway(Map<String, Object> config) {
@@ -78,7 +124,8 @@ public class PathwayService {
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
         activePublishedVersions.put(pathwayCode, versionNo);
         persistenceService.savePathwayVersion(pathwayCode, versionNo, "PUBLISHED", config);
-        persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED");
+        persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED",
+                string(config.get("tenant_id"), null), string(config.get("org_code"), null));
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("pathway_code", pathwayCode);
@@ -110,7 +157,8 @@ public class PathwayService {
         String previousVersion = activeVersion(pathwayCode, null);
         activePublishedVersions.put(pathwayCode, targetVersion);
         persistenceService.savePathwayVersion(pathwayCode, targetVersion, "PUBLISHED", targetConfig);
-        persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED");
+        persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED",
+                string(targetConfig.get("tenant_id"), null), string(targetConfig.get("org_code"), null));
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("pathway_code", pathwayCode);

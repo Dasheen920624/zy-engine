@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS re_rule_eval_result (
   rule_version VARCHAR(32),
   patient_id VARCHAR(64),
   encounter_id VARCHAR(64),
-  hit_flag BOOLEAN NOT NULL,
+  hit_flag SMALLINT NOT NULL,
   severity VARCHAR(32),
   message VARCHAR(1000),
   actions CLOB,
