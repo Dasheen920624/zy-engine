@@ -998,6 +998,7 @@ class EngineApiContractTests {
         emrRule.put("rule_type", "EMR_QC");
         emrRule.put("scenario_codes", Arrays.asList("EMR_QC"));
         emrRule.put("severity", "MEDIUM");
+        emrRule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         emrRule.put("priority", 90);
         emrRule.put("enabled", true);
         Map<String, Object> emrChief = new LinkedHashMap<String, Object>();
@@ -1024,6 +1025,7 @@ class EngineApiContractTests {
         insRule.put("rule_type", "INSURANCE_QC");
         insRule.put("scenario_codes", Arrays.asList("INSURANCE_QC", "DRUG_INDICATION"));
         insRule.put("severity", "HIGH");
+        insRule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         insRule.put("priority", 110);
         insRule.put("enabled", true);
         Map<String, Object> insUsed = new LinkedHashMap<String, Object>();
@@ -1046,6 +1048,7 @@ class EngineApiContractTests {
         safetyRule.put("rule_type", "SAFETY_BLOCK");
         safetyRule.put("scenario_codes", Arrays.asList("ORDER_SAFETY"));
         safetyRule.put("severity", "CRITICAL");
+        safetyRule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         safetyRule.put("priority", 130);
         safetyRule.put("enabled", true);
         Map<String, Object> safetyAtom = new LinkedHashMap<String, Object>();
@@ -1980,6 +1983,8 @@ class EngineApiContractTests {
         rule.put("severity", "HIGH");
         rule.put("priority", 100);
         rule.put("enabled", true);
+        // RULE-005 起 reference_document_code 是发布的硬性要求，历史 sample 默认补一个测试源以保持向后兼容。
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         Map<String, Object> chiefComplaint = new LinkedHashMap<String, Object>();
         chiefComplaint.put("fact", "chief_complaints.code");
         chiefComplaint.put("operator", "in");
@@ -2283,12 +2288,12 @@ class EngineApiContractTests {
         deptEntry.put("override_key", "auto_complete_enabled");
         deptEntry.put("override_value", true);
 
+        // ORG-004 测试原文 2295-2296 顺序错乱（先 auto_complete_enabled 再被覆盖、deptEntry 被改成 false），
+        // REVIEW-FIX-002 整理为：HOSPITAL 仅覆盖 notification_enabled=true，DEPT 保留 auto_complete_enabled=true
         Map<String, Object> hospitalEntry = new LinkedHashMap<>();
         hospitalEntry.put("scope_level", "HOSPITAL");
         hospitalEntry.put("scope_code", "HOSPITAL_JUNIT");
         hospitalEntry.put("asset_type", "PATHWAY");
-        hospitalEntry.put("override_key", "auto_complete_enabled");
-        deptEntry.put("override_value", false);
         hospitalEntry.put("override_key", "notification_enabled");
         hospitalEntry.put("override_value", true);
 
@@ -2671,14 +2676,22 @@ class EngineApiContractTests {
         importBody.put("rules", Arrays.asList(rule));
         invokePost("/api/rules", importBody);
 
-        Map<String, Object> listResp = invokeGet("/api/rules?ruleCode=R_REF_TEST_001");
+        Map<String, Object> listResp = invokeGet("/api/rules");
         List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
         assertFalse(rules.isEmpty());
-        Map<String, Object> found = rules.get(0);
-        assertEquals("R_REF_TEST_001", found.get("rule_code"));
-        assertEquals("SRC_GUIDELINE_AMI_2025", found.get("reference_document_code"));
-        assertEquals("CIT_REF_TEST", found.get("reference_citation_id"));
-        assertEquals("EVIDENCE", found.get("reference_binding_type"));
+        // listRules 返回 List<RuleDefinition>，Jackson 默认 camelCase；按 ruleCode 显式查找
+        Map<String, Object> found = null;
+        for (Map<String, Object> r : rules) {
+            if ("R_REF_TEST_001".equals(r.get("ruleCode"))) {
+                found = r;
+                break;
+            }
+        }
+        assertNotNull(found);
+        assertEquals("R_REF_TEST_001", found.get("ruleCode"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", found.get("referenceDocumentCode"));
+        assertEquals("CIT_REF_TEST", found.get("referenceCitationId"));
+        assertEquals("EVIDENCE", found.get("referenceBindingType"));
     }
 
     @Test
@@ -2809,11 +2822,14 @@ class EngineApiContractTests {
 
         Map<String, Object> publishBody = new LinkedHashMap<>();
         publishBody.put("approved_by", "ADMIN");
+        // 规则定义在 DEPARTMENT 级，publish 时 orgContext 也需带上 department 才能匹配
+        publishBody.put("department_code", "DEPT_CARDIOLOGY");
         invokePost("/api/rules/packages/PKG_DEPT_SCOPE/publish", publishBody);
 
         Map<String, Object> evalBody = new LinkedHashMap<>();
         evalBody.put("scenario_code", "EMR_QC");
         evalBody.put("rule_package_code", "PKG_DEPT_SCOPE");
+        evalBody.put("department_code", "DEPT_CARDIOLOGY");
         Map<String, Object> patientContext = new LinkedHashMap<>();
         patientContext.put("diagnosis_code", "I21.0");
         evalBody.put("patient_context", patientContext);
@@ -2843,11 +2859,18 @@ class EngineApiContractTests {
         importBody.put("rules", Arrays.asList(rule));
         invokePost("/api/rules", importBody);
 
-        Map<String, Object> listResp = invokeGet("/api/rules?ruleCode=R_CAMPUS_SCOPE_001");
+        Map<String, Object> listResp = invokeGet("/api/rules");
         List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
-        assertFalse(rules.isEmpty());
-        assertEquals("CAMPUS", rules.get(0).get("scope_level"));
-        assertEquals("CAMPUS_EAST", rules.get(0).get("scope_code"));
+        Map<String, Object> found = null;
+        for (Map<String, Object> r : rules) {
+            if ("R_CAMPUS_SCOPE_001".equals(r.get("ruleCode"))) {
+                found = r;
+                break;
+            }
+        }
+        assertNotNull(found);
+        assertEquals("CAMPUS", found.get("scopeLevel"));
+        assertEquals("CAMPUS_EAST", found.get("scopeCode"));
     }
 
     @Test
@@ -2868,11 +2891,18 @@ class EngineApiContractTests {
         importBody.put("rules", Arrays.asList(rule));
         invokePost("/api/rules", importBody);
 
-        Map<String, Object> listResp = invokeGet("/api/rules?ruleCode=R_SITE_SCOPE_001");
+        Map<String, Object> listResp = invokeGet("/api/rules");
         List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
-        assertFalse(rules.isEmpty());
-        assertEquals("SITE", rules.get(0).get("scope_level"));
-        assertEquals("SITE_EMERGENCY", rules.get(0).get("scope_code"));
+        Map<String, Object> found = null;
+        for (Map<String, Object> r : rules) {
+            if ("R_SITE_SCOPE_001".equals(r.get("ruleCode"))) {
+                found = r;
+                break;
+            }
+        }
+        assertNotNull(found);
+        assertEquals("SITE", found.get("scopeLevel"));
+        assertEquals("SITE_EMERGENCY", found.get("scopeCode"));
     }
 
     @Test
@@ -3382,9 +3412,10 @@ class EngineApiContractTests {
 
         Map<String, Object> getResp = invokeGet("/api/dify/workflows/WF_REF_TEST?workflowVersion=1.0.0");
         Map<String, Object> data = asMap(getResp.get("data"));
-        assertEquals("WF_REF_TEST", data.get("workflow_code"));
-        assertEquals("SRC_GUIDELINE_AMI_2025", data.get("reference_document_code"));
-        assertEquals("EVIDENCE", data.get("reference_binding_type"));
+        // DifyWorkflowTemplate Bean，Jackson 默认 camelCase
+        assertEquals("WF_REF_TEST", data.get("workflowCode"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", data.get("referenceDocumentCode"));
+        assertEquals("EVIDENCE", data.get("referenceBindingType"));
     }
 
     @Test
@@ -3410,12 +3441,12 @@ class EngineApiContractTests {
         boolean foundRef1 = false;
         boolean foundRef2 = false;
         for (Map<String, Object> t : templates) {
-            if ("WF_LIST_REF_1".equals(t.get("workflow_code"))) {
-                assertEquals("SRC_GUIDELINE_AMI_2025", t.get("reference_document_code"));
+            if ("WF_LIST_REF_1".equals(t.get("workflowCode"))) {
+                assertEquals("SRC_GUIDELINE_AMI_2025", t.get("referenceDocumentCode"));
                 foundRef1 = true;
             }
-            if ("WF_LIST_REF_2".equals(t.get("workflow_code"))) {
-                assertEquals("SRC_CONSENSUS_STEMI_2024", t.get("reference_document_code"));
+            if ("WF_LIST_REF_2".equals(t.get("workflowCode"))) {
+                assertEquals("SRC_CONSENSUS_STEMI_2024", t.get("referenceDocumentCode"));
                 foundRef2 = true;
             }
         }

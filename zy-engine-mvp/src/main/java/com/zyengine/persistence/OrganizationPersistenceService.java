@@ -55,43 +55,10 @@ public class OrganizationPersistenceService {
         if (!enabled()) {
             return;
         }
-        if (properties.localFileDatabase()) {
-            saveOrganizationUnitLocal(unit);
-            return;
-        }
-        String sql = "MERGE INTO org_unit t " +
-                "USING (SELECT ? AS tenant_id, ? AS level_code, ? AS org_code FROM dual) s " +
-                "ON (t.tenant_id=s.tenant_id AND t.level_code=s.level_code AND t.org_code=s.org_code) " +
-                "WHEN MATCHED THEN UPDATE SET t.org_name=?, t.parent_level_code=?, t.parent_org_code=?, " +
-                "t.status=?, t.display_order=?, t.updated_time=SYSTIMESTAMP " +
-                "WHEN NOT MATCHED THEN INSERT (id, tenant_id, level_code, org_code, org_name, " +
-                "parent_level_code, parent_org_code, status, display_order, created_by, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            int i = 1;
-            ps.setString(i++, unit.getTenantId());
-            ps.setString(i++, unit.getLevel());
-            ps.setString(i++, unit.getCode());
-            ps.setString(i++, unit.getName());
-            ps.setString(i++, unit.getParentLevel());
-            ps.setString(i++, unit.getParentCode());
-            ps.setString(i++, unit.getStatus());
-            ps.setInt(i++, unit.getDisplayOrder() != null ? unit.getDisplayOrder() : 0);
-            ps.setLong(i++, Ids.next());
-            ps.setString(i++, unit.getTenantId());
-            ps.setString(i++, unit.getLevel());
-            ps.setString(i++, unit.getCode());
-            ps.setString(i++, unit.getName());
-            ps.setString(i++, unit.getParentLevel());
-            ps.setString(i++, unit.getParentCode());
-            ps.setString(i++, unit.getStatus());
-            ps.setInt(i++, unit.getDisplayOrder() != null ? unit.getDisplayOrder() : 0);
-            ps.setString(i++, unit.getCreatedBy());
-            ps.executeUpdate();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save organization unit failed: " + ex.getMessage(), ex);
-        }
+        // ORG-003 原本仅 H2 走 UPDATE+INSERT、Oracle 走 MERGE INTO USING FROM dual；后者 DM/PG/Kingbase 不兼容。
+        // REVIEW-FIX-002 把所有方言统一到 UPDATE+INSERT 两阶段 upsert（CURRENT_TIMESTAMP 跨方言可用），
+        // 兼顾 Oracle/DM/PG/H2 多方言，且保留 (tenant_id, level_code, org_code) 唯一约束保护。
+        saveOrganizationUnitLocal(unit);
     }
 
     /**
@@ -253,7 +220,18 @@ public class OrganizationPersistenceService {
     }
 
     private void loadDriver() throws SQLException {
-        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
+        // 根据 dialect 选驱动类，与多方言 DDL 对齐；不限于 H2/Oracle，否则 DM/PG 用户无法启动。
+        String dialect = properties.providerName();
+        String driverClass;
+        if (properties.localFileDatabase()) {
+            driverClass = "org.h2.Driver";
+        } else if ("DM".equals(dialect)) {
+            driverClass = "dm.jdbc.driver.DmDriver";
+        } else if ("POSTGRESQL".equals(dialect) || "KINGBASE".equals(dialect)) {
+            driverClass = "org.postgresql.Driver";
+        } else {
+            driverClass = "oracle.jdbc.OracleDriver";
+        }
         try {
             Class.forName(driverClass);
         } catch (ClassNotFoundException ex) {

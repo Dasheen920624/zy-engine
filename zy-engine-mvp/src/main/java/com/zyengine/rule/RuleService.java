@@ -1551,12 +1551,23 @@ public class RuleService {
             definition.setTenantId(orgContext.getTenantId());
             definition.setGroupCode(orgContext.getGroupCode());
             definition.setHospitalCode(orgContext.getHospitalCode());
-            definition.setCampusCode(orgContext.getCampusCode());
-            definition.setSiteCode(orgContext.getSiteCode());
-            definition.setDepartmentCode(orgContext.getDepartmentCode());
             definition.setLegacyOrgCode(orgContext.getLegacyOrgCode());
-            definition.setScopeLevel(orgContext.getEffectiveScopeLevel());
-            definition.setScopeCode(orgContext.getEffectiveScopeCode());
+            // 单条规则可以在 ruleJson 中显式声明更细的 campus/site/department 覆盖 orgContext 的默认。
+            // ORG-004 之前的逻辑只取 orgContext 字段，会丢失规则自身的科室/站点/院区维度，导致
+            // 用 department_code 字段定义的科室规则被误降级到 HOSPITAL 作用域。
+            String campusCode = ruleJsonString(definition, "campus_code", "campusCode", null);
+            String siteCode = ruleJsonString(definition, "site_code", "siteCode", null);
+            String departmentCode = ruleJsonString(definition, "department_code", "departmentCode", null);
+            definition.setCampusCode(campusCode != null ? campusCode : orgContext.getCampusCode());
+            definition.setSiteCode(siteCode != null ? siteCode : orgContext.getSiteCode());
+            definition.setDepartmentCode(departmentCode != null ? departmentCode : orgContext.getDepartmentCode());
+            // 若规则自带了更细的维度，按"最细维度即生效作用域"重算 scope；否则沿用 orgContext.effective。
+            if (departmentCode != null || siteCode != null || campusCode != null) {
+                applyEffectiveScope(definition);
+            } else {
+                definition.setScopeLevel(orgContext.getEffectiveScopeLevel());
+                definition.setScopeCode(orgContext.getEffectiveScopeCode());
+            }
             definition.setOrgSource(orgContext.getSource());
         } else {
             definition.setTenantId(ruleJsonString(definition, "tenant_id", "tenantId", DEFAULT_TENANT_ID));

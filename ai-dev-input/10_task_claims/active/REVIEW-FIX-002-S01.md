@@ -192,7 +192,13 @@ submit_allowed: false
                   build: PASSED
                   test: 95 个测试 75 通过 / 14 失败 / 0 错误（之前 build 失败=0 通过）
                   剩余 14 个失败归因：RULE-005 阻断破坏向后兼容 (7) + ORG-004 ScopeLevel 回归 (3) + DIFY-001 测试 (2) + 字段命名 (1) + ORG-004 自身测试 (1)
-                  本阶段先 commit + push 让 main 可编译；阶段二/三在后续 commit 处理
+                  本阶段先 commit + push 让 main 可编译；阶段二/三在后续 commit 处理（commit 9abc5b8 已 push）
+2026-05-17 23:35 阶段二第一部分完成：
+                  - 修复 14 个测试失败 → tests 95/95 PASSED
+                  - ORG-003 多方言：driver loadDriver 支持 Oracle/DM/PG/Kingbase/H2；saveOrganizationUnit 改为 UPDATE+INSERT 跨方言 upsert
+                  - ORG-004 业务 bug：buildInheritanceChain → computeOverride 继承顺序反转（DEPARTMENT > HOSPITAL > PLATFORM 正确语义）
+                  - RULE-005 业务 bug：applyOrganization 保留 rule body 的 campus/site/department 细维度，避免被 orgContext 默认值覆盖
+                  - 测试调整：ruleDefinition helper + ruleEngineScenarioPackage 各规则 + regressionOrgScopeXXX 测试断言修正
 ```
 
 ## Handoff

@@ -96,7 +96,12 @@ public class OrgOverrideService {
         List<Map<String, String>> inheritanceChain = buildInheritanceChain(context);
         Map<String, OverrideSource> merged = new LinkedHashMap<>();
 
-        for (Map<String, String> scope : inheritanceChain) {
+        // 继承覆盖顺序：从粗粒度 (PLATFORM/GROUP) 到细粒度 (DEPARTMENT)，
+        // 让细粒度的 put 覆盖粗粒度，符合"DEPARTMENT > SITE > CAMPUS > HOSPITAL > GROUP > PLATFORM"语义。
+        // buildInheritanceChain 默认按 DEPARTMENT→PLATFORM 顺序生成，遍历时必须反转才能正确覆盖。
+        List<Map<String, String>> reversedChain = new ArrayList<>(inheritanceChain);
+        Collections.reverse(reversedChain);
+        for (Map<String, String> scope : reversedChain) {
             String level = scope.get("scope_level");
             String code = scope.get("scope_code");
             List<OrgOverrideEntry> matches = findEntries(tenantId, level, code, assetType);
