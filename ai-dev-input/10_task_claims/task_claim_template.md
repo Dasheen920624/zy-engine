@@ -8,9 +8,12 @@ owner:
 role:
 status: ACTIVE
 branch:
+git_base_commit:
+git_status_at_claim:
 created_at:
 last_heartbeat:
 expected_finish:
+heartbeat_interval_minutes: 60
 database_mode:
 oracle_available:
 local_db_verified:
@@ -21,6 +24,11 @@ review_status: NOT_REQUESTED
 reviewer:
 open_findings:
 quality_gate: BLOCKED_UNTIL_APPROVED
+feature_acceptance_required:
+feature_acceptance_id:
+write_scope:
+read_scope:
+forbidden_scope:
 
 ## Write Scope
 
@@ -52,6 +60,19 @@ quality_gate: BLOCKED_UNTIL_APPROVED
 
 ```
 
+## Status Sync Checkpoints
+
+```text
+claim_pushed_before_code:
+task_ledger_in_progress:
+git_status_checked_before_edit:
+last_heartbeat_pushed:
+review_status_synced:
+task_ledger_done_synced:
+commit_hash_recorded:
+post_push_git_status_clean:
+```
+
 ## Verification
 
 ```text
@@ -68,6 +89,11 @@ samples_or_api_examples_updated:
 docs_updated:
 db_only_checked:
 oracle_dm_h2_schema_synced:
+production_development_schema_synced:
+table_and_column_comments_complete:
+required_code_comments_complete:
+feature_acceptance_created:
+claim_status_synced:
 security_privacy_checked:
 ```
 

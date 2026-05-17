@@ -31,9 +31,11 @@ zy-engine-mvp/docs/00_总入口与AI接手导航.md
 11. 前端演示和规则校验默认使用dry-run，不允许绕过后端权限、审计和发布流程。
 12. 所有规则、知识、图谱证据、Dify解释、字典映射、适配器口径和质控结论都必须能追溯来源、引用位置、版本、审批人和适用组织范围。
 13. 多 AI 并行时必须先创建并推送 claim，遵守泳道、写入边界和不同能力 AI 执行规则。
-14. 开发完成后必须创建 review，按质量门禁完成自检、评审、整改和复评；未达到 `review_status=APPROVED` 且 `open_findings=0` 前，业务代码不得正式提交或进入主版本。
-15. 用户要求自主开发时，必须创建或更新 run log，优先处理阻断 review，额度不足时停止开新任务并完成交接。
-16. 每个任务必须说明目标角色、业务闭环和客户验收故事线，不能只按技术模块实现。
+14. claim 必须先推送到远端，开发前必须执行 `check-ai-collaboration.ps1` 和 `git status -sb`；状态、心跳、review、任务台账和提交 hash 必须同步，不能只在聊天里说明。
+15. 开发完成后必须创建 review，按质量门禁完成自检、评审、整改和复评；未达到 `review_status=APPROVED` 且 `open_findings=0` 前，业务代码不得正式提交或进入主版本。
+16. 客户可见、医学/医保/质控、数据库持久化、前端页面、发布同步、安全权限功能必须创建 `ai-dev-input/13_feature_acceptance/` 验收记录；未达 GOLD 的功能进入专业优化队列。
+17. 用户要求自主开发时，必须创建或更新 run log，优先处理阻断 review，额度不足时停止开新任务并完成交接。
+18. 每个任务必须说明目标角色、业务闭环和客户验收故事线，不能只按技术模块实现。
 
 ## 技术要求
 
@@ -45,6 +47,8 @@ zy-engine-mvp/docs/00_总入口与AI接手导航.md
 6. JSON配置可存CLOB，但关键查询字段必须结构化。
 7. 所有模块必须有单元测试。
 8. 涉及医学、医保、质控依据的配置，必须有来源完整性检查；缺来源、来源过期或来源未审核时不得发布。
+9. 新增或修改数据库表、字段、索引、约束、迁移脚本时，必须有中文表/字段备注，并同步 Oracle/达梦/PostgreSQL-Kingbase/LOCAL_H2_FILE。
+10. 公共 Controller、Service、Provider、复杂规则、发布/回滚/同步、医学/医保/质控判断必须有简洁意图注释，禁止无意义逐行注释。
 
 ## 输出要求
 
@@ -56,13 +60,17 @@ zy-engine-mvp/docs/00_总入口与AI接手导航.md
 4. 代码实现。
 5. 测试用例。
 6. 数据库角色说明：生产库验证方式、开发库 LOCAL_H2_FILE 验证方式、未跑生产库 smoke 的原因和补验计划。
-7. 本地验证方式。
-8. 未覆盖风险。
+7. claim/git 状态同步说明：claim_id、是否已推送、开发前 git 状态、心跳、review_id、任务台账状态。
+8. 功能验收说明：feature_acceptance_id、质量等级、是否进入专业优化队列。
+9. 表/字段备注和必要代码注释说明。
+10. 本地验证方式。
+11. 未覆盖风险。
 
 每次提交前必须验证：
 
 1. `zy-engine-mvp/scripts/run-tests.ps1`
 2. `zy-engine-mvp/scripts/build.ps1`
-3. `git diff --check`
+3. `zy-engine-mvp/scripts/check-ai-collaboration.ps1`
+4. `git diff --check`
 
-每完成一个明确开发任务，必须先通过 `ai-dev-input/11_ai_reviews` 质量评审，确认 `review_status=APPROVED` 且 `open_findings=0`。通过后只暂存本任务相关文件，使用中文短句提交，并立即推送到远端当前分支，保证其它 AI 可以拉取最新项目。自主运行时最终回复还必须包含 run_id、next_action。最终回复必须包含 review_id、open_findings、提交 hash、推送分支；如无法提交或推送，必须说明原因、影响和替代交接方式。
+每完成一个明确开发任务，必须先通过 `ai-dev-input/11_ai_reviews` 质量评审，确认 `review_status=APPROVED` 且 `open_findings=0`。需要功能验收的任务还必须完成 `ai-dev-input/13_feature_acceptance` 记录。通过后只暂存本任务相关文件，使用中文短句提交，并立即推送到远端当前分支，保证其它 AI 可以拉取最新项目。自主运行时最终回复还必须包含 run_id、next_action。最终回复必须包含 claim_id、review_id、feature_acceptance_id、open_findings、提交 hash、推送分支；如无法提交或推送，必须说明原因、影响和替代交接方式。

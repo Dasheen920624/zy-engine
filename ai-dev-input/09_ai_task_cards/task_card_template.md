@@ -29,9 +29,20 @@ review_required:
 review_id:
 review_status:
 open_findings:
+feature_acceptance_required:
+feature_acceptance_id:
 ```
 
-没有成功推送 active claim 前，只允许阅读和规划。
+没有成功推送远端 active claim 前，只允许阅读和规划。
+
+并发开发前还必须执行：
+
+```powershell
+.\zy-engine-mvp\scripts\check-ai-collaboration.ps1
+git status -sb
+```
+
+没有远端 active claim、claim 写入范围冲突、或 git 状态无法解释时，不允许开始改业务文件。
 
 若是自主开发，还必须创建或更新：
 
@@ -120,6 +131,9 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 - 本任务写入范围：
 - 明确不改范围：
 - 是否可能和其它 AI 冲突：
+- claim 是否已推送：
+- 开发前 git status：
+- 预计心跳间隔：
 - 目标用户角色：
 
 ## 适用组织范围
@@ -190,6 +204,8 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 - 索引：
 - 生产库 DDL（Oracle/达梦/PostgreSQL-Kingbase）：
 - 开发库 DDL（LOCAL_H2_FILE）：
+- 表/字段中文注释：
+- 索引/约束注释或说明：
 - Oracle/达梦/PostgreSQL-Kingbase 差异：
 - H2 本地库差异：
 - 是否需要迁移脚本：
@@ -233,6 +249,16 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 - 规则校验结果展示：
 - 空态、加载态、错误态：
 - E2E 或组件测试：
+
+## 注释要求
+
+说明：
+
+- 新增/修改表是否有中文 `COMMENT ON` 或等价备注脚本：
+- 新增/修改关键字段是否有中文注释：
+- 公共 Controller/Service/Provider 是否需要简洁意图注释：
+- 复杂规则、发布/回滚/同步、医学/医保/质控判断是否有注释：
+- 是否避免无意义逐行注释：
 
 ## Provider 影响
 
@@ -285,6 +311,8 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 - 安全和隐私审查：
 - 前端体验和可访问性审查：
 - P0/P1/P2 问题处理要求：
+- 是否需要功能验收记录：
+- 功能验收负责人：
 
 评审放行条件：
 
@@ -318,6 +346,7 @@ claim.status=READY_TO_SUBMIT
 - `ai-dev-input/README.md`
 - 样例 JSON
 - 测试矩阵
+- 功能验收记录：`ai-dev-input/13_feature_acceptance/**`
 
 ## 验收标准
 
@@ -338,6 +367,7 @@ claim.status=READY_TO_SUBMIT
 必须通过：
 
 ```powershell
+.\zy-engine-mvp\scripts\check-ai-collaboration.ps1
 .\zy-engine-mvp\scripts\run-tests.ps1
 .\zy-engine-mvp\scripts\build.ps1
 git diff --check
@@ -363,10 +393,11 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 
 1. 只暂存并提交本任务相关文件。
 2. 创建并通过 `ai-dev-input/11_ai_reviews` 质量评审。
-3. 只有 `review_status=APPROVED` 且 `open_findings=0`，才能正式提交业务代码。
-4. 每完成一个明确任务并通过质量门禁后，必须立即推送到远端当前分支。
-5. 完成后把 claim 更新为 `DONE` 并归档到 `ai-dev-input/10_task_claims/archive/YYYYMMDD/`，把 review 归档到 `ai-dev-input/11_ai_reviews/archive/YYYYMMDD/`；自主运行结束时归档 run log。
-6. 最终回复必须说明提交 hash、推送分支、review_id、run_id 和开放问题数；若无法提交或推送，必须说明原因、影响和替代交接方式。
+3. 需要功能验收时创建并更新 `ai-dev-input/13_feature_acceptance` 记录。
+4. 只有 `review_status=APPROVED` 且 `open_findings=0`，才能正式提交业务代码。
+5. 每完成一个明确任务并通过质量门禁后，必须立即推送到远端当前分支。
+6. 完成后把 claim 更新为 `DONE` 并归档到 `ai-dev-input/10_task_claims/archive/YYYYMMDD/`，把 review 归档到 `ai-dev-input/11_ai_reviews/archive/YYYYMMDD/`；有功能验收记录时同步提交 hash 和质量等级；自主运行结束时归档 run log。
+7. 最终回复必须说明提交 hash、推送分支、claim_id、review_id、feature_acceptance_id、run_id 和开放问题数；若无法提交或推送，必须说明原因、影响和替代交接方式。
 
 ## 风险与边界
 

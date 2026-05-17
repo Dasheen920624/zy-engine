@@ -97,6 +97,7 @@ PROV-001-S03 来源 review 阻断测试
 git pull --ff-only origin main
 git status -sb
 rg -n "claim_id:|task_id:|write_scope:" ai-dev-input/10_task_claims
+.\zy-engine-mvp\scripts\check-ai-collaboration.ps1
 ```
 
 然后检查：
@@ -114,6 +115,7 @@ rg -n "claim_id:|task_id:|write_scope:" ai-dev-input/10_task_claims
 - 写入范围重叠：不能继续，需要拆分、等待、或认领集成任务。
 - 本地已有无关改动：忽略但不回滚。
 - 本地已有相关改动：兼容现有改动继续，claim 中记录“接续已有本地改动”。
+- `git status -sb` 不是干净状态且无法说明来源：不能开始修改，必须先交接或请用户确认。
 
 ## 6. 认领流程
 
@@ -155,6 +157,10 @@ branch:
 created_at:
 last_heartbeat:
 expected_finish:
+git_base_commit:
+git_status_at_claim:
+feature_acceptance_required:
+feature_acceptance_id:
 write_scope:
 read_scope:
 forbidden_scope:
@@ -188,6 +194,8 @@ handoff:
 - `review_status` 写 `NOT_REQUESTED`、`REVIEW_REQUESTED`、`CHANGES_REQUESTED`、`APPROVED` 或 `REJECTED`。
 - `open_findings` 写开放问题数量；通过评审必须为 `0`。
 - `quality_gate` 写明是否允许正式提交。
+- `feature_acceptance_required` 写明是否需要逐功能验收；客户可见、医学/医保/质控、数据库、前端、发布同步、安全权限任务必须为 `true`。
+- `feature_acceptance_id` 引用 `ai-dev-input/13_feature_acceptance/` 下的验收记录。
 - `handoff` 记录未完成事项、风险和下一步。
 
 ## 8. 心跳机制
@@ -214,6 +222,19 @@ git push origin main
 超过 4 小时无心跳：视为可能 STALE，后续 AI 不得直接改同一文件范围，应先认领接管/协调任务。
 超过 24 小时无心跳且无对应提交：可由新的 AI 创建接管 claim，并在 handoff 中记录接管原因。
 ```
+
+## 8.1 Git 状态同步机制
+
+为避免“任务做了但台账没更新”或“git 状态滞后”：
+
+- 开发前：claim 必须已经推送到远端；`git status -sb` 结果写入 claim。
+- 开发中：超过 60 分钟必须更新 `last_heartbeat`；状态变化必须同步到 claim。
+- 自检前：claim 状态改为 `SELF_CHECK`，记录实际 diff 范围。
+- 发起评审前：claim 状态改为 `REVIEW_REQUESTED`，review 文件写入 `pending/`。
+- 提交前：claim 必须是 `READY_TO_SUBMIT`，review 必须 `APPROVED` 且 `open_findings=0`。
+- 推送后：claim、任务台账、功能验收记录必须写入 commit hash，再归档。
+
+任何一个状态对象缺失或不同步，都视为并发风险，不允许口头宣布完成。
 
 ## 9. 阻塞与交接
 
@@ -378,15 +399,17 @@ INT-002-S01 合并前端路由和导航
 
 ```text
 1. git pull --ff-only origin main
-2. 阅读 AI接手执行手册
-3. 阅读本任务认领机制
-4. 查看 active/blocked claim
-5. 选择一个无冲突任务切片
-6. 创建并推送 claim
-7. 开发代码、测试、文档
-8. 创建 review，完成质量评审和整改
-9. 评审通过后正式提交
-10. 完成后归档 claim 和 review
+2. 阅读 00_总入口与AI接手导航
+3. 查看任务台账目标行
+4. 运行 check-ai-collaboration.ps1 和 git status -sb
+5. 查看 active/blocked claim、pending review、feature acceptance 队列
+6. 选择一个无冲突任务切片
+7. 创建并推送 claim
+8. 开发代码、测试、文档
+9. 创建 review，完成质量评审和整改
+10. 需要时创建功能验收记录
+11. 评审和必要功能验收通过后正式提交
+12. 完成后归档 claim、review 和功能验收记录
 ```
 
 没有成功推送 claim 前，只允许阅读和规划，不允许修改业务代码。
@@ -403,6 +426,7 @@ INT-002-S01 合并前端路由和导航
 - 明确的写入范围。
 - 通过的验证命令。
 - 提交 hash 或无法提交原因。
+- 需要功能验收时，有功能验收记录和质量等级。
 - 剩余风险和下一步。
 
 这套记录是后续 AI 判断“哪些任务已做、哪些任务正在做、哪些任务不能碰”的第一依据。
