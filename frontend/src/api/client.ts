@@ -64,12 +64,25 @@ http.interceptors.response.use(
       (error.response?.headers?.["x-trace-id"] as string) ||
       (error.config?.headers?.["X-Trace-Id"] as string) ||
       "";
-    const code = (error.response?.data?.code as never) || "UNKNOWN_ERROR";
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      "网络异常或后端不可达";
-    throw new ApiError(code, message, traceId, error.response?.status);
+    const status = error.response?.status;
+    // 401/403 单独可观测：将来引入鉴权后业务层可据此跳登录或提示无权限。
+    // 当前没有鉴权链路，但保留分类信息以便日志告警。
+    let code: string;
+    let message: string;
+    if (status === 401) {
+      code = "UNAUTHORIZED";
+      message = "未认证或登录已过期";
+    } else if (status === 403) {
+      code = "FORBIDDEN";
+      message = "无权限执行此操作";
+    } else {
+      code = (error.response?.data?.code as never) || "UNKNOWN_ERROR";
+      message =
+        error.response?.data?.message ||
+        error.message ||
+        "网络异常或后端不可达";
+    }
+    throw new ApiError(code as never, message, traceId, status);
   },
 );
 

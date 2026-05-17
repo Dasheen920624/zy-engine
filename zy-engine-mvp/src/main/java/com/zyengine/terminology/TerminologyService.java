@@ -28,6 +28,17 @@ public class TerminologyService {
      */
     private final Map<String, Map<String, Object>> governanceQueue = new ConcurrentHashMap<String, Map<String, Object>>();
 
+    /** 治理队列内存最大容量，避免 OOM。超过容量时按插入顺序淘汰最旧条目。 */
+    private static final int GOVERNANCE_QUEUE_MAX_SIZE = 5000;
+
+    /**
+     * approve/reject 操作的串行化锁。findQueueEntry + status 更新是 read-modify-write 序列，
+     * 必须互斥防止两个线程并发审批同一项导致：
+     * 1) 双重写入映射缓存
+     * 2) entry 被查询到但 governance_status 在更新前已被另一线程改为 APPROVED/REJECTED
+     */
+    private final java.util.concurrent.locks.ReentrantLock governanceLock = new java.util.concurrent.locks.ReentrantLock();
+
     public TerminologyService(EnginePersistenceService persistenceService) {
         this.persistenceService = persistenceService;
         seedMappings();
@@ -160,87 +171,98 @@ public class TerminologyService {
      * 并将建议的标准码写入映射缓存。
      */
     public Map<String, Object> approvePendingMapping(String queueId, Map<String, Object> request) {
-        Map<String, Object> entry = findQueueEntry(queueId);
-        if (entry == null) {
-            throw new IllegalArgumentException("queue entry not found: " + queueId);
+        // 锁住整个 read-modify-write 序列，避免并发审批同一条 entry 时出现：
+        // - 双重写入映射缓存（两个线程都通过 PENDING_MAPPING 检查后各自 register 一次）
+        // - 一个线程审批一条 entry 后另一个线程仍能 reject 它（TOCTOU）
+        governanceLock.lock();
+        try {
+            Map<String, Object> entry = findQueueEntry(queueId);
+            if (entry == null) {
+                throw new IllegalArgumentException("queue entry not found: " + queueId);
+            }
+            if (!"PENDING_MAPPING".equals(string(entry.get("governance_status"), null))) {
+                throw new IllegalArgumentException("queue entry is not in PENDING_MAPPING status: " + queueId);
+            }
+
+            String reviewedBy = string(request.get("reviewed_by"), "SYSTEM");
+            String reviewComment = string(request.get("review_comment"), null);
+            String approvedStandardCode = string(request.get("standard_code"),
+                    string(entry.get("proposed_standard_code"), null));
+            String approvedStandardName = string(request.get("standard_name"),
+                    string(entry.get("proposed_standard_name"), approvedStandardCode));
+
+            if (approvedStandardCode == null || approvedStandardCode.isEmpty()) {
+                throw new IllegalArgumentException("standard_code is required for approval");
+            }
+
+            if (persistenceService.enabled()) {
+                persistenceService.updateUnmappedQueueStatus(queueId,
+                        string(entry.get("tenant_id"), "default"), "APPROVED", reviewedBy, reviewComment);
+            }
+            entry.put("governance_status", "APPROVED");
+            entry.put("reviewed_by", reviewedBy);
+            entry.put("reviewed_time", OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            entry.put("review_comment", reviewComment);
+
+            String sourceSystem = string(entry.get("source_system"), "");
+            String sourceCode = string(entry.get("source_code"), "");
+            String sourceName = string(entry.get("source_name"), "");
+            String conceptType = string(entry.get("concept_type"), "");
+            register(sourceSystem, sourceCode, sourceName, conceptType,
+                    approvedStandardCode, approvedStandardName, "APPROVED", 0.90, "MANUAL_REVIEW");
+
+            String govKey = governanceKey(sourceSystem, sourceCode, conceptType, "PENDING_MAPPING");
+            governanceQueue.remove(govKey);
+
+            Map<String, Object> result = new LinkedHashMap<String, Object>(entry);
+            result.put("standard_code", approvedStandardCode);
+            result.put("standard_name", approvedStandardName);
+            return result;
+        } finally {
+            governanceLock.unlock();
         }
-        if (!"PENDING_MAPPING".equals(string(entry.get("governance_status"), null))) {
-            throw new IllegalArgumentException("queue entry is not in PENDING_MAPPING status: " + queueId);
-        }
-
-        String reviewedBy = string(request.get("reviewed_by"), "SYSTEM");
-        String reviewComment = string(request.get("review_comment"), null);
-        // 审批时可覆盖建议标准码
-        String approvedStandardCode = string(request.get("standard_code"),
-                string(entry.get("proposed_standard_code"), null));
-        String approvedStandardName = string(request.get("standard_name"),
-                string(entry.get("proposed_standard_name"), approvedStandardCode));
-
-        if (approvedStandardCode == null || approvedStandardCode.isEmpty()) {
-            throw new IllegalArgumentException("standard_code is required for approval");
-        }
-
-        // 更新治理队列状态
-        if (persistenceService.enabled()) {
-            persistenceService.updateUnmappedQueueStatus(queueId,
-                    string(entry.get("tenant_id"), "default"), "APPROVED", reviewedBy, reviewComment);
-        }
-        // 更新内存镜像
-        entry.put("governance_status", "APPROVED");
-        entry.put("reviewed_by", reviewedBy);
-        entry.put("reviewed_time", OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        entry.put("review_comment", reviewComment);
-
-        // 将审批后的映射写入映射缓存
-        String sourceSystem = string(entry.get("source_system"), "");
-        String sourceCode = string(entry.get("source_code"), "");
-        String sourceName = string(entry.get("source_name"), "");
-        String conceptType = string(entry.get("concept_type"), "");
-        register(sourceSystem, sourceCode, sourceName, conceptType,
-                approvedStandardCode, approvedStandardName, "APPROVED", 0.90, "MANUAL_REVIEW");
-
-        // 从 PENDING_MAPPING 内存队列中移除（已改为 APPROVED）
-        String govKey = governanceKey(sourceSystem, sourceCode, conceptType, "PENDING_MAPPING");
-        governanceQueue.remove(govKey);
-
-        Map<String, Object> result = new LinkedHashMap<String, Object>(entry);
-        result.put("standard_code", approvedStandardCode);
-        result.put("standard_name", approvedStandardName);
-        return result;
     }
 
     /**
      * 驳回映射：将治理队列中的 PENDING_MAPPING 记录标记为 REJECTED。
      */
     public Map<String, Object> rejectPendingMapping(String queueId, Map<String, Object> request) {
-        Map<String, Object> entry = findQueueEntry(queueId);
-        if (entry == null) {
-            throw new IllegalArgumentException("queue entry not found: " + queueId);
+        governanceLock.lock();
+        try {
+            Map<String, Object> entry = findQueueEntry(queueId);
+            if (entry == null) {
+                throw new IllegalArgumentException("queue entry not found: " + queueId);
+            }
+            if (!"PENDING_MAPPING".equals(string(entry.get("governance_status"), null))) {
+                throw new IllegalArgumentException("queue entry is not in PENDING_MAPPING status: " + queueId);
+            }
+
+            String reviewedBy = string(request.get("reviewed_by"), "SYSTEM");
+            String reviewComment = string(request.get("review_comment"), null);
+
+            if (persistenceService.enabled()) {
+                persistenceService.updateUnmappedQueueStatus(queueId,
+                        string(entry.get("tenant_id"), "default"), "REJECTED", reviewedBy, reviewComment);
+                // REJECTED 后从 DB 物理删除，避免表膨胀；保留内存归档用于本次响应展示。
+                // 历史保留可由 reviewed_time + 单独归档表实现（属于 follow-up 任务）。
+                persistenceService.deleteUnmappedQueueEntry(queueId, string(entry.get("tenant_id"), "default"));
+            }
+
+            entry.put("governance_status", "REJECTED");
+            entry.put("reviewed_by", reviewedBy);
+            entry.put("reviewed_time", OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            entry.put("review_comment", reviewComment);
+
+            String sourceSystem = string(entry.get("source_system"), "");
+            String sourceCode = string(entry.get("source_code"), "");
+            String conceptType = string(entry.get("concept_type"), "");
+            String govKey = governanceKey(sourceSystem, sourceCode, conceptType, "PENDING_MAPPING");
+            governanceQueue.remove(govKey);
+
+            return new LinkedHashMap<String, Object>(entry);
+        } finally {
+            governanceLock.unlock();
         }
-        if (!"PENDING_MAPPING".equals(string(entry.get("governance_status"), null))) {
-            throw new IllegalArgumentException("queue entry is not in PENDING_MAPPING status: " + queueId);
-        }
-
-        String reviewedBy = string(request.get("reviewed_by"), "SYSTEM");
-        String reviewComment = string(request.get("review_comment"), null);
-
-        if (persistenceService.enabled()) {
-            persistenceService.updateUnmappedQueueStatus(queueId,
-                    string(entry.get("tenant_id"), "default"), "REJECTED", reviewedBy, reviewComment);
-        }
-
-        entry.put("governance_status", "REJECTED");
-        entry.put("reviewed_by", reviewedBy);
-        entry.put("reviewed_time", OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        entry.put("review_comment", reviewComment);
-
-        String sourceSystem = string(entry.get("source_system"), "");
-        String sourceCode = string(entry.get("source_code"), "");
-        String conceptType = string(entry.get("concept_type"), "");
-        String govKey = governanceKey(sourceSystem, sourceCode, conceptType, "PENDING_MAPPING");
-        governanceQueue.remove(govKey);
-
-        return new LinkedHashMap<String, Object>(entry);
     }
 
     private Map<String, Object> findQueueEntry(String queueId) {
@@ -295,14 +317,24 @@ public class TerminologyService {
                     OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
             queueEntry = existing;
         } else {
+            // 治理队列容量保护：超过 GOVERNANCE_QUEUE_MAX_SIZE 时按插入顺序淘汰最旧条目，避免 OOM。
+            if (governanceQueue.size() >= GOVERNANCE_QUEUE_MAX_SIZE) {
+                java.util.Iterator<String> it = governanceQueue.keySet().iterator();
+                if (it.hasNext()) {
+                    it.next();
+                    it.remove();
+                }
+            }
             governanceQueue.put(govKey, queueEntry);
         }
 
-        // 持久化
+        // 持久化失败不阻断标准化主流程，但必须留下日志便于运维定位审计基础设施问题。
         try {
             persistenceService.saveUnmappedQueueEntry(queueEntry);
-        } catch (RuntimeException ignored) {
-            // 治理队列落库失败不阻断标准化主流程。
+        } catch (RuntimeException ex) {
+            org.slf4j.LoggerFactory.getLogger(TerminologyService.class)
+                    .warn("[traceId={}] save unmapped queue entry failed: {}",
+                            com.zyengine.common.TraceContext.getTraceId(), ex.getMessage());
         }
 
         Map<String, Object> result = base(sourceSystem, sourceCode, sourceName, conceptType);

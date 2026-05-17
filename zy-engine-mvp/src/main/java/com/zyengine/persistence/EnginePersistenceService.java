@@ -1451,15 +1451,35 @@ public class EnginePersistenceService {
             ps.setString(2, reviewedBy);
             ps.setString(3, reviewComment);
             ps.setString(4, queueId);
-            ps.setString(5, string(tenantId, "default"));
+            ps.setString(5, string(tenantId, com.zyengine.common.OrgDefaults.DEFAULT_TENANT_ID));
             ps.executeUpdate();
         } catch (SQLException ex) {
             throw new IllegalStateException("update unmapped queue status failed: " + ex.getMessage(), ex);
         }
     }
 
+    /**
+     * 删除未映射治理队列中的指定条目（用于 REJECTED 后清理，防止表膨胀）。
+     */
+    public void deleteUnmappedQueueEntry(String queueId, String tenantId) {
+        if (!enabled()) {
+            return;
+        }
+        String sql = "DELETE FROM tm_unmapped_queue WHERE queue_id=? AND tenant_id=?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, queueId);
+            ps.setString(2, string(tenantId, com.zyengine.common.OrgDefaults.DEFAULT_TENANT_ID));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("delete unmapped queue entry failed: " + ex.getMessage(), ex);
+        }
+    }
+
     private void saveUnmappedQueueEntryLocal(Map<String, Object> entry) {
-        // H2 不支持 MERGE，用 UPDATE + INSERT 两步操作
+        // H2 不支持 Oracle MERGE 的 dual 写法，统一用 UPDATE + INSERT 两阶段。
+        // 用事务包裹避免：UPDATE 受影响 0 行 → INSERT 期间另一线程已插入相同 (tenant,source,system,code,type)
+        // 导致 INSERT 撞 UNIQUE 约束，或反过来 INSERT 成功后 UPDATE 计数丢失。
         String updateSql = "UPDATE tm_unmapped_queue SET occurrence_count=occurrence_count+1, " +
                 "last_occurrence_time=CURRENT_TIMESTAMP, source_name=COALESCE(?, source_name), " +
                 "updated_time=CURRENT_TIMESTAMP " +
@@ -1469,12 +1489,17 @@ public class EnginePersistenceService {
                 "proposed_confidence, proposed_mapping_source, occurrence_count, last_occurrence_time, " +
                 "created_time, updated_time) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-        try (Connection connection = connection()) {
+        Connection connection = null;
+        boolean prevAutoCommit = true;
+        try {
+            connection = connection();
+            prevAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
             int updated;
             try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
                 int i = 1;
                 ps.setString(i++, string(entry.get("source_name"), null));
-                ps.setString(i++, string(entry.get("tenant_id"), "default"));
+                ps.setString(i++, string(entry.get("tenant_id"), com.zyengine.common.OrgDefaults.DEFAULT_TENANT_ID));
                 ps.setString(i++, string(entry.get("source_system"), ""));
                 ps.setString(i++, string(entry.get("source_code"), ""));
                 ps.setString(i++, string(entry.get("concept_type"), ""));
@@ -1485,7 +1510,7 @@ public class EnginePersistenceService {
                 try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
                     int i = 1;
                     ps.setLong(i++, Ids.next());
-                    ps.setString(i++, string(entry.get("tenant_id"), "default"));
+                    ps.setString(i++, string(entry.get("tenant_id"), com.zyengine.common.OrgDefaults.DEFAULT_TENANT_ID));
                     ps.setString(i++, string(entry.get("queue_id"), ""));
                     ps.setString(i++, string(entry.get("source_system"), ""));
                     ps.setString(i++, string(entry.get("source_code"), ""));
@@ -1499,8 +1524,19 @@ public class EnginePersistenceService {
                     ps.executeUpdate();
                 }
             }
+            connection.commit();
         } catch (SQLException ex) {
+            if (connection != null) {
+                try { connection.rollback(); } catch (SQLException rollbackEx) { /* ignore rollback failure */ }
+            }
             throw new IllegalStateException("save unmapped queue entry local failed: " + ex.getMessage(), ex);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(prevAutoCommit);
+                    connection.close();
+                } catch (SQLException closeEx) { /* ignore */ }
+            }
         }
     }
 

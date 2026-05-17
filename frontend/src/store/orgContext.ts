@@ -14,8 +14,18 @@ function loadInitial(): OrgContext {
   } catch {
     /* localStorage 可能在隐私模式不可用，忽略 */
   }
+  const tenantId = env.VITE_DEFAULT_TENANT_ID;
+  if (!tenantId) {
+    // 兜底使用演示租户但必须告警：生产部署如未设置 VITE_DEFAULT_TENANT_ID，
+    // 所有请求会落到 TENANT_DEMO，数据会被错误归类。
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[orgContext] VITE_DEFAULT_TENANT_ID is not set; falling back to 'TENANT_DEMO'. " +
+        "Production deployments MUST set this env to avoid cross-tenant data contamination.",
+    );
+  }
   return {
-    tenant_id: env.VITE_DEFAULT_TENANT_ID || "TENANT_DEMO",
+    tenant_id: tenantId || "TENANT_DEMO",
     group_code: env.VITE_DEFAULT_GROUP_CODE || undefined,
     hospital_code: env.VITE_DEFAULT_HOSPITAL_CODE || undefined,
   };

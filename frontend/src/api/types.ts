@@ -17,18 +17,38 @@ export interface OrgContext {
   department_code?: string;
 }
 
-// Provider 运行状态（与 /api/system/providers 对齐）
+// Provider 运行状态（前端视图层使用的数组项，与 system.ts 适配层输出对齐）
+// 后端 HealthController 实际返回 providers: { database, graph, dify } 对象结构，
+// system.ts 中 fetchSystemProviders 会将其展平为数组以保持组件简洁。
 export interface ProviderStatus {
-  name: string;
-  ready: boolean;
-  provider: string;
-  reason?: string;
+  name: string;                    // 内部 key（"database"/"graph"/"dify"），来自展平的 Map.Entry.key
+  role: string;                    // 角色描述（CONFIG_PRIMARY_STORE / GRAPH_QUERY_PROVIDER / WORKFLOW_PROVIDER）
+  ready: boolean;                  // 是否可用
+  status: string;                  // READY / DISABLED / MISCONFIGURED / FALLBACK
+  provider: string;                // 实际 provider 名（如 LOCAL_H2_FILE / NEO4J / DIFY 等）
+  reason?: string | null;          // degraded_reason 展平后的别名
 }
 
 export interface SystemProviders {
   run_mode: "DB_ONLY" | "HYBRID" | "FULL_INTEGRATION" | "IN_MEMORY_DEMO";
   providers: ProviderStatus[];
   timestamp?: string;
+}
+
+// 后端原始结构（用于 system.ts 内部适配，不要直接暴露给视图层）
+export interface RawProviderEntry {
+  role?: string;
+  configured?: boolean;
+  ready?: boolean;
+  status?: string;
+  provider?: string;
+  degraded_reason?: string | null;
+}
+
+export interface RawSystemProviders {
+  service?: string;
+  run_mode?: "DB_ONLY" | "HYBRID" | "FULL_INTEGRATION" | "IN_MEMORY_DEMO";
+  providers?: Record<string, RawProviderEntry> | RawProviderEntry[];
 }
 
 // ─── 规则引擎 (FE-003) ───────────────────────────────────────────────
