@@ -25,6 +25,9 @@ public class RuleDefinition {
     private String scopeLevel;
     private String scopeCode;
     private String orgSource;
+    private String referenceDocumentCode;
+    private String referenceCitationId;
+    private String referenceBindingType;
     private Map<String, Object> ruleJson = new LinkedHashMap<String, Object>();
 
     public String getRuleCode() {
@@ -193,6 +196,30 @@ public class RuleDefinition {
 
     public void setOrgSource(String orgSource) {
         this.orgSource = orgSource;
+    }
+
+    public String getReferenceDocumentCode() {
+        return referenceDocumentCode;
+    }
+
+    public void setReferenceDocumentCode(String referenceDocumentCode) {
+        this.referenceDocumentCode = referenceDocumentCode;
+    }
+
+    public String getReferenceCitationId() {
+        return referenceCitationId;
+    }
+
+    public void setReferenceCitationId(String referenceCitationId) {
+        this.referenceCitationId = referenceCitationId;
+    }
+
+    public String getReferenceBindingType() {
+        return referenceBindingType;
+    }
+
+    public void setReferenceBindingType(String referenceBindingType) {
+        this.referenceBindingType = referenceBindingType;
     }
 
     public Map<String, Object> getRuleJson() {

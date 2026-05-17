@@ -232,6 +232,7 @@ public class RuleService {
             increment(byType, definition.getRuleType());
             increment(byStatus, definition.getStatus());
             collectDslIssues(definition, issues);
+            collectReferenceIssues(definition, issues);
             ruleSummaries.add(ruleSummary(definition));
         }
 
@@ -268,11 +269,25 @@ public class RuleService {
         summary.put("hospital_code", definition.getHospitalCode());
         summary.put("scope_level", definition.getScopeLevel());
         summary.put("scope_code", definition.getScopeCode());
+        summary.put("reference_document_code", definition.getReferenceDocumentCode());
+        summary.put("reference_citation_id", definition.getReferenceCitationId());
+        summary.put("reference_binding_type", definition.getReferenceBindingType());
         return summary;
     }
 
     private void collectDslIssues(RuleDefinition definition, List<Map<String, Object>> issues) {
         collectDslIssues(definition.getRuleCode(), definition.getRuleJson().get("condition"), "condition", issues);
+    }
+
+    private void collectReferenceIssues(RuleDefinition definition, List<Map<String, Object>> issues) {
+        if (definition.getReferenceDocumentCode() == null || definition.getReferenceDocumentCode().trim().isEmpty()) {
+            Map<String, Object> issue = new LinkedHashMap<String, Object>();
+            issue.put("rule_code", definition.getRuleCode());
+            issue.put("severity", "ERROR");
+            issue.put("field", "reference_document_code");
+            issue.put("message", "规则缺少来源文档绑定（reference_document_code），发布将被阻断");
+            issues.add(issue);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -905,6 +920,9 @@ public class RuleService {
         entry.put("hospital_code", definition.getHospitalCode());
         entry.put("scope_level", definition.getScopeLevel());
         entry.put("scope_code", definition.getScopeCode());
+        entry.put("reference_document_code", definition.getReferenceDocumentCode());
+        entry.put("reference_citation_id", definition.getReferenceCitationId());
+        entry.put("reference_binding_type", definition.getReferenceBindingType());
 
         RuleResult result = new RuleResult();
         result.setRuleCode(definition.getRuleCode());
@@ -1389,6 +1407,9 @@ public class RuleService {
         definition.setPublishedBy(string(rule.get("published_by"), string(rule.get("publishedBy"), null)));
         definition.setPublishedTime(string(rule.get("published_time"), string(rule.get("publishedTime"), null)));
         definition.setRuleJson(new LinkedHashMap<String, Object>(rule));
+        definition.setReferenceDocumentCode(string(rule.get("reference_document_code"), null));
+        definition.setReferenceCitationId(string(rule.get("reference_citation_id"), null));
+        definition.setReferenceBindingType(string(rule.get("reference_binding_type"), null));
         return definition;
     }
 
@@ -1602,6 +1623,9 @@ public class RuleService {
         definition.getRuleJson().put("scope_level", definition.getScopeLevel());
         definition.getRuleJson().put("scope_code", definition.getScopeCode());
         definition.getRuleJson().put("org_source", definition.getOrgSource());
+        definition.getRuleJson().put("reference_document_code", definition.getReferenceDocumentCode());
+        definition.getRuleJson().put("reference_citation_id", definition.getReferenceCitationId());
+        definition.getRuleJson().put("reference_binding_type", definition.getReferenceBindingType());
     }
 
     private void applyOrganization(RuleExecLogEntry entry, RuleDefinition definition,

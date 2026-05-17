@@ -2586,4 +2586,128 @@ class EngineApiContractTests {
         assertEquals("VALIDATION_ERROR", response.get("code"));
         assertTrue(String.valueOf(response.get("message")).contains("asset_type"));
     }
+
+    @Test
+    void ruleReferenceFieldsImportAndList() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_REF_TEST_001");
+        rule.put("rule_name", "来源引用测试规则");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("reference_citation_id", "CIT_REF_TEST");
+        rule.put("reference_binding_type", "EVIDENCE");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> listResp = invokeGet("/api/rules?ruleCode=R_REF_TEST_001");
+        List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
+        assertFalse(rules.isEmpty());
+        Map<String, Object> found = rules.get(0);
+        assertEquals("R_REF_TEST_001", found.get("rule_code"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", found.get("reference_document_code"));
+        assertEquals("CIT_REF_TEST", found.get("reference_citation_id"));
+        assertEquals("EVIDENCE", found.get("reference_binding_type"));
+    }
+
+    @Test
+    void rulePublishBlockedWithoutReference() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_NO_REF_001");
+        rule.put("rule_name", "无来源规则");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("package_code", "PKG_NO_REF");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> reviewResp = invokeGet("/api/rules/packages/PKG_NO_REF/review");
+        Map<String, Object> review = asMap(reviewResp.get("data"));
+        assertEquals(false, review.get("ready_to_publish"));
+
+        List<Map<String, Object>> issues = asListOfMap(review.get("issues"));
+        boolean hasReferenceIssue = false;
+        for (Map<String, Object> issue : issues) {
+            if ("reference_document_code".equals(issue.get("field"))) {
+                hasReferenceIssue = true;
+                assertEquals("ERROR", issue.get("severity"));
+            }
+        }
+        assertTrue(hasReferenceIssue, "review should report missing reference_document_code");
+
+        Map<String, Object> publishBody = new LinkedHashMap<>();
+        publishBody.put("approved_by", "ADMIN");
+        Map<String, Object> publishResp = invokePostExpectingClientError(
+                "/api/rules/packages/PKG_NO_REF/publish", publishBody);
+        assertEquals("VALIDATION_ERROR", publishResp.get("code"));
+    }
+
+    @Test
+    void rulePublishAllowedWithReference() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_WITH_REF_001");
+        rule.put("rule_name", "有来源规则");
+        rule.put("rule_type", "EMR_QC");
+        rule.put("package_code", "PKG_WITH_REF");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("reference_binding_type", "EVIDENCE");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> reviewResp = invokeGet("/api/rules/packages/PKG_WITH_REF/review");
+        Map<String, Object> review = asMap(reviewResp.get("data"));
+
+        boolean hasReferenceIssue = false;
+        for (Map<String, Object> issue : asListOfMap(review.get("issues"))) {
+            if ("reference_document_code".equals(issue.get("field"))) {
+                hasReferenceIssue = true;
+            }
+        }
+        assertFalse(hasReferenceIssue, "review should not report missing reference when document is bound");
+    }
+
+    @Test
+    void ruleEvaluationCarriesReferenceInfo() throws Exception {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_code", "R_EVAL_REF_001");
+        rule.put("rule_name", "评估来源测试规则");
+        rule.put("rule_type", "PATHWAY_ENTRY");
+        rule.put("package_code", "PKG_EVAL_REF");
+        rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        rule.put("reference_citation_id", "CIT_EVAL_REF");
+        rule.put("reference_binding_type", "EVIDENCE");
+        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("rules", Arrays.asList(rule));
+        invokePost("/api/rules", importBody);
+
+        Map<String, Object> publishBody = new LinkedHashMap<>();
+        publishBody.put("approved_by", "ADMIN");
+        invokePost("/api/rules/packages/PKG_EVAL_REF/publish", publishBody);
+
+        Map<String, Object> evalBody = new LinkedHashMap<>();
+        evalBody.put("scenario_code", "PATHWAY_ENTRY");
+        evalBody.put("rule_package_code", "PKG_EVAL_REF");
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("diagnosis_code", "I21.0");
+        evalBody.put("patient_context", patientContext);
+        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalData = asMap(evalResp.get("data"));
+
+        List<Map<String, Object>> results = asListOfMap(evalData.get("results"));
+        assertFalse(results.isEmpty());
+        Map<String, Object> result = results.get(0);
+        assertEquals("R_EVAL_REF_001", result.get("rule_code"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", result.get("reference_document_code"));
+        assertEquals("CIT_EVAL_REF", result.get("reference_citation_id"));
+        assertEquals("EVIDENCE", result.get("reference_binding_type"));
+    }
 }
