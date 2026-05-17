@@ -31,6 +31,191 @@ export interface SystemProviders {
   timestamp?: string;
 }
 
+// ─── 规则引擎 (FE-003) ───────────────────────────────────────────────
+
+export type ScenarioCode = "AMI_RECOMMEND" | "EMR_QC" | "INSURANCE_QC" | "ORDER_SAFETY";
+
+export type Severity = "HIGH" | "MEDIUM" | "LOW" | "INFO";
+
+export interface EvaluateRequest {
+  scenario_code: ScenarioCode;
+  rule_package_code?: string;
+  rule_package_version?: string;
+  operator_id?: string;
+  patient_context: {
+    patient: { patient_id: string; gender?: string; age?: number };
+    encounter: {
+      encounter_id: string;
+      visit_type?: string;
+      department_code?: string;
+      arrival_time?: string;
+    };
+    facts: Record<string, unknown>;
+  };
+  // 组织上下文（body 显式声明，优先级高于 Header）
+  tenant_id?: string;
+  hospital_code?: string;
+  campus_code?: string;
+  department_code?: string;
+}
+
+export interface HitItem {
+  rule_code: string;
+  rule_name?: string;
+  rule_version?: string;
+  package_code?: string;
+  severity: Severity;
+  action_type?: string;
+  message: string;
+  condition_summary?: string;
+  facts_matched?: Record<string, unknown>;
+  suggested_actions?: string[];
+  source_document?: {
+    title: string;
+    institution?: string;
+    version?: string;
+    section?: string;
+    evidence_level?: string;
+    reviewer?: string;
+    summary?: string;
+  };
+}
+
+export interface EvaluateResponse {
+  result_id: string;
+  batch_id?: string;
+  scenario_code: ScenarioCode;
+  package_code?: string;
+  package_version?: string;
+  evaluated_count: number;
+  hit_count: number;
+  elapsed_ms: number;
+  trace_id: string;
+  hits: HitItem[];
+  org_source?: string;
+  tenant_id?: string;
+  hospital_code?: string;
+  campus_code?: string;
+  department_code?: string;
+  scope_level?: string;
+  scope_code?: string;
+  created_time?: string;
+}
+
+export interface BatchEvaluateRequest {
+  scenario_code: ScenarioCode;
+  rule_package_code?: string;
+  rule_package_version?: string;
+  operator_id?: string;
+  items: Array<{
+    case_id: string;
+    patient_context: EvaluateRequest["patient_context"];
+  }>;
+}
+
+export interface BatchEvaluateResponse {
+  batch_id: string;
+  scenario_code: ScenarioCode;
+  results: EvaluateResponse[];
+  total_evaluated: number;
+  total_hit: number;
+  elapsed_ms: number;
+}
+
+export interface RuleEngineResultSummary {
+  result_id: string;
+  batch_id?: string;
+  scenario_code: ScenarioCode;
+  package_code?: string;
+  package_version?: string;
+  patient_id?: string;
+  encounter_id?: string;
+  evaluated_count: number;
+  hit_count: number;
+  elapsed_ms: number;
+  source?: string;
+  created_time?: string;
+}
+
+// ─── 配置包 (FE-004) ───────────────────────────────────────────────
+
+export type AssetType = "RULE" | "PATH" | "GRAPH" | "DIFY" | "WORKFLOW" | "TERMINOLOGY" | "ADAPTER" | "MIXED";
+
+export type PackageStatus = "DRAFT" | "REVIEWED" | "PUBLISHED" | "SYNCED" | "ACTIVE" | "RETIRED";
+
+export type ScopeLevel = "PLATFORM" | "GROUP" | "HOSPITAL" | "CAMPUS" | "SITE" | "DEPARTMENT";
+
+export interface ConfigPackageSummary {
+  tenant_id: string;
+  package_code: string;
+  package_version: string;
+  asset_type: AssetType;
+  scope_level: ScopeLevel;
+  scope_code: string;
+  scope_reference?: string;
+  status: PackageStatus;
+  base_version?: string;
+  target_version?: string;
+  content_hash: string;
+  created_by?: string;
+  reviewed_by?: string;
+  approved_by?: string;
+  created_time?: string;
+  reviewed_time?: string;
+  published_time?: string;
+}
+
+export interface ManifestItem {
+  asset_code: string;
+  asset_type: string;
+  version?: string;
+  change_type?: "ADDED" | "MODIFIED" | "UNCHANGED" | "REMOVED";
+}
+
+export interface ReviewIssue {
+  severity: "ERROR" | "WARNING" | "INFO";
+  field: string;
+  message: string;
+}
+
+export interface SourceReview {
+  enabled: boolean;
+  blocked: boolean;
+  missing_count: number;
+  expired_count: number;
+  unreviewed_count: number;
+  allow_publish: boolean;
+  message?: string;
+}
+
+export interface ConfigPackageReview extends ConfigPackageSummary {
+  declared_content_hash?: string;
+  ready_to_publish: boolean;
+  issues: ReviewIssue[];
+  summary?: {
+    asset_count: number;
+    manifest_keys: string[];
+    full_snapshot_present: boolean;
+    diff_present: boolean;
+    scope_exists: boolean;
+  };
+  manifest?: Record<string, unknown>;
+  source_review?: SourceReview;
+  scope_reference?: string;
+}
+
+export interface ConfigPackageDetail extends ConfigPackageSummary {
+  declared_content_hash?: string;
+  manifest?: Record<string, unknown>;
+  diff?: Record<string, unknown>;
+  full_snapshot?: Record<string, unknown>;
+}
+
+export interface PublishRequest {
+  approved_by: string;
+  approved_note?: string;
+}
+
 // 通用错误码（与 00_总入口 §9 一致）
 export type ApiErrorCode =
   | "SUCCESS"
