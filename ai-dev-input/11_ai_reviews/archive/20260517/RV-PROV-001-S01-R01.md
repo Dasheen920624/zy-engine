@@ -111,8 +111,8 @@ review_status: APPROVED
 approved_by: AI-Codex-20260517-bootstrap-self-review
 approved_at: 2026-05-17 11:49:00 +08:00
 submit_allowed: true
-commit: pending
-push: pending
+commit: 3ae1d1f
+push: origin/main
 risks: Oracle 实库 smoke 本轮未执行，后续建议补 Oracle 集成验证。
 follow_up_claims: PROV-002 / PROV-003
 ```
