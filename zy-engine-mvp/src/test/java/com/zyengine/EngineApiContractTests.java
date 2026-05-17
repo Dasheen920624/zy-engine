@@ -3257,4 +3257,61 @@ class EngineApiContractTests {
         assertEquals("AMI_NSTEMI", evidences.get(0).get("target_code"));
         assertEquals("SRC_CONSENSUS_STEMI_2024", evidences.get(0).get("reference_document_code"));
     }
+
+    @Test
+    void difyTemplateReferenceFields() throws Exception {
+        Map<String, Object> template = new LinkedHashMap<>();
+        template.put("workflow_code", "WF_REF_TEST");
+        template.put("workflow_name", "来源引用测试工作流");
+        template.put("workflow_version", "1.0.0");
+        template.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        template.put("reference_binding_type", "EVIDENCE");
+        template.put("input_defaults", Collections.singletonMap("model", "gpt-4"));
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("templates", Arrays.asList(template));
+        invokePost("/api/dify/workflows", importBody);
+
+        Map<String, Object> getResp = invokeGet("/api/dify/workflows/WF_REF_TEST?workflowVersion=1.0.0");
+        Map<String, Object> data = asMap(getResp.get("data"));
+        assertEquals("WF_REF_TEST", data.get("workflow_code"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", data.get("reference_document_code"));
+        assertEquals("EVIDENCE", data.get("reference_binding_type"));
+    }
+
+    @Test
+    void difyTemplateListReturnsReferences() throws Exception {
+        Map<String, Object> template1 = new LinkedHashMap<>();
+        template1.put("workflow_code", "WF_LIST_REF_1");
+        template1.put("workflow_name", "列表来源测试1");
+        template1.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+
+        Map<String, Object> template2 = new LinkedHashMap<>();
+        template2.put("workflow_code", "WF_LIST_REF_2");
+        template2.put("workflow_name", "列表来源测试2");
+        template2.put("reference_document_code", "SRC_CONSENSUS_STEMI_2024");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("templates", Arrays.asList(template1, template2));
+        invokePost("/api/dify/workflows", importBody);
+
+        Map<String, Object> listResp = invokeGet("/api/dify/workflows");
+        List<Map<String, Object>> templates = asListOfMap(listResp.get("data"));
+        assertTrue(templates.size() >= 2);
+
+        boolean foundRef1 = false;
+        boolean foundRef2 = false;
+        for (Map<String, Object> t : templates) {
+            if ("WF_LIST_REF_1".equals(t.get("workflow_code"))) {
+                assertEquals("SRC_GUIDELINE_AMI_2025", t.get("reference_document_code"));
+                foundRef1 = true;
+            }
+            if ("WF_LIST_REF_2".equals(t.get("workflow_code"))) {
+                assertEquals("SRC_CONSENSUS_STEMI_2024", t.get("reference_document_code"));
+                foundRef2 = true;
+            }
+        }
+        assertTrue(foundRef1);
+        assertTrue(foundRef2);
+    }
 }

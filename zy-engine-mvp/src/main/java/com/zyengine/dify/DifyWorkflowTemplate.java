@@ -17,6 +17,8 @@ public class DifyWorkflowTemplate {
     private Map<String, String> inputMappings = new LinkedHashMap<String, String>();
     private List<String> requiredInputs = new ArrayList<String>();
     private Map<String, Object> degradedOutputs = new LinkedHashMap<String, Object>();
+    private String referenceDocumentCode;
+    private String referenceBindingType;
 
     public String getWorkflowCode() {
         return workflowCode;
@@ -104,5 +106,21 @@ public class DifyWorkflowTemplate {
 
     public void setDegradedOutputs(Map<String, Object> degradedOutputs) {
         this.degradedOutputs = degradedOutputs;
+    }
+
+    public String getReferenceDocumentCode() {
+        return referenceDocumentCode;
+    }
+
+    public void setReferenceDocumentCode(String referenceDocumentCode) {
+        this.referenceDocumentCode = referenceDocumentCode;
+    }
+
+    public String getReferenceBindingType() {
+        return referenceBindingType;
+    }
+
+    public void setReferenceBindingType(String referenceBindingType) {
+        this.referenceBindingType = referenceBindingType;
     }
 }

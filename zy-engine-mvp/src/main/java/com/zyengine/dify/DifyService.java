@@ -645,6 +645,8 @@ public class DifyService {
         if (degraded instanceof Map) {
             template.setDegradedOutputs(new LinkedHashMap<String, Object>((Map<String, Object>) degraded));
         }
+        template.setReferenceDocumentCode(string(entry.get("reference_document_code"), null));
+        template.setReferenceBindingType(string(entry.get("reference_binding_type"), null));
         return template;
     }
 
