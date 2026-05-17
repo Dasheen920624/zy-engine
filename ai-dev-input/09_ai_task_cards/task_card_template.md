@@ -1,15 +1,12 @@
 # AI 任务卡模板
 
-使用前先阅读：
+使用前按最小阅读策略执行：
 
-- `zy-engine-mvp/docs/AI接手执行手册.md`
-- `zy-engine-mvp/docs/AI自主开发运行守则.md`
-- `zy-engine-mvp/docs/AI任务认领与并行开发机制.md`
-- `zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md`
-- `zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
-- `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
-- `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-- `zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
+- 必读：`zy-engine-mvp/docs/00_总入口与AI接手导航.md`
+- 只读任务行：`zy-engine-mvp/docs/02_任务台账.md`
+- 按任务触发条件最多补读 1 份专项文档：后端 `06_后端开发规范.md`，前端 `07_前端开发规范.md`，数据库 `数据库Provider与离线AI开发约定.md`，架构 `05_架构总图与服务边界.md`，部署 `09_内网部署与版本管理.md`，医学/医保/质控 `产品功能业务核查与开工清单.md`。
+
+不要把长文档列表当作默认必读清单；`00_总入口与AI接手导航.md` 的硬门禁和 DoD 是默认权威口径。
 
 ## 任务认领
 

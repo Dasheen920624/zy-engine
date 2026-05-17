@@ -8,29 +8,13 @@
 zy-engine-mvp/docs/00_总入口与AI接手导航.md
 ```
 
-总入口会路由到 4 份高密度索引：
+最小阅读策略：
 
-1. `zy-engine-mvp/docs/01_多角色诉求矩阵.md`
-2. `zy-engine-mvp/docs/02_任务台账.md`
-3. `zy-engine-mvp/docs/03_AI能力分级与并行冲突规约.md`
-4. `zy-engine-mvp/docs/04_客户验收剧本与报告模板.md`
+1. 必读 `00_总入口与AI接手导航.md`。
+2. 只读 `02_任务台账.md` 中的"下一批可领"、目标任务行、所在泳道。
+3. 按任务触发条件最多补读 1 份专项文档：后端读 `06_后端开发规范.md`，前端读 `07_前端开发规范.md`，数据库/DDL 读 `数据库Provider与离线AI开发约定.md`，架构/Provider 读 `05_架构总图与服务边界.md`，部署读 `09_内网部署与版本管理.md`，医学/医保/质控读 `产品功能业务核查与开工清单.md`。
 
-以及详情文档：
-
-5. `zy-engine-mvp/docs/AI接手执行手册.md`
-6. `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
-7. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-8. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-9. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
-10. `zy-engine-mvp/docs/前端产品交互与视觉规范.md`
-11. `zy-engine-mvp/docs/AI自主开发运行守则.md`
-12. `zy-engine-mvp/docs/AI任务认领与并行开发机制.md`
-13. `zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md`
-14. `zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
-15. `zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
-16. `zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md`
-
-`00_总入口与AI接手导航.md` 是唯一首读入口；自主开发运行守则、任务认领机制、质量门禁、数据库 Provider 与离线开发约定是执行纪律；产品化总纲、产品功能核查、全功能蓝图、前端配置验收和前端交互视觉规范是业务与界面设计入口。
+除非任务明确跨域，不要通读长文档。`00_总入口与AI接手导航.md` 的硬门禁和 DoD 是默认权威口径。
 
 ## 必须遵守的边界
 

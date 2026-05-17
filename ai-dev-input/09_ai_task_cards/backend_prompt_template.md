@@ -1,17 +1,12 @@
 # 后端开发提示词模板
 
-请基于以下资料实现指定后端任务。开始前必须先阅读：
+请基于以下资料实现指定后端任务。开始前按最小阅读策略执行：
 
-- `zy-engine-mvp/docs/AI接手执行手册.md`
-- `zy-engine-mvp/docs/AI自主开发运行守则.md`
-- `zy-engine-mvp/docs/AI任务认领与并行开发机制.md`
-- `zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md`
-- `zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
-- `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
-- `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-- `zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
-- `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-- `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
+- 必读：`zy-engine-mvp/docs/00_总入口与AI接手导航.md`
+- 只读任务行：`zy-engine-mvp/docs/02_任务台账.md`
+- 后端任务补读：`zy-engine-mvp/docs/06_后端开发规范.md`
+- 涉及 DDL / 持久化 / 开发库 / 生产库时再补读：`zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
+- 涉及架构 Provider 或跨模块时再补读：`zy-engine-mvp/docs/05_架构总图与服务边界.md`
 
 ## 模块
 
@@ -23,11 +18,10 @@
 
 ## 输入资料
 
-- 产品总纲：`zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-- 业务核查：`zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
-- 全功能蓝图：`zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-- 顶级总控：`zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
-- 接手手册：`zy-engine-mvp/docs/AI接手执行手册.md`
+- 最小入口：`zy-engine-mvp/docs/00_总入口与AI接手导航.md`
+- 任务台账：`zy-engine-mvp/docs/02_任务台账.md`
+- 业务核查（医学/医保/质控任务才读）：`zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
+- 产品总纲（范围不清时才读）：`zy-engine-mvp/docs/产品化方案与AI开发编排.md`
 - OpenAPI：`ai-dev-input/02_api_contracts/engines.openapi.yaml`
 - JSON Schema：`ai-dev-input/03_data_models/...`
 - DDL：`ai-dev-input/04_database/oracle/core_ddl.sql`、`ai-dev-input/04_database/dm/core_ddl.sql`、`ai-dev-input/04_database/postgres/core_ddl.sql`、`ai-dev-input/04_database/local/h2_core_ddl.sql`

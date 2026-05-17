@@ -2,24 +2,13 @@
 
 ## 1. 用途
 
-本文是后续 AI 接手本项目时的第一入口。它不替代产品总纲，而是把“接手后怎么做”压缩成可执行流程。
+本文是早期接手手册，已降级为参考资料。后续 AI 的唯一首读入口是 `00_总入口与AI接手导航.md`；默认不要从本文开始，也不要按旧长清单通读。
 
-接手 AI 必读顺序：
+最小接手顺序：
 
-1. 本文。
-2. `zy-engine-mvp/docs/AI自主开发运行守则.md`
-3. `zy-engine-mvp/docs/AI任务认领与并行开发机制.md`
-4. `zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md`
-5. `zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
-6. `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
-7. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-8. `zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
-9. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-10. `zy-engine-mvp/docs/多角色评审与执行计划.md`
-11. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
-12. 根目录 `README.md`
-13. `zy-engine-mvp/README.md`
-14. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
+1. `zy-engine-mvp/docs/00_总入口与AI接手导航.md`
+2. `zy-engine-mvp/docs/02_任务台账.md` 的下一批、目标任务行和所在泳道。
+3. 按任务触发条件最多补读 1 份专项文档。专项文档选择规则以 `00_总入口与AI接手导航.md` 为准。
 
 ## 2. 当前项目一句话
 
@@ -38,21 +27,15 @@ rg -n "run_id:|status: ACTIVE|current_claim|next_action" ai-dev-input/12_autonom
 rg -n "业务核查|首批客户验收故事线|当前优先任务池|Definition of Done|PROV-001|PKG-001|ORG-001|TERM-001|RULE-001|FE-001|FE-003" zy-engine-mvp/docs
 ```
 
-再阅读：
+如任务边界仍不清，再按触发条件阅读 1 份专项文档：
 
 ```text
-zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md
-zy-engine-mvp/docs/AI自主开发运行守则.md
-zy-engine-mvp/docs/AI任务认领与并行开发机制.md
-zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
-zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md
-zy-engine-mvp/docs/产品化方案与AI开发编排.md
-zy-engine-mvp/docs/产品功能业务核查与开工清单.md
-zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
-zy-engine-mvp/docs/前端配置平台规划与开发验证.md
-zy-engine-mvp/README.md
-ai-dev-input/09_ai_task_cards/ai_system_prompt.md
-ai-dev-input/09_ai_task_cards/task_card_template.md
+后端：zy-engine-mvp/docs/06_后端开发规范.md
+前端：zy-engine-mvp/docs/07_前端开发规范.md
+数据库：zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md
+架构：zy-engine-mvp/docs/05_架构总图与服务边界.md
+部署：zy-engine-mvp/docs/09_内网部署与版本管理.md
+医学/医保/质控：zy-engine-mvp/docs/产品功能业务核查与开工清单.md
 ```
 
 若工作树已有未提交改动：
