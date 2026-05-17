@@ -18,11 +18,14 @@ import java.util.Map;
 public class ProvenanceController {
     private final ProvenanceService provenanceService;
     private final SourceCitationService sourceCitationService;
+    private final SourceAssetBindingService sourceAssetBindingService;
 
     public ProvenanceController(ProvenanceService provenanceService,
-                                SourceCitationService sourceCitationService) {
+                                SourceCitationService sourceCitationService,
+                                SourceAssetBindingService sourceAssetBindingService) {
         this.provenanceService = provenanceService;
         this.sourceCitationService = sourceCitationService;
+        this.sourceAssetBindingService = sourceAssetBindingService;
     }
 
     @PostMapping("/source-documents")
@@ -94,6 +97,60 @@ public class ProvenanceController {
             @RequestParam(required = false) String tenantId,
             @RequestParam(required = false) String tenant_id) {
         return ApiResult.success(sourceCitationService.getCitationsByDocument(
+                documentCode, tenantId == null ? tenant_id : tenantId));
+    }
+
+    @PostMapping("/bindings")
+    public ApiResult<Map<String, Object>> importBindings(@RequestBody Object request) {
+        return ApiResult.success(sourceAssetBindingService.importBindings(request));
+    }
+
+    @GetMapping("/bindings")
+    public ApiResult<List<Map<String, Object>>> listBindings(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String tenant_id,
+            @RequestParam(required = false) String assetType,
+            @RequestParam(required = false) String asset_type,
+            @RequestParam(required = false) String assetCode,
+            @RequestParam(required = false) String asset_code,
+            @RequestParam(required = false) String documentCode,
+            @RequestParam(required = false) String document_code,
+            @RequestParam(required = false) String bindingType,
+            @RequestParam(required = false) String binding_type,
+            @RequestParam(required = false) String limit) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        filters.put("tenantId", tenantId == null ? tenant_id : tenantId);
+        filters.put("assetType", assetType == null ? asset_type : assetType);
+        filters.put("assetCode", assetCode == null ? asset_code : assetCode);
+        filters.put("documentCode", documentCode == null ? document_code : documentCode);
+        filters.put("bindingType", bindingType == null ? binding_type : bindingType);
+        filters.put("limit", limit);
+        return ApiResult.success(sourceAssetBindingService.listBindings(filters));
+    }
+
+    @GetMapping("/bindings/{bindingId}")
+    public ApiResult<Map<String, Object>> getBinding(@PathVariable String bindingId,
+                                                     @RequestParam(required = false) String tenantId,
+                                                     @RequestParam(required = false) String tenant_id) {
+        return ApiResult.success(sourceAssetBindingService.getBinding(bindingId, tenantId == null ? tenant_id : tenantId));
+    }
+
+    @GetMapping("/assets/{assetType}/{assetCode}/bindings")
+    public ApiResult<List<Map<String, Object>>> getBindingsByAsset(
+            @PathVariable String assetType,
+            @PathVariable String assetCode,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String tenant_id) {
+        return ApiResult.success(sourceAssetBindingService.getBindingsByAsset(
+                assetType, assetCode, tenantId == null ? tenant_id : tenantId));
+    }
+
+    @GetMapping("/source-documents/{documentCode}/bindings")
+    public ApiResult<List<Map<String, Object>>> getBindingsByDocument(
+            @PathVariable String documentCode,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String tenant_id) {
+        return ApiResult.success(sourceAssetBindingService.getBindingsByDocument(
                 documentCode, tenantId == null ? tenant_id : tenantId));
     }
 }

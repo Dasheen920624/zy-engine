@@ -2447,4 +2447,143 @@ class EngineApiContractTests {
         assertEquals(1, warnings.size());
         assertEquals("location", warnings.get(0).get("field"));
     }
+
+    @Test
+    void sourceAssetBindingImportListAndGet() throws Exception {
+        Map<String, Object> importDoc = sampleSourceDocumentImport("TENANT_BINDING");
+        invokePost("/api/provenance/source-documents", importDoc);
+
+        Map<String, Object> ruleBinding = new LinkedHashMap<>();
+        ruleBinding.put("asset_type", "RULE");
+        ruleBinding.put("asset_code", "R_AMI_STEMI_ENTRY");
+        ruleBinding.put("document_code", "SRC_GUIDELINE_AMI_2025");
+        ruleBinding.put("binding_type", "EVIDENCE");
+        ruleBinding.put("confidence", "HIGH");
+        ruleBinding.put("description", "STEMI入径规则来源于AMI指南");
+
+        Map<String, Object> pathwayBinding = new LinkedHashMap<>();
+        pathwayBinding.put("asset_type", "PATHWAY");
+        pathwayBinding.put("asset_code", "AMI_STEMI_PATHWAY");
+        pathwayBinding.put("document_code", "SRC_CONSENSUS_STEMI_2024");
+        pathwayBinding.put("binding_type", "COMPLIANCE");
+        pathwayBinding.put("description", "STEMI路径符合绿色通道共识");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_BINDING");
+        importBody.put("operator_id", "JUNIT_BINDING_ADMIN");
+        importBody.put("bindings", Arrays.asList(ruleBinding, pathwayBinding));
+
+        Map<String, Object> importResp = invokePost("/api/provenance/bindings", importBody);
+        Map<String, Object> imported = asMap(importResp.get("data"));
+        assertEquals("TENANT_BINDING", imported.get("tenant_id"));
+        assertEquals(2, ((Number) imported.get("imported_count")).intValue());
+
+        List<Map<String, Object>> bindingsList = asListOfMap(imported.get("bindings"));
+        assertEquals(2, bindingsList.size());
+        assertNotNull(bindingsList.get(0).get("binding_id"));
+        assertEquals("RULE", bindingsList.get(0).get("asset_type"));
+        assertEquals("R_AMI_STEMI_ENTRY", bindingsList.get(0).get("asset_code"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", bindingsList.get(0).get("document_code"));
+        assertEquals("EVIDENCE", bindingsList.get(0).get("binding_type"));
+
+        Map<String, Object> listResp = invokeGet("/api/provenance/bindings?tenantId=TENANT_BINDING"
+                + "&assetType=RULE");
+        List<Map<String, Object>> filtered = asListOfMap(listResp.get("data"));
+        assertEquals(1, filtered.size());
+        assertEquals("R_AMI_STEMI_ENTRY", filtered.get(0).get("asset_code"));
+
+        String bindingId = (String) bindingsList.get(0).get("binding_id");
+        Map<String, Object> getResp = invokeGet("/api/provenance/bindings/" + bindingId
+                + "?tenantId=TENANT_BINDING");
+        Map<String, Object> binding = asMap(getResp.get("data"));
+        assertEquals(bindingId, binding.get("binding_id"));
+        assertEquals("RULE", binding.get("asset_type"));
+    }
+
+    @Test
+    void sourceAssetBindingGetByAsset() throws Exception {
+        Map<String, Object> importDoc = sampleSourceDocumentImport("TENANT_BIND_ASSET");
+        invokePost("/api/provenance/source-documents", importDoc);
+
+        Map<String, Object> binding1 = new LinkedHashMap<>();
+        binding1.put("asset_type", "RULE");
+        binding1.put("asset_code", "R_DUAL_BINDING");
+        binding1.put("document_code", "SRC_GUIDELINE_AMI_2025");
+        binding1.put("binding_type", "EVIDENCE");
+
+        Map<String, Object> binding2 = new LinkedHashMap<>();
+        binding2.put("asset_type", "RULE");
+        binding2.put("asset_code", "R_DUAL_BINDING");
+        binding2.put("document_code", "SRC_CONSENSUS_STEMI_2024");
+        binding2.put("binding_type", "REFERENCE");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_BIND_ASSET");
+        importBody.put("bindings", Arrays.asList(binding1, binding2));
+        invokePost("/api/provenance/bindings", importBody);
+
+        Map<String, Object> byAssetResp = invokeGet("/api/provenance/assets/RULE/R_DUAL_BINDING/bindings"
+                + "?tenantId=TENANT_BIND_ASSET");
+        List<Map<String, Object>> byAsset = asListOfMap(byAssetResp.get("data"));
+        assertEquals(2, byAsset.size());
+        for (Map<String, Object> b : byAsset) {
+            assertEquals("R_DUAL_BINDING", b.get("asset_code"));
+            assertEquals("RULE", b.get("asset_type"));
+        }
+    }
+
+    @Test
+    void sourceAssetBindingGetByDocument() throws Exception {
+        Map<String, Object> importDoc = sampleSourceDocumentImport("TENANT_BIND_DOC");
+        invokePost("/api/provenance/source-documents", importDoc);
+
+        Map<String, Object> binding = new LinkedHashMap<>();
+        binding.put("asset_type", "PATHWAY");
+        binding.put("asset_code", "AMI_PATHWAY");
+        binding.put("document_code", "SRC_GUIDELINE_AMI_2025");
+        binding.put("binding_type", "DERIVATION");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("tenant_id", "TENANT_BIND_DOC");
+        importBody.put("bindings", Arrays.asList(binding));
+        invokePost("/api/provenance/bindings", importBody);
+
+        Map<String, Object> byDocResp = invokeGet("/api/provenance/source-documents/SRC_GUIDELINE_AMI_2025/bindings"
+                + "?tenantId=TENANT_BIND_DOC");
+        List<Map<String, Object>> byDoc = asListOfMap(byDocResp.get("data"));
+        assertEquals(1, byDoc.size());
+        assertEquals("SRC_GUIDELINE_AMI_2025", byDoc.get(0).get("document_code"));
+        assertEquals("PATHWAY", byDoc.get(0).get("asset_type"));
+    }
+
+    @Test
+    void sourceAssetBindingImportRejectsMissingRequiredFields() throws Exception {
+        Map<String, Object> badBinding = new LinkedHashMap<>();
+        badBinding.put("asset_type", "RULE");
+        badBinding.put("binding_type", "EVIDENCE");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("bindings", Arrays.asList(badBinding));
+
+        Map<String, Object> response = invokePostExpectingClientError("/api/provenance/bindings", importBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertTrue(String.valueOf(response.get("message")).contains("asset_code")
+                || String.valueOf(response.get("message")).contains("document_code"));
+    }
+
+    @Test
+    void sourceAssetBindingImportRejectsUnsupportedAssetType() throws Exception {
+        Map<String, Object> badBinding = new LinkedHashMap<>();
+        badBinding.put("asset_type", "INVALID_TYPE");
+        badBinding.put("asset_code", "TEST");
+        badBinding.put("document_code", "DOC_TEST");
+        badBinding.put("binding_type", "EVIDENCE");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("bindings", Arrays.asList(badBinding));
+
+        Map<String, Object> response = invokePostExpectingClientError("/api/provenance/bindings", importBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertTrue(String.valueOf(response.get("message")).contains("asset_type"));
+    }
 }
