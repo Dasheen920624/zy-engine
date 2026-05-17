@@ -165,7 +165,9 @@ public class ConfigPackageService {
 
     public Map<String, Object> buildReview(ConfigPackage configPackage) {
         List<Map<String, Object>> issues = new ArrayList<Map<String, Object>>();
+        Map<String, Object> sourceReview = sourceReview(configPackage);
         validateForReview(configPackage, issues);
+        validateSourceReview(sourceReview, issues);
 
         Map<String, Object> summary = new LinkedHashMap<String, Object>();
         summary.put("asset_count", assetCount(configPackage.getFullSnapshot()));
@@ -182,6 +184,7 @@ public class ConfigPackageService {
         review.put("issues", issues);
         review.put("summary", summary);
         review.put("manifest", configPackage.getManifest());
+        review.put("source_review", sourceReview);
         review.put("scope_reference", organizationDirectoryService.scopeReference(configPackage.getTenantId(),
                 configPackage.getScopeLevel(), configPackage.getScopeCode()));
         return review;
@@ -374,6 +377,51 @@ public class ConfigPackageService {
     }
 
     @SuppressWarnings("unchecked")
+    private Map<String, Object> sourceReview(ConfigPackage configPackage) {
+        Object fromManifest = configPackage.getManifest() == null ? null : configPackage.getManifest().get("source_review");
+        if (!(fromManifest instanceof Map)) {
+            fromManifest = configPackage.getFullSnapshot() == null ? null : configPackage.getFullSnapshot().get("source_review");
+        }
+        Map<String, Object> raw = fromManifest instanceof Map
+                ? new LinkedHashMap<String, Object>((Map<String, Object>) fromManifest)
+                : new LinkedHashMap<String, Object>();
+        Map<String, Object> review = new LinkedHashMap<String, Object>();
+        review.put("enabled", bool(raw.get("enabled"), false));
+        review.put("blocked", bool(raw.get("blocked"), false));
+        review.put("missing_count", intValue(raw.get("missing_count"), 0));
+        review.put("expired_count", intValue(raw.get("expired_count"), 0));
+        review.put("unreviewed_count", intValue(raw.get("unreviewed_count"), 0));
+        review.put("allow_publish", bool(raw.get("allow_publish"), true));
+        review.put("message", string(raw.get("message"), "SOURCE_REVIEW_NOT_ENABLED"));
+        return review;
+    }
+
+    private void validateSourceReview(Map<String, Object> sourceReview, List<Map<String, Object>> issues) {
+        if (!bool(sourceReview.get("enabled"), false)) {
+            return;
+        }
+        if (bool(sourceReview.get("blocked"), false)) {
+            issues.add(issue("ERROR", "source_review", "source review blocked publish"));
+            return;
+        }
+        int missing = intValue(sourceReview.get("missing_count"), 0);
+        int expired = intValue(sourceReview.get("expired_count"), 0);
+        int unreviewed = intValue(sourceReview.get("unreviewed_count"), 0);
+        if (missing > 0) {
+            issues.add(issue("ERROR", "source_review.missing_count", "source review has missing sources: " + missing));
+        }
+        if (expired > 0) {
+            issues.add(issue("ERROR", "source_review.expired_count", "source review has expired sources: " + expired));
+        }
+        if (unreviewed > 0) {
+            issues.add(issue("ERROR", "source_review.unreviewed_count", "source review has unreviewed sources: " + unreviewed));
+        }
+        if (!bool(sourceReview.get("allow_publish"), true)) {
+            issues.add(issue("ERROR", "source_review.allow_publish", "source review does not allow publish"));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     private Map<String, Object> mapValue(Object value) {
         if (value instanceof Map) {
             return new LinkedHashMap<String, Object>((Map<String, Object>) value);
@@ -433,6 +481,30 @@ public class ConfigPackageService {
         }
         String text = String.valueOf(value);
         return text.trim().isEmpty() ? defaultValue : text.trim();
+    }
+
+    private boolean bool(Object value, boolean defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Boolean) {
+            return ((Boolean) value).booleanValue();
+        }
+        return "true".equalsIgnoreCase(String.valueOf(value).trim());
+    }
+
+    private int intValue(Object value, int defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value).trim());
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
     }
 
     private String upper(String text) {

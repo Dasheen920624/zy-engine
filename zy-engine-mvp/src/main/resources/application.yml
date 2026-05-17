@@ -18,6 +18,7 @@ zyengine:
     url: ${ZYENGINE_DB_URL:jdbc:oracle:thin:@//192.168.4.25:1521/ORCL}
     username: ${ZYENGINE_DB_USERNAME:ZYENGINE}
     password: ${ZYENGINE_DB_PASSWORD:}
+    init-schema: ${ZYENGINE_DB_INIT_SCHEMA:true}
   dify:
     enabled: ${ZYENGINE_DIFY_ENABLED:false}
     base-url: ${ZYENGINE_DIFY_BASE_URL:}

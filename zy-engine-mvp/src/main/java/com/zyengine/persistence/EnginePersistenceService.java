@@ -12,11 +12,18 @@ import com.zyengine.rule.RuleDefinition;
 import com.zyengine.util.ClinicalFactUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -41,15 +48,42 @@ public class EnginePersistenceService {
     }
 
     public boolean enabled() {
-        return properties.isEnabled() && properties.hasPassword();
+        return properties.isEnabled() && properties.hasRequiredCredentials();
+    }
+
+    public String providerName() {
+        return enabled() ? properties.providerName() : "IN_MEMORY";
+    }
+
+    @PostConstruct
+    public void initializeLocalSchema() {
+        if (!enabled() || !properties.localFileDatabase() || !properties.isInitSchema()) {
+            return;
+        }
+        List<String> statements = loadLocalSchemaStatements();
+        try (Connection connection = connection();
+             Statement statement = connection.createStatement()) {
+            for (String sql : statements) {
+                String trimmed = sql.trim();
+                if (!trimmed.isEmpty()) {
+                    statement.execute(trimmed);
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("initialize local database schema failed: " + ex.getMessage(), ex);
+        }
     }
 
     public void savePathwayDraft(String pathwayCode, Map<String, Object> config) {
         if (!enabled()) {
             return;
         }
+        if (properties.localFileDatabase()) {
+            savePathwayDraftLocal(pathwayCode, config);
+            return;
+        }
         String sql = "MERGE INTO pe_pathway_def t " +
-                "USING (SELECT ? tenant_id, ? org_code, ? pathway_code FROM dual) s " +
+                "USING (SELECT ? AS tenant_id, ? AS org_code, ? AS pathway_code FROM dual) s " +
                 "ON (t.tenant_id=s.tenant_id AND t.org_code=s.org_code AND t.pathway_code=s.pathway_code) " +
                 "WHEN MATCHED THEN UPDATE SET t.pathway_name=?, t.specialty_code=?, t.disease_code=?, t.status='DRAFT', t.updated_time=SYSTIMESTAMP " +
                 "WHEN NOT MATCHED THEN INSERT (id, tenant_id, org_code, pathway_code, pathway_name, specialty_code, disease_code, status, created_time) " +
@@ -86,8 +120,12 @@ public class EnginePersistenceService {
         if (!enabled()) {
             return;
         }
+        if (properties.localFileDatabase()) {
+            savePathwayVersionLocal(pathwayCode, versionNo, status, config);
+            return;
+        }
         String sql = "MERGE INTO pe_pathway_version t " +
-                "USING (SELECT ? pathway_code, ? version_no FROM dual) s " +
+                "USING (SELECT ? AS pathway_code, ? AS version_no FROM dual) s " +
                 "ON (t.pathway_code=s.pathway_code AND t.version_no=s.version_no) " +
                 "WHEN MATCHED THEN UPDATE SET t.status=?, t.config_json=? " +
                 "WHEN NOT MATCHED THEN INSERT (id, pathway_code, version_no, status, config_json, created_time) " +
@@ -161,8 +199,12 @@ public class EnginePersistenceService {
         if (!enabled()) {
             return;
         }
+        if (properties.localFileDatabase()) {
+            savePatientInstanceLocal(instance, admittedBy);
+            return;
+        }
         String sql = "MERGE INTO pe_patient_instance t " +
-                "USING (SELECT ? tenant_id, ? org_code, ? encounter_id, ? pathway_code, 'ACTIVE' status FROM dual) s " +
+                "USING (SELECT ? AS tenant_id, ? AS org_code, ? AS encounter_id, ? AS pathway_code, 'ACTIVE' AS status FROM dual) s " +
                 "ON (t.tenant_id=s.tenant_id AND t.org_code=s.org_code AND t.encounter_id=s.encounter_id AND t.pathway_code=s.pathway_code AND t.status=s.status) " +
                 "WHEN MATCHED THEN UPDATE SET t.current_node_code=?, t.updated_time=SYSTIMESTAMP " +
                 "WHEN NOT MATCHED THEN INSERT (id, tenant_id, org_code, patient_id, encounter_id, pathway_code, version_no, status, current_node_code, admitted_by, admission_time, created_time) " +
@@ -222,8 +264,12 @@ public class EnginePersistenceService {
         if (!enabled()) {
             return;
         }
+        if (properties.localFileDatabase()) {
+            saveTaskStateLocal(taskState);
+            return;
+        }
         String sql = "MERGE INTO pe_patient_task_state t " +
-                "USING (SELECT ? instance_id, ? node_code, ? task_code FROM dual) s " +
+                "USING (SELECT ? AS instance_id, ? AS node_code, ? AS task_code FROM dual) s " +
                 "ON (t.instance_id=s.instance_id AND t.node_code=s.node_code AND t.task_code=s.task_code) " +
                 "WHEN MATCHED THEN UPDATE SET t.task_name=?, t.task_type=?, t.status=?, t.result_json=?, t.updated_time=SYSTIMESTAMP " +
                 "WHEN NOT MATCHED THEN INSERT (id, instance_id, node_code, task_code, task_name, task_type, status, result_json, created_time, updated_time) " +
@@ -296,8 +342,12 @@ public class EnginePersistenceService {
         if (!enabled()) {
             return;
         }
+        if (properties.localFileDatabase()) {
+            saveRuleDefinitionLocal(definition, approvedBy);
+            return;
+        }
         String sql = "MERGE INTO re_rule_def t " +
-                "USING (SELECT ? tenant_id, ? org_code, ? rule_code, ? version_no FROM dual) s " +
+                "USING (SELECT ? AS tenant_id, ? AS org_code, ? AS rule_code, ? AS version_no FROM dual) s " +
                 "ON (t.tenant_id=s.tenant_id AND t.org_code=s.org_code AND t.rule_code=s.rule_code AND t.version_no=s.version_no) " +
                 "WHEN MATCHED THEN UPDATE SET t.rule_name=?, t.rule_type=?, t.status=?, t.severity=?, t.rule_json=?, t.approved_by=?, " +
                 "t.approved_time=CASE WHEN ?='PUBLISHED' THEN SYSTIMESTAMP ELSE t.approved_time END " +
@@ -531,6 +581,207 @@ public class EnginePersistenceService {
         return summary;
     }
 
+    private void savePathwayDraftLocal(String pathwayCode, Map<String, Object> config) {
+        String updateSql = "UPDATE pe_pathway_def SET pathway_name=?, specialty_code=?, disease_code=?, status='DRAFT', updated_time=CURRENT_TIMESTAMP " +
+                "WHERE tenant_id=? AND org_code=? AND pathway_code=?";
+        String insertSql = "INSERT INTO pe_pathway_def (id, tenant_id, org_code, pathway_code, pathway_name, specialty_code, disease_code, status, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', CURRENT_TIMESTAMP)";
+        String tenantId = string(config.get("tenant_id"), "default");
+        String orgCode = string(config.get("org_code"), "ZYHOSPITAL");
+        String name = string(config.get("pathway_name"), pathwayCode);
+        String specialty = string(config.get("specialty_code"), null);
+        String disease = string(config.get("disease_code"), pathwayCode);
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, name);
+                ps.setString(i++, specialty);
+                ps.setString(i++, disease);
+                ps.setString(i++, tenantId);
+                ps.setString(i++, orgCode);
+                ps.setString(i++, pathwayCode);
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, Ids.next());
+                    ps.setString(i++, tenantId);
+                    ps.setString(i++, orgCode);
+                    ps.setString(i++, pathwayCode);
+                    ps.setString(i++, name);
+                    ps.setString(i++, specialty);
+                    ps.setString(i++, disease);
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local pathway draft failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void savePathwayVersionLocal(String pathwayCode, String versionNo, String status, Map<String, Object> config) {
+        String updateSql = "UPDATE pe_pathway_version SET status=?, config_json=? WHERE pathway_code=? AND version_no=?";
+        String insertSql = "INSERT INTO pe_pathway_version (id, pathway_code, version_no, status, config_json, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        String json = toJson(config);
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, status);
+                ps.setString(i++, json);
+                ps.setString(i++, pathwayCode);
+                ps.setString(i++, versionNo);
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, Ids.next());
+                    ps.setString(i++, pathwayCode);
+                    ps.setString(i++, versionNo);
+                    ps.setString(i++, status);
+                    ps.setString(i++, json);
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local pathway version failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void savePatientInstanceLocal(PatientPathwayInstance instance, String admittedBy) {
+        String updateSql = "UPDATE pe_patient_instance SET current_node_code=?, updated_time=CURRENT_TIMESTAMP " +
+                "WHERE tenant_id=? AND org_code=? AND encounter_id=? AND pathway_code=? AND status='ACTIVE'";
+        String insertSql = "INSERT INTO pe_patient_instance " +
+                "(id, tenant_id, org_code, patient_id, encounter_id, pathway_code, version_no, status, current_node_code, admitted_by, admission_time, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        long id = extractNumericId(instance.getInstanceId());
+        String tenantId = string(instance.getTenantId(), "default");
+        String orgCode = string(instance.getLegacyOrgCode(), string(instance.getHospitalCode(), "ZYHOSPITAL"));
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, instance.getCurrentNodeCode());
+                ps.setString(i++, tenantId);
+                ps.setString(i++, orgCode);
+                ps.setString(i++, instance.getEncounterId());
+                ps.setString(i++, instance.getPathwayCode());
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, id);
+                    ps.setString(i++, tenantId);
+                    ps.setString(i++, orgCode);
+                    ps.setString(i++, instance.getPatientId());
+                    ps.setString(i++, instance.getEncounterId());
+                    ps.setString(i++, instance.getPathwayCode());
+                    ps.setString(i++, instance.getVersionNo());
+                    ps.setString(i++, instance.getCurrentNodeCode());
+                    ps.setString(i++, admittedBy);
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local patient instance failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void saveTaskStateLocal(PatientTaskState taskState) {
+        String updateSql = "UPDATE pe_patient_task_state SET task_name=?, task_type=?, status=?, result_json=?, updated_time=CURRENT_TIMESTAMP " +
+                "WHERE instance_id=? AND node_code=? AND task_code=?";
+        String insertSql = "INSERT INTO pe_patient_task_state " +
+                "(id, instance_id, node_code, task_code, task_name, task_type, status, result_json, created_time, updated_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        long instanceId = extractNumericId(taskState.getInstanceId());
+        String resultJson = toJson(taskState.getResult());
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, taskState.getTaskName());
+                ps.setString(i++, taskState.getTaskType());
+                ps.setString(i++, taskState.getStatus());
+                ps.setString(i++, resultJson);
+                ps.setLong(i++, instanceId);
+                ps.setString(i++, taskState.getNodeCode());
+                ps.setString(i++, taskState.getTaskCode());
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, Ids.next());
+                    ps.setLong(i++, instanceId);
+                    ps.setString(i++, taskState.getNodeCode());
+                    ps.setString(i++, taskState.getTaskCode());
+                    ps.setString(i++, taskState.getTaskName());
+                    ps.setString(i++, taskState.getTaskType());
+                    ps.setString(i++, taskState.getStatus());
+                    ps.setString(i++, resultJson);
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local task state failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void saveRuleDefinitionLocal(RuleDefinition definition, String approvedBy) {
+        String updateSql = "UPDATE re_rule_def SET rule_name=?, rule_type=?, status=?, severity=?, rule_json=?, approved_by=?, " +
+                "approved_time=? WHERE tenant_id=? AND org_code=? AND rule_code=? AND version_no=?";
+        String insertSql = "INSERT INTO re_rule_def " +
+                "(id, tenant_id, org_code, rule_code, rule_name, rule_type, version_no, status, severity, rule_json, created_time, approved_by, approved_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
+        String json = toJson(definition.getRuleJson());
+        String tenantId = string(definition.getTenantId(), "default");
+        String orgCode = string(definition.getLegacyOrgCode(), string(definition.getHospitalCode(), "ZYHOSPITAL"));
+        Timestamp approvedTime = "PUBLISHED".equals(definition.getStatus()) ? new Timestamp(System.currentTimeMillis()) : null;
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, definition.getRuleName());
+                ps.setString(i++, definition.getRuleType());
+                ps.setString(i++, definition.getStatus());
+                ps.setString(i++, definition.getSeverity());
+                ps.setString(i++, json);
+                ps.setString(i++, approvedBy);
+                ps.setTimestamp(i++, approvedTime);
+                ps.setString(i++, tenantId);
+                ps.setString(i++, orgCode);
+                ps.setString(i++, definition.getRuleCode());
+                ps.setString(i++, definition.getVersionNo());
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, Ids.next());
+                    ps.setString(i++, tenantId);
+                    ps.setString(i++, orgCode);
+                    ps.setString(i++, definition.getRuleCode());
+                    ps.setString(i++, definition.getRuleName());
+                    ps.setString(i++, definition.getRuleType());
+                    ps.setString(i++, definition.getVersionNo());
+                    ps.setString(i++, definition.getStatus());
+                    ps.setString(i++, definition.getSeverity());
+                    ps.setString(i++, json);
+                    ps.setString(i++, approvedBy);
+                    ps.setTimestamp(i++, approvedTime);
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local rule definition failed: " + ex.getMessage(), ex);
+        }
+    }
+
     private void recordAuditLog(String traceId, String engineType, String actionType, String targetType, String targetCode,
                                 String patientId, String encounterId, String operatorId, Map<String, Object> detail) {
         Map<String, Object> record = new LinkedHashMap<String, Object>();
@@ -599,11 +850,7 @@ public class EnginePersistenceService {
     }
 
     private Connection connection() throws SQLException {
-        try {
-            Class.forName("oracle.jdbc.OracleDriver");
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException("Oracle JDBC driver not found", ex);
-        }
+        loadDriver();
         SQLException last = null;
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
@@ -618,6 +865,42 @@ public class EnginePersistenceService {
             }
         }
         throw last;
+    }
+
+    private void loadDriver() throws SQLException {
+        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
+        try {
+            Class.forName(driverClass);
+        } catch (ClassNotFoundException ex) {
+            throw new SQLException(driverClass + " not found", ex);
+        }
+    }
+
+    private List<String> loadLocalSchemaStatements() {
+        InputStream stream = EnginePersistenceService.class.getResourceAsStream("/db/local/h2_core_ddl.sql");
+        if (stream == null) {
+            throw new IllegalStateException("local database schema resource not found: /db/local/h2_core_ddl.sql");
+        }
+        StringBuilder sql = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                if (!trimmed.startsWith("--")) {
+                    sql.append(line).append('\n');
+                }
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException("read local database schema failed", ex);
+        }
+        List<String> statements = new ArrayList<String>();
+        String[] parts = sql.toString().split(";");
+        for (String part : parts) {
+            if (!part.trim().isEmpty()) {
+                statements.add(part);
+            }
+        }
+        return statements;
     }
 
     private String toJson(Object value) {

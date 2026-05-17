@@ -92,7 +92,7 @@ if ($tz -eq "China Standard Time" -or $tz -eq "Asia/Shanghai") {
 
 # ============================================================================
 Write-Host "`n==> 目录与磁盘" -ForegroundColor Cyan
-$zyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "C:\zoesoft\zy-engine" }
+$zyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "D:\zoesoft\zy-engine" }
 if (Test-Path $zyHome) {
     $drive = (Split-Path -Qualifier $zyHome).TrimEnd(':')
     $free = (Get-PSDrive $drive).Free

@@ -66,6 +66,8 @@ public class HealthController {
         capabilities.put("graph_fallback", !graphReady);
         capabilities.put("dify_fallback", !difyReady);
         capabilities.put("config_primary_store", "ORACLE");
+        capabilities.put("local_development_store", "LOCAL_H2_FILE");
+        capabilities.put("oracle_schema_required", true);
         data.put("capabilities", capabilities);
         return ApiResult.success(data);
     }
@@ -77,8 +79,10 @@ public class HealthController {
         provider.put("ready", ready);
         provider.put("status", ready ? "READY" : "DISABLED");
         provider.put("dialect", text(databaseProperties.getDialect(), "oracle"));
-        provider.put("provider", ready ? "ORACLE" : "IN_MEMORY");
-        provider.put("degraded_reason", ready ? null : "数据库持久化未启用或密码未配置，当前使用内存态运行。");
+        provider.put("provider", persistenceService.providerName());
+        provider.put("production_authority", "ORACLE");
+        provider.put("schema_init", databaseProperties.isInitSchema());
+        provider.put("degraded_reason", ready ? null : "数据库持久化未启用或凭据不完整，当前使用内存态运行。");
         return provider;
     }
 

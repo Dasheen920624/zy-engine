@@ -19,10 +19,12 @@
 - 字典映射：提供第三方系统编码到平台标准概念的标准化接口，未命中项会返回待治理状态；支持映射配置导入、列表与版本回查，校验失败返回 `VALIDATION_ERROR`。
 - 适配器中心：提供 REST/SQL/WebService 风格的第三方取数 Mock，返回统一行集和标准码映射结果；支持适配器查询定义导入、列表与单项查询，导入未内置 Mock 的查询会返回 `SUCCESS` 但 `row_count=0`，提示后续接入真实取数。
 - 配置包中心：支持配置包导入、列表、详情、review、hash 校验、组织范围校验、发布、导出和审计；hash 不一致或组织范围不存在的包会阻断发布，同一 `tenant_id + package_code + package_version` 内容不同不会静默覆盖。
+- 配置包来源校验：`/api/config-packages/*/review` 返回 `source_review` 结构；当 `source_review.enabled=true` 且出现 `missing_count/expired_count/unreviewed_count` 或 `allow_publish=false` 时，`publish` 会阻断并返回 `VALIDATION_ERROR`。
 - 组织上下文：支持 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code` 解析，默认兼容 `default/ZYHOSPITAL`，并返回配置继承顺序。
 - 组织目录：支持集团、医院、院区、卫生所/站点、科室导入、列表、详情和树形回查；`PLATFORM` 不可导入为真实组织，只作为系统内置默认基线。
 - 路径任务取数：任务配置了 `source.adapter_code/query_code` 时，完成任务会自动调用适配器 Mock 并保存取数结果。
 - Oracle 持久化：可选开启，已验证可写入 `ZYENGINE` 用户下的核心表。
+- 本地文件库持久化：AI/离线开发环境可使用 H2 文件数据库 `LOCAL_H2_FILE`，无需公司内网和 Oracle 服务，启动时自动初始化本地 schema；Oracle 仍是生产权威库。
 - 运行模式探测：`GET /system/providers` 返回数据库、Neo4j、Dify 当前 Provider、ready 状态和降级原因，便于 DB-only 测试环境和内网集成环境使用同一套验收口径。
 
 ## 编码约定
@@ -45,6 +47,11 @@ docs/编码与中文备注规范.md
 
 ```text
 docs/产品化方案与AI开发编排.md
+docs/产品功能业务核查与开工清单.md
+docs/AI自主开发运行守则.md
+docs/AI任务认领与并行开发机制.md
+docs/AI开发质量门禁与评审整改机制.md
+docs/数据库Provider与离线AI开发约定.md
 ```
 
 全功能蓝图、来源追溯平台、规则医学文献来源和并行开发计划见：
@@ -64,6 +71,8 @@ docs/前端配置平台规划与开发验证.md
 ```text
 docs/AI接手执行手册.md
 ```
+
+多 AI 开发时，run log、claim、heartbeat、review 等协作元数据可以同步到 `main`；业务代码必须在 `review_status=APPROVED` 且 `open_findings=0` 后才能正式提交、合并或进入主版本。
 
 ## 推荐命令行
 
@@ -87,6 +96,7 @@ scripts/README.md
 - Spring Boot 2.7.18
 - Maven
 - Oracle JDBC `ojdbc8`
+- H2 本地文件数据库（AI/离线开发）
 - Oracle / 达梦 DDL 预留
 
 ## 编译
@@ -134,6 +144,29 @@ GET http://localhost:18080/zy-engine/api/health
 ```powershell
 .\scripts\run-config-import-smoke.cmd
 ```
+
+## 启动：本地 H2 文件数据库模式
+
+AI 开发环境无法连接公司内网 Oracle 时，先识别数据库环境：
+
+```powershell
+.\scripts\detect-db-env.cmd -BootstrapLocal
+```
+
+若输出 `recommended_mode=LOCAL_H2`，启动本地文件数据库模式：
+
+```powershell
+.\scripts\start-local-db.cmd
+```
+
+健康检查：
+
+```text
+GET http://localhost:18082/zy-engine/api/health
+GET http://localhost:18082/zy-engine/api/system/providers
+```
+
+本地库文件默认写入 `data/local-db/`，该目录已被 `.gitignore` 忽略。H2 模式用于 AI/离线开发和 DB-only 验证，不替代 Oracle 生产权威；任何 DDL 变更仍必须同步维护 Oracle、达梦和 H2 结构文件。
 
 ## 图谱和 Dify 配置
 

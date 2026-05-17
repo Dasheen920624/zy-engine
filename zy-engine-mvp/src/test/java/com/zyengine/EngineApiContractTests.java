@@ -1,6 +1,8 @@
 package com.zyengine;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zyengine.persistence.EnginePersistenceProperties;
+import com.zyengine.persistence.EnginePersistenceService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,6 +62,38 @@ class EngineApiContractTests {
         assertNotNull(data.get("run_mode"));
         assertNotNull(graph.get("provider"));
         assertNotNull(dify.get("provider"));
+    }
+
+    @Test
+    void localFileDatabaseDoesNotRequireOraclePassword() {
+        EnginePersistenceProperties properties = new EnginePersistenceProperties();
+        properties.setEnabled(true);
+        properties.setDialect("h2");
+        properties.setUrl("jdbc:h2:file:./target/zyengine-local-test;MODE=Oracle");
+        properties.setUsername("sa");
+        properties.setPassword("");
+
+        assertTrue(properties.localFileDatabase());
+        assertTrue(properties.hasRequiredCredentials());
+        assertEquals("LOCAL_H2_FILE", properties.providerName());
+    }
+
+    @Test
+    void localFileDatabaseInitializesSchemaAndAcceptsAuditWrite() {
+        EnginePersistenceProperties properties = new EnginePersistenceProperties();
+        properties.setEnabled(true);
+        properties.setDialect("h2");
+        properties.setUrl("jdbc:h2:mem:zyengine_local_contract;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_DELAY=-1");
+        properties.setUsername("sa");
+        properties.setPassword("");
+        properties.setInitSchema(true);
+
+        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper);
+        service.initializeLocalSchema();
+        service.saveAuditLog("TEST", "LOCAL_DB_WRITE", "CONTRACT", "LOCAL_H2", null, null, "JUNIT",
+                new LinkedHashMap<String, Object>());
+
+        assertEquals("LOCAL_H2_FILE", service.providerName());
     }
 
     @Test
@@ -266,6 +300,38 @@ class EngineApiContractTests {
                 publishBody);
         assertEquals("VALIDATION_ERROR", response.get("code"));
         assertTrue(String.valueOf(response.get("message")).contains("scope_code"));
+    }
+
+    @Test
+    void configPackagePublishRejectsWhenSourceReviewBlocks() throws Exception {
+        invokePost("/api/organizations", sampleOrganizationImport("default"));
+
+        Map<String, Object> packageBody = sampleConfigPackage("PKG_CONFIG_SOURCE_BLOCK", "2026.05.01");
+        Map<String, Object> sourceReview = new LinkedHashMap<String, Object>();
+        sourceReview.put("enabled", Boolean.TRUE);
+        sourceReview.put("missing_count", 1);
+        sourceReview.put("expired_count", 0);
+        sourceReview.put("unreviewed_count", 0);
+        sourceReview.put("allow_publish", Boolean.FALSE);
+        sourceReview.put("message", "缺少来源文献");
+        asMap(packageBody.get("manifest")).put("source_review", sourceReview);
+        invokePost("/api/config-packages", packageBody);
+
+        Map<String, Object> reviewResp = invokeGet("/api/config-packages/PKG_CONFIG_SOURCE_BLOCK/2026.05.01/review");
+        Map<String, Object> review = asMap(reviewResp.get("data"));
+        assertEquals(Boolean.FALSE, review.get("ready_to_publish"));
+        Map<String, Object> returnedSourceReview = asMap(review.get("source_review"));
+        assertEquals(Boolean.TRUE, returnedSourceReview.get("enabled"));
+        assertEquals(1, ((Number) returnedSourceReview.get("missing_count")).intValue());
+        assertEquals(Boolean.FALSE, returnedSourceReview.get("allow_publish"));
+        assertEquals("缺少来源文献", returnedSourceReview.get("message"));
+
+        Map<String, Object> publishBody = new LinkedHashMap<String, Object>();
+        publishBody.put("approved_by", "JUNIT_APPROVER");
+        Map<String, Object> response = invokePostExpectingClientError(
+                "/api/config-packages/PKG_CONFIG_SOURCE_BLOCK/2026.05.01/publish", publishBody);
+        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertTrue(String.valueOf(response.get("message")).contains("source_review"));
     }
 
     @Test

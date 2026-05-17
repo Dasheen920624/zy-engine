@@ -8,7 +8,9 @@
 
 ```powershell
 .\scripts\build.cmd
+.\scripts\detect-db-env.cmd
 .\scripts\start-memory.cmd
+.\scripts\start-local-db.cmd
 .\scripts\start-oracle.cmd
 .\scripts\run-oracle-ddl.cmd
 .\scripts\verify-encoding.cmd
@@ -30,7 +32,9 @@
 | 脚本 | 用途 |
 |---|---|
 | `build.cmd` / `build.ps1` | 使用 Maven 构建 JDK 1.8 后端工程 |
+| `detect-db-env.cmd` / `detect-db-env.ps1` | 识别当前 AI 环境应使用 Oracle 还是本地 H2 文件库 |
 | `start-memory.cmd` / `start-memory.ps1` | 启动内存演示模式，默认端口 `18080` |
+| `start-local-db.cmd` / `start-local-db.ps1` | 启动本地 H2 文件数据库模式，默认端口 `18082` |
 | `start-oracle.cmd` / `start-oracle.ps1` | 启动 Oracle 持久化模式，默认端口 `18081` |
 | `run-oracle-ddl.cmd` / `run-oracle-ddl.ps1` | 初始化 Oracle 核心表、索引、组织上下文迁移、中文表备注和字段备注 |
 | `verify-encoding.cmd` / `verify-encoding.ps1` | 校验常见乱码特征，并验证 JSON 样例可解析 |
@@ -75,6 +79,29 @@ Oracle 真实落库校验需要先启动 Oracle 模式，再执行：
 
 约定：凡是修改 Oracle/达梦 DDL、Oracle 迁移脚本、表字段、索引、约束、持久化 SQL 或新增落库链路的任务，完成前必须先执行 `run-oracle-ddl.cmd` 同步真实 Oracle，再启动 Oracle 模式并执行对应 Oracle smoke。若缺少专项 smoke，先补脚本或在最终交接中明确未覆盖风险。
 
+## 本地 H2 文件库模式
+
+当 AI 开发环境不能连接公司内网 Oracle 时，先执行：
+
+```powershell
+.\scripts\detect-db-env.cmd -BootstrapLocal
+```
+
+若输出 `recommended_mode=LOCAL_H2`，使用本地文件数据库：
+
+```powershell
+.\scripts\start-local-db.cmd
+```
+
+默认端口：
+
+```text
+http://localhost:18082/zy-engine/api/health
+http://localhost:18082/zy-engine/api/system/providers
+```
+
+本地库文件位于 `zy-engine-mvp/data/local-db/`，已被 `.gitignore` 忽略。H2 只作为 AI/离线开发 Provider，Oracle 仍是生产权威库；任何 DDL 变更必须同步维护 Oracle、达梦和 H2 三份结构文件。
+
 ## 端口
 
 内存模式默认：
@@ -87,6 +114,12 @@ Oracle 模式默认：
 
 ```text
 http://localhost:18081/zy-engine/api/health
+```
+
+本地 H2 模式默认：
+
+```text
+http://localhost:18082/zy-engine/api/health
 ```
 
 停止本地服务：

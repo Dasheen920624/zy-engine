@@ -7,14 +7,19 @@
 接手 AI 必读顺序：
 
 1. 本文。
-2. `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
-3. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-4. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-5. `zy-engine-mvp/docs/多角色评审与执行计划.md`
-6. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
-7. 根目录 `README.md`
-8. `zy-engine-mvp/README.md`
-9. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
+2. `zy-engine-mvp/docs/AI自主开发运行守则.md`
+3. `zy-engine-mvp/docs/AI任务认领与并行开发机制.md`
+4. `zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md`
+5. `zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
+6. `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
+7. `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+8. `zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
+9. `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
+10. `zy-engine-mvp/docs/多角色评审与执行计划.md`
+11. `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+12. 根目录 `README.md`
+13. `zy-engine-mvp/README.md`
+14. `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
 
 ## 2. 当前项目一句话
 
@@ -26,14 +31,23 @@
 
 ```powershell
 git status -sb
-rg -n "当前优先任务池|Definition of Done|PROV-001|PKG-001|ORG-001|TERM-001|RULE-001|FE-001|FE-003" zy-engine-mvp/docs
+rg -n "claim_id:|task_id:|write_scope:" ai-dev-input/10_task_claims
+rg -n "review_id:|review_status:|status: OPEN|CHANGES_REQUESTED" ai-dev-input/11_ai_reviews
+rg -n "run_id:|status: ACTIVE|current_claim|next_action" ai-dev-input/12_autonomous_runs
+.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+rg -n "业务核查|首批客户验收故事线|当前优先任务池|Definition of Done|PROV-001|PKG-001|ORG-001|TERM-001|RULE-001|FE-001|FE-003" zy-engine-mvp/docs
 ```
 
 再阅读：
 
 ```text
 zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md
+zy-engine-mvp/docs/AI自主开发运行守则.md
+zy-engine-mvp/docs/AI任务认领与并行开发机制.md
+zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
+zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md
 zy-engine-mvp/docs/产品化方案与AI开发编排.md
+zy-engine-mvp/docs/产品功能业务核查与开工清单.md
 zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
 zy-engine-mvp/docs/前端配置平台规划与开发验证.md
 zy-engine-mvp/README.md
@@ -48,11 +62,100 @@ ai-dev-input/09_ai_task_cards/task_card_template.md
 - 相关则继续兼容；无关则忽略。
 - 不确定时向用户说明风险。
 
-## 4. 开发前必须确认
+## 4. 自主开发硬规则
+
+当用户要求“开始任务”“自主开发”“默认同意开发”“直到没有额度”时，AI 进入自主运行模式。
+
+自主运行必须：
+
+- 按 `AI自主开发运行守则.md` 选择任务，不随意扩大范围。
+- 按 `产品功能业务核查与开工清单.md` 确认任务服务的角色、业务闭环和客户验收故事线。
+- 先处理 `CHANGES_REQUESTED` 的 P0/P1/P2 质控问题，再领取新功能。
+- 创建或更新 `ai-dev-input/12_autonomous_runs/active/<run_id>.md`。
+- 每个任务仍必须创建 claim 和 review。
+- 剩余额度不足时停止开新任务，优先整理交接。
+- 遇到生产凭据、真实患者数据、不可逆迁移、医学责任或架构分歧时停止并说明风险。
+
+自主运行记录用于交接，不替代 claim 或 review。
+
+## 5. 任务认领硬规则
+
+任何 AI 修改业务代码、DDL、脚本、样例或核心文档前，必须先完成任务认领。
+
+认领步骤：
+
+```powershell
+git pull --ff-only origin main
+rg -n "claim_id:|task_id:|write_scope:" ai-dev-input/10_task_claims
+Copy-Item ai-dev-input/10_task_claims/task_claim_template.md ai-dev-input/10_task_claims/active/<claim_id>.md
+# 填写 claim_id、task_id、owner、write_scope、forbidden_scope、verification
+git add ai-dev-input/10_task_claims/active/<claim_id>.md
+git commit -m "认领<claim_id>任务"
+git push origin main
+```
+
+没有成功推送 `active/<claim_id>.md` 前，只允许阅读、分析和规划，不允许改业务文件。
+
+认领时必须确认：
+
+- `claim_id` 唯一。
+- `task_id` 已拆成清晰小切片。
+- `write_scope` 不与其它 active claim 重叠。
+- 共享文件已写明具体修改区块。
+- 若接续本地已有改动，claim 中必须说明。
+
+完成任务后必须把 claim 更新为 `DONE` 并归档到：
+
+```text
+ai-dev-input/10_task_claims/archive/YYYYMMDD/<claim_id>.md
+```
+
+注意：`DONE` 之前必须有 `ai-dev-input/11_ai_reviews` 中的通过记录。认领成功只表示任务锁生效，不表示业务代码可以直接进入主版本。
+
+## 6. 质量门禁硬规则
+
+任何 AI 完成功能后，必须先通过质量门禁再正式提交业务代码。
+
+最低流程：
+
+```text
+ACTIVE/IN_PROGRESS
+-> SELF_CHECK
+-> REVIEW_REQUESTED
+-> CHANGES_REQUESTED/FIXING 或 APPROVED
+-> READY_TO_SUBMIT
+-> DONE
+```
+
+必须创建评审文件：
+
+```text
+ai-dev-input/11_ai_reviews/pending/<review_id>.md
+```
+
+高风险任务必须独立评审，包括：
+
+- 医学、医保、病历质控、医嘱安全、路径推荐和 Dify 解释。
+- 配置发布、review、publish、rollback、active 指针。
+- Oracle/达梦/H2 DDL、迁移、索引、约束和持久化 SQL。
+- 权限、安全、审计、日志脱敏和租户隔离。
+- 前端配置发布、规则校验、质控看板和客户验收主流程。
+
+评审结论要求：
+
+- 存在 P0/P1/P2 开放问题时，不得正式提交。
+- `review_status=APPROVED` 且 `open_findings=0` 后，claim 才能进入 `READY_TO_SUBMIT`。
+- 原开发 AI 仍在线时，默认由原开发 AI 按质控问题自行整改。
+- 原开发 AI 不可用时，新的 AI 必须创建修复 claim 接管，不能直接覆盖。
+
+## 7. 开发前必须确认
 
 每次开始前必须明确：
 
 - 任务编号，例如 `ORG-001`、`PKG-001`、`TERM-001`、`FE-001`。
+- 任务认领编号 `claim_id`，例如 `PROV-001-S03`。
+- 当前数据库模式：`ORACLE`、`LOCAL_H2` 或 `IN_MEMORY`。
+- 若没有 Oracle，是否已使用 `start-local-db.ps1` 启动本地 H2 文件库。
 - 所属模块。
 - 若涉及前端，必须确认配置界面、演示界面、规则校验工作台或质控看板的页面范围。
 - 是否涉及组织隔离。
@@ -61,6 +164,7 @@ ai-dev-input/09_ai_task_cards/task_card_template.md
 - 是否涉及 Provider。
 - 是否需要 Oracle/达梦 DDL。
 - 是否涉及 Oracle 表结构、索引、迁移脚本、持久化 SQL 或落库行为；若涉及，必须同步真实 Oracle 并跑 Oracle 版本 smoke。
+- 无 Oracle 的 AI 修改 DDL 或持久化链路时，必须同步维护 Oracle、达梦、H2 三份结构文件，并用 LOCAL_H2 完整验证。
 - 是否属于 `顶级多角色评审与AI并行开发总控.md` 中的某条并行泳道，是否会与其它 AI 的写入范围冲突。
 - 目标用户是谁：医生、质控、医保、信息科、院领导、实施工程师或第三方系统。
 - DB-only 模式如何验收。
@@ -68,7 +172,9 @@ ai-dev-input/09_ai_task_cards/task_card_template.md
 
 没有明确任务编号时，优先使用 `产品化方案与AI开发编排.md` 中的“当前优先任务池”。
 
-## 5. 任务编号约定
+如果用户只说“开始干活”或“开始任务”，优先使用 `产品功能业务核查与开工清单.md` 中的“AI 开工后的业务优先级”和“首批客户验收故事线”选择任务。
+
+## 8. 任务编号约定
 
 ```text
 ORG-xxx     组织模型与租户隔离
@@ -89,22 +195,28 @@ TEST-xxx    测试与验收
 DOC-xxx     文档
 ```
 
-## 6. 标准开发流程
+## 9. 标准开发流程
 
 ### Step 1：确认范围
 
 ```powershell
+git pull --ff-only origin main
 git status -sb
 git log -1 --pretty=format:%H%n%s
+rg -n "claim_id:|task_id:|write_scope:" ai-dev-input/10_task_claims
+rg -n "review_id:|review_status:|status: OPEN|CHANGES_REQUESTED" ai-dev-input/11_ai_reviews
+rg -n "run_id:|status: ACTIVE|current_claim|next_action" ai-dev-input/12_autonomous_runs
+.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
 ```
 
-阅读相关模块代码和测试。优先使用 `rg` 搜索，不要凭记忆修改。
+阅读相关模块代码和测试。优先使用 `rg` 搜索，不要凭记忆修改。若尚未推送 claim，先完成“任务认领硬规则”。
 
 ### Step 2：形成任务计划
 
 计划至少包含：
 
 - 需要修改的模块。
+- 服务的业务角色和验收故事线。
 - 需要新增/修改的接口。
 - 数据模型和配置影响。
 - 测试点。
@@ -162,11 +274,37 @@ git diff --check
 
 Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 已提交用于说明 Oracle 连接目标；真实 `.env.oracle.local` 只存本机 Oracle 凭据，已被 `.gitignore` 忽略，禁止提交。若当前任务新增了新的 Oracle 业务链路，应补对应 Oracle smoke；如果不能连接客户 Oracle，最终回复必须明确说明未验证原因和风险，不能只用内存/JUnit 代替。
 
+若当前 AI 无法连接公司内网 Oracle，必须使用本地 H2 文件库完成等价开发验证：
+
+```powershell
+.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+.\zy-engine-mvp\scripts\start-local-db.ps1
+```
+
+另开终端执行需要的 smoke，BaseUrl 使用：
+
+```text
+http://localhost:18082/zy-engine/api
+```
+
+无 Oracle 的最终回复必须写明：`LOCAL_H2` 已验证、Oracle smoke 待有内网环境的 AI 或集成 AI 执行。
+
 若只改文档，仍建议运行完整测试和构建，除非用户明确要求快速文档修改。
 
-### Step 7：提交
+### Step 7：质量评审
 
-每完成一个明确任务，必须提交并推送一次，保证其它 AI 可以拉取最新项目。不得把已完成任务长期留在本地未提交状态。
+每完成一个明确任务，必须先创建 review 并进入质量评审：
+
+```powershell
+Copy-Item ai-dev-input/11_ai_reviews/review_template.md ai-dev-input/11_ai_reviews/pending/<review_id>.md
+# 填写 review_id、claim_id、自检、验证结果、数据库模式
+```
+
+若 Reviewer 提出质控问题，必须按 `AI开发质量门禁与评审整改机制.md` 整改并复评。只有 `review_status=APPROVED` 且 `open_findings=0`，才能进入正式提交。
+
+### Step 8：提交
+
+每完成一个明确任务且通过质量门禁后，必须提交并推送一次，保证其它 AI 可以拉取最新项目。不得把已完成任务长期留在本地未提交状态。
 
 提交前：
 
@@ -200,7 +338,7 @@ git push origin main
 
 若因为权限、网络或远端冲突无法推送，必须在最终回复中明确说明原因、当前提交 hash 和其它 AI 获取变更的替代方式。
 
-## 7. 每批代码 Definition of Done
+## 10. 每批代码 Definition of Done
 
 完成一批任务前必须满足：
 
@@ -208,18 +346,25 @@ git push origin main
 - 新增能力有契约测试。
 - 新增配置有样例或 API 示例。
 - README 或 docs 已更新。
+- 已说明目标角色、业务闭环和客户验收方式。
 - `run-tests.ps1` 通过。
 - `build.ps1` 通过。
 - `git diff --check` 通过。
+- 已创建 review 记录。
+- `review_status=APPROVED`。
+- `open_findings=0`。
+- 自主开发时，已更新 run log。
 - 涉及数据库表结构、索引、约束、迁移或持久化 SQL 的任务，已执行 `run-oracle-ddl.ps1` 同步真实 Oracle，并通过 Oracle 版本 smoke；若未执行，必须说明原因和残留风险。
+- 无 Oracle 环境时，已使用 `LOCAL_H2_FILE` 完成等价 smoke，并同步维护 Oracle/达梦/H2 结构文件。
 - 已提交本任务相关文件。
 - 已推送到远端当前分支，或明确说明无法推送的原因。
+- 当前 claim 和 review 已更新并归档，或明确说明仍处于 `BLOCKED/HANDOFF/CHANGES_REQUESTED` 的原因。
 - DB-only 模式仍可运行。
 - 不硬编码单医院逻辑。
 - 不把 Neo4j/Dify 作为强依赖。
 - 最终回复包含改动、验证、风险。
 
-## 8. 当前优先任务执行顺序
+## 11. 当前优先任务执行顺序
 
 建议按以下顺序推进：
 
@@ -240,7 +385,7 @@ git push origin main
 
 若用户要求进入多 AI 并行开发或交付前总控评审，必须优先按 `顶级多角色评审与AI并行开发总控.md` 的“当前最高优先级执行顺序”和“并行开发泳道”拆分任务。
 
-## 9. 推荐任务切片
+## 12. 推荐任务切片
 
 ### PKG-001 配置包统一模型
 
@@ -398,7 +543,7 @@ DB-ORG-001 已补齐组织上下文落库：
 - 命中条件、证据、建议动作、标准化差异、traceId 展示。
 - DB-only mock/degraded 演示闭环。
 
-## 10. 禁止事项
+## 13. 禁止事项
 
 - 禁止把客户医院编码、医嘱名称、院区能力写死进 Java 逻辑。
 - 禁止直接让外部系统传任意 SQL/Cypher 到引擎执行。
@@ -408,8 +553,16 @@ DB-ORG-001 已补齐组织上下文落库：
 - 禁止配置发布后静默覆盖同版本。
 - 禁止在日志中输出数据库密码、Dify API Key、患者完整隐私明文。
 - 禁止回滚用户或其他 AI 的未提交改动。
+- 禁止未认领任务就修改业务代码、DDL、脚本、样例或核心文档。
+- 禁止认领大而泛的任务编号但不拆切片，例如只写 `PROV-001`。
+- 禁止在 active claim 写入范围冲突时继续开发。
+- 禁止未通过质量评审就正式提交、合并或发布业务代码。
+- 禁止 Builder AI 自行批准高风险任务。
+- 禁止删除、掩盖或绕过 Reviewer AI 提出的 P0/P1/P2 质控问题。
+- 禁止自主运行时在额度不足的情况下继续开新模块或留下无交接半成品。
+- 禁止把 run log 当成任务锁，绕过 claim 机制。
 
-## 11. 最终回复模板
+## 14. 最终回复模板
 
 建议最终回复保持简洁：
 
@@ -424,6 +577,15 @@ DB-ORG-001 已补齐组织上下文落库：
 - build.ps1
 - git diff --check
 
+质量门禁：
+- review_id
+- review_status
+- open_findings
+
+自主运行：
+- run_id
+- next_action
+
 提交与推送：
 - <commit hash / branch / remote>
 
@@ -431,4 +593,4 @@ DB-ORG-001 已补齐组织上下文落库：
 - ...
 ```
 
-如果没有提交或没有推送，必须明确说明原因。默认情况下，每个明确任务完成后都要提交并推送一次。
+如果没有提交或没有推送，必须明确说明原因。默认情况下，每个明确任务通过质量门禁后都要提交并推送一次。

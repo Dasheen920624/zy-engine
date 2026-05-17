@@ -78,6 +78,27 @@ X-Trace-Id: trace-demo-config-package-publish
   "comment": "发布到演示医院规则配置中心。"
 }
 
+### Import source-blocked config package sample
+POST http://localhost:18080/zy-engine/api/config-packages
+Content-Type: application/json
+X-Trace-Id: trace-demo-config-package-source-blocked-import
+
+< ../../ai-dev-input/06_samples/sample_config_package_source_blocked.json
+
+### Review source-blocked config package (returns source_review)
+GET http://localhost:18080/zy-engine/api/config-packages/PKG_AMI_RULE_SOURCE_BLOCKED/2026.05.02/review?tenantId=TENANT_DEMO
+X-Trace-Id: trace-demo-config-package-source-blocked-review
+
+### Publish source-blocked config package (expect VALIDATION_ERROR)
+POST http://localhost:18080/zy-engine/api/config-packages/PKG_AMI_RULE_SOURCE_BLOCKED/2026.05.02/publish?tenantId=TENANT_DEMO
+Content-Type: application/json
+X-Trace-Id: trace-demo-config-package-source-blocked-publish
+
+{
+  "approved_by": "QUALITY_APPROVER",
+  "comment": "预期被 source_review 阻断"
+}
+
 ### Export config package
 POST http://localhost:18080/zy-engine/api/config-packages/PKG_AMI_RULE_CONFIG/2026.05.01/export?tenantId=TENANT_DEMO
 Content-Type: application/json

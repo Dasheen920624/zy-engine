@@ -10,10 +10,40 @@
 zy-engine-mvp/docs/AI接手执行手册.md
 ```
 
+用户授权 AI 自主开发、连续执行或“直到没有额度”时，必须遵守：
+
+```text
+zy-engine-mvp/docs/AI自主开发运行守则.md
+```
+
 顶级多角色评审、优化决策、并行开发泳道、不同能力 AI 执行边界和产品级验收剧本见：
 
 ```text
 zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md
+```
+
+业务功能、客户验收故事线和 AI 开工优先级的最终核查见：
+
+```text
+zy-engine-mvp/docs/产品功能业务核查与开工清单.md
+```
+
+多 AI 同时开发前，必须先按以下机制认领任务：
+
+```text
+zy-engine-mvp/docs/AI任务认领与并行开发机制.md
+```
+
+多 AI 开发完成后，必须先按以下机制完成质量评审、问题整改和放行：
+
+```text
+zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
+```
+
+无公司内网 Oracle 的 AI 开发环境，必须按以下约定识别数据库并启用本地文件库：
+
+```text
+zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md
 ```
 
 前端配置、功能演示、规则校验和可视化验收的详细方案见：
@@ -26,6 +56,12 @@ zy-engine-mvp/docs/前端配置平台规划与开发验证.md
 
 ```text
 zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
+```
+
+外网 AI 基准知识包、院内字典映射、Dify/无 Dify 兼容和专家审核闭环见：
+
+```text
+zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md
 ```
 
 项目目标不是交付单医院定制代码，而是建设可在集团化医院、单体医院、多院区、基层卫生所等多组织形态落地的医疗智能引擎平台。
@@ -42,6 +78,7 @@ zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
 + 质控引擎
 + Dify/AI 工作流引擎
 + 医疗数据标准化中心
++ AI 医疗知识工厂
 + 配置发布与运维审计中心
 + 前端配置与演示校验平台
 ```
@@ -49,11 +86,15 @@ zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
 核心原则：
 
 - Oracle/关系型数据库是配置、版本、审计和业务运行记录的主数据源。
+- AI 离线开发可使用 `LOCAL_H2_FILE` 本地文件数据库完成等价开发验证，但 Oracle 仍是生产权威结构和最终真实落库验收目标。
 - Neo4j 是图谱查询投影，不是唯一主数据源。
 - Dify 是 AI 工作流执行目标，不保存核心业务状态。
 - HIS、EMR、LIS、PACS、医保等院内系统是外部数据源，必须通过适配器接入。
 - 路径、规则、图谱、Dify 模板、字典、适配器均是可版本化、可发布、可回滚的配置资产。
 - 规则、知识、图谱证据、Dify 解释、字典映射、适配器口径和质控指标必须可追溯来源；缺来源、来源过期或来源未审核的医学/医保/质控配置不得发布。
+- 外网 AI 基准版可以利用大模型持续生成医疗知识、字典映射、规则和图谱候选，但 AI 产物必须经过来源追溯、自动校验和专业人员审核后才能进入发布包。
+- 院内是否具备 Dify/大模型能力不能影响核心标准化流程；Dify、外网基准包、本地规则、向量索引和人工审核都必须通过 Provider 方式接入。
+- 规则引擎必须优先保证无 Neo4j、无 Dify、无大模型场景下的完整可用性；Dify、大模型和 Neo4j 只作为候选生成、解释增强、证据补全和更高准确率复核的可降级增强能力。
 - 没有 Neo4j、没有 Dify 时，DB-only 模式必须仍可完成核心业务验收。
 - 前端必须让配置、演示、规则校验、质控运营和运维追溯可视化，不能只依赖接口文档或 Postman 验收。
 
@@ -194,6 +235,7 @@ Provider 层
 
 数据层
   Oracle 主数据
+  H2 本地文件库（AI/离线开发 Provider）
   Neo4j 图谱投影
   发布包文件
   日志与指标存储
@@ -237,6 +279,14 @@ GET /api/system/providers
 - 医嘱安全拦截。
 - 规则包 review、publish、rollback。
 - 执行日志和命中率统计。
+
+兼容性硬要求：
+
+- 规则导入、发布、版本选择、模拟执行、第三方调用、批量评估、结果回查、执行日志、审计、来源追溯和组织隔离必须在 DB-only 模式完整可用。
+- 规则条件必须优先基于标准化后的结构化事实、标准码、配置包和关系型数据库快照执行，不能把 Neo4j 查询、Dify 调用或大模型回答作为必需判断步骤。
+- Neo4j 可用于图谱证据召回和候选补充；不可用时必须回退到 DB 图谱快照、已发布知识包或内置启发式，规则引擎不能失败。
+- Dify/大模型可用于规则候选生成、复杂语义解释、人工审核辅助、低置信度复核和结果说明增强；不可用时必须返回确定性规则结果和可审计的降级说明。
+- 高风险场景如医嘱安全拦截、医保质控、病历质控和路径入径，最终命中结论必须来自已审核发布的规则包，不能来自一次实时大模型生成。
 
 后续必须支持第三方独立调用：
 
@@ -317,7 +367,24 @@ order_class = ANTIPLATELET
 dose_group = LOW_DOSE
 ```
 
-### 8.6 前端配置与演示平台
+### 8.6 AI 医疗知识工厂
+
+职责：
+
+- 外网基准版持续接入权威医疗标准、医保政策、药品说明书、临床指南、专家共识和院内脱敏字典治理包。
+- AI 生成标准概念、同义词、候选映射、规则草案、图谱断言、测试样例和配置包说明。
+- 通过来源追溯、授权检查、自动质检、冲突检测和专家审核，把 AI 候选资产转为可发布配置包。
+- 为无 Dify 院内环境预生成标准知识包、同义词索引、映射候选和增量治理包。
+- 为有 Dify 或本地大模型的院内环境提供统一 Model Gateway 和 Provider 契约。
+
+边界：
+
+- AI 不是医学事实源，不能直接发布或激活临床、医保、质控高风险配置。
+- Dify/大模型只生成候选和解释，不保存正式配置主数据。
+- 外网 AI 不接收院内真实患者隐私；院内字典外传必须经过脱敏和授权策略。
+- 未经授权、无来源、来源过期或未审核的知识不得进入交付包。
+
+### 8.7 前端配置与演示平台
 
 职责：
 
@@ -348,7 +415,9 @@ dose_group = LOW_DOSE
 
 每个需求必须回答：
 
+- 服务哪个用户角色？
 - 属于哪个业务场景？
+- 是否落在首批客户验收故事线内？
 - 是否影响患者安全、医保合规、医疗质量？
 - 是否需要医生确认？
 - 是否需要组织隔离？
@@ -514,6 +583,7 @@ DOC-xxx     文档
 每张任务卡必须包含：
 
 ```text
+claim_id：
 任务编号：
 业务目标：
 适用组织范围：
@@ -530,21 +600,114 @@ Provider 影响：
 风险与边界：
 ```
 
-### 11.4 每批代码 Definition of Done
+### 11.4 自主运行机制
+
+当用户没有指定具体任务或授权 AI 连续开发时，AI 必须按 `AI自主开发运行守则.md` 运行。
+
+自主运行记录目录：
+
+```text
+ai-dev-input/12_autonomous_runs/active
+ai-dev-input/12_autonomous_runs/archive
+```
+
+执行规则：
+
+- 先检查 `11_ai_reviews`，优先修复 `CHANGES_REQUESTED` 的 P0/P1/P2 问题。
+- 再检查 `10_task_claims`，避免领取冲突写入范围。
+- 没有明确任务时，按总控最高优先级和当前优先任务池选择小切片。
+- 每轮自主运行必须留下 run log，记录任务选择、claim、review、验证、风险和下一步。
+- 剩余额度不足时停止开新任务，优先更新 claim/review/run log 交接。
+- 遇到生产凭据、真实患者数据、不可逆迁移、医学责任或架构分歧时停止并说明风险。
+
+### 11.5 任务认领机制
+
+多 AI 并行开发统一使用 Git claim 文件做任务锁。
+
+认领目录：
+
+```text
+ai-dev-input/10_task_claims/active
+ai-dev-input/10_task_claims/blocked
+ai-dev-input/10_task_claims/archive
+```
+
+执行规则：
+
+- 每个 AI 开发前必须创建并推送 `active/<claim_id>.md`。
+- `claim_id` 必须是小切片，例如 `RULE-008-S01`，不能只写大任务编号。
+- claim 必须声明 `write_scope`、`forbidden_scope`、`verification` 和 `handoff`。
+- 未成功推送 claim 前，只能阅读和规划，不能改业务文件。
+- active claim 的写入范围不得重叠；共享文件必须声明具体修改段落。
+- 长任务超过 60 分钟应更新 `last_heartbeat`。
+- 完成后必须把 claim 归档到 `archive/YYYYMMDD/`。
+- 冲突、阻塞、交接按 `AI任务认领与并行开发机制.md` 执行。
+
+### 11.6 质量门禁机制
+
+多 AI 并行开发统一使用 `ai-dev-input/11_ai_reviews` 作为质量评审和整改闭环目录。
+
+评审目录：
+
+```text
+ai-dev-input/11_ai_reviews/pending
+ai-dev-input/11_ai_reviews/changes_requested
+ai-dev-input/11_ai_reviews/approved
+ai-dev-input/11_ai_reviews/archive
+```
+
+执行规则：
+
+- 开发完成后，Builder AI 必须先把 claim 改为 `SELF_CHECK`，再创建 review。
+- Reviewer AI 按需求、架构、医疗安全、数据库一致性、代码质量、测试、安全、前端体验和运维维度审查。
+- 发现问题时，review 进入 `CHANGES_REQUESTED`，claim 进入 `CHANGES_REQUESTED` 或 `FIXING`。
+- P0/P1/P2 开放问题未关闭时，业务代码不得正式提交、合并、发布或归档完成。
+- `review_status=APPROVED` 且 `open_findings=0` 后，claim 才能进入 `READY_TO_SUBMIT`。
+- 高风险任务不得由 Builder AI 自行批准；医学、医保、质控、权限、安全、数据库、发布链路必须有独立评审。
+- 认领文件、心跳和评审记录可以同步到 `main`；业务代码进入主版本必须先通过质量门禁。
+
+详细流程以 `AI开发质量门禁与评审整改机制.md` 为准。
+
+### 11.7 数据库环境识别
+
+每个 AI 开发前必须执行：
+
+```powershell
+.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+```
+
+约定：
+
+- `recommended_mode=ORACLE`：优先使用 Oracle，涉及 DDL/持久化时跑 Oracle DDL 和 Oracle smoke。
+- `recommended_mode=LOCAL_H2`：使用 `.\zy-engine-mvp\scripts\start-local-db.ps1` 启动本地 H2 文件库，端口 `18082`。
+- `IN_MEMORY_DEMO` 只用于快速演示，不作为持久化验收。
+- 无 Oracle 的 AI 修改表结构时，必须同步维护 Oracle、达梦、H2 三份结构文件。
+- Oracle smoke 可由有内网环境的 AI 或集成 AI 最终补跑，但无 Oracle AI 不能跳过 LOCAL_H2 验证。
+
+### 11.8 每批代码 Definition of Done
 
 每批 AI 开发完成前必须满足：
 
 - `git status -sb` 确认范围清晰。
+- 已创建并推送当前任务 claim。
+- 自主运行时已创建或更新 run log。
+- 已说明目标角色、业务闭环和客户验收故事线。
 - 只提交本任务相关文件。
 - `scripts/run-tests.ps1` 通过。
 - `scripts/build.ps1` 通过。
 - `git diff --check` 通过。
+- 已创建质量评审记录。
+- `review_status=APPROVED`。
+- `open_findings=0`。
 - 每完成一个明确任务，必须提交并推送到远端当前分支，保证其它 AI 可以拉取最新项目。
 - 新增接口有契约测试。
 - 新增配置有样例 JSON 或 API 示例。
 - README 或 docs 已更新。
 - 不引入 Neo4j/Dify 强依赖。
 - 不硬编码医院逻辑。
+- claim 和 review 已更新并归档；若未完成，状态必须是 `BLOCKED`、`HANDOFF` 或 `CHANGES_REQUESTED` 且写清原因。
+- 已说明数据库模式；无 Oracle 时已用 `LOCAL_H2_FILE` 验证并标注 Oracle smoke 待集成环境补跑。
+- 自主运行结束时已写明 `next_action` 和停机原因。
 
 ## 12. 当前优先任务池
 
@@ -597,6 +760,42 @@ Provider 影响：
 - 医嘱标准化接口。
 - 未映射医嘱清单。
 - 字典版本 impact report。
+
+### AIK-001 AI 医疗知识工厂
+
+目标：在外网基准版本中持续接入国内外权威医疗知识，利用 AI 生成可审核的标准概念、同义词、字典映射、规则、图谱和路径候选，再打包导出给院内系统使用。
+
+产出：
+
+- 来源注册、授权和证据片段数据模型。
+- AI 知识生产任务、模型调用记录和候选资产模型。
+- 医疗知识总包 `medical_knowledge_package` manifest。
+- AI 候选资产的自动质检、冲突检测和专家审核状态。
+- 外网基准包到院内配置包的导出、导入、dry-run 和激活流程。
+
+### TERM-AI-001 AI 字典候选生成与 Dify 兼容
+
+目标：让院内字典和标准字典映射不依赖单一 AI 能力；有 Dify 时调用 Dify Provider，无 Dify 时使用外网基准包、本地规则、同义词索引、向量召回和人工审核。
+
+产出：
+
+- `TerminologyCandidateProvider` 抽象。
+- `RuleBasedProvider`、`ExternalAiPackageProvider`、`DifyProvider`、`ManualProvider` 设计和降级策略。
+- 候选映射置信度、冲突、多候选和未映射治理队列。
+- 映射审核、发布、回滚和影响分析流程。
+- 字典脱敏治理包导出和外网增量映射包导入流程。
+
+### RULE-CORE-001 规则引擎 DB-only 兼容加固
+
+目标：确保规则引擎在无 Neo4j、无 Dify、无大模型的院内环境中仍具备最高程度可用性，只有在追求更高召回率、解释质量或低置信度复核时才使用 Dify/AI 增强。
+
+产出：
+
+- DB-only 规则执行能力矩阵：导入、review、publish、simulate、evaluate、batch、results、audit、source trace、terminology normalize。
+- 规则执行 Provider 边界：核心 DSL evaluator、terminology、source、audit、result store 必须本地可用；Graph/Dify/AI Provider 必须可降级。
+- 无 Neo4j/无 Dify 测试样例和验收剧本。
+- Dify/AI 增强场景清单：候选规则生成、解释增强、复杂证据补全、人工审核辅助、低置信度复核。
+- 发布阻断规则：实时 AI 输出不得直接成为高风险规则命中结论。
 
 ### PROV-001 来源追溯底座
 

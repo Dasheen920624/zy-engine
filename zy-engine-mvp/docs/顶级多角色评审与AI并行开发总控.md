@@ -8,7 +8,12 @@
 
 ```text
 zy-engine-mvp/docs/AI接手执行手册.md
+zy-engine-mvp/docs/AI自主开发运行守则.md
+zy-engine-mvp/docs/AI任务认领与并行开发机制.md
+zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
+zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md
 zy-engine-mvp/docs/产品化方案与AI开发编排.md
+zy-engine-mvp/docs/产品功能业务核查与开工清单.md
 zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
 zy-engine-mvp/docs/前端配置平台规划与开发验证.md
 ai-dev-input/09_ai_task_cards/task_card_template.md
@@ -363,7 +368,94 @@ override_reason        覆盖原因
 
 禁止两个 AI 同时无协调地修改同一服务类、同一 DDL 文件或同一前端路由文件。必须先拆分任务，避免互相覆盖。
 
-### 11.3 接手标准流程
+### 11.3 自主运行和任务选择
+
+当用户授权 AI 自主开发时，AI 不能随机选择任务，必须按以下优先级推进：
+
+```text
+先修复阻断 review
+-> 接管 stale/handoff
+-> 执行当前最高优先级任务池
+-> 补测试、smoke、文档和 DDL 一致性缺口
+-> 选择低冲突小切片
+```
+
+自主运行必须创建：
+
+```text
+ai-dev-input/12_autonomous_runs/active/<run_id>.md
+```
+
+运行记录必须写清：
+
+- 为什么选择当前任务。
+- 当前 claim 和 review。
+- 验证结果。
+- 停机条件是否触发。
+- 下一步交接。
+
+详细流程以 `zy-engine-mvp/docs/AI自主开发运行守则.md` 为准。
+
+任务选择还必须对齐 `zy-engine-mvp/docs/产品功能业务核查与开工清单.md`，明确本任务服务的用户角色、业务闭环和客户验收故事线。
+
+### 11.4 任务认领和锁定
+
+多 AI 并行开发必须使用 `ai-dev-input/10_task_claims` 作为任务锁目录。任何 AI 未成功推送 active claim 前，不得修改业务代码、DDL、脚本、样例或核心文档。
+
+认领文件：
+
+```text
+ai-dev-input/10_task_claims/active/<claim_id>.md
+```
+
+认领要求：
+
+- `claim_id` 必须是任务切片，例如 `PROV-001-S03`，不能只写 `PROV-001`。
+- claim 必须声明 `task_id`、`owner`、`status`、`write_scope`、`forbidden_scope`、`verification`。
+- `write_scope` 与其它 active claim 重叠时，后认领者必须停止并拆分任务。
+- claim 推送失败时，必须重新 `git pull --ff-only` 并检查是否已被其它 AI 抢先认领。
+- 超过 60 分钟的任务必须更新 `last_heartbeat`。
+- 超过 4 小时无心跳视为可能 stale；超过 24 小时且无相关提交，可由新 AI 创建接管 claim。
+- 完成后必须把 claim 移入 `archive/YYYYMMDD/` 并写明验证结果、提交 hash 和风险。
+
+冲突优先级：
+
+```text
+远端已推送 claim > 更小写入范围 > 明确用户接管指令 > 已测试并推送的实现 > 集成任务统一处理
+```
+
+共享文件必须在 claim 中写明具体修改区块，包括 README、API 示例、总控文档、契约测试、DDL 和核心服务类。
+
+详细流程以 `zy-engine-mvp/docs/AI任务认领与并行开发机制.md` 为准。
+
+### 11.5 质量门禁和整改闭环
+
+任务认领只能防止多个 AI 撞车，不能证明实现符合要求。所有任务完成后必须进入 `ai-dev-input/11_ai_reviews` 质量门禁。
+
+评审状态流：
+
+```text
+SELF_CHECK
+-> REVIEW_REQUESTED
+-> CHANGES_REQUESTED / FIXING
+-> APPROVED
+-> READY_TO_SUBMIT
+-> DONE
+```
+
+执行规则：
+
+- Builder AI 完成实现后，先自检并创建 `pending/<review_id>.md`。
+- Reviewer AI 按需求、架构、医疗安全、数据库一致性、测试、安全、前端体验和运维维度审查。
+- 有 P0/P1/P2 开放问题时，review 必须进入 `changes_requested/`，claim 必须进入 `CHANGES_REQUESTED` 或 `FIXING`。
+- 原 Builder AI 仍在线时，必须由原 Builder AI 自行整改；不可用时，由新的 AI 创建修复 claim 接管。
+- `review_status=APPROVED` 且 `open_findings=0` 后，业务代码才允许正式提交或合入主版本。
+- 高风险任务不得自审批准；医学、医保、质控、安全、数据库、持久化和发布链路必须独立评审。
+- claim、heartbeat、review 元数据可以同步到 `main`；未通过质量门禁的业务代码不能进入主版本。
+
+详细流程以 `zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md` 为准。
+
+### 11.6 接手标准流程
 
 每个 AI 开始前执行：
 
@@ -371,18 +463,26 @@ override_reason        覆盖原因
 git pull --ff-only origin main
 git status -sb
 git log -1 --pretty=format:%H%n%s
+rg -n "claim_id:|task_id:|write_scope:" ai-dev-input/10_task_claims
 ```
 
 然后阅读：
 
 ```text
 zy-engine-mvp/docs/AI接手执行手册.md
+zy-engine-mvp/docs/AI自主开发运行守则.md
+zy-engine-mvp/docs/AI任务认领与并行开发机制.md
+zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
 zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md
 zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
 ai-dev-input/09_ai_task_cards/task_card_template.md
 ```
 
-每个 AI 完成后必须：
+确认无冲突后，必须先创建并推送 active claim，再进入代码开发。
+
+每个 AI 完成实现后必须先自检并提交质量评审。评审通过前不得正式提交业务代码。
+
+质量门禁通过后必须：
 
 ```powershell
 .\zy-engine-mvp\scripts\run-tests.ps1
@@ -392,6 +492,8 @@ git add <only current task files>
 git commit -m "<中文短句>"
 git push origin main
 ```
+
+然后把当前 claim 标记为 `DONE` 并归档到 `ai-dev-input/10_task_claims/archive/YYYYMMDD/`，把 review 归档到 `ai-dev-input/11_ai_reviews/archive/YYYYMMDD/`。
 
 涉及 Oracle 表结构、迁移、索引或落库行为时，还必须：
 
@@ -571,6 +673,7 @@ git push origin main
 交付要求：
 
 - 每批任务必须可被脚本验证。
+- 无 Oracle 的 AI 必须使用 `LOCAL_H2_FILE` 完成 DB-only 等价验证；Oracle 是生产权威，Oracle smoke 由有内网环境的 AI 或集成 AI 补齐。
 - 安全凭据不能进入日志和 Git。
 - 生产问题必须能通过 traceId 查链路。
 - 升级失败必须有回滚手段。
@@ -584,6 +687,7 @@ git push origin main
 任务名称：
 目标角色：
 业务场景：
+客户验收故事线：
 用户操作路径：
 后端接口：
 前端页面：
@@ -751,6 +855,10 @@ Oracle 验证：
 
 ```text
 功能是否满足任务卡：
+是否已创建 review：
+review_status 是否 APPROVED：
+open_findings 是否为 0：
+自主运行时是否更新 run log：
 是否支持组织上下文：
 是否支持配置版本：
 是否支持来源追溯：

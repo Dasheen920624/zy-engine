@@ -46,6 +46,12 @@
             <artifactId>neo4j-java-driver</artifactId>
             <version>4.4.23</version>
         </dependency>
+        <!-- Embedded local file database for AI/offline development. Oracle remains the production authority. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

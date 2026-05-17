@@ -3,8 +3,52 @@
 使用前先阅读：
 
 - `zy-engine-mvp/docs/AI接手执行手册.md`
+- `zy-engine-mvp/docs/AI自主开发运行守则.md`
+- `zy-engine-mvp/docs/AI任务认领与并行开发机制.md`
+- `zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md`
+- `zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
 - `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
 - `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+- `zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
+
+## 任务认领
+
+开发前必须先创建并推送 claim 文件：
+
+```text
+ai-dev-input/10_task_claims/active/<claim_id>.md
+```
+
+填写：
+
+```text
+claim_id:
+owner:
+status: ACTIVE
+write_scope:
+forbidden_scope:
+verification:
+review_required:
+review_id:
+review_status:
+open_findings:
+```
+
+没有成功推送 active claim 前，只允许阅读和规划。
+
+若是自主开发，还必须创建或更新：
+
+```text
+ai-dev-input/12_autonomous_runs/active/<run_id>.md
+```
+
+完成开发后必须创建质量评审：
+
+```text
+ai-dev-input/11_ai_reviews/pending/<review_id>.md
+```
+
+未通过 `review_status=APPROVED` 且 `open_findings=0` 前，不允许正式提交、合并或进入主版本。
 
 ## 任务编号
 
@@ -52,6 +96,14 @@ DOC-xxx     文档
 - 医保质控可视化
 - 运维审计
 
+必须填写：
+
+```text
+目标角色：
+业务闭环：
+客户验收故事线：
+```
+
 ## 总控泳道
 
 填写本任务属于 `顶级多角色评审与AI并行开发总控.md` 中哪条泳道：
@@ -62,6 +114,11 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 
 说明：
 
+- 本任务 claim_id：
+- 自主运行 run_id：
+- 数据库模式：ORACLE / LOCAL_H2 / IN_MEMORY
+- Oracle 是否可用：
+- 本地 H2 是否已验证：
 - 本任务写入范围：
 - 明确不改范围：
 - 是否可能和其它 AI 冲突：
@@ -134,8 +191,10 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 - 新增字段：
 - 索引：
 - Oracle/达梦差异：
+- H2 本地库差异：
 - 是否需要迁移脚本：
 - 是否必须同步真实 Oracle：
+- 无 Oracle 时是否必须用 LOCAL_H2 验证：
 - Oracle smoke 脚本：
 
 ## 来源追溯影响
@@ -213,6 +272,40 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 6. 涉及来源追溯时补缺来源、过期来源、未审核来源测试。
 7. 涉及表结构、索引、约束、迁移或持久化 SQL 时，必须执行真实 Oracle DDL/迁移和 Oracle 版本 smoke，不能只跑内存/JUnit。
 
+## 质量评审要求
+
+说明：
+
+- review_id：
+- review 类型：独立评审 / 自审 / 领域评审 / 集成评审
+- 是否高风险任务：
+- 必须参与的 Reviewer AI：
+- 医学/医保/质控审查：
+- 数据库一致性审查：
+- 安全和隐私审查：
+- 前端体验和可访问性审查：
+- P0/P1/P2 问题处理要求：
+
+评审放行条件：
+
+```text
+review_status=APPROVED
+open_findings=0
+claim.status=READY_TO_SUBMIT
+```
+
+## 自主运行要求
+
+若本任务由 AI 自主选择，说明：
+
+- run_id：
+- 任务选择依据：
+- 是否先检查 pending/changes_requested review：
+- 是否存在 active claim 冲突：
+- 剩余额度不足时的交接动作：
+- 停机条件：
+- 下一步任务：
+
 ## 文档要求
 
 根据影响范围更新：
@@ -231,6 +324,16 @@ A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 /
 1.
 2.
 3.
+
+业务验收必须说明：
+
+```text
+目标角色是否能完成动作：
+是否可在脚本或前端中演示：
+是否可追溯来源/版本/traceId：
+是否支持人工复核或医生确认：
+是否可导出或记录验收结果：
+```
 
 必须通过：
 
@@ -252,8 +355,11 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 提交与推送：
 
 1. 只暂存并提交本任务相关文件。
-2. 每完成一个明确任务，必须立即推送到远端当前分支。
-3. 最终回复必须说明提交 hash、推送分支；若无法提交或推送，必须说明原因、影响和替代交接方式。
+2. 创建并通过 `ai-dev-input/11_ai_reviews` 质量评审。
+3. 只有 `review_status=APPROVED` 且 `open_findings=0`，才能正式提交业务代码。
+4. 每完成一个明确任务并通过质量门禁后，必须立即推送到远端当前分支。
+5. 完成后把 claim 更新为 `DONE` 并归档到 `ai-dev-input/10_task_claims/archive/YYYYMMDD/`，把 review 归档到 `ai-dev-input/11_ai_reviews/archive/YYYYMMDD/`；自主运行结束时归档 run log。
+6. 最终回复必须说明提交 hash、推送分支、review_id、run_id 和开放问题数；若无法提交或推送，必须说明原因、影响和替代交接方式。
 
 ## 风险与边界
 

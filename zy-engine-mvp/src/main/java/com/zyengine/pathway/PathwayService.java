@@ -62,7 +62,7 @@ public class PathwayService {
         result.put("pathway_code", pathwayCode);
         result.put("status", "DRAFT");
         result.put("validation", "PASSED");
-        result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
+        result.put("persistence", persistenceService.providerName());
         audit("CREATE_DRAFT", "PATHWAY", pathwayCode, null, result, null);
         return result;
     }
@@ -84,7 +84,7 @@ public class PathwayService {
         result.put("pathway_code", pathwayCode);
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
-        result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
+        result.put("persistence", persistenceService.providerName());
         audit("PUBLISH", "PATHWAY", pathwayCode, null, result,
                 string(request == null ? null : request.get("approved_by"), null));
         return result;
@@ -119,7 +119,7 @@ public class PathwayService {
         result.put("status", "ROLLED_BACK");
         result.put("operator_id", string(request == null ? null : request.get("operator_id"), null));
         result.put("reason", string(request == null ? null : request.get("reason"), null));
-        result.put("persistence", persistenceService.enabled() ? "ORACLE" : "MEMORY");
+        result.put("persistence", persistenceService.providerName());
         audit("ROLLBACK", "PATHWAY", pathwayCode, null, result,
                 string(request == null ? null : request.get("operator_id"), null));
         return result;

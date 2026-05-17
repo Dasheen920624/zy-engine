@@ -310,6 +310,88 @@ BEGIN
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
   )');
 
+  create_ignore('CREATE TABLE src_document (
+    id NUMBER(20) PRIMARY KEY,
+    tenant_id VARCHAR2(64) NOT NULL,
+    document_code VARCHAR2(128) NOT NULL,
+    title VARCHAR2(500) NOT NULL,
+    source_type VARCHAR2(64) NOT NULL,
+    source_uri VARCHAR2(1000),
+    publisher VARCHAR2(200),
+    effective_date DATE,
+    expiry_date DATE,
+    review_status VARCHAR2(32) NOT NULL,
+    reviewed_by VARCHAR2(64),
+    reviewed_time TIMESTAMP,
+    content_hash VARCHAR2(128),
+    metadata_json CLOB,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_src_document UNIQUE (tenant_id, document_code)
+  )');
+
+  create_ignore('CREATE TABLE src_citation (
+    id NUMBER(20) PRIMARY KEY,
+    tenant_id VARCHAR2(64) NOT NULL,
+    citation_code VARCHAR2(128) NOT NULL,
+    document_code VARCHAR2(128) NOT NULL,
+    section_code VARCHAR2(128),
+    clause_no VARCHAR2(128),
+    page_no VARCHAR2(64),
+    excerpt_text CLOB,
+    summary_text VARCHAR2(1000),
+    evidence_level VARCHAR2(64),
+    status VARCHAR2(32) NOT NULL,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_src_citation UNIQUE (tenant_id, citation_code)
+  )');
+
+  create_ignore('CREATE TABLE src_asset_binding (
+    id NUMBER(20) PRIMARY KEY,
+    tenant_id VARCHAR2(64) NOT NULL,
+    asset_type VARCHAR2(64) NOT NULL,
+    asset_code VARCHAR2(128) NOT NULL,
+    asset_version VARCHAR2(64),
+    citation_code VARCHAR2(128) NOT NULL,
+    binding_role VARCHAR2(64) NOT NULL,
+    status VARCHAR2(32) NOT NULL,
+    created_by VARCHAR2(64),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_src_asset_binding UNIQUE (tenant_id, asset_type, asset_code, asset_version, citation_code, binding_role)
+  )');
+
+  create_ignore('CREATE TABLE src_review_record (
+    id NUMBER(20) PRIMARY KEY,
+    tenant_id VARCHAR2(64) NOT NULL,
+    review_code VARCHAR2(128) NOT NULL,
+    target_type VARCHAR2(64) NOT NULL,
+    target_code VARCHAR2(128) NOT NULL,
+    target_version VARCHAR2(64),
+    missing_count NUMBER(10) DEFAULT 0 NOT NULL,
+    expired_count NUMBER(10) DEFAULT 0 NOT NULL,
+    unreviewed_count NUMBER(10) DEFAULT 0 NOT NULL,
+    review_result VARCHAR2(32) NOT NULL,
+    review_message VARCHAR2(1000),
+    reviewed_by VARCHAR2(64),
+    reviewed_time TIMESTAMP,
+    detail_json CLOB,
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uk_src_review_record UNIQUE (tenant_id, review_code)
+  )');
+
+  create_ignore('CREATE TABLE src_runtime_evidence (
+    id NUMBER(20) PRIMARY KEY,
+    trace_id VARCHAR2(128) NOT NULL,
+    tenant_id VARCHAR2(64),
+    engine_type VARCHAR2(32) NOT NULL,
+    action_type VARCHAR2(64) NOT NULL,
+    target_type VARCHAR2(64) NOT NULL,
+    target_code VARCHAR2(128) NOT NULL,
+    target_version VARCHAR2(64),
+    citation_code VARCHAR2(128),
+    evidence_summary VARCHAR2(1000),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )');
+
   add_column_if_missing('pe_variation_record', 'tenant_id', 'VARCHAR2(64)');
   add_column_if_missing('pe_variation_record', 'group_code', 'VARCHAR2(64)');
   add_column_if_missing('pe_variation_record', 'hospital_code', 'VARCHAR2(64)');
@@ -356,6 +438,11 @@ BEGIN
   create_ignore('CREATE INDEX idx_re_log_org ON re_rule_exec_log(tenant_id, hospital_code, scope_level, scope_code)');
   create_ignore('CREATE INDEX idx_audit_trace ON engine_audit_log(trace_id)');
   create_ignore('CREATE INDEX idx_audit_org ON engine_audit_log(tenant_id, hospital_code, scope_level, scope_code)');
+  create_ignore('CREATE INDEX idx_src_doc_review ON src_document(tenant_id, review_status, expiry_date)');
+  create_ignore('CREATE INDEX idx_src_citation_doc ON src_citation(tenant_id, document_code)');
+  create_ignore('CREATE INDEX idx_src_binding_asset ON src_asset_binding(tenant_id, asset_type, asset_code, asset_version)');
+  create_ignore('CREATE INDEX idx_src_review_target ON src_review_record(tenant_id, target_type, target_code, target_version)');
+  create_ignore('CREATE INDEX idx_src_runtime_trace ON src_runtime_evidence(trace_id, engine_type)');
 END;
 /
 
@@ -530,5 +617,11 @@ COMMENT ON COLUMN engine_audit_log.scope_level IS '组织作用域层级';
 COMMENT ON COLUMN engine_audit_log.scope_code IS '组织作用域编码';
 COMMENT ON COLUMN engine_audit_log.org_source IS '组织上下文来源';
 COMMENT ON COLUMN engine_audit_log.detail_json IS '操作详情JSON';
+
+COMMENT ON TABLE src_document IS '来源追溯-来源文档主表';
+COMMENT ON TABLE src_citation IS '来源追溯-文献引用片段表';
+COMMENT ON TABLE src_asset_binding IS '来源追溯-业务资产与引用绑定表';
+COMMENT ON TABLE src_review_record IS '来源追溯-发布前来源审核记录表';
+COMMENT ON TABLE src_runtime_evidence IS '来源追溯-运行时证据链表';
 
 PROMPT ZYENGINE core tables and comments are ready.

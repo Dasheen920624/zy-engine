@@ -1,0 +1,51 @@
+{
+  "tenant_id": "TENANT_DEMO",
+  "package_code": "PKG_AMI_RULE_SOURCE_BLOCKED",
+  "package_version": "2026.05.02",
+  "asset_type": "RULE",
+  "scope_level": "HOSPITAL",
+  "scope_code": "HOSPITAL_DEMO",
+  "created_by": "QUALITY_CENTER",
+  "manifest": {
+    "owner": "QUALITY_CENTER",
+    "description": "来源审核阻断样例：用于验证 source_review 阻断发布。",
+    "source_review": {
+      "enabled": true,
+      "missing_count": 1,
+      "expired_count": 0,
+      "unreviewed_count": 0,
+      "allow_publish": false,
+      "message": "缺少来源文献，禁止发布。"
+    }
+  },
+  "full_snapshot": {
+    "package_code": "PKG_AMI_CORE",
+    "package_version": "2026.05",
+    "rules": [
+      {
+        "rule_code": "R_AMI_STEMI_CANDIDATE",
+        "rule_name": "AMI/STEMI 候选入径规则",
+        "rule_type": "PATHWAY_ENTRY",
+        "version_no": "1.0.0",
+        "severity": "HIGH",
+        "enabled": true,
+        "condition": {
+          "all": [
+            {
+              "fact": "chief_complaints.code",
+              "operator": "in",
+              "value": [
+                "CHEST_PAIN"
+              ]
+            }
+          ]
+        },
+        "actions": [
+          {
+            "type": "CREATE_RECOMMENDATION"
+          }
+        ]
+      }
+    ]
+  }
+}

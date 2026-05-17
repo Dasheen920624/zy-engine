@@ -3,8 +3,13 @@
 请基于以下资料实现指定后端任务。开始前必须先阅读：
 
 - `zy-engine-mvp/docs/AI接手执行手册.md`
+- `zy-engine-mvp/docs/AI自主开发运行守则.md`
+- `zy-engine-mvp/docs/AI任务认领与并行开发机制.md`
+- `zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md`
+- `zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
 - `zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
 - `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+- `zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
 - `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
 - `ai-dev-input/09_ai_task_cards/ai_system_prompt.md`
 
@@ -19,6 +24,7 @@
 ## 输入资料
 
 - 产品总纲：`zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+- 业务核查：`zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
 - 全功能蓝图：`zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
 - 顶级总控：`zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md`
 - 接手手册：`zy-engine-mvp/docs/AI接手执行手册.md`
@@ -47,12 +53,13 @@
 ## 必须输出
 
 1. 任务理解和边界。
-2. 修改文件列表。
-3. 代码实现。
-4. 测试用例。
-5. 文档和样例更新。
-6. 本地启动和验证命令。
-7. 风险与未完成项。
+2. 目标角色、业务闭环和客户验收故事线。
+3. 修改文件列表。
+4. 代码实现。
+5. 测试用例。
+6. 文档和样例更新。
+7. 本地启动和验证命令。
+8. 风险与未完成项。
 
 ## 验证要求
 
@@ -78,9 +85,13 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 ## 提交要求
 
 1. 先运行 `git status -sb` 确认工作树。
-2. 只暂存本任务相关文件。
-3. 每完成一个明确任务，必须提交一次，不得把已完成任务长期留在本地未提交状态。
-4. 提交信息使用中文短句，例如：
+2. 确认已创建并推送 `ai-dev-input/10_task_claims/active/<claim_id>.md`。
+3. 自主开发时确认已创建或更新 `ai-dev-input/12_autonomous_runs/active/<run_id>.md`。
+4. 完成开发后创建 `ai-dev-input/11_ai_reviews/pending/<review_id>.md`，通过质量评审和整改复评。
+5. 只有 `review_status=APPROVED` 且 `open_findings=0` 后，才能正式提交业务代码。
+6. 只暂存本任务相关文件。
+7. 每完成一个明确任务并通过质量门禁后，必须提交一次，不得把已完成任务长期留在本地未提交状态。
+8. 提交信息使用中文短句，例如：
 
 ```text
 增加配置包发布模型
@@ -88,5 +99,5 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 增加医嘱标准化映射
 ```
 
-5. 提交成功后必须立即推送到远端当前分支，确保其它 AI 可以拉取最新项目。
-6. 最终回复必须包含改动摘要、验证结果、提交 hash、推送分支；如未提交或未推送，必须说明原因、影响和替代交接方式。
+9. 提交成功后必须立即推送到远端当前分支，确保其它 AI 可以拉取最新项目。
+10. 最终回复必须包含改动摘要、验证结果、review_id、open_findings、run_id、提交 hash、推送分支；如未提交或未推送，必须说明原因、影响和替代交接方式。

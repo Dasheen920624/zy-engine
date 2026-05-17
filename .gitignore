@@ -10,6 +10,9 @@ target/
 *.out
 *.err
 *.pid
+zy-engine-mvp/data/
+*.mv.db
+*.trace.db
 
 # Local environment and secrets
 .env

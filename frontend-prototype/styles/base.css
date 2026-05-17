@@ -5,20 +5,24 @@
 
 :root {
   /* 颜色 token */
-  --color-bg: #f5f6f8;
+  --color-bg: #ffffff;
+  --color-bg-soft: #f5fbff;
+  --color-menu: #2fa7e8;
+  --color-menu-hover: #178fd0;
+  --color-menu-active: #0b78bd;
   --color-surface: #ffffff;
   --color-surface-alt: #fafbfc;
-  --color-border: #e5e7eb;
-  --color-border-strong: #d1d5db;
+  --color-border: #d8e8f3;
+  --color-border-strong: #b8d8ec;
 
-  --color-text-primary: #1f2937;
-  --color-text-secondary: #4b5563;
-  --color-text-tertiary: #6b7280;
+  --color-text-primary: #1f2d3d;
+  --color-text-secondary: #52677a;
+  --color-text-tertiary: #7c8b99;
   --color-text-inverse: #ffffff;
 
-  --color-brand: #1e40af;
-  --color-brand-hover: #1d4ed8;
-  --color-brand-light: #dbeafe;
+  --color-brand: #168bd3;
+  --color-brand-hover: #0f73b6;
+  --color-brand-light: #e8f6ff;
 
   --color-success: #047857;
   --color-success-light: #d1fae5;
@@ -26,8 +30,8 @@
   --color-warning-light: #fef3c7;
   --color-danger: #b91c1c;
   --color-danger-light: #fee2e2;
-  --color-info: #1e40af;
-  --color-info-light: #dbeafe;
+  --color-info: #168bd3;
+  --color-info-light: #e8f6ff;
   --color-neutral: #4b5563;
   --color-neutral-light: #e5e7eb;
 
@@ -137,8 +141,8 @@ p { margin: 0; }
 
 .app-sidebar {
   grid-area: sidebar;
-  background: #0f172a;
-  color: #e5e7eb;
+  background: linear-gradient(180deg, var(--color-menu) 0%, var(--color-menu-active) 100%);
+  color: var(--color-text-inverse);
   padding: var(--space-4) 0;
   display: flex;
   flex-direction: column;
@@ -149,27 +153,27 @@ p { margin: 0; }
   font-size: var(--fs-16);
   font-weight: 700;
   color: #ffffff;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
   margin-bottom: var(--space-3);
 }
-.app-sidebar .brand small { display: block; font-size: var(--fs-12); font-weight: 400; color: #94a3b8; margin-top: var(--space-1); }
+.app-sidebar .brand small { display: block; font-size: var(--fs-12); font-weight: 400; color: rgba(255, 255, 255, 0.78); margin-top: var(--space-1); }
 
 .app-sidebar nav { flex: 1; overflow-y: auto; }
 .app-sidebar nav ul { list-style: none; padding: 0; margin: 0; }
 .app-sidebar nav li a {
   display: block;
   padding: var(--space-3) var(--space-5);
-  color: #cbd5e1;
+  color: rgba(255, 255, 255, 0.9);
   font-size: var(--fs-13);
   border-left: 3px solid transparent;
 }
-.app-sidebar nav li a:hover { background: #1e293b; color: #ffffff; text-decoration: none; }
-.app-sidebar nav li a.active { background: #1e293b; color: #ffffff; border-left-color: var(--color-brand); }
+.app-sidebar nav li a:hover { background: rgba(255, 255, 255, 0.16); color: #ffffff; text-decoration: none; }
+.app-sidebar nav li a.active { background: rgba(255, 255, 255, 0.22); color: #ffffff; border-left-color: #ffffff; }
 
 .app-sidebar nav .group {
   padding: var(--space-3) var(--space-5) var(--space-1);
   font-size: var(--fs-12);
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.72);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -178,6 +182,7 @@ p { margin: 0; }
   grid-area: main;
   padding: var(--space-5);
   overflow: auto;
+  background: var(--color-bg);
 }
 
 /* 页面头 */
@@ -271,8 +276,8 @@ p { margin: 0; }
   gap: 4px;
   padding: 2px 6px;
   font-size: var(--fs-12);
-  background: linear-gradient(90deg, #ddd6fe 0%, #fde68a 100%);
-  color: #5b21b6;
+  background: linear-gradient(90deg, #e8f6ff 0%, #d1fae5 100%);
+  color: #0f73b6;
   border-radius: var(--radius-2);
   font-weight: 500;
 }
@@ -340,7 +345,7 @@ p { margin: 0; }
 /* 来源卡片 */
 .source-card {
   border: 1px solid var(--color-brand-light);
-  background: #f8fafc;
+  background: var(--color-bg-soft);
   border-radius: var(--radius-4);
   padding: var(--space-3);
   margin-top: var(--space-2);

@@ -10,8 +10,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ZyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "C:\zoesoft\zy-engine" }
-$BackupRoot = if ($env:ZY_BACKUP_DIR) { $env:ZY_BACKUP_DIR } else { "C:\zoesoft\zy-engine.bak" }
+$ZyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "D:\zoesoft\zy-engine" }
+$BackupRoot = if ($env:ZY_BACKUP_DIR) { $env:ZY_BACKUP_DIR } else { "D:\zoesoft\zy-engine.bak" }
 
 # 必须 admin
 $winId = [System.Security.Principal.WindowsIdentity]::GetCurrent()

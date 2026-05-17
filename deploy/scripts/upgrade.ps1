@@ -12,8 +12,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ZyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "C:\zoesoft\zy-engine" }
-$BackupRoot = if ($env:ZY_BACKUP_DIR) { $env:ZY_BACKUP_DIR } else { "C:\zoesoft\zy-engine.bak" }
+$ZyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "D:\zoesoft\zy-engine" }
+$BackupRoot = if ($env:ZY_BACKUP_DIR) { $env:ZY_BACKUP_DIR } else { "D:\zoesoft\zy-engine.bak" }
 
 # 必须 admin
 $winId = [System.Security.Principal.WindowsIdentity]::GetCurrent()
@@ -46,7 +46,7 @@ Stop-Service "ZyEngine" -Force -ErrorAction SilentlyContinue
 
 Write-Host "`n==> 3. 解压新发布包" -ForegroundColor Cyan
 if ($Package -eq "") {
-    $Package = "C:\Temp\zy-engine-$To.tar.gz"
+    $Package = "D:\Temp\zy-engine-$To.tar.gz"
 }
 if (-not (Test-Path $Package)) { throw "未找到 $Package；请先上传发布包并用 -Package 指定" }
 $tmpDir = Join-Path $env:TEMP "zy-upgrade-$ts"
