@@ -106,8 +106,13 @@ public class TerminologyService {
     public Map<String, Object> getMapping(String sourceSystem, String sourceCode, String conceptType) {
         ConceptMapping mapping = mappings.get(key(canonical(sourceSystem), canonical(sourceCode), canonical(conceptType)));
         if (mapping == null) {
-            throw new IllegalArgumentException(
-                    "mapping not found: " + canonical(sourceSystem) + "/" + canonical(sourceCode) + "/" + canonical(conceptType));
+            // 不回显用户输入的原始值，避免攻击者通过尝试不同值并观察 4xx vs 5xx 来枚举字典；
+            // 详细 source_system/source_code 进入服务端日志便于运维定位。
+            org.slf4j.LoggerFactory.getLogger(TerminologyService.class)
+                    .info("[traceId={}] terminology mapping not found: sourceSystem={}, sourceCode={}, conceptType={}",
+                            com.zyengine.common.TraceContext.getTraceId(),
+                            canonical(sourceSystem), canonical(sourceCode), canonical(conceptType));
+            throw new IllegalArgumentException("mapping not found");
         }
         return view(mapping);
     }

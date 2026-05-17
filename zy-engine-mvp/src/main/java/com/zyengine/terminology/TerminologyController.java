@@ -41,7 +41,27 @@ public class TerminologyController {
     public ApiResult<Map<String, Object>> getMapping(@PathVariable String sourceSystem,
                                                      @PathVariable String sourceCode,
                                                      @RequestParam String conceptType) {
+        validatePathToken("sourceSystem", sourceSystem);
+        validatePathToken("sourceCode", sourceCode);
+        validatePathToken("conceptType", conceptType);
         return ApiResult.success(terminologyService.getMapping(sourceSystem, sourceCode, conceptType));
+    }
+
+    /**
+     * 校验 path 与 query 字段的长度与字符集，避免传入空字符串或异常超长字符串导致后端 store key 异常。
+     * 限定 1-128 字符、字母/数字/下划线/横线/点；不符合要求直接 400 拒绝。
+     */
+    private static void validatePathToken(String fieldName, String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(fieldName + " is required");
+        }
+        String trimmed = value.trim();
+        if (trimmed.length() > 128) {
+            throw new IllegalArgumentException(fieldName + " exceeds max length 128");
+        }
+        if (!trimmed.matches("[A-Za-z0-9._\\-]+")) {
+            throw new IllegalArgumentException(fieldName + " contains invalid characters");
+        }
     }
 
     /**

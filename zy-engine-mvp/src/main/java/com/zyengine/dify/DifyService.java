@@ -255,9 +255,16 @@ public class DifyService {
         return result;
     }
 
+    /**
+     * 单次 Dify 调用允许的最大超时（30 秒）。
+     * 超过此值的配置都会被夹紧，避免恶意配置（如 ZYENGINE_DIFY_TIMEOUT_MS=999999）耗尽连接池。
+     */
+    private static final int MAX_TIMEOUT_MS = 30_000;
+
     private RestTemplate restTemplate(DifyWorkflowTemplate template) {
-        int timeout = template != null && template.getTimeoutMs() != null && template.getTimeoutMs() > 0
+        int rawTimeout = template != null && template.getTimeoutMs() != null && template.getTimeoutMs() > 0
                 ? template.getTimeoutMs() : properties.getTimeoutMs();
+        int timeout = Math.min(Math.max(rawTimeout, 0), MAX_TIMEOUT_MS);
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeout);
         factory.setReadTimeout(timeout);

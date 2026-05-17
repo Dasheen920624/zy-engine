@@ -227,8 +227,9 @@ public class AdapterHubService {
         Map<String, Object> row = new LinkedHashMap<String, Object>();
         row.put("patient_id", string(params.get("patient_id"), "P_AMI_001"));
         row.put("encounter_id", string(params.get("encounter_id"), "E_AMI_001"));
-        row.put("tenant_id", string(params.get("tenant_id"), "default"));
-        row.put("org_code", string(params.get("org_code"), "ZYHOSPITAL"));
+        // 统一引用 OrgDefaults 集中常量，避免字面量散落在多个 Service。
+        row.put("tenant_id", string(params.get("tenant_id"), com.zyengine.common.OrgDefaults.DEFAULT_TENANT_ID));
+        row.put("org_code", string(params.get("org_code"), com.zyengine.common.OrgDefaults.DEFAULT_HOSPITAL_CODE));
         return row;
     }
 
@@ -342,8 +343,11 @@ public class AdapterHubService {
                     string(params.get("encounter_id"), null),
                     string(params.get("operator_id"), null),
                     detail);
-        } catch (RuntimeException ignored) {
-            // 适配器Mock查询不能因为审计失败影响演示链路。
+        } catch (RuntimeException ex) {
+            // 适配器Mock查询不能因为审计失败影响演示链路；但失败必须可见，便于运维诊断审计基础设施问题。
+            org.slf4j.LoggerFactory.getLogger(AdapterHubService.class)
+                    .warn("[traceId={}] adapter audit log persistence failed: {}",
+                            com.zyengine.common.TraceContext.getTraceId(), ex.getMessage());
         }
     }
 

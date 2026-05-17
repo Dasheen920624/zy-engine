@@ -95,6 +95,13 @@ public class RuleService {
         if (definition == null) {
             throw new IllegalArgumentException("rule not found: " + ruleCode + "@" + versionNo);
         }
+        // RULE-005 阻断：单规则 publish 路径也需要 reference_document_code 检查，
+        // 与 publishPackage 的阻断保持一致，避免绕过包级 review 直接发布无来源规则。
+        List<Map<String, Object>> referenceIssues = new ArrayList<Map<String, Object>>();
+        collectReferenceIssues(definition, referenceIssues);
+        if (!referenceIssues.isEmpty()) {
+            throw new IllegalArgumentException("rule is not ready to publish: " + referenceIssues);
+        }
         String approvedBy = string(request.get("approved_by"), null);
         markPublished(definition, approvedBy);
         persistenceService.saveRuleDefinition(definition, approvedBy);

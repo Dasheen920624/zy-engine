@@ -78,14 +78,13 @@ public class HealthController {
         provider.put("configured", databaseProperties.isEnabled());
         provider.put("ready", ready);
         provider.put("status", ready ? "READY" : "DISABLED");
-        provider.put("dialect", text(databaseProperties.getDialect(), "oracle"));
+        // database_role 是契约字段（测试与运维都依赖），保留；具体方言/驱动细节不暴露。
         provider.put("database_role", databaseProperties.roleName());
         provider.put("provider", persistenceService.providerName());
-        provider.put("production_authority", "ORACLE");
-        provider.put("development_store", "LOCAL_H2_FILE");
         provider.put("production_ready", ready && databaseProperties.productionAuthority());
-        provider.put("schema_init", databaseProperties.isInitSchema());
-        provider.put("degraded_reason", ready ? null : "数据库持久化未启用或凭据不完整，当前使用内存态运行。");
+        // 隐藏 schema_init / dialect / production_authority 等部署细节，避免暴露内部基础设施拓扑；
+        // 仅在 degraded 时给出通用 reason，不再回显具体的中文失败描述（避免帮助攻击者识别状态）。
+        provider.put("degraded_reason", ready ? null : "DB_PROVIDER_UNAVAILABLE");
         return provider;
     }
 
@@ -97,7 +96,7 @@ public class HealthController {
         provider.put("status", ready ? "READY" : fallbackStatus(graphProperties.isEnabled()));
         provider.put("provider", ready ? "NEO4J" : "DATABASE_OR_HEURISTIC_FALLBACK");
         provider.put("default_version", text(graphProperties.getDefaultVersion(), "AMI_GRAPH_2026_01"));
-        provider.put("degraded_reason", ready ? null : graphReason());
+        provider.put("degraded_reason", ready ? null : "GRAPH_PROVIDER_UNAVAILABLE");
         return provider;
     }
 
@@ -108,8 +107,8 @@ public class HealthController {
         provider.put("ready", ready);
         provider.put("status", ready ? "READY" : fallbackStatus(difyProperties.isEnabled()));
         provider.put("provider", ready ? "DIFY" : "LOCAL_TEMPLATE_FALLBACK");
-        provider.put("timeout_ms", difyProperties.getTimeoutMs());
-        provider.put("degraded_reason", ready ? null : difyReason());
+        // 不再暴露具体 timeout_ms 数值（可被用于猜测服务负载/超时调优策略）。
+        provider.put("degraded_reason", ready ? null : "DIFY_PROVIDER_UNAVAILABLE");
         return provider;
     }
 

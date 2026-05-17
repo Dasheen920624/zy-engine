@@ -349,7 +349,11 @@ public class OrgOverrideService {
         try {
             persistenceService.saveAuditLog("ORG_OVERRIDE", actionType, targetType, targetCode,
                     null, null, operatorId, detail);
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException ex) {
+            // 审计失败不阻断业务，但必须留下日志便于运维定位审计基础设施问题。
+            org.slf4j.LoggerFactory.getLogger(OrgOverrideService.class)
+                    .warn("[traceId={}] org-override audit log persistence failed: {}",
+                            com.zyengine.common.TraceContext.getTraceId(), ex.getMessage());
         }
     }
 

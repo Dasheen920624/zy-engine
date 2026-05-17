@@ -32,6 +32,9 @@ public class GraphService {
     private final GraphProperties properties;
     private final EnginePersistenceService persistenceService;
     private final Map<String, Map<String, Object>> graphVersions = new ConcurrentHashMap<String, Map<String, Object>>();
+    // 图谱版本激活/回滚的串行化锁。多版本切换 ACTIVE→RETIRED 是一个 read-modify-write 序列，
+    // 必须互斥防止并发时出现"多个版本同时 ACTIVE"或前一个 active 漏置 RETIRED。
+    private final java.util.concurrent.locks.ReentrantLock graphVersionLock = new java.util.concurrent.locks.ReentrantLock();
     private final Map<String, Map<String, Object>> graphEvidences = new ConcurrentHashMap<String, Map<String, Object>>();
     private final Map<String, Map<String, Object>> graphNodes = new ConcurrentHashMap<String, Map<String, Object>>();
     private final List<Map<String, Object>> graphEdges = Collections.synchronizedList(new ArrayList<Map<String, Object>>());
@@ -87,63 +90,74 @@ public class GraphService {
     }
 
     public Map<String, Object> activateGraphVersion(String graphVersion, Map<String, Object> request) {
-        Map<String, Object> entry = graphVersions.get(graphVersion);
-        if (entry == null) {
-            throw new IllegalArgumentException("graph version not found: " + graphVersion);
-        }
-        // 同一版本号即唯一键，激活时把所有同 family 前缀（::之前）的其他版本置 RETIRED，便于多版本共存时切换。
-        String family = versionFamily(graphVersion);
-        for (Map<String, Object> other : graphVersions.values()) {
-            String otherVersion = String.valueOf(other.get("graph_version"));
-            if (!otherVersion.equals(graphVersion) && versionFamily(otherVersion).equals(family)
-                    && "ACTIVE".equals(other.get("status"))) {
-                other.put("status", "RETIRED");
-                other.put("retired_time", nowText());
+        graphVersionLock.lock();
+        try {
+            Map<String, Object> entry = graphVersions.get(graphVersion);
+            if (entry == null) {
+                throw new IllegalArgumentException("graph version not found: " + graphVersion);
             }
-        }
-        entry.put("status", "ACTIVE");
-        entry.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
-        entry.put("published_time", nowText());
+            // 同一版本号即唯一键，激活时把所有同 family 前缀（::之前）的其他版本置 RETIRED，便于多版本共存时切换。
+            String family = versionFamily(graphVersion);
+            for (Map<String, Object> other : graphVersions.values()) {
+                String otherVersion = String.valueOf(other.get("graph_version"));
+                if (!otherVersion.equals(graphVersion) && versionFamily(otherVersion).equals(family)
+                        && "ACTIVE".equals(other.get("status"))) {
+                    other.put("status", "RETIRED");
+                    other.put("retired_time", nowText());
+                }
+            }
+            entry.put("status", "ACTIVE");
+            entry.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
+            entry.put("published_time", nowText());
 
-        List<Map<String, Object>> referenceWarnings = new ArrayList<Map<String, Object>>();
-        if (entry.get("reference_document_code") == null) {
-            Map<String, Object> warning = new LinkedHashMap<String, Object>();
-            warning.put("severity", "WARN");
-            warning.put("field", "reference_document_code");
-            warning.put("message", "图谱版本缺少来源文档绑定（reference_document_code）");
-            referenceWarnings.add(warning);
+            List<Map<String, Object>> referenceWarnings = new ArrayList<Map<String, Object>>();
+            if (entry.get("reference_document_code") == null) {
+                Map<String, Object> warning = new LinkedHashMap<String, Object>();
+                warning.put("severity", "WARN");
+                warning.put("field", "reference_document_code");
+                warning.put("message", "图谱版本缺少来源文档绑定（reference_document_code）");
+                referenceWarnings.add(warning);
+            }
+            entry.put("reference_warnings", referenceWarnings);
+            return entry;
+        } finally {
+            graphVersionLock.unlock();
         }
-        entry.put("reference_warnings", referenceWarnings);
-
-        return entry;
     }
 
     public Map<String, Object> rollbackVersion(String graphVersion, Map<String, Object> request) {
-        Map<String, Object> target = graphVersions.get(graphVersion);
-        if (target == null) {
-            throw new IllegalArgumentException("graph version not found: " + graphVersion);
-        }
-
-        String previousActiveVersion = null;
-        for (Map<String, Object> existing : graphVersions.values()) {
-            if ("ACTIVE".equals(string(existing.get("status"), null))) {
-                previousActiveVersion = string(existing.get("graph_version"), null);
-                existing.put("status", "RETIRED");
-                existing.put("retired_time", nowText());
+        // 与 activateGraphVersion 共享 graphVersionLock：回滚也是 read-modify-write 序列，
+        // 必须互斥防止并发回滚导致多版本同时 ACTIVE。
+        graphVersionLock.lock();
+        try {
+            Map<String, Object> target = graphVersions.get(graphVersion);
+            if (target == null) {
+                throw new IllegalArgumentException("graph version not found: " + graphVersion);
             }
+
+            String previousActiveVersion = null;
+            for (Map<String, Object> existing : graphVersions.values()) {
+                if ("ACTIVE".equals(string(existing.get("status"), null))) {
+                    previousActiveVersion = string(existing.get("graph_version"), null);
+                    existing.put("status", "RETIRED");
+                    existing.put("retired_time", nowText());
+                }
+            }
+
+            target.put("status", "ACTIVE");
+            target.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
+            target.put("published_time", nowText());
+
+            Map<String, Object> result = new LinkedHashMap<String, Object>();
+            result.put("graph_version", graphVersion);
+            result.put("status", "ACTIVE");
+            result.put("previous_active_version", previousActiveVersion);
+            result.put("rolled_back_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
+            result.put("rolled_back_time", nowText());
+            return result;
+        } finally {
+            graphVersionLock.unlock();
         }
-
-        target.put("status", "ACTIVE");
-        target.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
-        target.put("published_time", nowText());
-
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("graph_version", graphVersion);
-        result.put("status", "ACTIVE");
-        result.put("previous_active_version", previousActiveVersion);
-        result.put("rolled_back_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
-        result.put("rolled_back_time", nowText());
-        return result;
     }
 
     public List<Map<String, Object>> importGraphEvidences(Object request) {
@@ -412,40 +426,35 @@ public class GraphService {
         params.put("graph_version", hasText(graphVersion) ? graphVersion : null);
         params.put("limit", integer(request.get("limit"), 10));
 
-        Driver driver = newDriver();
-        try {
-            Session session = driver.session(sessionConfig());
-            try {
-                Result result = session.run(cypher, Values.value(params));
-                List<GraphCandidate> candidates = new ArrayList<GraphCandidate>();
-                while (result.hasNext()) {
-                    Record record = result.next();
-                    GraphCandidate candidate = new GraphCandidate();
-                    candidate.setDiseaseCode(record.get("disease_code").asString(null));
-                    candidate.setDiseaseName(record.get("disease_name").asString(null));
-                    candidate.setRawGraphScore(record.get("score").asDouble(0.0));
-                    candidate.setMatchedRelations(record.get("relations").asList(new Function<Value, Map<String, Object>>() {
-                        @Override
-                        public Map<String, Object> apply(Value value) {
-                            return value.asMap();
-                        }
-                    }));
-                    candidate.setEvidenceRefs(cleanStrings(record.get("evidenceRefs").asList(new Function<Value, String>() {
-                        @Override
-                        public String apply(Value value) {
-                            return value.isNull() ? null : value.asString(null);
-                        }
-                    })));
-                    candidate.setGraphVersion(graphVersion);
-                    candidate.setGraphSource("NEO4J");
-                    candidates.add(candidate);
-                }
-                return candidates;
-            } finally {
-                session.close();
+        // try-with-resources 保证 Driver 与 Session 在任何异常路径下都被释放，
+        // 比手写嵌套 try/finally 更不易遗漏（GRAPH-003 review finding F-NEXT GRAPH-3）。
+        try (Driver driver = newDriver();
+             Session session = driver.session(sessionConfig())) {
+            Result result = session.run(cypher, Values.value(params));
+            List<GraphCandidate> candidates = new ArrayList<GraphCandidate>();
+            while (result.hasNext()) {
+                Record record = result.next();
+                GraphCandidate candidate = new GraphCandidate();
+                candidate.setDiseaseCode(record.get("disease_code").asString(null));
+                candidate.setDiseaseName(record.get("disease_name").asString(null));
+                candidate.setRawGraphScore(record.get("score").asDouble(0.0));
+                candidate.setMatchedRelations(record.get("relations").asList(new Function<Value, Map<String, Object>>() {
+                    @Override
+                    public Map<String, Object> apply(Value value) {
+                        return value.asMap();
+                    }
+                }));
+                candidate.setEvidenceRefs(cleanStrings(record.get("evidenceRefs").asList(new Function<Value, String>() {
+                    @Override
+                    public String apply(Value value) {
+                        return value.isNull() ? null : value.asString(null);
+                    }
+                })));
+                candidate.setGraphVersion(graphVersion);
+                candidate.setGraphSource("NEO4J");
+                candidates.add(candidate);
             }
-        } finally {
-            driver.close();
+            return candidates;
         }
     }
 
@@ -463,31 +472,24 @@ public class GraphService {
                 "WHERE ($graph_version IS NULL OR coalesce(ev.graph_version, $graph_version) = $graph_version) " +
                 "RETURN ev.code AS evidence_id, coalesce(ev.title, ev.name, ev.code) AS title, coalesce(ev.source, '') AS source, " +
                 "$target_code AS target_code, type(r) AS relation_type";
-        Driver driver = newDriver();
-        try {
-            Session session = driver.session(sessionConfig());
-            try {
-                Result result = session.run(cypher, Values.parameters("target_code", targetCode,
-                        "graph_version", hasText(graphVersion) ? graphVersion : null));
-                List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-                while (result.hasNext()) {
-                    Record record = result.next();
-                    Map<String, Object> evidence = new LinkedHashMap<String, Object>();
-                    evidence.put("evidence_id", record.get("evidence_id").asString(null));
-                    evidence.put("title", record.get("title").asString(null));
-                    evidence.put("source", record.get("source").asString(null));
-                    evidence.put("target_code", record.get("target_code").asString(targetCode));
-                    evidence.put("relation_type", record.get("relation_type").asString(null));
-                    evidence.put("graph_version", graphVersion);
-                    evidence.put("graph_source", "NEO4J");
-                    list.add(evidence);
-                }
-                return list;
-            } finally {
-                session.close();
+        try (Driver driver = newDriver();
+             Session session = driver.session(sessionConfig())) {
+            Result result = session.run(cypher, Values.parameters("target_code", targetCode,
+                    "graph_version", hasText(graphVersion) ? graphVersion : null));
+            List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+            while (result.hasNext()) {
+                Record record = result.next();
+                Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+                evidence.put("evidence_id", record.get("evidence_id").asString(null));
+                evidence.put("title", record.get("title").asString(null));
+                evidence.put("source", record.get("source").asString(null));
+                evidence.put("target_code", record.get("target_code").asString(targetCode));
+                evidence.put("relation_type", record.get("relation_type").asString(null));
+                evidence.put("graph_version", graphVersion);
+                evidence.put("graph_source", "NEO4J");
+                list.add(evidence);
             }
-        } finally {
-            driver.close();
+            return list;
         }
     }
 
