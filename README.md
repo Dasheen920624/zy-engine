@@ -24,6 +24,7 @@
 - 架构总图：[05_架构总图与服务边界](zy-engine-mvp/docs/05_架构总图与服务边界.md) — Provider / 跨数据库 / 国产化 / 内网约束
 - 后端开发规范：[06_后端开发规范](zy-engine-mvp/docs/06_后端开发规范.md)
 - 前端开发规范：[07_前端开发规范](zy-engine-mvp/docs/07_前端开发规范.md)
+- 国产化兼容性规约：[08_国产化兼容性规约](zy-engine-mvp/docs/08_国产化兼容性规约.md) — CentOS 7 / 统信 / 麒麟 / 鲲鹏 / 龙芯 / 达梦 / PG / Kingbase
 
 **产品 / 业务**
 
