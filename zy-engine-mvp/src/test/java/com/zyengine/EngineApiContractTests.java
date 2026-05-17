@@ -3314,4 +3314,40 @@ class EngineApiContractTests {
         assertTrue(foundRef1);
         assertTrue(foundRef2);
     }
+
+    @Test
+    void graphVersionRollback() throws Exception {
+        Map<String, Object> v1 = new LinkedHashMap<>();
+        v1.put("graph_version", "AMI_ROLLBACK_V1");
+        v1.put("name", "AMI图谱V1");
+
+        Map<String, Object> v2 = new LinkedHashMap<>();
+        v2.put("graph_version", "AMI_ROLLBACK_V2");
+        v2.put("name", "AMI图谱V2");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("versions", Arrays.asList(v1, v2));
+        invokePost("/api/graph/versions", importBody);
+
+        Map<String, Object> activateBody = new LinkedHashMap<>();
+        activateBody.put("published_by", "ADMIN");
+        invokePost("/api/graph/versions/AMI_ROLLBACK_V2/activate", activateBody);
+
+        Map<String, Object> getV2 = invokeGet("/api/graph/versions/AMI_ROLLBACK_V2");
+        assertEquals("ACTIVE", asMap(getV2.get("data")).get("status"));
+
+        Map<String, Object> rollbackBody = new LinkedHashMap<>();
+        rollbackBody.put("published_by", "ADMIN");
+        Map<String, Object> rollbackResp = invokePost("/api/graph/versions/AMI_ROLLBACK_V1/rollback", rollbackBody);
+        Map<String, Object> rollbackData = asMap(rollbackResp.get("data"));
+        assertEquals("AMI_ROLLBACK_V1", rollbackData.get("graph_version"));
+        assertEquals("ACTIVE", rollbackData.get("status"));
+        assertEquals("AMI_ROLLBACK_V2", rollbackData.get("previous_active_version"));
+
+        Map<String, Object> getV1 = invokeGet("/api/graph/versions/AMI_ROLLBACK_V1");
+        assertEquals("ACTIVE", asMap(getV1.get("data")).get("status"));
+
+        Map<String, Object> getV2After = invokeGet("/api/graph/versions/AMI_ROLLBACK_V2");
+        assertEquals("RETIRED", asMap(getV2After.get("data")).get("status"));
+    }
 }

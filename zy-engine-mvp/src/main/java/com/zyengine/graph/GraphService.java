@@ -118,6 +118,34 @@ public class GraphService {
         return entry;
     }
 
+    public Map<String, Object> rollbackVersion(String graphVersion, Map<String, Object> request) {
+        Map<String, Object> target = graphVersions.get(graphVersion);
+        if (target == null) {
+            throw new IllegalArgumentException("graph version not found: " + graphVersion);
+        }
+
+        String previousActiveVersion = null;
+        for (Map<String, Object> existing : graphVersions.values()) {
+            if ("ACTIVE".equals(string(existing.get("status"), null))) {
+                previousActiveVersion = string(existing.get("graph_version"), null);
+                existing.put("status", "RETIRED");
+                existing.put("retired_time", nowText());
+            }
+        }
+
+        target.put("status", "ACTIVE");
+        target.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
+        target.put("published_time", nowText());
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("graph_version", graphVersion);
+        result.put("status", "ACTIVE");
+        result.put("previous_active_version", previousActiveVersion);
+        result.put("rolled_back_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
+        result.put("rolled_back_time", nowText());
+        return result;
+    }
+
     public List<Map<String, Object>> importGraphEvidences(Object request) {
         List<Map<String, Object>> entries = normalize(request, "evidences", "evidence_id");
         if (entries.isEmpty()) {
