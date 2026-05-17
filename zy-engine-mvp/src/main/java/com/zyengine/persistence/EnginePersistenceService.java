@@ -1206,6 +1206,24 @@ public class EnginePersistenceService {
         return text.trim().isEmpty() ? defaultValue : text;
     }
 
+    /**
+     * 解析 Object 为 double，null 或不可解析时返回 defaultValue。
+     * 用于 TERM-002 等场景下从 Map 提取置信度等浮点字段。
+     */
+    private double doubleValue(Object value, double defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        try {
+            return Double.parseDouble(String.valueOf(value).trim());
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
     private String filterValue(Map<String, String> filters, String key) {
         if (filters == null) {
             return null;

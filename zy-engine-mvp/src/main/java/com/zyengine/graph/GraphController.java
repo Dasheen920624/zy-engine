@@ -50,7 +50,7 @@ public class GraphController {
     @PostMapping("/versions/{graphVersion}/activate")
     public ApiResult<Map<String, Object>> activateVersion(@PathVariable String graphVersion,
                                                           @RequestBody(required = false) Map<String, Object> request) {
-        return ApiResult.success(graphService.activateVersion(graphVersion, request));
+        return ApiResult.success(graphService.activateGraphVersion(graphVersion, request));
     }
 
     @PostMapping("/versions/{graphVersion}/rollback")

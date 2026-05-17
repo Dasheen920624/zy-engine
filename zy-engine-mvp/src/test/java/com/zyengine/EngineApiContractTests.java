@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -2661,7 +2662,10 @@ class EngineApiContractTests {
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         rule.put("reference_citation_id", "CIT_REF_TEST");
         rule.put("reference_binding_type", "EVIDENCE");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2684,7 +2688,10 @@ class EngineApiContractTests {
         rule.put("rule_name", "无来源规则");
         rule.put("rule_type", "EMR_QC");
         rule.put("package_code", "PKG_NO_REF");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2720,7 +2727,10 @@ class EngineApiContractTests {
         rule.put("package_code", "PKG_WITH_REF");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         rule.put("reference_binding_type", "EVIDENCE");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2748,7 +2758,10 @@ class EngineApiContractTests {
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         rule.put("reference_citation_id", "CIT_EVAL_REF");
         rule.put("reference_binding_type", "EVIDENCE");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2764,7 +2777,7 @@ class EngineApiContractTests {
         Map<String, Object> patientContext = new LinkedHashMap<>();
         patientContext.put("diagnosis_code", "I21.0");
         evalBody.put("patient_context", patientContext);
-        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalResp = invokePost("/api/rule-engine/evaluate", evalBody);
         Map<String, Object> evalData = asMap(evalResp.get("data"));
 
         List<Map<String, Object>> results = asListOfMap(evalData.get("results"));
@@ -2785,7 +2798,10 @@ class EngineApiContractTests {
         rule.put("package_code", "PKG_DEPT_SCOPE");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         rule.put("department_code", "DEPT_CARDIOLOGY");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2801,7 +2817,7 @@ class EngineApiContractTests {
         Map<String, Object> patientContext = new LinkedHashMap<>();
         patientContext.put("diagnosis_code", "I21.0");
         evalBody.put("patient_context", patientContext);
-        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalResp = invokePost("/api/rule-engine/evaluate", evalBody);
         Map<String, Object> evalData = asMap(evalResp.get("data"));
         List<Map<String, Object>> results = asListOfMap(evalData.get("results"));
         assertFalse(results.isEmpty());
@@ -2818,7 +2834,10 @@ class EngineApiContractTests {
         rule.put("package_code", "PKG_CAMPUS_SCOPE");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         rule.put("campus_code", "CAMPUS_EAST");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2840,7 +2859,10 @@ class EngineApiContractTests {
         rule.put("package_code", "PKG_SITE_SCOPE");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         rule.put("site_code", "SITE_EMERGENCY");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2860,7 +2882,10 @@ class EngineApiContractTests {
         rule.put("rule_name", "无来源阻断测试");
         rule.put("rule_type", "EMR_QC");
         rule.put("package_code", "PKG_NO_SRC_BLOCK");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2888,7 +2913,10 @@ class EngineApiContractTests {
         rule.put("package_code", "PKG_SRC_ALLOW");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
         rule.put("reference_binding_type", "EVIDENCE");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2909,7 +2937,10 @@ class EngineApiContractTests {
         rule.put("rule_type", "EMR_QC");
         rule.put("package_code", "PKG_DRAFT_EVAL");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2929,7 +2960,10 @@ class EngineApiContractTests {
         rule.put("rule_type", "PATHWAY_ENTRY");
         rule.put("package_code", "PKG_PUB_EVAL");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -2945,7 +2979,7 @@ class EngineApiContractTests {
         Map<String, Object> patientContext = new LinkedHashMap<>();
         patientContext.put("diagnosis_code", "I21.0");
         evalBody.put("patient_context", patientContext);
-        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalResp = invokePost("/api/rule-engine/evaluate", evalBody);
         Map<String, Object> evalData = asMap(evalResp.get("data"));
         List<Map<String, Object>> results = asListOfMap(evalData.get("results"));
         assertFalse(results.isEmpty());
@@ -2960,7 +2994,7 @@ class EngineApiContractTests {
         Map<String, Object> patientContext = new LinkedHashMap<>();
         patientContext.put("drug_code", "ASPIRIN");
         evalBody.put("patient_context", patientContext);
-        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalResp = invokePost("/api/rule-engine/evaluate", evalBody);
         Map<String, Object> evalData = asMap(evalResp.get("data"));
         List<Map<String, Object>> warnings = asListOfMap(evalData.get("warnings"));
         boolean hasNoRulesWarning = false;
@@ -2986,7 +3020,7 @@ class EngineApiContractTests {
         Map<String, Object> patientContext = new LinkedHashMap<>();
         patientContext.put("diagnosis_code", "I21.0");
         evalBody.put("patient_context", patientContext);
-        Map<String, Object> response = invokePostExpectingClientError("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> response = invokePostExpectingClientError("/api/rule-engine/evaluate", evalBody);
         assertEquals("VALIDATION_ERROR", response.get("code"));
         assertTrue(String.valueOf(response.get("message")).contains("scenario_code"));
     }
@@ -2999,7 +3033,10 @@ class EngineApiContractTests {
         rule.put("rule_type", "PATHWAY_ENTRY");
         rule.put("package_code", "PKG_AUDIT_HIT");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -3015,7 +3052,7 @@ class EngineApiContractTests {
         Map<String, Object> patientContext = new LinkedHashMap<>();
         patientContext.put("diagnosis_code", "I21.0");
         evalBody.put("patient_context", patientContext);
-        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalResp = invokePost("/api/rule-engine/evaluate", evalBody);
         Map<String, Object> evalData = asMap(evalResp.get("data"));
         assertNotNull(evalData.get("trace_id"));
         assertFalse(String.valueOf(evalData.get("trace_id")).isEmpty());
@@ -3029,7 +3066,10 @@ class EngineApiContractTests {
         rule.put("rule_type", "PATHWAY_ENTRY");
         rule.put("package_code", "PKG_AUDIT_ERR");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "within_minutes_from"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "within_minutes_from");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -3048,7 +3088,10 @@ class EngineApiContractTests {
         rule.put("rule_type", "PATHWAY_ENTRY");
         rule.put("package_code", "PKG_TRACE_PROP");
         rule.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
-        rule.put("condition", Collections.singletonMap("fact", "diagnosis_code", "operator", "exists"));
+        Map<String, Object> ruleCondition = new LinkedHashMap<>();
+        ruleCondition.put("fact", "diagnosis_code");
+        ruleCondition.put("operator", "exists");
+        rule.put("condition", ruleCondition);
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("rules", Arrays.asList(rule));
@@ -3064,7 +3107,7 @@ class EngineApiContractTests {
         Map<String, Object> patientContext = new LinkedHashMap<>();
         patientContext.put("diagnosis_code", "I21.0");
         evalBody.put("patient_context", patientContext);
-        Map<String, Object> evalResp = invokePost("/api/rules/engine/evaluate", evalBody);
+        Map<String, Object> evalResp = invokePost("/api/rule-engine/evaluate", evalBody);
         Map<String, Object> evalData = asMap(evalResp.get("data"));
 
         String traceId = String.valueOf(evalData.get("trace_id"));
