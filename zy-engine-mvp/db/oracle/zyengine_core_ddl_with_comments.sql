@@ -679,4 +679,54 @@ COMMENT ON COLUMN cfg_config_package.created_time IS '创建时间';
 COMMENT ON COLUMN cfg_config_package.reviewed_time IS '审核时间';
 COMMENT ON COLUMN cfg_config_package.published_time IS '发布时间';
 
+-- ============================================================================
+-- 术语治理队列
+-- ============================================================================
+CREATE TABLE tm_unmapped_queue (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  queue_id VARCHAR2(64) NOT NULL,
+  source_system VARCHAR2(64) NOT NULL,
+  source_code VARCHAR2(128) NOT NULL,
+  source_name VARCHAR2(200),
+  concept_type VARCHAR2(64) NOT NULL,
+  governance_status VARCHAR2(32) NOT NULL,
+  proposed_standard_code VARCHAR2(128),
+  proposed_standard_name VARCHAR2(200),
+  proposed_confidence NUMBER(5,4) DEFAULT 0,
+  proposed_mapping_source VARCHAR2(64),
+  reviewed_by VARCHAR2(64),
+  reviewed_time TIMESTAMP,
+  review_comment VARCHAR2(1000),
+  occurrence_count NUMBER(10) DEFAULT 1 NOT NULL,
+  last_occurrence_time TIMESTAMP,
+  created_time TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_tm_unmapped_queue UNIQUE (tenant_id, source_system, source_code, concept_type, governance_status)
+);
+
+CREATE INDEX idx_tm_queue_status ON tm_unmapped_queue(tenant_id, governance_status, last_occurrence_time);
+CREATE INDEX idx_tm_queue_system ON tm_unmapped_queue(tenant_id, source_system, concept_type);
+
+COMMENT ON TABLE tm_unmapped_queue IS '术语未映射治理队列';
+COMMENT ON COLUMN tm_unmapped_queue.id IS '主键ID';
+COMMENT ON COLUMN tm_unmapped_queue.tenant_id IS '租户ID';
+COMMENT ON COLUMN tm_unmapped_queue.queue_id IS '队列记录ID';
+COMMENT ON COLUMN tm_unmapped_queue.source_system IS '来源系统编码';
+COMMENT ON COLUMN tm_unmapped_queue.source_code IS '来源术语编码';
+COMMENT ON COLUMN tm_unmapped_queue.source_name IS '来源术语名称';
+COMMENT ON COLUMN tm_unmapped_queue.concept_type IS '概念类型（DIAGNOSIS/SYMPTOM/FINDING/LAB_ITEM/DEPARTMENT）';
+COMMENT ON COLUMN tm_unmapped_queue.governance_status IS '治理状态（PENDING_MAPPING/APPROVED/REJECTED/CONFLICT）';
+COMMENT ON COLUMN tm_unmapped_queue.proposed_standard_code IS '建议标准码';
+COMMENT ON COLUMN tm_unmapped_queue.proposed_standard_name IS '建议标准名称';
+COMMENT ON COLUMN tm_unmapped_queue.proposed_confidence IS '建议置信度';
+COMMENT ON COLUMN tm_unmapped_queue.proposed_mapping_source IS '建议映射来源';
+COMMENT ON COLUMN tm_unmapped_queue.reviewed_by IS '审核人';
+COMMENT ON COLUMN tm_unmapped_queue.reviewed_time IS '审核时间';
+COMMENT ON COLUMN tm_unmapped_queue.review_comment IS '审核备注';
+COMMENT ON COLUMN tm_unmapped_queue.occurrence_count IS '出现次数';
+COMMENT ON COLUMN tm_unmapped_queue.last_occurrence_time IS '最近出现时间';
+COMMENT ON COLUMN tm_unmapped_queue.created_time IS '创建时间';
+COMMENT ON COLUMN tm_unmapped_queue.updated_time IS '更新时间';
+
 PROMPT ZYENGINE core tables and comments are ready.

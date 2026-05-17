@@ -410,3 +410,32 @@ CREATE TABLE IF NOT EXISTS cfg_config_package (
 
 CREATE INDEX IF NOT EXISTS idx_cfg_pkg_tenant ON cfg_config_package (tenant_id, asset_type, status);
 CREATE INDEX IF NOT EXISTS idx_cfg_pkg_code ON cfg_config_package (tenant_id, package_code, package_version);
+
+-- ============================================================================
+-- 术语治理队列
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS tm_unmapped_queue (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  queue_id VARCHAR(64) NOT NULL,
+  source_system VARCHAR(64) NOT NULL,
+  source_code VARCHAR(128) NOT NULL,
+  source_name VARCHAR(200),
+  concept_type VARCHAR(64) NOT NULL,
+  governance_status VARCHAR(32) NOT NULL,
+  proposed_standard_code VARCHAR(128),
+  proposed_standard_name VARCHAR(200),
+  proposed_confidence NUMERIC(5,4) DEFAULT 0,
+  proposed_mapping_source VARCHAR(64),
+  reviewed_by VARCHAR(64),
+  reviewed_time TIMESTAMP,
+  review_comment VARCHAR(1000),
+  occurrence_count INTEGER DEFAULT 1 NOT NULL,
+  last_occurrence_time TIMESTAMP,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_tm_unmapped_queue UNIQUE (tenant_id, source_system, source_code, concept_type, governance_status)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tm_queue_status ON tm_unmapped_queue (tenant_id, governance_status, last_occurrence_time);
+CREATE INDEX IF NOT EXISTS idx_tm_queue_system ON tm_unmapped_queue (tenant_id, source_system, concept_type);

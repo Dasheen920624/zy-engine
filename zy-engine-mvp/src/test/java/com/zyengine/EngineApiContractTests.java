@@ -3350,4 +3350,87 @@ class EngineApiContractTests {
         Map<String, Object> getV2After = invokeGet("/api/graph/versions/AMI_ROLLBACK_V2");
         assertEquals("RETIRED", asMap(getV2After.get("data")).get("status"));
     }
+
+    // =========================================================================
+    // TERM-002: 未映射治理队列
+    // =========================================================================
+
+    @Test
+    void terminologyUnmappedEntersGovernanceQueue() throws Exception {
+        // 标准化一个未映射编码，应进入治理队列
+        Map<String, Object> normalizeBody = new LinkedHashMap<String, Object>();
+        normalizeBody.put("source_system", "EMR");
+        normalizeBody.put("source_code", "DYSPNEA_UNKNOWN");
+        normalizeBody.put("source_name", "未知呼吸困难");
+        normalizeBody.put("concept_type", "SYMPTOM");
+        Map<String, Object> normalized = invokePost("/api/terminology/normalize", normalizeBody);
+        Map<String, Object> data = asMap(normalized.get("data"));
+        assertEquals(Boolean.FALSE, data.get("matched"));
+        assertEquals("PENDING_MAPPING", data.get("governance_status"));
+        assertNotNull(data.get("queue_id"));
+
+        // 查询治理队列应包含该条目
+        Map<String, Object> pendingResp = invokeGet("/api/terminology/pending?governanceStatus=PENDING_MAPPING");
+        List<Object> pendingList = asList(pendingResp.get("data"));
+        assertTrue(pendingList.size() >= 1);
+    }
+
+    @Test
+    void terminologyApprovePendingMapping() throws Exception {
+        // 先让一个未映射术语进入队列
+        Map<String, Object> normalizeBody = new LinkedHashMap<String, Object>();
+        normalizeBody.put("source_system", "LIS");
+        normalizeBody.put("source_code", "UNKNOWN_LAB_ITEM");
+        normalizeBody.put("source_name", "未知检验项目");
+        normalizeBody.put("concept_type", "LAB_ITEM");
+        Map<String, Object> normalized = invokePost("/api/terminology/normalize", normalizeBody);
+        String queueId = String.valueOf(asMap(normalized.get("data")).get("queue_id"));
+
+        // 审批映射
+        Map<String, Object> approveBody = new LinkedHashMap<String, Object>();
+        approveBody.put("standard_code", "UNKNOWN_LAB_STD");
+        approveBody.put("standard_name", "未知检验项目标准码");
+        approveBody.put("reviewed_by", "TEST_REVIEWER");
+        approveBody.put("review_comment", "测试审批通过");
+        Map<String, Object> approved = invokePost("/api/terminology/pending/" + queueId + "/approve", approveBody);
+        Map<String, Object> approvedData = asMap(approved.get("data"));
+        assertEquals("APPROVED", approvedData.get("governance_status"));
+
+        // 审批后再次标准化应命中
+        Map<String, Object> reNormalized = invokePost("/api/terminology/normalize", normalizeBody);
+        Map<String, Object> reData = asMap(reNormalized.get("data"));
+        assertEquals(Boolean.TRUE, reData.get("matched"));
+        assertEquals("UNKNOWN_LAB_STD", reData.get("standard_code"));
+    }
+
+    @Test
+    void terminologyRejectPendingMapping() throws Exception {
+        // 先让一个未映射术语进入队列
+        Map<String, Object> normalizeBody = new LinkedHashMap<String, Object>();
+        normalizeBody.put("source_system", "HIS");
+        normalizeBody.put("source_code", "REJECT_TEST_CODE");
+        normalizeBody.put("source_name", "驳回测试项");
+        normalizeBody.put("concept_type", "DIAGNOSIS");
+        Map<String, Object> normalized = invokePost("/api/terminology/normalize", normalizeBody);
+        String queueId = String.valueOf(asMap(normalized.get("data")).get("queue_id"));
+
+        // 驳回映射
+        Map<String, Object> rejectBody = new LinkedHashMap<String, Object>();
+        rejectBody.put("reviewed_by", "TEST_REVIEWER");
+        rejectBody.put("review_comment", "测试驳回");
+        Map<String, Object> rejected = invokePost("/api/terminology/pending/" + queueId + "/reject", rejectBody);
+        Map<String, Object> rejectedData = asMap(rejected.get("data"));
+        assertEquals("REJECTED", rejectedData.get("governance_status"));
+    }
+
+    @Test
+    void terminologyPendingListFilters() throws Exception {
+        // 查询全部 PENDING_MAPPING
+        Map<String, Object> allPending = invokeGet("/api/terminology/pending?governanceStatus=PENDING_MAPPING");
+        assertNotNull(allPending.get("data"));
+
+        // 按 source_system 过滤
+        Map<String, Object> filteredPending = invokeGet("/api/terminology/pending?governanceStatus=PENDING_MAPPING&sourceSystem=EMR");
+        assertNotNull(filteredPending.get("data"));
+    }
 }

@@ -376,3 +376,32 @@ CREATE TABLE cfg_config_package (
 
 CREATE INDEX idx_cfg_pkg_tenant ON cfg_config_package(tenant_id, asset_type, status);
 CREATE INDEX idx_cfg_pkg_code ON cfg_config_package(tenant_id, package_code, package_version);
+
+-- ============================================================================
+-- 术语治理队列
+-- ============================================================================
+CREATE TABLE tm_unmapped_queue (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  queue_id VARCHAR2(64) NOT NULL,
+  source_system VARCHAR2(64) NOT NULL,
+  source_code VARCHAR2(128) NOT NULL,
+  source_name VARCHAR2(200),
+  concept_type VARCHAR2(64) NOT NULL,
+  governance_status VARCHAR2(32) NOT NULL,
+  proposed_standard_code VARCHAR2(128),
+  proposed_standard_name VARCHAR2(200),
+  proposed_confidence NUMBER(5,4) DEFAULT 0,
+  proposed_mapping_source VARCHAR2(64),
+  reviewed_by VARCHAR2(64),
+  reviewed_time TIMESTAMP,
+  review_comment VARCHAR2(1000),
+  occurrence_count NUMBER(10) DEFAULT 1 NOT NULL,
+  last_occurrence_time TIMESTAMP,
+  created_time TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_tm_unmapped_queue UNIQUE (tenant_id, source_system, source_code, concept_type, governance_status)
+);
+
+CREATE INDEX idx_tm_queue_status ON tm_unmapped_queue(tenant_id, governance_status, last_occurrence_time);
+CREATE INDEX idx_tm_queue_system ON tm_unmapped_queue(tenant_id, source_system, concept_type);

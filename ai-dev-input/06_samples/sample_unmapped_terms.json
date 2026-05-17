@@ -1,0 +1,45 @@
+{
+  "description": "未映射术语治理队列样例数据。标准化请求中未命中已有映射的术语会自动进入治理队列。",
+  "unmapped_terms": [
+    {
+      "source_system": "HIS",
+      "source_code": "I50.0",
+      "source_name": "充血性心力衰竭",
+      "concept_type": "DIAGNOSIS",
+      "proposed_standard_code": "CHF",
+      "proposed_standard_name": "充血性心力衰竭",
+      "proposed_confidence": 0.72,
+      "proposed_mapping_source": "AUTO_SUGGEST"
+    },
+    {
+      "source_system": "EMR",
+      "source_code": "DYSPNEA",
+      "source_name": "呼吸困难",
+      "concept_type": "SYMPTOM",
+      "proposed_standard_code": null,
+      "proposed_standard_name": null,
+      "proposed_confidence": 0,
+      "proposed_mapping_source": null
+    },
+    {
+      "source_system": "LIS",
+      "source_code": "BNP",
+      "source_name": "脑钠肽",
+      "concept_type": "LAB_ITEM",
+      "proposed_standard_code": "BNP",
+      "proposed_standard_name": "脑钠肽",
+      "proposed_confidence": 0.88,
+      "proposed_mapping_source": "AUTO_SUGGEST"
+    },
+    {
+      "source_system": "HIS",
+      "source_code": "ICU",
+      "source_name": "重症医学科",
+      "concept_type": "DEPARTMENT",
+      "proposed_standard_code": "ICU",
+      "proposed_standard_name": "重症医学科",
+      "proposed_confidence": 0.95,
+      "proposed_mapping_source": "AUTO_SUGGEST"
+    }
+  ]
+}

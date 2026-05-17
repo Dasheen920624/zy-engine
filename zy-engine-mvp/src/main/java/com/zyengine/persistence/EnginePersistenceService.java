@@ -1304,4 +1304,209 @@ public class EnginePersistenceService {
             return Ids.next();
         }
     }
+
+    // =========================================================================
+    // 术语治理队列持久化
+    // =========================================================================
+
+    /**
+     * 保存或更新未映射治理队列记录。
+     * 同一 tenant+sourceSystem+sourceCode+conceptType+governanceStatus 只保留一条，
+     * 重复出现时 occurrence_count +1 并更新 last_occurrence_time。
+     */
+    public void saveUnmappedQueueEntry(Map<String, Object> entry) {
+        if (!enabled()) {
+            return;
+        }
+        if (properties.localFileDatabase()) {
+            saveUnmappedQueueEntryLocal(entry);
+            return;
+        }
+        String sql = "MERGE INTO tm_unmapped_queue t " +
+                "USING (SELECT ? AS tenant_id, ? AS source_system, ? AS source_code, ? AS concept_type, " +
+                "? AS governance_status FROM dual) s " +
+                "ON (t.tenant_id=s.tenant_id AND t.source_system=s.source_system " +
+                "AND t.source_code=s.source_code AND t.concept_type=s.concept_type " +
+                "AND t.governance_status=s.governance_status) " +
+                "WHEN MATCHED THEN UPDATE SET t.occurrence_count=t.occurrence_count+1, " +
+                "t.last_occurrence_time=SYSTIMESTAMP, t.source_name=COALESCE(?, t.source_name), " +
+                "t.updated_time=SYSTIMESTAMP " +
+                "WHEN NOT MATCHED THEN INSERT (id, tenant_id, queue_id, source_system, source_code, source_name, " +
+                "concept_type, governance_status, proposed_standard_code, proposed_standard_name, " +
+                "proposed_confidence, proposed_mapping_source, occurrence_count, last_occurrence_time, " +
+                "created_time, updated_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, SYSTIMESTAMP, SYSTIMESTAMP, SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            int i = 1;
+            // ON 条件
+            ps.setString(i++, string(entry.get("tenant_id"), "default"));
+            ps.setString(i++, string(entry.get("source_system"), ""));
+            ps.setString(i++, string(entry.get("source_code"), ""));
+            ps.setString(i++, string(entry.get("concept_type"), ""));
+            ps.setString(i++, string(entry.get("governance_status"), "PENDING_MAPPING"));
+            // MATCHED UPDATE
+            ps.setString(i++, string(entry.get("source_name"), null));
+            // NOT MATCHED INSERT
+            ps.setLong(i++, Ids.next());
+            ps.setString(i++, string(entry.get("tenant_id"), "default"));
+            ps.setString(i++, string(entry.get("queue_id"), ""));
+            ps.setString(i++, string(entry.get("source_system"), ""));
+            ps.setString(i++, string(entry.get("source_code"), ""));
+            ps.setString(i++, string(entry.get("source_name"), null));
+            ps.setString(i++, string(entry.get("concept_type"), ""));
+            ps.setString(i++, string(entry.get("governance_status"), "PENDING_MAPPING"));
+            ps.setString(i++, string(entry.get("proposed_standard_code"), null));
+            ps.setString(i++, string(entry.get("proposed_standard_name"), null));
+            ps.setDouble(i++, doubleValue(entry.get("proposed_confidence"), 0));
+            ps.setString(i++, string(entry.get("proposed_mapping_source"), null));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save unmapped queue entry failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 查询未映射治理队列。
+     * 支持按 governance_status / source_system / concept_type 过滤。
+     */
+    public List<Map<String, Object>> listUnmappedQueue(String tenantId, String governanceStatus,
+                                                        String sourceSystem, String conceptType, int limit) {
+        if (!enabled()) {
+            return new ArrayList<Map<String, Object>>();
+        }
+        StringBuilder sql = new StringBuilder(
+                "SELECT id, tenant_id, queue_id, source_system, source_code, source_name, concept_type, " +
+                "governance_status, proposed_standard_code, proposed_standard_name, proposed_confidence, " +
+                "proposed_mapping_source, reviewed_by, reviewed_time, review_comment, " +
+                "occurrence_count, last_occurrence_time, created_time, updated_time " +
+                "FROM tm_unmapped_queue WHERE tenant_id=?");
+        List<String> params = new ArrayList<String>();
+        params.add(string(tenantId, "default"));
+        if (governanceStatus != null && !governanceStatus.isEmpty()) {
+            sql.append(" AND governance_status=?");
+            params.add(governanceStatus);
+        }
+        if (sourceSystem != null && !sourceSystem.isEmpty()) {
+            sql.append(" AND source_system=?");
+            params.add(sourceSystem);
+        }
+        if (conceptType != null && !conceptType.isEmpty()) {
+            sql.append(" AND concept_type=?");
+            params.add(conceptType);
+        }
+        sql.append(" ORDER BY last_occurrence_time DESC");
+        if (limit > 0) {
+            sql.append(" FETCH FIRST ").append(limit).append(" ROWS ONLY");
+        }
+        List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setString(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    results.add(toUnmappedQueueEntry(rs));
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("list unmapped queue failed: " + ex.getMessage(), ex);
+        }
+        return results;
+    }
+
+    /**
+     * 更新治理队列记录状态（审批/驳回）。
+     */
+    public void updateUnmappedQueueStatus(String queueId, String tenantId, String governanceStatus,
+                                            String reviewedBy, String reviewComment) {
+        if (!enabled()) {
+            return;
+        }
+        String sql = "UPDATE tm_unmapped_queue SET governance_status=?, reviewed_by=?, " +
+                "reviewed_time=CURRENT_TIMESTAMP, review_comment=?, updated_time=CURRENT_TIMESTAMP " +
+                "WHERE queue_id=? AND tenant_id=?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, governanceStatus);
+            ps.setString(2, reviewedBy);
+            ps.setString(3, reviewComment);
+            ps.setString(4, queueId);
+            ps.setString(5, string(tenantId, "default"));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("update unmapped queue status failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void saveUnmappedQueueEntryLocal(Map<String, Object> entry) {
+        // H2 不支持 MERGE，用 UPDATE + INSERT 两步操作
+        String updateSql = "UPDATE tm_unmapped_queue SET occurrence_count=occurrence_count+1, " +
+                "last_occurrence_time=CURRENT_TIMESTAMP, source_name=COALESCE(?, source_name), " +
+                "updated_time=CURRENT_TIMESTAMP " +
+                "WHERE tenant_id=? AND source_system=? AND source_code=? AND concept_type=? AND governance_status=?";
+        String insertSql = "INSERT INTO tm_unmapped_queue (id, tenant_id, queue_id, source_system, source_code, " +
+                "source_name, concept_type, governance_status, proposed_standard_code, proposed_standard_name, " +
+                "proposed_confidence, proposed_mapping_source, occurrence_count, last_occurrence_time, " +
+                "created_time, updated_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, string(entry.get("source_name"), null));
+                ps.setString(i++, string(entry.get("tenant_id"), "default"));
+                ps.setString(i++, string(entry.get("source_system"), ""));
+                ps.setString(i++, string(entry.get("source_code"), ""));
+                ps.setString(i++, string(entry.get("concept_type"), ""));
+                ps.setString(i++, string(entry.get("governance_status"), "PENDING_MAPPING"));
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, Ids.next());
+                    ps.setString(i++, string(entry.get("tenant_id"), "default"));
+                    ps.setString(i++, string(entry.get("queue_id"), ""));
+                    ps.setString(i++, string(entry.get("source_system"), ""));
+                    ps.setString(i++, string(entry.get("source_code"), ""));
+                    ps.setString(i++, string(entry.get("source_name"), null));
+                    ps.setString(i++, string(entry.get("concept_type"), ""));
+                    ps.setString(i++, string(entry.get("governance_status"), "PENDING_MAPPING"));
+                    ps.setString(i++, string(entry.get("proposed_standard_code"), null));
+                    ps.setString(i++, string(entry.get("proposed_standard_name"), null));
+                    ps.setDouble(i++, doubleValue(entry.get("proposed_confidence"), 0));
+                    ps.setString(i++, string(entry.get("proposed_mapping_source"), null));
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save unmapped queue entry local failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private Map<String, Object> toUnmappedQueueEntry(ResultSet rs) throws SQLException {
+        Map<String, Object> entry = new LinkedHashMap<String, Object>();
+        entry.put("id", rs.getLong("id"));
+        entry.put("tenant_id", rs.getString("tenant_id"));
+        entry.put("queue_id", rs.getString("queue_id"));
+        entry.put("source_system", rs.getString("source_system"));
+        entry.put("source_code", rs.getString("source_code"));
+        entry.put("source_name", rs.getString("source_name"));
+        entry.put("concept_type", rs.getString("concept_type"));
+        entry.put("governance_status", rs.getString("governance_status"));
+        entry.put("proposed_standard_code", rs.getString("proposed_standard_code"));
+        entry.put("proposed_standard_name", rs.getString("proposed_standard_name"));
+        entry.put("proposed_confidence", rs.getDouble("proposed_confidence"));
+        entry.put("proposed_mapping_source", rs.getString("proposed_mapping_source"));
+        entry.put("reviewed_by", rs.getString("reviewed_by"));
+        entry.put("reviewed_time", formatTimestamp(rs.getTimestamp("reviewed_time")));
+        entry.put("review_comment", rs.getString("review_comment"));
+        entry.put("occurrence_count", rs.getInt("occurrence_count"));
+        entry.put("last_occurrence_time", formatTimestamp(rs.getTimestamp("last_occurrence_time")));
+        entry.put("created_time", formatTimestamp(rs.getTimestamp("created_time")));
+        entry.put("updated_time", formatTimestamp(rs.getTimestamp("updated_time")));
+        return entry;
+    }
 }

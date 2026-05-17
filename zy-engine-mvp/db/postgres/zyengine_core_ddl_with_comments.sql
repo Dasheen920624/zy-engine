@@ -451,3 +451,53 @@ CREATE INDEX IF NOT EXISTS idx_src_review_target ON src_review_record (tenant_id
 CREATE INDEX IF NOT EXISTS idx_src_runtime_trace ON src_runtime_evidence (trace_id, engine_type);
 CREATE INDEX IF NOT EXISTS idx_cfg_pkg_tenant ON cfg_config_package (tenant_id, package_code, status);
 CREATE INDEX IF NOT EXISTS idx_cfg_pkg_asset ON cfg_config_package (tenant_id, asset_type, scope_level, scope_code);
+
+-- ============================================================================
+-- 术语治理队列
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS tm_unmapped_queue (
+  id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  queue_id VARCHAR(64) NOT NULL,
+  source_system VARCHAR(64) NOT NULL,
+  source_code VARCHAR(128) NOT NULL,
+  source_name VARCHAR(200),
+  concept_type VARCHAR(64) NOT NULL,
+  governance_status VARCHAR(32) NOT NULL,
+  proposed_standard_code VARCHAR(128),
+  proposed_standard_name VARCHAR(200),
+  proposed_confidence NUMERIC(5,4) DEFAULT 0,
+  proposed_mapping_source VARCHAR(64),
+  reviewed_by VARCHAR(64),
+  reviewed_time TIMESTAMP,
+  review_comment VARCHAR(1000),
+  occurrence_count INTEGER DEFAULT 1 NOT NULL,
+  last_occurrence_time TIMESTAMP,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_tm_unmapped_queue UNIQUE (tenant_id, source_system, source_code, concept_type, governance_status)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tm_queue_status ON tm_unmapped_queue (tenant_id, governance_status, last_occurrence_time);
+CREATE INDEX IF NOT EXISTS idx_tm_queue_system ON tm_unmapped_queue (tenant_id, source_system, concept_type);
+
+COMMENT ON TABLE tm_unmapped_queue IS '术语未映射治理队列';
+COMMENT ON COLUMN tm_unmapped_queue.id IS '主键ID';
+COMMENT ON COLUMN tm_unmapped_queue.tenant_id IS '租户ID';
+COMMENT ON COLUMN tm_unmapped_queue.queue_id IS '队列记录ID';
+COMMENT ON COLUMN tm_unmapped_queue.source_system IS '来源系统编码';
+COMMENT ON COLUMN tm_unmapped_queue.source_code IS '来源术语编码';
+COMMENT ON COLUMN tm_unmapped_queue.source_name IS '来源术语名称';
+COMMENT ON COLUMN tm_unmapped_queue.concept_type IS '概念类型';
+COMMENT ON COLUMN tm_unmapped_queue.governance_status IS '治理状态';
+COMMENT ON COLUMN tm_unmapped_queue.proposed_standard_code IS '建议标准码';
+COMMENT ON COLUMN tm_unmapped_queue.proposed_standard_name IS '建议标准名称';
+COMMENT ON COLUMN tm_unmapped_queue.proposed_confidence IS '建议置信度';
+COMMENT ON COLUMN tm_unmapped_queue.proposed_mapping_source IS '建议映射来源';
+COMMENT ON COLUMN tm_unmapped_queue.reviewed_by IS '审核人';
+COMMENT ON COLUMN tm_unmapped_queue.reviewed_time IS '审核时间';
+COMMENT ON COLUMN tm_unmapped_queue.review_comment IS '审核备注';
+COMMENT ON COLUMN tm_unmapped_queue.occurrence_count IS '出现次数';
+COMMENT ON COLUMN tm_unmapped_queue.last_occurrence_time IS '最近出现时间';
+COMMENT ON COLUMN tm_unmapped_queue.created_time IS '创建时间';
+COMMENT ON COLUMN tm_unmapped_queue.updated_time IS '更新时间';
