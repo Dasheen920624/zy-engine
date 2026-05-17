@@ -1,0 +1,63 @@
+# 跨平台行尾与文件类型识别约定
+#
+# 仓库内默认强制 LF，避免 Windows 与 Linux/macOS 协作时混乱。
+# 例外：Windows 专用脚本（.cmd / .bat）保持 CRLF；
+#       PowerShell（.ps1）用 CRLF + UTF-8 BOM（PowerShell 5.1 兼容需要 BOM）。
+
+* text=auto eol=lf
+
+# 文本文件 - 强制 LF
+*.md          text eol=lf
+*.json        text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+*.xml         text eol=lf
+*.html        text eol=lf
+*.css         text eol=lf
+*.scss        text eol=lf
+*.ts          text eol=lf
+*.tsx         text eol=lf
+*.js          text eol=lf
+*.jsx         text eol=lf
+*.java        text eol=lf
+*.kt          text eol=lf
+*.sql         text eol=lf
+*.http        text eol=lf
+*.properties  text eol=lf
+*.sh          text eol=lf
+*.gitignore   text eol=lf
+*.gitattributes text eol=lf
+*.editorconfig text eol=lf
+.nvmrc        text eol=lf
+.npmrc        text eol=lf
+.env*         text eol=lf
+
+# Windows 脚本 - 保留 CRLF
+*.cmd         text eol=crlf
+*.bat         text eol=crlf
+*.ps1         text eol=crlf working-tree-encoding=UTF-8-BOM
+
+# 二进制 - 不做转换
+*.png         binary
+*.jpg         binary
+*.jpeg        binary
+*.gif         binary
+*.ico         binary
+*.svg         binary
+*.pdf         binary
+*.zip         binary
+*.tar         binary
+*.tar.gz      binary
+*.tgz         binary
+*.jar         binary
+*.war         binary
+*.so          binary
+*.dll         binary
+*.dylib       binary
+
+# Linguist / GitHub 语言识别提示（可选）
+*.sql linguist-language=PLSQL
+*.http linguist-detectable=false
+
+# 大文件 LFS 占位（如未启用 LFS，删除以下行）
+# *.bin filter=lfs diff=lfs merge=lfs -text

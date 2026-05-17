@@ -19,13 +19,26 @@
 
 ## 详情文档（按需深入）
 
+**架构与规范（写代码前必读）**
+
+- 架构总图：[05_架构总图与服务边界](zy-engine-mvp/docs/05_架构总图与服务边界.md) — Provider / 跨数据库 / 国产化 / 内网约束
+- 后端开发规范：[06_后端开发规范](zy-engine-mvp/docs/06_后端开发规范.md)
+- 前端开发规范：[07_前端开发规范](zy-engine-mvp/docs/07_前端开发规范.md)
+
+**产品 / 业务**
+
 - 产品/架构总纲：[产品化方案与AI开发编排](zy-engine-mvp/docs/产品化方案与AI开发编排.md)
 - 多角色评审与并行泳道：[顶级多角色评审与AI并行开发总控](zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md)
 - 全功能蓝图：[全功能蓝图与并行开发计划](zy-engine-mvp/docs/全功能蓝图与并行开发计划.md)
-- 前端方案：[前端配置平台规划与开发验证](zy-engine-mvp/docs/前端配置平台规划与开发验证.md)
+- 前端方案规划：[前端配置平台规划与开发验证](zy-engine-mvp/docs/前端配置平台规划与开发验证.md)
+
+**接手与工程**
+
 - 旧入口（仍有效）：[AI接手执行手册](zy-engine-mvp/docs/AI接手执行手册.md)
 - 早期评审：[多角色评审与执行计划](zy-engine-mvp/docs/多角色评审与执行计划.md)
 - 后端工程：[后端 MVP README](zy-engine-mvp/README.md)
+- 前端工程：[前端 README](frontend/README.md)
+- 前端高保真原型：[frontend-prototype/index.html](frontend-prototype/index.html)
 - 研发输入包：[AI研发输入包 README](ai-dev-input/README.md)
 - AI 系统提示词：[AI开发系统提示词](ai-dev-input/09_ai_task_cards/ai_system_prompt.md)
 
