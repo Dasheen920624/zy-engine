@@ -6,7 +6,7 @@ slice: 图谱版本生产库主数据
 title: GRAPH-001 图谱版本生产库主数据（来源绑定 + 激活检查 + 测试）
 owner: AI-Codex-20260517
 role: Backend AI
-status: ACTIVE
+status: DONE
 branch: main
 git_base_commit: 7ebf11b
 git_status_at_claim: clean, synced with origin/main
