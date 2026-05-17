@@ -97,8 +97,8 @@ check_db_postgres() {
 # ---------------------------------------------------------------------------
 # 路径常量
 # ---------------------------------------------------------------------------
-ZY_HOME="${ZY_HOME:-/opt/zy-engine}"
-ZY_BACKUP_DIR="${ZY_BACKUP_DIR:-/opt/zy-engine.bak}"
+ZY_HOME="${ZY_HOME:-/zoesoft/zy-engine}"
+ZY_BACKUP_DIR="${ZY_BACKUP_DIR:-/zoesoft/zy-engine.bak}"
 ZY_USER="${ZY_USER:-zyengine}"
 ZY_ENV_FILE="${ZY_ENV_FILE:-$ZY_HOME/conf/zyengine.env}"
 

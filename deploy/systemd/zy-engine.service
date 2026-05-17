@@ -9,16 +9,16 @@ After=network.target
 Type=simple
 User=zyengine
 Group=zyengine
-WorkingDirectory=/opt/zy-engine
+WorkingDirectory=/zoesoft/zy-engine
 
 # 加载环境变量（数据库凭据、端口、JAVA_OPTS 等）
-EnvironmentFile=/opt/zy-engine/conf/zyengine.env
+EnvironmentFile=/zoesoft/zy-engine/conf/zyengine.env
 
 # 默认 JAVA_OPTS（zyengine.env 可覆盖）
-Environment="JAVA_OPTS=-server -Xms2g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/opt/zy-engine/logs/heap.hprof -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Duser.timezone=Asia/Shanghai -Djava.security.egd=file:/dev/./urandom"
+Environment="JAVA_OPTS=-server -Xms2g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/zoesoft/zy-engine/logs/heap.hprof -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Duser.timezone=Asia/Shanghai -Djava.security.egd=file:/dev/./urandom"
 
 # 启动命令：用 PATH 中 java，或 EnvironmentFile 中 JAVA_HOME
-ExecStart=/bin/bash -c 'exec "${JAVA_HOME:-/usr}/bin/java" $JAVA_OPTS -jar /opt/zy-engine/lib/zy-engine.jar --spring.config.location=optional:file:/opt/zy-engine/conf/application.yml,optional:file:/opt/zy-engine/conf/application-local.yml'
+ExecStart=/bin/bash -c 'exec "${JAVA_HOME:-/usr}/bin/java" $JAVA_OPTS -jar /zoesoft/zy-engine/lib/zy-engine.jar --spring.config.location=optional:file:/zoesoft/zy-engine/conf/application.yml,optional:file:/zoesoft/zy-engine/conf/application-local.yml'
 
 # 优雅停止：先 SIGTERM，30 秒后 SIGKILL
 ExecStop=/bin/kill -TERM $MAINPID
@@ -41,11 +41,11 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
 ProtectHome=true
-ReadWritePaths=/opt/zy-engine/logs /opt/zy-engine.bak
+ReadWritePaths=/zoesoft/zy-engine/logs /zoesoft/zy-engine.bak
 
 # 日志
-StandardOutput=append:/opt/zy-engine/logs/stdout.log
-StandardError=append:/opt/zy-engine/logs/stderr.log
+StandardOutput=append:/zoesoft/zy-engine/logs/stdout.log
+StandardError=append:/zoesoft/zy-engine/logs/stderr.log
 
 [Install]
 WantedBy=multi-user.target

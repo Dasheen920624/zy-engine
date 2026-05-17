@@ -2,7 +2,7 @@
 # 离线安装 —— Linux / Unix
 # 用法：sudo ./install-offline.sh [--init-db | --migrate-db | --skip-init-db]
 #
-# 前置：发布包已解压到 $ZY_HOME（默认 /opt/zy-engine），profile 已选好。
+# 前置：发布包已解压到 $ZY_HOME（默认 /zoesoft/zy-engine），profile 已选好。
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091

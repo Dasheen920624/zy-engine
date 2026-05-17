@@ -12,7 +12,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ZyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "C:\zy-engine" }
+$ZyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "C:\zoesoft\zy-engine" }
 
 # 必须 admin
 $winId = [System.Security.Principal.WindowsIdentity]::GetCurrent()

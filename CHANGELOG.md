@@ -20,6 +20,7 @@
 ### Changed
 - 根 README 顶部置顶 "AI 首读" 唯一入口。
 - `ai-dev-input/09_ai_task_cards/ai_system_prompt.md` 指向 00 总入口。
+- **部署路径前缀统一**：从 `/opt/zy-engine` 改为 `/zoesoft/zy-engine`（Linux）；Windows 默认 `C:\zoesoft\zy-engine`。备份目录同步：`/zoesoft/zy-engine.bak`、`C:\zoesoft\zy-engine.bak`。影响：deploy/scripts/*.sh、deploy/scripts/*.ps1、deploy/profiles/*.env、deploy/systemd/zy-engine.service、deploy/nginx/*.conf、deploy/README.md、docs/07/08/09。环境变量 `ZY_HOME` / `ZY_BACKUP_DIR` 仍可覆盖默认值。
 
 ### Notes
 - 当前版本未打 tag。下次 tag 建议 `v0.2.0`（理由：新增架构规范层 + 国产化矩阵 + 自动化部署框架，属于兼容性新增）。

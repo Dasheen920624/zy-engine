@@ -74,11 +74,11 @@ cd /tmp
 sha256sum -c zy-engine-v1.2.3-a1b2c3d.tar.gz.sha256
 
 # 3) 解压
-sudo mkdir -p /opt/zy-engine
-sudo tar -xzvf zy-engine-v1.2.3-a1b2c3d.tar.gz -C /opt/zy-engine --strip-components=1
+sudo mkdir -p /zoesoft/zy-engine
+sudo tar -xzvf zy-engine-v1.2.3-a1b2c3d.tar.gz -C /zoesoft/zy-engine --strip-components=1
 
 # 4) 选 profile
-cd /opt/zy-engine
+cd /zoesoft/zy-engine
 sudo cp profiles/kylin-aarch64-dm.env conf/zyengine.env
 sudo $EDITOR conf/zyengine.env        # 填入 DB 凭据等
 
