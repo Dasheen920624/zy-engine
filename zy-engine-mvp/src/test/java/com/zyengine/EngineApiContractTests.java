@@ -3149,4 +3149,67 @@ class EngineApiContractTests {
         assertEquals("UNBOUND_NODE", warnings.get(0).get("element_code"));
         assertEquals("WARN", warnings.get(0).get("severity"));
     }
+
+    @Test
+    void graphVersionReferenceFields() throws Exception {
+        Map<String, Object> version = new LinkedHashMap<>();
+        version.put("graph_version", "AMI_GRAPH_REF_2026_01");
+        version.put("name", "AMI图谱-来源绑定测试");
+        version.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        version.put("reference_binding_type", "EVIDENCE");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("versions", Arrays.asList(version));
+        invokePost("/api/graph/versions", importBody);
+
+        Map<String, Object> getResp = invokeGet("/api/graph/versions/AMI_GRAPH_REF_2026_01");
+        Map<String, Object> data = asMap(getResp.get("data"));
+        assertEquals("AMI_GRAPH_REF_2026_01", data.get("graph_version"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", data.get("reference_document_code"));
+        assertEquals("EVIDENCE", data.get("reference_binding_type"));
+    }
+
+    @Test
+    void graphVersionActivateReportsMissingReference() throws Exception {
+        Map<String, Object> version = new LinkedHashMap<>();
+        version.put("graph_version", "AMI_GRAPH_NO_REF_2026_01");
+        version.put("name", "AMI图谱-无来源测试");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("versions", Arrays.asList(version));
+        invokePost("/api/graph/versions", importBody);
+
+        Map<String, Object> activateBody = new LinkedHashMap<>();
+        activateBody.put("published_by", "ADMIN");
+        Map<String, Object> activateResp = invokePost("/api/graph/versions/AMI_GRAPH_NO_REF_2026_01/activate", activateBody);
+        Map<String, Object> data = asMap(activateResp.get("data"));
+        assertEquals("ACTIVE", data.get("status"));
+
+        List<Map<String, Object>> warnings = asListOfMap(data.get("reference_warnings"));
+        assertFalse(warnings.isEmpty());
+        assertEquals("WARN", warnings.get(0).get("severity"));
+        assertEquals("reference_document_code", warnings.get(0).get("field"));
+    }
+
+    @Test
+    void graphVersionActivateWithReferenceNoWarning() throws Exception {
+        Map<String, Object> version = new LinkedHashMap<>();
+        version.put("graph_version", "AMI_GRAPH_WITH_REF_2026_01");
+        version.put("name", "AMI图谱-有来源测试");
+        version.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        version.put("reference_binding_type", "EVIDENCE");
+
+        Map<String, Object> importBody = new LinkedHashMap<>();
+        importBody.put("versions", Arrays.asList(version));
+        invokePost("/api/graph/versions", importBody);
+
+        Map<String, Object> activateBody = new LinkedHashMap<>();
+        activateBody.put("published_by", "ADMIN");
+        Map<String, Object> activateResp = invokePost("/api/graph/versions/AMI_GRAPH_WITH_REF_2026_01/activate", activateBody);
+        Map<String, Object> data = asMap(activateResp.get("data"));
+        assertEquals("ACTIVE", data.get("status"));
+
+        List<Map<String, Object>> warnings = asListOfMap(data.get("reference_warnings"));
+        assertTrue(warnings.isEmpty());
+    }
 }

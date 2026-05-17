@@ -104,6 +104,17 @@ public class GraphService {
         entry.put("status", "ACTIVE");
         entry.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
         entry.put("published_time", nowText());
+
+        List<Map<String, Object>> referenceWarnings = new ArrayList<Map<String, Object>>();
+        if (entry.get("reference_document_code") == null) {
+            Map<String, Object> warning = new LinkedHashMap<String, Object>();
+            warning.put("severity", "WARN");
+            warning.put("field", "reference_document_code");
+            warning.put("message", "图谱版本缺少来源文档绑定（reference_document_code）");
+            referenceWarnings.add(warning);
+        }
+        entry.put("reference_warnings", referenceWarnings);
+
         return entry;
     }
 
@@ -814,6 +825,8 @@ public class GraphService {
         view.put("status", canonical(string(entry.get("status"), "DRAFT")));
         view.put("description", string(entry.get("description"), null));
         view.put("source_uri", string(entry.get("source_uri"), null));
+        view.put("reference_document_code", string(entry.get("reference_document_code"), null));
+        view.put("reference_binding_type", string(entry.get("reference_binding_type"), null));
         view.put("published_by", string(entry.get("published_by"), null));
         view.put("published_time", string(entry.get("published_time"), null));
         view.put("created_time", nowText());
