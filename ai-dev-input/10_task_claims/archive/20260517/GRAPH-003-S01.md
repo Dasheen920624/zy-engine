@@ -6,7 +6,7 @@ slice: 图谱证据查询
 title: GRAPH-003 图谱证据查询（返回证据 + 来源）
 owner: AI-Codex-20260517
 role: Backend AI
-status: ACTIVE
+status: DONE
 branch: main
 database_mode: LOCAL_H2_FILE
 oracle_available: false
