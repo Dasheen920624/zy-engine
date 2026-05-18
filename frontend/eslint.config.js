@@ -1,5 +1,5 @@
 // 前端 ESLint flat config（ESLint 9 风格）
-// 与 zy-engine-mvp/docs/07_前端开发规范.md 对齐。
+// 与 docs/engineering/07_前端开发规范.md 对齐。
 
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";

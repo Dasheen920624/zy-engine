@@ -106,5 +106,5 @@ log_ok "安装完成。版本：$(cat "$ZY_HOME/manifest.json" 2>/dev/null | gre
 echo ""
 echo "下一步建议："
 echo "  - 配置 Nginx：sudo cp $ZY_HOME/nginx/zy-engine.conf /etc/nginx/conf.d/"
-echo "  - 跑客户验收剧本：见 zy-engine-mvp/docs/04_客户验收剧本与报告模板.md"
-echo "  - 接入监控：见 zy-engine-mvp/docs/09_内网部署与版本管理.md §11"
+echo "  - 跑客户验收剧本：见 docs/02_场景剧本图.md"
+echo "  - 接入监控：见 docs/engineering/09_内网部署与版本管理.md §11"

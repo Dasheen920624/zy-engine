@@ -37,40 +37,24 @@ Get-Content .\README.md -Encoding UTF8
 
 Oracle 中文表备注和字段备注推荐执行 `db/oracle/zyengine_comments_unistr.sql`，该脚本使用 `UNISTR` 写入中文，可避免客户端字符集不一致导致备注乱码。
 
-详细说明见：
+详细说明见 [../docs/engineering/编码与中文备注规范.md](../docs/engineering/编码与中文备注规范.md)。
 
-```text
-docs/编码与中文备注规范.md
-```
+**产品设计与 AI 接手流程**（V2 金本位）：
 
-产品化总纲、集团化医院支持方案、跨环境一致性、AI 协作开发约定见：
+- [../docs/README.md](../docs/README.md) — 文档体系导航
+- [../docs/01_产品事实源.md](../docs/01_产品事实源.md) — 产品全貌
+- [../docs/05_AI实施手册.md](../docs/05_AI实施手册.md) — 接下来 12 个 PR
 
-```text
-docs/产品化方案与AI开发编排.md
-docs/产品功能业务核查与开工清单.md
-docs/AI自主开发运行守则.md
-docs/AI任务认领与并行开发机制.md
-docs/AI开发质量门禁与评审整改机制.md
-docs/数据库Provider与离线AI开发约定.md
-```
+**工程规范**（写代码前必读）：
 
-全功能蓝图、来源追溯平台、规则医学文献来源和并行开发计划见：
+- [../docs/engineering/00_总入口与AI接手导航.md](../docs/engineering/00_总入口与AI接手导航.md) — 硬门禁与 DoD
+- [../docs/engineering/02_任务台账.md](../docs/engineering/02_任务台账.md) — 任务状态唯一权威
+- [../docs/engineering/05_架构总图与服务边界.md](../docs/engineering/05_架构总图与服务边界.md) — 架构与 Provider
+- [../docs/engineering/06_后端开发规范.md](../docs/engineering/06_后端开发规范.md) — 后端代码规范
+- [../docs/engineering/数据库Provider与离线AI开发约定.md](../docs/engineering/数据库Provider与离线AI开发约定.md) — 多数据库与本地开发
+- [../docs/engineering/产品功能业务核查与开工清单.md](../docs/engineering/产品功能业务核查与开工清单.md) — 医学/医保/质控核查
 
-```text
-docs/全功能蓝图与并行开发计划.md
-```
-
-前端配置平台、功能演示、规则校验工作台和可视化验收计划见：
-
-```text
-docs/前端配置平台规划与开发验证.md
-```
-
-其它 AI 接手执行流程见：
-
-```text
-docs/AI接手执行手册.md
-```
+历史长文已统一归档到 `../docs/_archive/`，仅供溯源，不得作为实施依据。
 
 多 AI 开发时，run log、claim、heartbeat、review 等协作元数据可以同步到 `main`；业务代码必须在 `review_status=APPROVED` 且 `open_findings=0` 后才能正式提交、合并或进入主版本。
 

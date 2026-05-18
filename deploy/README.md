@@ -2,7 +2,7 @@
 
 本目录是 **ARCH-003** 的产物，提供医院内网环境下的自动化部署、升级、回滚、灾备能力。Linux/UnixServer 用 `*.sh`，Windows Server 用 `*.ps1`，两套脚本行为等价。
 
-> 完整流程与版本约定见 [VERSIONING.md](../VERSIONING.md) 与 [zy-engine-mvp/docs/09_内网部署与版本管理.md](../zy-engine-mvp/docs/09_内网部署与版本管理.md)。
+> 完整流程与版本约定见 [VERSIONING.md](../VERSIONING.md) 与 [docs/engineering/09_内网部署与版本管理.md](../docs/engineering/09_内网部署与版本管理.md)。
 
 ## 1. 目录结构
 
@@ -108,7 +108,7 @@ sudo ./scripts/rollback.sh --to v1.2.3
 
 ## 5. 灾备恢复
 
-参见 [09_内网部署与版本管理.md §9](../zy-engine-mvp/docs/09_内网部署与版本管理.md)。
+参见 [09_内网部署与版本管理.md §9](../docs/engineering/09_内网部署与版本管理.md)。
 
 ## 6. Profile 命名约定
 

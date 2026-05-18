@@ -185,7 +185,7 @@ setOrg({ ...org, hospital_code: "HOSPITAL_BETA" });
 
 ## 后续任务
 
-参见 [../zy-engine-mvp/docs/02_任务台账.md](../zy-engine-mvp/docs/02_任务台账.md) F 泳道：
+参见 [../docs/engineering/02_任务台账.md](../docs/engineering/02_任务台账.md) F 泳道：
 
 - FE-003 演示与规则校验工作台
 - FE-004 配置包中心

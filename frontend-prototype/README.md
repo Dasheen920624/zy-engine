@@ -81,9 +81,9 @@ python -m http.server 8000 -d frontend-prototype
 
 | 文档 | 对应原型 |
 |---|---|
-| `../zy-engine-mvp/docs/前端配置平台规划与开发验证.md` | 全部页面 |
-| `../zy-engine-mvp/docs/01_多角色诉求矩阵.md` 第 2.2 节产品设计师 | base.css 设计 token 选择 |
-| `../zy-engine-mvp/docs/04_客户验收剧本与报告模板.md` 剧本一/二/三/四/五/六 | 5 个页面分别对应 |
+| [`../docs/04_页面规格书.md`](../docs/04_页面规格书.md) | 全部页面（18 个目标页面） |
+| [`../docs/03_设计系统.md`](../docs/03_设计系统.md) | Design Tokens 与组件 API |
+| [`../docs/02_场景剧本图.md`](../docs/02_场景剧本图.md) 6 大剧本 | 5 个原型页面分别对应 S1-S5 |
 | `../ai-dev-input/06_samples/sample_emr_qc_case.json` | demo-validation 输入区 |
 | `../ai-dev-input/06_samples/sample_insurance_qc_case.json` | demo-validation tab 三 |
 | `../ai-dev-input/06_samples/sample_order_safety_case.json` | demo-validation tab 四 |
