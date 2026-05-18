@@ -7,6 +7,11 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 
+// MedKernel 自定义规则（强制 ADR-0003/0004 + 项目重命名决策）
+import noHardcodedColor from "./eslint-rules/no-hardcoded-color.js";
+import requireSourceInfo from "./eslint-rules/require-source-info-for-medical.js";
+import forbidDeprecatedNaming from "./eslint-rules/forbid-deprecated-naming.js";
+
 export default tseslint.config(
   {
     ignores: ["dist", "node_modules", "coverage", "**/*.config.{js,ts}"],
@@ -25,6 +30,14 @@ export default tseslint.config(
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      // MedKernel 自定义规则集
+      medkernel: {
+        rules: {
+          "no-hardcoded-color": noHardcodedColor,
+          "require-source-info-for-medical": requireSourceInfo,
+          "forbid-deprecated-naming": forbidDeprecatedNaming,
+        },
+      },
     },
     rules: {
       // === TypeScript ===
@@ -94,6 +107,11 @@ export default tseslint.config(
       "no-var": "error",
       "object-shorthand": "warn",
       "no-nested-ternary": "warn",
+
+      // === MedKernel 自定义规则（ADR-0003/0004 + 重命名） ===
+      "medkernel/no-hardcoded-color": "error",
+      "medkernel/require-source-info-for-medical": "warn",
+      "medkernel/forbid-deprecated-naming": "error",
     },
   },
   {

@@ -8,7 +8,20 @@
 
 ## [Unreleased]
 
+### Added (2026-05-18)
+- **AI 一致性保证 7 套机制**（开工前最后基础设施）：
+  - `docs/engineering/AI一致性保证.md` 总览
+  - `docs/engineering/adr/` 架构决策记录 4 份（三产品分层、PR-V2 命名空间、禁止硬编码、医学必有来源）
+  - `docs/engineering/reference-implementations/` 参考实现样板 4 份（StatusBadge / Controller / 6 状态页 / API 调用）
+  - `docs/engineering/forbidden-patterns.md` 禁用清单（9 大类）
+  - `frontend/eslint-rules/` 3 条自定义规则（no-hardcoded-color / require-source-info-for-medical / forbid-deprecated-naming）
+  - `scripts/verify-task-prereq.ps1` 接手前 7 项自检
+  - `scripts/verify-pr.ps1` 提交前 9 项 DoD 自检
+  - `docs/engineering/AI能力分级匹配清单.md` 三档能力 × 12 PR 映射
+  - `.github/pull_request_template.md` PR review 标准化清单
+
 ### Changed (Breaking - 2026-05-18)
+- **CSS Token 命名空间 --zy-* → --mk-***：彻底统一为 mk- 命名空间，10 个文件 181 处替换。配套 ESLint 规则 `forbid-deprecated-naming` 加入 `--zy-` 和 `.zy-` 检测。
 - **项目重命名 zy-engine → MedKernel**：V2 升级后定位是"三产品 + 三引擎 + 共用底座"的平台，原 "engine" 词不再准确。完整影响：
   - Java 包名：`com.zyengine.*` → `com.medkernel.*`（71 个 Java 类全部迁移）
   - Maven artifact：`zy-engine-mvp` → `medkernel-mvp`（含 groupId、artifactId、name）
