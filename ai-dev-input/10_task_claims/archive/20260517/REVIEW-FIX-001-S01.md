@@ -30,18 +30,18 @@ feature_acceptance_id:
 ## Write Scope
 
 ```text
-zy-engine-mvp/src/main/java/com/zyengine/persistence/EnginePersistenceService.java
-zy-engine-mvp/src/main/java/com/zyengine/common/GlobalExceptionHandler.java
-zy-engine-mvp/src/main/java/com/zyengine/config/ConfigPackageController.java
-zy-engine-mvp/src/main/java/com/zyengine/rule/RuleEvalResultRepository.java
-zy-engine-mvp/src/main/java/com/zyengine/rule/RuleService.java
-zy-engine-mvp/src/main/java/com/zyengine/pathway/PathwayService.java
-zy-engine-mvp/db/oracle/re_rule_eval_result_ddl.sql
-zy-engine-mvp/db/dm/re_rule_eval_result_ddl.sql
-zy-engine-mvp/db/postgres/re_rule_eval_result_ddl.sql
-zy-engine-mvp/src/main/resources/db/local/re_rule_eval_result_ddl.sql
-zy-engine-mvp/src/test/java/com/zyengine/EngineApiContractTests.java
-zy-engine-mvp/docs/02_任务台账.md
+medkernel-mvp/src/main/java/com/medkernel/persistence/EnginePersistenceService.java
+medkernel-mvp/src/main/java/com/medkernel/common/GlobalExceptionHandler.java
+medkernel-mvp/src/main/java/com/medkernel/config/ConfigPackageController.java
+medkernel-mvp/src/main/java/com/medkernel/rule/RuleEvalResultRepository.java
+medkernel-mvp/src/main/java/com/medkernel/rule/RuleService.java
+medkernel-mvp/src/main/java/com/medkernel/pathway/PathwayService.java
+medkernel-mvp/db/oracle/re_rule_eval_result_ddl.sql
+medkernel-mvp/db/dm/re_rule_eval_result_ddl.sql
+medkernel-mvp/db/postgres/re_rule_eval_result_ddl.sql
+medkernel-mvp/src/main/resources/db/local/re_rule_eval_result_ddl.sql
+medkernel-mvp/src/test/java/com/medkernel/EngineApiContractTests.java
+medkernel-mvp/docs/02_任务台账.md
 ai-dev-input/10_task_claims/active/REVIEW-FIX-001-S01.md
 ai-dev-input/10_task_claims/archive/20260517/REVIEW-FIX-001-S01.md
 ai-dev-input/11_ai_reviews/pending/RV-REVIEW-FIX-001-S01-R01.md
@@ -54,12 +54,12 @@ ai-dev-input/12_autonomous_runs/archive/20260517/RUN-REVIEW-FIX-20260517.md
 
 ```text
 README.md
-zy-engine-mvp/docs/AI接手执行手册.md
-zy-engine-mvp/docs/AI自主开发运行守则.md
-zy-engine-mvp/docs/AI任务认领与并行开发机制.md
-zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
-zy-engine-mvp/docs/02_任务台账.md
-zy-engine-mvp/src/main/java/com/zyengine/**
+medkernel-mvp/docs/AI接手执行手册.md
+medkernel-mvp/docs/AI自主开发运行守则.md
+medkernel-mvp/docs/AI任务认领与并行开发机制.md
+medkernel-mvp/docs/AI开发质量门禁与评审整改机制.md
+medkernel-mvp/docs/02_任务台账.md
+medkernel-mvp/src/main/java/com/medkernel/**
 ```
 
 ## Forbidden Scope
@@ -110,7 +110,7 @@ post_push_git_status_clean: pending
 ```text
 后端：
 - mvn test: PASSED 48/48 (LOCAL_H2_FILE 模式)
-- mvn package: PASSED (target/zy-engine-mvp-0.1.0-SNAPSHOT.jar)
+- mvn package: PASSED (target/medkernel-mvp-0.1.0-SNAPSHOT.jar)
 - git diff --check: PASSED (无空白错误)
 - 现有集成测试已覆盖：
   - configPackageImportReviewPublishAndExport (ConfigPackageController OrgContext 路径)

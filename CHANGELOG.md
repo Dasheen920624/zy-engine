@@ -8,11 +8,30 @@
 
 ## [Unreleased]
 
+### Changed (Breaking - 2026-05-18)
+- **项目重命名 zy-engine → MedKernel**：V2 升级后定位是"三产品 + 三引擎 + 共用底座"的平台，原 "engine" 词不再准确。完整影响：
+  - Java 包名：`com.zyengine.*` → `com.medkernel.*`（71 个 Java 类全部迁移）
+  - Maven artifact：`zy-engine-mvp` → `medkernel-mvp`（含 groupId、artifactId、name）
+  - 主工程目录：`zy-engine-mvp/` → `medkernel-mvp/`
+  - Spring Boot 主类：`ZyEngineApplication.java` → `MedKernelApplication.java`
+  - HTTP context path：`/zy-engine/api/*` → `/medkernel/api/*`
+  - Spring application name：`zy-engine` → `medkernel`
+  - 部署目录：`/zoesoft/zy-engine` → `/zoesoft/medkernel`（Linux）、`C:\zoesoft\medkernel`（Windows）
+  - 环境变量：`ZY_HOME` → `MK_HOME`、`ZY_BACKUP_DIR` → `MK_BACKUP_DIR`、`ZYENGINE_*` → `MEDKERNEL_*`
+  - 配置文件：`zyengine.env` → `medkernel.env`
+  - systemd 服务：`zy-engine.service` → `medkernel.service`、Windows 服务名 `ZyEngine` → `MedKernel`
+  - SQL 文件名：`zyengine_core_ddl_with_comments.sql` 等 7 个 → `medkernel_*` 同名
+  - nginx 配置：`zy-engine.conf` / `zy-engine-tls.conf` → `medkernel.conf` / `medkernel-tls.conf`，upstream `zyengine_backend` → `medkernel_backend`
+  - 前端 package name：`zy-engine-frontend` → `medkernel-frontend`
+  - PowerShell 函数：`Import-ZyEngineOracleLocalEnv` → `Import-MedKernelOracleLocalEnv`
+  - 总影响：229 文件 1900+ 处替换
+  - **迁移指南：** 客户已部署版本需走升级流程（重新走 install-offline + 旧目录数据迁移），不可直接覆盖
+
 ### Removed
 - **物理清理旧文件（2026-05-18，tag `pre-cleanup-20260518` 保留快照）：**
   - 删除 `docs/_archive/`（31 份历史文档：V1 草稿 1 + V2 之前主线 19 + 早期资料 11）
   - 删除 `frontend-prototype/`（8 份 HTML 静态原型，FE-002 React 工程已完整替代）
-  - 删除 `zy-engine-mvp/docs/README.md` 重定向页（已无引用风险）
+  - 删除 `medkernel-mvp/docs/README.md` 重定向页（已无引用风险）
   - 如需溯源：`git checkout pre-cleanup-20260518`
 
 ### Changed
@@ -23,10 +42,10 @@
     - `docs/03_设计系统.md` — Design Tokens + 13 核心组件 API + 三产品密度模式
     - `docs/04_页面规格书.md` — 18 个目标页面精确规格
     - `docs/05_AI实施手册.md` — 接下来 12 个 PR（PR-V2-01~12）精确清单
-  - 工程规范迁移：`zy-engine-mvp/docs/*.md` → `docs/engineering/`（15 份保留）
+  - 工程规范迁移：`medkernel-mvp/docs/*.md` → `docs/engineering/`（15 份保留）
   - 历史归档：19 份废弃长文 + 1 份 V1 草稿 + 11 份早期资料 → `docs/_archive/`（全部加废弃 banner）
   - 项目根 README、ai-dev-input/README、各模块 README、deploy 引用路径同步更新
-  - `zy-engine-mvp/docs/README.md` 保留为重定向页防止断链
+  - `medkernel-mvp/docs/README.md` 保留为重定向页防止断链
   - V2 PR 命名空间隔离：PR-V2-01~12 为权威主键，不复用历史 FE-XXX 编号避免冲突
 - 任务台账新增 §2.5 V2 PR 优先级总览，V2 PR 优先级最高
 - 05_架构总图新增 §1.1 三产品分层与架构关系
@@ -43,7 +62,7 @@
 ### Changed
 - 根 README 顶部置顶 "AI 首读" 唯一入口。
 - `ai-dev-input/09_ai_task_cards/ai_system_prompt.md` 指向 00 总入口。
-- **部署路径前缀统一**：从 `/opt/zy-engine` 改为 `/zoesoft/zy-engine`（Linux）；Windows 默认 `C:\zoesoft\zy-engine`。备份目录同步：`/zoesoft/zy-engine.bak`、`C:\zoesoft\zy-engine.bak`。影响：deploy/scripts/*.sh、deploy/scripts/*.ps1、deploy/profiles/*.env、deploy/systemd/zy-engine.service、deploy/nginx/*.conf、deploy/README.md、docs/07/08/09。环境变量 `ZY_HOME` / `ZY_BACKUP_DIR` 仍可覆盖默认值。
+- **部署路径前缀统一**：从 `/opt/zy-engine` 改为 `/zoesoft/zy-engine`（Linux）；Windows 默认 `C:\zoesoft\zy-engine`。备份目录同步：`/zoesoft/zy-engine.bak`、`C:\zoesoft\zy-engine.bak`。环境变量 `ZY_HOME` / `ZY_BACKUP_DIR` 仍可覆盖默认值。**注：2026-05-18 后项目重命名为 MedKernel，部署路径变更为 `/zoesoft/medkernel`，环境变量变更为 `MK_HOME` / `MK_BACKUP_DIR`，详见本日 Changed 段。**
 
 ### Notes
 - 当前版本未打 tag。下次 tag 建议 `v0.2.0`（理由：新增架构规范层 + 国产化矩阵 + 自动化部署框架，属于兼容性新增）。

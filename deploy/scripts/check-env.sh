@@ -65,26 +65,26 @@ else
 fi
 
 log_step "目录与磁盘"
-if [ -d "$ZY_HOME" ]; then
-  FREE_GB=$(df -BG "$ZY_HOME" | awk 'NR==2 {gsub(/G/,"",$4); print $4}')
+if [ -d "$MK_HOME" ]; then
+  FREE_GB=$(df -BG "$MK_HOME" | awk 'NR==2 {gsub(/G/,"",$4); print $4}')
   if [ "${FREE_GB:-0}" -ge 10 ]; then
-    record_ok "$ZY_HOME 可用空间 ${FREE_GB}GB"
+    record_ok "$MK_HOME 可用空间 ${FREE_GB}GB"
   else
-    record_warn "$ZY_HOME 可用空间仅 ${FREE_GB}GB，建议 ≥ 10GB"
+    record_warn "$MK_HOME 可用空间仅 ${FREE_GB}GB，建议 ≥ 10GB"
   fi
 else
-  record_warn "$ZY_HOME 不存在（首次部署会创建）"
+  record_warn "$MK_HOME 不存在（首次部署会创建）"
 fi
 
 log_step "端口"
-PORT_BACKEND="${ZYENGINE_HTTP_PORT:-18080}"
+PORT_BACKEND="${MEDKERNEL_HTTP_PORT:-18080}"
 if port_in_use "$PORT_BACKEND"; then
   record_fail "后端端口 $PORT_BACKEND 已被占用"
 else
   record_ok "后端端口 $PORT_BACKEND 空闲"
 fi
 
-PORT_FRONTEND="${ZYENGINE_FRONTEND_PORT:-80}"
+PORT_FRONTEND="${MEDKERNEL_FRONTEND_PORT:-80}"
 if port_in_use "$PORT_FRONTEND"; then
   record_warn "前端端口 $PORT_FRONTEND 已被占用（Nginx 已运行？）"
 else
@@ -111,12 +111,12 @@ else
 fi
 
 log_step "数据库"
-DIALECT="${ZYENGINE_DB_DIALECT:-}"
+DIALECT="${MEDKERNEL_DB_DIALECT:-}"
 case "$DIALECT" in
   oracle)   check_db_oracle   || true ;;
   dm)       check_db_dm       || true ;;
   postgres) check_db_postgres || true ;;
-  "")       record_warn "未设置 ZYENGINE_DB_DIALECT，跳过数据库连通" ;;
+  "")       record_warn "未设置 MEDKERNEL_DB_DIALECT，跳过数据库连通" ;;
   *)        record_warn "未知 dialect：$DIALECT" ;;
 esac
 

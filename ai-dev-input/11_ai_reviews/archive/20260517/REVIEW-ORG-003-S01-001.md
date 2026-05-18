@@ -27,10 +27,10 @@ feature_acceptance_id:
 
 ```text
 Reviewed files:
-  - zy-engine-mvp/src/main/java/com/zyengine/persistence/OrganizationPersistenceService.java (新增)
-  - zy-engine-mvp/src/main/java/com/zyengine/organization/OrganizationDirectoryService.java (修改)
-  - zy-engine-mvp/src/test/java/com/zyengine/EngineApiContractTests.java (修改)
-  - zy-engine-mvp/scripts/run-org-smoke.ps1 (新增)
+  - medkernel-mvp/src/main/java/com/medkernel/persistence/OrganizationPersistenceService.java (新增)
+  - medkernel-mvp/src/main/java/com/medkernel/organization/OrganizationDirectoryService.java (修改)
+  - medkernel-mvp/src/test/java/com/medkernel/EngineApiContractTests.java (修改)
+  - medkernel-mvp/scripts/run-org-smoke.ps1 (新增)
 Out of scope:
   - OrgOverrideService/OrgOverrideController (ORG-004 交付，不在本任务范围)
   - 前端页面 (不在本任务范围)

@@ -30,20 +30,20 @@ feature_acceptance_required: false
 
 ```text
 后端：
-  zy-engine-mvp/src/main/java/com/zyengine/graph/GraphController.java
-  zy-engine-mvp/src/main/java/com/zyengine/graph/GraphService.java
-  zy-engine-mvp/src/main/java/com/zyengine/persistence/EnginePersistenceService.java
-  zy-engine-mvp/src/main/java/com/zyengine/persistence/OrganizationPersistenceService.java
-  zy-engine-mvp/src/main/java/com/zyengine/terminology/TerminologyService.java
-  zy-engine-mvp/src/main/java/com/zyengine/terminology/TerminologyController.java
-  zy-engine-mvp/src/main/java/com/zyengine/provenance/SourceCitationService.java
-  zy-engine-mvp/src/main/java/com/zyengine/provenance/SourceAssetBindingService.java
-  zy-engine-mvp/src/main/java/com/zyengine/dify/DifyService.java
-  zy-engine-mvp/src/main/java/com/zyengine/dify/DifyWorkflowTemplate.java
-  zy-engine-mvp/src/main/java/com/zyengine/rule/RuleService.java
-  zy-engine-mvp/src/main/java/com/zyengine/adapter/AdapterHubService.java
-  zy-engine-mvp/src/main/java/com/zyengine/organization/OrgOverrideService.java
-  zy-engine-mvp/src/main/java/com/zyengine/system/HealthController.java (信息隐藏)
+  medkernel-mvp/src/main/java/com/medkernel/graph/GraphController.java
+  medkernel-mvp/src/main/java/com/medkernel/graph/GraphService.java
+  medkernel-mvp/src/main/java/com/medkernel/persistence/EnginePersistenceService.java
+  medkernel-mvp/src/main/java/com/medkernel/persistence/OrganizationPersistenceService.java
+  medkernel-mvp/src/main/java/com/medkernel/terminology/TerminologyService.java
+  medkernel-mvp/src/main/java/com/medkernel/terminology/TerminologyController.java
+  medkernel-mvp/src/main/java/com/medkernel/provenance/SourceCitationService.java
+  medkernel-mvp/src/main/java/com/medkernel/provenance/SourceAssetBindingService.java
+  medkernel-mvp/src/main/java/com/medkernel/dify/DifyService.java
+  medkernel-mvp/src/main/java/com/medkernel/dify/DifyWorkflowTemplate.java
+  medkernel-mvp/src/main/java/com/medkernel/rule/RuleService.java
+  medkernel-mvp/src/main/java/com/medkernel/adapter/AdapterHubService.java
+  medkernel-mvp/src/main/java/com/medkernel/organization/OrgOverrideService.java
+  medkernel-mvp/src/main/java/com/medkernel/system/HealthController.java (信息隐藏)
 
 前端：
   frontend/src/api/client.ts (401 处理)
@@ -54,7 +54,7 @@ feature_acceptance_required: false
   frontend/src/store/orgContext.ts (兜底加 warning)
 
 文档/治理：
-  zy-engine-mvp/docs/02_任务台账.md
+  medkernel-mvp/docs/02_任务台账.md
   ai-dev-input/10_task_claims/active/REVIEW-FIX-002-S01.md → archive
   ai-dev-input/11_ai_reviews/pending/RV-REVIEW-FIX-002-S01-R01.md → archive
   ai-dev-input/11_ai_reviews/pending/REV-TERM-002-S01.md (已改 CHANGES_REQUESTED) → archive
@@ -71,19 +71,19 @@ feature_acceptance_required: false
 
 ```text
 README.md
-zy-engine-mvp/docs/AI接手执行手册.md
-zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
+medkernel-mvp/docs/AI接手执行手册.md
+medkernel-mvp/docs/AI开发质量门禁与评审整改机制.md
 ai-dev-input/11_ai_reviews/pending/REV-TERM-002-S01.md
-zy-engine-mvp/src/main/java/com/zyengine/**
+medkernel-mvp/src/main/java/com/medkernel/**
 frontend/src/**
 ```
 
 ## Forbidden Scope
 
 ```text
-zy-engine-mvp/src/main/java/com/zyengine/pathway/**  (上次 REVIEW-FIX-001 已覆盖，本次不动)
-zy-engine-mvp/src/main/java/com/zyengine/config/**  (同上)
-zy-engine-mvp/src/main/java/com/zyengine/audit/**  (未发现关键问题，本次不动)
+medkernel-mvp/src/main/java/com/medkernel/pathway/**  (上次 REVIEW-FIX-001 已覆盖，本次不动)
+medkernel-mvp/src/main/java/com/medkernel/config/**  (同上)
+medkernel-mvp/src/main/java/com/medkernel/audit/**  (未发现关键问题，本次不动)
 ai-dev-input/历史归档目录
 docs/legacy-materials/**
 frontend-prototype/**

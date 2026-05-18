@@ -37,5 +37,5 @@ archive/             已正式提交并归档的评审记录。
 
 ```powershell
 rg -n "review_id:|claim_id:|review_status:|severity:|status: OPEN" ai-dev-input/11_ai_reviews
-.\zy-engine-mvp\scripts\check-ai-collaboration.ps1
+.\medkernel-mvp\scripts\check-ai-collaboration.ps1
 ```

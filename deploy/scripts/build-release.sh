@@ -27,18 +27,18 @@ done
 
 GIT_HASH="$(git -C "$REPO_ROOT" rev-parse --short HEAD)"
 BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-PKG_NAME="zy-engine-v${VERSION}-${GIT_HASH}"
+PKG_NAME="medkernel-v${VERSION}-${GIT_HASH}"
 STAGING="$(mktemp -d)/$PKG_NAME"
 mkdir -p "$STAGING"
 log_info "Staging：$STAGING"
 
 log_step "1. 构建后端 jar"
-( cd "$REPO_ROOT/zy-engine-mvp" && mvn -B -q -DskipTests package )
-JAR_FILE="$(ls "$REPO_ROOT/zy-engine-mvp/target/"zy-engine-mvp-*.jar | head -1)"
+( cd "$REPO_ROOT/medkernel-mvp" && mvn -B -q -DskipTests package )
+JAR_FILE="$(ls "$REPO_ROOT/medkernel-mvp/target/"medkernel-mvp-*.jar | head -1)"
 [ -f "$JAR_FILE" ] || die "未找到 jar"
 mkdir -p "$STAGING/lib"
-cp "$JAR_FILE" "$STAGING/lib/zy-engine.jar"
-JAR_SHA=$(sha256sum "$STAGING/lib/zy-engine.jar" | awk '{print $1}')
+cp "$JAR_FILE" "$STAGING/lib/medkernel.jar"
+JAR_SHA=$(sha256sum "$STAGING/lib/medkernel.jar" | awk '{print $1}')
 log_ok "后端 jar：$JAR_SHA"
 
 log_step "2. 构建前端 dist"
@@ -60,7 +60,7 @@ fi
 
 log_step "3. 拷贝 DDL / scripts / docs / profiles"
 mkdir -p "$STAGING/db"
-cp -a "$REPO_ROOT/zy-engine-mvp/db/." "$STAGING/db/"
+cp -a "$REPO_ROOT/medkernel-mvp/db/." "$STAGING/db/"
 mkdir -p "$STAGING/scripts"
 cp -a "$SCRIPT_DIR/." "$STAGING/scripts/"
 mkdir -p "$STAGING/systemd" "$STAGING/nginx" "$STAGING/profiles"
@@ -83,13 +83,13 @@ fi
 log_step "5. 生成 manifest.json"
 cat > "$STAGING/manifest.json" <<JSON
 {
-  "name": "zy-engine",
+  "name": "medkernel",
   "version": "$VERSION",
   "git_hash": "$GIT_HASH",
   "build_time": "$BUILD_TIME",
   "build_host": "$(hostname)",
   "components": {
-    "backend":  {"jar": "lib/zy-engine.jar", "sha256": "$JAR_SHA"},
+    "backend":  {"jar": "lib/medkernel.jar", "sha256": "$JAR_SHA"},
     "frontend": {"dist": "frontend/dist/",   "sha256": "$FE_SHA"}
   },
   "supported_os": [

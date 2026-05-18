@@ -47,7 +47,7 @@
 
 ```powershell
 param(
-  [string]$BaseUrl = "http://localhost:18080/zy-engine/api",
+  [string]$BaseUrl = "http://localhost:18080/medkernel/api",
   [string]$DbType = "LOCAL_H2_FILE"  # LOCAL_H2_FILE | ORACLE | DM | POSTGRES
 )
 ```
@@ -115,12 +115,12 @@ param(
 
 ```powershell
 # 开发库验证
-.\zy-engine-mvp\scripts\run-config-package-smoke.ps1 -DbType LOCAL_H2_FILE
+.\medkernel-mvp\scripts\run-config-package-smoke.ps1 -DbType LOCAL_H2_FILE
 
 # 生产库验证 (有环境时)
-.\zy-engine-mvp\scripts\run-config-package-smoke.ps1 -DbType ORACLE
-.\zy-engine-mvp\scripts\run-config-package-smoke.ps1 -DbType DM
-.\zy-engine-mvp\scripts\run-config-package-smoke.ps1 -DbType POSTGRES
+.\medkernel-mvp\scripts\run-config-package-smoke.ps1 -DbType ORACLE
+.\medkernel-mvp\scripts\run-config-package-smoke.ps1 -DbType DM
+.\medkernel-mvp\scripts\run-config-package-smoke.ps1 -DbType POSTGRES
 ```
 
 ## 7. 风险和注意事项

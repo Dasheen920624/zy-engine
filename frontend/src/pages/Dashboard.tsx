@@ -48,7 +48,7 @@ export default function Dashboard() {
           <Card>
             <Statistic
               title="目标后端"
-              valueRender={() => <Tag color="blue">/zy-engine/api</Tag>}
+              valueRender={() => <Tag color="blue">/medkernel/api</Tag>}
             />
           </Card>
         </Col>

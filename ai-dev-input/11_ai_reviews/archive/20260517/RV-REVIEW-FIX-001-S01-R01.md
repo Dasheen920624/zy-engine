@@ -27,18 +27,18 @@ feature_acceptance_id:
 
 ```text
 Reviewed files:
-  zy-engine-mvp/src/main/java/com/zyengine/common/OrgDefaults.java (新建)
-  zy-engine-mvp/src/main/java/com/zyengine/common/GlobalExceptionHandler.java (重写)
-  zy-engine-mvp/src/main/java/com/zyengine/persistence/EnginePersistenceService.java (改 SQL 参数化 + 新增 load/重建方法 + toJsonOrNull + 多 DDL 加载)
-  zy-engine-mvp/src/main/java/com/zyengine/config/ConfigPackageController.java (接入 OrganizationContextService)
-  zy-engine-mvp/src/main/java/com/zyengine/config/ConfigPackageService.java (修复 findPackage DB-only 回归)
-  zy-engine-mvp/src/main/java/com/zyengine/config/ConfigPackageRepository.java (修复 properties.getConnection 编译错误)
-  zy-engine-mvp/src/main/java/com/zyengine/rule/RuleEvalResultRepository.java (重写：手写 JDBC + upsert + Ids.next)
-  zy-engine-mvp/src/main/java/com/zyengine/rule/RuleService.java (注入 Repository + recordEvaluation 持久化分支)
-  zy-engine-mvp/src/main/java/com/zyengine/pathway/PathwayService.java (启动重建 + publish/rollback 传组织上下文)
-  zy-engine-mvp/db/oracle|dm|postgres/re_rule_eval_result_ddl.sql (PG 改 SMALLINT/TEXT)
-  zy-engine-mvp/src/main/resources/db/local/re_rule_eval_result_ddl.sql (H2 改 SMALLINT)
-  zy-engine-mvp/docs/02_任务台账.md (新增 REVIEW-FIX-001 条目)
+  medkernel-mvp/src/main/java/com/medkernel/common/OrgDefaults.java (新建)
+  medkernel-mvp/src/main/java/com/medkernel/common/GlobalExceptionHandler.java (重写)
+  medkernel-mvp/src/main/java/com/medkernel/persistence/EnginePersistenceService.java (改 SQL 参数化 + 新增 load/重建方法 + toJsonOrNull + 多 DDL 加载)
+  medkernel-mvp/src/main/java/com/medkernel/config/ConfigPackageController.java (接入 OrganizationContextService)
+  medkernel-mvp/src/main/java/com/medkernel/config/ConfigPackageService.java (修复 findPackage DB-only 回归)
+  medkernel-mvp/src/main/java/com/medkernel/config/ConfigPackageRepository.java (修复 properties.getConnection 编译错误)
+  medkernel-mvp/src/main/java/com/medkernel/rule/RuleEvalResultRepository.java (重写：手写 JDBC + upsert + Ids.next)
+  medkernel-mvp/src/main/java/com/medkernel/rule/RuleService.java (注入 Repository + recordEvaluation 持久化分支)
+  medkernel-mvp/src/main/java/com/medkernel/pathway/PathwayService.java (启动重建 + publish/rollback 传组织上下文)
+  medkernel-mvp/db/oracle|dm|postgres/re_rule_eval_result_ddl.sql (PG 改 SMALLINT/TEXT)
+  medkernel-mvp/src/main/resources/db/local/re_rule_eval_result_ddl.sql (H2 改 SMALLINT)
+  medkernel-mvp/docs/02_任务台账.md (新增 REVIEW-FIX-001 条目)
   ai-dev-input/10_task_claims/active/REVIEW-FIX-001-S01.md (新建)
   ai-dev-input/12_autonomous_runs/active/RUN-REVIEW-FIX-20260517.md (新建)
 
@@ -73,7 +73,7 @@ feature_acceptance_created: false (修复类任务，不创建新功能验收)
 
 ```text
 run-tests: PASSED (48/48, surefire 报告显示全绿)
-build: PASSED (target/zy-engine-mvp-0.1.0-SNAPSHOT.jar 已生成)
+build: PASSED (target/medkernel-mvp-0.1.0-SNAPSHOT.jar 已生成)
 git diff --check: PASSED (无空白错误)
 local h2 smoke: PASSED (启动期 PathwayService.rebuildFromPersistence 已通过 @PostConstruct 触发 + EnginePersistenceService loadLocalSchemaResource 多 DDL 加载验证)
 oracle ddl: N/A

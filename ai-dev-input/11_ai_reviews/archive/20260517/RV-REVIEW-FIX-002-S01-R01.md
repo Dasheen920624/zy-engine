@@ -105,7 +105,7 @@ problem: 在本批次完成的 19 项中无遗留 finding；测试 95/95 通过
 finding_id: F-NEXT-PROV-002F
 severity: P0 (out-of-scope, 已转 task)
 status: TRACKED
-file: provenance/SourceCitation*.java + db/**/zyengine_core_ddl_with_comments.sql
+file: provenance/SourceCitation*.java + db/**/medkernel_core_ddl_with_comments.sql
 title: SRC_CITATION DDL 字段与 Service 字段错位 + 内存态孤儿化
 required_fix: 见任务台账 PROV-002F
 reviewer_verdict: TASK_CREATED

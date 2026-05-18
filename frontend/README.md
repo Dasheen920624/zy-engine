@@ -39,7 +39,7 @@ npm install
 复制 `.env.example` 为 `.env.local`，按需修改：
 
 ```text
-VITE_API_BASE_URL=          # 留空时走 vite proxy（/zy-engine → http://localhost:18080）
+VITE_API_BASE_URL=          # 留空时走 vite proxy（/medkernel → http://localhost:18080）
 VITE_ENABLE_MSW=false       # true 启用浏览器 mock，离开后端也可运行
 ```
 
@@ -53,9 +53,9 @@ npm run dev
 启动前确认后端已运行：
 
 ```powershell
-cd ../zy-engine-mvp
+cd ../medkernel-mvp
 ./scripts/start-memory.cmd
-# 健康检查 http://localhost:18080/zy-engine/api/health
+# 健康检查 http://localhost:18080/medkernel/api/health
 ```
 
 ### 4. 构建产物
@@ -167,12 +167,12 @@ setOrg({ ...org, hospital_code: "HOSPITAL_BETA" });
 
 开发期：
 
-- vite proxy：`/zy-engine` → `http://localhost:18080`，无 CORS 困扰。
-- `VITE_API_BASE_URL` 默认为 `/zy-engine/api`，与后端 servlet path 对齐。
+- vite proxy：`/medkernel` → `http://localhost:18080`，无 CORS 困扰。
+- `VITE_API_BASE_URL` 默认为 `/medkernel/api`，与后端 servlet path 对齐。
 
 内网部署：
 
-- 通过 nginx 把 `dist/` 静态资源与 `/zy-engine/api` 反代到同源。
+- 通过 nginx 把 `dist/` 静态资源与 `/medkernel/api` 反代到同源。
 
 ## 9 角色诉求自检（FE-002 范围内）
 

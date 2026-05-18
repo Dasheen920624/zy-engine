@@ -23,41 +23,41 @@ done
 
 log_step "1. 备份当前版本"
 TS="$(date +%Y%m%d_%H%M%S)"
-BACKUP_PATH="$ZY_BACKUP_DIR/$TS"
+BACKUP_PATH="$MK_BACKUP_DIR/$TS"
 mkdir -p "$BACKUP_PATH"
 for d in lib frontend conf systemd nginx; do
-  if [ -d "$ZY_HOME/$d" ]; then
-    cp -a "$ZY_HOME/$d" "$BACKUP_PATH/"
+  if [ -d "$MK_HOME/$d" ]; then
+    cp -a "$MK_HOME/$d" "$BACKUP_PATH/"
     log_ok "备份 $d → $BACKUP_PATH/"
   fi
 done
-[ -f "$ZY_HOME/manifest.json" ] && cp "$ZY_HOME/manifest.json" "$BACKUP_PATH/"
+[ -f "$MK_HOME/manifest.json" ] && cp "$MK_HOME/manifest.json" "$BACKUP_PATH/"
 log_ok "备份完成：$BACKUP_PATH"
-echo "$BACKUP_PATH" > "$ZY_HOME/.last-backup"
+echo "$BACKUP_PATH" > "$MK_HOME/.last-backup"
 
 [ "$BACKUP_ONLY" -eq 1 ] && { log_ok "仅备份，已完成。"; exit 0; }
 
 [ -n "$TO_VER" ] || die "请指定 --to <version>，例：--to v1.3.0"
 
 log_step "2. 停止服务"
-systemctl stop zy-engine || true
+systemctl stop medkernel || true
 
 log_step "3. 解压新版发布包"
-NEW_PKG="/tmp/zy-engine-${TO_VER}.tar.gz"
+NEW_PKG="/tmp/medkernel-${TO_VER}.tar.gz"
 [ -f "$NEW_PKG" ] || die "未找到 $NEW_PKG；请先把发布包传到 /tmp/"
 TMPDIR_NEW="$(mktemp -d)"
 tar -xzvf "$NEW_PKG" -C "$TMPDIR_NEW" --strip-components=1 >/dev/null
 log_ok "解压到临时目录：$TMPDIR_NEW"
 
-log_step "4. 覆盖到 $ZY_HOME（保留 conf）"
+log_step "4. 覆盖到 $MK_HOME（保留 conf）"
 # conf 不覆盖，避免覆盖客户填的凭据
 for d in lib frontend db scripts systemd nginx docs profiles manifest.json CHANGELOG.md; do
   if [ -e "$TMPDIR_NEW/$d" ]; then
-    rm -rf "$ZY_HOME/${d:?}"
-    cp -a "$TMPDIR_NEW/$d" "$ZY_HOME/"
+    rm -rf "$MK_HOME/${d:?}"
+    cp -a "$TMPDIR_NEW/$d" "$MK_HOME/"
   fi
 done
-chown -R "$ZY_USER:$ZY_USER" "$ZY_HOME"
+chown -R "$ZY_USER:$ZY_USER" "$MK_HOME"
 chmod 600 "$ZY_ENV_FILE" 2>/dev/null || true
 log_ok "新版本已就位"
 
@@ -70,9 +70,9 @@ fi
 
 log_step "6. 重启 systemd"
 systemctl daemon-reload
-systemctl start zy-engine
+systemctl start medkernel
 sleep 3
-systemctl is-active --quiet zy-engine || die "启动失败，请查看：journalctl -u zy-engine -n 100"
+systemctl is-active --quiet medkernel || die "启动失败，请查看：journalctl -u medkernel -n 100"
 
 log_step "7. 健康检查"
 if "$SCRIPT_DIR/healthcheck.sh"; then

@@ -20,36 +20,36 @@ done
 [ "$EUID" -eq 0 ] || die "需要 root 权限（sudo）"
 
 if [ "$TO" = "last" ]; then
-  [ -r "$ZY_HOME/.last-backup" ] || die "未找到 .last-backup，请显式指定 --to <timestamp>"
-  BACKUP_PATH="$(cat "$ZY_HOME/.last-backup")"
+  [ -r "$MK_HOME/.last-backup" ] || die "未找到 .last-backup，请显式指定 --to <timestamp>"
+  BACKUP_PATH="$(cat "$MK_HOME/.last-backup")"
 else
-  BACKUP_PATH="$ZY_BACKUP_DIR/$TO"
+  BACKUP_PATH="$MK_BACKUP_DIR/$TO"
 fi
 
 [ -d "$BACKUP_PATH" ] || die "备份目录不存在：$BACKUP_PATH"
 
 log_step "1. 停止服务"
-systemctl stop zy-engine || true
+systemctl stop medkernel || true
 
 log_step "2. 还原备份 ← $BACKUP_PATH"
 for d in lib frontend conf systemd nginx; do
   if [ -d "$BACKUP_PATH/$d" ]; then
-    rm -rf "$ZY_HOME/${d:?}"
-    cp -a "$BACKUP_PATH/$d" "$ZY_HOME/"
+    rm -rf "$MK_HOME/${d:?}"
+    cp -a "$BACKUP_PATH/$d" "$MK_HOME/"
     log_ok "还原 $d"
   fi
 done
-[ -f "$BACKUP_PATH/manifest.json" ] && cp "$BACKUP_PATH/manifest.json" "$ZY_HOME/"
+[ -f "$BACKUP_PATH/manifest.json" ] && cp "$BACKUP_PATH/manifest.json" "$MK_HOME/"
 
-chown -R "$ZY_USER:$ZY_USER" "$ZY_HOME"
+chown -R "$ZY_USER:$ZY_USER" "$MK_HOME"
 chmod 600 "$ZY_ENV_FILE" 2>/dev/null || true
 
 log_step "3. 重启服务"
 systemctl daemon-reload
-systemctl start zy-engine
+systemctl start medkernel
 sleep 3
-systemctl is-active --quiet zy-engine || die "启动失败，请查看：journalctl -u zy-engine -n 100"
+systemctl is-active --quiet medkernel || die "启动失败，请查看：journalctl -u medkernel -n 100"
 
 log_step "4. 健康检查"
 "$SCRIPT_DIR/healthcheck.sh"
-log_ok "回滚完成 → $(cat "$ZY_HOME/manifest.json" 2>/dev/null | grep -oE '"version":[[:space:]]*"[^"]+"' || echo unknown)"
+log_ok "回滚完成 → $(cat "$MK_HOME/manifest.json" 2>/dev/null | grep -oE '"version":[[:space:]]*"[^"]+"' || echo unknown)"

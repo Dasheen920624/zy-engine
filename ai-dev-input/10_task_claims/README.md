@@ -27,7 +27,7 @@ archive/  已完成、放弃或接管完成的任务记录。
 git pull --ff-only origin main
 git status -sb
 rg -n "claim_id:|task_id:|write_scope:" ai-dev-input/10_task_claims
-.\zy-engine-mvp\scripts\check-ai-collaboration.ps1
+.\medkernel-mvp\scripts\check-ai-collaboration.ps1
 ```
 
 没有成功提交并推送 `active/<claim_id>.md` 前，不允许修改业务代码。claim 中必须记录 `git_base_commit`、`git_status_at_claim`、写入范围、review 需求、功能验收需求和预计心跳间隔。

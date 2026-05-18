@@ -26,9 +26,9 @@ quality_gate: APPROVED
 
 ```text
 README.md
-zy-engine-mvp/docs/产品化方案与AI开发编排.md
-zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
-zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md
+medkernel-mvp/docs/产品化方案与AI开发编排.md
+medkernel-mvp/docs/全功能蓝图与并行开发计划.md
+medkernel-mvp/docs/AI医疗知识工厂与字典映射方案.md
 ai-dev-input/10_task_claims/active/DOC-RULE-COMPAT-001-S01.md
 ai-dev-input/10_task_claims/archive/20260517/DOC-RULE-COMPAT-001-S01.md
 ai-dev-input/11_ai_reviews/archive/20260517/RV-DOC-RULE-COMPAT-001-S01-R01.md
@@ -38,10 +38,10 @@ ai-dev-input/11_ai_reviews/archive/20260517/RV-DOC-RULE-COMPAT-001-S01-R01.md
 
 ```text
 README.md
-zy-engine-mvp/docs/产品化方案与AI开发编排.md
-zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
-zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md
-zy-engine-mvp/docs/前端配置平台规划与开发验证.md
+medkernel-mvp/docs/产品化方案与AI开发编排.md
+medkernel-mvp/docs/全功能蓝图与并行开发计划.md
+medkernel-mvp/docs/AI医疗知识工厂与字典映射方案.md
+medkernel-mvp/docs/前端配置平台规划与开发验证.md
 ```
 
 ## Forbidden Scope
@@ -69,8 +69,8 @@ DONE: Linked this boundary from product principles, rule engine module, roadmap,
 ## Verification
 
 ```text
-PASS: rg -n "RULE-CORE-001|无 Neo4j、无 Dify、无大模型|规则引擎.*Dify|核心判定|可降级 Provider|实时 Dify|实时 AI|DB-only 兼容" README.md zy-engine-mvp/docs/产品化方案与AI开发编排.md zy-engine-mvp/docs/全功能蓝图与并行开发计划.md zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md
-PASS: git diff --check -- README.md zy-engine-mvp/docs/产品化方案与AI开发编排.md zy-engine-mvp/docs/全功能蓝图与并行开发计划.md zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md ai-dev-input/10_task_claims/archive/20260517/DOC-RULE-COMPAT-001-S01.md ai-dev-input/11_ai_reviews/archive/20260517/RV-DOC-RULE-COMPAT-001-S01-R01.md
+PASS: rg -n "RULE-CORE-001|无 Neo4j、无 Dify、无大模型|规则引擎.*Dify|核心判定|可降级 Provider|实时 Dify|实时 AI|DB-only 兼容" README.md medkernel-mvp/docs/产品化方案与AI开发编排.md medkernel-mvp/docs/全功能蓝图与并行开发计划.md medkernel-mvp/docs/AI医疗知识工厂与字典映射方案.md
+PASS: git diff --check -- README.md medkernel-mvp/docs/产品化方案与AI开发编排.md medkernel-mvp/docs/全功能蓝图与并行开发计划.md medkernel-mvp/docs/AI医疗知识工厂与字典映射方案.md ai-dev-input/10_task_claims/archive/20260517/DOC-RULE-COMPAT-001-S01.md ai-dev-input/11_ai_reviews/archive/20260517/RV-DOC-RULE-COMPAT-001-S01-R01.md
 N/A: run-tests/build, documentation-only change.
 ```
 

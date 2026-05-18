@@ -22,9 +22,9 @@ oracle_smoke_status: N/A
 ```text
 Reviewed files:
 - README.md
-- zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md
-- zy-engine-mvp/docs/产品化方案与AI开发编排.md
-- zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
+- medkernel-mvp/docs/AI医疗知识工厂与字典映射方案.md
+- medkernel-mvp/docs/产品化方案与AI开发编排.md
+- medkernel-mvp/docs/全功能蓝图与并行开发计划.md
 - ai-dev-input/10_task_claims/archive/20260516/DOC-AI-KNOW-001-S01.md
 
 Out of scope:

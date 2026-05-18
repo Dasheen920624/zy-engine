@@ -1,4 +1,4 @@
-// 后端统一返回信封。与 zy-engine-mvp 的 ApiResult 对齐。
+// 后端统一返回信封。与 medkernel-mvp 的 ApiResult 对齐。
 export interface ApiResult<T = unknown> {
   success: boolean;
   code: string;

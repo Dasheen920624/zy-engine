@@ -2,11 +2,11 @@
 
 请基于以下资料实现指定后端任务。开始前按最小阅读策略执行：
 
-- 必读：`zy-engine-mvp/docs/00_总入口与AI接手导航.md`
-- 只读任务行：`zy-engine-mvp/docs/02_任务台账.md`
-- 后端任务补读：`zy-engine-mvp/docs/06_后端开发规范.md`
-- 涉及 DDL / 持久化 / 开发库 / 生产库时再补读：`zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md`
-- 涉及架构 Provider 或跨模块时再补读：`zy-engine-mvp/docs/05_架构总图与服务边界.md`
+- 必读：`medkernel-mvp/docs/00_总入口与AI接手导航.md`
+- 只读任务行：`medkernel-mvp/docs/02_任务台账.md`
+- 后端任务补读：`medkernel-mvp/docs/06_后端开发规范.md`
+- 涉及 DDL / 持久化 / 开发库 / 生产库时再补读：`medkernel-mvp/docs/数据库Provider与离线AI开发约定.md`
+- 涉及架构 Provider 或跨模块时再补读：`medkernel-mvp/docs/05_架构总图与服务边界.md`
 
 ## 模块
 
@@ -18,10 +18,10 @@
 
 ## 输入资料
 
-- 最小入口：`zy-engine-mvp/docs/00_总入口与AI接手导航.md`
-- 任务台账：`zy-engine-mvp/docs/02_任务台账.md`
-- 业务核查（医学/医保/质控任务才读）：`zy-engine-mvp/docs/产品功能业务核查与开工清单.md`
-- 产品总纲（范围不清时才读）：`zy-engine-mvp/docs/产品化方案与AI开发编排.md`
+- 最小入口：`medkernel-mvp/docs/00_总入口与AI接手导航.md`
+- 任务台账：`medkernel-mvp/docs/02_任务台账.md`
+- 业务核查（医学/医保/质控任务才读）：`medkernel-mvp/docs/产品功能业务核查与开工清单.md`
+- 产品总纲（范围不清时才读）：`medkernel-mvp/docs/产品化方案与AI开发编排.md`
 - OpenAPI：`ai-dev-input/02_api_contracts/engines.openapi.yaml`
 - JSON Schema：`ai-dev-input/03_data_models/...`
 - DDL：`ai-dev-input/04_database/oracle/core_ddl.sql`、`ai-dev-input/04_database/dm/core_ddl.sql`、`ai-dev-input/04_database/postgres/core_ddl.sql`、`ai-dev-input/04_database/local/h2_core_ddl.sql`
@@ -66,24 +66,24 @@
 提交前必须执行：
 
 ```powershell
-.\zy-engine-mvp\scripts\check-ai-collaboration.ps1
-.\zy-engine-mvp\scripts\run-tests.ps1
-.\zy-engine-mvp\scripts\build.ps1
+.\medkernel-mvp\scripts\check-ai-collaboration.ps1
+.\medkernel-mvp\scripts\run-tests.ps1
+.\medkernel-mvp\scripts\build.ps1
 git diff --check
 ```
 
 若任务涉及落库，还必须先区分生产库和开发库。无 Oracle/内网环境时执行：
 
 ```powershell
-.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
-.\zy-engine-mvp\scripts\start-local-db.ps1
+.\medkernel-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+.\medkernel-mvp\scripts\start-local-db.ps1
 ```
 
 有 Oracle 生产权威库时执行：
 
 ```powershell
-.\zy-engine-mvp\scripts\run-oracle-ddl.ps1
-.\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
+.\medkernel-mvp\scripts\run-oracle-ddl.ps1
+.\medkernel-mvp\scripts\run-oracle-org-smoke.ps1
 ```
 
 Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 已提交用于说明连接目标；真实 `.env.oracle.local` 仅为本地忽略文件，不允许提交。若无法连接生产库，必须说明已完成的 LOCAL_H2_FILE 开发库验证、未验证原因、影响范围和补验计划。
@@ -93,7 +93,7 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 ## 提交要求
 
 1. 先运行 `git status -sb` 确认工作树。
-2. 运行 `.\zy-engine-mvp\scripts\check-ai-collaboration.ps1` 检查 active claim、pending review 和功能验收队列。
+2. 运行 `.\medkernel-mvp\scripts\check-ai-collaboration.ps1` 检查 active claim、pending review 和功能验收队列。
 3. 确认已创建并推送 `ai-dev-input/10_task_claims/active/<claim_id>.md`，并把开发前 `git status -sb` 写入 claim。
 4. 自主开发时确认已创建或更新 `ai-dev-input/12_autonomous_runs/active/<run_id>.md`。
 5. 完成开发后创建 `ai-dev-input/11_ai_reviews/pending/<review_id>.md`，通过质量评审和整改复评。

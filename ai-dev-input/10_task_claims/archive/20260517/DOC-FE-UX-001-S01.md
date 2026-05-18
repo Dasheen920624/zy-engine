@@ -25,8 +25,8 @@ quality_gate: APPROVED
 ## Write Scope
 
 ```text
-zy-engine-mvp/docs/前端产品交互与视觉规范.md
-zy-engine-mvp/docs/前端配置平台规划与开发验证.md
+medkernel-mvp/docs/前端产品交互与视觉规范.md
+medkernel-mvp/docs/前端配置平台规划与开发验证.md
 ai-dev-input/10_task_claims/active/DOC-FE-UX-001-S01.md
 ai-dev-input/10_task_claims/archive/20260517/DOC-FE-UX-001-S01.md
 ai-dev-input/11_ai_reviews/archive/20260517/RV-DOC-FE-UX-001-S01-R01.md
@@ -36,12 +36,12 @@ ai-dev-input/11_ai_reviews/archive/20260517/RV-DOC-FE-UX-001-S01-R01.md
 
 ```text
 README.md
-zy-engine-mvp/docs/前端配置平台规划与开发验证.md
-zy-engine-mvp/docs/产品化方案与AI开发编排.md
-zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
+medkernel-mvp/docs/前端配置平台规划与开发验证.md
+medkernel-mvp/docs/产品化方案与AI开发编排.md
+medkernel-mvp/docs/全功能蓝图与并行开发计划.md
 origin/main:frontend-prototype/*
 origin/main:frontend/*
-origin/main:zy-engine-mvp/docs/07_前端开发规范.md
+origin/main:medkernel-mvp/docs/07_前端开发规范.md
 ```
 
 ## Forbidden Scope
@@ -74,7 +74,7 @@ DONE: Linked the new spec from existing frontend planning document.
 PASS: rg references for 前端产品交互与视觉规范 / FE-UX / 天蓝 / 高保真原型.
 PASS: git diff --check for touched docs and claim.
 PASS: git diff --check for modified frontend-prototype in temp worktree.
-PASS: git apply --check for C:\tmp\zyengine-fe-prototype-skyblue-white-gitdiff-20260517-092903.patch against origin/main.
+PASS: git apply --check for C:\tmp\medkernel-fe-prototype-skyblue-white-gitdiff-20260517-092903.patch against origin/main.
 N/A: run-tests/build, documentation and prototype patch only.
 ```
 
@@ -118,8 +118,8 @@ submit_allowed: true
 ## Handoff
 
 ```text
-Patch: C:\tmp\zyengine-fe-prototype-skyblue-white-gitdiff-20260517-092903.patch
-Preview: C:\tmp\zyengine-fe-prototype-skyblue-white-preview-20260517-092903
+Patch: C:\tmp\medkernel-fe-prototype-skyblue-white-gitdiff-20260517-092903.patch
+Preview: C:\tmp\medkernel-fe-prototype-skyblue-white-preview-20260517-092903
 Apply after current main safely merges origin/main frontend-prototype/frontend directories.
 ```
 

@@ -4,8 +4,8 @@
 
 ## 验证结果
 
-- [ ] `.\zy-engine-mvp\scripts\verify-encoding.cmd`
-- [ ] `.\zy-engine-mvp\scripts\build.cmd`
+- [ ] `.\medkernel-mvp\scripts\verify-encoding.cmd`
+- [ ] `.\medkernel-mvp\scripts\build.cmd`
 - [ ] 本地健康检查通过
 - [ ] 涉及数据库时已验证 Oracle/达梦兼容影响
 

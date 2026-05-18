@@ -47,9 +47,9 @@ IN_MEMORY_DEMO     未启用数据库，仅内存演示
 生产库结构文件不能缺失，任何表结构变更必须同步维护：
 
 ```text
-zy-engine-mvp/db/oracle/zyengine_core_ddl_with_comments.sql
-zy-engine-mvp/db/dm/zyengine_core_ddl_with_comments.sql
-zy-engine-mvp/db/postgres/zyengine_core_ddl_with_comments.sql
+medkernel-mvp/db/oracle/medkernel_core_ddl_with_comments.sql
+medkernel-mvp/db/dm/medkernel_core_ddl_with_comments.sql
+medkernel-mvp/db/postgres/medkernel_core_ddl_with_comments.sql
 ai-dev-input/04_database/oracle/core_ddl.sql
 ai-dev-input/04_database/dm/core_ddl.sql
 ai-dev-input/04_database/postgres/core_ddl.sql
@@ -58,7 +58,7 @@ ai-dev-input/04_database/postgres/core_ddl.sql
 本地 H2 结构文件也要同步补齐，用于 AI 离线开发：
 
 ```text
-zy-engine-mvp/src/main/resources/db/local/h2_core_ddl.sql
+medkernel-mvp/src/main/resources/db/local/h2_core_ddl.sql
 ai-dev-input/04_database/local/h2_core_ddl.sql
 ```
 
@@ -76,7 +76,7 @@ ai-dev-input/04_database/local/h2_core_ddl.sql
 每个 AI 开始开发前必须先识别数据库环境：
 
 ```powershell
-.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+.\medkernel-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
 ```
 
 识别结果：
@@ -96,13 +96,13 @@ recommended_mode=LOCAL_H2
 启动命令：
 
 ```powershell
-.\zy-engine-mvp\scripts\start-oracle.ps1
+.\medkernel-mvp\scripts\start-oracle.ps1
 ```
 
 或：
 
 ```powershell
-.\zy-engine-mvp\scripts\start-local-db.ps1
+.\medkernel-mvp\scripts\start-local-db.ps1
 ```
 
 ## 5. 本地 H2 开发约定
@@ -110,14 +110,14 @@ recommended_mode=LOCAL_H2
 本地 H2 文件库默认位置：
 
 ```text
-zy-engine-mvp/data/local-db/zyengine-local.mv.db
+medkernel-mvp/data/local-db/medkernel-local.mv.db
 ```
 
 启动后访问：
 
 ```text
-http://localhost:18082/zy-engine/api/health
-http://localhost:18082/zy-engine/api/system/providers
+http://localhost:18082/medkernel/api/health
+http://localhost:18082/medkernel/api/system/providers
 ```
 
 Provider 应显示：
@@ -148,33 +148,33 @@ run_mode=DB_ONLY
 普通 AI 离线开发必须至少执行：
 
 ```powershell
-.\zy-engine-mvp\scripts\run-tests.ps1
-.\zy-engine-mvp\scripts\build.ps1
+.\medkernel-mvp\scripts\run-tests.ps1
+.\medkernel-mvp\scripts\build.ps1
 git diff --check
 ```
 
 涉及持久化或 DDL 的任务，在没有 Oracle 时必须执行：
 
 ```powershell
-.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
-.\zy-engine-mvp\scripts\start-local-db.ps1
+.\medkernel-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+.\medkernel-mvp\scripts\start-local-db.ps1
 ```
 
 另一个终端执行核心 smoke，端口使用 `18082`：
 
 ```powershell
-.\zy-engine-mvp\scripts\run-rule-smoke.ps1 -BaseUrl http://localhost:18082/zy-engine/api
-.\zy-engine-mvp\scripts\run-pathway-smoke.ps1 -BaseUrl http://localhost:18082/zy-engine/api
-.\zy-engine-mvp\scripts\run-config-import-smoke.ps1 -BaseUrl http://localhost:18082/zy-engine/api
-.\zy-engine-mvp\scripts\run-graph-dify-smoke.ps1 -BaseUrl http://localhost:18082/zy-engine/api
-.\zy-engine-mvp\scripts\run-terminology-adapter-smoke.ps1 -BaseUrl http://localhost:18082/zy-engine/api
+.\medkernel-mvp\scripts\run-rule-smoke.ps1 -BaseUrl http://localhost:18082/medkernel/api
+.\medkernel-mvp\scripts\run-pathway-smoke.ps1 -BaseUrl http://localhost:18082/medkernel/api
+.\medkernel-mvp\scripts\run-config-import-smoke.ps1 -BaseUrl http://localhost:18082/medkernel/api
+.\medkernel-mvp\scripts\run-graph-dify-smoke.ps1 -BaseUrl http://localhost:18082/medkernel/api
+.\medkernel-mvp\scripts\run-terminology-adapter-smoke.ps1 -BaseUrl http://localhost:18082/medkernel/api
 ```
 
 有生产库环境的 AI 或最终集成 AI 仍必须执行对应生产库验证。当前 Oracle 生产权威库至少执行：
 
 ```powershell
-.\zy-engine-mvp\scripts\run-oracle-ddl.ps1
-.\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
+.\medkernel-mvp\scripts\run-oracle-ddl.ps1
+.\medkernel-mvp\scripts\run-oracle-org-smoke.ps1
 ```
 
 ## 7. 并行开发规则

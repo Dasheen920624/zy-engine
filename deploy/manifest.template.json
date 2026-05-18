@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package",
-  "name": "zy-engine",
+  "name": "medkernel",
   "version": "0.0.0",
   "git_hash": "0000000",
   "build_time": "0000-00-00T00:00:00+08:00",
@@ -8,7 +8,7 @@
 
   "components": {
     "backend": {
-      "jar": "lib/zy-engine.jar",
+      "jar": "lib/medkernel.jar",
       "sha256": "TO_BE_FILLED_BY_BUILD_SCRIPT",
       "spring_boot_version": "2.7.18",
       "jdk_target": "1.8"
@@ -19,17 +19,17 @@
       "framework": "React 18 + Vite 5 + AntD 5"
     },
     "db_oracle": {
-      "ddl": "db/oracle/zyengine_core_ddl_with_comments.sql",
-      "migration": "db/oracle/zyengine_org_context_migration.sql",
-      "comments": "db/oracle/zyengine_comments_unistr.sql"
+      "ddl": "db/oracle/medkernel_core_ddl_with_comments.sql",
+      "migration": "db/oracle/medkernel_org_context_migration.sql",
+      "comments": "db/oracle/medkernel_comments_unistr.sql"
     },
     "db_dm": {
-      "ddl": "db/dm/zyengine_core_ddl_with_comments.sql",
-      "migration": "db/dm/zyengine_org_context_migration.sql"
+      "ddl": "db/dm/medkernel_core_ddl_with_comments.sql",
+      "migration": "db/dm/medkernel_org_context_migration.sql"
     },
     "db_postgres": {
-      "ddl": "db/postgres/zyengine_core_ddl_with_comments.sql",
-      "migration": "db/postgres/zyengine_org_context_migration.sql"
+      "ddl": "db/postgres/medkernel_core_ddl_with_comments.sql",
+      "migration": "db/postgres/medkernel_org_context_migration.sql"
     }
   },
 

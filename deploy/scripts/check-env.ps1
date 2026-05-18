@@ -1,4 +1,4 @@
-﻿# 部署前环境检查 —— Windows
+# 部署前环境检查 —— Windows
 # 用法：PowerShell -ExecutionPolicy Bypass -File check-env.ps1 [-Profile centos7-x86_64-oracle]
 
 [CmdletBinding()]
@@ -92,7 +92,7 @@ if ($tz -eq "China Standard Time" -or $tz -eq "Asia/Shanghai") {
 
 # ============================================================================
 Write-Host "`n==> 目录与磁盘" -ForegroundColor Cyan
-$zyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "D:\zoesoft\zy-engine" }
+$zyHome = if ($env:MK_HOME) { $env:MK_HOME } else { "D:\zoesoft\medkernel" }
 if (Test-Path $zyHome) {
     $drive = (Split-Path -Qualifier $zyHome).TrimEnd(':')
     $free = (Get-PSDrive $drive).Free
@@ -105,7 +105,7 @@ if (Test-Path $zyHome) {
 
 # ============================================================================
 Write-Host "`n==> 端口" -ForegroundColor Cyan
-$portBackend = if ($env:ZYENGINE_HTTP_PORT) { [int]$env:ZYENGINE_HTTP_PORT } else { 18080 }
+$portBackend = if ($env:MEDKERNEL_HTTP_PORT) { [int]$env:MEDKERNEL_HTTP_PORT } else { 18080 }
 if (Test-PortInUse $portBackend) {
     Record "FAIL" "后端端口 $portBackend 已被占用"
 } else {
@@ -124,7 +124,7 @@ try {
 
 # ============================================================================
 Write-Host "`n==> 数据库" -ForegroundColor Cyan
-$dialect = $env:ZYENGINE_DB_DIALECT
+$dialect = $env:MEDKERNEL_DB_DIALECT
 switch ($dialect) {
     "oracle" {
         if (Get-Command sqlplus -ErrorAction SilentlyContinue) {
@@ -137,7 +137,7 @@ switch ($dialect) {
             Record "OK" "psql 可用（连通性请手动验证）"
         } else { Record "SKIP" "psql 未安装" }
     }
-    $null { Record "WARN" "未设置 ZYENGINE_DB_DIALECT" }
+    $null { Record "WARN" "未设置 MEDKERNEL_DB_DIALECT" }
     default { Record "WARN" "未知 dialect: $dialect" }
 }
 

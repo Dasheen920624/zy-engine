@@ -1,5 +1,5 @@
-﻿# 健康检查 —— Windows
-# 用法：PowerShell -ExecutionPolicy Bypass -File healthcheck.ps1 [-Url http://localhost:18080/zy-engine]
+# 健康检查 —— Windows
+# 用法：PowerShell -ExecutionPolicy Bypass -File healthcheck.ps1 [-Url http://localhost:18080/medkernel]
 
 [CmdletBinding()]
 param(
@@ -10,8 +10,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 if (-not $Url) {
-    $port = if ($env:ZYENGINE_HTTP_PORT) { $env:ZYENGINE_HTTP_PORT } else { "18080" }
-    $Url = "http://localhost:$port/zy-engine"
+    $port = if ($env:MEDKERNEL_HTTP_PORT) { $env:MEDKERNEL_HTTP_PORT } else { "18080" }
+    $Url = "http://localhost:$port/medkernel"
 }
 
 Write-Host "==> Healthcheck: $Url" -ForegroundColor Cyan

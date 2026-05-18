@@ -27,10 +27,10 @@ deploy/
 │   └── lib/
 │       └── common.sh           # 公共函数（日志 / 探测 / 报错）
 ├── systemd/
-│   └── zy-engine.service       # Linux systemd 单元
+│   └── medkernel.service       # Linux systemd 单元
 ├── nginx/
-│   ├── zy-engine.conf          # HTTP 反代
-│   └── zy-engine-tls.conf      # HTTPS（自签证书）
+│   ├── medkernel.conf          # HTTP 反代
+│   └── medkernel-tls.conf      # HTTPS（自签证书）
 ├── profiles/                   # 不同部署目标 env 模板
 │   ├── centos7-x86_64-oracle.env
 │   ├── uos-aarch64-dm.env
@@ -50,7 +50,7 @@ deploy/
   --include-frontend \
   --output ./dist
 
-# 产物：dist/zy-engine-v1.2.3-a1b2c3d.tar.gz
+# 产物：dist/medkernel-v1.2.3-a1b2c3d.tar.gz
 ```
 
 ```powershell
@@ -66,21 +66,21 @@ deploy/
 
 ```bash
 # 1) 上传发布包
-scp zy-engine-v1.2.3-a1b2c3d.tar.gz deploy-host:/tmp/
+scp medkernel-v1.2.3-a1b2c3d.tar.gz deploy-host:/tmp/
 
 # 2) sha256 校验
 ssh deploy-host
 cd /tmp
-sha256sum -c zy-engine-v1.2.3-a1b2c3d.tar.gz.sha256
+sha256sum -c medkernel-v1.2.3-a1b2c3d.tar.gz.sha256
 
 # 3) 解压
-sudo mkdir -p /zoesoft/zy-engine
-sudo tar -xzvf zy-engine-v1.2.3-a1b2c3d.tar.gz -C /zoesoft/zy-engine --strip-components=1
+sudo mkdir -p /zoesoft/medkernel
+sudo tar -xzvf medkernel-v1.2.3-a1b2c3d.tar.gz -C /zoesoft/medkernel --strip-components=1
 
 # 4) 选 profile
-cd /zoesoft/zy-engine
-sudo cp profiles/kylin-aarch64-dm.env conf/zyengine.env
-sudo $EDITOR conf/zyengine.env        # 填入 DB 凭据等
+cd /zoesoft/medkernel
+sudo cp profiles/kylin-aarch64-dm.env conf/medkernel.env
+sudo $EDITOR conf/medkernel.env        # 填入 DB 凭据等
 
 # 5) 环境检查
 sudo ./scripts/check-env.sh
@@ -95,7 +95,7 @@ sudo ./scripts/install-offline.sh --init-db
 ## 4. 升级
 
 ```bash
-sudo systemctl stop zy-engine     # 升级脚本会自动 stop，这里只是显式
+sudo systemctl stop medkernel     # 升级脚本会自动 stop，这里只是显式
 sudo ./scripts/upgrade.sh --to v1.3.0
 ./scripts/healthcheck.sh
 ```
@@ -121,8 +121,8 @@ sudo ./scripts/rollback.sh --to v1.2.3
 
 ## 7. 安全约束
 
-- 所有脚本必须用普通用户（zyengine）运行，sudo 仅用于初始化（创建目录 / 注册 systemd / firewall）。
-- `conf/zyengine.env` 权限 600，含密码字段。
+- 所有脚本必须用普通用户（medkernel）运行，sudo 仅用于初始化（创建目录 / 注册 systemd / firewall）。
+- `conf/medkernel.env` 权限 600，含密码字段。
 - `*.sh` 必须 `set -euo pipefail`，失败立即停止。
 - 不允许 `curl ... | sh` 从公网拉脚本。
 

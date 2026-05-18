@@ -25,9 +25,9 @@ quality_gate: APPROVED
 ## Write Scope
 
 ```text
-zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md
-zy-engine-mvp/docs/产品化方案与AI开发编排.md
-zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
+medkernel-mvp/docs/AI医疗知识工厂与字典映射方案.md
+medkernel-mvp/docs/产品化方案与AI开发编排.md
+medkernel-mvp/docs/全功能蓝图与并行开发计划.md
 README.md
 ai-dev-input/10_task_claims/active/DOC-AI-KNOW-001-S01.md
 ai-dev-input/10_task_claims/archive/20260516/DOC-AI-KNOW-001-S01.md
@@ -38,10 +38,10 @@ ai-dev-input/11_ai_reviews/archive/20260516/RV-DOC-AI-KNOW-001-S01-R01.md
 
 ```text
 README.md
-zy-engine-mvp/README.md
-zy-engine-mvp/docs/产品化方案与AI开发编排.md
-zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
-zy-engine-mvp/docs/前端配置平台规划与开发验证.md
+medkernel-mvp/README.md
+medkernel-mvp/docs/产品化方案与AI开发编排.md
+medkernel-mvp/docs/全功能蓝图与并行开发计划.md
+medkernel-mvp/docs/前端配置平台规划与开发验证.md
 ai-dev-input/10_task_claims/task_claim_template.md
 ai-dev-input/11_ai_reviews/review_template.md
 ```
@@ -73,8 +73,8 @@ DONE: Linked the new design from core product entry documents.
 ## Verification
 
 ```text
-PASS: rg -n "AI医疗知识工厂与字典映射方案|AI 医疗知识工厂|TERM-AI|PKG-AI|FE-AI|AIK-001" README.md zy-engine-mvp/docs
-PASS: git diff --check -- README.md zy-engine-mvp/docs/产品化方案与AI开发编排.md zy-engine-mvp/docs/全功能蓝图与并行开发计划.md zy-engine-mvp/docs/AI医疗知识工厂与字典映射方案.md ai-dev-input/10_task_claims/archive/20260516/DOC-AI-KNOW-001-S01.md ai-dev-input/11_ai_reviews/archive/20260516/RV-DOC-AI-KNOW-001-S01-R01.md
+PASS: rg -n "AI医疗知识工厂与字典映射方案|AI 医疗知识工厂|TERM-AI|PKG-AI|FE-AI|AIK-001" README.md medkernel-mvp/docs
+PASS: git diff --check -- README.md medkernel-mvp/docs/产品化方案与AI开发编排.md medkernel-mvp/docs/全功能蓝图与并行开发计划.md medkernel-mvp/docs/AI医疗知识工厂与字典映射方案.md ai-dev-input/10_task_claims/archive/20260516/DOC-AI-KNOW-001-S01.md ai-dev-input/11_ai_reviews/archive/20260516/RV-DOC-AI-KNOW-001-S01-R01.md
 N/A: run-tests/build, documentation-only change.
 ```
 

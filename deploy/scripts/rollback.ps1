@@ -1,4 +1,4 @@
-﻿# 回滚 —— Windows
+# 回滚 —— Windows
 # 用法：管理员 PowerShell：
 #   .\rollback.ps1 -To last
 #   .\rollback.ps1 -To 20260517_083000
@@ -10,8 +10,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ZyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "D:\zoesoft\zy-engine" }
-$BackupRoot = if ($env:ZY_BACKUP_DIR) { $env:ZY_BACKUP_DIR } else { "D:\zoesoft\zy-engine.bak" }
+$MkHome = if ($env:MK_HOME) { $env:MK_HOME } else { "D:\zoesoft\medkernel" }
+$BackupRoot = if ($env:MK_BACKUP_DIR) { $env:MK_BACKUP_DIR } else { "D:\zoesoft\medkernel.bak" }
 
 # 必须 admin
 $winId = [System.Security.Principal.WindowsIdentity]::GetCurrent()
@@ -21,7 +21,7 @@ if (-not $winPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::
 }
 
 if ($To -eq "last") {
-    $lastFile = "$ZyHome\.last-backup"
+    $lastFile = "$MkHome\.last-backup"
     if (-not (Test-Path $lastFile)) { throw "未找到 .last-backup；请显式 -To <timestamp>" }
     $backup = (Get-Content $lastFile).Trim()
 } else {
@@ -30,22 +30,22 @@ if ($To -eq "last") {
 if (-not (Test-Path $backup)) { throw "备份目录不存在：$backup" }
 
 Write-Host "==> 1. 停止服务" -ForegroundColor Cyan
-Stop-Service "ZyEngine" -Force -ErrorAction SilentlyContinue
+Stop-Service "MedKernel" -Force -ErrorAction SilentlyContinue
 
 Write-Host "`n==> 2. 还原备份 <- $backup" -ForegroundColor Cyan
 foreach ($d in @("lib", "frontend", "conf", "systemd", "nginx")) {
     if (Test-Path "$backup\$d") {
-        Remove-Item "$ZyHome\$d" -Recurse -Force -ErrorAction SilentlyContinue
-        Copy-Item "$backup\$d" "$ZyHome\" -Recurse -Force
+        Remove-Item "$MkHome\$d" -Recurse -Force -ErrorAction SilentlyContinue
+        Copy-Item "$backup\$d" "$MkHome\" -Recurse -Force
         Write-Host "[OK]   还原 $d" -ForegroundColor Green
     }
 }
 if (Test-Path "$backup\manifest.json") {
-    Copy-Item "$backup\manifest.json" "$ZyHome\" -Force
+    Copy-Item "$backup\manifest.json" "$MkHome\" -Force
 }
 
 Write-Host "`n==> 3. 启动服务" -ForegroundColor Cyan
-Start-Service "ZyEngine"
+Start-Service "MedKernel"
 Start-Sleep -Seconds 5
 
 Write-Host "`n==> 4. 健康检查" -ForegroundColor Cyan

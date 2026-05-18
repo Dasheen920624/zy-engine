@@ -48,12 +48,12 @@
 ```
 1. git pull --ff-only origin main
 2. git status -sb 确认工作树干净
-3. .\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+3. .\medkernel-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
 4. 从 docs/engineering/02_任务台账.md "下一批可领" 段选任务
 5. 在 10_task_claims/active/<claim_id>.md 创建并推送任务认领
 6. 开发：同步修改后端代码、测试、样例、API 示例、文档
-7. 跑测试：.\zy-engine-mvp\scripts\run-tests.ps1
-            .\zy-engine-mvp\scripts\build.ps1
+7. 跑测试：.\medkernel-mvp\scripts\run-tests.ps1
+            .\medkernel-mvp\scripts\build.ps1
             git diff --check
 8. 在 11_ai_reviews/pending/<review_id>.md 创建评审记录
 9. APPROVED 且 open_findings=0 后才能正式提交

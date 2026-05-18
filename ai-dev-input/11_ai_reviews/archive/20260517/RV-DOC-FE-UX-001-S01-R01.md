@@ -21,13 +21,13 @@ oracle_smoke_status: N/A
 
 ```text
 Reviewed files:
-- zy-engine-mvp/docs/前端产品交互与视觉规范.md
-- zy-engine-mvp/docs/前端配置平台规划与开发验证.md
+- medkernel-mvp/docs/前端产品交互与视觉规范.md
+- medkernel-mvp/docs/前端配置平台规划与开发验证.md
 - ai-dev-input/10_task_claims/archive/20260517/DOC-FE-UX-001-S01.md
 
 Reviewed generated artifacts:
-- C:\tmp\zyengine-fe-prototype-skyblue-white-gitdiff-20260517-092903.patch
-- C:\tmp\zyengine-fe-prototype-skyblue-white-preview-20260517-092903
+- C:\tmp\medkernel-fe-prototype-skyblue-white-gitdiff-20260517-092903.patch
+- C:\tmp\medkernel-fe-prototype-skyblue-white-preview-20260517-092903
 
 Out of scope:
 - Applying frontend-prototype/ to current dirty worktree.

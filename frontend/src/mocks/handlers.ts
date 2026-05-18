@@ -19,7 +19,7 @@ function wrap<T>(data: T, traceId = "fe-mock-trace"): ApiResult<T> {
   };
 }
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "/zy-engine/api";
+const baseURL = import.meta.env.VITE_API_BASE_URL || "/medkernel/api";
 
 // ─── Mock 场景数据 (FE-003) ───────────────────────────────────────────
 
@@ -701,7 +701,7 @@ export const handlers = [
         ...summary,
         ...mockPackageDetails[`${code}@${version}`],
         exported_time: new Date().toISOString(),
-        export_format: "ZYENGINE_CONFIG_PACKAGE_V1",
+        export_format: "MEDKERNEL_CONFIG_PACKAGE_V1",
         trace_id: `mock-export-${Date.now()}`,
       }),
     );

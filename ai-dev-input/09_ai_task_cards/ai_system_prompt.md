@@ -5,7 +5,7 @@
 开始任何开发前，必须先阅读 **唯一总入口**：
 
 ```text
-zy-engine-mvp/docs/00_总入口与AI接手导航.md
+medkernel-mvp/docs/00_总入口与AI接手导航.md
 ```
 
 最小阅读策略：
@@ -68,9 +68,9 @@ zy-engine-mvp/docs/00_总入口与AI接手导航.md
 
 每次提交前必须验证：
 
-1. `zy-engine-mvp/scripts/run-tests.ps1`
-2. `zy-engine-mvp/scripts/build.ps1`
-3. `zy-engine-mvp/scripts/check-ai-collaboration.ps1`
+1. `medkernel-mvp/scripts/run-tests.ps1`
+2. `medkernel-mvp/scripts/build.ps1`
+3. `medkernel-mvp/scripts/check-ai-collaboration.ps1`
 4. `git diff --check`
 
 每完成一个明确开发任务，必须先通过 `ai-dev-input/11_ai_reviews` 质量评审，确认 `review_status=APPROVED` 且 `open_findings=0`。需要功能验收的任务还必须完成 `ai-dev-input/13_feature_acceptance` 记录。通过后只暂存本任务相关文件，使用中文短句提交，并立即推送到远端当前分支，保证其它 AI 可以拉取最新项目。自主运行时最终回复还必须包含 run_id、next_action。最终回复必须包含 claim_id、review_id、feature_acceptance_id、open_findings、提交 hash、推送分支；如无法提交或推送，必须说明原因、影响和替代交接方式。

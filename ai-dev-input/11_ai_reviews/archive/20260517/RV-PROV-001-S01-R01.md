@@ -21,14 +21,14 @@ oracle_smoke_status: NOT_RUN
 
 ```text
 Reviewed files:
-- zy-engine-mvp/src/main/java/com/zyengine/provenance/SourceDocument.java
-- zy-engine-mvp/src/main/java/com/zyengine/provenance/ProvenanceService.java
-- zy-engine-mvp/src/main/java/com/zyengine/provenance/ProvenanceController.java
-- zy-engine-mvp/src/test/java/com/zyengine/EngineApiContractTests.java
+- medkernel-mvp/src/main/java/com/medkernel/provenance/SourceDocument.java
+- medkernel-mvp/src/main/java/com/medkernel/provenance/ProvenanceService.java
+- medkernel-mvp/src/main/java/com/medkernel/provenance/ProvenanceController.java
+- medkernel-mvp/src/test/java/com/medkernel/EngineApiContractTests.java
 - ai-dev-input/06_samples/sample_source_documents.json
 - ai-dev-input/04_database/oracle/core_ddl.sql
 - ai-dev-input/04_database/dm/core_ddl.sql
-- zy-engine-mvp/docs/api-examples.http
+- medkernel-mvp/docs/api-examples.http
 Out of scope:
 - frontend/** and existing rule/pathway runtime logic
 ```

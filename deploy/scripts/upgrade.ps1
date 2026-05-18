@@ -1,4 +1,4 @@
-﻿# 升级 —— Windows
+# 升级 —— Windows
 # 用法：管理员 PowerShell：
 #   .\upgrade.ps1 -To v1.3.0 [-MigrateDb] [-BackupOnly]
 
@@ -12,8 +12,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ZyHome = if ($env:ZY_HOME) { $env:ZY_HOME } else { "D:\zoesoft\zy-engine" }
-$BackupRoot = if ($env:ZY_BACKUP_DIR) { $env:ZY_BACKUP_DIR } else { "D:\zoesoft\zy-engine.bak" }
+$MkHome = if ($env:MK_HOME) { $env:MK_HOME } else { "D:\zoesoft\medkernel" }
+$BackupRoot = if ($env:MK_BACKUP_DIR) { $env:MK_BACKUP_DIR } else { "D:\zoesoft\medkernel.bak" }
 
 # 必须 admin
 $winId = [System.Security.Principal.WindowsIdentity]::GetCurrent()
@@ -27,26 +27,26 @@ $ts = Get-Date -Format "yyyyMMdd_HHmmss"
 $backup = Join-Path $BackupRoot $ts
 New-Item -ItemType Directory -Force -Path $backup | Out-Null
 foreach ($d in @("lib", "frontend", "conf", "systemd", "nginx")) {
-    if (Test-Path "$ZyHome\$d") {
-        Copy-Item -Path "$ZyHome\$d" -Destination $backup -Recurse -Force
+    if (Test-Path "$MkHome\$d") {
+        Copy-Item -Path "$MkHome\$d" -Destination $backup -Recurse -Force
         Write-Host "[OK]   备份 $d" -ForegroundColor Green
     }
 }
-if (Test-Path "$ZyHome\manifest.json") {
-    Copy-Item "$ZyHome\manifest.json" $backup
+if (Test-Path "$MkHome\manifest.json") {
+    Copy-Item "$MkHome\manifest.json" $backup
 }
-$backup | Out-File -FilePath "$ZyHome\.last-backup" -Encoding ascii
+$backup | Out-File -FilePath "$MkHome\.last-backup" -Encoding ascii
 Write-Host "[OK]   备份完成：$backup" -ForegroundColor Green
 
 if ($BackupOnly) { Write-Host "[OK]   仅备份，已完成" -ForegroundColor Green; exit 0 }
 if ($To -eq "") { throw "请指定 -To <version>" }
 
 Write-Host "`n==> 2. 停止服务" -ForegroundColor Cyan
-Stop-Service "ZyEngine" -Force -ErrorAction SilentlyContinue
+Stop-Service "MedKernel" -Force -ErrorAction SilentlyContinue
 
 Write-Host "`n==> 3. 解压新发布包" -ForegroundColor Cyan
 if ($Package -eq "") {
-    $Package = "D:\Temp\zy-engine-$To.tar.gz"
+    $Package = "D:\Temp\medkernel-$To.tar.gz"
 }
 if (-not (Test-Path $Package)) { throw "未找到 $Package；请先上传发布包并用 -Package 指定" }
 $tmpDir = Join-Path $env:TEMP "zy-upgrade-$ts"
@@ -59,13 +59,13 @@ Write-Host "[OK]   解压到 $tmpDir" -ForegroundColor Green
 Write-Host "`n==> 4. 覆盖（保留 conf）" -ForegroundColor Cyan
 foreach ($d in @("lib", "frontend", "db", "scripts", "systemd", "nginx", "docs", "profiles")) {
     if (Test-Path "$tmpDir\$d") {
-        Remove-Item "$ZyHome\$d" -Recurse -Force -ErrorAction SilentlyContinue
-        Copy-Item "$tmpDir\$d" "$ZyHome\" -Recurse -Force
+        Remove-Item "$MkHome\$d" -Recurse -Force -ErrorAction SilentlyContinue
+        Copy-Item "$tmpDir\$d" "$MkHome\" -Recurse -Force
     }
 }
 foreach ($f in @("manifest.json", "CHANGELOG.md")) {
     if (Test-Path "$tmpDir\$f") {
-        Copy-Item "$tmpDir\$f" "$ZyHome\" -Force
+        Copy-Item "$tmpDir\$f" "$MkHome\" -Force
     }
 }
 
@@ -77,7 +77,7 @@ if ($MigrateDb) {
 }
 
 Write-Host "`n==> 6. 启动" -ForegroundColor Cyan
-Start-Service "ZyEngine"
+Start-Service "MedKernel"
 Start-Sleep -Seconds 5
 
 Write-Host "`n==> 7. 健康检查" -ForegroundColor Cyan

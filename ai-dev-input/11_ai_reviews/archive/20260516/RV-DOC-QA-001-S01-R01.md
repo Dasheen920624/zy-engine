@@ -21,14 +21,14 @@ oracle_smoke_status: N/A
 
 ```text
 Reviewed files:
-- zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
-- zy-engine-mvp/docs/AI任务认领与并行开发机制.md
-- zy-engine-mvp/docs/AI接手执行手册.md
-- zy-engine-mvp/docs/产品化方案与AI开发编排.md
-- zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md
-- zy-engine-mvp/docs/全功能蓝图与并行开发计划.md
+- medkernel-mvp/docs/AI开发质量门禁与评审整改机制.md
+- medkernel-mvp/docs/AI任务认领与并行开发机制.md
+- medkernel-mvp/docs/AI接手执行手册.md
+- medkernel-mvp/docs/产品化方案与AI开发编排.md
+- medkernel-mvp/docs/顶级多角色评审与AI并行开发总控.md
+- medkernel-mvp/docs/全功能蓝图与并行开发计划.md
 - README.md
-- zy-engine-mvp/README.md
+- medkernel-mvp/README.md
 - ai-dev-input/README.md
 - ai-dev-input/09_ai_task_cards/ai_system_prompt.md
 - ai-dev-input/09_ai_task_cards/backend_prompt_template.md

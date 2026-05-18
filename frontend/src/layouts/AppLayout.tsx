@@ -66,7 +66,7 @@ export default function AppLayout() {
           }}
         >
           <div style={{ fontSize: 16, fontWeight: 700 }}>医疗智能引擎平台</div>
-          <div style={{ fontSize: 12, color: "#94a3b8" }}>zy-engine · 内网管理台</div>
+          <div style={{ fontSize: 12, color: "#94a3b8" }}>medkernel · 内网管理台</div>
         </div>
         <Menu
           theme="dark"

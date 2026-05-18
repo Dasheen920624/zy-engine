@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # 健康检查 —— Linux / Unix
-# 用法：./healthcheck.sh [--url http://localhost:18080/zy-engine] [--timeout 10]
+# 用法：./healthcheck.sh [--url http://localhost:18080/medkernel] [--timeout 10]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/lib/common.sh"
 
-BASE_URL="${ZYENGINE_HEALTH_URL:-http://localhost:${ZYENGINE_HTTP_PORT:-18080}/zy-engine}"
+BASE_URL="${MEDKERNEL_HEALTH_URL:-http://localhost:${MEDKERNEL_HTTP_PORT:-18080}/medkernel}"
 TIMEOUT=10
 
 while [[ $# -gt 0 ]]; do

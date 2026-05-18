@@ -68,9 +68,9 @@ port_in_use() {
 # ---------------------------------------------------------------------------
 check_db_oracle() {
   command -v sqlplus >/dev/null 2>&1 || { log_skip "sqlplus 未安装，跳过 Oracle 连通"; return 0; }
-  local connect="${ZYENGINE_DB_CONNECT:-}"
-  local user="${ZYENGINE_DB_USERNAME:-}"
-  local pwd="${ZYENGINE_DB_PASSWORD:-}"
+  local connect="${MEDKERNEL_DB_CONNECT:-}"
+  local user="${MEDKERNEL_DB_USERNAME:-}"
+  local pwd="${MEDKERNEL_DB_PASSWORD:-}"
   [ -z "$connect" ] || [ -z "$user" ] || [ -z "$pwd" ] && { log_skip "Oracle 凭据未设，跳过"; return 0; }
   if echo "SELECT 1 FROM DUAL;" | sqlplus -s "${user}/${pwd}@${connect}" 2>&1 | grep -q '^[[:space:]]*1$'; then
     log_ok "Oracle 连通：${connect}"
@@ -86,21 +86,21 @@ check_db_dm() {
 
 check_db_postgres() {
   command -v psql >/dev/null 2>&1 || { log_skip "psql 未安装，跳过 PG 连通"; return 0; }
-  local host="${ZYENGINE_DB_HOST:-}"
-  local user="${ZYENGINE_DB_USERNAME:-}"
-  local db="${ZYENGINE_DB_NAME:-}"
+  local host="${MEDKERNEL_DB_HOST:-}"
+  local user="${MEDKERNEL_DB_USERNAME:-}"
+  local db="${MEDKERNEL_DB_NAME:-}"
   [ -z "$host" ] || [ -z "$user" ] || [ -z "$db" ] && { log_skip "PG 凭据未设，跳过"; return 0; }
-  PGPASSWORD="${ZYENGINE_DB_PASSWORD:-}" psql -h "$host" -U "$user" -d "$db" -c 'SELECT 1;' -At >/dev/null \
+  PGPASSWORD="${MEDKERNEL_DB_PASSWORD:-}" psql -h "$host" -U "$user" -d "$db" -c 'SELECT 1;' -At >/dev/null \
     && log_ok "PG 连通：${host}/${db}" || { log_err "PG 连通失败"; return 1; }
 }
 
 # ---------------------------------------------------------------------------
 # 路径常量
 # ---------------------------------------------------------------------------
-ZY_HOME="${ZY_HOME:-/zoesoft/zy-engine}"
-ZY_BACKUP_DIR="${ZY_BACKUP_DIR:-/zoesoft/zy-engine.bak}"
-ZY_USER="${ZY_USER:-zyengine}"
-ZY_ENV_FILE="${ZY_ENV_FILE:-$ZY_HOME/conf/zyengine.env}"
+MK_HOME="${MK_HOME:-/zoesoft/medkernel}"
+MK_BACKUP_DIR="${MK_BACKUP_DIR:-/zoesoft/medkernel.bak}"
+ZY_USER="${ZY_USER:-medkernel}"
+ZY_ENV_FILE="${ZY_ENV_FILE:-$MK_HOME/conf/medkernel.env}"
 
 load_env() {
   if [ -r "$ZY_ENV_FILE" ]; then

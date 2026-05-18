@@ -4,7 +4,7 @@ import { OrgContext } from "../api/types";
 // 用 module-level 变量 + 订阅者，避免引入 zustand/redux。
 // 真正生产中可换成 zustand，本脚手架先保持轻量。
 
-const STORAGE_KEY = "zy-engine.orgContext";
+const STORAGE_KEY = "medkernel.orgContext";
 
 function loadInitial(): OrgContext {
   const env = (import.meta.env as Record<string, string>) || {};

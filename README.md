@@ -1,4 +1,4 @@
-# 集团化医疗智能引擎平台（zy-engine）
+# 集团化医疗智能引擎平台（medkernel）
 
 > 让医院能像产品经理管理软件一样管理临床路径、规则和医学知识：版本化、可灰度、可追溯、可下线，每一次诊疗决策都能回到来源。
 
@@ -26,7 +26,7 @@
 | 目录 | 用途 |
 |---|---|
 | [`docs/`](docs/) | 所有文档（产品 + 工程 + 归档） |
-| [`zy-engine-mvp/`](zy-engine-mvp/README.md) | 后端 MVP 工程（Spring Boot 2.7 / JDK 1.8） |
+| [`medkernel-mvp/`](medkernel-mvp/README.md) | 后端 MVP 工程（Spring Boot 2.7 / JDK 1.8） |
 | [`frontend/`](frontend/README.md) | 前端工程（React 18 + TypeScript + Vite + Ant Design 5） |
 | [`ai-dev-input/`](ai-dev-input/README.md) | AI 协作运行时（任务卡 / claim / review / 验收记录 / 演示数据 / DDL） |
 | [`deploy/`](deploy/README.md) | 内网自动化部署（Linux *.sh / Windows *.ps1） |
@@ -38,7 +38,7 @@
 ### 后端（首次启动）
 
 ```powershell
-cd zy-engine-mvp
+cd medkernel-mvp
 .\scripts\detect-db-env.ps1 -BootstrapLocal   # 自动选择 Oracle 或 LOCAL_H2
 .\scripts\run-tests.cmd                        # 跑测试
 .\scripts\build.cmd                            # 构建
@@ -48,8 +48,8 @@ cd zy-engine-mvp
 健康检查：
 
 ```text
-http://localhost:18080/zy-engine/api/health
-http://localhost:18080/zy-engine/api/system/providers
+http://localhost:18080/medkernel/api/health
+http://localhost:18080/medkernel/api/system/providers
 ```
 
 ### 前端（首次启动）

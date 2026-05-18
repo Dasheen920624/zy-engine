@@ -2,7 +2,7 @@
 # 离线安装 —— Linux / Unix
 # 用法：sudo ./install-offline.sh [--init-db | --migrate-db | --skip-init-db]
 #
-# 前置：发布包已解压到 $ZY_HOME（默认 /zoesoft/zy-engine），profile 已选好。
+# 前置：发布包已解压到 $MK_HOME（默认 /zoesoft/medkernel），profile 已选好。
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
@@ -35,44 +35,44 @@ else
   log_ok "用户 $ZY_USER 已存在"
 fi
 
-for d in "$ZY_HOME/logs" "$ZY_HOME/conf" "$ZY_BACKUP_DIR"; do
+for d in "$MK_HOME/logs" "$MK_HOME/conf" "$MK_BACKUP_DIR"; do
   mkdir -p "$d"
   chown -R "$ZY_USER:$ZY_USER" "$d"
 done
-chmod 750 "$ZY_HOME/logs"
+chmod 750 "$MK_HOME/logs"
 [ -f "$ZY_ENV_FILE" ] && chmod 600 "$ZY_ENV_FILE" && chown "$ZY_USER:$ZY_USER" "$ZY_ENV_FILE"
 
 log_step "3. 处理数据库 DDL"
-DIALECT="${ZYENGINE_DB_DIALECT:-}"
+DIALECT="${MEDKERNEL_DB_DIALECT:-}"
 if [ "$SKIP_DB" -eq 1 ]; then
   log_skip "按 --skip-init-db 跳过 DDL 处理"
 elif [ "$INIT_DB" -eq 1 ] || [ "$MIGRATE_DB" -eq 1 ]; then
   case "$DIALECT" in
     oracle)
-      DDL_DIR="$ZY_HOME/db/oracle"
+      DDL_DIR="$MK_HOME/db/oracle"
       log_info "Oracle DDL 目录：$DDL_DIR"
       if [ "$INIT_DB" -eq 1 ]; then
-        log_info "请执行（信息科 / DBA）：sqlplus $ZYENGINE_DB_USERNAME/$ZYENGINE_DB_PASSWORD@$ZYENGINE_DB_CONNECT @$DDL_DIR/zyengine_core_ddl_with_comments.sql"
+        log_info "请执行（信息科 / DBA）：sqlplus $MEDKERNEL_DB_USERNAME/$MEDKERNEL_DB_PASSWORD@$MEDKERNEL_DB_CONNECT @$DDL_DIR/medkernel_core_ddl_with_comments.sql"
       fi
-      log_info "请执行：sqlplus ... @$DDL_DIR/zyengine_org_context_migration.sql"
+      log_info "请执行：sqlplus ... @$DDL_DIR/medkernel_org_context_migration.sql"
       ;;
     dm)
-      DDL_DIR="$ZY_HOME/db/dm"
+      DDL_DIR="$MK_HOME/db/dm"
       log_info "达梦 DDL 目录：$DDL_DIR"
-      log_info "请执行（信息科）：disql ${ZYENGINE_DB_USERNAME}/${ZYENGINE_DB_PASSWORD}@${ZYENGINE_DB_CONNECT} -e \"START '$DDL_DIR/zyengine_core_ddl_with_comments.sql';\""
+      log_info "请执行（信息科）：disql ${MEDKERNEL_DB_USERNAME}/${MEDKERNEL_DB_PASSWORD}@${MEDKERNEL_DB_CONNECT} -e \"START '$DDL_DIR/medkernel_core_ddl_with_comments.sql';\""
       ;;
     postgres)
-      DDL_DIR="$ZY_HOME/db/postgres"
+      DDL_DIR="$MK_HOME/db/postgres"
       log_info "PG DDL 目录：$DDL_DIR"
       if command -v psql >/dev/null 2>&1; then
-        PGPASSWORD="${ZYENGINE_DB_PASSWORD:-}" psql \
-          -h "${ZYENGINE_DB_HOST:-localhost}" -p "${ZYENGINE_DB_PORT:-5432}" \
-          -U "${ZYENGINE_DB_USERNAME:-zyengine}" -d "${ZYENGINE_DB_NAME:-zyengine}" \
+        PGPASSWORD="${MEDKERNEL_DB_PASSWORD:-}" psql \
+          -h "${MEDKERNEL_DB_HOST:-localhost}" -p "${MEDKERNEL_DB_PORT:-5432}" \
+          -U "${MEDKERNEL_DB_USERNAME:-medkernel}" -d "${MEDKERNEL_DB_NAME:-medkernel}" \
           -v ON_ERROR_STOP=1 \
-          -f "$DDL_DIR/zyengine_core_ddl_with_comments.sql"
+          -f "$DDL_DIR/medkernel_core_ddl_with_comments.sql"
         log_ok "PG DDL 已执行"
       else
-        log_warn "psql 未安装；请由 DBA 执行 $DDL_DIR/zyengine_core_ddl_with_comments.sql"
+        log_warn "psql 未安装；请由 DBA 执行 $DDL_DIR/medkernel_core_ddl_with_comments.sql"
       fi
       ;;
     *)
@@ -84,27 +84,27 @@ else
 fi
 
 log_step "4. 注册 systemd"
-if [ -f "$ZY_HOME/systemd/zy-engine.service" ]; then
-  install -m 644 "$ZY_HOME/systemd/zy-engine.service" /etc/systemd/system/zy-engine.service
+if [ -f "$MK_HOME/systemd/medkernel.service" ]; then
+  install -m 644 "$MK_HOME/systemd/medkernel.service" /etc/systemd/system/medkernel.service
   systemctl daemon-reload
-  systemctl enable zy-engine
-  log_ok "systemd 单元已注册：zy-engine.service"
+  systemctl enable medkernel
+  log_ok "systemd 单元已注册：medkernel.service"
 else
-  log_warn "$ZY_HOME/systemd/zy-engine.service 不存在，跳过 systemd"
+  log_warn "$MK_HOME/systemd/medkernel.service 不存在，跳过 systemd"
 fi
 
 log_step "5. 启动应用"
-systemctl restart zy-engine
+systemctl restart medkernel
 sleep 3
-systemctl is-active --quiet zy-engine && log_ok "zy-engine 已运行" || die "启动失败，请查看：journalctl -u zy-engine -n 100"
+systemctl is-active --quiet medkernel && log_ok "medkernel 已运行" || die "启动失败，请查看：journalctl -u medkernel -n 100"
 
 log_step "6. 健康检查"
 "$SCRIPT_DIR/healthcheck.sh"
 
 log_step "7. 完成"
-log_ok "安装完成。版本：$(cat "$ZY_HOME/manifest.json" 2>/dev/null | grep -oE '"version":[[:space:]]*"[^"]+"' || echo unknown)"
+log_ok "安装完成。版本：$(cat "$MK_HOME/manifest.json" 2>/dev/null | grep -oE '"version":[[:space:]]*"[^"]+"' || echo unknown)"
 echo ""
 echo "下一步建议："
-echo "  - 配置 Nginx：sudo cp $ZY_HOME/nginx/zy-engine.conf /etc/nginx/conf.d/"
+echo "  - 配置 Nginx：sudo cp $MK_HOME/nginx/medkernel.conf /etc/nginx/conf.d/"
 echo "  - 跑客户验收剧本：见 docs/02_场景剧本图.md"
 echo "  - 接入监控：见 docs/engineering/09_内网部署与版本管理.md §11"

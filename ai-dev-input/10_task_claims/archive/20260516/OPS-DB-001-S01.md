@@ -21,20 +21,20 @@ oracle_verification_required: false
 ```text
 README.md
 .gitignore
-zy-engine-mvp/pom.xml
-zy-engine-mvp/src/main/resources/application.yml
-zy-engine-mvp/src/main/resources/db/local/h2_core_ddl.sql
-zy-engine-mvp/src/main/java/com/zyengine/persistence/**
-zy-engine-mvp/src/main/java/com/zyengine/system/HealthController.java
-zy-engine-mvp/src/main/java/com/zyengine/pathway/PathwayService.java
-zy-engine-mvp/src/test/java/com/zyengine/EngineApiContractTests.java
-zy-engine-mvp/scripts/detect-db-env.*
-zy-engine-mvp/scripts/start-local-db.*
-zy-engine-mvp/scripts/README.md
-zy-engine-mvp/docs/数据库Provider与离线AI开发约定.md
-zy-engine-mvp/docs/AI接手执行手册.md
-zy-engine-mvp/docs/产品化方案与AI开发编排.md
-zy-engine-mvp/docs/顶级多角色评审与AI并行开发总控.md
+medkernel-mvp/pom.xml
+medkernel-mvp/src/main/resources/application.yml
+medkernel-mvp/src/main/resources/db/local/h2_core_ddl.sql
+medkernel-mvp/src/main/java/com/medkernel/persistence/**
+medkernel-mvp/src/main/java/com/medkernel/system/HealthController.java
+medkernel-mvp/src/main/java/com/medkernel/pathway/PathwayService.java
+medkernel-mvp/src/test/java/com/medkernel/EngineApiContractTests.java
+medkernel-mvp/scripts/detect-db-env.*
+medkernel-mvp/scripts/start-local-db.*
+medkernel-mvp/scripts/README.md
+medkernel-mvp/docs/数据库Provider与离线AI开发约定.md
+medkernel-mvp/docs/AI接手执行手册.md
+medkernel-mvp/docs/产品化方案与AI开发编排.md
+medkernel-mvp/docs/顶级多角色评审与AI并行开发总控.md
 ai-dev-input/04_database/local/h2_core_ddl.sql
 ai-dev-input/README.md
 ai-dev-input/09_ai_task_cards/task_card_template.md
@@ -44,9 +44,9 @@ ai-dev-input/10_task_claims/**
 ## Read Scope
 
 ```text
-zy-engine-mvp/src/main/java/com/zyengine/**
-zy-engine-mvp/scripts/**
-zy-engine-mvp/docs/**
+medkernel-mvp/src/main/java/com/medkernel/**
+medkernel-mvp/scripts/**
+medkernel-mvp/docs/**
 ai-dev-input/**
 ```
 
@@ -81,7 +81,7 @@ Docs require Oracle/DM/H2 structure synchronization for future DDL changes.
 .\scripts\build.ps1
 .\scripts\run-tests.ps1
 .\scripts\detect-db-env.ps1 -BootstrapLocal
-start-local-db.ps1 on port 18083 + run-rule-smoke.ps1 -BaseUrl http://localhost:18083/zy-engine/api
+start-local-db.ps1 on port 18083 + run-rule-smoke.ps1 -BaseUrl http://localhost:18083/medkernel/api
 git diff --check
 ```
 

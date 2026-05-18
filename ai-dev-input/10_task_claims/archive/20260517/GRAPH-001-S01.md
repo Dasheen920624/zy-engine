@@ -20,28 +20,28 @@ review_required: false
 ## Write Scope
 
 ```text
-zy-engine-mvp/src/main/java/com/zyengine/graph/GraphService.java
-zy-engine-mvp/src/main/java/com/zyengine/graph/GraphController.java
-zy-engine-mvp/src/test/java/com/zyengine/EngineApiContractTests.java
-zy-engine-mvp/docs/02_任务台账.md
+medkernel-mvp/src/main/java/com/medkernel/graph/GraphService.java
+medkernel-mvp/src/main/java/com/medkernel/graph/GraphController.java
+medkernel-mvp/src/test/java/com/medkernel/EngineApiContractTests.java
+medkernel-mvp/docs/02_任务台账.md
 ai-dev-input/10_task_claims/active/GRAPH-001-S01.md
 ```
 
 ## Read Scope
 
 ```text
-zy-engine-mvp/src/main/java/com/zyengine/graph/**
-zy-engine-mvp/src/main/java/com/zyengine/provenance/SourceAssetBindingService.java
-zy-engine-mvp/src/test/java/com/zyengine/EngineApiContractTests.java
+medkernel-mvp/src/main/java/com/medkernel/graph/**
+medkernel-mvp/src/main/java/com/medkernel/provenance/SourceAssetBindingService.java
+medkernel-mvp/src/test/java/com/medkernel/EngineApiContractTests.java
 ```
 
 ## Forbidden Scope
 
 ```text
 frontend/**
-zy-engine-mvp/src/main/java/com/zyengine/rule/**
-zy-engine-mvp/src/main/java/com/zyengine/pathway/**
-zy-engine-mvp/src/main/java/com/zyengine/provenance/**
+medkernel-mvp/src/main/java/com/medkernel/rule/**
+medkernel-mvp/src/main/java/com/medkernel/pathway/**
+medkernel-mvp/src/main/java/com/medkernel/provenance/**
 ```
 
 ## Acceptance

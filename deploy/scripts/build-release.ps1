@@ -1,4 +1,4 @@
-﻿# 构建发布包 —— Windows
+# 构建发布包 —— Windows
 # 用法：PowerShell -ExecutionPolicy Bypass -File build-release.ps1 `
 #         -Version 1.2.3 `
 #         [-IncludeFrontend] `
@@ -20,7 +20,7 @@ $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
 
 $gitHash = (git -C $RepoRoot rev-parse --short HEAD).Trim()
 $buildTime = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssK")
-$pkgName = "zy-engine-v$Version-$gitHash"
+$pkgName = "medkernel-v$Version-$gitHash"
 
 $staging = Join-Path ([System.IO.Path]::GetTempPath()) "zy-release-$gitHash"
 if (Test-Path $staging) { Remove-Item -Recurse -Force $staging }
@@ -29,16 +29,16 @@ New-Item -ItemType Directory -Force -Path $stageRoot | Out-Null
 Write-Host "==> Staging: $stageRoot" -ForegroundColor Cyan
 
 Write-Host "`n==> 1. 构建后端 jar" -ForegroundColor Cyan
-Push-Location (Join-Path $RepoRoot "zy-engine-mvp")
+Push-Location (Join-Path $RepoRoot "medkernel-mvp")
 try {
     & mvn -B -q -DskipTests package
     if ($LASTEXITCODE -ne 0) { throw "Maven 构建失败" }
 } finally { Pop-Location }
-$jarFile = Get-ChildItem (Join-Path $RepoRoot "zy-engine-mvp\target") -Filter "zy-engine-mvp-*.jar" | Select-Object -First 1
+$jarFile = Get-ChildItem (Join-Path $RepoRoot "medkernel-mvp\target") -Filter "medkernel-mvp-*.jar" | Select-Object -First 1
 if (-not $jarFile) { throw "未找到 jar" }
 New-Item -ItemType Directory -Force -Path "$stageRoot\lib" | Out-Null
-Copy-Item $jarFile.FullName "$stageRoot\lib\zy-engine.jar"
-$jarSha = (Get-FileHash "$stageRoot\lib\zy-engine.jar" -Algorithm SHA256).Hash.ToLower()
+Copy-Item $jarFile.FullName "$stageRoot\lib\medkernel.jar"
+$jarSha = (Get-FileHash "$stageRoot\lib\medkernel.jar" -Algorithm SHA256).Hash.ToLower()
 Write-Host "[OK]   jar sha256: $jarSha" -ForegroundColor Green
 
 Write-Host "`n==> 2. 前端" -ForegroundColor Cyan
@@ -59,7 +59,7 @@ if ($IncludeFrontend -and (Test-Path (Join-Path $RepoRoot "frontend"))) {
 }
 
 Write-Host "`n==> 3. 拷贝 DDL / scripts / docs / profiles" -ForegroundColor Cyan
-Copy-Item (Join-Path $RepoRoot "zy-engine-mvp\db") "$stageRoot\" -Recurse
+Copy-Item (Join-Path $RepoRoot "medkernel-mvp\db") "$stageRoot\" -Recurse
 Copy-Item $ScriptDir "$stageRoot\scripts" -Recurse
 foreach ($d in @("systemd", "nginx", "profiles")) {
     $src = Join-Path $ScriptDir "..\$d"
@@ -73,13 +73,13 @@ if (Test-Path "$RepoRoot\CHANGELOG.md") {
 
 Write-Host "`n==> 4. manifest.json" -ForegroundColor Cyan
 $manifest = @{
-    name = "zy-engine"
+    name = "medkernel"
     version = $Version
     git_hash = $gitHash
     build_time = $buildTime
     build_host = $env:COMPUTERNAME
     components = @{
-        backend  = @{ jar = "lib/zy-engine.jar"; sha256 = $jarSha }
+        backend  = @{ jar = "lib/medkernel.jar"; sha256 = $jarSha }
         frontend = @{ dist = "frontend/dist/"; sha256 = $feSha }
     }
     supported_os = @(

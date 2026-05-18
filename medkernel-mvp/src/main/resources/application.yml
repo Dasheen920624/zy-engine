@@ -1,0 +1,36 @@
+server:
+  port: 18080
+  servlet:
+    context-path: /medkernel
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: medkernel-mvp
+
+medkernel:
+  database:
+    dialect: oracle
+    role: ${MEDKERNEL_DB_ROLE:production}
+    enabled: ${MEDKERNEL_DB_ENABLED:false}
+    url: ${MEDKERNEL_DB_URL:jdbc:oracle:thin:@//192.168.4.25:1521/ORCL}
+    username: ${MEDKERNEL_DB_USERNAME:ZYENGINE}
+    password: ${MEDKERNEL_DB_PASSWORD:}
+    init-schema: ${MEDKERNEL_DB_INIT_SCHEMA:true}
+  dify:
+    enabled: ${MEDKERNEL_DIFY_ENABLED:false}
+    base-url: ${MEDKERNEL_DIFY_BASE_URL:}
+    api-key: ${MEDKERNEL_DIFY_API_KEY:}
+    timeout-ms: ${MEDKERNEL_DIFY_TIMEOUT_MS:3000}
+    user: ${MEDKERNEL_DIFY_USER:medkernel-mvp}
+  graph:
+    enabled: ${MEDKERNEL_GRAPH_ENABLED:false}
+    uri: ${MEDKERNEL_GRAPH_URI:bolt://localhost:7687}
+    username: ${MEDKERNEL_GRAPH_USERNAME:neo4j}
+    password: ${MEDKERNEL_GRAPH_PASSWORD:}
+    database: ${MEDKERNEL_GRAPH_DATABASE:neo4j}
+    timeout-ms: ${MEDKERNEL_GRAPH_TIMEOUT_MS:3000}
+    default-version: ${MEDKERNEL_GRAPH_DEFAULT_VERSION:AMI_GRAPH_2026_01}

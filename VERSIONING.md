@@ -19,7 +19,7 @@ MAJOR.MINOR.PATCH[-prerelease][+build]
 | `-rc.N` / `-beta.N` | 预发布 | UAT 阶段 |
 | `+gitShortHash` | 构建标识 | CI 自动注入 |
 
-> 详细发布流程见 [zy-engine-mvp/docs/09_内网部署与版本管理.md](zy-engine-mvp/docs/09_内网部署与版本管理.md)。
+> 详细发布流程见 [medkernel-mvp/docs/09_内网部署与版本管理.md](medkernel-mvp/docs/09_内网部署与版本管理.md)。
 
 ## 2. 分支约定
 
@@ -46,9 +46,9 @@ git add CHANGELOG.md
 git commit -m "标注 v1.2.3 CHANGELOG"
 
 # 3) 同步 pom.xml 与 frontend/package.json 版本号
-# 后端：sed -i 's|<version>.*</version>|<version>1.2.3</version>|' zy-engine-mvp/pom.xml
+# 后端：sed -i 's|<version>.*</version>|<version>1.2.3</version>|' medkernel-mvp/pom.xml
 # 前端：npm version 1.2.3 --no-git-tag-version --prefix frontend
-git add zy-engine-mvp/pom.xml frontend/package.json
+git add medkernel-mvp/pom.xml frontend/package.json
 git commit -m "升版 v1.2.3"
 
 # 4) 打 annotated tag
@@ -73,7 +73,7 @@ git push origin main --tags
 
 每次 MAJOR 升级必须：
 
-- 在 [09_内网部署与版本管理.md](zy-engine-mvp/docs/09_内网部署与版本管理.md) §6 补"升级注意事项"
+- 在 [09_内网部署与版本管理.md](medkernel-mvp/docs/09_内网部署与版本管理.md) §6 补"升级注意事项"
 - 给客户/医院信息科发"破坏性变更通知" ≥ 2 周前
 - 提供等长支持窗口（旧 MAJOR 至少再支持 6 个月）
 
@@ -106,7 +106,7 @@ git push origin main --tags
 Maven `git-commit-id-plugin`（已通过 properties 注入）→ `application.yml`：
 
 ```yaml
-zyengine:
+medkernel:
   build:
     version: @project.version@
     git-hash: ${git.commit.id.abbrev}
@@ -155,7 +155,7 @@ define: {
   "build_time": "2026-05-17T08:30:00+08:00",
   "build_host": "ci-builder-1",
   "components": {
-    "backend": { "jar": "lib/zy-engine.jar", "sha256": "..." },
+    "backend": { "jar": "lib/medkernel.jar", "sha256": "..." },
     "frontend": { "dist": "frontend/dist/", "sha256": "..." },
     "db_oracle": { "version": "1.2.3" },
     "db_dm": { "version": "1.2.3" },

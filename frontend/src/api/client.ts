@@ -15,7 +15,7 @@ import { getOrgContext } from "../store/orgContext";
 const baseURL =
   import.meta.env.VITE_API_BASE_URL ||
   // 内网部署通常前后端同源；开发期通过 vite proxy 转发
-  "/zy-engine/api";
+  "/medkernel/api";
 
 export const http = axios.create({
   baseURL,

@@ -2,8 +2,8 @@
 
 使用前按最小阅读策略执行：
 
-- 必读：`zy-engine-mvp/docs/00_总入口与AI接手导航.md`
-- 只读任务行：`zy-engine-mvp/docs/02_任务台账.md`
+- 必读：`medkernel-mvp/docs/00_总入口与AI接手导航.md`
+- 只读任务行：`medkernel-mvp/docs/02_任务台账.md`
 - 按任务触发条件最多补读 1 份专项文档：后端 `06_后端开发规范.md`，前端 `07_前端开发规范.md`，数据库 `数据库Provider与离线AI开发约定.md`，架构 `05_架构总图与服务边界.md`，部署 `09_内网部署与版本管理.md`，医学/医保/质控 `产品功能业务核查与开工清单.md`。
 
 不要把长文档列表当作默认必读清单；`00_总入口与AI接手导航.md` 的硬门禁和 DoD 是默认权威口径。
@@ -38,7 +38,7 @@ feature_acceptance_id:
 并发开发前还必须执行：
 
 ```powershell
-.\zy-engine-mvp\scripts\check-ai-collaboration.ps1
+.\medkernel-mvp\scripts\check-ai-collaboration.ps1
 git status -sb
 ```
 
@@ -338,11 +338,11 @@ claim.status=READY_TO_SUBMIT
 
 根据影响范围更新：
 
-- `zy-engine-mvp/README.md`
-- `zy-engine-mvp/docs/api-examples.http`
-- `zy-engine-mvp/docs/产品化方案与AI开发编排.md`
-- `zy-engine-mvp/docs/全功能蓝图与并行开发计划.md`
-- `zy-engine-mvp/docs/前端配置平台规划与开发验证.md`
+- `medkernel-mvp/README.md`
+- `medkernel-mvp/docs/api-examples.http`
+- `medkernel-mvp/docs/产品化方案与AI开发编排.md`
+- `medkernel-mvp/docs/全功能蓝图与并行开发计划.md`
+- `medkernel-mvp/docs/前端配置平台规划与开发验证.md`
 - `ai-dev-input/README.md`
 - 样例 JSON
 - 测试矩阵
@@ -367,24 +367,24 @@ claim.status=READY_TO_SUBMIT
 必须通过：
 
 ```powershell
-.\zy-engine-mvp\scripts\check-ai-collaboration.ps1
-.\zy-engine-mvp\scripts\run-tests.ps1
-.\zy-engine-mvp\scripts\build.ps1
+.\medkernel-mvp\scripts\check-ai-collaboration.ps1
+.\medkernel-mvp\scripts\run-tests.ps1
+.\medkernel-mvp\scripts\build.ps1
 git diff --check
 ```
 
 若任务涉及落库，必须说明生产库和开发库验证结果。无生产库环境时至少通过：
 
 ```powershell
-.\zy-engine-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
-.\zy-engine-mvp\scripts\start-local-db.ps1
+.\medkernel-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
+.\medkernel-mvp\scripts\start-local-db.ps1
 ```
 
 有 Oracle 生产权威库时还必须通过：
 
 ```powershell
-.\zy-engine-mvp\scripts\run-oracle-ddl.ps1
-.\zy-engine-mvp\scripts\run-oracle-org-smoke.ps1
+.\medkernel-mvp\scripts\run-oracle-ddl.ps1
+.\medkernel-mvp\scripts\run-oracle-org-smoke.ps1
 ```
 
 Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.local.example` 为可提交模板，记录 Oracle 连接目标；真实 `.env.oracle.local` 为本地忽略文件，只记录本机 Oracle 凭据，禁止提交。达梦/PostgreSQL/Kingbase 若无真实环境，必须提交 DDL 同步和补验计划。

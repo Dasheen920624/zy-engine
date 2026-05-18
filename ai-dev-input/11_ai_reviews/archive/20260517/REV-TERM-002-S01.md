@@ -27,18 +27,18 @@ feature_acceptance_id: FA-TERM-002-S01
 
 ```text
 Reviewed files:
-  src/main/java/com/zyengine/terminology/TerminologyService.java
-  src/main/java/com/zyengine/terminology/TerminologyController.java
-  src/main/java/com/zyengine/persistence/EnginePersistenceService.java
-  src/test/java/com/zyengine/EngineApiContractTests.java
-  zy-engine-mvp/src/main/resources/db/local/h2_core_ddl.sql
+  src/main/java/com/medkernel/terminology/TerminologyService.java
+  src/main/java/com/medkernel/terminology/TerminologyController.java
+  src/main/java/com/medkernel/persistence/EnginePersistenceService.java
+  src/test/java/com/medkernel/EngineApiContractTests.java
+  medkernel-mvp/src/main/resources/db/local/h2_core_ddl.sql
   ai-dev-input/04_database/oracle/core_ddl.sql
   ai-dev-input/04_database/dm/core_ddl.sql
   ai-dev-input/04_database/postgres/core_ddl.sql
   ai-dev-input/04_database/local/h2_core_ddl.sql
-  zy-engine-mvp/db/oracle/zyengine_core_ddl_with_comments.sql
-  zy-engine-mvp/db/dm/zyengine_core_ddl_with_comments.sql
-  zy-engine-mvp/db/postgres/zyengine_core_ddl_with_comments.sql
+  medkernel-mvp/db/oracle/medkernel_core_ddl_with_comments.sql
+  medkernel-mvp/db/dm/medkernel_core_ddl_with_comments.sql
+  medkernel-mvp/db/postgres/medkernel_core_ddl_with_comments.sql
   ai-dev-input/06_samples/sample_unmapped_terms.json
 Out of scope:
   前端治理队列页面
@@ -101,7 +101,7 @@ feature_quality: PASS
 finding_id: F-TERM-002-001
 severity: P0
 status: RESOLVED
-file: zy-engine-mvp/src/main/java/com/zyengine/persistence/EnginePersistenceService.java
+file: medkernel-mvp/src/main/java/com/medkernel/persistence/EnginePersistenceService.java
 line: 1361, 1479
 title: doubleValue(Object, int) 方法未定义，整个项目 build 阻断
 problem: TERM-002 在 saveUnmappedQueueEntry / saveUnmappedQueueEntryLocal 中调用 doubleValue(entry.get("proposed_confidence"), 0)，但该 helper 方法未在 EnginePersistenceService 中定义。
@@ -117,7 +117,7 @@ reviewer_verdict: RESOLVED_BY_REVIEW_FIX_002_AND_CODEX_CLOSEOUT
 finding_id: F-TERM-002-002
 severity: P0
 status: RESOLVED
-file: zy-engine-mvp/src/main/java/com/zyengine/terminology/TerminologyService.java
+file: medkernel-mvp/src/main/java/com/medkernel/terminology/TerminologyService.java
 line: 264-301
 title: PENDING_MAPPING 治理队列无大小上限，可 OOM
 problem: governanceQueue 是 ConcurrentHashMap，未映射项进入队列无清理/淘汰机制。高频未映射查询场景下队列无限增长。对比 DifyService MAX_INVOCATION_RECORDS=500 等其他模块都有上限。
@@ -131,7 +131,7 @@ reviewer_verdict: RESOLVED_BY_REVIEW_FIX_002_AND_CODEX_CLOSEOUT
 finding_id: F-TERM-002-003
 severity: P1
 status: RESOLVED
-file: zy-engine-mvp/src/main/java/com/zyengine/terminology/TerminologyService.java
+file: medkernel-mvp/src/main/java/com/medkernel/terminology/TerminologyService.java
 line: 241-247
 title: approve/reject 查询与更新非原子，存在 TOCTOU 竞态
 problem: findQueueEntry() 与 approve/reject 操作之间无锁，多线程并发审批同一项可能：1) 一项被两个线程审批后双重写入映射缓存；2) 一项被并发删除后另一线程操作空对象。
@@ -144,7 +144,7 @@ reviewer_verdict: RESOLVED_BY_REVIEW_FIX_002_AND_CODEX_CLOSEOUT
 finding_id: F-TERM-002-004
 severity: P1
 status: RESOLVED
-file: zy-engine-mvp/src/main/java/com/zyengine/terminology/TerminologyService.java
+file: medkernel-mvp/src/main/java/com/medkernel/terminology/TerminologyService.java
 line: 210-239
 title: rejectPendingMapping 仅删除内存，DB 中 REJECTED 永不清理（表膨胀）
 problem: 拒绝审批后 governanceQueue.remove(...) 但 DB 中的 REJECTED 记录从未删除或归档。
@@ -157,7 +157,7 @@ reviewer_verdict: RESOLVED_BY_REVIEW_FIX_002_AND_CODEX_CLOSEOUT
 finding_id: F-TERM-002-005
 severity: P1
 status: RESOLVED
-file: zy-engine-mvp/src/main/java/com/zyengine/persistence/EnginePersistenceService.java
+file: medkernel-mvp/src/main/java/com/medkernel/persistence/EnginePersistenceService.java
 line: saveUnmappedQueueEntryLocal
 title: UPDATE+INSERT 两步无事务，部分成功可导致数据不一致
 problem: H2 local 路径用 UPDATE 失败回退 INSERT，但两步无 connection.setAutoCommit(false) + commit() 包裹。

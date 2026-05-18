@@ -39,7 +39,7 @@ git status
 git diff
 ai-dev-input/10_task_claims/**
 ai-dev-input/11_ai_reviews/**
-zy-engine-mvp/**
+medkernel-mvp/**
 deploy/**
 frontend-prototype/**
 ```
