@@ -4,9 +4,8 @@
 
 正式机制见：
 
-```text
-../../zy-engine-mvp/docs/AI自主开发运行守则.md
-```
+- [`../../docs/engineering/00_总入口与AI接手导航.md`](../../docs/engineering/00_总入口与AI接手导航.md) — 接手流程与硬门禁
+- [`../../docs/05_AI实施手册.md`](../../docs/05_AI实施手册.md) — 12 PR 拓扑图与实施步骤
 
 目录含义：
 

@@ -4,10 +4,8 @@
 
 正式机制见：
 
-```text
-../../zy-engine-mvp/docs/AI任务认领与并行开发机制.md
-../../zy-engine-mvp/docs/AI开发质量门禁与评审整改机制.md
-```
+- [`../../docs/engineering/00_总入口与AI接手导航.md §2.1`](../../docs/engineering/00_总入口与AI接手导航.md) — 并发开发硬机制
+- [`../../docs/05_AI实施手册.md §16`](../../docs/05_AI实施手册.md) — PR 协作与冲突处理
 
 目录含义：
 

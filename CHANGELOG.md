@@ -8,6 +8,22 @@
 
 ## [Unreleased]
 
+### Changed
+- **文档体系 V2 + 物理重组（2026-05-18）：** 35 份历史文档冗余冲突，重做为"金本位 5 份 + 工程规范 15 份 + 归档 31 份"。
+  - 新增项目根 `docs/` 作为唯一文档中心：
+    - `docs/01_产品事实源.md` — 产品定义、三产品分层（A 配置工厂 + B 临床嵌入器 + C 质控驾驶舱）、9 角色×3 产品矩阵、6 大剧本、22 不变量
+    - `docs/02_场景剧本图.md` — 6 大客户验收剧本精确 storyboard
+    - `docs/03_设计系统.md` — Design Tokens + 13 核心组件 API + 三产品密度模式
+    - `docs/04_页面规格书.md` — 18 个目标页面精确规格
+    - `docs/05_AI实施手册.md` — 接下来 12 个 PR（PR-V2-01~12）精确清单
+  - 工程规范迁移：`zy-engine-mvp/docs/*.md` → `docs/engineering/`（15 份保留）
+  - 历史归档：19 份废弃长文 + 1 份 V1 草稿 + 11 份早期资料 → `docs/_archive/`（全部加废弃 banner）
+  - 项目根 README、ai-dev-input/README、各模块 README、deploy 引用路径同步更新
+  - `zy-engine-mvp/docs/README.md` 保留为重定向页防止断链
+  - V2 PR 命名空间隔离：PR-V2-01~12 为权威主键，不复用历史 FE-XXX 编号避免冲突
+- 任务台账新增 §2.5 V2 PR 优先级总览，V2 PR 优先级最高
+- 05_架构总图新增 §1.1 三产品分层与架构关系
+
 ### Added
 - 架构规范层（ARCH-001）：架构总图与服务边界、后端开发规范、前端开发规范、`.gitattributes`、ESLint flat config、Prettier。
 - 国产化兼容矩阵（ARCH-002）：OS × CPU × JDK × DB 支持矩阵；达梦 DM 完整 DDL（含中文备注与组织上下文迁移）；PostgreSQL / KingbaseES DDL（PG 兼容模式）；数据库方言差异详表；已知坑实战记录。
