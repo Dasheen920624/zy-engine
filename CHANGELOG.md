@@ -8,6 +8,13 @@
 
 ## [Unreleased]
 
+### Removed
+- **物理清理旧文件（2026-05-18，tag `pre-cleanup-20260518` 保留快照）：**
+  - 删除 `docs/_archive/`（31 份历史文档：V1 草稿 1 + V2 之前主线 19 + 早期资料 11）
+  - 删除 `frontend-prototype/`（8 份 HTML 静态原型，FE-002 React 工程已完整替代）
+  - 删除 `zy-engine-mvp/docs/README.md` 重定向页（已无引用风险）
+  - 如需溯源：`git checkout pre-cleanup-20260518`
+
 ### Changed
 - **文档体系 V2 + 物理重组（2026-05-18）：** 35 份历史文档冗余冲突，重做为"金本位 5 份 + 工程规范 15 份 + 归档 31 份"。
   - 新增项目根 `docs/` 作为唯一文档中心：

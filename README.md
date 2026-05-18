@@ -16,7 +16,8 @@
 |---|---|---|
 | **金本位**（产品+设计+实施） | [`docs/`](docs/) | 5 份核心：产品事实源 / 场景剧本图 / 设计系统 / 页面规格书 / AI 实施手册 |
 | **工程规范**（架构+开发） | [`docs/engineering/`](docs/engineering/) | 架构总图 / 前后端规范 / 国产化适配 / 部署 / 任务台账 / 编码规范 |
-| **历史归档**（仅供溯源） | [`docs/_archive/`](docs/_archive/) | 早期产品资料、V1 草稿、已废弃的 19 份历史长文（均已加废弃 banner） |
+
+> 历史归档已物理删除（2026-05-18，commit `e336bb8` 之后）。如需溯源旧文档（V1 草稿 / 19 份 V2 之前主线 / 11 份早期资料），请 `git checkout pre-cleanup-20260518` 回到清理前快照。
 
 ---
 
@@ -27,7 +28,6 @@
 | [`docs/`](docs/) | 所有文档（产品 + 工程 + 归档） |
 | [`zy-engine-mvp/`](zy-engine-mvp/README.md) | 后端 MVP 工程（Spring Boot 2.7 / JDK 1.8） |
 | [`frontend/`](frontend/README.md) | 前端工程（React 18 + TypeScript + Vite + Ant Design 5） |
-| [`frontend-prototype/`](frontend-prototype/README.md) | 早期高保真静态原型（供视觉参考） |
 | [`ai-dev-input/`](ai-dev-input/README.md) | AI 协作运行时（任务卡 / claim / review / 验收记录 / 演示数据 / DDL） |
 | [`deploy/`](deploy/README.md) | 内网自动化部署（Linux *.sh / Windows *.ps1） |
 
