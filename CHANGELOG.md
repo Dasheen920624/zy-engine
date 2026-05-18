@@ -30,7 +30,7 @@
   - HTTP context path：`/zy-engine/api/*` → `/medkernel/api/*`
   - Spring application name：`zy-engine` → `medkernel`
   - 部署目录：`/zoesoft/zy-engine` → `/zoesoft/medkernel`（Linux）、`C:\zoesoft\medkernel`（Windows）
-  - 环境变量：`ZY_HOME` → `MK_HOME`、`ZY_BACKUP_DIR` → `MK_BACKUP_DIR`、`ZYENGINE_*` → `MEDKERNEL_*`
+  - 环境变量：`ZY_HOME` → `MK_HOME`、`ZY_BACKUP_DIR` → `MK_BACKUP_DIR`、`ZY_USER` → `MK_USER`、`ZY_ENV_FILE` → `MK_ENV_FILE`、`ZYENGINE_*` → `MEDKERNEL_*`
   - 配置文件：`zyengine.env` → `medkernel.env`
   - systemd 服务：`zy-engine.service` → `medkernel.service`、Windows 服务名 `ZyEngine` → `MedKernel`
   - SQL 文件名：`zyengine_core_ddl_with_comments.sql` 等 7 个 → `medkernel_*` 同名

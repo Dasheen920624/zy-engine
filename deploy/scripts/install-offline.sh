@@ -28,19 +28,19 @@ log_step "1. 检查环境"
 "$SCRIPT_DIR/check-env.sh" || die "环境检查失败"
 
 log_step "2. 创建运行用户与目录"
-if ! id "$ZY_USER" >/dev/null 2>&1; then
-  useradd -m -s /bin/bash "$ZY_USER"
-  log_ok "已创建用户 $ZY_USER"
+if ! id "$MK_USER" >/dev/null 2>&1; then
+  useradd -m -s /bin/bash "$MK_USER"
+  log_ok "已创建用户 $MK_USER"
 else
-  log_ok "用户 $ZY_USER 已存在"
+  log_ok "用户 $MK_USER 已存在"
 fi
 
 for d in "$MK_HOME/logs" "$MK_HOME/conf" "$MK_BACKUP_DIR"; do
   mkdir -p "$d"
-  chown -R "$ZY_USER:$ZY_USER" "$d"
+  chown -R "$MK_USER:$MK_USER" "$d"
 done
 chmod 750 "$MK_HOME/logs"
-[ -f "$ZY_ENV_FILE" ] && chmod 600 "$ZY_ENV_FILE" && chown "$ZY_USER:$ZY_USER" "$ZY_ENV_FILE"
+[ -f "$MK_ENV_FILE" ] && chmod 600 "$MK_ENV_FILE" && chown "$MK_USER:$MK_USER" "$MK_ENV_FILE"
 
 log_step "3. 处理数据库 DDL"
 DIALECT="${MEDKERNEL_DB_DIALECT:-}"

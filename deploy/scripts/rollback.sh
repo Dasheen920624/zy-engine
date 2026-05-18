@@ -41,8 +41,8 @@ for d in lib frontend conf systemd nginx; do
 done
 [ -f "$BACKUP_PATH/manifest.json" ] && cp "$BACKUP_PATH/manifest.json" "$MK_HOME/"
 
-chown -R "$ZY_USER:$ZY_USER" "$MK_HOME"
-chmod 600 "$ZY_ENV_FILE" 2>/dev/null || true
+chown -R "$MK_USER:$MK_USER" "$MK_HOME"
+chmod 600 "$MK_ENV_FILE" 2>/dev/null || true
 
 log_step "3. 重启服务"
 systemctl daemon-reload

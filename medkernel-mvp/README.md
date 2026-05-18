@@ -54,7 +54,7 @@ Oracle 中文表备注和字段备注推荐执行 `db/oracle/medkernel_comments_
 - [../docs/engineering/数据库Provider与离线AI开发约定.md](../docs/engineering/数据库Provider与离线AI开发约定.md) — 多数据库与本地开发
 - [../docs/engineering/产品功能业务核查与开工清单.md](../docs/engineering/产品功能业务核查与开工清单.md) — 医学/医保/质控核查
 
-历史长文已统一归档到 `../docs/_archive/`，仅供溯源，不得作为实施依据。
+> 历史长文已物理清理（2026-05-18 起；如需溯源 `git checkout pre-cleanup-20260518`，详见 CHANGELOG）。
 
 多 AI 开发时，run log、claim、heartbeat、review 等协作元数据可以同步到 `main`；业务代码必须在 `review_status=APPROVED` 且 `open_findings=0` 后才能正式提交、合并或进入主版本。
 

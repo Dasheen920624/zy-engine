@@ -13,7 +13,7 @@ export default function ConfigPackagesPlaceholder() {
         type="warning"
         showIcon
         message="本页面是占位页"
-        description="FE-004 将在此实现配置包列表 / 详情 / Review / diff / hash 校验 / publish / rollback / export。视觉与交互参考 frontend-prototype/config-package-center.html。"
+        description="FE-004 将在此实现配置包列表 / 详情 / Review / diff / hash 校验 / publish / rollback / export。"
       />
       <Card title="将对接的后端接口" style={{ marginTop: 16 }}>
         <Paragraph><code>GET /api/config-packages</code></Paragraph>

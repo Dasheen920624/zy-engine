@@ -13,7 +13,7 @@ export default function DemoValidationPlaceholder() {
         type="warning"
         showIcon
         message="本页面是占位页"
-        description="FE-003 将在此实现 AMI 推荐 / EMR_QC / INSURANCE_QC / ORDER_SAFETY 四类剧本的 dry-run。视觉与交互参考 frontend-prototype/demo-validation.html。"
+        description="FE-003 将在此实现 AMI 推荐 / EMR_QC / INSURANCE_QC / ORDER_SAFETY 四类剧本的 dry-run。"
       />
       <Card title="将对接的后端接口" style={{ marginTop: 16 }}>
         <Paragraph>

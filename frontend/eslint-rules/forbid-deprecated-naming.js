@@ -5,7 +5,7 @@
  *
  * 检测：
  *   - 标识符含 ZyEngine
- *   - 字符串含 'zy-engine' 'zyengine' '/zy-engine/' 'ZyEngine' 'ZY_HOME' 'ZYENGINE_'
+ *   - 字符串含 'zy-engine' 'zyengine' '/zy-engine/' 'ZyEngine' 'ZY_HOME' 'ZY_USER' 'ZY_ENV_FILE' 'ZYENGINE_'
  *   - CSS 变量 --zy-*（已全部改为 --mk-*）
  *   - 注释里的旧命名
  *
@@ -34,6 +34,8 @@ const DEPRECATED_PATTERNS = [
   // 环境变量
   { pattern: /\bZY_HOME\b/, hint: '改用 MK_HOME' },
   { pattern: /\bZY_BACKUP_DIR\b/, hint: '改用 MK_BACKUP_DIR' },
+  { pattern: /\bZY_USER\b/, hint: '改用 MK_USER' },
+  { pattern: /\bZY_ENV_FILE\b/, hint: '改用 MK_ENV_FILE' },
   { pattern: /\bZYENGINE_[A-Z]/, hint: '改用 MEDKERNEL_*' },
 
   // CSS 变量 / 类名（已彻底替换为 mk-）

@@ -99,16 +99,16 @@ check_db_postgres() {
 # ---------------------------------------------------------------------------
 MK_HOME="${MK_HOME:-/zoesoft/medkernel}"
 MK_BACKUP_DIR="${MK_BACKUP_DIR:-/zoesoft/medkernel.bak}"
-ZY_USER="${ZY_USER:-medkernel}"
-ZY_ENV_FILE="${ZY_ENV_FILE:-$MK_HOME/conf/medkernel.env}"
+MK_USER="${MK_USER:-medkernel}"
+MK_ENV_FILE="${MK_ENV_FILE:-$MK_HOME/conf/medkernel.env}"
 
 load_env() {
-  if [ -r "$ZY_ENV_FILE" ]; then
+  if [ -r "$MK_ENV_FILE" ]; then
     # shellcheck disable=SC1090
-    set -a; source "$ZY_ENV_FILE"; set +a
-    log_info "已加载环境变量：$ZY_ENV_FILE"
+    set -a; source "$MK_ENV_FILE"; set +a
+    log_info "已加载环境变量：$MK_ENV_FILE"
   else
-    log_warn "未找到 $ZY_ENV_FILE，使用默认或 shell 已有变量"
+    log_warn "未找到 $MK_ENV_FILE，使用默认或 shell 已有变量"
   fi
 }
 

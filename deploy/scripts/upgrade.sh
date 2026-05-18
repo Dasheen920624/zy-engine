@@ -57,8 +57,8 @@ for d in lib frontend db scripts systemd nginx docs profiles manifest.json CHANG
     cp -a "$TMPDIR_NEW/$d" "$MK_HOME/"
   fi
 done
-chown -R "$ZY_USER:$ZY_USER" "$MK_HOME"
-chmod 600 "$ZY_ENV_FILE" 2>/dev/null || true
+chown -R "$MK_USER:$MK_USER" "$MK_HOME"
+chmod 600 "$MK_ENV_FILE" 2>/dev/null || true
 log_ok "新版本已就位"
 
 log_step "5. 数据库迁移"

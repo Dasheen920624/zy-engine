@@ -13,7 +13,7 @@ export default function ProvenancePlaceholder() {
         type="warning"
         showIcon
         message="本页面是占位页"
-        description="FE-008 将在此实现来源文档库 / 引用片段 / 资产绑定 / 审核记录 / 影响分析。视觉与交互参考 frontend-prototype/provenance.html。依赖 PROV-001 ~ PROV-006 后端能力。"
+        description="FE-008 将在此实现来源文档库 / 引用片段 / 资产绑定 / 审核记录 / 影响分析。依赖 PROV-001 ~ PROV-006 后端能力。"
       />
       <Card title="将对接的后端接口（PROV-xxx 落地后）" style={{ marginTop: 16 }}>
         <Paragraph><code>GET /api/provenance/documents</code></Paragraph>
