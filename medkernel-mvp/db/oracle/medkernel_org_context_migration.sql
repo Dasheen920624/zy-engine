@@ -139,4 +139,4 @@ BEGIN
 END;
 /
 
-PROMPT ZYENGINE org context migration is ready.
+PROMPT MEDKERNEL org context migration is ready.

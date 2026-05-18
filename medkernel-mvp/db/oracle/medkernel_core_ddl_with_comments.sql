@@ -729,4 +729,4 @@ COMMENT ON COLUMN tm_unmapped_queue.last_occurrence_time IS '最近出现时间'
 COMMENT ON COLUMN tm_unmapped_queue.created_time IS '创建时间';
 COMMENT ON COLUMN tm_unmapped_queue.updated_time IS '更新时间';
 
-PROMPT ZYENGINE core tables and comments are ready.
+PROMPT MEDKERNEL core tables and comments are ready.

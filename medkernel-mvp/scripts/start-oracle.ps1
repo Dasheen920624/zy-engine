@@ -31,7 +31,7 @@ if ([string]::IsNullOrWhiteSpace($DbUrl)) {
   $DbUrl = "jdbc:oracle:thin:@//192.168.4.25:1521/ORCL"
 }
 if ([string]::IsNullOrWhiteSpace($DbUsername)) {
-  $DbUsername = "ZYENGINE"
+  $DbUsername = "MEDKERNEL"
 }
 if ([string]::IsNullOrWhiteSpace($DbPassword)) {
   throw "Please set MEDKERNEL_DB_PASSWORD before starting Oracle mode."

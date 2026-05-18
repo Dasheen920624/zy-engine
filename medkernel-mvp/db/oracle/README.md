@@ -24,7 +24,7 @@ medkernel_core_ddl_with_comments.sql
 
 ```powershell
 $env:MEDKERNEL_DB_CONNECT='//192.168.4.25:1521/ORCL'
-$env:MEDKERNEL_DB_USERNAME='ZYENGINE'
+$env:MEDKERNEL_DB_USERNAME='MEDKERNEL'
 $env:MEDKERNEL_DB_PASSWORD='数据库密码'
 .\scripts\run-oracle-ddl.ps1
 ```

@@ -55,7 +55,7 @@
 
 ```powershell
 $env:MEDKERNEL_DB_URL='jdbc:oracle:thin:@//192.168.4.25:1521/ORCL'
-$env:MEDKERNEL_DB_USERNAME='ZYENGINE'
+$env:MEDKERNEL_DB_USERNAME='MEDKERNEL'
 $env:MEDKERNEL_DB_PASSWORD='数据库密码'
 .\scripts\start-oracle.cmd
 ```
@@ -64,7 +64,7 @@ $env:MEDKERNEL_DB_PASSWORD='数据库密码'
 
 ```powershell
 $env:MEDKERNEL_DB_CONNECT='//192.168.4.25:1521/ORCL'
-$env:MEDKERNEL_DB_USERNAME='ZYENGINE'
+$env:MEDKERNEL_DB_USERNAME='MEDKERNEL'
 $env:MEDKERNEL_DB_PASSWORD='数据库密码'
 .\scripts\run-oracle-ddl.cmd
 ```

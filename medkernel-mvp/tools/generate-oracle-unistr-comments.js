@@ -33,7 +33,7 @@ source.split(/\r?\n/).forEach((line) => {
 
 lines.push("END;");
 lines.push("/");
-lines.push("PROMPT ZYENGINE unicode comments are ready.");
+lines.push("PROMPT MEDKERNEL unicode comments are ready.");
 
 fs.writeFileSync(output, lines.join("\n") + "\n", "ascii");
 console.log(output);

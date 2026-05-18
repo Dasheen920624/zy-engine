@@ -17,7 +17,7 @@ medkernel:
     role: ${MEDKERNEL_DB_ROLE:production}
     enabled: ${MEDKERNEL_DB_ENABLED:false}
     url: ${MEDKERNEL_DB_URL:jdbc:oracle:thin:@//192.168.4.25:1521/ORCL}
-    username: ${MEDKERNEL_DB_USERNAME:ZYENGINE}
+    username: ${MEDKERNEL_DB_USERNAME:MEDKERNEL}
     password: ${MEDKERNEL_DB_PASSWORD:}
     init-schema: ${MEDKERNEL_DB_INIT_SCHEMA:true}
   dify:

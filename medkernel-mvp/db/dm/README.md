@@ -19,7 +19,7 @@
 ```powershell
 $env:MEDKERNEL_DB_DIALECT='dm'
 $env:MEDKERNEL_DB_CONNECT='192.168.4.30:5236'
-$env:MEDKERNEL_DB_USERNAME='ZYENGINE'
+$env:MEDKERNEL_DB_USERNAME='MEDKERNEL'
 $env:MEDKERNEL_DB_PASSWORD='数据库密码'
 # 批次 3 提供 scripts/run-dm-ddl.ps1，本批次 README 提供手工执行方式
 ```

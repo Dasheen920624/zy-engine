@@ -27,7 +27,7 @@ if ([string]::IsNullOrWhiteSpace($Connect)) {
   $Connect = "//192.168.4.25:1521/ORCL"
 }
 if ([string]::IsNullOrWhiteSpace($Username)) {
-  $Username = "ZYENGINE"
+  $Username = "MEDKERNEL"
 }
 if ([string]::IsNullOrWhiteSpace($Password)) {
   throw "Please set MEDKERNEL_DB_PASSWORD before running this script."

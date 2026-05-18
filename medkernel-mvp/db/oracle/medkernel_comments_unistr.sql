@@ -122,4 +122,4 @@ BEGIN
   EXECUTE IMMEDIATE 'COMMENT ON COLUMN engine_audit_log.detail_json IS ''' || UNISTR('\64CD\4F5C\8BE6\60C5\004A\0053\004F\004E') || '''';
 END;
 /
-PROMPT ZYENGINE unicode comments are ready.
+PROMPT MEDKERNEL unicode comments are ready.

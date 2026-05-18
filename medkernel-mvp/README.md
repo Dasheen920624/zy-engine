@@ -23,7 +23,7 @@
 - 组织上下文：支持 `tenant_id/group_code/hospital_code/campus_code/site_code/department_code` 解析，默认兼容 `default/ZYHOSPITAL`，并返回配置继承顺序。
 - 组织目录：支持集团、医院、院区、卫生所/站点、科室导入、列表、详情和树形回查；`PLATFORM` 不可导入为真实组织，只作为系统内置默认基线。
 - 路径任务取数：任务配置了 `source.adapter_code/query_code` 时，完成任务会自动调用适配器 Mock 并保存取数结果。
-- Oracle 持久化：可选开启，已验证可写入 `ZYENGINE` 用户下的核心表。
+- Oracle 持久化：可选开启，已验证可写入 `MEDKERNEL` 用户下的核心表。
 - 本地文件库持久化：AI/离线开发环境可使用 H2 文件数据库 `LOCAL_H2_FILE`，无需公司内网和 Oracle 服务，启动时自动初始化本地 schema；Oracle 仍是生产权威库。
 - 运行模式探测：`GET /system/providers` 返回数据库、Neo4j、Dify 当前 Provider、ready 状态和降级原因，便于 DB-only 测试环境和内网集成环境使用同一套验收口径。
 
@@ -175,7 +175,7 @@ $env:MEDKERNEL_DIFY_API_KEY='Dify应用API密钥'
 ```powershell
 $env:MEDKERNEL_DB_ENABLED='true'
 $env:MEDKERNEL_DB_URL='jdbc:oracle:thin:@//192.168.4.25:1521/ORCL'
-$env:MEDKERNEL_DB_USERNAME='ZYENGINE'
+$env:MEDKERNEL_DB_USERNAME='MEDKERNEL'
 $env:MEDKERNEL_DB_PASSWORD='数据库密码'
 .\scripts\start-oracle.cmd
 ```
@@ -198,7 +198,7 @@ db/oracle/medkernel_core_ddl_with_comments.sql
 
 ```powershell
 $env:MEDKERNEL_DB_CONNECT='//192.168.4.25:1521/ORCL'
-$env:MEDKERNEL_DB_USERNAME='ZYENGINE'
+$env:MEDKERNEL_DB_USERNAME='MEDKERNEL'
 $env:MEDKERNEL_DB_PASSWORD='数据库密码'
 .\scripts\run-oracle-ddl.cmd
 ```
