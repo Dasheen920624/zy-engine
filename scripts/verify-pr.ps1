@@ -27,6 +27,10 @@ param(
   [switch]$SkipBackend
 )
 
+# 锚定到项目根（脚本所在目录的父目录），让后续所有相对路径检查不受调用方 cwd 影响
+$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+Set-Location -LiteralPath $ProjectRoot
+
 $ErrorActionPreference = "Continue"
 $PASS_COUNT = 0
 $FAIL_COUNT = 0
@@ -75,9 +79,16 @@ if ([string]::IsNullOrWhiteSpace($status)) {
 Show-Section "2. ADR 不变量未被违反"
 
 # 仅检查本次 diff 中新增的内容（不检查全仓库）
-$diff = git diff --cached origin/main -- ":(exclude)*.md" ":(exclude)CHANGELOG.md" 2>$null
+# 排除：所有 .md（按 forbidden-patterns.md:6 文档类豁免）、ESLint 规则文件（自身需含禁用模式）、本脚本（自身豁免）
+$ExcludePathspecs = @(
+  ":(exclude)*.md",
+  ":(exclude)CHANGELOG.md",
+  ":(exclude)frontend/eslint-rules/forbid-deprecated-naming.js",
+  ":(exclude)scripts/verify-pr.ps1"
+)
+$diff = git diff --cached origin/main -- $ExcludePathspecs 2>$null
 if (-not $diff) {
-  $diff = git diff origin/main -- ":(exclude)*.md" ":(exclude)CHANGELOG.md" 2>$null
+  $diff = git diff origin/main -- $ExcludePathspecs 2>$null
 }
 
 if ($diff) {

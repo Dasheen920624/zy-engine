@@ -105,8 +105,8 @@ if ($activeClaims.Count -eq 0) {
 
 Write-Section "Pending Reviews"
 $reviewDirs = @(
-  Join-Path $repoRoot "ai-dev-input\11_ai_reviews\pending",
-  Join-Path $repoRoot "ai-dev-input\11_ai_reviews\changes_requested"
+  (Join-Path $repoRoot "ai-dev-input\11_ai_reviews\pending"),
+  (Join-Path $repoRoot "ai-dev-input\11_ai_reviews\changes_requested")
 )
 $reviews = foreach ($dir in $reviewDirs) {
   Get-ChildItem -Path $dir -Filter "*.md" -File -ErrorAction SilentlyContinue
@@ -124,8 +124,8 @@ if ($reviews.Count -eq 0) {
 
 Write-Section "Feature Acceptance"
 $acceptanceDirs = @(
-  Join-Path $repoRoot "ai-dev-input\13_feature_acceptance\pending",
-  Join-Path $repoRoot "ai-dev-input\13_feature_acceptance\needs_optimization"
+  (Join-Path $repoRoot "ai-dev-input\13_feature_acceptance\pending"),
+  (Join-Path $repoRoot "ai-dev-input\13_feature_acceptance\needs_optimization")
 )
 $acceptanceItems = foreach ($dir in $acceptanceDirs) {
   Get-ChildItem -Path $dir -Filter "*.md" -File -ErrorAction SilentlyContinue
