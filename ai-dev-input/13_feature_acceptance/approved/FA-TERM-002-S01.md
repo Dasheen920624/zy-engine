@@ -4,15 +4,15 @@ acceptance_id: FA-TERM-002-S01
 feature_id: TERM-002
 task_id: TERM-002
 claim_id: TERM-002-S01
-review_id:
+review_id: REV-TERM-002-S01
 title: 未映射治理队列 - PENDING_MAPPING 持久化 + 查询 + 审批
 owner: CodeBuddy-20260517-term-governance-01
-status: PENDING
+status: APPROVED
 quality_level: SILVER
 created_at: 2026-05-17T22:00:00+08:00
-updated_at: 2026-05-17T22:00:00+08:00
-commit:
-push:
+updated_at: 2026-05-18T10:40:00+08:00
+commit: closeout commit reported in final response
+push: closeout push pending
 
 ## Scope
 
@@ -75,4 +75,15 @@ compliance_reviewer:
 1. Oracle 生产库未实际验证（需内网环境执行 run-oracle-ddl.ps1）
 2. 前端治理队列页面尚未实现，目前只能通过 API 操作
 3. 自动映射建议（proposed_standard_code）暂未实现智能推荐
+```
+
+## Closeout Evidence
+
+```text
+closeout_owner: Codex-closeout-20260518
+reason: 原 active claim 无 AI 继续工作，用户确认可处理；REVIEW-FIX-002 已修复原 review findings
+run-tests.ps1: PASS
+build.ps1: PASS
+git diff --check: PASS
+quality_level: SILVER（API/后端/DDL 已验收；Oracle 生产库和前端页面仍为明确非本任务范围/待后续）
 ```
