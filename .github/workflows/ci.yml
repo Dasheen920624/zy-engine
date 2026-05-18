@@ -1,16 +1,18 @@
-name: ZY Engine CI
+name: MedKernel CI
 
 on:
   push:
     branches:
       - main
+      - develop
   pull_request:
     branches:
       - main
+      - develop
 
 jobs:
-  build:
-    name: Build and verify
+  backend-build-test:
+    name: Backend build + tests
     runs-on: windows-latest
 
     steps:
@@ -34,3 +36,28 @@ jobs:
 
       - name: Run JUnit contract tests
         run: .\medkernel-mvp\scripts\run-tests.cmd
+
+  guard-rules:
+    name: Guard rules (verify-pr.ps1)
+    runs-on: windows-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+
+    steps:
+      - name: Checkout (full history for git diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run verify-pr.ps1 (skip backend/frontend build, only guard rules)
+        shell: powershell
+        run: |
+          $head = $env:GITHUB_HEAD_REF
+          if ($head -match '^ai/([A-Za-z0-9-]+)/') {
+            $taskId = $matches[1]
+          } elseif ($head -match '^feature/([A-Za-z0-9-]+)/') {
+            $taskId = $matches[1]
+          } else {
+            $taskId = "CI-PR-$($env:GITHUB_RUN_ID)"
+          }
+          Write-Host "Resolved TaskId = $taskId"
+          .\scripts\verify-pr.ps1 -TaskId $taskId -SkipFrontend -SkipBackend

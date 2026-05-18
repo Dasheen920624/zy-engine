@@ -8,6 +8,20 @@
 
 ## [Unreleased]
 
+### Added (2026-05-19)
+- **分支策略与发布管理**（多 AI 并行 + main 永远稳定）：
+  - 新增 [`docs/engineering/分支策略与发布管理.md`](docs/engineering/分支策略与发布管理.md)
+  - 启用简化 Git Flow：`main`（稳定基线）+ `develop`（所有 AI 推到这里）+ `feature/<TASK-ID>/<slug>`（可选，大型变更）
+  - `main` 仅接受 develop → main 的 PR；每次 merge 后立即打 `stable-YYYY-MM-DD-<short-hash>` tag
+  - AI 任务分支命名 `ai/<TASK-ID>/<slug>`（与 02_任务台账 双向可查）
+  - 已打基线 tag `stable-2026-05-19`（在 main HEAD = `5043d96`，Phase E 全部完成节点）
+  - 已创建 `origin/develop` 分支（与 main 同步起点 = `5043d96`）
+- **CI 升级**（`.github/workflows/ci.yml`）：
+  - 项目名 `ZY Engine CI` → `MedKernel CI`
+  - 触发分支：`main` 和 `develop` 都触发 build + test
+  - PR to main 增加 `guard-rules` job：跑 `verify-pr.ps1 -SkipFrontend -SkipBackend`，校验禁用命名 / 路径断链 / UTF-8 / AI 协作
+  - 从分支名 `ai/<TASK-ID>/<slug>` 或 `feature/<TASK-ID>/<slug>` 自动解析 TaskId
+
 ### Added (2026-05-18)
 - **AI 一致性保证 7 套机制**（开工前最后基础设施）：
   - `docs/engineering/AI一致性保证.md` 总览
