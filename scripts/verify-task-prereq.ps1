@@ -1,4 +1,4 @@
-# 接手前自检脚本：AI 领任务前必须跑通此脚本才能创建 active claim。
+﻿# 接手前自检脚本：AI 领任务前必须跑通此脚本才能创建 active claim。
 #
 # 用法：
 #   .\scripts\verify-task-prereq.ps1 -TaskId PR-V2-01 -Level senior

@@ -48,7 +48,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run verify-pr.ps1 (skip backend/frontend build, only guard rules)
-        shell: powershell
+        shell: pwsh
         env:
           EVENT_BEFORE: ${{ github.event.before }}
         run: |
