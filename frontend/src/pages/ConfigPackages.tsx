@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
-  Badge,
   Button,
   Card,
   Col,
@@ -42,8 +41,8 @@ import {
   publishPackage,
   exportPackage,
 } from "../api/configPackage";
-import { ApiError } from "../api/types";
 import type {
+  ApiError,
   AssetType,
   ConfigPackageDetail,
   ConfigPackageReview,
@@ -56,6 +55,11 @@ import type {
 const { Text } = Typography;
 
 // ─── 常量 ──────────────────────────────────────────────────────────────
+
+interface PackageKey {
+  code: string;
+  version: string;
+}
 
 const ASSET_TYPE_OPTIONS: { value: AssetType; label: string }[] = [
   { value: "RULE", label: "RULE" },
@@ -136,14 +140,45 @@ function changeTypeLabel(ct?: string): string {
   }
 }
 
+function requirePackageKey(key: PackageKey | null): PackageKey {
+  if (!key) {
+    throw new Error("selected package is required");
+  }
+  return key;
+}
+
+function diffLineColor(type: "add" | "del" | "neutral"): string {
+  switch (type) {
+    case "add":
+      return "var(--mk-code-add)";
+    case "del":
+      return "var(--mk-code-del)";
+    case "neutral":
+    default:
+      return "var(--mk-code-text)";
+  }
+}
+
+function diffLineBackground(type: "add" | "del" | "neutral"): string {
+  switch (type) {
+    case "add":
+      return "var(--mk-code-add-bg)";
+    case "del":
+      return "var(--mk-code-del-bg)";
+    case "neutral":
+    default:
+      return "transparent";
+  }
+}
+
 function issueIcon(severity: string) {
   switch (severity) {
     case "ERROR":
-      return <ExclamationCircleOutlined style={{ color: "#b91c1c" }} />;
+      return <ExclamationCircleOutlined style={{ color: "var(--mk-danger)" }} />;
     case "WARNING":
-      return <WarningOutlined style={{ color: "#b45309" }} />;
+      return <WarningOutlined style={{ color: "var(--mk-warning)" }} />;
     default:
-      return <CheckCircleOutlined style={{ color: "#047857" }} />;
+      return <CheckCircleOutlined style={{ color: "var(--mk-success)" }} />;
   }
 }
 
@@ -218,7 +253,7 @@ function FilterToolbar({
           <Input
             size="small"
             placeholder="包编码 / 名称"
-            prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
+            prefix={<SearchOutlined style={{ color: "var(--mk-text-tertiary)" }} />}
             value={filters.keyword}
             onChange={(e) => onChange({ keyword: e.target.value })}
             allowClear
@@ -240,8 +275,8 @@ function ReviewCheckList({ issues }: { issues: ReviewIssue[] }) {
     return (
       <div style={{ padding: "8px 0" }}>
         <Space>
-          <CheckCircleOutlined style={{ color: "#047857" }} />
-          <Text style={{ color: "#047857" }}>全部检查通过</Text>
+          <CheckCircleOutlined style={{ color: "var(--mk-success)" }} />
+          <Text style={{ color: "var(--mk-success)" }}>全部检查通过</Text>
         </Space>
       </div>
     );
@@ -254,7 +289,8 @@ function ReviewCheckList({ issues }: { issues: ReviewIssue[] }) {
           key={i}
           style={{
             padding: "8px 0",
-            borderBottom: i < issues.length - 1 ? "1px solid #f0f0f0" : "none",
+            borderBottom:
+              i < issues.length - 1 ? "var(--mk-border-width) solid var(--mk-border-divider)" : "none",
             display: "flex",
             gap: 8,
             alignItems: "flex-start",
@@ -292,7 +328,7 @@ function ManifestTable({ manifest }: { manifest?: Record<string, unknown> }) {
   }
 
   const cols: ColumnsType<(typeof items)[0]> = [
-    { title: "资产编码", dataIndex: "asset_code", key: "code", render: (v: string) => <code style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{v}</code> },
+    { title: "资产编码", dataIndex: "asset_code", key: "code", render: (v: string) => <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 12 }}>{v}</code> },
     { title: "类型", dataIndex: "asset_type", key: "type", width: 80 },
     { title: "版本", dataIndex: "version", key: "version", width: 60 },
     {
@@ -336,11 +372,11 @@ function DiffView({ diff }: { diff?: Record<string, unknown> }) {
     return (
       <pre
         style={{
-          background: "#f8f9fa",
+          background: "var(--mk-bg-muted)",
           padding: 12,
           borderRadius: 4,
           fontSize: 12,
-          fontFamily: "var(--font-mono)",
+          fontFamily: "var(--mk-font-mono)",
           maxHeight: 300,
           overflow: "auto",
           margin: 0,
@@ -354,11 +390,11 @@ function DiffView({ diff }: { diff?: Record<string, unknown> }) {
   return (
     <pre
       style={{
-        background: "#1e1e1e",
+        background: "var(--mk-bg-inverse)",
         padding: 12,
         borderRadius: 4,
         fontSize: 12,
-        fontFamily: "var(--font-mono)",
+        fontFamily: "var(--mk-font-mono)",
         maxHeight: 300,
         overflow: "auto",
         margin: 0,
@@ -368,13 +404,8 @@ function DiffView({ diff }: { diff?: Record<string, unknown> }) {
         <div
           key={i}
           style={{
-            color: line.type === "add" ? "#4ade80" : line.type === "del" ? "#f87171" : "#d4d4d4",
-            background:
-              line.type === "add"
-                ? "rgba(74,222,128,0.08)"
-                : line.type === "del"
-                  ? "rgba(248,113,113,0.08)"
-                  : "transparent",
+            color: diffLineColor(line.type),
+            background: diffLineBackground(line.type),
             padding: "1px 4px",
             borderRadius: 2,
           }}
@@ -406,6 +437,16 @@ export default function ConfigPackages() {
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [approvedBy, setApprovedBy] = useState("");
   const [approvedNote, setApprovedNote] = useState("");
+  const selectedPackageKey = useMemo<PackageKey | null>(
+    () =>
+      selectedPkg
+        ? {
+            code: selectedPkg.package_code,
+            version: selectedPkg.package_version,
+          }
+        : null,
+    [selectedPkg],
+  );
 
   // ─── 数据查询 ────────────────────────────────────────────────
 
@@ -439,9 +480,12 @@ export default function ConfigPackages() {
     data: pkgDetail,
     isLoading: detailLoading,
   } = useQuery<ConfigPackageDetail, ApiError>({
-    queryKey: ["config-package-detail", selectedPkg?.package_code, selectedPkg?.package_version],
-    queryFn: () => getPackageDetail(selectedPkg!.package_code, selectedPkg!.package_version),
-    enabled: !!selectedPkg,
+    queryKey: ["config-package-detail", selectedPackageKey?.code, selectedPackageKey?.version],
+    queryFn: () => {
+      const key = requirePackageKey(selectedPackageKey);
+      return getPackageDetail(key.code, key.version);
+    },
+    enabled: Boolean(selectedPackageKey),
   });
 
   // Review 查询
@@ -449,15 +493,21 @@ export default function ConfigPackages() {
     data: pkgReview,
     isLoading: reviewLoading,
   } = useQuery<ConfigPackageReview, ApiError>({
-    queryKey: ["config-package-review", selectedPkg?.package_code, selectedPkg?.package_version],
-    queryFn: () => reviewPackage(selectedPkg!.package_code, selectedPkg!.package_version),
-    enabled: !!selectedPkg,
+    queryKey: ["config-package-review", selectedPackageKey?.code, selectedPackageKey?.version],
+    queryFn: () => {
+      const key = requirePackageKey(selectedPackageKey);
+      return reviewPackage(key.code, key.version);
+    },
+    enabled: Boolean(selectedPackageKey),
   });
 
   // ─── 操作 mutation ──────────────────────────────────────────
 
   const reviewMutation = useMutation<ConfigPackageReview, ApiError>({
-    mutationFn: () => reviewPackage(selectedPkg!.package_code, selectedPkg!.package_version),
+    mutationFn: () => {
+      const key = requirePackageKey(selectedPackageKey);
+      return reviewPackage(key.code, key.version);
+    },
     onSuccess: (data) => {
       message.success(`Review 完成 · ${data.ready_to_publish ? "可发布" : "存在问题"}`);
       queryClient.invalidateQueries({ queryKey: ["config-package-review"] });
@@ -467,7 +517,10 @@ export default function ConfigPackages() {
   });
 
   const publishMut = useMutation<ConfigPackageDetail, ApiError, { approved_by: string; approved_note?: string }>({
-    mutationFn: (req) => publishPackage(selectedPkg!.package_code, selectedPkg!.package_version, req),
+    mutationFn: (req) => {
+      const key = requirePackageKey(selectedPackageKey);
+      return publishPackage(key.code, key.version, req);
+    },
     onSuccess: () => {
       message.success("发布成功");
       setPublishModalOpen(false);
@@ -481,14 +534,18 @@ export default function ConfigPackages() {
   });
 
   const exportMut = useMutation({
-    mutationFn: () => exportPackage(selectedPkg!.package_code, selectedPkg!.package_version),
+    mutationFn: () => {
+      const key = requirePackageKey(selectedPackageKey);
+      return exportPackage(key.code, key.version);
+    },
     onSuccess: (data) => {
+      const key = requirePackageKey(selectedPackageKey);
       // 下载为 JSON
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${selectedPkg!.package_code}_${selectedPkg!.package_version}_snapshot.json`;
+      a.download = `${key.code}_${key.version}_snapshot.json`;
       a.click();
       URL.revokeObjectURL(url);
       message.success("导出成功");
@@ -524,14 +581,14 @@ export default function ConfigPackages() {
       title: "包编码",
       dataIndex: "package_code",
       key: "code",
-      render: (v: string) => <Text strong style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>{v}</Text>,
+      render: (v: string) => <Text strong style={{ fontFamily: "var(--mk-font-mono)", fontSize: 13 }}>{v}</Text>,
     },
     {
       title: "版本",
       dataIndex: "package_version",
       key: "version",
       width: 120,
-      render: (v: string) => <code style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{v}</code>,
+      render: (v: string) => <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 12 }}>{v}</code>,
     },
     {
       title: "类型",
@@ -561,7 +618,7 @@ export default function ConfigPackages() {
       width: 100,
       render: (v: string) => (
         <Tooltip title={v}>
-          <code style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>{shortHash(v)}</code>
+          <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 11 }}>{shortHash(v)}</code>
         </Tooltip>
       ),
     },
@@ -668,7 +725,7 @@ export default function ConfigPackages() {
               background:
                 selectedPkg?.package_code === r.package_code &&
                 selectedPkg?.package_version === r.package_version
-                  ? "#dbeafe"
+                  ? "var(--mk-brand-primary-soft)"
                   : undefined,
             },
           })}
@@ -717,29 +774,36 @@ export default function ConfigPackages() {
           }
         >
           {detailLoading || reviewLoading ? (
-            <div style={{ textAlign: "center", padding: 40, color: "#9ca3af" }}>加载中...</div>
+            <div style={{ textAlign: "center", padding: 40, color: "var(--mk-text-tertiary)" }}>
+              加载中...
+            </div>
           ) : (
             <Row gutter={16}>
               {/* 左栏：基础信息 + manifest */}
               <Col xs={24} lg={12}>
                 <h4 style={{ marginBottom: 12, fontWeight: 500 }}>基础信息</h4>
-                <Descriptions column={1} size="small" labelStyle={{ color: "#6b7280", width: 140 }} style={{ marginBottom: 16 }}>
+                <Descriptions
+                  column={1}
+                  size="small"
+                  labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
+                  style={{ marginBottom: 16 }}
+                >
                   <Descriptions.Item label="package_code">
-                    <code style={{ fontFamily: "var(--font-mono)" }}>{selectedPkg.package_code}</code>
+                    <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.package_code}</code>
                   </Descriptions.Item>
                   <Descriptions.Item label="package_version">
-                    <code style={{ fontFamily: "var(--font-mono)" }}>{selectedPkg.package_version}</code>
+                    <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.package_version}</code>
                   </Descriptions.Item>
                   <Descriptions.Item label="asset_type">
                     <Tag color="blue">{selectedPkg.asset_type}</Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label="scope">{selectedPkg.scope_reference || `${selectedPkg.scope_level} · ${selectedPkg.scope_code}`}</Descriptions.Item>
                   <Descriptions.Item label="base_version">
-                    <code style={{ fontFamily: "var(--font-mono)" }}>{selectedPkg.base_version || "—"}</code>
+                    <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.base_version || "—"}</code>
                   </Descriptions.Item>
                   <Descriptions.Item label="content_hash">
                     <Tooltip title={selectedPkg.content_hash}>
-                      <code style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>{shortHash(selectedPkg.content_hash)}</code>
+                      <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 11 }}>{shortHash(selectedPkg.content_hash)}</code>
                     </Tooltip>
                   </Descriptions.Item>
                   <Descriptions.Item label="created_by">{selectedPkg.created_by || "—"} · {formatTime(selectedPkg.created_time)}</Descriptions.Item>
@@ -784,7 +848,11 @@ export default function ConfigPackages() {
                 {pkgReview?.summary && (
                   <div style={{ marginTop: 12 }}>
                     <h4 style={{ marginBottom: 8, fontWeight: 500 }}>校验摘要</h4>
-                    <Descriptions column={1} size="small" labelStyle={{ color: "#6b7280", width: 140 }}>
+                    <Descriptions
+                      column={1}
+                      size="small"
+                      labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
+                    >
                       <Descriptions.Item label="asset_count">{pkgReview.summary.asset_count}</Descriptions.Item>
                       <Descriptions.Item label="full_snapshot">{pkgReview.summary.full_snapshot_present ? <Tag color="success">✓</Tag> : <Tag color="error">✗</Tag>}</Descriptions.Item>
                       <Descriptions.Item label="diff">{pkgReview.summary.diff_present ? <Tag color="success">✓</Tag> : <Tag color="default">无</Tag>}</Descriptions.Item>
@@ -794,14 +862,35 @@ export default function ConfigPackages() {
                 )}
 
                 {/* ready_to_publish 状态 */}
-                <div style={{ marginTop: 16, padding: "8px 12px", background: pkgReview?.ready_to_publish ? "#ecfdf5" : "#fef2f2", borderRadius: 4, border: `1px solid ${pkgReview?.ready_to_publish ? "#a7f3d0" : "#fecaca"}` }}>
+                <div
+                  style={{
+                    marginTop: 16,
+                    padding: "8px 12px",
+                    background: pkgReview?.ready_to_publish
+                      ? "var(--mk-success-soft)"
+                      : "var(--mk-danger-soft)",
+                    borderRadius: 4,
+                    border: `1px solid ${
+                      pkgReview?.ready_to_publish
+                        ? "var(--mk-success-border)"
+                        : "var(--mk-danger-border)"
+                    }`,
+                  }}
+                >
                   <Space>
                     {pkgReview?.ready_to_publish ? (
-                      <CheckCircleOutlined style={{ color: "#047857" }} />
+                      <CheckCircleOutlined style={{ color: "var(--mk-success)" }} />
                     ) : (
-                      <ExclamationCircleOutlined style={{ color: "#b91c1c" }} />
+                      <ExclamationCircleOutlined style={{ color: "var(--mk-danger)" }} />
                     )}
-                    <Text strong style={{ color: pkgReview?.ready_to_publish ? "#047857" : "#b91c1c" }}>
+                    <Text
+                      strong
+                      style={{
+                        color: pkgReview?.ready_to_publish
+                          ? "var(--mk-success)"
+                          : "var(--mk-danger)",
+                      }}
+                    >
                       {pkgReview?.ready_to_publish ? "可发布" : "不可发布"}
                     </Text>
                   </Space>
@@ -852,7 +941,7 @@ export default function ConfigPackages() {
         </div>
         <div style={{ marginBottom: 12 }}>
           <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
-            审批人 (approved_by) <span style={{ color: "#b91c1c" }}>*</span>
+            审批人 (approved_by) <span style={{ color: "var(--mk-danger)" }}>*</span>
           </Text>
           <Input
             placeholder="必填 · 例：CIO_LI"

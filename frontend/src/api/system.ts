@@ -1,5 +1,5 @@
 import { get } from "./client";
-import {
+import type {
   OrgContext,
   ProviderStatus,
   RawSystemProviders,
@@ -16,13 +16,14 @@ export async function fetchSystemProviders(): Promise<SystemProviders> {
   const providers: ProviderStatus[] = [];
   if (Array.isArray(raw.providers)) {
     raw.providers.forEach((p, index) => {
+      const provider = p as ProviderStatus;
       providers.push({
-        name: (p as ProviderStatus).name ?? `provider-${index}`,
+        name: provider.name ?? `provider-${index}`,
         role: p.role ?? "",
         ready: Boolean(p.ready),
         status: p.status ?? (p.ready ? "READY" : "DISABLED"),
         provider: p.provider ?? "",
-        reason: p.degraded_reason ?? null,
+        reason: p.degraded_reason ?? provider.reason ?? null,
       });
     });
   } else if (raw.providers && typeof raw.providers === "object") {

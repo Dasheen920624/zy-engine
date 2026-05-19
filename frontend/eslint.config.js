@@ -14,7 +14,7 @@ import forbidDeprecatedNaming from "./eslint-rules/forbid-deprecated-naming.js";
 
 export default tseslint.config(
   {
-    ignores: ["dist", "node_modules", "coverage", "**/*.config.{js,ts}"],
+    ignores: ["dist", "node_modules", "coverage", "public", "**/*.config.{js,ts}"],
   },
   {
     files: ["src/**/*.{ts,tsx}"],
@@ -122,6 +122,13 @@ export default tseslint.config(
     rules: {
       "no-console": "off",
       "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
+    files: ["src/api/client.ts"],
+    rules: {
+      "no-restricted-imports": "off",
+      "no-restricted-syntax": "off",
     },
   },
 );

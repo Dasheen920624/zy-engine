@@ -1,5 +1,7 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
-import { ApiError, ApiResult, OrgContext } from "./types";
+import axios from "axios";
+import type { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import { ApiError } from "./types";
+import type { ApiResult, OrgContext } from "./types";
 import { generateTraceId } from "../utils/traceId";
 import { getOrgContext } from "../store/orgContext";
 

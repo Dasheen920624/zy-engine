@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
@@ -25,6 +25,16 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: true,
     target: "es2020",
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-antd": ["antd", "@ant-design/icons"],
+          "vendor-data": ["@tanstack/react-query", "axios"],
+        },
+      },
+    },
   },
   test: {
     globals: true,

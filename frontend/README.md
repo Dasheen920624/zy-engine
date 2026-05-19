@@ -1,6 +1,8 @@
-# 医疗智能引擎平台 · 前端工程（FE-002 脚手架）
+# 医疗智能引擎平台 · 前端治理控制台
 
-本目录是医疗智能引擎平台 **正式前端工程**。当前阶段为 **FE-002 脚手架**，已具备路由、Layout、组织上下文、API client、查询缓存、MSW mock、单元测试。业务页面由 FE-003～FE-010 逐步落地。
+本目录是医疗智能引擎平台 **正式前端工程**。当前已具备路由、Layout、组织上下文、API client、查询缓存、MSW mock、单元测试、Provider 状态页和配置包中心。业务页面由 FE-003～FE-010 继续逐步落地。
+
+命名口径：前端统一称为“治理控制台”，不再写死“内网管理台”。它可以部署在院内、专网、VPN/零信任网关后，也可以作为外网基准服务的控制台；但当前 MVP 未完成生产级外网账号、MFA、租户隔离和网关/WAF，不应直接裸露公网承载真实患者数据。
 
 ## 技术栈
 
@@ -31,6 +33,8 @@ npm install
 npm config set registry https://your-internal-npm-mirror/
 npm install
 ```
+
+依赖版本已在 `package.json` 中固定为精确版本。私有镜像必须同步这些精确版本及其传递依赖；若出现 `vite-node`、`@testing-library/dom` 等包缺失，应先补齐镜像或临时指定完整 npm registry 后再安装。
 
 ### 2. 配置环境变量
 
@@ -78,6 +82,7 @@ npm run typecheck     # 类型检查
 frontend/
 ├── index.html              # Vite 入口
 ├── package.json            # 依赖与脚本
+├── public/mockServiceWorker.js # 浏览器 MSW worker（VITE_ENABLE_MSW=true 时使用）
 ├── vite.config.ts          # Vite + proxy + vitest 配置
 ├── tsconfig*.json          # TypeScript 配置（分 app / node 引用）
 ├── .env.example            # 环境变量样例
@@ -85,6 +90,7 @@ frontend/
 └── src/
     ├── main.tsx            # 入口：QueryClient + Router + AntD ConfigProvider
     ├── App.tsx             # 路由出口
+    ├── styles/tokens.css   # 设计系统 CSS Variables（唯一允许定义色值）
     ├── styles/global.css   # 全局样式（与原型对齐）
     ├── api/
     │   ├── client.ts       # axios 实例 + 拦截器（traceId / 组织上下文 / ApiError）
@@ -104,7 +110,7 @@ frontend/
     │   ├── Dashboard.tsx
     │   ├── ProvidersStatus.tsx        # 调真实 /api/system/providers
     │   ├── DemoValidationPlaceholder.tsx
-    │   ├── ConfigPackagesPlaceholder.tsx
+    │   ├── ConfigPackages.tsx
     │   ├── ProvenancePlaceholder.tsx
     │   └── NotFound.tsx
     ├── mocks/

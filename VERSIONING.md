@@ -19,7 +19,7 @@ MAJOR.MINOR.PATCH[-prerelease][+build]
 | `-rc.N` / `-beta.N` | 预发布 | UAT 阶段 |
 | `+gitShortHash` | 构建标识 | CI 自动注入 |
 
-> 详细发布流程见 [medkernel-mvp/docs/09_内网部署与版本管理.md](medkernel-mvp/docs/09_内网部署与版本管理.md)。
+> 详细发布流程见 [docs/engineering/09_内网部署与版本管理.md](docs/engineering/09_内网部署与版本管理.md)。
 
 ## 2. 分支约定
 
@@ -73,7 +73,7 @@ git push origin main --tags
 
 每次 MAJOR 升级必须：
 
-- 在 [09_内网部署与版本管理.md](medkernel-mvp/docs/09_内网部署与版本管理.md) §6 补"升级注意事项"
+- 在 [09_内网部署与版本管理.md](docs/engineering/09_内网部署与版本管理.md) §6 补"升级注意事项"
 - 给客户/医院信息科发"破坏性变更通知" ≥ 2 周前
 - 提供等长支持窗口（旧 MAJOR 至少再支持 6 个月）
 
