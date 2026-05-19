@@ -8,13 +8,14 @@ import ConfigPackages from "../pages/ConfigPackages";
 import PackageImportWizard from "../pages/ConfigPackages/PackageImportWizard";
 import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import WorkflowTodos from "../pages/WorkflowTodos";
-import MappingWorkbench from "../pages/Terminology/MappingWorkbench";
 import { QualityDashboard, DepartmentDrillDown } from "../pages/Quality";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import RequireAuth from "./RequireAuth";
 import PlaceholderPage from "../components/PlaceholderPage";
 import { MappingWorkbench } from "../pages/Terminology";
+import PathwayList from "../pages/Pathway/PathwayList";
+import PathwayDetail from "../pages/Pathway/PathwayDetail";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -33,7 +34,8 @@ export const routes: RouteObject[] = [
           { path: "config/packages/import", element: <PackageImportWizard /> },
           { path: "provenance", element: <ProvenancePlaceholder /> },
           { path: "system/providers", element: <ProvidersStatus /> },
-          { path: "pathway/templates", element: <PlaceholderPage title="路径模板列表" pr="PR-V2-06" /> },
+          { path: "pathway/templates", element: <PathwayList /> },
+          { path: "pathway/templates/:code", element: <PathwayDetail /> },
           { path: "pathway/templates/:code/edit", element: <PlaceholderPage title="路径模板编辑器" pr="PR-V2-07" /> },
           { path: "pathway/templates/:code/diff", element: <PlaceholderPage title="路径版本对比" pr="PR-V2-07" /> },
           { path: "pathway/patients", element: <PlaceholderPage title="患者路径管理" pr="PR-V2-09" /> },

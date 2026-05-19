@@ -123,6 +123,24 @@ public class EnginePersistenceService {
         }
     }
 
+    public void deletePathwayDraft(String pathwayCode) {
+        if (!enabled()) {
+            return;
+        }
+        if (properties.localFileDatabase()) {
+            deletePathwayDraftLocal(pathwayCode);
+            return;
+        }
+        String sql = "DELETE FROM pe_pathway_def WHERE pathway_code=? AND status='DRAFT'";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, pathwayCode);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("delete pathway draft failed: " + ex.getMessage(), ex);
+        }
+    }
+
     public void savePathwayVersion(String pathwayCode, String versionNo, String status, Map<String, Object> config) {
         if (!enabled()) {
             return;
@@ -789,6 +807,17 @@ public class EnginePersistenceService {
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("save local pathway draft failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void deletePathwayDraftLocal(String pathwayCode) {
+        String sql = "DELETE FROM pe_pathway_def WHERE pathway_code=? AND status='DRAFT'";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, pathwayCode);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("delete local pathway draft failed: " + ex.getMessage(), ex);
         }
     }
 
