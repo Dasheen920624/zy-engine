@@ -65,6 +65,10 @@ function Test-GitRef([string]$Ref) {
 }
 
 function Get-GitBaseRef {
+  if (-not [string]::IsNullOrWhiteSpace($env:MEDKERNEL_DIFF_BASE) -and (Test-GitRef $env:MEDKERNEL_DIFF_BASE)) {
+    return $env:MEDKERNEL_DIFF_BASE
+  }
+
   if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_BASE_REF)) {
     $candidate = "origin/$($env:GITHUB_BASE_REF)"
     if (Test-GitRef $candidate) {
