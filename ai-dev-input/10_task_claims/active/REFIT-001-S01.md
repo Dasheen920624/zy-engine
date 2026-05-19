@@ -57,16 +57,16 @@ DOC-012 ✅ DONE
 ## Acceptance
 
 ```text
-- 输出已实现能力矩阵（配置包、组织、来源、规则、路径、字典、图谱、Dify、适配器、前端、审计运维）
-- 输出 API 清单（每个 Controller 的 endpoint、参数、响应）
-- 输出页面清单（每个页面的 URL、组件、状态管理）
-- 输出数据库表清单（每个表的 DDL、索引、约束、中文注释）
-- 输出测试清单（单元测试、集成测试、smoke 测试）
-- 识别 P0 改造 finding（安全、数据一致性、多租户隔离）
-- 识别 P1 改造 finding（代码规范、文档补全、性能优化）
-- 识别 P2 改造 finding（可维护性、可观测性、国际化）
-- 建立验收基线（GOLD/SILVER/BRONZE/REJECTED）
-- 输出改造任务映射（finding → 对应 REFIT-xxx 任务）
+- 已实现能力矩阵（配置包、组织、来源、规则、路径、字典、图谱、Dify、适配器、前端、审计运维）
+- API 清单（每个 Controller 的 endpoint、参数、响应）
+- 页面清单（每个页面的 URL、组件、状态管理）
+- 数据库表清单（每个表的 DDL、索引、约束、中文注释）
+- 测试清单（单元测试、集成测试、smoke 测试）
+- P0 改造 finding（安全、数据一致性、多租户隔离）
+- P1 改造 finding（代码规范、文档补全、性能优化）
+- P2 改造 finding（可维护性、可观测性、国际化）
+- 验收基线（GOLD/SILVER/BRONZE/REJECTED）
+- 改造任务映射（finding → 对应 REFIT-xxx 任务）
 ```
 
 ## Status Sync Checkpoints
