@@ -32,10 +32,11 @@ docs/engineering/00_总入口与AI接手导航.md
 12. 所有规则、知识、图谱证据、Dify解释、字典映射、适配器口径和质控结论都必须能追溯来源、引用位置、版本、审批人和适用组织范围。
 13. 多 AI 并行时必须先创建并推送 claim，遵守泳道、写入边界和不同能力 AI 执行规则。
 14. claim 必须先推送到远端，开发前必须执行 `check-ai-collaboration.ps1` 和 `git status -sb`；状态、心跳、review、任务台账和提交 hash 必须同步，不能只在聊天里说明。
-15. 开发完成后必须创建 review，按质量门禁完成自检、评审、整改和复评；未达到 `review_status=APPROVED` 且 `open_findings=0` 前，业务代码不得正式提交或进入主版本。
-16. 客户可见、医学/医保/质控、数据库持久化、前端页面、发布同步、安全权限功能必须创建 `ai-dev-input/13_feature_acceptance/` 验收记录；未达 GOLD 的功能进入专业优化队列。
-17. 用户要求自主开发时，必须创建或更新 run log，优先处理阻断 review，额度不足时停止开新任务并完成交接。
-18. 每个任务必须说明目标角色、业务闭环和客户验收故事线，不能只按技术模块实现。
+15. AI 禁止在 `main` 领任务、开发、提交或直接合并业务 PR；所有 AI 变更必须先合入 `develop`，`main` 只接受用户发布用的 `develop -> main` PR。
+16. 开发完成后必须创建 review，按质量门禁完成自检、评审、整改和复评；未达到 `review_status=APPROVED` 且 `open_findings=0` 前，业务代码不得正式提交或进入主版本。
+17. 客户可见、医学/医保/质控、数据库持久化、前端页面、发布同步、安全权限功能必须创建 `ai-dev-input/13_feature_acceptance/` 验收记录；未达 GOLD 的功能进入专业优化队列。
+18. 用户要求自主开发时，必须创建或更新 run log，优先处理阻断 review，额度不足时停止开新任务并完成交接。
+19. 每个任务必须说明目标角色、业务闭环和客户验收故事线，不能只按技术模块实现。
 
 ## 技术要求
 
@@ -73,4 +74,4 @@ docs/engineering/00_总入口与AI接手导航.md
 3. `medkernel-mvp/scripts/check-ai-collaboration.ps1`
 4. `git diff --check`
 
-每完成一个明确开发任务，必须先通过 `ai-dev-input/11_ai_reviews` 质量评审，确认 `review_status=APPROVED` 且 `open_findings=0`。需要功能验收的任务还必须完成 `ai-dev-input/13_feature_acceptance` 记录。通过后只暂存本任务相关文件，使用中文短句提交，并立即推送到远端当前分支，保证其它 AI 可以拉取最新项目。自主运行时最终回复还必须包含 run_id、next_action。最终回复必须包含 claim_id、review_id、feature_acceptance_id、open_findings、提交 hash、推送分支；如无法提交或推送，必须说明原因、影响和替代交接方式。
+每完成一个明确开发任务，必须先通过 `ai-dev-input/11_ai_reviews` 质量评审，确认 `review_status=APPROVED` 且 `open_findings=0`。需要功能验收的任务还必须完成 `ai-dev-input/13_feature_acceptance` 记录。通过后只暂存本任务相关文件，使用中文短句提交，并立即推送到远端 `develop` 或 PR 到 `develop`，保证其它 AI 可以拉取最新项目。自主运行时最终回复还必须包含 run_id、next_action。最终回复必须包含 claim_id、review_id、feature_acceptance_id、open_findings、提交 hash、推送分支；如无法提交或推送，必须说明原因、影响和替代交接方式。

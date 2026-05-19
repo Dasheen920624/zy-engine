@@ -25,13 +25,14 @@ archive/  已完成、放弃或接管完成的任务记录。
 认领前必须：
 
 ```powershell
+git branch --show-current
 git pull --ff-only origin develop
 git status -sb
 rg -n "claim_id:|task_id:|task_lock_path:|write_scope:" ai-dev-input/10_task_claims
 .\medkernel-mvp\scripts\check-ai-collaboration.ps1
 ```
 
-没有成功提交并推送 `active/<claim_id>.md` 和 `active_locks/<task_id>.lock` 到 `develop` 前，不允许修改业务代码。claim 中必须记录 `task_lock_path`、`git_base_commit`、`git_status_at_claim`、写入范围、review 需求、功能验收需求和预计心跳间隔。
+当前分支是 `main` 时，禁止创建 claim、禁止修改业务代码、禁止提交或推送。没有成功提交并推送 `active/<claim_id>.md` 和 `active_locks/<task_id>.lock` 到 `develop` 前，不允许修改业务代码。claim 中必须记录 `task_lock_path`、`git_base_commit`、`git_status_at_claim`、写入范围、review 需求、功能验收需求和预计心跳间隔。
 
 同任务唯一锁规则：
 
