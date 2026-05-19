@@ -215,24 +215,28 @@ CREATE TABLE IF NOT EXISTS tm_concept_mapping (
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS adp_adapter_def (
   id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL DEFAULT 'default',
+  hospital_code VARCHAR(64) NOT NULL DEFAULT 'DEFAULT_HOSPITAL',
   adapter_code VARCHAR(64) NOT NULL,
   adapter_name VARCHAR(200) NOT NULL,
   adapter_type VARCHAR(32) NOT NULL,
   status VARCHAR(32) NOT NULL,
   config_json TEXT NOT NULL,
   created_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT uk_adp_adapter_def UNIQUE (adapter_code)
+  CONSTRAINT uk_adp_adapter_def UNIQUE (tenant_id, hospital_code, adapter_code)
 );
 
 CREATE TABLE IF NOT EXISTS adp_query_def (
   id BIGINT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL DEFAULT 'default',
+  hospital_code VARCHAR(64) NOT NULL DEFAULT 'DEFAULT_HOSPITAL',
   adapter_code VARCHAR(64) NOT NULL,
   query_code VARCHAR(64) NOT NULL,
   query_name VARCHAR(200) NOT NULL,
   query_config TEXT NOT NULL,
   status VARCHAR(32) NOT NULL,
   created_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT uk_adp_query_def UNIQUE (adapter_code, query_code)
+  CONSTRAINT uk_adp_query_def UNIQUE (tenant_id, hospital_code, adapter_code, query_code)
 );
 
 -- ============================================================================

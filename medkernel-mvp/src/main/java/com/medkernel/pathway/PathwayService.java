@@ -1637,7 +1637,8 @@ public class PathwayService {
         adapterRequest.put("adapter_code", adapterCode);
         adapterRequest.put("query_code", queryCode);
         adapterRequest.put("params", params);
-        Map<String, Object> adapterResult = adapterHubService.query(adapterRequest);
+        Map<String, Object> adapterResult = adapterHubService.query(adapterRequest,
+                instance.getTenantId(), instance.getHospitalCode());
 
         snapshot.put("source", source);
         snapshot.put("adapter_query", adapterResult);

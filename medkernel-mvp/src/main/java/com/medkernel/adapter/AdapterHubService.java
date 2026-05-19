@@ -28,12 +28,12 @@ public class AdapterHubService {
         seedDefinitions();
     }
 
-    public Map<String, Object> query(Map<String, Object> request) {
+    public Map<String, Object> query(Map<String, Object> request, String tenantId, String hospitalCode) {
         long start = System.currentTimeMillis();
         String adapterCode = required(request, "adapter_code");
         String queryCode = required(request, "query_code");
         Map<String, Object> params = map(request.get("params"));
-        AdapterQueryDefinition definition = queryDefinitions.get(key(adapterCode, queryCode));
+        AdapterQueryDefinition definition = queryDefinitions.get(key(tenantId, hospitalCode, adapterCode, queryCode));
         Map<String, Object> result = definition == null
                 ? unsupported(adapterCode, queryCode, params)
                 : success(definition, params, System.currentTimeMillis() - start);
@@ -41,7 +41,7 @@ public class AdapterHubService {
         return result;
     }
 
-    public List<Map<String, Object>> importDefinitions(Object request) {
+    public List<Map<String, Object>> importDefinitions(Object request, String tenantId, String hospitalCode) {
         List<Map<String, Object>> entries = normalizeDefinitions(request);
         if (entries.isEmpty()) {
             throw new IllegalArgumentException("adapter definitions list is empty");
@@ -63,14 +63,20 @@ public class AdapterHubService {
 
         List<Map<String, Object>> imported = new ArrayList<Map<String, Object>>();
         for (AdapterQueryDefinition definition : staged) {
-            queryDefinitions.put(key(definition.adapterCode, definition.queryCode), definition);
+            queryDefinitions.put(key(tenantId, hospitalCode, definition.adapterCode, definition.queryCode), definition);
             imported.add(view(definition));
         }
         return imported;
     }
 
-    public List<Map<String, Object>> listDefinitions() {
-        List<AdapterQueryDefinition> list = new ArrayList<AdapterQueryDefinition>(queryDefinitions.values());
+    public List<Map<String, Object>> listDefinitions(String tenantId, String hospitalCode) {
+        String prefix = canonical(tenantId) + "::" + canonical(hospitalCode) + "::";
+        List<AdapterQueryDefinition> list = new ArrayList<AdapterQueryDefinition>();
+        for (Map.Entry<String, AdapterQueryDefinition> entry : queryDefinitions.entrySet()) {
+            if (entry.getKey().startsWith(prefix)) {
+                list.add(entry.getValue());
+            }
+        }
         Collections.sort(list, new Comparator<AdapterQueryDefinition>() {
             @Override
             public int compare(AdapterQueryDefinition left, AdapterQueryDefinition right) {
@@ -85,8 +91,8 @@ public class AdapterHubService {
         return result;
     }
 
-    public Map<String, Object> getDefinition(String adapterCode, String queryCode) {
-        AdapterQueryDefinition definition = queryDefinitions.get(key(adapterCode, queryCode));
+    public Map<String, Object> getDefinition(String adapterCode, String queryCode, String tenantId, String hospitalCode) {
+        AdapterQueryDefinition definition = queryDefinitions.get(key(tenantId, hospitalCode, adapterCode, queryCode));
         if (definition == null) {
             throw new IllegalArgumentException("adapter definition not found: "
                     + canonical(adapterCode) + "/" + canonical(queryCode));
@@ -254,29 +260,34 @@ public class AdapterHubService {
     }
 
     private void seedDefinitions() {
-        register("ECG_ADAPTER", "ECG适配器", "REST", "ECG", "QUERY_ECG_REPORT",
+        register(com.medkernel.common.OrgDefaults.DEFAULT_TENANT_ID, com.medkernel.common.OrgDefaults.DEFAULT_HOSPITAL_CODE,
+                "ECG_ADAPTER", "ECG适配器", "REST", "ECG", "QUERY_ECG_REPORT",
                 "查询心电图报告", "返回AMI样例患者十二导联心电图报告。",
                 Arrays.asList("patient_id", "encounter_id", "exam_code", "finding_codes", "report_time"),
                 null);
-        register("LIS_ADAPTER", "LIS检验适配器", "SQL", "LIS", "QUERY_TROPONIN",
+        register(com.medkernel.common.OrgDefaults.DEFAULT_TENANT_ID, com.medkernel.common.OrgDefaults.DEFAULT_HOSPITAL_CODE,
+                "LIS_ADAPTER", "LIS检验适配器", "SQL", "LIS", "QUERY_TROPONIN",
                 "查询肌钙蛋白结果", "返回AMI样例患者肌钙蛋白结果。",
                 Arrays.asList("patient_id", "encounter_id", "source_lab_code", "value", "unit", "report_time"),
                 null);
-        register("HIS_ADAPTER", "HIS诊断适配器", "REST", "HIS", "QUERY_DIAGNOSES",
+        register(com.medkernel.common.OrgDefaults.DEFAULT_TENANT_ID, com.medkernel.common.OrgDefaults.DEFAULT_HOSPITAL_CODE,
+                "HIS_ADAPTER", "HIS诊断适配器", "REST", "HIS", "QUERY_DIAGNOSES",
                 "查询诊断", "返回AMI样例患者HIS诊断。",
                 Arrays.asList("patient_id", "encounter_id", "source_diagnosis_code", "standard_code"),
                 null);
-        register("EMR_ADAPTER", "EMR病历适配器", "REST", "EMR", "QUERY_CHIEF_COMPLAINTS",
+        register(com.medkernel.common.OrgDefaults.DEFAULT_TENANT_ID, com.medkernel.common.OrgDefaults.DEFAULT_HOSPITAL_CODE,
+                "EMR_ADAPTER", "EMR病历适配器", "REST", "EMR", "QUERY_CHIEF_COMPLAINTS",
                 "查询主诉", "返回AMI样例患者主诉。",
                 Arrays.asList("patient_id", "encounter_id", "source_symptom_code", "text"),
                 null);
-        register("EMR_WS_ADAPTER", "EMR WebService适配器", "WEBSERVICE", "EMR", "QUERY_ADMISSION_NOTE",
+        register(com.medkernel.common.OrgDefaults.DEFAULT_TENANT_ID, com.medkernel.common.OrgDefaults.DEFAULT_HOSPITAL_CODE,
+                "EMR_WS_ADAPTER", "EMR WebService适配器", "WEBSERVICE", "EMR", "QUERY_ADMISSION_NOTE",
                 "查询入院记录", "模拟老系统SOAP接口返回病历文书。",
                 Arrays.asList("patient_id", "encounter_id", "document_id", "document_text"),
                 null);
     }
 
-    private void register(String adapterCode, String adapterName, String adapterType, String sourceSystem,
+    private void register(String tenantId, String hospitalCode, String adapterCode, String adapterName, String adapterType, String sourceSystem,
                           String queryCode, String queryName, String description,
                           Collection<String> schema, List<Map<String, Object>> sampleRows) {
         AdapterQueryDefinition definition = new AdapterQueryDefinition();
@@ -290,7 +301,7 @@ public class AdapterHubService {
         definition.schema = schema == null ? new ArrayList<String>() : new ArrayList<String>(schema);
         definition.sampleRows = sampleRows;
         definition.source = "BUILT_IN_SAMPLE";
-        queryDefinitions.put(key(definition.adapterCode, definition.queryCode), definition);
+        queryDefinitions.put(key(tenantId, hospitalCode, definition.adapterCode, definition.queryCode), definition);
     }
 
     private List<Map<String, Object>> supportedQueries() {
@@ -437,9 +448,9 @@ public class AdapterHubService {
         return value;
     }
 
-    private String key(String adapterCode, String queryCode) {
-        return canonical(adapterCode) + "::" + canonical(queryCode);
-    }
+private String key(String tenantId, String hospitalCode, String adapterCode, String queryCode) {
+    return canonical(tenantId) + "::" + canonical(hospitalCode) + "::" + canonical(adapterCode) + "::" + canonical(queryCode);
+}
 
     private String canonical(String value) {
         return string(value, "").trim().toUpperCase();
