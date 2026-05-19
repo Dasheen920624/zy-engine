@@ -1,7 +1,0 @@
-task_id: FE-013
-claim_id: FE-013-S01
-owner: CodeBuddy
-branch: develop
-git_base_commit: 87d5f01814a02e75083708d84a0467c725c70b1b
-created_at: 2026-05-19T21:00:00+08:00
-last_heartbeat: 2026-05-19T21:00:00+08:00
