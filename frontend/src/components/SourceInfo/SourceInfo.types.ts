@@ -10,12 +10,12 @@ export interface SourceInfoProps {
     excerpt: string;
     pageNumber?: number;
   };
-  review: {
+  review?: {
     status: 'reviewed' | 'pending' | 'rejected' | 'missing';
     reviewerName?: string;
     reviewedAt?: string;
   };
-  version: string;
+  version?: string;
   variant?: 'inline' | 'card' | 'compact';
   onClickDocument?: () => void;
 }

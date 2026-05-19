@@ -19,5 +19,8 @@ export type { TracedCardProps } from "./TracedCard/TracedCard.types";
 export { DangerConfirm } from "./DangerConfirm";
 export type { DangerConfirmProps, DangerLevel } from "./DangerConfirm/DangerConfirm.types";
 
+export { AiGeneratedBadge } from "./AiGeneratedBadge";
+export type { AiGeneratedBadgeProps } from "./AiGeneratedBadge/AiGeneratedBadge.types";
+
 export { EmbeddedAlert } from "./EmbeddedAlert";
 export type { EmbeddedAlertProps, EmbeddedAlertAction, EmbeddedAlertSource, AlertSeverity } from "./EmbeddedAlert/EmbeddedAlert.types";

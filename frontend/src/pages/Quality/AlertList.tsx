@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button, Card, Input, Select, Space, Statistic, Switch, Table, Tag, Typography } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import type { StatusKey } from "../../components/StatusBadge/StatusBadge.types";
-import { StatusBadge } from "../../components";
+import { StatusBadge, OrgContextSelector, SourceInfo } from "../../components";
 import { listAlerts, getAlertSummary } from "../../api/quality";
 import type { QualityAlert, ListAlertsParams, AlertSeverity } from "../../api/types";
 import AssignDialog from "./components/AssignDialog";
@@ -158,7 +158,10 @@ const AlertList: React.FC = () => {
     <div style={{ padding: 24 }}>
       <Title level={3} style={{ marginBottom: 24 }}>质控预警</Title>
 
+      <SourceInfo source={{ documentName: "质控预警", documentId: "quality-alerts" }} />
+
       <Space style={{ marginBottom: 16 }} size="middle">
+        <OrgContextSelector />
         <span>实时模式</span>
         <Switch checked={realtimeMode} onChange={setRealtimeMode} />
         <Input

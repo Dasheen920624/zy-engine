@@ -22,9 +22,9 @@ export interface OrgContext {
 }
 
 export interface OrgContextSelectorProps {
-  current: OrgContext;
-  allowedScopes: OrgContext[];
-  onChange: (next: OrgContext) => void;
+  current?: OrgContext;
+  allowedScopes?: OrgContext[];
+  onChange?: (next: OrgContext) => void;
   level?: 'hospital' | 'department';
   variant?: 'inline' | 'dropdown';
 }

@@ -25,19 +25,20 @@ const getConfidenceColor = (confidence: number) => {
 
 export default function AiGeneratedBadge({
   confidence,
-  model,
-  generatedAt,
-  reviewStatus,
+  model = "",
+  generatedAt = "",
+  reviewStatus = "pending",
   onAccept,
   onModify,
   onReject,
   variant = "badge",
 }: AiGeneratedBadgeProps) {
-  const reviewConfig = reviewStatusConfig[reviewStatus];
-  const confidenceColor = getConfidenceColor(confidence);
+  const reviewConfig = reviewStatus ? reviewStatusConfig[reviewStatus] : undefined;
+  const confidenceValue = confidence ?? 0;
+  const confidenceColor = getConfidenceColor(confidenceValue);
 
   const renderBadge = () => (
-    <Tooltip title={`模型: ${model}\n生成时间: ${generatedAt}\n置信度: ${confidence}%`}>
+    <Tooltip title={`模型: ${model}\n生成时间: ${generatedAt}\n置信度: ${confidenceValue}%`}>
       <Tag
         color="purple"
         icon={<RobotOutlined />}
@@ -79,9 +80,11 @@ export default function AiGeneratedBadge({
             AI 候选
           </Text>
         </Space>
-        <Tag color={reviewConfig.color} icon={reviewConfig.icon}>
-          {reviewConfig.text}
-        </Tag>
+        {reviewConfig && (
+          <Tag color={reviewConfig.color} icon={reviewConfig.icon}>
+            {reviewConfig.text}
+          </Tag>
+        )}
       </div>
 
       <div style={{ marginTop: 12 }}>
@@ -98,13 +101,13 @@ export default function AiGeneratedBadge({
             <Text type="secondary">置信度</Text>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Progress
-                percent={confidence}
+                percent={confidenceValue}
                 size="small"
                 strokeColor={confidenceColor}
                 style={{ flex: 1 }}
               />
               <Text style={{ color: confidenceColor, fontWeight: 600 }}>
-                {confidence}%
+                {confidenceValue}%
               </Text>
             </div>
           </div>

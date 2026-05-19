@@ -6,14 +6,14 @@ import type { StatusKey } from '../StatusBadge/StatusBadge.types';
 
 const { Text, Paragraph } = Typography;
 
-const reviewStatusToBadgeStatus: Record<SourceInfoProps['review']['status'], StatusKey> = {
+const reviewStatusToBadgeStatus: Record<NonNullable<SourceInfoProps['review']>['status'], StatusKey> = {
   reviewed: 'reviewed',
   pending: 'pending',
   rejected: 'rejected',
   missing: 'missing_source',
 };
 
-const statusLabelMap: Record<SourceInfoProps['review']['status'], string> = {
+const statusLabelMap: Record<NonNullable<SourceInfoProps['review']>['status'], string> = {
   reviewed: '已审核',
   pending: '待审核',
   rejected: '已驳回',
@@ -28,7 +28,7 @@ export function SourceInfo({
   variant = 'inline',
   onClickDocument,
 }: SourceInfoProps) {
-  const isMissing = review.status === 'missing';
+  const isMissing = review?.status === 'missing';
 
   const docLabel = (
     <span
@@ -63,15 +63,15 @@ export function SourceInfo({
     </Text>
   ) : null;
 
-  const versionTag = (
+  const versionTag = version ? (
     <Text type="secondary" style={{ fontSize: 'var(--mk-text-xs)' }}>
       v{version}
     </Text>
-  );
+  ) : null;
 
-  const badge = (
+  const badge = review ? (
     <StatusBadge status={reviewStatusToBadgeStatus[review.status]} text={statusLabelMap[review.status]} />
-  );
+  ) : null;
 
   /* ── inline ─────────────────────────────────────────────────── */
   if (variant === 'inline') {
@@ -135,8 +135,8 @@ export function SourceInfo({
         {source.section && <span>{source.section}</span>}
         {source.publishYear && <span>{source.publishYear}</span>}
         {versionTag}
-        {review.reviewerName && <span>审核人：{review.reviewerName}</span>}
-        {review.reviewedAt && <span>{review.reviewedAt}</span>}
+        {review?.reviewerName && <span>审核人：{review.reviewerName}</span>}
+        {review?.reviewedAt && <span>{review.reviewedAt}</span>}
       </div>
 
       {citation && (

@@ -1,6 +1,7 @@
 import React from "react";
 import { Descriptions, Input, InputNumber, Switch, Select, Tag, Typography, Empty } from "antd";
 import type { PathwayNode } from "../../../components/PathwayCanvas/types";
+import { StatusBadge } from "../../../components";
 
 const { Text } = Typography;
 
@@ -118,9 +119,9 @@ const NodePropertyPanel: React.FC<NodePropertyPanelProps> = ({ node, onChange, r
             </Descriptions.Item>
             <Descriptions.Item label="来源审核">
               {node.properties.source_verified ? (
-                <Tag color="success">通过</Tag>
+                <StatusBadge status="success" />
               ) : (
-                <Tag color="warning">待审核</Tag>
+                <StatusBadge status="warning" />
               )}
             </Descriptions.Item>
           </>
