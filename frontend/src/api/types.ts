@@ -452,3 +452,61 @@ export interface CancelRequest {
   operatorId: string;
   reason?: string;
 }
+
+// ─── 术语字典映射 (PR-V2-08) ───────────────────────────────────────────────
+
+export type MappingStatus = "UNMAPPED" | "MAPPED" | "CONFLICT" | "AI_CANDIDATE";
+
+export type ConceptType = "DIAGNOSIS" | "PROCEDURE" | "DRUG" | "LAB" | "OBSERVATION" | "DEVICE";
+
+export interface TerminologyItem {
+  id: number;
+  sourceSystem: string;
+  sourceCode: string;
+  sourceName: string;
+  conceptType: ConceptType;
+  mappingStatus: MappingStatus;
+  standardCode?: string;
+  standardName?: string;
+  confidence?: number;
+  proposedBy?: string;
+  proposedTime?: string;
+  reviewedBy?: string;
+  reviewedTime?: string;
+  reviewComment?: string;
+  occurrenceCount?: number;
+  lastOccurrenceTime?: string;
+}
+
+export interface AiCandidate {
+  sourceCode: string;
+  sourceName: string;
+  conceptType: ConceptType;
+  proposedStandardCode: string;
+  proposedStandardName: string;
+  confidence: number;
+  mappingSource: string;
+  evidence?: string;
+}
+
+export interface MappingAdoptRequest {
+  sourceCode: string;
+  conceptType: ConceptType;
+  standardCode: string;
+  standardName?: string;
+  operatorId: string;
+  comment?: string;
+}
+
+export interface BatchMappingAdoptRequest {
+  items: MappingAdoptRequest[];
+  operatorId: string;
+}
+
+export interface MappingSummary {
+  totalUnmapped: number;
+  totalMapped: number;
+  totalConflict: number;
+  totalAiCandidate: number;
+  byConceptType: Record<ConceptType, number>;
+}
