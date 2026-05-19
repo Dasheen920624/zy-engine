@@ -62,6 +62,7 @@ http.interceptors.response.use(
         body.message || "未知错误",
         body.trace_id || (resp.headers["x-trace-id"] as string) || "",
         resp.status,
+        body.message_key,
       );
     }
     return resp;
@@ -92,7 +93,7 @@ http.interceptors.response.use(
         error.message ||
         "网络异常或后端不可达";
     }
-    throw new ApiError(code as never, message, traceId, status);
+    throw new ApiError(code as never, message, traceId, status, error.response?.data?.message_key);
   },
 );
 

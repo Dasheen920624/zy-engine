@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, Select, Button, Space, Typography, Steps, message, Result } from 'antd';
+import { Card, Form, Input, Select, Button, Typography, Steps, message, Result } from 'antd';
 import { 
   BankOutlined, 
   UserOutlined, 
@@ -28,6 +28,7 @@ const TenantApplication: React.FC = () => {
       setSubmitting(true);
       
       // 实际项目中应该调用API
+      // eslint-disable-next-line no-console
       console.log('Submitting application:', values);
       
       // 模拟API调用
@@ -37,7 +38,7 @@ const TenantApplication: React.FC = () => {
       setApplicationCode(code);
       setCurrentStep(1);
       message.success('申请提交成功！');
-    } catch (error) {
+    } catch {
       message.error('请填写完整信息');
     } finally {
       setSubmitting(false);

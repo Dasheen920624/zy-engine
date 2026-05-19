@@ -12,7 +12,7 @@ import {
   ExclamationCircleOutlined 
 } from '@ant-design/icons';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 const { Option } = Select;
 
 interface ServiceAccount {
@@ -61,7 +61,7 @@ const ServiceAccountManagement: React.FC = () => {
         }
       ];
       setAccounts(mockAccounts);
-    } catch (error) {
+    } catch {
       message.error('加载服务账号失败');
     } finally {
       setLoading(false);
@@ -97,7 +97,7 @@ const ServiceAccountManagement: React.FC = () => {
       setCreateModalVisible(false);
       form.resetFields();
       message.success('服务账号创建成功');
-    } catch (error) {
+    } catch {
       message.error('创建失败');
     }
   };
@@ -112,7 +112,7 @@ const ServiceAccountManagement: React.FC = () => {
           : acc
       ));
       message.success('服务账号已吊销');
-    } catch (error) {
+    } catch {
       message.error('吊销失败');
     }
   };
@@ -129,7 +129,7 @@ const ServiceAccountManagement: React.FC = () => {
       title: '账号名称',
       dataIndex: 'accountName',
       key: 'accountName',
-      render: (text: string, record: ServiceAccount) => (
+      render: (text: string, _record: ServiceAccount) => (
         <Space>
           <ApiOutlined />
           <Text strong>{text}</Text>
@@ -308,7 +308,7 @@ const ServiceAccountManagement: React.FC = () => {
       <Modal
         title={
           <Space>
-            <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+            <ExclamationCircleOutlined style={{ color: 'var(--mk-warning)' }} />
             <span>客户端密钥</span>
           </Space>
         }

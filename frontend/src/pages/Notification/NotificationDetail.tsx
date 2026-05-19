@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Descriptions, Tag, Button, Space, Typography, Spin, message, Divider } from 'antd';
 import { ArrowLeftOutlined, CheckOutlined, DeleteOutlined, ExportOutlined } from '@ant-design/icons';
-import { notificationApi, Notification } from '../../api/notification';
+import { notificationApi } from '../../api/notification';
+import type { Notification } from '../../api/notification';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title, Paragraph, Text } = Typography;
@@ -36,6 +37,7 @@ const NotificationDetail: React.FC = () => {
 
   useEffect(() => {
     loadNotification();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notificationCode]);
 
   // 标记为已读
@@ -46,7 +48,7 @@ const NotificationDetail: React.FC = () => {
       await notificationApi.markAsRead(notificationCode);
       message.success('已标记为已读');
       loadNotification();
-    } catch (error) {
+    } catch {
       message.error('标记失败');
     }
   };
@@ -54,12 +56,12 @@ const NotificationDetail: React.FC = () => {
   // 归档通知
   const handleArchive = async () => {
     if (!notificationCode) return;
-    
+
     try {
       await notificationApi.archiveNotification(notificationCode);
       message.success('已归档');
       navigate('/notifications');
-    } catch (error) {
+    } catch {
       message.error('归档失败');
     }
   };
@@ -208,7 +210,7 @@ const NotificationDetail: React.FC = () => {
 
         <div style={{ marginTop: 16 }}>
           <Title level={5}>通知内容</Title>
-          <Card style={{ backgroundColor: '#fafafa' }}>
+          <Card style={{ backgroundColor: 'var(--mk-bg-elevated)' }}>
             <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
               {notification.content}
             </Paragraph>

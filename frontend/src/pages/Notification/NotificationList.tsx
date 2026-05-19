@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, List, Badge, Tag, Button, Space, Typography, Empty, Spin, message, Dropdown, Menu } from 'antd';
-import { BellOutlined, CheckOutlined, DeleteOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
-import { notificationApi, Notification, NotificationSummary } from '../../api/notification';
+import { BellOutlined, CheckOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
+import { notificationApi } from '../../api/notification';
+import type { Notification, NotificationSummary } from '../../api/notification';
 import { useNavigate } from 'react-router-dom';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface NotificationListProps {
   recipientId: string;
@@ -37,6 +38,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
 
   useEffect(() => {
     loadNotifications();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipientId]);
 
   // 标记为已读
@@ -45,7 +47,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
       await notificationApi.markAsRead(notificationCode);
       message.success('已标记为已读');
       loadNotifications();
-    } catch (error) {
+    } catch {
       message.error('标记失败');
     }
   };
@@ -55,7 +57,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
     const unreadCodes = notifications
       .filter(n => n.status === 'UNREAD')
       .map(n => n.notificationCode);
-    
+
     if (unreadCodes.length === 0) {
       message.info('没有未读通知');
       return;
@@ -65,7 +67,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
       await notificationApi.batchMarkAsRead(unreadCodes);
       message.success(`已标记 ${unreadCodes.length} 条通知为已读`);
       loadNotifications();
-    } catch (error) {
+    } catch {
       message.error('批量标记失败');
     }
   };
@@ -76,7 +78,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
       await notificationApi.archiveNotification(notificationCode);
       message.success('已归档');
       loadNotifications();
-    } catch (error) {
+    } catch {
       message.error('归档失败');
     }
   };
@@ -143,7 +145,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
             <BellOutlined />
             <span>通知中心</span>
             {summary && summary.unread > 0 && (
-              <Badge count={summary.unread} style={{ backgroundColor: '#f5222d' }} />
+              <Badge count={summary.unread} style={{ backgroundColor: 'var(--mk-danger)' }} />
             )}
           </Space>
         }
@@ -151,9 +153,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
           <Space>
             <Dropdown overlay={filterMenu} trigger={['click']}>
               <Button icon={<FilterOutlined />}>
-                {filter === 'ALL' ? '全部' : 
-                 filter === 'UNREAD' ? '未读' : 
-                 filter === 'READ' ? '已读' : '已归档'}
+                {{ ALL: '全部', UNREAD: '未读', READ: '已读', ARCHIVED: '已归档' }[filter] ?? '全部'}
               </Button>
             </Dropdown>
             <Button 
@@ -183,19 +183,19 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
             </Card>
             <Card size="small" style={{ flex: 1 }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#f5222d' }}>{summary.unread}</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--mk-danger)' }}>{summary.unread}</div>
                 <div>未读</div>
               </div>
             </Card>
             <Card size="small" style={{ flex: 1 }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>{summary.read}</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--mk-success)' }}>{summary.read}</div>
                 <div>已读</div>
               </div>
             </Card>
             <Card size="small" style={{ flex: 1 }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 'bold', color: '#8c8c8c' }}>{summary.archived}</div>
+                <div style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--mk-text-secondary)' }}>{summary.archived}</div>
                 <div>已归档</div>
               </div>
             </Card>
@@ -213,11 +213,11 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
                 <List.Item
                   key={notification.notificationCode}
                   style={{
-                    backgroundColor: notification.status === 'UNREAD' ? '#f6ffed' : 'transparent',
+                    backgroundColor: notification.status === 'UNREAD' ? 'var(--mk-success-soft)' : 'transparent',
                     padding: '12px 16px',
                     marginBottom: 8,
                     borderRadius: 8,
-                    border: '1px solid #f0f0f0',
+                    border: '1px solid var(--mk-border)',
                     cursor: 'pointer'
                   }}
                   onClick={() => handleNotificationClick(notification)}

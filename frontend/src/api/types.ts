@@ -3,8 +3,19 @@ export interface ApiResult<T = unknown> {
   success: boolean;
   code: string;
   message: string;
+  /** i18n 消息键，前端可据此查找本地化文案 */
+  message_key?: string;
   data: T | null;
   trace_id: string;
+}
+
+// 统一分页响应。与后端 PagedResult 对齐。
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }
 
 // 用户信息（SEC-001）
@@ -464,12 +475,14 @@ export class ApiError extends Error {
   public readonly code: ApiErrorCode;
   public readonly traceId: string;
   public readonly httpStatus?: number;
+  public readonly messageKey?: string;
 
-  constructor(code: ApiErrorCode, message: string, traceId = "", httpStatus?: number) {
+  constructor(code: ApiErrorCode, message: string, traceId = "", httpStatus?: number, messageKey?: string) {
     super(message);
     this.code = code;
     this.traceId = traceId;
     this.httpStatus = httpStatus;
+    this.messageKey = messageKey;
     this.name = "ApiError";
   }
 }

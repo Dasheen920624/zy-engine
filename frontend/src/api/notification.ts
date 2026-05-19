@@ -1,4 +1,4 @@
-import { client } from './client';
+import { http } from './client';
 
 // 通知类型定义
 export interface Notification {
@@ -53,7 +53,7 @@ export interface CreateNotificationRequest {
 export const notificationApi = {
   // 创建通知
   async createNotification(data: CreateNotificationRequest): Promise<Notification> {
-    const response = await client.post('/api/notifications', data);
+    const response = await http.post('/api/notifications', data);
     return response.data;
   },
 
@@ -64,37 +64,37 @@ export const notificationApi = {
     notificationType?: string;
     priority?: string;
   }): Promise<Notification[]> {
-    const response = await client.get('/api/notifications', { params });
+    const response = await http.get('/api/notifications', { params });
     return response.data;
   },
 
   // 获取通知详情
   async fetchNotification(notificationCode: string): Promise<Notification> {
-    const response = await client.get(`/api/notifications/${notificationCode}`);
+    const response = await http.get(`/api/notifications/${notificationCode}`);
     return response.data;
   },
 
   // 标记为已读
   async markAsRead(notificationCode: string): Promise<Notification> {
-    const response = await client.post(`/api/notifications/${notificationCode}/read`);
+    const response = await http.post(`/api/notifications/${notificationCode}/read`);
     return response.data;
   },
 
   // 批量标记为已读
   async batchMarkAsRead(notificationCodes: string[]): Promise<{ successCount: number }> {
-    const response = await client.post('/api/notifications/batch-read', { notificationCodes });
+    const response = await http.post('/api/notifications/batch-read', { notificationCodes });
     return response.data;
   },
 
   // 归档通知
   async archiveNotification(notificationCode: string): Promise<Notification> {
-    const response = await client.post(`/api/notifications/${notificationCode}/archive`);
+    const response = await http.post(`/api/notifications/${notificationCode}/archive`);
     return response.data;
   },
 
   // 获取未读通知数量
   async fetchUnreadCount(recipientId: string): Promise<number> {
-    const response = await client.get('/api/notifications/unread-count', {
+    const response = await http.get('/api/notifications/unread-count', {
       params: { recipientId }
     });
     return response.data.unreadCount;
@@ -102,7 +102,7 @@ export const notificationApi = {
 
   // 获取通知统计
   async fetchNotificationSummary(recipientId: string): Promise<NotificationSummary> {
-    const response = await client.get('/api/notifications/summary', {
+    const response = await http.get('/api/notifications/summary', {
       params: { recipientId }
     });
     return response.data;
@@ -110,7 +110,7 @@ export const notificationApi = {
 
   // 清理过期通知
   async cleanupExpiredNotifications(): Promise<number> {
-    const response = await client.post('/api/notifications/cleanup');
+    const response = await http.post('/api/notifications/cleanup');
     return response.data.cleanedCount;
   }
 };

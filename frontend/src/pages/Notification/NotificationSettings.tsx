@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Switch, Select, Button, Space, Typography, message, Divider, List, Tag } from 'antd';
+import { Card, Form, Switch, Button, Space, Typography, message, Divider, List, Tag } from 'antd';
 import { SaveOutlined, BellOutlined, MailOutlined, MessageOutlined, WechatOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 interface NotificationSetting {
   notificationType: string;
@@ -14,6 +13,20 @@ interface NotificationSetting {
     WECHAT: boolean;
   };
 }
+
+const channelKeyMap: Record<string, string> = {
+  '应用内通知': 'IN_APP',
+  '邮件': 'EMAIL',
+  '短信': 'SMS',
+  '企业微信': 'WECHAT',
+};
+
+const typeColorMap: Record<string, string> = {
+  SYSTEM: 'purple',
+  WORKFLOW: 'cyan',
+  ALERT: 'red',
+  REMINDER: 'gold',
+};
 
 const NotificationSettings: React.FC = () => {
   const [form] = Form.useForm();
@@ -79,6 +92,7 @@ const NotificationSettings: React.FC = () => {
 
   useEffect(() => {
     loadSettings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 保存设置
@@ -87,9 +101,10 @@ const NotificationSettings: React.FC = () => {
     try {
       const values = await form.validateFields();
       // 实际项目中应该调用后端API保存设置
+      // eslint-disable-next-line no-console
       console.log('Saving notification settings:', values.settings);
       message.success('通知设置已保存');
-    } catch (error) {
+    } catch {
       message.error('保存失败');
     } finally {
       setLoading(false);
@@ -126,7 +141,7 @@ const NotificationSettings: React.FC = () => {
       >
         <Form form={form} layout="vertical">
           <Form.List name="settings">
-            {(fields, { add, remove }) => (
+            {(fields, { add: _add, remove: _remove }) => (
               <>
                 {fields.map((field, index) => (
                   <div key={field.key}>
@@ -135,7 +150,7 @@ const NotificationSettings: React.FC = () => {
                       style={{ marginBottom: 16 }}
                       title={
                         <Space>
-                          <Tag color={index === 0 ? 'purple' : index === 1 ? 'cyan' : index === 2 ? 'red' : 'gold'}>
+                          <Tag color={typeColorMap[settings[index].notificationType] ?? 'default'}>
                             {getTypeName(settings[index].notificationType)}
                           </Tag>
                           <Text>通知渠道设置</Text>
@@ -151,7 +166,7 @@ const NotificationSettings: React.FC = () => {
                               alignItems: 'center', 
                               gap: 8,
                               padding: '8px 16px',
-                              backgroundColor: '#fafafa',
+                              backgroundColor: 'var(--mk-bg-elevated)',
                               borderRadius: 8,
                               minWidth: 150
                             }}
@@ -208,9 +223,7 @@ const NotificationSettings: React.FC = () => {
               renderItem={(item) => (
                 <List.Item>
                   <Space>
-                    {getChannelIcon(item.channel === '应用内通知' ? 'IN_APP' : 
-                                   item.channel === '邮件' ? 'EMAIL' : 
-                                   item.channel === '短信' ? 'SMS' : 'WECHAT')}
+                    {getChannelIcon(channelKeyMap[item.channel] ?? 'IN_APP')}
                     <Text strong>{item.channel}：</Text>
                     <Text type="secondary">{item.desc}</Text>
                   </Space>
