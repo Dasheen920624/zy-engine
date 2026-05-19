@@ -12,6 +12,7 @@ import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import RequireAuth from "./RequireAuth";
 import PlaceholderPage from "../components/PlaceholderPage";
+import { MappingWorkbench } from "../pages/Terminology";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -38,7 +39,7 @@ export const routes: RouteObject[] = [
           { path: "rule/definitions/:code/edit", element: <PlaceholderPage title="规则 DSL 编辑器" pr="PR-V2-05" /> },
           { path: "rule/validate", element: <PlaceholderPage title="规则校验工作台" /> },
           { path: "graph/explore", element: <PlaceholderPage title="图谱查询工作台" pr="PR-V2-05" /> },
-          { path: "terminology/mapping", element: <PlaceholderPage title="字典映射工作台" pr="PR-V2-08" /> },
+          { path: "terminology/mapping", element: <MappingWorkbench /> },
           { path: "qc/alerts", element: <PlaceholderPage title="质控预警列表" pr="PR-V2-11" /> },
           { path: "qc/dashboard", element: <PlaceholderPage title="院级质控驾驶舱" pr="PR-V2-12" /> },
           { path: "qc/insurance", element: <PlaceholderPage title="医保智能审核" pr="PR-V2-12" /> },

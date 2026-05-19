@@ -15,3 +15,6 @@ export type {
 
 export { TracedCard } from "./TracedCard";
 export type { TracedCardProps } from "./TracedCard/TracedCard.types";
+
+export { DangerConfirm } from "./DangerConfirm";
+export type { DangerConfirmProps, DangerLevel } from "./DangerConfirm/DangerConfirm.types";
