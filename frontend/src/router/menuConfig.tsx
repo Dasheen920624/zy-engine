@@ -2,18 +2,14 @@ import type { ReactNode } from "react";
 import {
   AppstoreOutlined,
   AuditOutlined,
-  BankOutlined,
-  ClusterOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
-  LinkOutlined,
   MedicineBoxOutlined,
   NodeIndexOutlined,
   ReadOutlined,
   SafetyCertificateOutlined,
   ShareAltOutlined,
   ToolOutlined,
-  UserOutlined,
 } from "@ant-design/icons";
 
 export interface MenuItem {

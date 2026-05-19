@@ -1,4 +1,4 @@
-import { ConstructionOutlined } from "@ant-design/icons";
+import { ToolOutlined } from "@ant-design/icons";
 import { Button, Result } from "antd";
 import { useNavigate } from "react-router-dom";
 
@@ -16,7 +16,7 @@ export default function PlaceholderPage({ title, pr }: PlaceholderPageProps) {
 
   return (
     <Result
-      icon={<ConstructionOutlined style={{ color: "var(--mk-primary)" }} />}
+      icon={<ToolOutlined style={{ color: "var(--mk-primary)" }} />}
       title={title}
       subTitle={
         <span>
