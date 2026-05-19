@@ -32,7 +32,7 @@
 | `06_samples/` | 演示样例数据（AMI/STEMI 路径、规则、患者上下文、组织、图谱、Dify、字典等） |
 | `07_tests/` | 测试矩阵与可执行验收用例 |
 | `09_ai_task_cards/` | AI 系统提示词、后端提示词模板、任务卡模板 |
-| `10_task_claims/` | 多 AI 并行开发的任务认领（active / archive） |
+| `10_task_claims/` | 多 AI 并行开发的任务认领（active / active_locks / archive） |
 | `11_ai_reviews/` | 多 AI 开发质量评审记录（pending / approved / archive） |
 | `12_autonomous_runs/` | AI 自主开发运行记录（active / archive） |
 | `13_feature_acceptance/` | 功能验收记录（GOLD / SILVER / BRONZE / REJECTED） |
@@ -46,11 +46,11 @@
 简化流程：
 
 ```
-1. git pull --ff-only origin main
+1. git pull --ff-only origin develop
 2. git status -sb 确认工作树干净
 3. .\medkernel-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
 4. 从 docs/engineering/02_任务台账.md "下一批可领" 段选任务
-5. 在 10_task_claims/active/<claim_id>.md 创建并推送任务认领
+5. 在 10_task_claims/active/<claim_id>.md 和 10_task_claims/active_locks/<task_id>.lock 创建并推送任务认领
 6. 开发：同步修改后端代码、测试、样例、API 示例、文档
 7. 跑测试：.\medkernel-mvp\scripts\run-tests.ps1
             .\medkernel-mvp\scripts\build.ps1
@@ -58,7 +58,7 @@
 8. 在 11_ai_reviews/pending/<review_id>.md 创建评审记录
 9. APPROVED 且 open_findings=0 后才能正式提交
 10. 客户可见或高风险功能：创建 13_feature_acceptance/<id>.md 记录
-11. 完成后归档 claim/review 到 archive/YYYYMMDD/
+11. 完成后归档 claim/review 到 archive/YYYYMMDD/，并删除对应 active_locks/<task_id>.lock
 ```
 
 ---

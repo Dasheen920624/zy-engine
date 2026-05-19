@@ -11,6 +11,7 @@
 
 ```text
 active/   正在开发或短时等待的任务认领文件。
+active_locks/ 同任务唯一锁文件。每个 task_id 只能有一个 <task_id>.lock。
 blocked/  被外部依赖阻塞的任务认领文件。
 archive/  已完成、放弃或接管完成的任务记录。
 ```
@@ -24,13 +25,20 @@ archive/  已完成、放弃或接管完成的任务记录。
 认领前必须：
 
 ```powershell
-git pull --ff-only origin main
+git pull --ff-only origin develop
 git status -sb
-rg -n "claim_id:|task_id:|write_scope:" ai-dev-input/10_task_claims
+rg -n "claim_id:|task_id:|task_lock_path:|write_scope:" ai-dev-input/10_task_claims
 .\medkernel-mvp\scripts\check-ai-collaboration.ps1
 ```
 
-没有成功提交并推送 `active/<claim_id>.md` 前，不允许修改业务代码。claim 中必须记录 `git_base_commit`、`git_status_at_claim`、写入范围、review 需求、功能验收需求和预计心跳间隔。
+没有成功提交并推送 `active/<claim_id>.md` 和 `active_locks/<task_id>.lock` 到 `develop` 前，不允许修改业务代码。claim 中必须记录 `task_lock_path`、`git_base_commit`、`git_status_at_claim`、写入范围、review 需求、功能验收需求和预计心跳间隔。
+
+同任务唯一锁规则：
+
+- `active_locks/<task_id>.lock` 是 Git 层面的硬锁，文件名必须等于任务编号。
+- claim 和 lock 必须在同一个提交中创建并推送，push 成功才算认领成功。
+- 两个 AI 同时认领同一任务时，第二个 AI 在 pull / merge / push 阶段必须处理同名锁文件冲突，不得改名绕过。
+- 完成、放弃或接管归档 claim 时，必须在同一提交中删除对应 lock；历史由 git 保留。
 
 状态同步要求：
 

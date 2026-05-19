@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$TaskId = "",
   [string]$ClaimId = "",
   [switch]$Strict
@@ -27,6 +27,7 @@ function Get-MetadataField($Content, $Name) {
 
 $collaborationIssues = @()
 $claimRecords = @()
+$lockRecords = @()
 
 Write-Section "Git"
 git status --short --branch
@@ -35,6 +36,7 @@ Write-Output ""
 
 Write-Section "Active Claims"
 $activeDir = Join-Path $repoRoot "ai-dev-input\10_task_claims\active"
+$lockDir = Join-Path $repoRoot "ai-dev-input\10_task_claims\active_locks"
 $activeClaims = Get-ChildItem -Path $activeDir -Filter "*.md" -File -ErrorAction SilentlyContinue
 if ($activeClaims.Count -eq 0) {
   Write-Output "active_claims=0"
@@ -46,9 +48,11 @@ if ($activeClaims.Count -eq 0) {
     $claimId = Get-MetadataField $content "claim_id"
     $heartbeat = Get-MetadataField $content "last_heartbeat"
     $writeScope = Get-MetadataField $content "write_scope"
+    $taskLockPath = Get-MetadataField $content "task_lock_path"
     $requiredFields = @(
       "claim_id",
       "task_id",
+      "task_lock_path",
       "status",
       "git_base_commit",
       "git_status_at_claim",
@@ -72,6 +76,30 @@ if ($activeClaims.Count -eq 0) {
       $collaborationIssues += $issue
       Write-Output $issue
     }
+    if (![string]::IsNullOrWhiteSpace($claimTask)) {
+      $expectedLockPath = "ai-dev-input/10_task_claims/active_locks/$claimTask.lock"
+      $normalizedTaskLockPath = $taskLockPath -replace "\\", "/"
+      if ($normalizedTaskLockPath -ne $expectedLockPath) {
+        $issue = ("claim_lock_path_mismatch file={0} expected={1} actual={2}" -f $claim.Name, $expectedLockPath, $taskLockPath)
+        $collaborationIssues += $issue
+        Write-Output $issue
+      }
+      $lockPath = Join-Path $lockDir "$claimTask.lock"
+      if (!(Test-Path -LiteralPath $lockPath)) {
+        $issue = ("claim_missing_task_lock file={0} expected={1}" -f $claim.Name, $expectedLockPath)
+        $collaborationIssues += $issue
+        Write-Output $issue
+      } else {
+        $lockContent = Get-Content -LiteralPath $lockPath -Raw
+        $lockClaimId = Get-MetadataField $lockContent "claim_id"
+        $lockTaskId = Get-MetadataField $lockContent "task_id"
+        if ($lockClaimId -ne $claimId -or $lockTaskId -ne $claimTask) {
+          $issue = ("task_lock_mismatch lock={0} expected_claim={1} actual_claim={2} expected_task={3} actual_task={4}" -f $expectedLockPath, $claimId, $lockClaimId, $claimTask, $lockTaskId)
+          $collaborationIssues += $issue
+          Write-Output $issue
+        }
+      }
+    }
     if (![string]::IsNullOrWhiteSpace($heartbeat)) {
       $parsedHeartbeat = [datetime]::MinValue
       if ([datetime]::TryParse($heartbeat, [ref]$parsedHeartbeat)) {
@@ -83,6 +111,7 @@ if ($activeClaims.Count -eq 0) {
         }
       }
     }
+
     $claimRecords += [pscustomobject]@{
       File = $claim.Name
       ClaimId = $claimId
@@ -91,6 +120,7 @@ if ($activeClaims.Count -eq 0) {
       WriteScope = $writeScope
     }
   }
+
   $duplicateTaskGroups = $claimRecords |
     Where-Object { ![string]::IsNullOrWhiteSpace($_.TaskId) } |
     Group-Object TaskId |
@@ -98,6 +128,51 @@ if ($activeClaims.Count -eq 0) {
   foreach ($group in $duplicateTaskGroups) {
     $files = ($group.Group | ForEach-Object { $_.File }) -join ","
     $issue = ("duplicate_active_task_id task_id={0} files={1}" -f $group.Name, $files)
+    $collaborationIssues += $issue
+    Write-Output $issue
+  }
+}
+
+Write-Section "Active Task Locks"
+$activeLocks = Get-ChildItem -Path $lockDir -Filter "*.lock" -File -ErrorAction SilentlyContinue
+if ($activeLocks.Count -eq 0) {
+  Write-Output "active_task_locks=0"
+} else {
+  foreach ($lock in $activeLocks) {
+    $content = Get-Content -Path $lock.FullName -Raw
+    $lockTask = Get-MetadataField $content "task_id"
+    $lockClaim = Get-MetadataField $content "claim_id"
+    $expectedName = if (![string]::IsNullOrWhiteSpace($lockTask)) { "$lockTask.lock" } else { "" }
+    Write-Output ("{0} task_id={1} claim_id={2}" -f $lock.Name, $lockTask, $lockClaim)
+    if ([string]::IsNullOrWhiteSpace($lockTask) -or [string]::IsNullOrWhiteSpace($lockClaim)) {
+      $issue = ("task_lock_missing_fields file={0}" -f $lock.Name)
+      $collaborationIssues += $issue
+      Write-Output $issue
+    }
+    if (![string]::IsNullOrWhiteSpace($expectedName) -and $lock.Name -ne $expectedName) {
+      $issue = ("task_lock_filename_mismatch file={0} expected={1}" -f $lock.Name, $expectedName)
+      $collaborationIssues += $issue
+      Write-Output $issue
+    }
+    $matchingClaim = $claimRecords | Where-Object { $_.ClaimId -eq $lockClaim -and $_.TaskId -eq $lockTask } | Select-Object -First 1
+    if ($null -eq $matchingClaim) {
+      $issue = ("orphan_task_lock file={0} task_id={1} claim_id={2}" -f $lock.Name, $lockTask, $lockClaim)
+      $collaborationIssues += $issue
+      Write-Output $issue
+    }
+    $lockRecords += [pscustomobject]@{
+      File = $lock.Name
+      ClaimId = $lockClaim
+      TaskId = $lockTask
+    }
+  }
+  $duplicateLockGroups = $lockRecords |
+    Where-Object { ![string]::IsNullOrWhiteSpace($_.TaskId) } |
+    Group-Object TaskId |
+    Where-Object { $_.Count -gt 1 }
+  foreach ($group in $duplicateLockGroups) {
+    $files = ($group.Group | ForEach-Object { $_.File }) -join ","
+    $issue = ("duplicate_task_lock task_id={0} files={1}" -f $group.Name, $files)
     $collaborationIssues += $issue
     Write-Output $issue
   }
@@ -175,6 +250,11 @@ if ($Strict -and $dirty) {
   throw "working_tree_not_clean"
 }
 
-if ($Strict -and $collaborationIssues.Count -gt 0) {
-  throw ("collaboration_issues=" + ($collaborationIssues -join "; "))
+if ($collaborationIssues.Count -gt 0) {
+  $message = "collaboration_issues=" + ($collaborationIssues -join "; ")
+  if ($Strict) {
+    throw $message
+  }
+  Write-Output $message
+  exit 1
 }

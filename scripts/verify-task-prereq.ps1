@@ -15,7 +15,7 @@
 #   4. 任务等级与你的等级匹配
 #   5. 依赖任务全部 DONE
 #   6. 文档体系（docs/）完整
-#   7. 是否已有别人在领同一任务（active claim）
+#   7. 是否已有别人在领同一任务（active claim + task lock）
 #
 # 任何一项 FAIL 都不允许创建 active claim。
 
@@ -294,14 +294,16 @@ foreach ($doc in $requiredDocs) {
 # ============================================================
 # 7. 是否已有别人在领同一任务
 # ============================================================
-Show-Section "7. active claim 冲突检查"
+Show-Section "7. active claim / task lock 冲突检查"
 
 $activeDir = "ai-dev-input/10_task_claims/active"
+$lockDir = "ai-dev-input/10_task_claims/active_locks"
+$expectedLock = Join-Path $lockDir "$TaskId.lock"
 if (Test-Path $activeDir) {
   $existingClaims = Get-ChildItem -Path $activeDir -Filter "*.md" -ErrorAction SilentlyContinue
   $conflicts = $existingClaims | Where-Object {
     $c = Get-Content $_.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
-    $c -match [regex]::Escape($TaskId)
+    $c -match "(?m)^task_id:\s*$([regex]::Escape($TaskId))\s*$"
   }
   if ($conflicts) {
     Show-Fail "已有 active claim 锁定 $TaskId："
@@ -314,6 +316,17 @@ if (Test-Path $activeDir) {
   }
 } else {
   Show-Warn "active 目录不存在: $activeDir"
+}
+
+if (Test-Path $expectedLock) {
+  Show-Fail "已有 task lock 锁定 $TaskId：$expectedLock"
+  Write-Host "    task lock 是 Git 层面的同任务唯一锁；必须等待原 claim 完成、归档或按接管规则处理" -ForegroundColor Gray
+} else {
+  if (-not (Test-Path $lockDir)) {
+    Show-Warn "task lock 目录不存在: $lockDir"
+  } else {
+    Show-Pass "无 task lock 冲突，可创建 $expectedLock"
+  }
 }
 
 # ============================================================
@@ -333,9 +346,10 @@ if ($FAIL_COUNT -gt 0) {
   Write-Host ""
   Write-Host "下一步：" -ForegroundColor White
   Write-Host "  1. cp ai-dev-input/10_task_claims/task_claim_template.md ai-dev-input/10_task_claims/active/$TaskId-<你的代号>.md"
-  Write-Host "  2. 填写 claim 内容"
-  Write-Host "  3. git add + commit + push（push 即占领）"
-  Write-Host "  4. 开始编码"
-  Write-Host "  5. 完成后跑 .\scripts\verify-pr.ps1 -TaskId $TaskId"
+  Write-Host "  2. 创建 ai-dev-input/10_task_claims/active_locks/$TaskId.lock（同任务唯一锁）"
+  Write-Host "  3. 填写 claim 与 lock 内容"
+  Write-Host "  4. git add + commit + push（push 成功才算占领）"
+  Write-Host "  5. 开始编码"
+  Write-Host "  6. 完成后跑 .\scripts\verify-pr.ps1 -TaskId $TaskId"
   exit 0
 }

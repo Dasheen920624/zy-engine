@@ -13,7 +13,7 @@
 #   2. ADR 不变量未被违反（grep 禁用模式）
 #   3. 后端 build + test（如适用）
 #   4. 前端 lint + test + build（如适用）
-#   5. UTF-8 无 BOM
+#   5. UTF-8 / 中文乱码检查
 #   6. 独占文件 / 共享文件冲突（check-ai-collaboration.ps1）
 #   7. 禁用命名检查（zy-engine / ZyEngine* 等）
 #   8. 引用断链检查（docs/_archive/ 等已删除路径）
@@ -321,9 +321,9 @@ if (-not $SkipFrontend) {
 }
 
 # ============================================================
-# 5. UTF-8 无 BOM
+# 5. UTF-8 / 中文乱码检查
 # ============================================================
-Show-Section "5. UTF-8 无 BOM 检查"
+Show-Section "5. UTF-8 / 中文乱码检查"
 
 if (Test-Path "medkernel-mvp/scripts/verify-encoding.cmd") {
   $encOutput = & "medkernel-mvp/scripts/verify-encoding.cmd" 2>&1
