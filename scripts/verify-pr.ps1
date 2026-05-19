@@ -9,7 +9,7 @@
 #   -SkipBackend    跳过后端检查（仅前端 PR）
 #
 # 9 项自动检查：
-#   1. 工作树有改动（不是空 PR）
+#   1. 工作树或 PR 差异有改动（不是空 PR）
 #   2. ADR 不变量未被违反（grep 禁用模式）
 #   3. 后端 build + test（如适用）
 #   4. 前端 lint + test + build（如适用）
@@ -56,7 +56,25 @@ function Show-Section($title) {
   Write-Host "=== $title ===" -ForegroundColor Cyan
 }
 
+function Test-GitRef([string]$Ref) {
+  if ([string]::IsNullOrWhiteSpace($Ref)) {
+    return $false
+  }
+  git rev-parse --verify $Ref 2>$null | Out-Null
+  return $LASTEXITCODE -eq 0
+}
+
 function Get-GitBaseRef {
+  if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_BASE_REF)) {
+    $candidate = "origin/$($env:GITHUB_BASE_REF)"
+    if (Test-GitRef $candidate) {
+      return $candidate
+    }
+    if (Test-GitRef $env:GITHUB_BASE_REF) {
+      return $env:GITHUB_BASE_REF
+    }
+  }
+
   $upstream = git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null
   if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($upstream)) {
     return $upstream.Trim()
@@ -116,16 +134,24 @@ Write-Host "Diff base: $BaseRef" -ForegroundColor Gray
 Write-Host ("=" * 60)
 
 # ============================================================
-# 1. 工作树有改动
+# 1. 工作树或 PR 差异有改动
 # ============================================================
-Show-Section "1. 工作树有改动"
+Show-Section "1. 工作树或 PR 差异有改动"
 
 $status = git status --porcelain
-if ([string]::IsNullOrWhiteSpace($status)) {
-  Show-Fail "工作树无改动，没什么要提交的"
-} else {
+$diffNames = git diff --name-only $BaseRef -- 2>$null
+if (-not $diffNames) {
+  $diffNames = git diff --cached --name-only $BaseRef -- 2>$null
+}
+
+if (-not [string]::IsNullOrWhiteSpace($status)) {
   $changedLines = ($status -split "`n").Count
   Show-Pass "$changedLines 个文件改动"
+} elseif (-not [string]::IsNullOrWhiteSpace($diffNames)) {
+  $changedLines = ($diffNames -split "`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count
+  Show-Pass "$changedLines 个文件相对 $BaseRef 有差异（CI/已提交场景）"
+} else {
+  Show-Fail "工作树与 $BaseRef 均无差异，没什么要提交或合并的"
 }
 
 # ============================================================

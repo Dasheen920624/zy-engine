@@ -24,13 +24,15 @@ MAJOR.MINOR.PATCH[-prerelease][+build]
 ## 2. 分支约定
 
 ```
-main           主分支，永远可发布；fast-forward 合并
-claude/<任务>  worktree 临时分支（多 AI 并行）
-release/X.Y    长期支持分支（重大版本进入维护期后）
-hotfix/X.Y.Z   紧急修复分支（从 release/X.Y 分出，修完合并回 main + release/X.Y）
+main                       稳定发布分支，永远可发布；仅接受 develop → main PR
+develop                    日常集成分支；AI 小变更可直接 push，大变更先开任务分支
+ai/<TASK-ID>/<slug>        AI 任务分支，基于 origin/develop 创建，完成后 PR 或 push → develop
+feature/<TASK-ID>/<slug>   高风险/大型任务分支，完成后 PR → develop
+release/X.Y                长期支持分支（重大版本进入维护期后）
+hotfix/X.Y.Z               紧急修复分支（从 main 或 release/X.Y 分出，修完回合）
 ```
 
-**禁用**：feature 分支与 main 长期分叉；GitFlow 复杂模型在本项目过度。
+**禁用**：AI 直接 push `main`、feature 分支与 `develop` 长期分叉、绕过 CI 把未验收变更合入 `main`。完整规则以 [docs/engineering/分支策略与发布管理.md](docs/engineering/分支策略与发布管理.md) 为准。
 
 ## 3. 打 tag 流程
 
@@ -201,9 +203,13 @@ define: {
 ...
 ```
 
-## 7. 与 main 协作的注意
+## 7. 与 main / develop 协作的注意
 
-按 memory `feedback_auto_push_main`：完成任务后直接 ff push main 不再询问。
+2026-05-19 起采用 `main + develop` 双线：
+
+- AI 日常任务基于 `origin/develop` 开工，完成后推送 `develop` 或先开 `ai/<TASK-ID>/<slug>` / `feature/<TASK-ID>/<slug>`。
+- `main` 只接受用户 approve 且 CI PASS 的 `develop → main` PR。
+- 如果 GitHub 提示 `develop → main` 不能合并，先检查 `origin/main` 是否为 `origin/develop` 祖先、PR checks 是否通过、`guard-rules` 是否正确以 `origin/main` 为 diff base。
 
 但 **打 tag 必须由人执行**（不允许 AI 自动 tag），因为：
 

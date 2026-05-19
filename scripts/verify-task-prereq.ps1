@@ -56,7 +56,25 @@ function Show-Section($title) {
   Write-Host "=== $title ===" -ForegroundColor Cyan
 }
 
+function Test-GitRef([string]$Ref) {
+  if ([string]::IsNullOrWhiteSpace($Ref)) {
+    return $false
+  }
+  git rev-parse --verify $Ref 2>$null | Out-Null
+  return $LASTEXITCODE -eq 0
+}
+
 function Get-GitBaseRef {
+  if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_BASE_REF)) {
+    $candidate = "origin/$($env:GITHUB_BASE_REF)"
+    if (Test-GitRef $candidate) {
+      return $candidate
+    }
+    if (Test-GitRef $env:GITHUB_BASE_REF) {
+      return $env:GITHUB_BASE_REF
+    }
+  }
+
   $upstream = git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null
   if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($upstream)) {
     return $upstream.Trim()
@@ -135,7 +153,7 @@ if (-not $SkipGitPull) {
     git fetch origin 2>&1 | Out-Null
     $baseRef = Get-GitBaseRef
     if ([string]::IsNullOrWhiteSpace($baseRef)) {
-      Show-Warn "未找到当前分支 upstream，也未找到 origin/main；跳过远端同步检查"
+      Show-Warn "未找到当前分支 upstream，也未找到 origin/develop 或 origin/main；跳过远端同步检查"
       $behind = 0
       $ahead = 0
     } else {
