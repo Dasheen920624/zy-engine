@@ -10,6 +10,7 @@ import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import WorkflowTodos from "../pages/WorkflowTodos";
 import { QualityDashboard, DepartmentDrillDown, EvalIndicatorSetList } from "../pages/Quality";
 import AlertList from "../pages/Quality/AlertList";
+import { KnowledgePage } from "../pages/Knowledge";
 import { NotificationList, NotificationDetail, NotificationSettings } from "../pages/Notification";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
@@ -52,6 +53,7 @@ export const routes: RouteObject[] = [
           { path: "qc/eval/sets", element: <EvalIndicatorSetList /> },
           { path: "qc/department/:deptCode", element: <DepartmentDrillDown /> },
           { path: "qc/insurance", element: <PlaceholderPage title="医保智能审核" pr="PR-V2-12" /> },
+          { path: "aik/sources", element: <KnowledgePage /> },
           { path: "aik/review", element: <PlaceholderPage title="知识审核台" pr="PR-V2-05" /> },
           { path: "workflow/todos", element: <WorkflowTodos /> },
           { path: "notifications", element: <NotificationList recipientId="current-user" /> },
