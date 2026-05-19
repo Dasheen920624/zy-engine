@@ -93,15 +93,16 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 ## 提交要求
 
 1. 先运行 `git status -sb` 确认工作树。
-2. 运行 `.\medkernel-mvp\scripts\check-ai-collaboration.ps1` 检查 active claim、pending review 和功能验收队列。
-3. 确认已创建并推送 `ai-dev-input/10_task_claims/active/<claim_id>.md`，并把开发前 `git status -sb` 写入 claim。
-4. 自主开发时确认已创建或更新 `ai-dev-input/12_autonomous_runs/active/<run_id>.md`。
-5. 完成开发后创建 `ai-dev-input/11_ai_reviews/pending/<review_id>.md`，通过质量评审和整改复评。
-6. 需要功能验收时，创建或更新 `ai-dev-input/13_feature_acceptance/<status>/<feature_acceptance_id>.md`。
-7. 只有 `review_status=APPROVED` 且 `open_findings=0` 后，才能正式提交业务代码；需要客户验收的功能还必须有功能验收结论。
-8. 只暂存本任务相关文件。
-9. 每完成一个明确任务并通过质量门禁后，必须提交一次，不得把已完成任务长期留在本地未提交状态。
-10. 提交信息使用中文短句，例如：
+2. 运行 `git branch --show-current`；如果当前是 `main`，立即停止，切到 `develop` 或基于 `origin/develop` 创建任务分支。
+3. 运行 `.\medkernel-mvp\scripts\check-ai-collaboration.ps1` 检查 active claim、pending review 和功能验收队列。
+4. 确认已创建并推送 `ai-dev-input/10_task_claims/active/<claim_id>.md`，并把开发前 `git status -sb` 写入 claim。
+5. 自主开发时确认已创建或更新 `ai-dev-input/12_autonomous_runs/active/<run_id>.md`。
+6. 完成开发后创建 `ai-dev-input/11_ai_reviews/pending/<review_id>.md`，通过质量评审和整改复评。
+7. 需要功能验收时，创建或更新 `ai-dev-input/13_feature_acceptance/<status>/<feature_acceptance_id>.md`。
+8. 只有 `review_status=APPROVED` 且 `open_findings=0` 后，才能正式提交业务代码；需要客户验收的功能还必须有功能验收结论。
+9. 只暂存本任务相关文件。
+10. 每完成一个明确任务并通过质量门禁后，必须提交一次，不得把已完成任务长期留在本地未提交状态。
+11. 提交信息使用中文短句，例如：
 
 ```text
 增加配置包发布模型
@@ -109,5 +110,5 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 增加医嘱标准化映射
 ```
 
-11. 提交成功后必须立即推送到远端当前分支，确保其它 AI 可以拉取最新项目。
-12. 最终回复必须包含改动摘要、验证结果、claim_id、review_id、feature_acceptance_id、open_findings、run_id、提交 hash、推送分支；如未提交或未推送，必须说明原因、影响和替代交接方式。
+12. 提交成功后必须立即推送到远端 `develop` 或创建 PR 到 `develop`，确保其它 AI 可以拉取最新项目。
+13. 最终回复必须包含改动摘要、验证结果、claim_id、review_id、feature_acceptance_id、open_findings、run_id、提交 hash、推送分支；如未提交或未推送，必须说明原因、影响和替代交接方式。

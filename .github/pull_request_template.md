@@ -69,6 +69,7 @@
 ## 6. AI 协作
 
 - [ ] 只改了 active claim 声明的独占文件
+- [ ] AI 业务 PR 目标是 `develop`；只有用户发布 PR 可以是 `develop -> main`
 - [ ] `.\medkernel-mvp\scripts\check-ai-collaboration.ps1` PASS
 - [ ] 未覆盖其它 AI 未提交的工作
 - [ ] commit message 包含 PR-V2-XX 编号

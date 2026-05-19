@@ -166,6 +166,11 @@ public ApiResult<List<UserDto>> list() {
 ❌ 错误：直接改代码不创建 claim  
 ✅ 正确：领任务 → push active claim → 才能改代码
 
+### 6.4 禁止绕过 task lock
+
+❌ 错误：发现 `active_locks/<task_id>.lock` 已存在后改一个锁文件名继续开发
+✅ 正确：同任务只允许一个 `active_locks/<task_id>.lock`；遇到锁冲突必须停止、等待、拆任务或按 stale claim 接管流程处理
+
 ---
 
 ## 7. 命名空间

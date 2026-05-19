@@ -395,7 +395,7 @@ Oracle 脚本会自动读取仓库根目录 `.env.oracle.local`。`.env.oracle.l
 2. 创建并通过 `ai-dev-input/11_ai_reviews` 质量评审。
 3. 需要功能验收时创建并更新 `ai-dev-input/13_feature_acceptance` 记录。
 4. 只有 `review_status=APPROVED` 且 `open_findings=0`，才能正式提交业务代码。
-5. 每完成一个明确任务并通过质量门禁后，必须立即推送到远端当前分支。
+5. 每完成一个明确任务并通过质量门禁后，必须立即推送到远端 `develop` 或开 PR 到 `develop`。
 6. 完成后把 claim 更新为 `DONE` 并归档到 `ai-dev-input/10_task_claims/archive/YYYYMMDD/`，把 review 归档到 `ai-dev-input/11_ai_reviews/archive/YYYYMMDD/`；有功能验收记录时同步提交 hash 和质量等级；自主运行结束时归档 run log。
 7. 最终回复必须说明提交 hash、推送分支、claim_id、review_id、feature_acceptance_id、run_id 和开放问题数；若无法提交或推送，必须说明原因、影响和替代交接方式。
 

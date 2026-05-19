@@ -1,4 +1,4 @@
-﻿# 接手前自检脚本：AI 领任务前必须跑通此脚本才能创建 active claim。
+# 接手前自检脚本：AI 领任务前必须跑通此脚本才能创建 active claim。
 #
 # 用法：
 #   .\scripts\verify-task-prereq.ps1 -TaskId PR-V2-01 -Level senior
@@ -15,7 +15,7 @@
 #   4. 任务等级与你的等级匹配
 #   5. 依赖任务全部 DONE
 #   6. 文档体系（docs/）完整
-#   7. 是否已有别人在领同一任务（active claim）
+#   7. 是否已有别人在领同一任务（active claim + task lock）
 #
 # 任何一项 FAIL 都不允许创建 active claim。
 
@@ -30,6 +30,10 @@ param(
   [Parameter(Mandatory = $false)]
   [switch]$SkipGitPull
 )
+
+# 锚定到项目根（脚本所在目录的父目录），让后续所有相对路径检查不受调用方 cwd 影响
+$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+Set-Location -LiteralPath $ProjectRoot
 
 $ErrorActionPreference = "Stop"
 $PASS_COUNT = 0
@@ -64,6 +68,14 @@ function Test-GitRef([string]$Ref) {
   return $LASTEXITCODE -eq 0
 }
 
+function Get-CurrentGitBranch {
+  $branch = git branch --show-current 2>$null
+  if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($branch)) {
+    return $branch.Trim()
+  }
+  return ""
+}
+
 function Get-GitBaseRef {
   if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_BASE_REF)) {
     $candidate = "origin/$($env:GITHUB_BASE_REF)"
@@ -75,22 +87,12 @@ function Get-GitBaseRef {
     }
   }
 
-  $upstream = git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null
-  if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($upstream)) {
-    return $upstream.Trim()
-  }
-
   git rev-parse --verify origin/develop 2>$null | Out-Null
   if ($LASTEXITCODE -eq 0) {
     return "origin/develop"
   }
 
-  git rev-parse --verify origin/main 2>$null | Out-Null
-  if ($LASTEXITCODE -eq 0) {
-    return "origin/main"
-  }
-
-  return $null
+  return "origin/develop"
 }
 
 function Get-TaskAliases([string]$TaskId) {
@@ -131,6 +133,26 @@ Write-Host "MedKernel | 接手前自检 | Task=$TaskId | Level=$Level" -Foregrou
 Write-Host ("=" * 60)
 
 # ============================================================
+# 0. 分支策略
+# ============================================================
+Show-Section "0. 分支策略"
+
+$currentBranch = Get-CurrentGitBranch
+if ($currentBranch -eq "main") {
+  Show-Fail "当前在 main，AI 禁止在 main 领任务、开发、提交或推送；请切到 develop 或基于 origin/develop 创建任务分支"
+} elseif ([string]::IsNullOrWhiteSpace($currentBranch)) {
+  Show-Warn "当前为 detached HEAD，无法识别分支；请确认目标基线是 origin/develop"
+} else {
+  Show-Pass "当前分支 $currentBranch；AI 任务只能合入 develop"
+}
+
+if (Test-GitRef "origin/develop") {
+  Show-Pass "远端 develop 基线存在"
+} else {
+  Show-Fail "未找到 origin/develop；AI 任务必须以 develop 为开发和合入基线"
+}
+
+# ============================================================
 # 1. git 工作树干净
 # ============================================================
 Show-Section "1. git 工作树干净"
@@ -152,8 +174,8 @@ if (-not $SkipGitPull) {
   try {
     git fetch origin 2>&1 | Out-Null
     $baseRef = Get-GitBaseRef
-    if ([string]::IsNullOrWhiteSpace($baseRef)) {
-      Show-Warn "未找到当前分支 upstream，也未找到 origin/develop 或 origin/main；跳过远端同步检查"
+    if (-not (Test-GitRef $baseRef)) {
+      Show-Fail "未找到 $baseRef；先 fetch origin develop，AI 不允许退回 main 作为开发基线"
       $behind = 0
       $ahead = 0
     } else {
@@ -294,14 +316,16 @@ foreach ($doc in $requiredDocs) {
 # ============================================================
 # 7. 是否已有别人在领同一任务
 # ============================================================
-Show-Section "7. active claim 冲突检查"
+Show-Section "7. active claim / task lock 冲突检查"
 
 $activeDir = "ai-dev-input/10_task_claims/active"
+$lockDir = "ai-dev-input/10_task_claims/active_locks"
+$expectedLock = Join-Path $lockDir "$TaskId.lock"
 if (Test-Path $activeDir) {
   $existingClaims = Get-ChildItem -Path $activeDir -Filter "*.md" -ErrorAction SilentlyContinue
   $conflicts = $existingClaims | Where-Object {
     $c = Get-Content $_.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
-    $c -match [regex]::Escape($TaskId)
+    $c -match "(?m)^task_id:\s*$([regex]::Escape($TaskId))\s*$"
   }
   if ($conflicts) {
     Show-Fail "已有 active claim 锁定 $TaskId："
@@ -314,6 +338,17 @@ if (Test-Path $activeDir) {
   }
 } else {
   Show-Warn "active 目录不存在: $activeDir"
+}
+
+if (Test-Path $expectedLock) {
+  Show-Fail "已有 task lock 锁定 $TaskId：$expectedLock"
+  Write-Host "    task lock 是 Git 层面的同任务唯一锁；必须等待原 claim 完成、归档或按接管规则处理" -ForegroundColor Gray
+} else {
+  if (-not (Test-Path $lockDir)) {
+    Show-Warn "task lock 目录不存在: $lockDir"
+  } else {
+    Show-Pass "无 task lock 冲突，可创建 $expectedLock"
+  }
 }
 
 # ============================================================
@@ -333,9 +368,10 @@ if ($FAIL_COUNT -gt 0) {
   Write-Host ""
   Write-Host "下一步：" -ForegroundColor White
   Write-Host "  1. cp ai-dev-input/10_task_claims/task_claim_template.md ai-dev-input/10_task_claims/active/$TaskId-<你的代号>.md"
-  Write-Host "  2. 填写 claim 内容"
-  Write-Host "  3. git add + commit + push（push 即占领）"
-  Write-Host "  4. 开始编码"
-  Write-Host "  5. 完成后跑 .\scripts\verify-pr.ps1 -TaskId $TaskId"
+  Write-Host "  2. 创建 ai-dev-input/10_task_claims/active_locks/$TaskId.lock（同任务唯一锁）"
+  Write-Host "  3. 填写 claim 与 lock 内容"
+  Write-Host "  4. git add + commit + push 到 develop（push 成功才算占领）"
+  Write-Host "  5. 开始编码"
+  Write-Host "  6. 完成后跑 .\scripts\verify-pr.ps1 -TaskId $TaskId"
   exit 0
 }

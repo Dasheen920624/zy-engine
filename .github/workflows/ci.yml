@@ -59,6 +59,22 @@ jobs:
             git rev-parse $env:EVENT_BEFORE
           }
 
+      - name: Enforce branch policy
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        run: |
+          $base = $env:GITHUB_BASE_REF
+          $head = $env:GITHUB_HEAD_REF
+          Write-Host "PR branch policy: $head -> $base"
+
+          if ($base -eq "main" -and $head -ne "develop") {
+            throw "AI 变更不允许直接 PR 到 main；必须先合入 develop，再由用户发起 develop -> main 发布 PR。"
+          }
+
+          if ($base -eq "develop" -and $head -eq "main") {
+            throw "不允许从 main 合回 develop；AI 任务必须基于 develop。"
+          }
+
       - name: Run verify-pr.ps1 (skip backend/frontend build, only guard rules)
         shell: pwsh
         env:
