@@ -1,7 +1,0 @@
-task_id: DOC-007
-claim_id: DOC-007-S01
-owner: CodeBuddy
-branch: develop
-git_base_commit: cb34a771f10b099e573051c0d0fba926712fceb7
-created_at: 2026-05-19T20:45:00+08:00
-last_heartbeat: 2026-05-19T20:45:00+08:00
