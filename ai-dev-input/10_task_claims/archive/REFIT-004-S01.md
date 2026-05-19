@@ -7,7 +7,7 @@ slice: S01
 title: 多数据库持久化和中文注释统一补齐
 owner: TraeAI-Main
 role: 高级
-status: ACTIVE
+status: DONE
 branch: develop
 target_base_branch: develop
 git_base_commit: a35563f
