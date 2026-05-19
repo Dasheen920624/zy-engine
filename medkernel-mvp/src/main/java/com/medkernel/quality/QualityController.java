@@ -79,7 +79,9 @@ public class QualityController {
     @PostMapping("/problems/{id}/assign")
     public ApiResult<Map<String, Object>> assignProblem(
             @PathVariable String id,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
         return ApiResult.success(qualityService.assignProblem(id, request));
     }
 }

@@ -129,7 +129,11 @@ public class RuleController {
     }
 
     @GetMapping("/exec-logs/{logId}")
-    public ApiResult<RuleExecLogEntry> getExecLog(@PathVariable String logId) {
+    public ApiResult<RuleExecLogEntry> getExecLog(@PathVariable String logId,
+                                                  HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        filters.put("logId", logId);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(ruleService.getExecLog(logId));
     }
 

@@ -1,6 +1,7 @@
 package com.medkernel.terminology;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,33 +19,45 @@ import java.util.Map;
 @RequestMapping("/api/terminology")
 public class TerminologyController {
     private final TerminologyService terminologyService;
+    private final OrganizationContextService organizationContextService;
 
-    public TerminologyController(TerminologyService terminologyService) {
+    public TerminologyController(TerminologyService terminologyService,
+                                 OrganizationContextService organizationContextService) {
         this.terminologyService = terminologyService;
+        this.organizationContextService = organizationContextService;
     }
 
     @PostMapping("/normalize")
-    public ApiResult<Map<String, Object>> normalize(@RequestBody Map<String, Object> request) {
+    public ApiResult<Map<String, Object>> normalize(@RequestBody Map<String, Object> request,
+                                                     HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
         return ApiResult.success(terminologyService.normalize(request));
     }
 
     @PostMapping("/mappings")
-    public ApiResult<List<Map<String, Object>>> importMappings(@RequestBody Object request) {
+    public ApiResult<List<Map<String, Object>>> importMappings(@RequestBody Object request,
+                                                                HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         return ApiResult.success(terminologyService.importMappings(request));
     }
 
     @GetMapping("/mappings")
-    public ApiResult<List<Map<String, Object>>> listMappings() {
+    public ApiResult<List<Map<String, Object>>> listMappings(HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(terminologyService.listMappings());
     }
 
     @GetMapping("/mappings/{sourceSystem}/{sourceCode}")
     public ApiResult<Map<String, Object>> getMapping(@PathVariable String sourceSystem,
                                                      @PathVariable String sourceCode,
-                                                     @RequestParam String conceptType) {
+                                                     @RequestParam String conceptType,
+                                                     HttpServletRequest httpRequest) {
         validatePathToken("sourceSystem", sourceSystem);
         validatePathToken("sourceCode", sourceCode);
         validatePathToken("conceptType", conceptType);
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(terminologyService.getMapping(sourceSystem, sourceCode, conceptType));
     }
 
@@ -73,12 +87,14 @@ public class TerminologyController {
             @RequestParam(required = false) String governanceStatus,
             @RequestParam(required = false) String sourceSystem,
             @RequestParam(required = false) String conceptType,
-            @RequestParam(required = false) String limit) {
+            @RequestParam(required = false) String limit,
+            HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
         filters.put("governanceStatus", governanceStatus);
         filters.put("sourceSystem", sourceSystem);
         filters.put("conceptType", conceptType);
         filters.put("limit", limit);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(terminologyService.listPendingMappings(filters));
     }
 
@@ -87,7 +103,9 @@ public class TerminologyController {
      */
     @PostMapping("/pending/{queueId}/approve")
     public ApiResult<Map<String, Object>> approvePendingMapping(@PathVariable String queueId,
-                                                                 @RequestBody Map<String, Object> request) {
+                                                                 @RequestBody Map<String, Object> request,
+                                                                 HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         return ApiResult.success(terminologyService.approvePendingMapping(queueId, request));
     }
 
@@ -96,7 +114,9 @@ public class TerminologyController {
      */
     @PostMapping("/pending/{queueId}/reject")
     public ApiResult<Map<String, Object>> rejectPendingMapping(@PathVariable String queueId,
-                                                                 @RequestBody Map<String, Object> request) {
+                                                                @RequestBody Map<String, Object> request,
+                                                                HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         return ApiResult.success(terminologyService.rejectPendingMapping(queueId, request));
     }
 }

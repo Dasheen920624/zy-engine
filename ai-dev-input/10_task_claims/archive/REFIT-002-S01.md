@@ -7,7 +7,7 @@ slice: S01
 title: 租户/组织/身份贯通改造
 owner: TraeAI-Main
 role: 高级
-status: ACTIVE
+status: DONE
 branch: develop
 target_base_branch: develop
 git_base_commit: a0d2f46dd0de2ffd8d2c8d721799ba72e6ffbf52

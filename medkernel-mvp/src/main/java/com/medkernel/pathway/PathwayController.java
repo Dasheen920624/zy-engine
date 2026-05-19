@@ -34,7 +34,9 @@ public class PathwayController {
     }
 
     @PostMapping("/pathways")
-    public ApiResult<Map<String, Object>> createPathway(@RequestBody Map<String, Object> config) {
+    public ApiResult<Map<String, Object>> createPathway(@RequestBody Map<String, Object> config,
+                                                         HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, config);
         return ApiResult.success(pathwayService.createPathway(config));
     }
 
@@ -44,48 +46,69 @@ public class PathwayController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String dept,
             @RequestParam(required = false, defaultValue = "1") String page,
-            @RequestParam(required = false, defaultValue = "20") String size) {
+            @RequestParam(required = false, defaultValue = "20") String size,
+            HttpServletRequest httpRequest) {
         Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
         filters.put("search", search);
         filters.put("status", status);
         filters.put("dept", dept);
         filters.put("page", page);
         filters.put("size", size);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(pathwayService.listPathwaysFiltered(filters));
     }
 
     @GetMapping("/pathways/{pathwayCode}")
     public ApiResult<Map<String, Object>> getPathway(@PathVariable String pathwayCode,
-                                                     @RequestParam(required = false) String versionNo) {
+                                                     @RequestParam(required = false) String versionNo,
+                                                     HttpServletRequest httpRequest) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("pathwayCode", pathwayCode);
+        filters.put("versionNo", versionNo);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(pathwayService.getPathway(pathwayCode, versionNo));
     }
 
     @DeleteMapping("/pathways/{pathwayCode}")
-    public ApiResult<Map<String, Object>> deletePathway(@PathVariable String pathwayCode) {
+    public ApiResult<Map<String, Object>> deletePathway(@PathVariable String pathwayCode,
+                                                         HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         return ApiResult.success(pathwayService.deletePathway(pathwayCode));
     }
 
     @GetMapping("/pathways/{pathwayCode}/diff")
     public ApiResult<Map<String, Object>> diffPathway(@PathVariable String pathwayCode,
                                                       @RequestParam(name = "from") String fromVersion,
-                                                      @RequestParam(name = "to") String toVersion) {
+                                                      @RequestParam(name = "to") String toVersion,
+                                                      HttpServletRequest httpRequest) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("pathwayCode", pathwayCode);
+        filters.put("fromVersion", fromVersion);
+        filters.put("toVersion", toVersion);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(pathwayService.diffPathway(pathwayCode, fromVersion, toVersion));
     }
 
     @PostMapping("/pathways/{pathwayCode}/publish")
     public ApiResult<Map<String, Object>> publishPathway(@PathVariable String pathwayCode,
-                                                         @RequestBody Map<String, Object> request) {
+                                                         @RequestBody Map<String, Object> request,
+                                                         HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
         return ApiResult.success(pathwayService.publish(pathwayCode, request));
     }
 
     @PostMapping("/pathways/{pathwayCode}/rollback")
     public ApiResult<Map<String, Object>> rollbackPathway(@PathVariable String pathwayCode,
-                                                          @RequestBody(required = false) Map<String, Object> request) {
+                                                          @RequestBody(required = false) Map<String, Object> request,
+                                                          HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
         return ApiResult.success(pathwayService.rollback(pathwayCode, request));
     }
 
     @PostMapping("/patient-pathways/candidates")
-    public ApiResult<List<RecommendationCard>> candidates(@RequestBody Map<String, Object> patientContext) {
+    public ApiResult<List<RecommendationCard>> candidates(@RequestBody Map<String, Object> patientContext,
+                                                           HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, patientContext);
         return ApiResult.success(pathwayService.candidates(patientContext));
     }
 
@@ -103,7 +126,12 @@ public class PathwayController {
 
     @GetMapping("/patient-pathways/{instanceId}/nodes/{nodeCode}")
     public ApiResult<PatientNodeState> getNodeState(@PathVariable String instanceId,
-                                                    @PathVariable String nodeCode) {
+                                                    @PathVariable String nodeCode,
+                                                    HttpServletRequest httpRequest) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("instanceId", instanceId);
+        filters.put("nodeCode", nodeCode);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(pathwayService.getNodeState(instanceId, nodeCode));
     }
 
@@ -111,7 +139,9 @@ public class PathwayController {
     public ApiResult<PatientTaskState> completeTask(@PathVariable String instanceId,
                                                     @PathVariable String nodeCode,
                                                     @PathVariable String taskCode,
-                                                    @RequestBody(required = false) Map<String, Object> request) {
+                                                    @RequestBody(required = false) Map<String, Object> request,
+                                                    HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
         return ApiResult.success(pathwayService.completeTask(instanceId, nodeCode, taskCode, request));
     }
 
@@ -119,20 +149,26 @@ public class PathwayController {
     public ApiResult<PatientTaskState> skipTask(@PathVariable String instanceId,
                                                 @PathVariable String nodeCode,
                                                 @PathVariable String taskCode,
-                                                @RequestBody(required = false) Map<String, Object> request) {
+                                                @RequestBody(required = false) Map<String, Object> request,
+                                                HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
         return ApiResult.success(pathwayService.skipTask(instanceId, nodeCode, taskCode, request));
     }
 
     @PostMapping("/patient-pathways/{instanceId}/variations")
     public ApiResult<PathwayVariationRecord> recordVariation(@PathVariable String instanceId,
-                                                             @RequestBody Map<String, Object> request) {
+                                                             @RequestBody Map<String, Object> request,
+                                                             HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
         return ApiResult.success(pathwayService.recordVariation(instanceId, request));
     }
 
     @PostMapping("/patient-pathways/{instanceId}/nodes/{nodeCode}/complete")
     public ApiResult<PatientPathwayInstance> completeNode(@PathVariable String instanceId,
                                                           @PathVariable String nodeCode,
-                                                          @RequestBody(required = false) Map<String, Object> request) {
+                                                          @RequestBody(required = false) Map<String, Object> request,
+                                                          HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
         return ApiResult.success(pathwayService.completeNode(instanceId, nodeCode, request));
     }
 
