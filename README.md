@@ -67,10 +67,10 @@ npm run dev
 
 ## 当前后端能力（已实现）
 
-- 三大引擎主路径：路径（PATH-001~008）、规则（RULE-001~008）、图谱（GRAPH-001/003/004）
-- 配置包统一模型 + 多数据库持久化（PKG-001~004）
-- 5 段组织上下文与继承（ORG-001~004）
-- 来源追溯（PROV-001~003）、字典映射（TERM-001/002）、Dify 适配（DIFY-001）
+- 三大引擎主路径：路径（PATH-001 至 PATH-008）、规则（RULE-001 至 RULE-008）、图谱（GRAPH-001、GRAPH-003、GRAPH-004）
+- 配置包统一模型 + 多数据库持久化（PKG-001 至 PKG-004）
+- 5 段组织上下文与继承（ORG-001 至 ORG-004）
+- 来源追溯（PROV-001 至 PROV-003）、字典映射（TERM-001、TERM-002）、Dify 适配（DIFY-001）
 - 审计日志、健康检查、Provider 状态接口
 - 跨数据库 DDL：Oracle / DM / PostgreSQL / KingbaseES / LOCAL_H2_FILE 五套同步维护
 
