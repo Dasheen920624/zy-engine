@@ -5,9 +5,9 @@ task_id: REFIT-001
 task_lock_path: ai-dev-input/10_task_claims/active_locks/REFIT-001.lock
 slice: S01
 title: 已实现能力全量盘点与一致性基线
-owner: CodeBuddy
+owner: TraeAI-Main
 role: 高级
-status: ACTIVE
+status: COMPLETED
 branch: develop
 target_base_branch: develop
 git_base_commit: 145bd390f7980b6248fd4baee363e7819ba4071c
