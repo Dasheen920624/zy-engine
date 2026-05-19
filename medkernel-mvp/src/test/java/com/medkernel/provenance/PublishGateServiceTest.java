@@ -1,5 +1,6 @@
 package com.medkernel.provenance;
 
+import com.medkernel.persistence.EnginePersistenceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,11 +32,14 @@ class PublishGateServiceTest {
     @Mock
     private ProvenanceService provenanceService;
 
+    @Mock
+    private EnginePersistenceService persistenceService;
+
     private PublishGateService publishGateService;
 
     @BeforeEach
     void setUp() {
-        publishGateService = new PublishGateService(bindingService, provenanceService);
+        publishGateService = new PublishGateService(bindingService, provenanceService, persistenceService);
     }
 
     // ---- checkPublishGate ----

@@ -1,6 +1,8 @@
 package com.medkernel.provenance;
 
 import com.medkernel.common.ErrorCode;
+import com.medkernel.common.TraceContext;
+import com.medkernel.persistence.EnginePersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -32,10 +34,13 @@ public class PublishGateService {
 
     private final SourceAssetBindingService bindingService;
     private final ProvenanceService provenanceService;
+    private final EnginePersistenceService persistenceService;
 
-    public PublishGateService(SourceAssetBindingService bindingService, ProvenanceService provenanceService) {
+    public PublishGateService(SourceAssetBindingService bindingService, ProvenanceService provenanceService,
+                              EnginePersistenceService persistenceService) {
         this.bindingService = bindingService;
         this.provenanceService = provenanceService;
+        this.persistenceService = persistenceService;
     }
 
     /**
@@ -121,6 +126,10 @@ public class PublishGateService {
         result.put("issues", issues);
         result.put("warnings", warnings);
         result.put("passed", issues.isEmpty());
+
+        // REFIT-003: 审计日志 - 记录发布门禁检查结果
+        auditPublishGate(resolvedAssetType, assetCode, resolvedTenantId, result);
+
         return result;
     }
 
@@ -170,6 +179,25 @@ public class PublishGateService {
         issue.put("field", field);
         issue.put("message", message);
         return issue;
+    }
+
+    private void auditPublishGate(String assetType, String assetCode, String tenantId, Map<String, Object> result) {
+        Map<String, Object> detail = new LinkedHashMap<String, Object>();
+        detail.put("asset_type", assetType);
+        detail.put("asset_code", assetCode);
+        detail.put("tenant_id", tenantId);
+        detail.put("passed", result.get("passed"));
+        detail.put("issue_count", ((List<?>) result.get("issues")).size());
+        detail.put("warning_count", ((List<?>) result.get("warnings")).size());
+        detail.put("trace_id", TraceContext.getTraceId());
+        try {
+            persistenceService.saveAuditLog("PUBLISH_GATE", "CHECK", assetType, assetCode,
+                    null, null, null, detail);
+        } catch (RuntimeException ex) {
+            // 审计写入失败不应影响发布门禁检查。
+            log.warn("[traceId={}] publish gate audit log persistence failed: {}",
+                    TraceContext.getTraceId(), ex.getMessage());
+        }
     }
 
     private String string(Object value, String defaultValue) {
