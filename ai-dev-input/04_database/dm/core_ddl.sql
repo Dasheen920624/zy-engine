@@ -113,6 +113,23 @@ CREATE TABLE pe_variation_record (
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
+CREATE TABLE pe_recommendation_record (
+  id BIGINT PRIMARY KEY,
+  recommendation_id VARCHAR(128) NOT NULL,
+  patient_id VARCHAR(64) NOT NULL,
+  encounter_id VARCHAR(64) NOT NULL,
+  scenario VARCHAR(64) NOT NULL,
+  target_code VARCHAR(128) NOT NULL,
+  target_name VARCHAR(200),
+  score DECIMAL(8,2),
+  confidence VARCHAR(32),
+  action_level VARCHAR(32),
+  card_json TEXT,
+  trace_id VARCHAR(128),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_pe_recommendation UNIQUE (recommendation_id)
+);
+
 CREATE TABLE re_rule_def (
   id BIGINT PRIMARY KEY,
   tenant_id VARCHAR(64) NOT NULL,

@@ -5,16 +5,16 @@ task_id: REFIT-004
 task_lock_path: ai-dev-input/10_task_claims/active_locks/REFIT-004.lock
 slice: S01
 title: 多数据库持久化和中文注释统一补齐
-owner: TraeAI-Main
+owner: CodeBuddy
 role: 高级
 status: DONE
 branch: develop
 target_base_branch: develop
-git_base_commit: a35563f
+git_base_commit: 3834c22
 git_status_at_claim: clean
-created_at: 2026-05-20T01:00:00+08:00
-last_heartbeat: 2026-05-20T01:00:00+08:00
-expected_finish: 2026-05-20T12:00:00+08:00
+created_at: 2026-05-19T23:50:00+08:00
+last_heartbeat: 2026-05-20T00:34:00+08:00
+expected_finish: 2026-05-20T23:50:00+08:00
 heartbeat_interval_minutes: 60
 database_mode: LOCAL_H2_FILE
 oracle_available: false
@@ -43,11 +43,15 @@ REFIT-001 (DONE), ARCH-004 (DONE)
 3. loadLocalSchemaStatements() 注册所有 H2 DDL 文件
 4. 四方言 DDL（Oracle/DM/PG/H2）表结构、索引、约束一致
 5. 中文注释覆盖所有公开方法
-6. build 通过
+6. 所有表和列有中文注释
+7. smoke 计划覆盖所有新表
+8. build 通过
 
 ## Verification
 
 ```powershell
-cd medkernel-mvp && powershell -ExecutionPolicy Bypass -File scripts/build.ps1
+cd medkernel-mvp
+powershell -ExecutionPolicy Bypass -File scripts/run-tests.ps1
+powershell -ExecutionPolicy Bypass -File scripts/build.ps1
 git diff --check
 ```
