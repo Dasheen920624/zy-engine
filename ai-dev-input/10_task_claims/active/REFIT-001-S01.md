@@ -86,5 +86,11 @@ task_lock_removed_on_archive: pending
 ## Progress
 
 ```text
-认领任务，准备开始全量盘点
+1. 认领任务 ✅
+2. 分析已实现能力，创建能力矩阵 ✅
+3. 盘点 API/页面/表/测试清单 ✅
+4. 识别 P0/P1/P2 改造 finding ✅
+5. 建立验收基线 ✅
+6. 创建验收记录 ✅
+7. 等待审核
 ```
