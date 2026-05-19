@@ -76,7 +76,47 @@ review_status_synced: N/A
 task_ledger_done_synced: true
 commit_hash_recorded: ba5a0d401c84a4c6d20bac458306d038870f31a0
 post_push_git_status_clean: true
-task_lock_removed_on_archive: pending
+task_lock_removed_on_archive: true
+```
+
+## Self Check
+
+```text
+task_card_satisfied: true
+write_scope_matches_diff: true
+tests_updated: N/A (PROV-002F 是持久化接通，无新增业务逻辑)
+samples_or_api_examples_updated: N/A
+docs_updated: true (任务台账已更新)
+db_only_checked: N/A (仅使用现有 DDL)
+oracle_dm_h2_schema_synced: true (Oracle MERGE + H2 UPDATE/INSERT 双模式)
+production_development_schema_synced: true (DDL 已存在，字段映射已对齐)
+table_and_column_comments_complete: N/A (未新增表)
+required_code_comments_complete: true (关键方法有中文注释)
+feature_acceptance_created: false (PROV-002F 无客户可见功能)
+claim_status_synced: true
+security_privacy_checked: N/A
+```
+
+## Verification
+
+```text
+- SourceCitationService 启动期 rebuildFromPersistence 可从 DB 重建内存索引
+- importCitations 写入后自动持久化到 src_citation 表
+- Oracle MERGE 语法兼容生产库
+- H2 UPDATE/INSERT 两阶段兼容本地开发库
+- 字段映射：citation_code↔citationId, section_code↔section, clause_no↔clause,
+  page_no↔page, excerpt_text↔quoteText, summary_text↔description,
+  evidence_level↔citationType
+```
+
+## Completion
+
+```text
+commit: ba5a0d401c84a4c6d20bac458306d038870f31a0
+push: 6b76b57 (archive commit)
+tests: N/A (无新增业务逻辑)
+review: N/A (review_required: false)
+risks: 低风险 - 仅增加持久化路径，不改变现有 API 行为
 ```
 
 ## Progress
