@@ -62,31 +62,31 @@ interface PackageKey {
 }
 
 const ASSET_TYPE_OPTIONS: { value: AssetType; label: string }[] = [
-  { value: "RULE", label: "RULE" },
-  { value: "PATH", label: "PATH" },
-  { value: "GRAPH", label: "GRAPH" },
-  { value: "DIFY", label: "DIFY" },
-  { value: "TERMINOLOGY", label: "TERMINOLOGY" },
-  { value: "ADAPTER", label: "ADAPTER" },
-  { value: "MIXED", label: "MIXED" },
+  { value: "RULE", label: "规则" },
+  { value: "PATH", label: "路径" },
+  { value: "GRAPH", label: "图谱" },
+  { value: "DIFY", label: "Dify" },
+  { value: "TERMINOLOGY", label: "术语" },
+  { value: "ADAPTER", label: "适配器" },
+  { value: "MIXED", label: "混合" },
 ];
 
 const STATUS_OPTIONS: { value: PackageStatus; label: string; color: string }[] = [
-  { value: "DRAFT", label: "DRAFT", color: "default" },
-  { value: "REVIEWED", label: "REVIEWED", color: "warning" },
-  { value: "PUBLISHED", label: "PUBLISHED", color: "processing" },
-  { value: "SYNCED", label: "SYNCED", color: "cyan" },
-  { value: "ACTIVE", label: "ACTIVE", color: "success" },
-  { value: "RETIRED", label: "RETIRED", color: "error" },
+  { value: "DRAFT", label: "草稿", color: "default" },
+  { value: "REVIEWED", label: "已审核", color: "warning" },
+  { value: "PUBLISHED", label: "已发布", color: "processing" },
+  { value: "SYNCED", label: "已同步", color: "cyan" },
+  { value: "ACTIVE", label: "生效中", color: "success" },
+  { value: "RETIRED", label: "已下线", color: "error" },
 ];
 
 const SCOPE_OPTIONS: { value: ScopeLevel; label: string }[] = [
-  { value: "PLATFORM", label: "PLATFORM" },
-  { value: "GROUP", label: "GROUP" },
-  { value: "HOSPITAL", label: "HOSPITAL" },
-  { value: "CAMPUS", label: "CAMPUS" },
-  { value: "SITE", label: "SITE" },
-  { value: "DEPARTMENT", label: "DEPARTMENT" },
+  { value: "PLATFORM", label: "平台级" },
+  { value: "GROUP", label: "集团级" },
+  { value: "HOSPITAL", label: "院区级" },
+  { value: "CAMPUS", label: "院区" },
+  { value: "SITE", label: "站点" },
+  { value: "DEPARTMENT", label: "科室级" },
 ];
 
 // ─── 工具函数 ──────────────────────────────────────────────────────────
@@ -269,7 +269,7 @@ function FilterToolbar({
   );
 }
 
-/** Review 检查列表 */
+/** 校验检查列表 */
 function ReviewCheckList({ issues }: { issues: ReviewIssue[] }) {
   if (!issues || issues.length === 0) {
     return (
@@ -509,11 +509,11 @@ export default function ConfigPackages() {
       return reviewPackage(key.code, key.version);
     },
     onSuccess: (data) => {
-      message.success(`Review 完成 · ${data.ready_to_publish ? "可发布" : "存在问题"}`);
+      message.success(`校验完成 · ${data.ready_to_publish ? "可发布" : "存在问题"}`);
       queryClient.invalidateQueries({ queryKey: ["config-package-review"] });
       queryClient.invalidateQueries({ queryKey: ["config-packages"] });
     },
-    onError: (err) => message.error(`Review 失败: ${err.message}`),
+    onError: (err) => message.error(`校验失败: ${err.message}`),
   });
 
   const publishMut = useMutation<ConfigPackageDetail, ApiError, { approved_by: string; approved_note?: string }>({
@@ -612,7 +612,7 @@ export default function ConfigPackages() {
       render: (v: string) => <Tag color={statusColor(v)}>{v}</Tag>,
     },
     {
-      title: "hash",
+      title: "哈希",
       dataIndex: "content_hash",
       key: "hash",
       width: 100,
@@ -788,27 +788,27 @@ export default function ConfigPackages() {
                   labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
                   style={{ marginBottom: 16 }}
                 >
-                  <Descriptions.Item label="package_code">
+                  <Descriptions.Item label="包编码">
                     <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.package_code}</code>
                   </Descriptions.Item>
-                  <Descriptions.Item label="package_version">
+                  <Descriptions.Item label="版本">
                     <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.package_version}</code>
                   </Descriptions.Item>
-                  <Descriptions.Item label="asset_type">
+                  <Descriptions.Item label="资产类型">
                     <Tag color="blue">{selectedPkg.asset_type}</Tag>
                   </Descriptions.Item>
-                  <Descriptions.Item label="scope">{selectedPkg.scope_reference || `${selectedPkg.scope_level} · ${selectedPkg.scope_code}`}</Descriptions.Item>
-                  <Descriptions.Item label="base_version">
+                  <Descriptions.Item label="组织范围">{selectedPkg.scope_reference || `${selectedPkg.scope_level} · ${selectedPkg.scope_code}`}</Descriptions.Item>
+                  <Descriptions.Item label="基础版本">
                     <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.base_version || "—"}</code>
                   </Descriptions.Item>
-                  <Descriptions.Item label="content_hash">
+                  <Descriptions.Item label="内容哈希">
                     <Tooltip title={selectedPkg.content_hash}>
                       <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 11 }}>{shortHash(selectedPkg.content_hash)}</code>
                     </Tooltip>
                   </Descriptions.Item>
-                  <Descriptions.Item label="created_by">{selectedPkg.created_by || "—"} · {formatTime(selectedPkg.created_time)}</Descriptions.Item>
-                  <Descriptions.Item label="reviewed_by">{selectedPkg.reviewed_by || "—"} · {formatTime(selectedPkg.reviewed_time)}</Descriptions.Item>
-                  <Descriptions.Item label="approved_by">
+                  <Descriptions.Item label="创建人">{selectedPkg.created_by || "—"} · {formatTime(selectedPkg.created_time)}</Descriptions.Item>
+                  <Descriptions.Item label="审核人">{selectedPkg.reviewed_by || "—"} · {formatTime(selectedPkg.reviewed_time)}</Descriptions.Item>
+                  <Descriptions.Item label="审批人">
                     {selectedPkg.approved_by ? (
                       <span>{selectedPkg.approved_by} · {formatTime(selectedPkg.published_time)}</span>
                     ) : (
@@ -819,13 +819,13 @@ export default function ConfigPackages() {
 
                 <Divider style={{ margin: "12px 0" }} />
 
-                <h4 style={{ marginBottom: 12, fontWeight: 500 }}>manifest（资产清单）</h4>
+                <h4 style={{ marginBottom: 12, fontWeight: 500 }}>资产清单</h4>
                 <ManifestTable manifest={pkgDetail?.manifest} />
               </Col>
 
-              {/* 右栏：Review 检查 */}
+              {/* 右栏：校验检查 */}
               <Col xs={24} lg={12}>
-                <h4 style={{ marginBottom: 12, fontWeight: 500 }}>Review 检查</h4>
+                <h4 style={{ marginBottom: 12, fontWeight: 500 }}>校验检查</h4>
                 <ReviewCheckList issues={pkgReview?.issues || []} />
 
                 {/* 来源完整性 */}
@@ -844,7 +844,7 @@ export default function ConfigPackages() {
                   </div>
                 )}
 
-                {/* Review summary */}
+                {/* 校验摘要 */}
                 {pkgReview?.summary && (
                   <div style={{ marginTop: 12 }}>
                     <h4 style={{ marginBottom: 8, fontWeight: 500 }}>校验摘要</h4>
@@ -853,10 +853,10 @@ export default function ConfigPackages() {
                       size="small"
                       labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
                     >
-                      <Descriptions.Item label="asset_count">{pkgReview.summary.asset_count}</Descriptions.Item>
-                      <Descriptions.Item label="full_snapshot">{pkgReview.summary.full_snapshot_present ? <Tag color="success">✓</Tag> : <Tag color="error">✗</Tag>}</Descriptions.Item>
-                      <Descriptions.Item label="diff">{pkgReview.summary.diff_present ? <Tag color="success">✓</Tag> : <Tag color="default">无</Tag>}</Descriptions.Item>
-                      <Descriptions.Item label="scope_exists">{pkgReview.summary.scope_exists ? <Tag color="success">✓</Tag> : <Tag color="error">✗</Tag>}</Descriptions.Item>
+                      <Descriptions.Item label="资产数量">{pkgReview.summary.asset_count}</Descriptions.Item>
+                      <Descriptions.Item label="完整快照">{pkgReview.summary.full_snapshot_present ? <Tag color="success">✓</Tag> : <Tag color="error">✗</Tag>}</Descriptions.Item>
+                      <Descriptions.Item label="差异">{pkgReview.summary.diff_present ? <Tag color="success">✓</Tag> : <Tag color="default">无</Tag>}</Descriptions.Item>
+                      <Descriptions.Item label="范围存在">{pkgReview.summary.scope_exists ? <Tag color="success">✓</Tag> : <Tag color="error">✗</Tag>}</Descriptions.Item>
                     </Descriptions>
                   </div>
                 )}
@@ -903,7 +903,7 @@ export default function ConfigPackages() {
                   <Divider style={{ margin: "16px 0 12px" }} />
                   <h4 style={{ marginBottom: 12, fontWeight: 500 }}>
                     <DiffOutlined style={{ marginRight: 8 }} />
-                    版本 diff（base {selectedPkg.base_version || "—"} → target {selectedPkg.package_version}）
+                    版本差异（基础 {selectedPkg.base_version || "—"} → 目标 {selectedPkg.package_version}）
                   </h4>
                   <DiffView diff={pkgDetail.diff} />
                 </Col>
