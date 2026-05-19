@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   AppstoreOutlined,
   AuditOutlined,
+  BellOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
   MedicineBoxOutlined,
@@ -208,6 +209,17 @@ export const topMenuItems: MenuItem[] = [
         key: "workflow-todos",
         label: "待办中心",
         path: "/workflow/todos",
+      },
+      {
+        key: "notifications",
+        label: "通知中心",
+        path: "/notifications",
+        icon: <BellOutlined />,
+      },
+      {
+        key: "notification-settings",
+        label: "通知设置",
+        path: "/notifications/settings",
       },
     ],
   },
