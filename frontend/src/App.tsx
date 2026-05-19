@@ -3,5 +3,5 @@ import { routes } from "./router/routes";
 
 export default function App() {
   const element = useRoutes(routes);
-  return element;
+  return <div data-product="factory">{element}</div>;
 }

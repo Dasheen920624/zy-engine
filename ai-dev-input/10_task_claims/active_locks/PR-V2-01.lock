@@ -1,7 +1,0 @@
-task_id: PR-V2-01
-claim_id: PR-V2-01-S01
-owner: TraeAI-1
-branch: develop
-git_base_commit: 9e2807b19980f4cc1bf585a4bb314c7faa8790cc
-created_at: 2026-05-19T10:00:00+08:00
-last_heartbeat: 2026-05-19T10:00:00+08:00

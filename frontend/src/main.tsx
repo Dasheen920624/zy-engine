@@ -7,6 +7,7 @@ import zhCN from "antd/locale/zh_CN";
 import "antd/dist/reset.css";
 import "./styles/tokens.css";
 import "./styles/global.css";
+import { antTheme } from "./styles/theme-tokens";
 import App from "./App";
 
 const queryClient = new QueryClient({
@@ -32,7 +33,7 @@ async function bootstrap() {
 
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: "var(--mk-brand-primary)" } }}>
+      <ConfigProvider locale={zhCN} theme={antTheme}>
         <AntdApp>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>

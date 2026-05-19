@@ -129,4 +129,32 @@
   --mk-z-tooltip: 1020;
   --mk-z-toast: 1030;
   --mk-z-debug: 9999;
+
+  --mk-density-table-row-height: 48px;
+  --mk-density-table-font-size: var(--mk-text-base);
+  --mk-density-card-padding: var(--mk-space-6);
+  --mk-density-section-gap: var(--mk-space-7);
+  --mk-density-button-height: 36px;
+  --mk-density-form-field-gap: var(--mk-space-5);
+  --mk-density-key-number-font-size: var(--mk-text-lg);
+}
+
+[data-product="embed"] {
+  --mk-density-table-row-height: 48px;
+  --mk-density-table-font-size: var(--mk-text-base);
+  --mk-density-card-padding: var(--mk-space-3);
+  --mk-density-section-gap: var(--mk-space-3);
+  --mk-density-button-height: 32px;
+  --mk-density-form-field-gap: var(--mk-space-3);
+  --mk-density-key-number-font-size: var(--mk-text-md);
+}
+
+[data-product="cockpit"] {
+  --mk-density-table-row-height: 36px;
+  --mk-density-table-font-size: var(--mk-text-sm);
+  --mk-density-card-padding: var(--mk-space-4);
+  --mk-density-section-gap: var(--mk-space-4);
+  --mk-density-button-height: 32px;
+  --mk-density-form-field-gap: var(--mk-space-4);
+  --mk-density-key-number-font-size: var(--mk-text-2xl);
 }
