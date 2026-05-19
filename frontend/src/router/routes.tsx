@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import Dashboard from "../pages/Dashboard";
@@ -8,17 +8,7 @@ import ConfigPackages from "../pages/ConfigPackages";
 import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
-import { isAuthenticated } from "../store/auth";
-
-/**
- * 路由守卫：未登录时重定向到 /login。
- */
-function RequireAuth() {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-  return <Outlet />;
-}
+import RequireAuth from "./RequireAuth";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },

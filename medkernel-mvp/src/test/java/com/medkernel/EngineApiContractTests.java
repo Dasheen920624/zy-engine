@@ -6,6 +6,7 @@ import com.medkernel.persistence.EnginePersistenceService;
 import com.medkernel.persistence.OrganizationPersistenceService;
 import com.medkernel.organization.OrganizationUnit;
 import com.medkernel.provenance.SourceDocument;
+import com.medkernel.security.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +37,9 @@ class EngineApiContractTests {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @Test
     void healthEndpointReturnsUp() throws Exception {
@@ -865,7 +869,9 @@ class EngineApiContractTests {
 
     @Test
     void ruleEngineGetEvaluationReturns4xxForUnknownResult() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/api/rule-engine/results/reval-not-exist")).andReturn();
+        MvcResult mvcResult = mockMvc.perform(get("/api/rule-engine/results/reval-not-exist")
+                        .header("Authorization", testBearerToken()))
+                .andReturn();
         assertTrue(mvcResult.getResponse().getStatus() >= 400,
                 "GET unknown resultId expected 4xx but got " + mvcResult.getResponse().getStatus());
         Map<String, Object> body = parse(mvcResult);
@@ -2165,13 +2171,14 @@ class EngineApiContractTests {
     }
 
     private Map<String, Object> invokeGet(String path) throws Exception {
-        MvcResult result = mockMvc.perform(get(path)).andReturn();
+        MvcResult result = mockMvc.perform(get(path).header("Authorization", testBearerToken())).andReturn();
         assertEquals(200, result.getResponse().getStatus(), "GET " + path + " unexpected status");
         return parse(result);
     }
 
     private Map<String, Object> invokePost(String path, Object body) throws Exception {
         MvcResult result = mockMvc.perform(post(path)
+                        .header("Authorization", testBearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsBytes(body)))
@@ -2183,6 +2190,7 @@ class EngineApiContractTests {
     private Map<String, Object> invokePostWithHeaders(String path, Object body,
                                                       Map<String, Object> headers) throws Exception {
         org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder builder = post(path)
+                .header("Authorization", testBearerToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .characterEncoding("UTF-8")
                 .content(objectMapper.writeValueAsBytes(body));
@@ -2198,6 +2206,7 @@ class EngineApiContractTests {
 
     private Map<String, Object> invokePostExpectingClientError(String path, Object body) throws Exception {
         MvcResult result = mockMvc.perform(post(path)
+                        .header("Authorization", testBearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsBytes(body)))
@@ -2205,6 +2214,10 @@ class EngineApiContractTests {
         assertTrue(result.getResponse().getStatus() >= 400,
                 "POST " + path + " expected 4xx but got " + result.getResponse().getStatus());
         return parse(result);
+    }
+
+    private String testBearerToken() {
+        return "Bearer " + jwtTokenProvider.createToken(1L, 1L, "junit", "JUnit Contract Tester");
     }
 
     private Map<String, Object> parse(MvcResult result) throws Exception {

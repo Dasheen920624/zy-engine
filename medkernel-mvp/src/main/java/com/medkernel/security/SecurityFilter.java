@@ -36,6 +36,7 @@ public class SecurityFilter implements Filter {
     private static final Set<String> PUBLIC_PATHS = new HashSet<String>(Arrays.asList(
             "/api/auth/login",
             "/api/auth/health",
+            "/api/health",
             "/api/system/org-context",
             "/actuator/health"
     ));

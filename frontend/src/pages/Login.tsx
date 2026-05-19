@@ -27,23 +27,9 @@ export default function Login() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      }}
-    >
-      <Card
-        style={{
-          width: 400,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-          borderRadius: 12,
-        }}
-      >
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
+    <div className="mk-login-shell">
+      <Card className="mk-login-card">
+        <div className="mk-login-header">
           <Title level={3} style={{ marginBottom: 4 }}>
             医疗智能引擎平台
           </Title>
@@ -84,7 +70,7 @@ export default function Login() {
               htmlType="submit"
               loading={loading}
               block
-              style={{ height: 44 }}
+              className="mk-login-button"
             >
               登录
             </Button>

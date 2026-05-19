@@ -50,6 +50,36 @@ body {
   margin-top: var(--mk-space-3);
 }
 
+.mk-login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mk-space-6);
+  background: linear-gradient(
+    135deg,
+    var(--mk-menu-bg) 0%,
+    var(--mk-menu-bg-hover) 58%,
+    var(--mk-brand-primary-active) 100%
+  );
+}
+
+.mk-login-card {
+  width: min(400px, calc(100vw - 48px));
+  border: var(--mk-border-width) solid var(--mk-brand-primary-soft);
+  border-radius: var(--mk-radius-lg);
+  box-shadow: var(--mk-shadow-overlay);
+}
+
+.mk-login-header {
+  text-align: center;
+  margin-bottom: var(--mk-space-7);
+}
+
+.mk-login-button {
+  height: 44px;
+}
+
 .page-header {
   margin-bottom: var(--mk-space-6);
 }

@@ -1,15 +1,18 @@
-export const DEFAULT_THEME_ID = "medkernel-blue";
+import { COLOR_TOKEN } from "../styles/tokens";
+
+export const DEFAULT_THEME_ID = "clinical-navy";
 export const CUSTOM_THEME_ID = "custom";
-export const THEME_STORAGE_KEY = "medkernel.theme.v1";
+export const THEME_STORAGE_KEY = "medkernel.theme.v2";
 
-const WHITE = "#ffffff";
-const BLACK = "#000000";
+const WHITE = COLOR_TOKEN.white;
+const BLACK = COLOR_TOKEN.black;
 
-const DEFAULT_PRIMARY = "#168bd3";
-const DEFAULT_MENU = "#2fa7e8";
+const DEFAULT_PRIMARY = COLOR_TOKEN.clinicalPrimary;
+const DEFAULT_MENU = COLOR_TOKEN.clinicalMenu;
 
 export type ThemeId =
   | typeof DEFAULT_THEME_ID
+  | "medkernel-blue"
   | "hospital-green"
   | "ai-violet"
   | typeof CUSTOM_THEME_ID;
@@ -34,36 +37,36 @@ export type ThemeOverrides = Partial<Record<ThemeCssVar, string>>;
 
 export const BASE_THEME_VALUES: Record<ThemeCssVar, string> = {
   "--mk-brand-primary": DEFAULT_PRIMARY,
-  "--mk-brand-primary-hover": "#0f73b6",
-  "--mk-brand-primary-active": "#0b5a8f",
-  "--mk-brand-primary-soft": "#e8f6ff",
-  "--mk-brand-primary-ghost": "#f5fbff",
+  "--mk-brand-primary-hover": COLOR_TOKEN.clinicalPrimaryHover,
+  "--mk-brand-primary-active": COLOR_TOKEN.clinicalPrimaryActive,
+  "--mk-brand-primary-soft": COLOR_TOKEN.clinicalPrimarySoft,
+  "--mk-brand-primary-ghost": COLOR_TOKEN.clinicalPrimaryGhost,
   "--mk-menu-bg": DEFAULT_MENU,
-  "--mk-menu-bg-hover": "#178fd0",
-  "--mk-menu-bg-active": "#0b78bd",
-  "--mk-menu-text": WHITE,
-  "--mk-menu-text-secondary": "#cce8f9",
+  "--mk-menu-bg-hover": COLOR_TOKEN.clinicalMenuHover,
+  "--mk-menu-bg-active": COLOR_TOKEN.clinicalMenuActive,
+  "--mk-menu-text": COLOR_TOKEN.clinicalMenuText,
+  "--mk-menu-text-secondary": COLOR_TOKEN.clinicalMenuTextSecondary,
   "--mk-info": DEFAULT_PRIMARY,
-  "--mk-info-soft": "#e8f6ff",
+  "--mk-info-soft": COLOR_TOKEN.clinicalPrimarySoft,
   "--mk-data-1": DEFAULT_PRIMARY,
-  "--mk-border-inverse": "#0b78bd",
+  "--mk-border-inverse": COLOR_TOKEN.clinicalBorderInverse,
 };
 
 export const BASE_APP_COLORS = {
-  success: "#12966e",
-  successSoft: "#e4f7ef",
-  warning: "#c78200",
-  warningSoft: "#fcf3df",
-  danger: "#d33f49",
-  dangerSoft: "#fdecee",
-  textPrimary: "#1f2d3d",
-  textSecondary: "#52677a",
-  textTertiary: "#7c8b99",
+  success: COLOR_TOKEN.success,
+  successSoft: COLOR_TOKEN.successSoft,
+  warning: COLOR_TOKEN.warning,
+  warningSoft: COLOR_TOKEN.warningSoft,
+  danger: COLOR_TOKEN.danger,
+  dangerSoft: COLOR_TOKEN.dangerSoft,
+  textPrimary: COLOR_TOKEN.textPrimary,
+  textSecondary: COLOR_TOKEN.textSecondary,
+  textTertiary: COLOR_TOKEN.textTertiary,
   bgPage: WHITE,
-  bgSoft: "#f5fbff",
+  bgSoft: COLOR_TOKEN.bgSoft,
   bgPanel: WHITE,
-  border: "#d8e8f3",
-  borderDivider: "#ebf2f8",
+  border: COLOR_TOKEN.border,
+  borderDivider: COLOR_TOKEN.borderDivider,
 };
 
 export interface CustomThemeSeed {
@@ -104,21 +107,27 @@ export const DEFAULT_CUSTOM_THEME: CustomThemeSeed = {
 export const BUILT_IN_THEMES: ThemeDefinition[] = [
   {
     id: DEFAULT_THEME_ID,
-    label: "MedKernel 蓝",
-    description: "默认医疗治理控制台主题",
+    label: "深海医疗蓝",
+    description: "默认医疗级深海蓝主题，适合院内控制台和驾驶舱",
     overrides: {},
+  },
+  {
+    id: "medkernel-blue",
+    label: "MedKernel 蓝",
+    description: "经典医疗治理控制台蓝色主题",
+    overrides: buildBrandOverrides(COLOR_TOKEN.medkernelBluePrimary, COLOR_TOKEN.medkernelBlueMenu),
   },
   {
     id: "hospital-green",
     label: "院区绿",
     description: "偏临床工作站的低刺激绿色主题",
-    overrides: buildBrandOverrides("#147a5c", "#15906b"),
+    overrides: buildBrandOverrides(COLOR_TOKEN.hospitalGreenPrimary, COLOR_TOKEN.hospitalGreenMenu),
   },
   {
     id: "ai-violet",
     label: "AI 紫",
     description: "偏 AI 编排与知识治理的紫色主题",
-    overrides: buildBrandOverrides("#5b4fd4", "#4f46c9"),
+    overrides: buildBrandOverrides(COLOR_TOKEN.aiVioletPrimary, COLOR_TOKEN.aiVioletMenu),
   },
 ];
 

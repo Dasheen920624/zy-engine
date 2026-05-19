@@ -3,17 +3,17 @@
  */
 
 :root {
-  --mk-brand-primary: #168bd3;
-  --mk-brand-primary-hover: #0f73b6;
-  --mk-brand-primary-active: #0b5a8f;
-  --mk-brand-primary-soft: #e8f6ff;
-  --mk-brand-primary-ghost: #f5fbff;
+  --mk-brand-primary: #0b8fa6;
+  --mk-brand-primary-hover: #12a8c5;
+  --mk-brand-primary-active: #066979;
+  --mk-brand-primary-soft: #e6f8fb;
+  --mk-brand-primary-ghost: #f4fcfd;
 
-  --mk-menu-bg: #2fa7e8;
-  --mk-menu-bg-hover: #178fd0;
-  --mk-menu-bg-active: #0b78bd;
-  --mk-menu-text: #ffffff;
-  --mk-menu-text-secondary: #cce8f9;
+  --mk-menu-bg: #001d33;
+  --mk-menu-bg-hover: #062a48;
+  --mk-menu-bg-active: #000b14;
+  --mk-menu-text: #f2fbff;
+  --mk-menu-text-secondary: #9bb6c9;
 
   --mk-success: #12966e;
   --mk-success-soft: #e4f7ef;
@@ -23,8 +23,8 @@
   --mk-danger: #d33f49;
   --mk-danger-soft: #fdecee;
   --mk-danger-border: #fecaca;
-  --mk-info: #168bd3;
-  --mk-info-soft: #e8f6ff;
+  --mk-info: #0b8fa6;
+  --mk-info-soft: #e6f8fb;
 
   --mk-ai-primary: #5b4fd4;
   --mk-ai-soft: #f0f0ff;
@@ -36,7 +36,7 @@
   --mk-text-secondary: #52677a;
   --mk-text-tertiary: #7c8b99;
   --mk-text-inverse: #ffffff;
-  --mk-text-inverse-muted: #cce8f9;
+  --mk-text-inverse-muted: #9bb6c9;
 
   --mk-bg-page: #ffffff;
   --mk-bg-soft: #f5fbff;
@@ -49,7 +49,7 @@
   --mk-border: #d8e8f3;
   --mk-border-strong: #b8d8ec;
   --mk-border-divider: #ebf2f8;
-  --mk-border-inverse: #0b78bd;
+  --mk-border-inverse: #16a6d9;
 
   --mk-code-add: #4ade80;
   --mk-code-del: #f87171;
@@ -57,7 +57,7 @@
   --mk-code-add-bg: rgba(74, 222, 128, 0.08);
   --mk-code-del-bg: rgba(248, 113, 113, 0.08);
 
-  --mk-data-1: #168bd3;
+  --mk-data-1: #0b8fa6;
   --mk-data-2: #12966e;
   --mk-data-3: #c78200;
   --mk-data-4: #5b4fd4;
