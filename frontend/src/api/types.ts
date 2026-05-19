@@ -7,6 +7,26 @@ export interface ApiResult<T = unknown> {
   trace_id: string;
 }
 
+// 用户信息（SEC-001）
+export interface UserInfo {
+  id: number;
+  tenant_id: number;
+  username: string;
+  display_name: string;
+  email?: string;
+  phone?: string;
+  avatar_url?: string;
+  status: string;
+  roles: string[];
+  permissions: string[];
+  org_scopes: Array<{
+    scope_level: string;
+    scope_code: string;
+    scope_name: string;
+  }>;
+  last_login_time?: string;
+}
+
 // 组织上下文五段式。Header / Query / Body 三方合并，Body 优先。
 export interface OrgContext {
   tenant_id?: string;
@@ -249,7 +269,11 @@ export type ApiErrorCode =
   | "UNKNOWN_ERROR"
   | "NO_RULES_MATCHED"
   | "PENDING_MAPPING"
-  | "MISSING_SOURCE";
+  | "MISSING_SOURCE"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "LOGIN_FAILED"
+  | "USER_LOCKED";
 
 export class ApiError extends Error {
   public readonly code: ApiErrorCode;

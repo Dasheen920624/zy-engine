@@ -4,6 +4,7 @@ import { ApiError } from "./types";
 import type { ApiResult, OrgContext } from "./types";
 import { generateTraceId } from "../utils/traceId";
 import { getOrgContext } from "../store/orgContext";
+import { getToken, clearAuth } from "../store/auth";
 
 /**
  * 统一 API client。
@@ -43,6 +44,11 @@ http.interceptors.request.use((config) => {
     headers["X-Trace-Id"] = generateTraceId();
   }
   applyOrgHeaders(headers, getOrgContext());
+  // 自动附加 JWT token
+  const token = getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   config.headers = headers as never;
   return config;
 });
@@ -74,6 +80,8 @@ http.interceptors.response.use(
     if (status === 401) {
       code = "UNAUTHORIZED";
       message = "未认证或登录已过期";
+      // 自动清除本地认证状态
+      clearAuth();
     } else if (status === 403) {
       code = "FORBIDDEN";
       message = "无权限执行此操作";
