@@ -30,9 +30,32 @@
 - **配置包**: cfg_config_package
 - **工作流**: wf_todo_task, wf_approval_action, wf_approval_rule
 - **通知中心**: NOTIFY_NOTIFICATION, NOTIFY_TEMPLATE, NOTIFY_CHANNEL_CONFIG, NOTIFY_SUBSCRIPTION, NOTIFY_DELIVERY_LOG
-- **安全模块**: sec_tenant, sec_user, sec_role, sec_permission, sec_user_role, sec_role_permission, sec_user_org_scope, sec_auth_audit_log
+- **安全模块**: sec_tenant, sec_user, sec_role, sec_permission, sec_user_role, sec_role_permission, sec_user_org_scope, sec_auth_audit_log, sec_identity_provider, sec_identity_binding, sec_user_sync_job, sec_user_sync_detail
+- **患者主索引**: mpi_patient_identity, mpi_visit_identity, mpi_identity_conflict
 
 ## 开发任务状态
+
+### MPI-001 患者主索引和就诊标识治理
+- **状态**: 已完成
+- **完成时间**: 2026-05-20
+- **主要成果**:
+  1. 创建3张新表DDL（4方言）：mpi_patient_identity, mpi_visit_identity, mpi_identity_conflict
+  2. 创建3个实体类：PatientIdentity, VisitIdentity, IdentityConflict
+  3. 创建MpiPersistenceService：支持患者标识、就诊标识、标识冲突的CRUD操作和冲突检测
+  4. 创建MpiService：支持患者标识管理、就诊标识管理、冲突处理、适配器同步
+  5. 创建MpiController：提供REST API（标识管理、冲突处理、适配器同步）
+  6. 创建单元测试MpiServiceTest：覆盖核心业务逻辑
+
+### SEC-006 院内用户体系同步
+- **状态**: 已完成
+- **完成时间**: 2026-05-20
+- **主要成果**:
+  1. 创建4张新表DDL（4方言）：sec_identity_provider, sec_identity_binding, sec_user_sync_job, sec_user_sync_detail
+  2. 创建4个实体类：IdentityProvider, IdentityBinding, UserSyncJob, UserSyncDetail
+  3. 扩展SecurityPersistenceService：添加IdentityProvider/IdentityBinding/SyncJob/SyncDetail CRUD方法
+  4. 扩展AdapterHubService：添加HIS/EMR/OA用户同步适配器定义及Mock数据
+  5. 创建UserSyncService：支持全量/增量/手动同步，通过适配器框架拉取外部用户
+  6. 创建UserSyncController：提供REST API（身份源CRUD、同步触发、任务查询）
 
 ### REFIT-004 多数据库持久化和中文注释统一补齐
 - **状态**: 已完成
