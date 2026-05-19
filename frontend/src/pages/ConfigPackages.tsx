@@ -717,7 +717,7 @@ export default function ConfigPackages() {
           rowKey={(r) => `${r.package_code}@${r.package_version}`}
           loading={isLoading}
           size="small"
-          pagination={{ pageSize: 10, showTotal: (t) => `共 ${t} 条` }}
+          pagination={false}
           onRow={(r) => ({
             onClick: () => handleSelectPkg(r),
             style: {

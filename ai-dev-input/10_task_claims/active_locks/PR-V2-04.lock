@@ -1,0 +1,7 @@
+task_id: PR-V2-04
+claim_id: PR-V2-04-S01
+owner: CodeBuddy
+branch: develop
+git_base_commit: e11ace0c6be559b21dae7302477c648239a531dd
+created_at: 2026-05-19T16:41:00+08:00
+last_heartbeat: 2026-05-19T16:41:00+08:00

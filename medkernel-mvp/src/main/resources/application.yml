@@ -20,6 +20,10 @@ medkernel:
     username: ${MEDKERNEL_DB_USERNAME:MEDKERNEL}
     password: ${MEDKERNEL_DB_PASSWORD:}
     init-schema: ${MEDKERNEL_DB_INIT_SCHEMA:true}
+  security:
+    jwt-secret: ${MEDKERNEL_JWT_SECRET:medkernel-default-jwt-secret-please-change-in-production-env-2026}
+    lock-threshold: ${MEDKERNEL_LOCK_THRESHOLD:5}
+    lock-duration-minutes: ${MEDKERNEL_LOCK_DURATION:30}
   dify:
     enabled: ${MEDKERNEL_DIFY_ENABLED:false}
     base-url: ${MEDKERNEL_DIFY_BASE_URL:}

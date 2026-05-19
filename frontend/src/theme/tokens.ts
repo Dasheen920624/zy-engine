@@ -1,0 +1,227 @@
+import { COLOR_TOKEN } from "../styles/tokens";
+
+export const DEFAULT_THEME_ID = "clinical-navy";
+export const CUSTOM_THEME_ID = "custom";
+export const THEME_STORAGE_KEY = "medkernel.theme.v2";
+
+const WHITE = COLOR_TOKEN.white;
+const BLACK = COLOR_TOKEN.black;
+
+const DEFAULT_PRIMARY = COLOR_TOKEN.clinicalPrimary;
+const DEFAULT_MENU = COLOR_TOKEN.clinicalMenu;
+
+export type ThemeId =
+  | typeof DEFAULT_THEME_ID
+  | "medkernel-blue"
+  | "hospital-green"
+  | "ai-violet"
+  | typeof CUSTOM_THEME_ID;
+
+export type ThemeCssVar =
+  | "--mk-brand-primary"
+  | "--mk-brand-primary-hover"
+  | "--mk-brand-primary-active"
+  | "--mk-brand-primary-soft"
+  | "--mk-brand-primary-ghost"
+  | "--mk-menu-bg"
+  | "--mk-menu-bg-hover"
+  | "--mk-menu-bg-active"
+  | "--mk-menu-text"
+  | "--mk-menu-text-secondary"
+  | "--mk-info"
+  | "--mk-info-soft"
+  | "--mk-data-1"
+  | "--mk-border-inverse";
+
+export type ThemeOverrides = Partial<Record<ThemeCssVar, string>>;
+
+export const BASE_THEME_VALUES: Record<ThemeCssVar, string> = {
+  "--mk-brand-primary": DEFAULT_PRIMARY,
+  "--mk-brand-primary-hover": COLOR_TOKEN.clinicalPrimaryHover,
+  "--mk-brand-primary-active": COLOR_TOKEN.clinicalPrimaryActive,
+  "--mk-brand-primary-soft": COLOR_TOKEN.clinicalPrimarySoft,
+  "--mk-brand-primary-ghost": COLOR_TOKEN.clinicalPrimaryGhost,
+  "--mk-menu-bg": DEFAULT_MENU,
+  "--mk-menu-bg-hover": COLOR_TOKEN.clinicalMenuHover,
+  "--mk-menu-bg-active": COLOR_TOKEN.clinicalMenuActive,
+  "--mk-menu-text": COLOR_TOKEN.clinicalMenuText,
+  "--mk-menu-text-secondary": COLOR_TOKEN.clinicalMenuTextSecondary,
+  "--mk-info": DEFAULT_PRIMARY,
+  "--mk-info-soft": COLOR_TOKEN.clinicalPrimarySoft,
+  "--mk-data-1": DEFAULT_PRIMARY,
+  "--mk-border-inverse": COLOR_TOKEN.clinicalBorderInverse,
+};
+
+export const BASE_APP_COLORS = {
+  success: COLOR_TOKEN.success,
+  successSoft: COLOR_TOKEN.successSoft,
+  warning: COLOR_TOKEN.warning,
+  warningSoft: COLOR_TOKEN.warningSoft,
+  danger: COLOR_TOKEN.danger,
+  dangerSoft: COLOR_TOKEN.dangerSoft,
+  textPrimary: COLOR_TOKEN.textPrimary,
+  textSecondary: COLOR_TOKEN.textSecondary,
+  textTertiary: COLOR_TOKEN.textTertiary,
+  bgPage: WHITE,
+  bgSoft: COLOR_TOKEN.bgSoft,
+  bgPanel: WHITE,
+  border: COLOR_TOKEN.border,
+  borderDivider: COLOR_TOKEN.borderDivider,
+};
+
+export interface CustomThemeSeed {
+  primary: string;
+  menu: string;
+}
+
+export interface ThemeDefinition {
+  id: ThemeId;
+  label: string;
+  description: string;
+  overrides: ThemeOverrides;
+  custom?: boolean;
+}
+
+export const MANAGED_THEME_VARIABLES: ThemeCssVar[] = [
+  "--mk-brand-primary",
+  "--mk-brand-primary-hover",
+  "--mk-brand-primary-active",
+  "--mk-brand-primary-soft",
+  "--mk-brand-primary-ghost",
+  "--mk-menu-bg",
+  "--mk-menu-bg-hover",
+  "--mk-menu-bg-active",
+  "--mk-menu-text",
+  "--mk-menu-text-secondary",
+  "--mk-info",
+  "--mk-info-soft",
+  "--mk-data-1",
+  "--mk-border-inverse",
+];
+
+export const DEFAULT_CUSTOM_THEME: CustomThemeSeed = {
+  primary: DEFAULT_PRIMARY,
+  menu: DEFAULT_MENU,
+};
+
+export const BUILT_IN_THEMES: ThemeDefinition[] = [
+  {
+    id: DEFAULT_THEME_ID,
+    label: "深海医疗蓝",
+    description: "默认医疗级深海蓝主题，适合院内控制台和驾驶舱",
+    overrides: {},
+  },
+  {
+    id: "medkernel-blue",
+    label: "MedKernel 蓝",
+    description: "经典医疗治理控制台蓝色主题",
+    overrides: buildBrandOverrides(COLOR_TOKEN.medkernelBluePrimary, COLOR_TOKEN.medkernelBlueMenu),
+  },
+  {
+    id: "hospital-green",
+    label: "院区绿",
+    description: "偏临床工作站的低刺激绿色主题",
+    overrides: buildBrandOverrides(COLOR_TOKEN.hospitalGreenPrimary, COLOR_TOKEN.hospitalGreenMenu),
+  },
+  {
+    id: "ai-violet",
+    label: "AI 紫",
+    description: "偏 AI 编排与知识治理的紫色主题",
+    overrides: buildBrandOverrides(COLOR_TOKEN.aiVioletPrimary, COLOR_TOKEN.aiVioletMenu),
+  },
+];
+
+export function normalizeHexColor(value: string, fallback: string): string {
+  const trimmed = value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+  if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
+    const [, r, g, b] = trimmed;
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+  return fallback;
+}
+
+export function createCustomTheme(seed: CustomThemeSeed): ThemeDefinition {
+  const primary = normalizeHexColor(seed.primary, DEFAULT_PRIMARY);
+  const menu = normalizeHexColor(seed.menu, primary);
+
+  return {
+    id: CUSTOM_THEME_ID,
+    label: "自定义",
+    description: "本地自定义主题色，可替换为租户主题包",
+    overrides: buildBrandOverrides(primary, menu),
+    custom: true,
+  };
+}
+
+export function resolveTheme(themeId: ThemeId, customTheme: CustomThemeSeed): ThemeDefinition {
+  if (themeId === CUSTOM_THEME_ID) {
+    return createCustomTheme(customTheme);
+  }
+  return BUILT_IN_THEMES.find((theme) => theme.id === themeId) ?? BUILT_IN_THEMES[0];
+}
+
+export function getThemeValue(theme: ThemeDefinition, variable: ThemeCssVar): string {
+  return theme.overrides[variable] ?? BASE_THEME_VALUES[variable];
+}
+
+export function getThemeOptions() {
+  return [
+    ...BUILT_IN_THEMES.map((theme) => ({
+      value: theme.id,
+      label: theme.label,
+    })),
+    { value: CUSTOM_THEME_ID, label: "自定义" },
+  ];
+}
+
+function buildBrandOverrides(primaryInput: string, menuInput: string): ThemeOverrides {
+  const primary = normalizeHexColor(primaryInput, DEFAULT_PRIMARY);
+  const menu = normalizeHexColor(menuInput, primary);
+
+  return {
+    "--mk-brand-primary": primary,
+    "--mk-brand-primary-hover": mixHex(primary, BLACK, 0.12),
+    "--mk-brand-primary-active": mixHex(primary, BLACK, 0.28),
+    "--mk-brand-primary-soft": mixHex(primary, WHITE, 0.9),
+    "--mk-brand-primary-ghost": mixHex(primary, WHITE, 0.96),
+    "--mk-menu-bg": menu,
+    "--mk-menu-bg-hover": mixHex(menu, BLACK, 0.12),
+    "--mk-menu-bg-active": mixHex(menu, BLACK, 0.28),
+    "--mk-menu-text": WHITE,
+    "--mk-menu-text-secondary": mixHex(menu, WHITE, 0.76),
+    "--mk-info": primary,
+    "--mk-info-soft": mixHex(primary, WHITE, 0.9),
+    "--mk-data-1": primary,
+    "--mk-border-inverse": mixHex(menu, BLACK, 0.28),
+  };
+}
+
+function mixHex(baseHex: string, targetHex: string, targetWeight: number): string {
+  const base = parseHex(baseHex);
+  const target = parseHex(targetHex);
+  const weight = clamp(targetWeight, 0, 1);
+  const mixed = base.map((channel, index) =>
+    Math.round(channel * (1 - weight) + target[index] * weight),
+  ) as [number, number, number];
+  return toHex(mixed);
+}
+
+function parseHex(hex: string): [number, number, number] {
+  const normalized = normalizeHexColor(hex, DEFAULT_PRIMARY).slice(1);
+  return [
+    parseInt(normalized.slice(0, 2), 16),
+    parseInt(normalized.slice(2, 4), 16),
+    parseInt(normalized.slice(4, 6), 16),
+  ];
+}
+
+function toHex(rgb: [number, number, number]): string {
+  return `#${rgb.map((value) => clamp(value, 0, 255).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}

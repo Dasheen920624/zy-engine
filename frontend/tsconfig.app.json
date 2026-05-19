@@ -19,7 +19,8 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@styles/*": ["src/styles/*"]
     },
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },

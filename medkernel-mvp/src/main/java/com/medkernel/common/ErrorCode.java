@@ -9,7 +9,11 @@ public enum ErrorCode {
     ADAPTER_TIMEOUT("ADAPTER_TIMEOUT", "adapter execution timed out"),
     DIFY_TIMEOUT("DIFY_TIMEOUT", "dify workflow timed out"),
     DB_ERROR("DB_ERROR", "database error"),
-    UNKNOWN_ERROR("UNKNOWN_ERROR", "unknown error");
+    UNKNOWN_ERROR("UNKNOWN_ERROR", "unknown error"),
+    UNAUTHORIZED("UNAUTHORIZED", "authentication required"),
+    FORBIDDEN("FORBIDDEN", "access denied"),
+    LOGIN_FAILED("LOGIN_FAILED", "invalid username or password"),
+    USER_LOCKED("USER_LOCKED", "account is temporarily locked");
 
     private final String code;
     private final String message;
