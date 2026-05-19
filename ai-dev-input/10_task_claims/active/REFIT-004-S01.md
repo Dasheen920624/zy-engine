@@ -7,13 +7,15 @@ slice: S01
 title: 多数据库持久化和中文注释统一补齐
 owner: CodeBuddy
 role: 高级
-status: ACTIVE
+status: DONE
 branch: REFIT-004
 target_base_branch: develop
 git_base_commit: 12d9f93
 git_status_at_claim: clean
 created_at: 2026-05-20T00:05:00+08:00
-last_heartbeat: 2026-05-20T00:05:00+08:00
+last_heartbeat: 2026-05-20T00:35:00+08:00
+completed_at: 2026-05-20T00:35:00+08:00
+git_done_commit: e336564
 expected_finish: 2026-05-20T12:05:00+08:00
 heartbeat_interval_minutes: 60
 database_mode: LOCAL_H2_FILE
