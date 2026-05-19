@@ -10,8 +10,15 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "medkernel.security")
 public class SecurityProperties {
 
-    /** JWT 签名密钥，生产环境必须配置为强随机值。 */
-    private String jwtSecret = "medkernel-default-jwt-secret-please-change-in-production-env-2026";
+    /**
+     * JWT 签名密钥。
+     *
+     * <p>必须通过环境变量 {@code MEDKERNEL_JWT_SECRET} 注入，长度 >= 32 字符。
+     * 不再在 Java/yml 中保留默认值，避免源码可读的弱密钥被用于签发 JWT（AUDIT §5.1）。
+     * 启动校验在 {@link JwtTokenProvider#init()}：null/空 → 抛 IllegalStateException 阻止启动。
+     * 测试场景请使用 {@code application-test.yml} 提供测试专用密钥。
+     */
+    private String jwtSecret;
 
     /** 登录失败锁定阈值，超过此次数将锁定账户。 */
     private int lockThreshold = 5;
