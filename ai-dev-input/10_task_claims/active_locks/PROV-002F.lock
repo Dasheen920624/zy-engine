@@ -1,7 +1,0 @@
-task_id: PROV-002F
-claim_id: PROV-002F-S01
-owner: CodeBuddy
-branch: develop
-git_base_commit: a68cf8f4c8df6bdfb8469064a08156520450a831
-created_at: 2026-05-19T21:30:00+08:00
-last_heartbeat: 2026-05-19T21:30:00+08:00
