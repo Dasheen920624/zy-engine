@@ -1,4 +1,3 @@
-import React from "react";
 import { Card, List, Tag, Typography, Space, Button, Empty, Spin } from "antd";
 import {
   CheckCircleOutlined,
@@ -7,7 +6,6 @@ import {
   InfoCircleOutlined,
   ReloadOutlined,
   DeleteOutlined,
-  ClockCircleOutlined,
 } from "@ant-design/icons";
 import type { DryRunResultPanelProps, DryRunResult } from "./DryRunResultPanel.types";
 
@@ -129,13 +127,15 @@ export default function DryRunResultPanel({
       style={{ width: "100%" }}
       bodyStyle={{ padding: 0 }}
     >
-      {loading ? (
+      {loading && (
         <div style={{ textAlign: "center", padding: 24 }}>
           <Spin tip="正在运行测试..." />
         </div>
-      ) : results.length === 0 ? (
+      )}
+      {!loading && results.length === 0 && (
         <Empty description={emptyText} style={{ padding: 24 }} />
-      ) : (
+      )}
+      {!loading && results.length > 0 && (
         <div style={{ maxHeight, overflow: "auto" }}>
           <List
             dataSource={results}

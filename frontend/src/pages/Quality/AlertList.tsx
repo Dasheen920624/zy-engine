@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button, Card, Input, Select, Space, Statistic, Switch, Table, Tag, Typography } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
+import type { StatusKey } from "../../components/StatusBadge/StatusBadge.types";
 import { StatusBadge } from "../../components";
 import { listAlerts, getAlertSummary } from "../../api/quality";
 import type { QualityAlert, ListAlertsParams, AlertSeverity } from "../../api/types";
@@ -40,6 +40,18 @@ const severityDots = (s: AlertSeverity) => {
     case "INFO": return "●";
     default: return "●";
   }
+};
+
+const SEVERITY_DOT_COLOR: Record<string, string> = {
+  red: "var(--mk-danger)",
+  orange: "var(--mk-warning)",
+  blue: "var(--mk-primary)",
+};
+
+const STATUS_BADGE_MAP: Record<string, StatusKey> = {
+  PENDING: "pending",
+  IN_PROGRESS: "processing",
+  RESOLVED: "success",
 };
 
 const AlertList: React.FC = () => {
@@ -85,7 +97,7 @@ const AlertList: React.FC = () => {
       key: "severity",
       width: 80,
       render: (s: AlertSeverity) => (
-        <span style={{ color: severityColor(s) === "red" ? "#ff4d4f" : severityColor(s) === "orange" ? "#faad14" : "#1890ff" }}>
+        <span style={{ color: SEVERITY_DOT_COLOR[severityColor(s)] || "var(--mk-primary)" }}>
           {severityDots(s)}
         </span>
       ),
@@ -126,7 +138,7 @@ const AlertList: React.FC = () => {
         if (record.overtime) {
           return <Tag color="red">超时未改</Tag>;
         }
-        return <StatusBadge status={s === "PENDING" ? "pending" : s === "IN_PROGRESS" ? "processing" : "success"} />;
+        return <StatusBadge status={STATUS_BADGE_MAP[s] ?? "success"} />;
       },
     },
     {
@@ -170,10 +182,10 @@ const AlertList: React.FC = () => {
       </Space>
 
       <Space style={{ marginBottom: 16, width: "100%" }} size="large">
-        <Card size="small"><Statistic title="危急" value={summary?.critical || 0} valueStyle={{ color: "#ff4d4f" }} /></Card>
-        <Card size="small"><Statistic title="警告" value={summary?.warning || 0} valueStyle={{ color: "#faad14" }} /></Card>
-        <Card size="small"><Statistic title="提醒" value={summary?.info || 0} valueStyle={{ color: "#1890ff" }} /></Card>
-        <Card size="small"><Statistic title="超时未改" value={summary?.overtime || 0} valueStyle={{ color: "#ff4d4f" }} /></Card>
+        <Card size="small"><Statistic title="危急" value={summary?.critical || 0} valueStyle={{ color: "var(--mk-danger)" }} /></Card>
+        <Card size="small"><Statistic title="警告" value={summary?.warning || 0} valueStyle={{ color: "var(--mk-warning)" }} /></Card>
+        <Card size="small"><Statistic title="提醒" value={summary?.info || 0} valueStyle={{ color: "var(--mk-primary)" }} /></Card>
+        <Card size="small"><Statistic title="超时未改" value={summary?.overtime || 0} valueStyle={{ color: "var(--mk-danger)" }} /></Card>
       </Space>
 
       <Table
@@ -206,7 +218,7 @@ const AlertList: React.FC = () => {
       />
 
       <style>{`
-        .ant-table-row-overtime td { background: #fff1f0 !important; }
+        .ant-table-row-overtime td { background: var(--mk-danger-soft) !important; }
       `}</style>
     </div>
   );

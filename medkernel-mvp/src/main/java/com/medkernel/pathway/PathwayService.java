@@ -113,6 +113,44 @@ public class PathwayService {
         return result;
     }
 
+    public Map<String, Object> saveDraft(String pathwayCode, Map<String, Object> draft, String tenantId) {
+        Map<String, Object> existing = pathwayDrafts.get(pathwayCode);
+        if (existing != null) {
+            existing.putAll(draft);
+            existing.put("pathway_code", pathwayCode);
+            existing.put("tenant_id", tenantId);
+        } else {
+            draft.put("pathway_code", pathwayCode);
+            draft.put("tenant_id", tenantId);
+            pathwayDrafts.put(pathwayCode, draft);
+        }
+        persistenceService.savePathwayDraft(pathwayCode, pathwayDrafts.get(pathwayCode));
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("status", "DRAFT");
+        result.put("persistence", persistenceService.providerName());
+        audit("SAVE_DRAFT", "PATHWAY", pathwayCode, null, result, null);
+        return result;
+    }
+
+    public Map<String, Object> submitReview(String pathwayCode, String tenantId) {
+        Map<String, Object> config = pathwayDrafts.get(pathwayCode);
+        if (config == null) {
+            throw new IllegalArgumentException("No draft found for pathway: " + pathwayCode);
+        }
+        config.put("review_status", "PENDING_REVIEW");
+        config.put("tenant_id", tenantId);
+        persistenceService.savePathwayDraft(pathwayCode, config);
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("review_status", "PENDING_REVIEW");
+        result.put("persistence", persistenceService.providerName());
+        audit("SUBMIT_REVIEW", "PATHWAY", pathwayCode, null, result, null);
+        return result;
+    }
+
     public Map<String, Object> publish(String pathwayCode, Map<String, Object> request) {
         Map<String, Object> config = pathwayDrafts.get(pathwayCode);
         String versionNo = string(request.get("version_no"), configSupport.versionNo(config, "1.0.0"));

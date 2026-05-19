@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Drawer, Button, Space, Input, Typography, message } from "antd";
+import { useState } from "react";
+import { Drawer, Button, Space, Input, message } from "antd";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -8,7 +8,6 @@ import {
 } from "@ant-design/icons";
 import type { ReviewDrawerProps } from "./ReviewDrawer.types";
 
-const { Text } = Typography;
 const { TextArea } = Input;
 
 export default function ReviewDrawer({

@@ -1,5 +1,4 @@
-import React from "react";
-import { Tag, Tooltip, Button, Typography, Space } from "antd";
+import { Tag, Button, Typography, Space } from "antd";
 import {
   FileTextOutlined,
   LinkOutlined,

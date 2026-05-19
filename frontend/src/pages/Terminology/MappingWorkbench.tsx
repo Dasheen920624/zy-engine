@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Alert,
   Badge,
@@ -21,19 +21,16 @@ import {
 } from "antd";
 import {
   CheckCircleOutlined,
-  CloseCircleOutlined,
   ExclamationCircleOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
   ReloadOutlined,
-  SearchOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import type {
   TerminologyItem,
   AiCandidate,
-  MappingStatus,
   ConceptType,
   MappingSummary,
 } from "../../api/types";
@@ -48,14 +45,6 @@ import {
 
 const { Text } = Typography;
 const { Search } = Input;
-
-// 映射状态配置
-const MAPPING_STATUS_MAP: Record<MappingStatus, { label: string; color: string }> = {
-  UNMAPPED: { label: "未映射", color: "default" },
-  MAPPED: { label: "已映射", color: "success" },
-  CONFLICT: { label: "冲突", color: "error" },
-  AI_CANDIDATE: { label: "AI候选", color: "processing" },
-};
 
 // 概念类型配置
 const CONCEPT_TYPE_MAP: Record<ConceptType, { label: string; color: string }> = {
@@ -187,13 +176,13 @@ export default function MappingWorkbench() {
       await adoptMapping({
         sourceCode: item.sourceCode,
         conceptType: item.conceptType,
-        standardCode: "standardCode" in item ? item.standardCode : item.proposedStandardCode,
-        standardName: "standardName" in item ? item.standardName : item.proposedStandardName,
+        standardCode: "proposedStandardCode" in item ? (item as AiCandidate).proposedStandardCode : (item as TerminologyItem).standardCode || "",
+        standardName: "proposedStandardName" in item ? (item as AiCandidate).proposedStandardName : (item as TerminologyItem).standardName,
         operatorId: "current-user",
       });
       message.success("采纳成功");
       fetchData();
-    } catch (err) {
+    } catch {
       message.error("采纳失败");
     }
   };
@@ -227,7 +216,7 @@ export default function MappingWorkbench() {
       message.success(`批量采纳成功: ${result.successCount} 项`);
       setSelectedRowKeys([]);
       fetchData();
-    } catch (err) {
+    } catch {
       message.error("批量采纳失败");
     }
   };
@@ -242,7 +231,7 @@ export default function MappingWorkbench() {
       });
       message.success("已驳回");
       fetchData();
-    } catch (err) {
+    } catch {
       message.error("驳回失败");
     }
   };
@@ -501,7 +490,7 @@ export default function MappingWorkbench() {
               <Statistic
                 title="未映射"
                 value={displaySummary.totalUnmapped}
-                valueStyle={{ color: "#faad14" }}
+                valueStyle={{ color: "var(--mk-warning)" }}
                 prefix={<FileSearchOutlined />}
               />
             </Card>
@@ -511,7 +500,7 @@ export default function MappingWorkbench() {
               <Statistic
                 title="已映射"
                 value={displaySummary.totalMapped}
-                valueStyle={{ color: "#52c41a" }}
+                valueStyle={{ color: "var(--mk-success)" }}
                 prefix={<CheckCircleOutlined />}
               />
             </Card>
@@ -521,7 +510,7 @@ export default function MappingWorkbench() {
               <Statistic
                 title="冲突"
                 value={displaySummary.totalConflict}
-                valueStyle={{ color: "#ff4d4f" }}
+                valueStyle={{ color: "var(--mk-danger)" }}
                 prefix={<ExclamationCircleOutlined />}
               />
             </Card>
@@ -531,7 +520,7 @@ export default function MappingWorkbench() {
               <Statistic
                 title="AI候选"
                 value={displaySummary.totalAiCandidate}
-                valueStyle={{ color: "#1890ff" }}
+                valueStyle={{ color: "var(--mk-primary)" }}
                 prefix={<ExperimentOutlined />}
               />
             </Card>

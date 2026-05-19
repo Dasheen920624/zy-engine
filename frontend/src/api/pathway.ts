@@ -1,5 +1,6 @@
-import { get, post, del } from "./client";
+import { get, post, put, del } from "./client";
 import type { PathwayListResult, PathwayDetail, ListPathwaysParams } from "./types";
+import type { ValidationResult } from "../components/PathwayCanvas/types";
 
 export async function listPathways(params?: ListPathwaysParams): Promise<PathwayListResult> {
   const qs = new URLSearchParams();
@@ -37,4 +38,24 @@ export async function rollbackPathway(
   request: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   return post(`/pathways/${encodeURIComponent(code)}/rollback`, request);
+}
+
+export async function savePathwayDraft(
+  code: string,
+  draft: { nodes: unknown[]; edges: unknown[] },
+): Promise<Record<string, unknown>> {
+  return put(`/pathways/${encodeURIComponent(code)}/draft`, draft);
+}
+
+export async function validatePathway(
+  code: string,
+  draft: { nodes: unknown[]; edges: unknown[] },
+): Promise<ValidationResult> {
+  return post<ValidationResult>(`/pathways/${encodeURIComponent(code)}/validate`, draft);
+}
+
+export async function submitPathwayReview(
+  code: string,
+): Promise<Record<string, unknown>> {
+  return post(`/pathways/${encodeURIComponent(code)}/submit-review`, {});
 }

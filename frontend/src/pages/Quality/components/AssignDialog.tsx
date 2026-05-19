@@ -32,7 +32,7 @@ const AssignDialog: React.FC<AssignDialogProps> = ({ visible, alert, onClose, on
         note: values.note,
         assigned_by: "current_user",
       };
-      await assignProblem(alert!.id, request);
+      await assignProblem(alert?.id ?? "", request);
       message.success("派单成功");
       form.resetFields();
       onAssigned?.();

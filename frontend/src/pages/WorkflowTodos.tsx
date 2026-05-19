@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Badge,
@@ -9,7 +9,6 @@ import {
   Form,
   Input,
   Modal,
-  Radio,
   Row,
   Select,
   Space,
@@ -25,8 +24,6 @@ import {
   ClockCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
-  ForwardOutlined,
-  PlusOutlined,
   ReloadOutlined,
   StopOutlined,
   SwapOutlined,
@@ -35,7 +32,6 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import type {
   TodoTask,
-  TodoTaskDetail,
   TodoSummary,
   BusinessType,
   TodoStatus,
@@ -204,6 +200,7 @@ export default function WorkflowTodos() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus, filterBusinessType]);
 
 
@@ -229,7 +226,7 @@ export default function WorkflowTodos() {
       setApproveModalVisible(false);
       form.resetFields();
       fetchData(); // Refresh data
-    } catch (err) {
+    } catch {
       message.error("审批失败");
     }
   };
@@ -245,7 +242,7 @@ export default function WorkflowTodos() {
       setRejectModalVisible(false);
       form.resetFields();
       fetchData(); // Refresh data
-    } catch (err) {
+    } catch {
       message.error("驳回失败");
     }
   };
@@ -262,7 +259,7 @@ export default function WorkflowTodos() {
       setDelegateModalVisible(false);
       form.resetFields();
       fetchData(); // Refresh data
-    } catch (err) {
+    } catch {
       message.error("转办失败");
     }
   };
@@ -325,7 +322,7 @@ export default function WorkflowTodos() {
       width: 100,
       render: (s: TodoStatus) => {
         const cfg = STATUS_MAP[s];
-        return <Badge status={cfg.color as any} text={cfg.label} />;
+        return <Badge status={cfg.color as "success" | "processing" | "error" | "default" | "warning"} text={cfg.label} />;
       },
     },
     {
@@ -438,7 +435,7 @@ export default function WorkflowTodos() {
               title="待处理"
               value={(summary || DEFAULT_SUMMARY).totalPending}
               prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: "#1890ff" }}
+              valueStyle={{ color: "var(--mk-primary)" }}
             />
           </Card>
         </Col>
@@ -448,7 +445,7 @@ export default function WorkflowTodos() {
               title="紧急"
               value={(summary || DEFAULT_SUMMARY).urgentCount}
               prefix={<ThunderboltOutlined />}
-              valueStyle={{ color: "#ff4d4f" }}
+              valueStyle={{ color: "var(--mk-danger)" }}
             />
           </Card>
         </Col>
@@ -458,7 +455,7 @@ export default function WorkflowTodos() {
               title="高优先级"
               value={(summary || DEFAULT_SUMMARY).highCount}
               prefix={<ExclamationCircleOutlined />}
-              valueStyle={{ color: "#fa8c16" }}
+              valueStyle={{ color: "var(--mk-warning)" }}
             />
           </Card>
         </Col>
@@ -468,7 +465,7 @@ export default function WorkflowTodos() {
               title="已过期"
               value={(summary || DEFAULT_SUMMARY).overdueCount}
               prefix={<StopOutlined />}
-              valueStyle={{ color: "#ff4d4f" }}
+              valueStyle={{ color: "var(--mk-danger)" }}
             />
           </Card>
         </Col>
@@ -569,7 +566,7 @@ export default function WorkflowTodos() {
                     {PRIORITY_MAP[selectedTodo.priority].label}
                   </Tag>
                   <Badge
-                    status={STATUS_MAP[selectedTodo.status].color as any}
+                    status={STATUS_MAP[selectedTodo.status].color as "success" | "processing" | "error" | "default" | "warning"}
                     text={STATUS_MAP[selectedTodo.status].label}
                   />
                 </div>

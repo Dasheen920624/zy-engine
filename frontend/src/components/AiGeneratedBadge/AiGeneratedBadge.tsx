@@ -1,4 +1,3 @@
-import React from "react";
 import { Tag, Tooltip, Button, Typography, Space, Progress } from "antd";
 import {
   RobotOutlined,
@@ -6,7 +5,6 @@ import {
   ClockCircleOutlined,
   CloseCircleOutlined,
   EditOutlined,
-  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import type { AiGeneratedBadgeProps } from "./AiGeneratedBadge.types";
 
