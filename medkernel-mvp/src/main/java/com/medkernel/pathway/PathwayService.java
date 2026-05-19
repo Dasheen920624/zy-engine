@@ -1,6 +1,7 @@
 package com.medkernel.pathway;
 
 import com.medkernel.adapter.AdapterHubService;
+import com.medkernel.audit.PublishGateService;
 import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientNodeState;
 import com.medkernel.dto.PatientTaskState;
@@ -38,6 +39,7 @@ public class PathwayService {
     private final RuleService ruleService;
     private final AdapterHubService adapterHubService;
     private final EnginePersistenceService persistenceService;
+    private final PublishGateService publishGateService;
     private final PathwayConfigSupport configSupport = new PathwayConfigSupport();
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
     private final Map<String, Map<String, Object>> pathwayDrafts = new ConcurrentHashMap<String, Map<String, Object>>();
@@ -47,10 +49,12 @@ public class PathwayService {
     private final Map<String, List<PathwayVariationRecord>> variationRecords = new ConcurrentHashMap<String, List<PathwayVariationRecord>>();
 
     public PathwayService(RuleService ruleService, AdapterHubService adapterHubService,
-                          EnginePersistenceService persistenceService) {
+                          EnginePersistenceService persistenceService,
+                          PublishGateService publishGateService) {
         this.ruleService = ruleService;
         this.adapterHubService = adapterHubService;
         this.persistenceService = persistenceService;
+        this.publishGateService = publishGateService;
     }
 
     /**
@@ -159,6 +163,16 @@ public class PathwayService {
             config.put("pathway_code", pathwayCode);
             config.put("version", versionNo);
         }
+
+        // 发布门禁：路径节点来源绑定检查（阻断级，对应产品不变量 H4）
+        List<Map<String, Object>> missingRefs = configSupport.collectMissingReferences(config);
+        String operatorId = string(request == null ? null : request.get("approved_by"), null);
+        PublishGateService.GateCheckResult gateResult = publishGateService.checkPathwayReferences(missingRefs);
+        publishGateService.auditGateCheck("PATHWAY", "PUBLISH_GATE", "PATHWAY", pathwayCode, operatorId, gateResult);
+        if (!gateResult.isReadyToPublish()) {
+            throw new IllegalStateException(publishGateService.formatBlockingMessage(gateResult));
+        }
+
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
         activePublishedVersions.put(pathwayCode, versionNo);
         persistenceService.savePathwayVersion(pathwayCode, versionNo, "PUBLISHED", config);
@@ -170,9 +184,8 @@ public class PathwayService {
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
         result.put("persistence", persistenceService.providerName());
-        result.put("reference_warnings", configSupport.collectMissingReferences(config));
-        audit("PUBLISH", "PATHWAY", pathwayCode, null, result,
-                string(request == null ? null : request.get("approved_by"), null));
+        result.put("reference_warnings", gateResult.toMapList());
+        audit("PUBLISH", "PATHWAY", pathwayCode, null, result, operatorId);
         return result;
     }
 

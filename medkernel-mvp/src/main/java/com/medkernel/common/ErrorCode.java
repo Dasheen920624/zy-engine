@@ -13,7 +13,12 @@ public enum ErrorCode {
     UNAUTHORIZED("UNAUTHORIZED", "authentication required"),
     FORBIDDEN("FORBIDDEN", "access denied"),
     LOGIN_FAILED("LOGIN_FAILED", "invalid username or password"),
-    USER_LOCKED("USER_LOCKED", "account is temporarily locked");
+    USER_LOCKED("USER_LOCKED", "account is temporarily locked"),
+    MISSING_SOURCE("MISSING_SOURCE", "required source citation or document binding is missing"),
+    SOURCE_EXPIRED("SOURCE_EXPIRED", "source document has expired"),
+    SOURCE_UNREVIEWED("SOURCE_UNREVIEWED", "source document has not been reviewed"),
+    PUBLISH_BLOCKED("PUBLISH_BLOCKED", "publish is blocked by gate check"),
+    NO_RULES_MATCHED("NO_RULES_MATCHED", "no matching published rules found for the scenario");
 
     private final String code;
     private final String message;

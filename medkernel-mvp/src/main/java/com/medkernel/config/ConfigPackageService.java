@@ -3,6 +3,7 @@ package com.medkernel.config;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.medkernel.audit.PublishGateService;
 import com.medkernel.organization.OrganizationDirectoryService;
 import com.medkernel.persistence.EnginePersistenceService;
 import org.slf4j.Logger;
@@ -38,16 +39,19 @@ public class ConfigPackageService {
     private final EnginePersistenceService persistenceService;
     private final OrganizationDirectoryService organizationDirectoryService;
     private final ConfigPackageRepository configPackageRepository;
+    private final PublishGateService publishGateService;
     private final Map<String, ConfigPackage> packageStore = new ConcurrentHashMap<String, ConfigPackage>();
 
     public ConfigPackageService(ObjectMapper objectMapper, EnginePersistenceService persistenceService,
                                 OrganizationDirectoryService organizationDirectoryService,
-                                ConfigPackageRepository configPackageRepository) {
+                                ConfigPackageRepository configPackageRepository,
+                                PublishGateService publishGateService) {
         this.canonicalMapper = objectMapper.copy();
         this.canonicalMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         this.persistenceService = persistenceService;
         this.organizationDirectoryService = organizationDirectoryService;
         this.configPackageRepository = configPackageRepository;
+        this.publishGateService = publishGateService;
     }
 
     public List<Map<String, Object>> importPackages(Object request) {
@@ -180,6 +184,16 @@ public class ConfigPackageService {
         if (approvedBy == null) {
             throw new IllegalArgumentException("approved_by is required");
         }
+
+        // 发布门禁：配置包来源审查校验（阻断级，对应产品不变量 H4）
+        @SuppressWarnings("unchecked")
+        Map<String, Object> sourceReview = (Map<String, Object>) review.get("source_review");
+        PublishGateService.GateCheckResult gateResult = publishGateService.checkConfigPackageSourceReview(sourceReview);
+        publishGateService.auditGateCheck("CONFIG_PACKAGE", "PUBLISH_GATE", "CONFIG_PACKAGE", packageCode, approvedBy, gateResult);
+        if (!gateResult.isReadyToPublish()) {
+            throw new IllegalStateException(publishGateService.formatBlockingMessage(gateResult));
+        }
+
         configPackage.setStatus("PUBLISHED");
         configPackage.setApprovedBy(approvedBy);
         configPackage.setPublishedTime(nowText());
