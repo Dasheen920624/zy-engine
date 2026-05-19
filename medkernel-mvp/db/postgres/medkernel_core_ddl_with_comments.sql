@@ -138,6 +138,28 @@ CREATE TABLE IF NOT EXISTS pe_variation_record (
 COMMENT ON TABLE  pe_variation_record IS '路径变异记录（带组织上下文）';
 COMMENT ON COLUMN pe_variation_record.org_source IS '组织来源：HEADER/QUERY/BODY/DEFAULT/NONE';
 
+CREATE TABLE IF NOT EXISTS pe_recommendation_record (
+  id BIGINT PRIMARY KEY,
+  recommendation_id VARCHAR(128) NOT NULL,
+  patient_id VARCHAR(64) NOT NULL,
+  encounter_id VARCHAR(64) NOT NULL,
+  scenario VARCHAR(64) NOT NULL,
+  target_code VARCHAR(128) NOT NULL,
+  target_name VARCHAR(200),
+  score DECIMAL(8,2),
+  confidence VARCHAR(32),
+  action_level VARCHAR(32),
+  card_json TEXT,
+  trace_id VARCHAR(128),
+  created_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uk_pe_recommendation UNIQUE (recommendation_id)
+);
+COMMENT ON TABLE pe_recommendation_record IS '推荐记录（AI 推荐结果持久化）';
+COMMENT ON COLUMN pe_recommendation_record.recommendation_id IS '推荐ID（全局唯一）';
+COMMENT ON COLUMN pe_recommendation_record.scenario IS '推荐场景';
+COMMENT ON COLUMN pe_recommendation_record.card_json IS '推荐卡片完整 JSON';
+COMMENT ON COLUMN pe_recommendation_record.trace_id IS '关联的追踪ID';
+
 -- ============================================================================
 -- 规则引擎
 -- ============================================================================
