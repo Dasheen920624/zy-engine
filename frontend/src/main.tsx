@@ -2,13 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConfigProvider, App as AntdApp } from "antd";
-import zhCN from "antd/locale/zh_CN";
+import { App as AntdApp } from "antd";
 import "antd/dist/reset.css";
 import "./styles/tokens.css";
 import "./styles/global.css";
-import { antTheme } from "./styles/theme-tokens";
 import App from "./App";
+import { MedKernelThemeProvider } from "./theme/ThemeProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,7 +32,7 @@ async function bootstrap() {
 
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <ConfigProvider locale={zhCN} theme={antTheme}>
+      <MedKernelThemeProvider>
         <AntdApp>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
@@ -41,7 +40,7 @@ async function bootstrap() {
             </BrowserRouter>
           </QueryClientProvider>
         </AntdApp>
-      </ConfigProvider>
+      </MedKernelThemeProvider>
     </React.StrictMode>,
   );
 }

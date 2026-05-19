@@ -92,6 +92,10 @@ frontend/
     ├── App.tsx             # 路由出口
     ├── styles/tokens.css   # 设计系统 CSS Variables（唯一允许定义色值）
     ├── styles/global.css   # 全局样式（与原型对齐）
+    ├── theme/
+    │   ├── tokens.ts       # 主题 registry + 自定义主题色派生
+    │   ├── ThemeProvider.tsx
+    │   └── ThemeSelector.tsx
     ├── api/
     │   ├── client.ts       # axios 实例 + 拦截器（traceId / 组织上下文 / ApiError）
     │   ├── system.ts       # /system/* 接口
@@ -155,6 +159,14 @@ const providers = await get<SystemProviders>("/system/providers");
 const [org, setOrg] = useOrgContext();
 setOrg({ ...org, hospital_code: "HOSPITAL_BETA" });
 ```
+
+### 主题色
+
+- 默认色值仍以 `src/styles/tokens.css` 为兜底。
+- 运行时主题由 `src/theme/tokens.ts` 管理，支持默认蓝、院区绿、AI 紫和本地自定义。
+- `ThemeSelector` 写入 `localStorage`，刷新后保留当前主题。
+- 自定义主题当前暴露主色和菜单色，自动派生 hover、active、soft、info、data-1 等变量。
+- 后期接租户配置时，只需要把后端返回的主题包转换为同样的 `ThemeDefinition` / `ThemeOverrides`。
 
 ### TanStack Query
 

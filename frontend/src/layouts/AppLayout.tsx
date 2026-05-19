@@ -16,6 +16,7 @@ import {
 } from "@ant-design/icons";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useOrgContext } from "../hooks/useOrgContext";
+import ThemeSelector from "../theme/ThemeSelector";
 
 const { Header, Sider, Content } = Layout;
 
@@ -56,7 +57,7 @@ export default function AppLayout() {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider width={224} theme="dark">
+      <Sider width={224} theme="dark" style={{ background: "var(--mk-menu-bg)" }}>
         <div
           style={{
             color: "var(--mk-text-inverse)",
@@ -75,7 +76,7 @@ export default function AppLayout() {
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems as never}
-          style={{ borderInlineEnd: "none" }}
+          style={{ borderInlineEnd: "none", background: "var(--mk-menu-bg)" }}
         />
       </Sider>
       <Layout>
@@ -96,8 +97,9 @@ export default function AppLayout() {
             </strong>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <ThemeSelector />
             <Tooltip title="组织上下文 · Header X-* 自动随请求发送">
-              <Tag color="blue" style={{ margin: 0 }}>
+              <Tag className="mk-tag-primary" style={{ margin: 0 }}>
                 {org.hospital_code || org.group_code || org.tenant_id || "DEFAULT"}
                 {org.department_code ? ` / ${org.department_code}` : ""}
               </Tag>

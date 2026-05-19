@@ -14,6 +14,42 @@ body {
 .text-mono { font-family: var(--mk-font-mono); }
 .text-muted { color: var(--mk-text-tertiary); }
 
+.mk-tag-primary {
+  color: var(--mk-brand-primary-active);
+  background: var(--mk-brand-primary-soft);
+  border-color: var(--mk-brand-primary);
+}
+
+.mk-theme-panel {
+  width: 280px;
+}
+
+.mk-theme-select,
+.mk-theme-controls {
+  width: 100%;
+}
+
+.mk-theme-divider {
+  margin: var(--mk-space-3) 0;
+}
+
+.mk-theme-color-row {
+  display: grid;
+  grid-template-columns: 40px minmax(92px, 1fr) auto;
+  align-items: center;
+  gap: var(--mk-space-2);
+}
+
+.mk-theme-color-input {
+  width: 92px;
+}
+
+.mk-theme-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--mk-space-3);
+}
+
 .page-header {
   margin-bottom: var(--mk-space-6);
 }
