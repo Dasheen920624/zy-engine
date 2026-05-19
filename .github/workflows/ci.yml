@@ -12,7 +12,7 @@ on:
 
 jobs:
   backend-build-test:
-    name: Backend build + tests
+    name: backend-build-test
     runs-on: windows-latest
 
     steps:
@@ -38,9 +38,8 @@ jobs:
         run: .\medkernel-mvp\scripts\run-tests.cmd
 
   guard-rules:
-    name: Guard rules (verify-pr.ps1)
+    name: guard-rules
     runs-on: windows-latest
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
 
     steps:
       - name: Checkout (full history for git diff)
@@ -49,8 +48,14 @@ jobs:
           fetch-depth: 0
 
       - name: Run verify-pr.ps1 (skip backend/frontend build, only guard rules)
-        shell: powershell
+        shell: pwsh
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
         run: |
+          if ($env:GITHUB_EVENT_NAME -eq "push" -and $env:EVENT_BEFORE -and $env:EVENT_BEFORE -notmatch '^0{40}$') {
+            $env:MEDKERNEL_DIFF_BASE = $env:EVENT_BEFORE
+            Write-Host "Push diff base = $env:MEDKERNEL_DIFF_BASE"
+          }
           $head = $env:GITHUB_HEAD_REF
           if ($head -match '^ai/([A-Za-z0-9-]+)/') {
             $taskId = $matches[1]

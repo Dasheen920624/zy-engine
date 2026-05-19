@@ -1,4 +1,4 @@
-import { OrgContext } from "../api/types";
+import type { OrgContext } from "../api/types";
 
 // 简易组织上下文 store（无第三方依赖）。
 // 用 module-level 变量 + 订阅者，避免引入 zustand/redux。
@@ -18,7 +18,6 @@ function loadInitial(): OrgContext {
   if (!tenantId) {
     // 兜底使用演示租户但必须告警：生产部署如未设置 VITE_DEFAULT_TENANT_ID，
     // 所有请求会落到 TENANT_DEMO，数据会被错误归类。
-    // eslint-disable-next-line no-console
     console.warn(
       "[orgContext] VITE_DEFAULT_TENANT_ID is not set; falling back to 'TENANT_DEMO'. " +
         "Production deployments MUST set this env to avoid cross-tenant data contamination.",
@@ -41,6 +40,7 @@ export function getOrgContext(): OrgContext {
 export function setOrgContext(next: OrgContext): void {
   current = { ...next };
   try {
+    // eslint-disable-next-line no-restricted-syntax -- 仅保存组织上下文，不包含 token、API Key 或患者隐私。
     localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
   } catch {
     /* ignore */

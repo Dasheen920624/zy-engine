@@ -2,8 +2,8 @@
 
 使用前按最小阅读策略执行：
 
-- 必读：`medkernel-mvp/docs/00_总入口与AI接手导航.md`
-- 只读任务行：`medkernel-mvp/docs/02_任务台账.md`
+- 必读：`docs/engineering/00_总入口与AI接手导航.md`
+- 只读任务行：`docs/engineering/02_任务台账.md`
 - 按任务触发条件最多补读 1 份专项文档：后端 `06_后端开发规范.md`，前端 `07_前端开发规范.md`，数据库 `数据库Provider与离线AI开发约定.md`，架构 `05_架构总图与服务边界.md`，部署 `09_内网部署与版本管理.md`，医学/医保/质控 `产品功能业务核查与开工清单.md`。
 
 不要把长文档列表当作默认必读清单；`00_总入口与AI接手导航.md` 的硬门禁和 DoD 是默认权威口径。
@@ -114,10 +114,10 @@ DOC-xxx     文档
 
 ## 总控泳道
 
-填写本任务属于 `顶级多角色评审与AI并行开发总控.md` 中哪条泳道：
+填写本任务属于 `docs/engineering/02_任务台账.md` 中哪条泳道：
 
 ```text
-A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 / D 规则质控和医嘱安全 / E 路径图谱Dify适配器 / F 前端配置和客户验收 / G 测试运维和安全
+A 配置包与发布治理 / B 组织与权限 / C 来源追溯与医学可信 / D 规则质控和医嘱安全 / E 路径图谱Dify适配器 / F 前端配置和客户验收 / G 测试运维和安全 / H 产品底座扩展 / I 体系成熟度补充能力
 ```
 
 说明：
@@ -339,10 +339,10 @@ claim.status=READY_TO_SUBMIT
 根据影响范围更新：
 
 - `medkernel-mvp/README.md`
-- `medkernel-mvp/docs/api-examples.http`
-- `medkernel-mvp/docs/产品化方案与AI开发编排.md`
-- `medkernel-mvp/docs/全功能蓝图与并行开发计划.md`
-- `medkernel-mvp/docs/前端配置平台规划与开发验证.md`
+- `docs/engineering/api-examples.http`
+- `docs/01_产品事实源.md`
+- `docs/04_页面规格书.md`
+- `docs/05_AI实施手册.md`
 - `ai-dev-input/README.md`
 - 样例 JSON
 - 测试矩阵

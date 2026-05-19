@@ -27,7 +27,7 @@ const menuItems = [
     type: "group" as const,
     label: "配置治理",
     children: [
-      { key: "/config-packages", icon: <FileSearchOutlined />, label: <Link to="/config-packages">配置包中心</Link> },
+      { key: "/config/packages", icon: <FileSearchOutlined />, label: <Link to="/config/packages">配置包中心</Link> },
       { key: "/provenance", icon: <ReadOutlined />, label: <Link to="/provenance">来源追溯</Link> },
       { key: "/pathways", icon: <NodeIndexOutlined />, label: "路径配置", disabled: true },
       { key: "/rules", icon: <SafetyCertificateOutlined />, label: "规则配置", disabled: true },
@@ -59,14 +59,16 @@ export default function AppLayout() {
       <Sider width={224} theme="dark">
         <div
           style={{
-            color: "#fff",
+            color: "var(--mk-text-inverse)",
             padding: "16px 20px 12px",
-            borderBottom: "1px solid #1e293b",
+            borderBottom: "var(--mk-border-width) solid var(--mk-border-inverse)",
             marginBottom: 8,
           }}
         >
           <div style={{ fontSize: 16, fontWeight: 700 }}>医疗智能引擎平台</div>
-          <div style={{ fontSize: 12, color: "#94a3b8" }}>medkernel · 内网管理台</div>
+          <div style={{ fontSize: 12, color: "var(--mk-text-inverse-muted)" }}>
+            medkernel · 治理控制台
+          </div>
         </div>
         <Menu
           theme="dark"
@@ -79,16 +81,19 @@ export default function AppLayout() {
       <Layout>
         <Header
           style={{
-            background: "#fff",
-            borderBottom: "1px solid #e5e7eb",
+            background: "var(--mk-bg-panel)",
+            borderBottom: "var(--mk-border-width) solid var(--mk-border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             padding: "0 24px",
           }}
         >
-          <div style={{ color: "#4b5563", fontSize: 13 }}>
-            首页 / <strong style={{ color: "#1f2937" }}>{describePath(location.pathname)}</strong>
+          <div style={{ color: "var(--mk-text-secondary)", fontSize: 13 }}>
+            首页 /{" "}
+            <strong style={{ color: "var(--mk-text-primary)" }}>
+              {describePath(location.pathname)}
+            </strong>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Tooltip title="组织上下文 · Header X-* 自动随请求发送">
@@ -97,7 +102,7 @@ export default function AppLayout() {
                 {org.department_code ? ` / ${org.department_code}` : ""}
               </Tag>
             </Tooltip>
-            <Tag color="default" style={{ fontFamily: "var(--font-mono)" }}>
+            <Tag color="default" style={{ fontFamily: "var(--mk-font-mono)" }}>
               v0.1
             </Tag>
           </div>
@@ -116,6 +121,7 @@ function describePath(path: string): string {
       return "工作台";
     case "/demo-validation":
       return "演示与校验";
+    case "/config/packages":
     case "/config-packages":
       return "配置包中心";
     case "/provenance":

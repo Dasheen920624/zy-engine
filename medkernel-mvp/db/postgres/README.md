@@ -142,7 +142,7 @@ timezone = 'Asia/Shanghai'
 
 ## 与 Oracle / DM 的差异
 
-详见 [`../../docs/08_国产化兼容性规约.md`](../../docs/08_国产化兼容性规约.md) §5。
+详见 [`../../../docs/engineering/08_国产化兼容性规约.md`](../../../docs/engineering/08_国产化兼容性规约.md) §5。
 
 ## 批次 3 计划
 

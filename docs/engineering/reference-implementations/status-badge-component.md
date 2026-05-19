@@ -255,7 +255,7 @@ export type { StatusBadgeProps, StatusKey } from './StatusBadge.types';
 
 ## 关键约束（不许变）
 
-1. ✅ 必须 import [`StatusBadge.css`](frontend/src/components/StatusBadge/StatusBadge.css)，**禁止**用内联样式硬编码颜色
+1. ✅ 必须 import `StatusBadge.css`，**禁止**用内联样式硬编码颜色
 2. ✅ 必须用 `var(--mk-*)` token，不允许硬编码颜色
 3. ✅ `dotOnly` 模式**强制**抛错若缺 `title`
 4. ✅ 必须有 `role="status"` 和 `aria-label`（无障碍）

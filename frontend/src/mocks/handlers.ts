@@ -420,15 +420,38 @@ export const handlers = [
     const payload: SystemProviders = {
       run_mode: "HYBRID",
       providers: [
-        { name: "Database", ready: true, provider: "Oracle", reason: undefined },
+        {
+          name: "Database",
+          role: "CONFIG_PRIMARY_STORE",
+          ready: true,
+          status: "READY",
+          provider: "Oracle",
+          reason: undefined,
+        },
         {
           name: "Graph",
+          role: "GRAPH_QUERY_PROVIDER",
           ready: false,
+          status: "FALLBACK",
           provider: "Neo4jProvider",
           reason: "Neo4j 不可达，已降级 DB Fallback",
         },
-        { name: "Dify", ready: true, provider: "DifyProvider", reason: undefined },
-        { name: "Adapter", ready: true, provider: "AdapterMock", reason: undefined },
+        {
+          name: "Dify",
+          role: "WORKFLOW_PROVIDER",
+          ready: true,
+          status: "READY",
+          provider: "DifyProvider",
+          reason: undefined,
+        },
+        {
+          name: "Adapter",
+          role: "HOSPITAL_ADAPTER_PROVIDER",
+          ready: true,
+          status: "READY",
+          provider: "AdapterMock",
+          reason: undefined,
+        },
       ],
       timestamp: new Date().toISOString(),
     };

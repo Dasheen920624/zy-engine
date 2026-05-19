@@ -84,7 +84,7 @@ SELECT COLUMN_NAME FROM USER_TAB_COLUMNS
 | 分页 | OFFSET ... FETCH | LIMIT/OFFSET 也支持 | 见 `PaginationDialect` |
 | timezone | NLS_TIMESTAMP_TZ_FORMAT | JDBC `serverTimezone` 参数 | URL 加 `serverTimezone=Asia/Shanghai` |
 
-详见 [`../../docs/08_国产化兼容性规约.md`](../../docs/08_国产化兼容性规约.md) §5。
+详见 [`../../../docs/engineering/08_国产化兼容性规约.md`](../../../docs/engineering/08_国产化兼容性规约.md) §5。
 
 ## 批次 3 计划
 

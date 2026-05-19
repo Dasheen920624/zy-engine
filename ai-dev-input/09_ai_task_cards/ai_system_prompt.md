@@ -5,7 +5,7 @@
 开始任何开发前，必须先阅读 **唯一总入口**：
 
 ```text
-medkernel-mvp/docs/00_总入口与AI接手导航.md
+docs/engineering/00_总入口与AI接手导航.md
 ```
 
 最小阅读策略：

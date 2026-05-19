@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConfigProvider, App as AntdApp } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import "antd/dist/reset.css";
+import "./styles/tokens.css";
 import "./styles/global.css";
 import App from "./App";
 
@@ -24,9 +25,14 @@ async function bootstrap() {
     await worker.start({ onUnhandledRequest: "bypass" });
   }
 
-  ReactDOM.createRoot(document.getElementById("root")!).render(
+  const root = document.getElementById("root");
+  if (!root) {
+    throw new Error("Root element #root not found");
+  }
+
+  ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: "#1e40af" } }}>
+      <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: "var(--mk-brand-primary)" } }}>
         <AntdApp>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>

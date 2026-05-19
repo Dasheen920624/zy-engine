@@ -9,7 +9,7 @@
 #   -SkipBackend    跳过后端检查（仅前端 PR）
 #
 # 9 项自动检查：
-#   1. 工作树有改动（不是空 PR）
+#   1. 工作树或 PR 差异有改动（不是空 PR）
 #   2. ADR 不变量未被违反（grep 禁用模式）
 #   3. 后端 build + test（如适用）
 #   4. 前端 lint + test + build（如适用）
@@ -56,21 +56,106 @@ function Show-Section($title) {
   Write-Host "=== $title ===" -ForegroundColor Cyan
 }
 
+function Test-GitRef([string]$Ref) {
+  if ([string]::IsNullOrWhiteSpace($Ref)) {
+    return $false
+  }
+  git rev-parse --verify $Ref 2>$null | Out-Null
+  return $LASTEXITCODE -eq 0
+}
+
+function Get-GitBaseRef {
+  if (-not [string]::IsNullOrWhiteSpace($env:MEDKERNEL_DIFF_BASE) -and (Test-GitRef $env:MEDKERNEL_DIFF_BASE)) {
+    return $env:MEDKERNEL_DIFF_BASE
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_BASE_REF)) {
+    $candidate = "origin/$($env:GITHUB_BASE_REF)"
+    if (Test-GitRef $candidate) {
+      return $candidate
+    }
+    if (Test-GitRef $env:GITHUB_BASE_REF) {
+      return $env:GITHUB_BASE_REF
+    }
+  }
+
+  $upstream = git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null
+  if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($upstream)) {
+    return $upstream.Trim()
+  }
+
+  git rev-parse --verify origin/develop 2>$null | Out-Null
+  if ($LASTEXITCODE -eq 0) {
+    return "origin/develop"
+  }
+
+  git rev-parse --verify origin/main 2>$null | Out-Null
+  if ($LASTEXITCODE -eq 0) {
+    return "origin/main"
+  }
+
+  return "HEAD"
+}
+
+function Get-TaskAliases([string]$TaskId) {
+  $aliases = New-Object System.Collections.Generic.List[string]
+  $aliases.Add($TaskId)
+  if ($TaskId -match '^PR-V2-(\d{2})$') {
+    $aliases.Add("PR-$($matches[1])")
+  } elseif ($TaskId -match '^PR-(\d{2})$') {
+    $aliases.Add("PR-V2-$($matches[1])")
+  }
+  return $aliases | Select-Object -Unique
+}
+
+function Get-PlaybookTaskSection([string]$Content, [string]$TaskId) {
+  $aliases = Get-TaskAliases $TaskId
+  $sections = [regex]::Matches($Content, '(?ms)^##\s+\d+\.\s+.*?(?=^##\s+\d+\.|\z)')
+  foreach ($section in $sections) {
+    $heading = ($section.Value -split "`r?`n", 2)[0]
+    foreach ($alias in $aliases) {
+      $aliasPattern = [regex]::Escape($alias)
+      if ($heading -match $aliasPattern -or $section.Value -match "\*\*任务编号[:：]\*\*\s*$aliasPattern") {
+        return $section.Value
+      }
+    }
+  }
+  foreach ($section in $sections) {
+    foreach ($alias in $aliases) {
+      if ($section.Value -match [regex]::Escape($alias)) {
+        return $section.Value
+      }
+    }
+  }
+  return $null
+}
+
+$BaseRef = Get-GitBaseRef
+
 Write-Host ""
 Write-Host "MedKernel | 提交前 DoD 自检 | Task=$TaskId" -ForegroundColor White
+Write-Host "Diff base: $BaseRef" -ForegroundColor Gray
 Write-Host ("=" * 60)
 
 # ============================================================
-# 1. 工作树有改动
+# 1. 工作树或 PR 差异有改动
 # ============================================================
-Show-Section "1. 工作树有改动"
+Show-Section "1. 工作树或 PR 差异有改动"
 
 $status = git status --porcelain
-if ([string]::IsNullOrWhiteSpace($status)) {
-  Show-Fail "工作树无改动，没什么要提交的"
-} else {
+$diffNames = git diff --name-only $BaseRef -- 2>$null
+if (-not $diffNames) {
+  $diffNames = git diff --cached --name-only $BaseRef -- 2>$null
+}
+
+if (-not [string]::IsNullOrWhiteSpace($status)) {
   $changedLines = ($status -split "`n").Count
   Show-Pass "$changedLines 个文件改动"
+} elseif (-not [string]::IsNullOrWhiteSpace($diffNames)) {
+  $changedLines = ($diffNames -split "`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count
+  Show-Pass "$changedLines 个文件相对 $BaseRef 有差异（CI/已提交场景）"
+} else {
+  Show-Fail "工作树与 $BaseRef 均无差异，没什么要提交或合并的"
 }
 
 # ============================================================
@@ -86,22 +171,36 @@ $ExcludePathspecs = @(
   ":(exclude)frontend/eslint-rules/forbid-deprecated-naming.js",
   ":(exclude)scripts/verify-pr.ps1"
 )
-$diff = git diff --cached origin/main -- $ExcludePathspecs 2>$null
+$diff = git diff --cached $BaseRef -- $ExcludePathspecs 2>$null
 if (-not $diff) {
-  $diff = git diff origin/main -- $ExcludePathspecs 2>$null
+  $diff = git diff $BaseRef -- $ExcludePathspecs 2>$null
 }
 
 if ($diff) {
   # 2.1 ADR-0003: 禁止硬编码颜色（仅检查 +号新增行）
   $addedLines = $diff -split "`n" | Where-Object { $_ -match '^\+[^+]' }
-  $colorViolations = $addedLines | Where-Object {
-    $_ -match '#[0-9a-fA-F]{3,8}\b' -and
-    $_ -notmatch 'tokens\.' -and
-    $_ -notmatch '^\+\+\+' -and
-    $_ -notmatch '^\+\s*//' -and
-    $_ -notmatch '^\+\s*\*'
+  $colorViolations = New-Object System.Collections.Generic.List[string]
+  $currentDiffFile = ""
+  foreach ($line in ($diff -split "`n")) {
+    if ($line -match '^\+\+\+ b/(.+)$') {
+      $currentDiffFile = $Matches[1]
+      continue
+    }
+    if ($line -notmatch '^\+[^+]') {
+      continue
+    }
+    if ($currentDiffFile -match 'frontend/src/styles/tokens\.(css|ts)$') {
+      continue
+    }
+    if (
+      $line -match '#[0-9a-fA-F]{3,8}\b' -and
+      $line -notmatch '^\+\s*//' -and
+      $line -notmatch '^\+\s*\*'
+    ) {
+      $colorViolations.Add("${currentDiffFile}: $line")
+    }
   }
-  if ($colorViolations) {
+  if ($colorViolations.Count -gt 0) {
     Show-Fail "ADR-0003 违反：本次新增含硬编码颜色 ($($colorViolations.Count) 处)，必须用 var(--mk-*) / var(--mk-*)"
     $colorViolations | Select-Object -First 3 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
   } else {
@@ -143,7 +242,7 @@ if ($diff) {
 if (-not $SkipBackend) {
   Show-Section "3. 后端 build + test"
 
-  $hasBackendChange = git diff origin/main --name-only -- "medkernel-mvp/" 2>$null
+  $hasBackendChange = git diff $BaseRef --name-only -- "medkernel-mvp/" 2>$null
   if ($hasBackendChange) {
     Push-Location "medkernel-mvp"
     try {
@@ -179,7 +278,7 @@ if (-not $SkipBackend) {
 if (-not $SkipFrontend) {
   Show-Section "4. 前端 lint + test + build"
 
-  $hasFrontendChange = git diff origin/main --name-only -- "frontend/" 2>$null
+  $hasFrontendChange = git diff $BaseRef --name-only -- "frontend/" 2>$null
   if ($hasFrontendChange) {
     Push-Location "frontend"
     try {
@@ -257,10 +356,9 @@ Show-Section "7. DoD 检查表自动抽取"
 $playbook = "docs/05_AI实施手册.md"
 if (Test-Path $playbook) {
   $pb = Get-Content $playbook -Raw -Encoding UTF8
-  $section = ($pb -split "## \d+\. $TaskId" | Select-Object -Index 1)
+  $section = Get-PlaybookTaskSection $pb $TaskId
   if ($section) {
-    $next = ($section -split "\n## ")[0]
-    if ($next -match '(?s)DoD 检查表\s*```markdown\s*([^`]+)```') {
+    if ($section -match '(?s)DoD 检查表\s*```markdown\s*([^`]+)```') {
       $dodList = $matches[1].Trim()
       Show-Pass "DoD 检查表已抽取（请人工对照逐项打钩）："
       $dodList -split "`n" | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }

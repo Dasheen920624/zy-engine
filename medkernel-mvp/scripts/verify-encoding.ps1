@@ -33,8 +33,15 @@ $badPatterns = @(
   (New-TextFromCodePoints @(0x934A, 0x6B13))
 )
 
-$include = @("*.md", "*.json", "*.yml", "*.yaml", "*.sql", "*.java", "*.html", "*.js", "*.http")
-$excludeSegments = @("\target\", "\m2repo\")
+$include = @("*.md", "*.json", "*.yml", "*.yaml", "*.sql", "*.java", "*.html", "*.js", "*.ts", "*.tsx", "*.css", "*.http")
+$excludeSegments = @(
+  "\.git\",
+  "\target\",
+  "\m2repo\",
+  "\node_modules\",
+  "\dist\",
+  "\coverage\"
+)
 $issues = New-Object System.Collections.Generic.List[object]
 
 Get-ChildItem -Path $Root -Recurse -File -Include $include | ForEach-Object {
