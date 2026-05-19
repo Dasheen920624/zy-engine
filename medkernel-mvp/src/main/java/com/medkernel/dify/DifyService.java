@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
+
+import javax.annotation.PostConstruct;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -40,6 +42,15 @@ public class DifyService {
         this.persistenceService = persistenceService;
     }
 
+    @PostConstruct
+    public void rebuildFromPersistence() {
+        List<DifyWorkflowTemplate> persisted = persistenceService.listDifyTemplates();
+        for (DifyWorkflowTemplate template : persisted) {
+            String key = key(template.getWorkflowCode(), template.getWorkflowVersion());
+            templates.putIfAbsent(key, template);
+        }
+    }
+
     public List<DifyWorkflowTemplate> importTemplates(Object request) {
         List<Map<String, Object>> entries = normalizeTemplates(request);
         if (entries.isEmpty()) {
@@ -62,6 +73,7 @@ public class DifyService {
         List<DifyWorkflowTemplate> imported = new ArrayList<DifyWorkflowTemplate>();
         for (DifyWorkflowTemplate template : staged) {
             templates.put(key(template.getWorkflowCode(), template.getWorkflowVersion()), template);
+            persistenceService.saveDifyTemplate(template);
             imported.add(template);
         }
         return imported;

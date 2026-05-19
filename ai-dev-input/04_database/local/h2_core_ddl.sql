@@ -509,3 +509,26 @@ CREATE INDEX IF NOT EXISTS idx_wf_todo_due ON wf_todo_task(tenant_id, due_time, 
 CREATE INDEX IF NOT EXISTS idx_wf_action_task ON wf_approval_action(tenant_id, task_id);
 CREATE INDEX IF NOT EXISTS idx_wf_action_operator ON wf_approval_action(tenant_id, operator_id);
 CREATE INDEX IF NOT EXISTS idx_wf_rule_type ON wf_approval_rule(tenant_id, business_type, status);
+
+-- ============================================================================
+-- Dify 工作流模板
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS src_dify_template (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  workflow_code VARCHAR2(128) NOT NULL,
+  workflow_version VARCHAR2(64) NOT NULL,
+  workflow_name VARCHAR2(256),
+  description VARCHAR2(1000),
+  dify_app_code VARCHAR2(128),
+  timeout_ms NUMBER(10),
+  retry_count NUMBER(10),
+  template_json CLOB,
+  reference_document_code VARCHAR2(128),
+  reference_binding_type VARCHAR2(64),
+  status VARCHAR2(32) NOT NULL,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_src_dify_template UNIQUE (workflow_code, workflow_version)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dify_tpl_code ON src_dify_template(tenant_id, workflow_code);

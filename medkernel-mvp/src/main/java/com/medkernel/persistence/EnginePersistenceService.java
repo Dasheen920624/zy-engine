@@ -3,10 +3,12 @@ package com.medkernel.persistence;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medkernel.common.TraceContext;
+import com.medkernel.dify.DifyWorkflowTemplate;
 import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientTaskState;
 import com.medkernel.dto.PathwayVariationRecord;
 import com.medkernel.dto.RecommendationCard;
+import com.medkernel.provenance.SourceAssetBinding;
 import com.medkernel.provenance.SourceCitation;
 import com.medkernel.provenance.SourceDocument;
 import com.medkernel.dto.RuleResult;
@@ -1178,6 +1180,345 @@ public class EnginePersistenceService {
         citation.setCitationType(rs.getString("evidence_level"));
         citation.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
         return citation;
+    }
+
+    // =========================================================================
+    // SRC_ASSET_BINDING 持久化
+    // =========================================================================
+
+    /**
+     * 持久化单条 SourceAssetBinding。
+     * Oracle 使用 MERGE（UPSERT），H2 使用 UPDATE+INSERT 两阶段。
+     * DDL 唯一键：(tenant_id, asset_type, asset_code, asset_version, citation_code, binding_role)。
+     * 字段映射：assetType↔asset_type, assetCode↔asset_code, citationId↔citation_code,
+     * bindingType↔binding_role, documentCode/confidence/description 无 DDL 列，仅内存保留。
+     */
+    public void saveSourceAssetBinding(SourceAssetBinding binding) {
+        if (!enabled()) {
+            return;
+        }
+        if (properties.localFileDatabase()) {
+            saveSourceAssetBindingLocal(binding);
+            return;
+        }
+        String sql = "MERGE INTO src_asset_binding t " +
+                "USING (SELECT ? AS tenant_id, ? AS asset_type, ? AS asset_code, ? AS asset_version, " +
+                "? AS citation_code, ? AS binding_role FROM dual) s " +
+                "ON (t.tenant_id=s.tenant_id AND t.asset_type=s.asset_type AND t.asset_code=s.asset_code " +
+                "AND t.asset_version=s.asset_version AND t.citation_code=s.citation_code " +
+                "AND t.binding_role=s.binding_role) " +
+                "WHEN MATCHED THEN UPDATE SET t.status='ACTIVE', t.created_by=COALESCE(?, t.created_by) " +
+                "WHEN NOT MATCHED THEN INSERT (id, tenant_id, asset_type, asset_code, asset_version, " +
+                "citation_code, binding_role, status, created_by, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            String tenantId = string(binding.getTenantId(), "default");
+            int i = 1;
+            // USING / ON 条件
+            ps.setString(i++, tenantId);
+            ps.setString(i++, binding.getAssetType());
+            ps.setString(i++, binding.getAssetCode());
+            ps.setString(i++, "1"); // asset_version: Java 模型无此字段，默认 "1"
+            ps.setString(i++, binding.getCitationId());
+            ps.setString(i++, binding.getBindingType());
+            // MATCHED UPDATE
+            ps.setString(i++, binding.getCreatedBy());
+            // NOT MATCHED INSERT
+            ps.setLong(i++, extractNumericId(binding.getBindingId()));
+            ps.setString(i++, tenantId);
+            ps.setString(i++, binding.getAssetType());
+            ps.setString(i++, binding.getAssetCode());
+            ps.setString(i++, "1");
+            ps.setString(i++, binding.getCitationId());
+            ps.setString(i++, binding.getBindingType());
+            ps.setString(i++, binding.getCreatedBy());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save source asset binding failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 加载所有 SourceAssetBinding，用于启动期重建内存索引。
+     * 注意：DDL 不含 documentCode/confidence/description/updated_time 列，这些字段在重建后为 null。
+     */
+    public List<SourceAssetBinding> listSourceAssetBindings() {
+        if (!enabled()) {
+            return new ArrayList<SourceAssetBinding>();
+        }
+        String sql = "SELECT tenant_id, id, asset_type, asset_code, citation_code, binding_role, " +
+                "status, created_by, created_time FROM src_asset_binding ORDER BY tenant_id, id";
+        List<SourceAssetBinding> bindings = new ArrayList<SourceAssetBinding>();
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                bindings.add(toSourceAssetBinding(rs));
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("list source asset bindings failed: " + ex.getMessage(), ex);
+        }
+        return bindings;
+    }
+
+    private void saveSourceAssetBindingLocal(SourceAssetBinding binding) {
+        String updateSql = "UPDATE src_asset_binding SET status='ACTIVE', created_by=COALESCE(?, created_by) " +
+                "WHERE tenant_id=? AND asset_type=? AND asset_code=? AND asset_version=? AND citation_code=? AND binding_role=?";
+        String insertSql = "INSERT INTO src_asset_binding (id, tenant_id, asset_type, asset_code, asset_version, " +
+                "citation_code, binding_role, status, created_by, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, CURRENT_TIMESTAMP)";
+        String tenantId = string(binding.getTenantId(), "default");
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, binding.getCreatedBy());
+                ps.setString(i++, tenantId);
+                ps.setString(i++, binding.getAssetType());
+                ps.setString(i++, binding.getAssetCode());
+                ps.setString(i++, "1");
+                ps.setString(i++, binding.getCitationId());
+                ps.setString(i++, binding.getBindingType());
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, extractNumericId(binding.getBindingId()));
+                    ps.setString(i++, tenantId);
+                    ps.setString(i++, binding.getAssetType());
+                    ps.setString(i++, binding.getAssetCode());
+                    ps.setString(i++, "1");
+                    ps.setString(i++, binding.getCitationId());
+                    ps.setString(i++, binding.getBindingType());
+                    ps.setString(i++, binding.getCreatedBy());
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local source asset binding failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private SourceAssetBinding toSourceAssetBinding(ResultSet rs) throws SQLException {
+        SourceAssetBinding binding = new SourceAssetBinding();
+        binding.setTenantId(rs.getString("tenant_id"));
+        binding.setBindingId("BIND_" + rs.getLong("id"));
+        binding.setAssetType(rs.getString("asset_type"));
+        binding.setAssetCode(rs.getString("asset_code"));
+        binding.setCitationId(rs.getString("citation_code"));
+        binding.setBindingType(rs.getString("binding_role"));
+        binding.setCreatedBy(rs.getString("created_by"));
+        binding.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
+        // DDL 不含 documentCode, confidence, description, updated_time 列，重建后为 null
+        return binding;
+    }
+
+    // =========================================================================
+    // DIFY TEMPLATE 持久化
+    // =========================================================================
+
+    /**
+     * 持久化单条 DifyWorkflowTemplate。
+     * Oracle 使用 MERGE（UPSERT），H2 使用 UPDATE+INSERT 两阶段。
+     * 唯一键：(workflow_code, workflow_version)。
+     * 复杂嵌套字段（inputDefaults/inputMappings/requiredInputs/degradedOutputs）序列化为 template_json。
+     */
+    public void saveDifyTemplate(DifyWorkflowTemplate template) {
+        if (!enabled()) {
+            return;
+        }
+        if (properties.localFileDatabase()) {
+            saveDifyTemplateLocal(template);
+            return;
+        }
+        String sql = "MERGE INTO src_dify_template t " +
+                "USING (SELECT ? AS workflow_code, ? AS workflow_version FROM dual) s " +
+                "ON (t.workflow_code=s.workflow_code AND t.workflow_version=s.workflow_version) " +
+                "WHEN MATCHED THEN UPDATE SET t.tenant_id=?, t.workflow_name=?, t.description=?, " +
+                "t.dify_app_code=?, t.timeout_ms=?, t.retry_count=?, t.template_json=?, " +
+                "t.reference_document_code=?, t.reference_binding_type=?, t.status='ACTIVE' " +
+                "WHEN NOT MATCHED THEN INSERT (id, tenant_id, workflow_code, workflow_version, workflow_name, " +
+                "description, dify_app_code, timeout_ms, retry_count, template_json, " +
+                "reference_document_code, reference_binding_type, status, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            String tenantId = "default";
+            String templateJson = toTemplateJson(template);
+            int i = 1;
+            // USING / ON 条件
+            ps.setString(i++, template.getWorkflowCode());
+            ps.setString(i++, template.getWorkflowVersion());
+            // MATCHED UPDATE
+            ps.setString(i++, tenantId);
+            ps.setString(i++, template.getWorkflowName());
+            ps.setString(i++, template.getDescription());
+            ps.setString(i++, template.getDifyAppCode());
+            ps.setObject(i++, template.getTimeoutMs());
+            ps.setObject(i++, template.getRetryCount());
+            ps.setString(i++, templateJson);
+            ps.setString(i++, template.getReferenceDocumentCode());
+            ps.setString(i++, template.getReferenceBindingType());
+            // NOT MATCHED INSERT
+            ps.setLong(i++, Ids.next());
+            ps.setString(i++, tenantId);
+            ps.setString(i++, template.getWorkflowCode());
+            ps.setString(i++, template.getWorkflowVersion());
+            ps.setString(i++, template.getWorkflowName());
+            ps.setString(i++, template.getDescription());
+            ps.setString(i++, template.getDifyAppCode());
+            ps.setObject(i++, template.getTimeoutMs());
+            ps.setObject(i++, template.getRetryCount());
+            ps.setString(i++, templateJson);
+            ps.setString(i++, template.getReferenceDocumentCode());
+            ps.setString(i++, template.getReferenceBindingType());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save dify template failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 加载所有 DifyWorkflowTemplate，用于启动期重建内存索引。
+     */
+    public List<DifyWorkflowTemplate> listDifyTemplates() {
+        if (!enabled()) {
+            return new ArrayList<DifyWorkflowTemplate>();
+        }
+        String sql = "SELECT tenant_id, workflow_code, workflow_version, workflow_name, description, " +
+                "dify_app_code, timeout_ms, retry_count, template_json, reference_document_code, " +
+                "reference_binding_type, created_time FROM src_dify_template ORDER BY workflow_code, workflow_version";
+        List<DifyWorkflowTemplate> templates = new ArrayList<DifyWorkflowTemplate>();
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                templates.add(toDifyTemplate(rs));
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("list dify templates failed: " + ex.getMessage(), ex);
+        }
+        return templates;
+    }
+
+    private void saveDifyTemplateLocal(DifyWorkflowTemplate template) {
+        String updateSql = "UPDATE src_dify_template SET tenant_id=?, workflow_name=?, description=?, " +
+                "dify_app_code=?, timeout_ms=?, retry_count=?, template_json=?, " +
+                "reference_document_code=?, reference_binding_type=?, status='ACTIVE' " +
+                "WHERE workflow_code=? AND workflow_version=?";
+        String insertSql = "INSERT INTO src_dify_template (id, tenant_id, workflow_code, workflow_version, " +
+                "workflow_name, description, dify_app_code, timeout_ms, retry_count, template_json, " +
+                "reference_document_code, reference_binding_type, status, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP)";
+        String templateJson = toTemplateJson(template);
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, "default");
+                ps.setString(i++, template.getWorkflowName());
+                ps.setString(i++, template.getDescription());
+                ps.setString(i++, template.getDifyAppCode());
+                ps.setObject(i++, template.getTimeoutMs());
+                ps.setObject(i++, template.getRetryCount());
+                ps.setString(i++, templateJson);
+                ps.setString(i++, template.getReferenceDocumentCode());
+                ps.setString(i++, template.getReferenceBindingType());
+                ps.setString(i++, template.getWorkflowCode());
+                ps.setString(i++, template.getWorkflowVersion());
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, Ids.next());
+                    ps.setString(i++, "default");
+                    ps.setString(i++, template.getWorkflowCode());
+                    ps.setString(i++, template.getWorkflowVersion());
+                    ps.setString(i++, template.getWorkflowName());
+                    ps.setString(i++, template.getDescription());
+                    ps.setString(i++, template.getDifyAppCode());
+                    ps.setObject(i++, template.getTimeoutMs());
+                    ps.setObject(i++, template.getRetryCount());
+                    ps.setString(i++, templateJson);
+                    ps.setString(i++, template.getReferenceDocumentCode());
+                    ps.setString(i++, template.getReferenceBindingType());
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local dify template failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private DifyWorkflowTemplate toDifyTemplate(ResultSet rs) throws SQLException {
+        DifyWorkflowTemplate template = new DifyWorkflowTemplate();
+        template.setWorkflowCode(rs.getString("workflow_code"));
+        template.setWorkflowVersion(rs.getString("workflow_version"));
+        template.setWorkflowName(rs.getString("workflow_name"));
+        template.setDescription(rs.getString("description"));
+        template.setDifyAppCode(rs.getString("dify_app_code"));
+        template.setTimeoutMs((Integer) rs.getObject("timeout_ms"));
+        template.setRetryCount((Integer) rs.getObject("retry_count"));
+        template.setReferenceDocumentCode(rs.getString("reference_document_code"));
+        template.setReferenceBindingType(rs.getString("reference_binding_type"));
+        String templateJson = rs.getString("template_json");
+        if (templateJson != null && !templateJson.trim().isEmpty()) {
+            try {
+                Map<String, Object> config = objectMapper.readValue(templateJson, LinkedHashMap.class);
+                Object defaults = config.get("input_defaults");
+                if (defaults instanceof Map) {
+                    template.setInputDefaults(new LinkedHashMap<String, Object>((Map<String, Object>) defaults));
+                }
+                Object mappings = config.get("input_mappings");
+                if (mappings instanceof Map) {
+                    Map<String, String> mappingConfig = new LinkedHashMap<String, String>();
+                    for (Map.Entry<String, Object> entry : ((Map<String, Object>) mappings).entrySet()) {
+                        if (entry.getKey() != null && entry.getValue() != null) {
+                            mappingConfig.put(entry.getKey(), String.valueOf(entry.getValue()));
+                        }
+                    }
+                    template.setInputMappings(mappingConfig);
+                }
+                Object required = config.get("required_inputs");
+                if (required instanceof Collection) {
+                    List<String> requiredList = new ArrayList<String>();
+                    for (Object item : (Collection<?>) required) {
+                        if (item != null) {
+                            requiredList.add(String.valueOf(item));
+                        }
+                    }
+                    template.setRequiredInputs(requiredList);
+                }
+                Object degraded = config.get("degraded_outputs");
+                if (degraded instanceof Map) {
+                    template.setDegradedOutputs(new LinkedHashMap<String, Object>((Map<String, Object>) degraded));
+                }
+            } catch (IOException ex) {
+                // 解析失败不阻断重建，保留空配置
+            }
+        }
+        return template;
+    }
+
+    private String toTemplateJson(DifyWorkflowTemplate template) {
+        Map<String, Object> config = new LinkedHashMap<String, Object>();
+        if (template.getInputDefaults() != null && !template.getInputDefaults().isEmpty()) {
+            config.put("input_defaults", template.getInputDefaults());
+        }
+        if (template.getInputMappings() != null && !template.getInputMappings().isEmpty()) {
+            config.put("input_mappings", template.getInputMappings());
+        }
+        if (template.getRequiredInputs() != null && !template.getRequiredInputs().isEmpty()) {
+            config.put("required_inputs", template.getRequiredInputs());
+        }
+        if (template.getDegradedOutputs() != null && !template.getDegradedOutputs().isEmpty()) {
+            config.put("degraded_outputs", template.getDegradedOutputs());
+        }
+        return config.isEmpty() ? null : toJson(config);
     }
 
     private void recordAuditLog(String traceId, String engineType, String actionType, String targetType, String targetCode,

@@ -3,6 +3,7 @@ package com.medkernel.provenance;
 import com.medkernel.persistence.EnginePersistenceService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,6 +34,15 @@ public class SourceAssetBindingService {
         this.persistenceService = persistenceService;
     }
 
+    @PostConstruct
+    public void rebuildFromPersistence() {
+        List<SourceAssetBinding> persisted = persistenceService.listSourceAssetBindings();
+        for (SourceAssetBinding binding : persisted) {
+            String key = key(binding.getTenantId(), binding.getBindingId());
+            bindingStore.putIfAbsent(key, binding);
+        }
+    }
+
     public Map<String, Object> importBindings(Object request) {
         ImportEnvelope envelope = normalize(request);
         if (envelope.bindings.isEmpty()) {
@@ -55,6 +65,7 @@ public class SourceAssetBindingService {
                 }
             }
             bindingStore.put(key, binding);
+            persistenceService.saveSourceAssetBinding(binding);
             imported.add(binding.toView());
         }
 
