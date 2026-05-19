@@ -109,3 +109,8 @@ export async function post<T>(url: string, body?: unknown, config?: AxiosRequest
   const resp = await http.post<ApiResult<T>>(url, body, config);
   return resp.data.data as T;
 }
+
+export async function del<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  const resp = await http.delete<ApiResult<T>>(url, config);
+  return resp.data.data as T;
+}

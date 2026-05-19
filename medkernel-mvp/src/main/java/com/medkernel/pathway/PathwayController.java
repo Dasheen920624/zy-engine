@@ -8,6 +8,7 @@ import com.medkernel.dto.PathwayVariationRecord;
 import com.medkernel.dto.RecommendationCard;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,14 +39,30 @@ public class PathwayController {
     }
 
     @GetMapping("/pathways")
-    public ApiResult<List<Map<String, Object>>> listPathways() {
-        return ApiResult.success(pathwayService.listPathways());
+    public ApiResult<Map<String, Object>> listPathways(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String dept,
+            @RequestParam(required = false, defaultValue = "1") String page,
+            @RequestParam(required = false, defaultValue = "20") String size) {
+        Map<String, String> filters = new java.util.LinkedHashMap<String, String>();
+        filters.put("search", search);
+        filters.put("status", status);
+        filters.put("dept", dept);
+        filters.put("page", page);
+        filters.put("size", size);
+        return ApiResult.success(pathwayService.listPathwaysFiltered(filters));
     }
 
     @GetMapping("/pathways/{pathwayCode}")
     public ApiResult<Map<String, Object>> getPathway(@PathVariable String pathwayCode,
                                                      @RequestParam(required = false) String versionNo) {
         return ApiResult.success(pathwayService.getPathway(pathwayCode, versionNo));
+    }
+
+    @DeleteMapping("/pathways/{pathwayCode}")
+    public ApiResult<Map<String, Object>> deletePathway(@PathVariable String pathwayCode) {
+        return ApiResult.success(pathwayService.deletePathway(pathwayCode));
     }
 
     @GetMapping("/pathways/{pathwayCode}/diff")

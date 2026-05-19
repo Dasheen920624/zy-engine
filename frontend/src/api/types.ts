@@ -342,6 +342,52 @@ export interface ImportConfirmRequest {
   target_environment?: string;
 }
 
+// 路径模板相关（PR-V2-06）
+export type PathwayStatus = "DRAFT" | "PUBLISHED" | "NONE";
+
+export interface PathwaySummary {
+  pathway_code: string;
+  pathway_name: string;
+  status: PathwayStatus;
+  draft_status: "DRAFT" | "NONE";
+  published_versions: string[];
+  latest_published_version: string | null;
+  active_published_version: string | null;
+  specialty_code: string | null;
+  disease_code: string | null;
+  dept: string | null;
+  instance_count: number;
+  completion_rate: number;
+}
+
+export interface PathwayListResult {
+  items: PathwaySummary[];
+  total: number;
+  page: number;
+  size: number;
+  total_pages: number;
+}
+
+export interface PathwayDetail {
+  pathway_code: string;
+  draft_status: "DRAFT" | "NONE";
+  published_versions: string[];
+  active_published_version: string | null;
+  selected_version: string | null;
+  draft_config: Record<string, unknown> | null;
+  published_config: Record<string, unknown> | null;
+  reference_sources: unknown[];
+  reference_warnings: unknown[];
+}
+
+export interface ListPathwaysParams {
+  search?: string;
+  status?: string;
+  dept?: string;
+  page?: number;
+  size?: number;
+}
+
 // 通用错误码（与 00_总入口 §9 一致）
 export type ApiErrorCode =
   | "SUCCESS"
