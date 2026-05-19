@@ -2,117 +2,118 @@
 -- 用户体系最小可用：租户、用户、角色、权限、用户角色、用户组织范围
 -- Oracle/DM DDL remains the production authority. This file mirrors the core
 -- tables needed by the current persistence provider.
+-- H2-compatible syntax: BIGINT instead of NUMBER(20), VARCHAR instead of VARCHAR2, etc.
 
 CREATE TABLE IF NOT EXISTS sec_tenant (
-  id NUMBER(20) PRIMARY KEY,
-  tenant_code VARCHAR2(64) NOT NULL,
-  tenant_name VARCHAR2(200) NOT NULL,
-  status VARCHAR2(32) NOT NULL,
-  contact_name VARCHAR2(100),
-  contact_phone VARCHAR2(32),
-  contact_email VARCHAR2(200),
-  license_type VARCHAR2(32),
-  max_users NUMBER(10) DEFAULT 100 NOT NULL,
-  created_by VARCHAR2(64),
+  id BIGINT PRIMARY KEY,
+  tenant_code VARCHAR(64) NOT NULL,
+  tenant_name VARCHAR(200) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  contact_name VARCHAR(100),
+  contact_phone VARCHAR(32),
+  contact_email VARCHAR(200),
+  license_type VARCHAR(32),
+  max_users INTEGER DEFAULT 100 NOT NULL,
+  created_by VARCHAR(64),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_by VARCHAR2(64),
+  updated_by VARCHAR(64),
   updated_time TIMESTAMP,
   CONSTRAINT uk_sec_tenant UNIQUE (tenant_code)
 );
 
 CREATE TABLE IF NOT EXISTS sec_user (
-  id NUMBER(20) PRIMARY KEY,
-  tenant_id NUMBER(20) NOT NULL,
-  username VARCHAR2(64) NOT NULL,
-  password_hash VARCHAR2(256) NOT NULL,
-  display_name VARCHAR2(100) NOT NULL,
-  email VARCHAR2(200),
-  phone VARCHAR2(32),
-  avatar_url VARCHAR2(500),
-  status VARCHAR2(32) NOT NULL,
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  username VARCHAR(64) NOT NULL,
+  password_hash VARCHAR(256) NOT NULL,
+  display_name VARCHAR(100) NOT NULL,
+  email VARCHAR(200),
+  phone VARCHAR(32),
+  avatar_url VARCHAR(500),
+  status VARCHAR(32) NOT NULL,
   last_login_time TIMESTAMP,
-  last_login_ip VARCHAR2(64),
-  login_attempts NUMBER(10) DEFAULT 0 NOT NULL,
+  last_login_ip VARCHAR(64),
+  login_attempts INTEGER DEFAULT 0 NOT NULL,
   locked_until TIMESTAMP,
-  created_by VARCHAR2(64),
+  created_by VARCHAR(64),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_by VARCHAR2(64),
+  updated_by VARCHAR(64),
   updated_time TIMESTAMP,
   CONSTRAINT uk_sec_user UNIQUE (tenant_id, username)
 );
 
 CREATE TABLE IF NOT EXISTS sec_role (
-  id NUMBER(20) PRIMARY KEY,
-  tenant_id NUMBER(20) NOT NULL,
-  role_code VARCHAR2(64) NOT NULL,
-  role_name VARCHAR2(100) NOT NULL,
-  role_type VARCHAR2(32) NOT NULL,
-  description VARCHAR2(500),
-  status VARCHAR2(32) NOT NULL,
-  created_by VARCHAR2(64),
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  role_code VARCHAR(64) NOT NULL,
+  role_name VARCHAR(100) NOT NULL,
+  role_type VARCHAR(32) NOT NULL,
+  description VARCHAR(500),
+  status VARCHAR(32) NOT NULL,
+  created_by VARCHAR(64),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_by VARCHAR2(64),
+  updated_by VARCHAR(64),
   updated_time TIMESTAMP,
   CONSTRAINT uk_sec_role UNIQUE (tenant_id, role_code)
 );
 
 CREATE TABLE IF NOT EXISTS sec_permission (
-  id NUMBER(20) PRIMARY KEY,
-  tenant_id NUMBER(20) NOT NULL,
-  permission_code VARCHAR2(128) NOT NULL,
-  permission_name VARCHAR2(200) NOT NULL,
-  permission_type VARCHAR2(32) NOT NULL,
-  resource_path VARCHAR2(500),
-  description VARCHAR2(500),
-  status VARCHAR2(32) NOT NULL,
-  created_by VARCHAR2(64),
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  permission_code VARCHAR(128) NOT NULL,
+  permission_name VARCHAR(200) NOT NULL,
+  permission_type VARCHAR(32) NOT NULL,
+  resource_path VARCHAR(500),
+  description VARCHAR(500),
+  status VARCHAR(32) NOT NULL,
+  created_by VARCHAR(64),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   CONSTRAINT uk_sec_permission UNIQUE (tenant_id, permission_code)
 );
 
 CREATE TABLE IF NOT EXISTS sec_user_role (
-  id NUMBER(20) PRIMARY KEY,
-  tenant_id NUMBER(20) NOT NULL,
-  user_id NUMBER(20) NOT NULL,
-  role_id NUMBER(20) NOT NULL,
-  created_by VARCHAR2(64),
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  role_id BIGINT NOT NULL,
+  created_by VARCHAR(64),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   CONSTRAINT uk_sec_user_role UNIQUE (tenant_id, user_id, role_id)
 );
 
 CREATE TABLE IF NOT EXISTS sec_user_org_scope (
-  id NUMBER(20) PRIMARY KEY,
-  tenant_id NUMBER(20) NOT NULL,
-  user_id NUMBER(20) NOT NULL,
-  scope_level VARCHAR2(32) NOT NULL,
-  scope_code VARCHAR2(64) NOT NULL,
-  scope_name VARCHAR2(200),
-  created_by VARCHAR2(64),
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  scope_level VARCHAR(32) NOT NULL,
+  scope_code VARCHAR(64) NOT NULL,
+  scope_name VARCHAR(200),
+  created_by VARCHAR(64),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   CONSTRAINT uk_sec_user_org_scope UNIQUE (tenant_id, user_id, scope_level, scope_code)
 );
 
 CREATE TABLE IF NOT EXISTS sec_role_permission (
-  id NUMBER(20) PRIMARY KEY,
-  tenant_id NUMBER(20) NOT NULL,
-  role_id NUMBER(20) NOT NULL,
-  permission_id NUMBER(20) NOT NULL,
-  created_by VARCHAR2(64),
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  role_id BIGINT NOT NULL,
+  permission_id BIGINT NOT NULL,
+  created_by VARCHAR(64),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   CONSTRAINT uk_sec_role_permission UNIQUE (tenant_id, role_id, permission_id)
 );
 
 CREATE TABLE IF NOT EXISTS sec_auth_audit_log (
-  id NUMBER(20) PRIMARY KEY,
-  tenant_id NUMBER(20),
-  user_id NUMBER(20),
-  username VARCHAR2(64),
-  event_type VARCHAR2(32) NOT NULL,
-  event_result VARCHAR2(32) NOT NULL,
-  ip_address VARCHAR2(64),
-  user_agent VARCHAR2(500),
-  failure_reason VARCHAR2(500),
-  trace_id VARCHAR2(128),
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT,
+  user_id BIGINT,
+  username VARCHAR(64),
+  event_type VARCHAR(32) NOT NULL,
+  event_result VARCHAR(32) NOT NULL,
+  ip_address VARCHAR(64),
+  user_agent VARCHAR(500),
+  failure_reason VARCHAR(500),
+  trace_id VARCHAR(128),
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
