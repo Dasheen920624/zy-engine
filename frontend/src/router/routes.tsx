@@ -6,6 +6,7 @@ import ProvidersStatus from "../pages/ProvidersStatus";
 import DemoValidation from "../pages/DemoValidationPlaceholder";
 import ConfigPackages from "../pages/ConfigPackages";
 import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
+import WorkflowTodos from "../pages/WorkflowTodos";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import RequireAuth from "./RequireAuth";
@@ -41,6 +42,7 @@ export const routes: RouteObject[] = [
           { path: "qc/dashboard", element: <PlaceholderPage title="院级质控驾驶舱" pr="PR-V2-12" /> },
           { path: "qc/insurance", element: <PlaceholderPage title="医保智能审核" pr="PR-V2-12" /> },
           { path: "aik/review", element: <PlaceholderPage title="知识审核台" pr="PR-V2-05" /> },
+          { path: "workflow/todos", element: <WorkflowTodos /> },
           { path: "admin/users", element: <PlaceholderPage title="用户管理" pr="PR-V2-04" /> },
           { path: "admin/audit", element: <PlaceholderPage title="审计日志" pr="PR-V2-04" /> },
           { path: "*", element: <NotFound /> },

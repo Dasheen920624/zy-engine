@@ -13,6 +13,7 @@ import {
   SafetyCertificateOutlined,
   ShareAltOutlined,
   ToolOutlined,
+  UnorderedListOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 
@@ -28,7 +29,7 @@ export interface MenuItem {
 }
 
 /**
- * 顶级菜单配置（10 项）
+ * 顶级菜单配置（11 项）
  * 按 04_页面规格书.md §0.2 的 18 页面清单生成
  */
 export const topMenuItems: MenuItem[] = [
@@ -199,6 +200,18 @@ export const topMenuItems: MenuItem[] = [
         key: "system-providers",
         label: "Provider 状态",
         path: "/system/providers",
+      },
+    ],
+  },
+  {
+    key: "workflow",
+    label: "待办",
+    icon: <UnorderedListOutlined />,
+    children: [
+      {
+        key: "workflow-todos",
+        label: "待办中心",
+        path: "/workflow/todos",
       },
     ],
   },

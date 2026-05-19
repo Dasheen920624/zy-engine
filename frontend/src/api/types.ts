@@ -288,3 +288,81 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
+
+// ─── 待办工作流 (WF-001) ───────────────────────────────────────────────
+
+export type BusinessType = "REVIEW" | "PUBLISH" | "ROLLBACK" | "RECTIFY" | "KNOWLEDGE" | "COMPLIANCE" | "SYNC";
+
+export type TodoStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" | "EXPIRED";
+
+export type TodoPriority = "URGENT" | "HIGH" | "NORMAL" | "LOW";
+
+export type AssignedType = "USER" | "ROLE" | "GROUP";
+
+export interface TodoTask {
+  taskCode: string;
+  businessType: BusinessType;
+  businessCode: string;
+  businessVersion?: string;
+  title: string;
+  description?: string;
+  priority: TodoPriority;
+  status: TodoStatus;
+  assignedType: AssignedType;
+  assignedTo?: string;
+  createdBy: string;
+  dueTime?: string;
+  completedBy?: string;
+  completedTime?: string;
+  completedComment?: string;
+  cancelledBy?: string;
+  cancelledTime?: string;
+  cancelReason?: string;
+  createdTime: string;
+  updatedTime?: string;
+}
+
+export interface ApprovalAction {
+  actionType: string;
+  actionResult: string;
+  operatorId: string;
+  operatorName?: string;
+  comment?: string;
+  delegateTo?: string;
+  delegateToName?: string;
+  createdTime: string;
+}
+
+export interface TodoTaskDetail extends TodoTask {
+  actions?: ApprovalAction[];
+}
+
+export interface TodoSummary {
+  totalPending: number;
+  urgentCount: number;
+  highCount: number;
+  normalCount: number;
+  lowCount: number;
+  overdueCount: number;
+  byBusinessType: Record<BusinessType, number>;
+}
+
+export interface ApprovalRequest {
+  operatorId: string;
+  operatorName?: string;
+  comment?: string;
+}
+
+export interface DelegateRequest extends ApprovalRequest {
+  delegateTo: string;
+  delegateToName?: string;
+}
+
+export interface AddSignRequest extends ApprovalRequest {
+  addSignTo: string;
+}
+
+export interface CancelRequest {
+  operatorId: string;
+  reason?: string;
+}
