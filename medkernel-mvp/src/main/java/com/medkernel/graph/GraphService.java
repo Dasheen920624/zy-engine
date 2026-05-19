@@ -1,6 +1,7 @@
 package com.medkernel.graph;
 
 import com.medkernel.persistence.EnginePersistenceService;
+import com.medkernel.provenance.PublishGateService;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Config;
 import org.neo4j.driver.Driver;
@@ -31,6 +32,7 @@ import java.util.function.Function;
 public class GraphService {
     private final GraphProperties properties;
     private final EnginePersistenceService persistenceService;
+    private final PublishGateService publishGateService;
     private final Map<String, Map<String, Object>> graphVersions = new ConcurrentHashMap<String, Map<String, Object>>();
     // 图谱版本激活/回滚的串行化锁。多版本切换 ACTIVE→RETIRED 是一个 read-modify-write 序列，
     // 必须互斥防止并发时出现"多个版本同时 ACTIVE"或前一个 active 漏置 RETIRED。
@@ -39,9 +41,11 @@ public class GraphService {
     private final Map<String, Map<String, Object>> graphNodes = new ConcurrentHashMap<String, Map<String, Object>>();
     private final List<Map<String, Object>> graphEdges = Collections.synchronizedList(new ArrayList<Map<String, Object>>());
 
-    public GraphService(GraphProperties properties, EnginePersistenceService persistenceService) {
+    public GraphService(GraphProperties properties, EnginePersistenceService persistenceService,
+                        PublishGateService publishGateService) {
         this.properties = properties;
         this.persistenceService = persistenceService;
+        this.publishGateService = publishGateService;
     }
 
     public List<Map<String, Object>> importGraphVersions(Object request) {
@@ -96,6 +100,11 @@ public class GraphService {
             if (entry == null) {
                 throw new IllegalArgumentException("graph version not found: " + graphVersion);
             }
+
+            // REFIT-003: 发布门禁 - 检查来源文档绑定
+            String tenantId = string(entry.get("tenant_id"), null);
+            publishGateService.requirePublishGate("GRAPH", graphVersion, tenantId);
+
             // 同一版本号即唯一键，激活时把所有同 family 前缀（::之前）的其他版本置 RETIRED，便于多版本共存时切换。
             String family = versionFamily(graphVersion);
             for (Map<String, Object> other : graphVersions.values()) {

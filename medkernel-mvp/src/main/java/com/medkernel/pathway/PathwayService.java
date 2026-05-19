@@ -9,6 +9,7 @@ import com.medkernel.dto.RecommendationCard;
 import com.medkernel.dto.RuleResult;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.persistence.EnginePersistenceService;
+import com.medkernel.provenance.PublishGateService;
 import com.medkernel.rule.RuleService;
 import com.medkernel.util.ClinicalFactUtils;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ public class PathwayService {
     private final RuleService ruleService;
     private final AdapterHubService adapterHubService;
     private final EnginePersistenceService persistenceService;
+    private final PublishGateService publishGateService;
     private final PathwayConfigSupport configSupport = new PathwayConfigSupport();
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
     private final Map<String, Map<String, Object>> pathwayDrafts = new ConcurrentHashMap<String, Map<String, Object>>();
@@ -47,10 +49,11 @@ public class PathwayService {
     private final Map<String, List<PathwayVariationRecord>> variationRecords = new ConcurrentHashMap<String, List<PathwayVariationRecord>>();
 
     public PathwayService(RuleService ruleService, AdapterHubService adapterHubService,
-                          EnginePersistenceService persistenceService) {
+                          EnginePersistenceService persistenceService, PublishGateService publishGateService) {
         this.ruleService = ruleService;
         this.adapterHubService = adapterHubService;
         this.persistenceService = persistenceService;
+        this.publishGateService = publishGateService;
     }
 
     /**
@@ -121,11 +124,16 @@ public class PathwayService {
             config.put("pathway_code", pathwayCode);
             config.put("version", versionNo);
         }
+
+        // REFIT-003: 发布门禁 - 检查来源文档绑定
+        String tenantId = string(config.get("tenant_id"), null);
+        publishGateService.requirePublishGate("PATHWAY", pathwayCode, tenantId);
+
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
         activePublishedVersions.put(pathwayCode, versionNo);
         persistenceService.savePathwayVersion(pathwayCode, versionNo, "PUBLISHED", config);
         persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED",
-                string(config.get("tenant_id"), null), string(config.get("org_code"), null));
+                tenantId, string(config.get("org_code"), null));
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("pathway_code", pathwayCode);

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.medkernel.organization.OrganizationDirectoryService;
 import com.medkernel.persistence.EnginePersistenceService;
+import com.medkernel.provenance.PublishGateService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -38,16 +39,19 @@ public class ConfigPackageService {
     private final EnginePersistenceService persistenceService;
     private final OrganizationDirectoryService organizationDirectoryService;
     private final ConfigPackageRepository configPackageRepository;
+    private final PublishGateService publishGateService;
     private final Map<String, ConfigPackage> packageStore = new ConcurrentHashMap<String, ConfigPackage>();
 
     public ConfigPackageService(ObjectMapper objectMapper, EnginePersistenceService persistenceService,
                                 OrganizationDirectoryService organizationDirectoryService,
-                                ConfigPackageRepository configPackageRepository) {
+                                ConfigPackageRepository configPackageRepository,
+                                PublishGateService publishGateService) {
         this.canonicalMapper = objectMapper.copy();
         this.canonicalMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         this.persistenceService = persistenceService;
         this.organizationDirectoryService = organizationDirectoryService;
         this.configPackageRepository = configPackageRepository;
+        this.publishGateService = publishGateService;
     }
 
     public List<Map<String, Object>> importPackages(Object request) {
@@ -206,6 +210,15 @@ public class ConfigPackageService {
         validateForReview(configPackage, issues);
         validateSourceReview(sourceReview, issues);
 
+        // REFIT-003: 发布门禁 - 使用真实的来源系统检查
+        Map<String, Object> publishGateResult = publishGateService.checkPublishGate(
+                "CONFIG_PACKAGE", configPackage.getPackageCode(), configPackage.getTenantId());
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> gateIssues = (List<Map<String, Object>>) publishGateResult.get("issues");
+        if (gateIssues != null) {
+            issues.addAll(gateIssues);
+        }
+
         Map<String, Object> summary = new LinkedHashMap<String, Object>();
         summary.put("asset_count", assetCount(configPackage.getFullSnapshot()));
         summary.put("manifest_keys", sortedKeys(configPackage.getManifest()));
@@ -222,6 +235,7 @@ public class ConfigPackageService {
         review.put("summary", summary);
         review.put("manifest", configPackage.getManifest());
         review.put("source_review", sourceReview);
+        review.put("publish_gate", publishGateResult);
         review.put("scope_reference", organizationDirectoryService.scopeReference(configPackage.getTenantId(),
                 configPackage.getScopeLevel(), configPackage.getScopeCode()));
         return review;
