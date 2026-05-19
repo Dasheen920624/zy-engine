@@ -1,9 +1,16 @@
 package com.medkernel.common;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ApiResult<T> {
     private boolean success;
     private String code;
     private String message;
+    /**
+     * 链路追踪 ID。即便没有启用全局 SNAKE_CASE 也固定以 trace_id 字段出现，
+     * 与前端 api/types.ts ApiResult.trace_id 契约对齐（AUDIT §1.4）。
+     */
+    @JsonProperty("trace_id")
     private String traceId;
     private T data;
 
@@ -50,10 +57,12 @@ public class ApiResult<T> {
         this.message = message;
     }
 
+    @JsonProperty("trace_id")
     public String getTraceId() {
         return traceId;
     }
 
+    @JsonProperty("trace_id")
     public void setTraceId(String traceId) {
         this.traceId = traceId;
     }

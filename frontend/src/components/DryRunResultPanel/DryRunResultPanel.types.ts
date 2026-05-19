@@ -3,7 +3,7 @@ export interface DryRunResult {
   status: 'success' | 'error' | 'warning' | 'info';
   title: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp?: string;
   duration?: number;
 }

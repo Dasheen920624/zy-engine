@@ -9,6 +9,8 @@ import PackageImportWizard from "../pages/ConfigPackages/PackageImportWizard";
 import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import WorkflowTodos from "../pages/WorkflowTodos";
 import { QualityDashboard, DepartmentDrillDown } from "../pages/Quality";
+import AlertList from "../pages/Quality/AlertList";
+import { NotificationList, NotificationDetail, NotificationSettings } from "../pages/Notification";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import RequireAuth from "./RequireAuth";
@@ -44,12 +46,15 @@ export const routes: RouteObject[] = [
           { path: "rule/validate", element: <PlaceholderPage title="规则校验工作台" /> },
           { path: "graph/explore", element: <PlaceholderPage title="图谱查询工作台" pr="PR-V2-05" /> },
           { path: "terminology/mapping", element: <MappingWorkbench /> },
-          { path: "qc/alerts", element: <PlaceholderPage title="质控预警列表" pr="PR-V2-11" /> },
+          { path: "qc/alerts", element: <AlertList /> },
           { path: "qc/dashboard", element: <QualityDashboard /> },
           { path: "qc/department/:deptCode", element: <DepartmentDrillDown /> },
           { path: "qc/insurance", element: <PlaceholderPage title="医保智能审核" pr="PR-V2-12" /> },
           { path: "aik/review", element: <PlaceholderPage title="知识审核台" pr="PR-V2-05" /> },
           { path: "workflow/todos", element: <WorkflowTodos /> },
+          { path: "notifications", element: <NotificationList recipientId="current-user" /> },
+          { path: "notifications/:notificationCode", element: <NotificationDetail /> },
+          { path: "notifications/settings", element: <NotificationSettings /> },
           { path: "admin/users", element: <PlaceholderPage title="用户管理" pr="PR-V2-04" /> },
           { path: "admin/audit", element: <PlaceholderPage title="审计日志" pr="PR-V2-04" /> },
           { path: "*", element: <NotFound /> },
