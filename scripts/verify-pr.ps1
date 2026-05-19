@@ -215,6 +215,8 @@ if (-not [string]::IsNullOrWhiteSpace($status)) {
 } elseif (-not [string]::IsNullOrWhiteSpace($diffNames)) {
   $changedLines = ($diffNames -split "`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count
   Show-Pass "$changedLines 个文件相对 $BaseRef 有差异（CI/已提交场景）"
+} elseif ($env:GITHUB_EVENT_NAME -eq "push" -and -not [string]::IsNullOrWhiteSpace($env:MEDKERNEL_DIFF_BASE)) {
+  Show-Pass "push 事件无文件差异，视为纯历史同步提交（如 develop 吸收 main），允许通过"
 } else {
   Show-Fail "工作树与 $BaseRef 均无差异，没什么要提交或合并的"
 }
