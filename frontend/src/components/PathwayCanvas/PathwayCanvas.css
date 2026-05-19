@@ -1,0 +1,40 @@
+.pathway-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pathway-canvas-container {
+  width: 100%;
+  height: 100%;
+}
+
+.pathway-canvas-toolbar {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  background: var(--mk-bg-elevated);
+  border: 1px solid var(--mk-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.canvas-toolbar-btn {
+  border: none;
+  background: transparent;
+  color: var(--mk-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.canvas-toolbar-btn:hover {
+  background: var(--mk-primary-soft);
+  color: var(--mk-primary);
+}

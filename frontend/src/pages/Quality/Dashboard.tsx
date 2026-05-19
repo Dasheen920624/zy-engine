@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Alert,
   Button,
   Card,
   Col,
-  DatePicker,
   Row,
   Select,
   Space,
@@ -13,7 +11,6 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from "antd";
 import {
   AlertOutlined,
@@ -21,15 +18,11 @@ import {
   ArrowUpOutlined,
   BarChartOutlined,
   BugOutlined,
-  CheckCircleOutlined,
   DownloadOutlined,
-  ExperimentOutlined,
   FileSearchOutlined,
   HeartOutlined,
   MedicineBoxOutlined,
   ReloadOutlined,
-  SafetyOutlined,
-  WarningOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import TrendChart from "./components/TrendChart";
@@ -45,8 +38,19 @@ import {
 } from "../../api/quality";
 import { useNavigate } from "react-router-dom";
 
-const { RangePicker } = DatePicker;
 const { Text, Title } = Typography;
+
+const PERIOD_LABEL: Record<string, string> = {
+  month: "本月",
+  week: "本周",
+  today: "今日",
+};
+
+const RISK_LEVEL_TAG: Record<string, { color: string; label: string }> = {
+  HIGH: { color: "error", label: "高风险" },
+  MEDIUM: { color: "warning", label: "中风险" },
+  LOW: { color: "success", label: "低风险" },
+};
 
 // 模拟数据
 const MOCK_KPIS: DashboardKpis = {
@@ -189,7 +193,7 @@ export default function QualityDashboard() {
       key: "stars",
       width: 120,
       render: (_, record) => (
-        <span style={{ color: "#faad14" }}>
+        <span style={{ color: "var(--mk-warning)" }}>
           {"★".repeat(record.stars)}
           {"☆".repeat(5 - record.stars)}
         </span>
@@ -233,7 +237,7 @@ export default function QualityDashboard() {
           <div>
             <Title level={4} style={{ margin: 0 }}>院级质控驾驶舱</Title>
             <Text type="secondary">
-              时间：{period === "month" ? "本月" : period === "week" ? "本周" : "今日"} · 组织：全院
+              时间：{PERIOD_LABEL[period] || "今日"} · 组织：全院
             </Text>
           </div>
           <Space>
@@ -262,7 +266,7 @@ export default function QualityDashboard() {
             <Card
               title={
                 <Space>
-                  <HeartOutlined style={{ color: "#52c41a" }} />
+                  <HeartOutlined style={{ color: "var(--mk-success)" }} />
                   <span>路径执行</span>
                 </Space>
               }
@@ -288,7 +292,7 @@ export default function QualityDashboard() {
             <Card
               title={
                 <Space>
-                  <AlertOutlined style={{ color: "#faad14" }} />
+                  <AlertOutlined style={{ color: "var(--mk-warning)" }} />
                   <span>规则命中</span>
                 </Space>
               }
@@ -314,7 +318,7 @@ export default function QualityDashboard() {
             <Card
               title={
                 <Space>
-                  <BugOutlined style={{ color: "#ff4d4f" }} />
+                  <BugOutlined style={{ color: "var(--mk-danger)" }} />
                   <span>质控问题</span>
                 </Space>
               }
@@ -340,7 +344,7 @@ export default function QualityDashboard() {
             <Card
               title={
                 <Space>
-                  <MedicineBoxOutlined style={{ color: "#1890ff" }} />
+                  <MedicineBoxOutlined style={{ color: "var(--mk-primary)" }} />
                   <span>医保风险</span>
                 </Space>
               }
@@ -357,19 +361,9 @@ export default function QualityDashboard() {
               />
               <div style={{ marginTop: 8 }}>
                 <Tag
-                  color={
-                    displayKpis.insurance.riskLevel === "HIGH"
-                      ? "error"
-                      : displayKpis.insurance.riskLevel === "MEDIUM"
-                      ? "warning"
-                      : "success"
-                  }
+                  color={RISK_LEVEL_TAG[displayKpis.insurance.riskLevel]?.color || "success"}
                 >
-                  {displayKpis.insurance.riskLevel === "HIGH"
-                    ? "高风险"
-                    : displayKpis.insurance.riskLevel === "MEDIUM"
-                    ? "中风险"
-                    : "低风险"}
+                  {RISK_LEVEL_TAG[displayKpis.insurance.riskLevel]?.label || "低风险"}
                 </Tag>
               </div>
             </Card>

@@ -64,7 +64,11 @@ public class NotificationController {
      * 获取通知详情
      */
     @GetMapping("/{notificationCode}")
-    public ApiResult<Map<String, Object>> getNotification(@PathVariable String notificationCode) {
+    public ApiResult<Map<String, Object>> getNotification(@PathVariable String notificationCode,
+                                                           HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<>();
+        filters.put("notificationCode", notificationCode);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         Notification notification = notificationService.getNotification(notificationCode);
         return ApiResult.success(notificationToMap(notification));
     }
@@ -73,7 +77,9 @@ public class NotificationController {
      * 标记为已读
      */
     @PostMapping("/{notificationCode}/read")
-    public ApiResult<Map<String, Object>> markAsRead(@PathVariable String notificationCode) {
+    public ApiResult<Map<String, Object>> markAsRead(@PathVariable String notificationCode,
+                                                      HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         Notification notification = notificationService.markAsRead(notificationCode);
         return ApiResult.success(notificationToMap(notification));
     }
@@ -82,7 +88,9 @@ public class NotificationController {
      * 批量标记为已读
      */
     @PostMapping("/batch-read")
-    public ApiResult<Map<String, Object>> batchMarkAsRead(@RequestBody Map<String, Object> body) {
+    public ApiResult<Map<String, Object>> batchMarkAsRead(@RequestBody Map<String, Object> body,
+                                                           HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, body);
         List<String> notificationCodes = (List<String>) body.get("notificationCodes");
         int count = notificationService.batchMarkAsRead(notificationCodes);
         Map<String, Object> result = new HashMap<>();
@@ -94,7 +102,9 @@ public class NotificationController {
      * 归档通知
      */
     @PostMapping("/{notificationCode}/archive")
-    public ApiResult<Map<String, Object>> archiveNotification(@PathVariable String notificationCode) {
+    public ApiResult<Map<String, Object>> archiveNotification(@PathVariable String notificationCode,
+                                                               HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         Notification notification = notificationService.archiveNotification(notificationCode);
         return ApiResult.success(notificationToMap(notification));
     }
@@ -135,7 +145,8 @@ public class NotificationController {
      * 清理过期通知
      */
     @PostMapping("/cleanup")
-    public ApiResult<Map<String, Object>> cleanupExpiredNotifications() {
+    public ApiResult<Map<String, Object>> cleanupExpiredNotifications(HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         int count = notificationService.cleanupExpiredNotifications();
         Map<String, Object> result = new HashMap<>();
         result.put("cleanedCount", count);

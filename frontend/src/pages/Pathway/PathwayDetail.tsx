@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button, Descriptions, Spin, Typography, Tag } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
@@ -15,7 +15,7 @@ const PathwayDetail: React.FC = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ["pathway", code],
-    queryFn: () => getPathway(code!),
+    queryFn: () => getPathway(code ?? ""),
     enabled: !!code,
   });
 
@@ -72,7 +72,7 @@ const PathwayDetail: React.FC = () => {
       {detail?.draft_config && (
         <>
           <Title level={4}>草稿配置</Title>
-          <pre style={{ background: "#f5f5f5", padding: 16, borderRadius: 8, overflow: "auto" }}>
+          <pre style={{ background: "var(--mk-bg-base)", padding: 16, borderRadius: 8, overflow: "auto" }}>
             {JSON.stringify(detail.draft_config, null, 2)}
           </pre>
         </>
@@ -83,7 +83,7 @@ const PathwayDetail: React.FC = () => {
           <Title level={4} style={{ marginTop: 24 }}>
             已发布配置
           </Title>
-          <pre style={{ background: "#f5f5f5", padding: 16, borderRadius: 8, overflow: "auto" }}>
+          <pre style={{ background: "var(--mk-bg-base)", padding: 16, borderRadius: 8, overflow: "auto" }}>
             {JSON.stringify(detail.published_config, null, 2)}
           </pre>
         </>

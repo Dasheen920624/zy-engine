@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Typography, Spin, Empty } from "antd";
 import type { DiffViewerProps, DiffLine } from "./DiffViewer.types";
 
@@ -80,6 +80,26 @@ const lineNumberStyle = {
   userSelect: "none" as const,
 };
 
+const LINE_BG_COLOR: Record<string, string> = {
+  add: "var(--mk-success-soft)",
+  remove: "var(--mk-danger-soft)",
+};
+
+const LINE_BORDER_COLOR: Record<string, string> = {
+  add: "var(--mk-success)",
+  remove: "var(--mk-danger)",
+};
+
+const LINE_TEXT_COLOR: Record<string, string> = {
+  add: "var(--mk-success)",
+  remove: "var(--mk-danger)",
+};
+
+const LINE_PREFIX: Record<string, string> = {
+  add: "+",
+  remove: "-",
+};
+
 export default function DiffViewer({
   oldContent,
   newContent,
@@ -88,7 +108,6 @@ export default function DiffViewer({
   newTitle = "新版本",
   mode = "unified",
   showLineNumbers = true,
-  contextLines = 3,
   loading = false,
 }: DiffViewerProps) {
   const diffLines = useMemo(() => generateDiff(oldContent, newContent), [oldContent, newContent]);
@@ -106,13 +125,8 @@ export default function DiffViewer({
   }
   
   const renderLine = (line: DiffLine, index: number) => {
-    const bgColor = line.type === "add" ? "var(--mk-success-soft)" : 
-                   line.type === "remove" ? "var(--mk-danger-soft)" : 
-                   "transparent";
-    
-    const borderColor = line.type === "add" ? "var(--mk-success)" : 
-                       line.type === "remove" ? "var(--mk-danger)" : 
-                       "transparent";
+    const bgColor = LINE_BG_COLOR[line.type] || "transparent";
+    const borderColor = LINE_BORDER_COLOR[line.type] || "transparent";
     
     return (
       <div
@@ -141,10 +155,8 @@ export default function DiffViewer({
             )}
           </>
         )}
-        <span style={{ color: line.type === "add" ? "var(--mk-success)" : 
-                             line.type === "remove" ? "var(--mk-danger)" : 
-                             "var(--mk-text-primary)" }}>
-          {line.type === "add" ? "+" : line.type === "remove" ? "-" : " "}
+        <span style={{ color: LINE_TEXT_COLOR[line.type] || "var(--mk-text-primary)" }}>
+          {LINE_PREFIX[line.type] || " "}
         </span>
         <span>{line.content}</span>
       </div>

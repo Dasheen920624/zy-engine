@@ -61,6 +61,7 @@ public class RuleActionLogController {
         filters.put("decision", decision);
         filters.put("decision_by", decisionBy);
         filters.put("limit", limit);
+        organizationContextService.applyExplicitFilters(filters, request);
         return ApiResult.success(actionLogService.listAll(filters));
     }
 
@@ -68,7 +69,11 @@ public class RuleActionLogController {
      * 根据ID获取决策日志
      */
     @GetMapping("/{logId}")
-    public ApiResult<RuleActionLog> getActionLog(@PathVariable String logId) {
+    public ApiResult<RuleActionLog> getActionLog(@PathVariable String logId,
+                                                 HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<>();
+        filters.put("logId", logId);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         RuleActionLog log = actionLogService.getById(logId);
         if (log == null) {
             return ApiResult.error("DECISION_LOG_NOT_FOUND", "决策日志不存在: " + logId);
@@ -81,7 +86,12 @@ public class RuleActionLogController {
      */
     @GetMapping("/patient/{patientId}")
     public ApiResult<List<RuleActionLog>> getActionLogsByPatient(@PathVariable String patientId,
-                                                                 @RequestParam(required = false) String encounterId) {
+                                                                 @RequestParam(required = false) String encounterId,
+                                                                 HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<>();
+        filters.put("patientId", patientId);
+        filters.put("encounterId", encounterId);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(actionLogService.queryByPatient(patientId, encounterId));
     }
 
@@ -89,7 +99,11 @@ public class RuleActionLogController {
      * 根据订单查询决策日志
      */
     @GetMapping("/order/{orderId}")
-    public ApiResult<List<RuleActionLog>> getActionLogsByOrder(@PathVariable String orderId) {
+    public ApiResult<List<RuleActionLog>> getActionLogsByOrder(@PathVariable String orderId,
+                                                               HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<>();
+        filters.put("orderId", orderId);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(actionLogService.queryByOrder(orderId));
     }
 }

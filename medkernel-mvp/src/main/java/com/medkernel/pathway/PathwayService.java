@@ -9,6 +9,7 @@ import com.medkernel.dto.RecommendationCard;
 import com.medkernel.dto.RuleResult;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.persistence.EnginePersistenceService;
+import com.medkernel.provenance.PublishGateService;
 import com.medkernel.rule.RuleService;
 import com.medkernel.util.ClinicalFactUtils;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ public class PathwayService {
     private final RuleService ruleService;
     private final AdapterHubService adapterHubService;
     private final EnginePersistenceService persistenceService;
+    private final PublishGateService publishGateService;
     private final PathwayConfigSupport configSupport = new PathwayConfigSupport();
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
     private final Map<String, Map<String, Object>> pathwayDrafts = new ConcurrentHashMap<String, Map<String, Object>>();
@@ -47,10 +49,11 @@ public class PathwayService {
     private final Map<String, List<PathwayVariationRecord>> variationRecords = new ConcurrentHashMap<String, List<PathwayVariationRecord>>();
 
     public PathwayService(RuleService ruleService, AdapterHubService adapterHubService,
-                          EnginePersistenceService persistenceService) {
+                          EnginePersistenceService persistenceService, PublishGateService publishGateService) {
         this.ruleService = ruleService;
         this.adapterHubService = adapterHubService;
         this.persistenceService = persistenceService;
+        this.publishGateService = publishGateService;
     }
 
     /**
@@ -113,6 +116,44 @@ public class PathwayService {
         return result;
     }
 
+    public Map<String, Object> saveDraft(String pathwayCode, Map<String, Object> draft, String tenantId) {
+        Map<String, Object> existing = pathwayDrafts.get(pathwayCode);
+        if (existing != null) {
+            existing.putAll(draft);
+            existing.put("pathway_code", pathwayCode);
+            existing.put("tenant_id", tenantId);
+        } else {
+            draft.put("pathway_code", pathwayCode);
+            draft.put("tenant_id", tenantId);
+            pathwayDrafts.put(pathwayCode, draft);
+        }
+        persistenceService.savePathwayDraft(pathwayCode, pathwayDrafts.get(pathwayCode));
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("status", "DRAFT");
+        result.put("persistence", persistenceService.providerName());
+        audit("SAVE_DRAFT", "PATHWAY", pathwayCode, null, result, null);
+        return result;
+    }
+
+    public Map<String, Object> submitReview(String pathwayCode, String tenantId) {
+        Map<String, Object> config = pathwayDrafts.get(pathwayCode);
+        if (config == null) {
+            throw new IllegalArgumentException("No draft found for pathway: " + pathwayCode);
+        }
+        config.put("review_status", "PENDING_REVIEW");
+        config.put("tenant_id", tenantId);
+        persistenceService.savePathwayDraft(pathwayCode, config);
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("review_status", "PENDING_REVIEW");
+        result.put("persistence", persistenceService.providerName());
+        audit("SUBMIT_REVIEW", "PATHWAY", pathwayCode, null, result, null);
+        return result;
+    }
+
     public Map<String, Object> publish(String pathwayCode, Map<String, Object> request) {
         Map<String, Object> config = pathwayDrafts.get(pathwayCode);
         String versionNo = string(request.get("version_no"), configSupport.versionNo(config, "1.0.0"));
@@ -121,11 +162,16 @@ public class PathwayService {
             config.put("pathway_code", pathwayCode);
             config.put("version", versionNo);
         }
+
+        // REFIT-003: 发布门禁 - 检查来源文档绑定
+        String tenantId = string(config.get("tenant_id"), null);
+        publishGateService.requirePublishGate("PATHWAY", pathwayCode, tenantId);
+
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
         activePublishedVersions.put(pathwayCode, versionNo);
         persistenceService.savePathwayVersion(pathwayCode, versionNo, "PUBLISHED", config);
         persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED",
-                string(config.get("tenant_id"), null), string(config.get("org_code"), null));
+                tenantId, string(config.get("org_code"), null));
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("pathway_code", pathwayCode);
@@ -1637,7 +1683,8 @@ public class PathwayService {
         adapterRequest.put("adapter_code", adapterCode);
         adapterRequest.put("query_code", queryCode);
         adapterRequest.put("params", params);
-        Map<String, Object> adapterResult = adapterHubService.query(adapterRequest);
+        Map<String, Object> adapterResult = adapterHubService.query(adapterRequest,
+                instance.getTenantId(), instance.getHospitalCode());
 
         snapshot.put("source", source);
         snapshot.put("adapter_query", adapterResult);

@@ -1,4 +1,4 @@
-import { Card, Typography } from "antd";
+import { Typography } from "antd";
 import type { TrendDay } from "../../../api/types";
 
 const { Text } = Typography;
@@ -53,7 +53,7 @@ export default function TrendChart({ data }: { data: TrendDay[] }) {
           y={height - 5}
           textAnchor="middle"
           fontSize="10"
-          fill="#666"
+          fill="var(--mk-text-secondary)"
         >
           {d.date.substring(5)}
         </text>
@@ -70,7 +70,7 @@ export default function TrendChart({ data }: { data: TrendDay[] }) {
         y={y + 3}
         textAnchor="end"
         fontSize="10"
-        fill="#666"
+        fill="var(--mk-text-secondary)"
       >
         {v}%
       </text>
@@ -90,16 +90,16 @@ export default function TrendChart({ data }: { data: TrendDay[] }) {
               y1={y}
               x2={width - padding.right}
               y2={y}
-              stroke="#f0f0f0"
+              stroke="var(--mk-border)"
               strokeDasharray="4"
             />
           );
         })}
 
         {/* 数据线 */}
-        {getPath("pathwayCompletionRate", "#52c41a")}
-        {getPath("ruleHitRate", "#faad14")}
-        {getPath("qcRectificationRate", "#1890ff")}
+        {getPath("pathwayCompletionRate", "var(--mk-success)")}
+        {getPath("ruleHitRate", "var(--mk-warning)")}
+        {getPath("qcRectificationRate", "var(--mk-primary)")}
 
         {/* 坐标轴 */}
         <line
@@ -107,14 +107,14 @@ export default function TrendChart({ data }: { data: TrendDay[] }) {
           y1={padding.top}
           x2={padding.left}
           y2={height - padding.bottom}
-          stroke="#d9d9d9"
+          stroke="var(--mk-border)"
         />
         <line
           x1={padding.left}
           y1={height - padding.bottom}
           x2={width - padding.right}
           y2={height - padding.bottom}
-          stroke="#d9d9d9"
+          stroke="var(--mk-border)"
         />
 
         {/* 标签 */}
@@ -125,15 +125,15 @@ export default function TrendChart({ data }: { data: TrendDay[] }) {
       {/* 图例 */}
       <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 8 }}>
         <span>
-          <span style={{ display: "inline-block", width: 16, height: 2, background: "#52c41a", marginRight: 4, verticalAlign: "middle" }} />
+          <span style={{ display: "inline-block", width: 16, height: 2, background: "var(--mk-success)", marginRight: 4, verticalAlign: "middle" }} />
           <Text style={{ fontSize: 12 }}>路径完成率</Text>
         </span>
         <span>
-          <span style={{ display: "inline-block", width: 16, height: 2, background: "#faad14", marginRight: 4, verticalAlign: "middle" }} />
+          <span style={{ display: "inline-block", width: 16, height: 2, background: "var(--mk-warning)", marginRight: 4, verticalAlign: "middle" }} />
           <Text style={{ fontSize: 12 }}>规则命中率</Text>
         </span>
         <span>
-          <span style={{ display: "inline-block", width: 16, height: 2, background: "#1890ff", marginRight: 4, verticalAlign: "middle" }} />
+          <span style={{ display: "inline-block", width: 16, height: 2, background: "var(--mk-primary)", marginRight: 4, verticalAlign: "middle" }} />
           <Text style={{ fontSize: 12 }}>质控整改率</Text>
         </span>
       </div>

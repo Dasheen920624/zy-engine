@@ -6,7 +6,7 @@ import type { EmbedConfig } from '../api/clinicalEvent';
 // 从 URL 参数或 window 全局变量获取配置
 function getConfig(): EmbedConfig {
   const params = new URLSearchParams(window.location.search);
-  const wsUrl = params.get('ws_url') || (window as Record<string, unknown>).__EMBED_WS_URL__ as string || 'ws://localhost:8080/ws/embed/alerts';
+  const wsUrl = params.get('ws_url') || (window as unknown as Record<string, unknown>).__EMBED_WS_URL__ as string || 'ws://localhost:8080/ws/embed/alerts';
 
   return {
     ws_url: wsUrl,
@@ -19,15 +19,15 @@ function getConfig(): EmbedConfig {
 function getPatientContext() {
   const params = new URLSearchParams(window.location.search);
   return {
-    patientId: params.get('patient_id') || (window as Record<string, unknown>).__EMBED_PATIENT_ID__ as string,
-    encounterId: params.get('encounter_id') || (window as Record<string, unknown>).__EMBED_ENCOUNTER_ID__ as string,
+    patientId: params.get('patient_id') || (window as unknown as Record<string, unknown>).__EMBED_PATIENT_ID__ as string,
+    encounterId: params.get('encounter_id') || (window as unknown as Record<string, unknown>).__EMBED_ENCOUNTER_ID__ as string,
   };
 }
 
 const config = getConfig();
 const { patientId, encounterId } = getPatientContext();
 
-const root = createRoot(document.getElementById('embed-root')!);
+const root = createRoot(document.getElementById('embed-root') ?? document.createElement('div'));
 root.render(
   <StrictMode>
     <EmbedApp config={config} patientId={patientId} encounterId={encounterId} />

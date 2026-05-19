@@ -3,8 +3,25 @@ import { Cascader } from 'antd';
 import { BankOutlined, HomeOutlined, TeamOutlined } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { OrgContext, OrgContextSelectorProps } from './OrgContextSelector.types';
+import type { OrgContext as StoreOrgContext } from '../../api/types';
+import { setOrgContext } from '../../store/orgContext';
 
 const SESSION_KEY = 'mk-org-context';
+
+/**
+ * 将 OrgContextSelector 用的 camelCase 视图模型转回 store/请求 Header 用的 snake_case。
+ * 必须与 {@link ../../api/client.ts} `applyOrgHeaders` 读到的 OrgContext 字段集严格对齐。
+ */
+function toStoreShape(view: OrgContext): StoreOrgContext {
+  return {
+    tenant_id: view.tenantId,
+    group_code: view.groupCode,
+    hospital_code: view.hospitalCode,
+    campus_code: view.campusCode,
+    site_code: view.siteCode,
+    department_code: view.departmentCode,
+  };
+}
 
 interface CascaderOption {
   value: string;
@@ -169,6 +186,11 @@ export function OrgContextSelector({
       const strValues = values.map(String);
       const found = findScopeByValues(allowedScopes, strValues, level);
       if (found) {
+        // 1) 同步写入全局 store —— axios 拦截器 applyOrgHeaders 读的就是这里，
+        //    保证下一个请求自动带上新的 X-Hospital-Code 等 Header（AUDIT §3.2 修复）。
+        setOrgContext(toStoreShape(found));
+        // 2) 兼容历史 sessionStorage 缓存键，避免直接读 sessionStorage 的旧代码失效；
+        //    后续若确认无消费者，可在下一轮审计中清理。
         try {
           sessionStorage.setItem(SESSION_KEY, JSON.stringify(found));
         } catch {

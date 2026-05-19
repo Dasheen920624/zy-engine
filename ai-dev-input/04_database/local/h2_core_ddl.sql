@@ -205,24 +205,28 @@ CREATE TABLE IF NOT EXISTS tm_concept_mapping (
 
 CREATE TABLE IF NOT EXISTS adp_adapter_def (
   id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL DEFAULT 'default',
+  hospital_code VARCHAR2(64) NOT NULL DEFAULT 'DEFAULT_HOSPITAL',
   adapter_code VARCHAR2(64) NOT NULL,
   adapter_name VARCHAR2(200) NOT NULL,
   adapter_type VARCHAR2(32) NOT NULL,
   status VARCHAR2(32) NOT NULL,
   config_json CLOB NOT NULL,
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT uk_adp_adapter_def UNIQUE (adapter_code)
+  CONSTRAINT uk_adp_adapter_def UNIQUE (tenant_id, hospital_code, adapter_code)
 );
 
 CREATE TABLE IF NOT EXISTS adp_query_def (
   id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL DEFAULT 'default',
+  hospital_code VARCHAR2(64) NOT NULL DEFAULT 'DEFAULT_HOSPITAL',
   adapter_code VARCHAR2(64) NOT NULL,
   query_code VARCHAR2(64) NOT NULL,
   query_name VARCHAR2(200) NOT NULL,
   query_config CLOB NOT NULL,
   status VARCHAR2(32) NOT NULL,
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT uk_adp_query_def UNIQUE (adapter_code, query_code)
+  CONSTRAINT uk_adp_query_def UNIQUE (tenant_id, hospital_code, adapter_code, query_code)
 );
 
 CREATE TABLE IF NOT EXISTS ge_graph_version (

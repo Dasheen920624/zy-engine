@@ -1,4 +1,4 @@
-import { request } from './request';
+import { get, post } from './client';
 
 export type ActionMode = 'NOTICE' | 'SOFT' | 'BLOCK';
 
@@ -47,8 +47,8 @@ export interface RecordDecisionRequest {
  * 记录用户决策
  */
 export async function recordDecision(request: RecordDecisionRequest): Promise<RuleActionLog> {
-  const response = await request.post<RuleActionLog>('/api/rule-action-logs', request);
-  return response.data;
+  const response = await post<RuleActionLog>('/api/rule-action-logs', request);
+  return response;
 }
 
 /**
@@ -62,16 +62,16 @@ export async function fetchActionLogs(params: {
   decision_by?: string;
   limit?: number;
 }): Promise<RuleActionLog[]> {
-  const response = await request.get<RuleActionLog[]>('/api/rule-action-logs', { params });
-  return response.data;
+  const response = await get<RuleActionLog[]>('/api/rule-action-logs', { params });
+  return response;
 }
 
 /**
  * 根据ID获取决策日志
  */
 export async function fetchActionLog(logId: string): Promise<RuleActionLog> {
-  const response = await request.get<RuleActionLog>(`/api/rule-action-logs/${logId}`);
-  return response.data;
+  const response = await get<RuleActionLog>(`/api/rule-action-logs/${logId}`);
+  return response;
 }
 
 /**
@@ -82,17 +82,17 @@ export async function fetchActionLogsByPatient(
   encounterId?: string
 ): Promise<RuleActionLog[]> {
   const params = encounterId ? { encounter_id: encounterId } : {};
-  const response = await request.get<RuleActionLog[]>(
+  const response = await get<RuleActionLog[]>(
     `/api/rule-action-logs/patient/${patientId}`,
     { params }
   );
-  return response.data;
+  return response;
 }
 
 /**
  * 根据订单查询决策日志
  */
 export async function fetchActionLogsByOrder(orderId: string): Promise<RuleActionLog[]> {
-  const response = await request.get<RuleActionLog[]>(`/api/rule-action-logs/order/${orderId}`);
-  return response.data;
+  const response = await get<RuleActionLog[]>(`/api/rule-action-logs/order/${orderId}`);
+  return response;
 }

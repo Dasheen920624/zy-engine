@@ -25,7 +25,7 @@ export default function ReasonDialog({
         informedConsent: values.informedConsent || false,
         familyNotified: values.familyNotified || false,
       });
-    } catch (error) {
+    } catch {
       // Validation failed
     }
   };

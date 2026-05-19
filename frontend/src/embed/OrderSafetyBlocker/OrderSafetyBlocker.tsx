@@ -8,7 +8,7 @@ import {
   EditOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import type { OrderSafetyBlockerProps, OrderSafetyDecision } from './OrderSafetyBlocker.types';
+import type { OrderSafetyBlockerProps } from './OrderSafetyBlocker.types';
 import ReasonDialog from './ReasonDialog';
 import { recordDecision } from '../../api/ruleActionLog';
 

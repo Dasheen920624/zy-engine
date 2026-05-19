@@ -121,7 +121,7 @@ export default function EmbeddedAlert({
           <Text strong style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
             {title}
           </Text>
-          {confidence != null && (
+          {confidence !== null && confidence !== undefined && (
             <Text type="secondary" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
               置信 {confidence}%
             </Text>

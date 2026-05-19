@@ -54,7 +54,11 @@ public class WorkflowController {
      * 获取待办任务详情
      */
     @GetMapping("/todos/{taskCode}")
-    public ApiResult<Map<String, Object>> getTodoDetail(@PathVariable String taskCode) {
+    public ApiResult<Map<String, Object>> getTodoDetail(@PathVariable String taskCode,
+                                                        HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        filters.put("taskCode", taskCode);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(workflowTodoService.getTodoTaskDetail(taskCode));
     }
 
@@ -86,7 +90,9 @@ public class WorkflowController {
      */
     @PostMapping("/todos/{taskCode}/approve")
     public ApiResult<Map<String, Object>> approveTask(@PathVariable String taskCode,
-                                                      @RequestBody Map<String, Object> body) {
+                                                      @RequestBody Map<String, Object> body,
+                                                      HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, body);
         return ApiResult.success(workflowTodoService.approveTask(taskCode, body));
     }
 
@@ -95,7 +101,9 @@ public class WorkflowController {
      */
     @PostMapping("/todos/{taskCode}/reject")
     public ApiResult<Map<String, Object>> rejectTask(@PathVariable String taskCode,
-                                                     @RequestBody Map<String, Object> body) {
+                                                     @RequestBody Map<String, Object> body,
+                                                     HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, body);
         return ApiResult.success(workflowTodoService.rejectTask(taskCode, body));
     }
 
@@ -104,7 +112,9 @@ public class WorkflowController {
      */
     @PostMapping("/todos/{taskCode}/delegate")
     public ApiResult<Map<String, Object>> delegateTask(@PathVariable String taskCode,
-                                                       @RequestBody Map<String, Object> body) {
+                                                       @RequestBody Map<String, Object> body,
+                                                       HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, body);
         return ApiResult.success(workflowTodoService.delegateTask(taskCode, body));
     }
 
@@ -113,7 +123,9 @@ public class WorkflowController {
      */
     @PostMapping("/todos/{taskCode}/cancel")
     public ApiResult<Map<String, Object>> cancelTask(@PathVariable String taskCode,
-                                                     @RequestBody Map<String, Object> body) {
+                                                     @RequestBody Map<String, Object> body,
+                                                     HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, body);
         return ApiResult.success(workflowTodoService.cancelTask(taskCode, body));
     }
 
@@ -122,7 +134,9 @@ public class WorkflowController {
      */
     @PostMapping("/todos/{taskCode}/add-sign")
     public ApiResult<Map<String, Object>> addSignTask(@PathVariable String taskCode,
-                                                      @RequestBody Map<String, Object> body) {
+                                                      @RequestBody Map<String, Object> body,
+                                                      HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, body);
         return ApiResult.success(workflowTodoService.addSignTask(taskCode, body));
     }
 }

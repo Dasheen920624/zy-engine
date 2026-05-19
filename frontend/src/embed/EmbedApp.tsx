@@ -15,7 +15,7 @@ interface EmbedAppProps {
 
 export default function EmbedApp({ config, patientId, encounterId }: EmbedAppProps) {
   const [alerts, setAlerts] = useState<EmbedAlert[]>([]);
-  const [connected, setConnected] = useState(false);
+  const [_connected, setConnected] = useState(false);
   const [blockerAlert, setBlockerAlert] = useState<EmbedAlert | null>(null);
 
   // WebSocket 连接

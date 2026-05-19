@@ -39,6 +39,17 @@ export interface EmbedAlert {
   }>;
   created_at: string;
   expires_at?: string;
+  action_mode?: string;
+  rule_code?: string;
+  rule_version?: string;
+  order_id?: string;
+  patient_name?: string;
+  patient_age?: number;
+  patient_gender?: string;
+  order_name?: string;
+  order_dose?: string;
+  order_frequency?: string;
+  risk_description?: string;
 }
 
 export interface EmbedConfig {
