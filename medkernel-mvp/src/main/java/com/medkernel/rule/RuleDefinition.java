@@ -28,6 +28,8 @@ public class RuleDefinition {
     private String referenceDocumentCode;
     private String referenceCitationId;
     private String referenceBindingType;
+    private String actionMode;
+    private boolean decisionRequired;
     private Map<String, Object> ruleJson = new LinkedHashMap<String, Object>();
 
     public String getRuleCode() {
@@ -220,6 +222,22 @@ public class RuleDefinition {
 
     public void setReferenceBindingType(String referenceBindingType) {
         this.referenceBindingType = referenceBindingType;
+    }
+
+    public String getActionMode() {
+        return actionMode;
+    }
+
+    public void setActionMode(String actionMode) {
+        this.actionMode = actionMode;
+    }
+
+    public boolean isDecisionRequired() {
+        return decisionRequired;
+    }
+
+    public void setDecisionRequired(boolean decisionRequired) {
+        this.decisionRequired = decisionRequired;
     }
 
     public Map<String, Object> getRuleJson() {

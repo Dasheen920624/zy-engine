@@ -4,6 +4,8 @@ import { EmbeddedAlert } from '../components/EmbeddedAlert';
 import type { EmbeddedAlertAction } from '../components/EmbeddedAlert';
 import { ClinicalEventClient, executeAlertAction } from '../api/clinicalEvent';
 import type { EmbedAlert, EmbedConfig } from '../api/clinicalEvent';
+import { OrderSafetyBlocker } from './OrderSafetyBlocker';
+import type { OrderSafetyDecision } from './OrderSafetyBlocker';
 
 interface EmbedAppProps {
   config: EmbedConfig;
@@ -14,6 +16,7 @@ interface EmbedAppProps {
 export default function EmbedApp({ config, patientId, encounterId }: EmbedAppProps) {
   const [alerts, setAlerts] = useState<EmbedAlert[]>([]);
   const [connected, setConnected] = useState(false);
+  const [blockerAlert, setBlockerAlert] = useState<EmbedAlert | null>(null);
 
   // WebSocket 连接
   useEffect(() => {
@@ -24,6 +27,13 @@ export default function EmbedApp({ config, patientId, encounterId }: EmbedAppPro
       if (patientId && alert.actions.some((a) => a.payload?.patient_id !== patientId)) {
         return;
       }
+      
+      // 检查是否为BLOCK模式的拦截告警
+      if (alert.action_mode === 'BLOCK') {
+        setBlockerAlert(alert);
+        return;
+      }
+      
       setAlerts((prev) => {
         const next = [alert, ...prev];
         // 限制最大数量
@@ -64,6 +74,41 @@ export default function EmbedApp({ config, patientId, encounterId }: EmbedAppPro
     setAlerts((prev) => prev.filter((a) => a.alert_id !== alertId));
   }, []);
 
+  // 处理拦截弹窗决策
+  const handleBlockerDecision = useCallback(
+    async (decision: OrderSafetyDecision, data?: { reason?: string; informedConsent?: boolean; familyNotified?: boolean }) => {
+      if (!blockerAlert) return;
+      
+      // 执行对应的动作
+      const action = blockerAlert.actions.find((a) => {
+        if (decision === 'CANCEL') return a.action_type === 'CANCEL_ORDER';
+        if (decision === 'MODIFY') return a.action_type === 'MODIFY_DOSE';
+        if (decision === 'CONTINUE') return a.action_type === 'CONTINUE_ORDER';
+        return false;
+      });
+      
+      if (action) {
+        await executeAlertAction(blockerAlert.alert_id, action.action_type, {
+          ...action.payload,
+          patient_id: patientId,
+          encounter_id: encounterId,
+          decision,
+          reason: data?.reason,
+          informed_consent: data?.informedConsent,
+          family_notified: data?.familyNotified,
+        });
+      }
+      
+      setBlockerAlert(null);
+    },
+    [blockerAlert, patientId, encounterId]
+  );
+
+  // 关闭拦截弹窗
+  const handleBlockerClose = useCallback(() => {
+    setBlockerAlert(null);
+  }, []);
+
   // 转换 actions 为组件格式
   const toEmbeddedActions = useCallback(
     (alert: EmbedAlert): EmbeddedAlertAction[] =>
@@ -75,7 +120,7 @@ export default function EmbedApp({ config, patientId, encounterId }: EmbedAppPro
     [handleAction],
   );
 
-  if (alerts.length === 0) {
+  if (alerts.length === 0 && !blockerAlert) {
     return null;
   }
 
@@ -119,6 +164,37 @@ export default function EmbedApp({ config, patientId, encounterId }: EmbedAppPro
           />
         ))}
       </div>
+
+      {/* 医嘱安全拦截弹窗 */}
+      {blockerAlert && (
+        <OrderSafetyBlocker
+          open={true}
+          ruleCode={blockerAlert.rule_code || ''}
+          ruleVersion={blockerAlert.rule_version || ''}
+          patientId={patientId || ''}
+          encounterId={encounterId || ''}
+          orderId={blockerAlert.order_id || ''}
+          actionMode="BLOCK"
+          severity={blockerAlert.severity === 'danger' ? 'CRITICAL' : 'HIGH'}
+          title={blockerAlert.title}
+          patientInfo={{
+            name: blockerAlert.patient_name || '患者',
+            age: blockerAlert.patient_age || 0,
+            gender: blockerAlert.patient_gender || '',
+            patientId: patientId || '',
+          }}
+          orderInfo={{
+            name: blockerAlert.order_name || '医嘱',
+            dose: blockerAlert.order_dose || '',
+            frequency: blockerAlert.order_frequency || '',
+          }}
+          riskDescription={blockerAlert.risk_description || blockerAlert.title}
+          evidence={blockerAlert.evidence}
+          source={blockerAlert.source}
+          onDecision={handleBlockerDecision}
+          onClose={handleBlockerClose}
+        />
+      )}
     </ConfigProvider>
   );
 }
