@@ -1,4 +1,5 @@
 import { Avatar, Dropdown, Menu, Tag, Tooltip } from "antd";
+import type { ReactNode } from "react";
 import {
   UserOutlined,
   LogoutOutlined,
@@ -9,6 +10,15 @@ import { useOrgContext } from "../hooks/useOrgContext";
 import { getUser, isAuthenticated, clearAuth } from "../store/auth";
 import { topMenuItems, getTopMenuKeyByPath } from "../router/menuConfig";
 import ThemeSelector from "../theme/ThemeSelector";
+function renderChildLabel(child: { disabled?: boolean; label: ReactNode; path?: string }): ReactNode {
+  if (child.disabled) {
+    return <span style={{ color: "var(--mk-text-disabled)" }}>{child.label}</span>;
+  }
+  if (child.path) {
+    return <Link to={child.path}>{child.label}</Link>;
+  }
+  return child.label;
+}
 
 /**
  * 顶部导航栏组件
@@ -106,15 +116,7 @@ export default function TopNav() {
           ),
           children: item.children?.map((child) => ({
             key: child.key,
-            label: child.disabled ? (
-              <span style={{ color: "var(--mk-text-disabled)" }}>
-                {child.label}
-              </span>
-            ) : child.path ? (
-              <Link to={child.path}>{child.label}</Link>
-            ) : (
-              child.label
-            ),
+            label: renderChildLabel(child),
             disabled: child.disabled,
           })),
         }))}
@@ -156,10 +158,10 @@ export default function TopNav() {
               <Avatar
                 size="small"
                 icon={<UserOutlined />}
-                src={user.avatarUrl}
+                src={user.avatar_url}
               />
               <span style={{ color: "var(--mk-text-primary)", fontSize: 13 }}>
-                {user.displayName || user.username}
+                {user.display_name || user.username}
               </span>
             </div>
           </Dropdown>

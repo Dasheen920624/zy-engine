@@ -5,6 +5,7 @@ import Dashboard from "../pages/Dashboard";
 import ProvidersStatus from "../pages/ProvidersStatus";
 import DemoValidation from "../pages/DemoValidationPlaceholder";
 import ConfigPackages from "../pages/ConfigPackages";
+import PackageImportWizard from "../pages/ConfigPackages/PackageImportWizard";
 import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import WorkflowTodos from "../pages/WorkflowTodos";
 import NotFound from "../pages/NotFound";
@@ -26,7 +27,7 @@ export const routes: RouteObject[] = [
           { path: "demo-validation", element: <DemoValidation /> },
           { path: "config-packages", element: <Navigate to="/config/packages" replace /> },
           { path: "config/packages", element: <ConfigPackages /> },
-          { path: "config/packages/import", element: <PlaceholderPage title="配置包发布向导" pr="PR-V2-05" /> },
+          { path: "config/packages/import", element: <PackageImportWizard /> },
           { path: "provenance", element: <ProvenancePlaceholder /> },
           { path: "system/providers", element: <ProvidersStatus /> },
           { path: "pathway/templates", element: <PlaceholderPage title="路径模板列表" pr="PR-V2-06" /> },

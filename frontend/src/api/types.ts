@@ -256,6 +256,92 @@ export interface PublishRequest {
   approved_note?: string;
 }
 
+// ─── 配置包导入 (FE-004-import) ───────────────────────────────────
+
+export interface ImportUploadResult {
+  upload_id: string;
+  filename: string;
+  file_size: number;
+  content_type: string;
+}
+
+export interface ImportValidateRequest {
+  upload_id: string;
+}
+
+export interface ImportValidateResult {
+  upload_id: string;
+  manifest: {
+    package_code: string;
+    package_version: string;
+    asset_type: AssetType;
+    scope_level: ScopeLevel;
+    scope_code: string;
+    base_version?: string;
+    items: ManifestItem[];
+  };
+  validation_results: Array<{
+    check: string;
+    status: "PASS" | "FAIL" | "WARN";
+    message: string;
+  }>;
+  valid: boolean;
+}
+
+export interface ImportSourceCheckRequest {
+  upload_id: string;
+}
+
+export interface ImportSourceCheckResult {
+  upload_id: string;
+  source_review: {
+    enabled: boolean;
+    blocked: boolean;
+    missing_count: number;
+    expired_count: number;
+    unreviewed_count: number;
+    allow_publish: boolean;
+    details: Array<{
+      asset_code: string;
+      asset_type: string;
+      status: "reviewed" | "pending" | "rejected" | "missing";
+      document_name?: string;
+      reviewer?: string;
+      reviewed_at?: string;
+    }>;
+  };
+}
+
+export interface ImportImpactRequest {
+  upload_id: string;
+  target_environment?: string;
+}
+
+export interface ImportImpactResult {
+  upload_id: string;
+  target_environment: string;
+  impact: {
+    assets_affected: number;
+    assets_added: number;
+    assets_modified: number;
+    assets_removed: number;
+    scopes_affected: string[];
+    conflicts: Array<{
+      asset_code: string;
+      conflict_type: string;
+      existing_version: string;
+      new_version: string;
+    }>;
+  };
+}
+
+export interface ImportConfirmRequest {
+  upload_id: string;
+  approved_by: string;
+  approved_note: string;
+  target_environment?: string;
+}
+
 // 通用错误码（与 00_总入口 §9 一致）
 export type ApiErrorCode =
   | "SUCCESS"
