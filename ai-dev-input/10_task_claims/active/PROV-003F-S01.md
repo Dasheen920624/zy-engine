@@ -68,10 +68,10 @@ PROV-003 ✅ DONE
 ## Status Sync Checkpoints
 
 ```text
-claim_pushed_before_code: pending
-task_ledger_in_progress: pending
+claim_pushed_before_code: true
+task_ledger_in_progress: true
 git_status_checked_before_edit: true
-last_heartbeat_pushed: pending
+last_heartbeat_pushed: true
 review_status_synced: N/A
 task_ledger_done_synced: pending
 commit_hash_recorded: pending
@@ -82,5 +82,10 @@ task_lock_removed_on_archive: pending
 ## Progress
 
 ```text
-认领任务，准备开始开发
+1. 分析 DDL src_asset_binding 字段，建立与 SourceAssetBinding Java 模型的字段映射
+2. EnginePersistenceService 新增 saveSourceAssetBinding + listSourceAssetBindings（Oracle MERGE + H2 UPDATE/INSERT 双模式）
+3. SourceAssetBindingService 新增 @PostConstruct rebuildFromPersistence() 从 DB 重建内存索引
+4. importBindings() 中加入 persistenceService.saveSourceAssetBinding(binding) 持久化调用
+5. 字段映射：assetType↔asset_type, assetCode↔asset_code, citationId↔citation_code, bindingType↔binding_role
+6. DDL 缺失列（documentCode/confidence/description/updatedTime）重建后为 null，需后续 DDL 变更补充
 ```

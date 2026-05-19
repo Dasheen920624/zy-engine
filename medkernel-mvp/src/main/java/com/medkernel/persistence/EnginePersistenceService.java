@@ -7,6 +7,7 @@ import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientTaskState;
 import com.medkernel.dto.PathwayVariationRecord;
 import com.medkernel.dto.RecommendationCard;
+import com.medkernel.provenance.SourceAssetBinding;
 import com.medkernel.provenance.SourceCitation;
 import com.medkernel.provenance.SourceDocument;
 import com.medkernel.dto.RuleResult;
@@ -1178,6 +1179,139 @@ public class EnginePersistenceService {
         citation.setCitationType(rs.getString("evidence_level"));
         citation.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
         return citation;
+    }
+
+    // =========================================================================
+    // SRC_ASSET_BINDING 持久化
+    // =========================================================================
+
+    /**
+     * 持久化单条 SourceAssetBinding。
+     * Oracle 使用 MERGE（UPSERT），H2 使用 UPDATE+INSERT 两阶段。
+     * DDL 唯一键：(tenant_id, asset_type, asset_code, asset_version, citation_code, binding_role)。
+     * 字段映射：assetType↔asset_type, assetCode↔asset_code, citationId↔citation_code,
+     * bindingType↔binding_role, documentCode/confidence/description 无 DDL 列，仅内存保留。
+     */
+    public void saveSourceAssetBinding(SourceAssetBinding binding) {
+        if (!enabled()) {
+            return;
+        }
+        if (properties.localFileDatabase()) {
+            saveSourceAssetBindingLocal(binding);
+            return;
+        }
+        String sql = "MERGE INTO src_asset_binding t " +
+                "USING (SELECT ? AS tenant_id, ? AS asset_type, ? AS asset_code, ? AS asset_version, " +
+                "? AS citation_code, ? AS binding_role FROM dual) s " +
+                "ON (t.tenant_id=s.tenant_id AND t.asset_type=s.asset_type AND t.asset_code=s.asset_code " +
+                "AND t.asset_version=s.asset_version AND t.citation_code=s.citation_code " +
+                "AND t.binding_role=s.binding_role) " +
+                "WHEN MATCHED THEN UPDATE SET t.status='ACTIVE', t.created_by=COALESCE(?, t.created_by) " +
+                "WHEN NOT MATCHED THEN INSERT (id, tenant_id, asset_type, asset_code, asset_version, " +
+                "citation_code, binding_role, status, created_by, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            String tenantId = string(binding.getTenantId(), "default");
+            int i = 1;
+            // USING / ON 条件
+            ps.setString(i++, tenantId);
+            ps.setString(i++, binding.getAssetType());
+            ps.setString(i++, binding.getAssetCode());
+            ps.setString(i++, "1"); // asset_version: Java 模型无此字段，默认 "1"
+            ps.setString(i++, binding.getCitationId());
+            ps.setString(i++, binding.getBindingType());
+            // MATCHED UPDATE
+            ps.setString(i++, binding.getCreatedBy());
+            // NOT MATCHED INSERT
+            ps.setLong(i++, extractNumericId(binding.getBindingId()));
+            ps.setString(i++, tenantId);
+            ps.setString(i++, binding.getAssetType());
+            ps.setString(i++, binding.getAssetCode());
+            ps.setString(i++, "1");
+            ps.setString(i++, binding.getCitationId());
+            ps.setString(i++, binding.getBindingType());
+            ps.setString(i++, binding.getCreatedBy());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save source asset binding failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 加载所有 SourceAssetBinding，用于启动期重建内存索引。
+     * 注意：DDL 不含 documentCode/confidence/description/updated_time 列，这些字段在重建后为 null。
+     */
+    public List<SourceAssetBinding> listSourceAssetBindings() {
+        if (!enabled()) {
+            return new ArrayList<SourceAssetBinding>();
+        }
+        String sql = "SELECT tenant_id, id, asset_type, asset_code, citation_code, binding_role, " +
+                "status, created_by, created_time FROM src_asset_binding ORDER BY tenant_id, id";
+        List<SourceAssetBinding> bindings = new ArrayList<SourceAssetBinding>();
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                bindings.add(toSourceAssetBinding(rs));
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("list source asset bindings failed: " + ex.getMessage(), ex);
+        }
+        return bindings;
+    }
+
+    private void saveSourceAssetBindingLocal(SourceAssetBinding binding) {
+        String updateSql = "UPDATE src_asset_binding SET status='ACTIVE', created_by=COALESCE(?, created_by) " +
+                "WHERE tenant_id=? AND asset_type=? AND asset_code=? AND asset_version=? AND citation_code=? AND binding_role=?";
+        String insertSql = "INSERT INTO src_asset_binding (id, tenant_id, asset_type, asset_code, asset_version, " +
+                "citation_code, binding_role, status, created_by, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, CURRENT_TIMESTAMP)";
+        String tenantId = string(binding.getTenantId(), "default");
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, binding.getCreatedBy());
+                ps.setString(i++, tenantId);
+                ps.setString(i++, binding.getAssetType());
+                ps.setString(i++, binding.getAssetCode());
+                ps.setString(i++, "1");
+                ps.setString(i++, binding.getCitationId());
+                ps.setString(i++, binding.getBindingType());
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, extractNumericId(binding.getBindingId()));
+                    ps.setString(i++, tenantId);
+                    ps.setString(i++, binding.getAssetType());
+                    ps.setString(i++, binding.getAssetCode());
+                    ps.setString(i++, "1");
+                    ps.setString(i++, binding.getCitationId());
+                    ps.setString(i++, binding.getBindingType());
+                    ps.setString(i++, binding.getCreatedBy());
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local source asset binding failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private SourceAssetBinding toSourceAssetBinding(ResultSet rs) throws SQLException {
+        SourceAssetBinding binding = new SourceAssetBinding();
+        binding.setTenantId(rs.getString("tenant_id"));
+        binding.setBindingId("BIND_" + rs.getLong("id"));
+        binding.setAssetType(rs.getString("asset_type"));
+        binding.setAssetCode(rs.getString("asset_code"));
+        binding.setCitationId(rs.getString("citation_code"));
+        binding.setBindingType(rs.getString("binding_role"));
+        binding.setCreatedBy(rs.getString("created_by"));
+        binding.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
+        // DDL 不含 documentCode, confidence, description, updated_time 列，重建后为 null
+        return binding;
     }
 
     private void recordAuditLog(String traceId, String engineType, String actionType, String targetType, String targetCode,
