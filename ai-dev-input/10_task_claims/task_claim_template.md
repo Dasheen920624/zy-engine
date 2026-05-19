@@ -9,6 +9,7 @@ owner:
 role:
 status: ACTIVE
 branch:
+target_base_branch: develop
 git_base_commit:
 git_status_at_claim:
 created_at:

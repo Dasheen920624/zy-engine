@@ -1,4 +1,4 @@
-﻿# 提交前自检脚本：AI 完成 PR 后必须跑通此脚本才能 commit + push。
+# 提交前自检脚本：AI 完成 PR 后必须跑通此脚本才能 commit + push。
 #
 # 用法：
 #   .\scripts\verify-pr.ps1 -TaskId PR-V2-01
@@ -64,6 +64,21 @@ function Test-GitRef([string]$Ref) {
   return $LASTEXITCODE -eq 0
 }
 
+function Get-CurrentGitBranch {
+  if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_HEAD_REF)) {
+    return $env:GITHUB_HEAD_REF
+  }
+  if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_REF_NAME)) {
+    return $env:GITHUB_REF_NAME
+  }
+
+  $branch = git branch --show-current 2>$null
+  if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($branch)) {
+    return $branch.Trim()
+  }
+  return ""
+}
+
 function Get-GitBaseRef {
   if (-not [string]::IsNullOrWhiteSpace($env:MEDKERNEL_DIFF_BASE) -and (Test-GitRef $env:MEDKERNEL_DIFF_BASE)) {
     return $env:MEDKERNEL_DIFF_BASE
@@ -80,19 +95,14 @@ function Get-GitBaseRef {
     return $candidate
   }
 
-  $upstream = git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null
-  if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($upstream)) {
-    return $upstream.Trim()
-  }
-
   git rev-parse --verify origin/develop 2>$null | Out-Null
   if ($LASTEXITCODE -eq 0) {
     return "origin/develop"
   }
 
-  git rev-parse --verify origin/main 2>$null | Out-Null
-  if ($LASTEXITCODE -eq 0) {
-    return "origin/main"
+  $upstream = git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null
+  if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($upstream)) {
+    return $upstream.Trim()
   }
 
   return "HEAD"
@@ -131,12 +141,58 @@ function Get-PlaybookTaskSection([string]$Content, [string]$TaskId) {
   return $null
 }
 
+function Test-BranchPolicy {
+  Show-Section "0. 分支策略"
+
+  $eventName = $env:GITHUB_EVENT_NAME
+  $baseBranch = $env:GITHUB_BASE_REF
+  $headBranch = Get-CurrentGitBranch
+
+  if ($eventName -eq "pull_request") {
+    if ($baseBranch -eq "main") {
+      if ($headBranch -eq "develop") {
+        Show-Pass "发布 PR 路径正确：develop -> main"
+      } else {
+        Show-Fail "AI 变更不允许直接 PR 到 main；必须先合入 develop，再由用户发起 develop -> main 发布 PR（当前 $headBranch -> main）"
+      }
+      return
+    }
+
+    if ($baseBranch -eq "develop") {
+      if ($headBranch -eq "main") {
+        Show-Fail "不允许从 main 合回 develop；AI 任务分支必须基于 develop"
+      } else {
+        Show-Pass "AI PR 目标分支正确：$headBranch -> develop"
+      }
+      return
+    }
+
+    Show-Fail "PR 目标分支必须是 develop；只有发布 PR 允许 develop -> main（当前目标：$baseBranch）"
+    return
+  }
+
+  if ([string]::IsNullOrWhiteSpace($eventName)) {
+    if ($headBranch -eq "main") {
+      Show-Fail "当前在 main，AI 禁止在 main 开发、提交或推送；请切到 develop 或基于 origin/develop 的 ai/<TASK-ID>/<slug> 分支"
+    } elseif ([string]::IsNullOrWhiteSpace($headBranch)) {
+      Show-Warn "当前为 detached HEAD，无法识别分支；请确认目标基线是 origin/develop"
+    } else {
+      Show-Pass "当前分支 $headBranch；AI 变更必须以 develop 为合入目标"
+    }
+    return
+  }
+
+  Show-Pass "CI 事件 $eventName；main 只接受 develop -> main 发布路径"
+}
+
 $BaseRef = Get-GitBaseRef
 
 Write-Host ""
 Write-Host "MedKernel | 提交前 DoD 自检 | Task=$TaskId" -ForegroundColor White
 Write-Host "Diff base: $BaseRef" -ForegroundColor Gray
 Write-Host ("=" * 60)
+
+Test-BranchPolicy
 
 if ($BaseRef -ne "HEAD" -and -not (Test-GitRef $BaseRef)) {
   Show-Fail "Diff base 不存在: $BaseRef；CI 需先 fetch 目标分支，PR 场景应有 origin/$env:GITHUB_BASE_REF"
@@ -412,7 +468,7 @@ if ($FAIL_COUNT -gt 0) {
   Write-Host "下一步：" -ForegroundColor White
   Write-Host "  1. git add <相关文件>"
   Write-Host "  2. git commit -m '<中文短句，PR-V2-XX 编号开头>'"
-  Write-Host "  3. git push origin <分支>"
+  Write-Host "  3. git push origin HEAD:develop（或 push 任务分支后开 PR -> develop）"
   Write-Host "  4. 创建 ai-dev-input/11_ai_reviews/pending/<review_id>.md"
   Write-Host "  5. review APPROVED 后归档 claim/review"
   exit 0
