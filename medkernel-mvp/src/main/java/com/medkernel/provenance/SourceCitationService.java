@@ -3,6 +3,8 @@ package com.medkernel.provenance;
 import com.medkernel.persistence.EnginePersistenceService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -31,6 +33,19 @@ public class SourceCitationService {
         this.persistenceService = persistenceService;
     }
 
+    /**
+     * 启动期从持久化层重建内存索引，避免重启后已导入的 citation 在 list/get 接口中"消失"。
+     * 参照 PathwayService 的 @PostConstruct rebuildFromPersistence 模式。
+     */
+    @PostConstruct
+    public void rebuildFromPersistence() {
+        List<SourceCitation> persisted = persistenceService.listSourceCitations();
+        for (SourceCitation citation : persisted) {
+            String key = key(citation.getTenantId(), citation.getCitationId());
+            citationStore.putIfAbsent(key, citation);
+        }
+    }
+
     public Map<String, Object> importCitations(Object request) {
         ImportEnvelope envelope = normalize(request);
         if (envelope.citations.isEmpty()) {
@@ -53,6 +68,7 @@ public class SourceCitationService {
                 }
             }
             citationStore.put(key, citation);
+            persistenceService.saveSourceCitation(citation);
             imported.add(citation.toView());
         }
 

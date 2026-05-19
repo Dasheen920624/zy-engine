@@ -7,6 +7,7 @@ import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientTaskState;
 import com.medkernel.dto.PathwayVariationRecord;
 import com.medkernel.dto.RecommendationCard;
+import com.medkernel.provenance.SourceCitation;
 import com.medkernel.provenance.SourceDocument;
 import com.medkernel.dto.RuleResult;
 import com.medkernel.rule.RuleDefinition;
@@ -1039,6 +1040,144 @@ public class EnginePersistenceService {
         document.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
         document.setUpdatedTime(formatTimestamp(rs.getTimestamp("updated_time")));
         return document;
+    }
+
+    // =========================================================================
+    // SRC_CITATION 持久化
+    // =========================================================================
+
+    /**
+     * 持久化单条 SourceCitation。
+     * Oracle 使用 MERGE（UPSERT），H2 使用 UPDATE+INSERT 两阶段。
+     * 字段映射：citationId↔citation_code, section↔section_code, clause↔clause_no,
+     * page↔page_no, quoteText↔excerpt_text, description↔summary_text, citationType↔evidence_level。
+     */
+    public void saveSourceCitation(SourceCitation citation) {
+        if (!enabled()) {
+            return;
+        }
+        if (properties.localFileDatabase()) {
+            saveSourceCitationLocal(citation);
+            return;
+        }
+        String sql = "MERGE INTO src_citation t " +
+                "USING (SELECT ? AS tenant_id, ? AS citation_code FROM dual) s " +
+                "ON (t.tenant_id=s.tenant_id AND t.citation_code=s.citation_code) " +
+                "WHEN MATCHED THEN UPDATE SET t.document_code=?, t.section_code=?, t.clause_no=?, " +
+                "t.page_no=?, t.excerpt_text=?, t.summary_text=?, t.evidence_level=?, t.status='ACTIVE' " +
+                "WHEN NOT MATCHED THEN INSERT (id, tenant_id, citation_code, document_code, section_code, " +
+                "clause_no, page_no, excerpt_text, summary_text, evidence_level, status, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', SYSTIMESTAMP)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            int i = 1;
+            // USING / ON 条件
+            ps.setString(i++, string(citation.getTenantId(), "default"));
+            ps.setString(i++, citation.getCitationId());
+            // MATCHED UPDATE
+            ps.setString(i++, citation.getDocumentCode());
+            ps.setString(i++, citation.getSection());
+            ps.setString(i++, citation.getClause());
+            ps.setString(i++, citation.getPage());
+            ps.setString(i++, citation.getQuoteText());
+            ps.setString(i++, citation.getDescription());
+            ps.setString(i++, citation.getCitationType());
+            // NOT MATCHED INSERT
+            ps.setLong(i++, Ids.next());
+            ps.setString(i++, string(citation.getTenantId(), "default"));
+            ps.setString(i++, citation.getCitationId());
+            ps.setString(i++, citation.getDocumentCode());
+            ps.setString(i++, citation.getSection());
+            ps.setString(i++, citation.getClause());
+            ps.setString(i++, citation.getPage());
+            ps.setString(i++, citation.getQuoteText());
+            ps.setString(i++, citation.getDescription());
+            ps.setString(i++, citation.getCitationType());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save source citation failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 加载所有 SourceCitation，用于启动期重建内存索引。
+     */
+    public List<SourceCitation> listSourceCitations() {
+        if (!enabled()) {
+            return new ArrayList<SourceCitation>();
+        }
+        String sql = "SELECT tenant_id, citation_code, document_code, section_code, clause_no, " +
+                "page_no, excerpt_text, summary_text, evidence_level, created_time " +
+                "FROM src_citation ORDER BY tenant_id, citation_code";
+        List<SourceCitation> citations = new ArrayList<SourceCitation>();
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                citations.add(toSourceCitation(rs));
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("list source citations failed: " + ex.getMessage(), ex);
+        }
+        return citations;
+    }
+
+    private void saveSourceCitationLocal(SourceCitation citation) {
+        String updateSql = "UPDATE src_citation SET document_code=?, section_code=?, clause_no=?, " +
+                "page_no=?, excerpt_text=?, summary_text=?, evidence_level=?, status='ACTIVE' " +
+                "WHERE tenant_id=? AND citation_code=?";
+        String insertSql = "INSERT INTO src_citation (id, tenant_id, citation_code, document_code, " +
+                "section_code, clause_no, page_no, excerpt_text, summary_text, evidence_level, status, created_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP)";
+        try (Connection connection = connection()) {
+            int updated;
+            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+                int i = 1;
+                ps.setString(i++, citation.getDocumentCode());
+                ps.setString(i++, citation.getSection());
+                ps.setString(i++, citation.getClause());
+                ps.setString(i++, citation.getPage());
+                ps.setString(i++, citation.getQuoteText());
+                ps.setString(i++, citation.getDescription());
+                ps.setString(i++, citation.getCitationType());
+                ps.setString(i++, string(citation.getTenantId(), "default"));
+                ps.setString(i++, citation.getCitationId());
+                updated = ps.executeUpdate();
+            }
+            if (updated == 0) {
+                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                    int i = 1;
+                    ps.setLong(i++, Ids.next());
+                    ps.setString(i++, string(citation.getTenantId(), "default"));
+                    ps.setString(i++, citation.getCitationId());
+                    ps.setString(i++, citation.getDocumentCode());
+                    ps.setString(i++, citation.getSection());
+                    ps.setString(i++, citation.getClause());
+                    ps.setString(i++, citation.getPage());
+                    ps.setString(i++, citation.getQuoteText());
+                    ps.setString(i++, citation.getDescription());
+                    ps.setString(i++, citation.getCitationType());
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save local source citation failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private SourceCitation toSourceCitation(ResultSet rs) throws SQLException {
+        SourceCitation citation = new SourceCitation();
+        citation.setTenantId(rs.getString("tenant_id"));
+        citation.setCitationId(rs.getString("citation_code"));
+        citation.setDocumentCode(rs.getString("document_code"));
+        citation.setSection(rs.getString("section_code"));
+        citation.setClause(rs.getString("clause_no"));
+        citation.setPage(rs.getString("page_no"));
+        citation.setQuoteText(rs.getString("excerpt_text"));
+        citation.setDescription(rs.getString("summary_text"));
+        citation.setCitationType(rs.getString("evidence_level"));
+        citation.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
+        return citation;
     }
 
     private void recordAuditLog(String traceId, String engineType, String actionType, String targetType, String targetCode,

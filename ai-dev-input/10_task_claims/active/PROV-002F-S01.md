@@ -7,7 +7,7 @@ slice: S01
 title: SRC_CITATION 持久化接通（REVIEW-FIX-002 follow-up）
 owner: CodeBuddy
 role: 中级
-status: ACTIVE
+status: DONE
 branch: develop
 target_base_branch: develop
 git_base_commit: a68cf8f4c8df6bdfb8469064a08156520450a831
@@ -68,12 +68,12 @@ PROV-002 ✅ DONE
 ## Status Sync Checkpoints
 
 ```text
-claim_pushed_before_code: pending
-task_ledger_in_progress: pending
+claim_pushed_before_code: true
+task_ledger_in_progress: true
 git_status_checked_before_edit: true
-last_heartbeat_pushed: pending
+last_heartbeat_pushed: true
 review_status_synced: N/A
-task_ledger_done_synced: pending
+task_ledger_done_synced: true
 commit_hash_recorded: pending
 post_push_git_status_clean: pending
 task_lock_removed_on_archive: pending
@@ -82,5 +82,10 @@ task_lock_removed_on_archive: pending
 ## Progress
 
 ```text
-认领任务，准备开始开发
+1. 分析 SourceCitation.java 字段与 DDL src_citation 列名映射
+2. EnginePersistenceService 增加 saveSourceCitation (Oracle MERGE + H2 UPDATE/INSERT)
+3. EnginePersistenceService 增加 listSourceCitations + toSourceCitation(ResultSet)
+4. SourceCitationService 增加 @PostConstruct rebuildFromPersistence
+5. importCitations 中添加 persistenceService.saveSourceCitation() 调用
+6. 更新任务台账至 DONE
 ```
