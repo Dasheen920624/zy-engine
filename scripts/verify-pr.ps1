@@ -77,6 +77,7 @@ function Get-GitBaseRef {
     if (Test-GitRef $env:GITHUB_BASE_REF) {
       return $env:GITHUB_BASE_REF
     }
+    return $candidate
   }
 
   $upstream = git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null
@@ -136,6 +137,10 @@ Write-Host ""
 Write-Host "MedKernel | 提交前 DoD 自检 | Task=$TaskId" -ForegroundColor White
 Write-Host "Diff base: $BaseRef" -ForegroundColor Gray
 Write-Host ("=" * 60)
+
+if ($BaseRef -ne "HEAD" -and -not (Test-GitRef $BaseRef)) {
+  Show-Fail "Diff base 不存在: $BaseRef；CI 需先 fetch 目标分支，PR 场景应有 origin/$env:GITHUB_BASE_REF"
+}
 
 # ============================================================
 # 1. 工作树或 PR 差异有改动

@@ -47,6 +47,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Prepare diff base
+        shell: pwsh
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq "pull_request" -and $env:GITHUB_BASE_REF) {
+            git fetch --no-tags origin "+refs/heads/$env:GITHUB_BASE_REF:refs/remotes/origin/$env:GITHUB_BASE_REF"
+            git rev-parse "origin/$env:GITHUB_BASE_REF"
+          } elseif ($env:GITHUB_EVENT_NAME -eq "push" -and $env:EVENT_BEFORE -and $env:EVENT_BEFORE -notmatch '^0{40}$') {
+            git rev-parse $env:EVENT_BEFORE
+          }
+
       - name: Run verify-pr.ps1 (skip backend/frontend build, only guard rules)
         shell: pwsh
         env:
