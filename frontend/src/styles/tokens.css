@@ -1,5 +1,13 @@
-/* MedKernel design tokens.
- * This is the only frontend style file allowed to define raw color values.
+/* MedKernel design tokens (clinical-navy 默认主题 CSS 变量).
+ *
+ * This is the only CSS file allowed to define raw color values (forbidden-patterns §1.1).
+ * Sibling files in the token layer (all whitelisted by ESLint no-hardcoded-color):
+ *   - styles/tokens.ts        原色板 hex 字面量，供 JS 端主题切换使用（不与本文件重复，是不同表达层）
+ *   - styles/theme-tokens.ts  AntD ConfigProvider 桥接（用 var(--mk-*) 引用本文件的变量）
+ *   - theme/tokens.ts         主题注册表 + 切换逻辑（运行时 setProperty 覆盖本文件变量）
+ *
+ * 改动 --mk-* 变量时，请同步检查 styles/tokens.ts 是否有对应 hex 需要更新；
+ * 反向亦然。详见 docs/engineering/AUDIT-20260519 §3.7。
  */
 
 :root {

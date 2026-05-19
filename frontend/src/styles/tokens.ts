@@ -1,3 +1,22 @@
+/**
+ * 原色板（hex 字面量），供运行时主题切换使用。
+ *
+ * <p>本文件不是 CSS 变量，不参与运行时样式渲染。运行时的 `--mk-*` CSS 变量
+ * 由 {@link ../styles/tokens.css} 提供（clinical-navy 默认主题）。
+ *
+ * <p>当用户切换主题（{@link ../theme/ThemeProvider.tsx}）时，{@link ../theme/tokens.ts}
+ * 会从本文件读取目标主题的 hex 值，通过 `document.documentElement.style.setProperty`
+ * 覆盖 `--mk-*` CSS 变量，从而在不刷新页面的前提下完成换肤。
+ *
+ * <p>本文件经 ESLint 规则 `no-hardcoded-color` 文件名豁免（filename.includes("tokens.ts")），
+ * 是允许出现 hex 的极少数文件之一。所有 hex 改动必须同步检查：
+ * <ol>
+ *   <li>{@link ../styles/tokens.css} 中对应 `--mk-*` 默认值是否需要同步</li>
+ *   <li>{@link ../theme/tokens.ts} 中 `BASE_THEME_VALUES` / `BASE_APP_COLORS` 是否引用</li>
+ * </ol>
+ *
+ * 详细架构见 docs/engineering/AUDIT-20260519 §3.7。
+ */
 export const COLOR_TOKEN = {
   white: "#ffffff",
   black: "#000000",
