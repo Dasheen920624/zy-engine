@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button, Descriptions, Spin, Typography, Tag } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { StatusBadge } from "../../components";
+import { StatusBadge, SourceInfo } from "../../components";
 import { getPathway } from "../../api/pathway";
 import type { PathwayDetail } from "../../api/types";
 
@@ -41,6 +41,7 @@ const PathwayDetail: React.FC = () => {
 
       <Title level={3}>
         {detail?.pathway_code || code}
+        <SourceInfo source={{ documentName: detail?.pathway_code ?? "", documentId: detail?.pathway_code ?? "" }} />
       </Title>
 
       <Descriptions bordered column={2} style={{ marginBottom: 24 }}>

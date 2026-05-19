@@ -32,6 +32,7 @@ import type {
   DoctorPerformance,
 } from "../../api/types";
 import { fetchDepartmentDetail } from "../../api/quality";
+import { SourceInfo } from "../../components";
 
 const { Text, Title } = Typography;
 
@@ -204,6 +205,7 @@ export default function DepartmentDrillDown() {
             <Title level={4} style={{ margin: 0 }}>
               {displayDetail.departmentCode} 质控钻取
             </Title>
+            <SourceInfo source={{ documentName: "科室下钻", documentId: "quality-department" }} />
             <Text type="secondary">
               时间：{PERIOD_LABEL[period] || "今日"}
             </Text>

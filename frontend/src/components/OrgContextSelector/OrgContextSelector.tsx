@@ -172,19 +172,19 @@ export function OrgContextSelector({
   const queryClient = useQueryClient();
 
   const options = useMemo(
-    () => buildCascaderOptions(allowedScopes, level),
+    () => buildCascaderOptions(allowedScopes ?? [], level),
     [allowedScopes, level],
   );
 
   const currentValue = useMemo(
-    () => getCurrentCascaderValue(current, level),
+    () => current ? getCurrentCascaderValue(current, level) : [],
     [current, level],
   );
 
   const handleChange = useCallback(
     (values: (string | number)[]) => {
       const strValues = values.map(String);
-      const found = findScopeByValues(allowedScopes, strValues, level);
+      const found = findScopeByValues(allowedScopes ?? [], strValues, level);
       if (found) {
         // 1) 同步写入全局 store —— axios 拦截器 applyOrgHeaders 读的就是这里，
         //    保证下一个请求自动带上新的 X-Hospital-Code 等 Header（AUDIT §3.2 修复）。
@@ -196,7 +196,7 @@ export function OrgContextSelector({
         } catch {
           /* ignore */
         }
-        onChange(found);
+        onChange?.(found);
         queryClient.invalidateQueries();
       }
     },
@@ -224,8 +224,8 @@ export function OrgContextSelector({
           }}
         >
           <HomeOutlined />
-          {current.hospitalCode}
-          {level === 'department' && current.departmentCode && (
+          {current?.hospitalCode}
+          {level === 'department' && current?.departmentCode && (
             <>
               <TeamOutlined style={{ marginLeft: 'var(--mk-space-2)' }} />
               {current.departmentCode}

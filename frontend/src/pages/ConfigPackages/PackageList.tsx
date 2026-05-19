@@ -29,6 +29,7 @@ import type {
   ScopeLevel,
 } from "@/api/types";
 import { StatusBadge } from "@/components/StatusBadge";
+import { OrgContextSelector } from "../../components";
 import type { FilterState } from "./index";
 
 const { Text } = Typography;
@@ -281,6 +282,7 @@ export default function PackageList({
             />
           </div>
           <Space>
+            <OrgContextSelector />
             <Button size="small" icon={<FilterOutlined />} onClick={onFilterReset}>
               重置
             </Button>

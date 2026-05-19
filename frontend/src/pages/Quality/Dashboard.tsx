@@ -36,6 +36,7 @@ import {
   fetchDepartmentRanking,
   fetchTrendData,
 } from "../../api/quality";
+import { SourceInfo } from "../../components";
 import { useNavigate } from "react-router-dom";
 
 const { Text, Title } = Typography;
@@ -236,6 +237,7 @@ export default function QualityDashboard() {
         <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <Title level={4} style={{ margin: 0 }}>院级质控驾驶舱</Title>
+            <SourceInfo source={{ documentName: "质控看板", documentId: "quality-dashboard" }} />
             <Text type="secondary">
               时间：{PERIOD_LABEL[period] || "今日"} · 组织：全院
             </Text>

@@ -15,7 +15,6 @@ import {
   Table,
   Tabs,
   Tag,
-  Tooltip,
   Typography,
   message,
 } from "antd";
@@ -42,6 +41,7 @@ import {
   batchAdoptMappings,
   rejectAiCandidate,
 } from "../../api/terminology";
+import { SourceInfo, AiGeneratedBadge, OrgContextSelector } from "../../components";
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -64,17 +64,6 @@ const STANDARD_DICT_OPTIONS = [
   { value: "ATC", label: "ATC 药品分类" },
   { value: "SNOMED-CT", label: "SNOMED-CT 临床术语" },
 ];
-
-// AI Badge 组件
-function AiBadge({ confidence }: { confidence?: number }) {
-  return (
-    <Tooltip title={confidence ? `AI置信度: ${(confidence * 100).toFixed(0)}%` : "AI候选"}>
-      <Tag icon={<ExperimentOutlined />} color="processing">
-        AI{confidence ? ` ${(confidence * 100).toFixed(0)}%` : ""}
-      </Tag>
-    </Tooltip>
-  );
-}
 
 // DangerConfirm 组件（二次确认）
 function DangerConfirm({
@@ -425,7 +414,7 @@ export default function MappingWorkbench() {
       render: (_, record) => (
         <Space direction="vertical" size={0}>
           <Space>
-            <AiBadge confidence={record.confidence} />
+            <AiGeneratedBadge confidence={record.confidence} />
             <Text strong>{record.proposedStandardCode}</Text>
           </Space>
           <Text type="secondary" style={{ fontSize: 12 }}>
@@ -463,9 +452,15 @@ export default function MappingWorkbench() {
   return (
     <div style={{ padding: 24 }}>
       <Card
-        title="字典映射工作台"
+        title={
+          <Space>
+            <span>字典映射工作台</span>
+            <SourceInfo source={{ documentName: "术语映射", documentId: "terminology-mapping" }} />
+          </Space>
+        }
         extra={
           <Space>
+            <OrgContextSelector />
             <Button icon={<ReloadOutlined />} onClick={fetchData}>
               刷新
             </Button>

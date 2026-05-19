@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Input, Select, Table, Typography, Space } from "antd";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { StatusBadge } from "../../components";
+import { StatusBadge, OrgContextSelector } from "../../components";
 import { listPathways } from "../../api/pathway";
 import type { PathwaySummary, ListPathwaysParams } from "../../api/types";
 import ActionMenu from "./components/ActionMenu";
@@ -101,6 +101,7 @@ const PathwayList: React.FC = () => {
       </Title>
 
       <Space style={{ marginBottom: 16 }} size="middle">
+        <OrgContextSelector />
         <Button
           type="primary"
           icon={<PlusOutlined />}

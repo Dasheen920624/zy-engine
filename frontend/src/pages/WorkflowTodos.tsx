@@ -44,6 +44,7 @@ import {
   rejectTask,
   delegateTask,
 } from "../api/workflow";
+import { OrgContextSelector } from "../components";
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -474,6 +475,7 @@ export default function WorkflowTodos() {
       {/* 筛选栏 */}
       <Card style={{ marginBottom: 16 }}>
         <Space>
+          <OrgContextSelector />
           <Select
             placeholder="状态筛选"
             allowClear

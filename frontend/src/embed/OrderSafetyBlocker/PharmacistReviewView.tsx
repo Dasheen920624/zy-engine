@@ -50,10 +50,10 @@ export default function PharmacistReviewView({
   };
 
   return (
-    <div style={{ border: '1px solid var(--mk-border, #d9d9d9)', borderRadius: 8, padding: 16 }}>
+    <div style={{ border: '1px solid var(--mk-border)', borderRadius: 8, padding: 16 }}>
       {/* 标题 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <StopOutlined style={{ color: 'var(--mk-danger, #ff4d4f)', fontSize: 18 }} />
+        <StopOutlined style={{ color: 'var(--mk-danger)', fontSize: 18 }} />
         <Text strong style={{ fontSize: 16 }}>
           药师审方
         </Text>
@@ -89,7 +89,7 @@ export default function PharmacistReviewView({
       {/* 医生决策详情 */}
       <div
         style={{
-          background: 'var(--mk-bg-secondary, #fafafa)',
+          background: 'var(--mk-bg-secondary)',
           borderRadius: 6,
           padding: 12,
           marginBottom: 16,
@@ -112,9 +112,9 @@ export default function PharmacistReviewView({
               style={{
                 margin: 0,
                 padding: '8px 12px',
-                background: 'var(--mk-bg-white, #fff)',
+                background: 'var(--mk-bg-white)',
                 borderRadius: 4,
-                border: '1px solid var(--mk-border-light, #f0f0f0)',
+                border: '1px solid var(--mk-border-light)',
               }}
             >
               {actionLog.reason}
