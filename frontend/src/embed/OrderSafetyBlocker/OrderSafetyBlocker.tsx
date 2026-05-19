@@ -1,203 +1,247 @@
 import { useState, useCallback } from 'react';
-import { Modal, Button, Space, Typography, Descriptions, Tag, Radio, Alert } from 'antd';
+import { Modal, Button, Typography, Space, Divider, Tag } from 'antd';
 import {
   StopOutlined,
+  WarningOutlined,
   ExclamationCircleOutlined,
+  MedicineBoxOutlined,
   EditOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import type { OrderSafetyEvent, DoctorDecision } from './types';
+import type { OrderSafetyBlockerProps, OrderSafetyDecision } from './OrderSafetyBlocker.types';
 import ReasonDialog from './ReasonDialog';
+import { recordDecision } from '../../api/ruleActionLog';
 
-const { Text, Title } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
-interface OrderSafetyBlockerProps {
-  /** 拦截事件 */
-  event: OrderSafetyEvent;
-  /** 是否可见 */
-  visible: boolean;
-  /** 取消医嘱回调 */
-  onCancelOrder: (eventId: string) => void;
-  /** 修改剂量回调 */
-  onModifyDosage: (eventId: string) => void;
-  /** 坚持使用回调（带理由和知情同意） */
-  onInsist: (eventId: string, reason: string, informedConsent: boolean) => void;
-  /** 关闭回调（BLOCK 模式下不允许直接关闭） */
-  onClose?: () => void;
-}
-
-/**
- * 医嘱安全拦截弹窗（BLOCK 模式）。
- * <p>
- * 必须确认以下之一才能继续：
- * <ul>
- *   <li>取消该医嘱</li>
- *   <li>修改为低剂量方案</li>
- *   <li>坚持使用（必须填写理由 ≥ 20 字 + 知情同意复选）</li>
- * </ul>
- * </p>
- *
- * <p>这是整个平台唯一用拦截弹窗的场景——因为出血风险是医疗安全 P0 红线。</p>
- */
 export default function OrderSafetyBlocker({
-  event,
-  visible,
-  onCancelOrder,
-  onModifyDosage,
-  onInsist,
+  open,
+  ruleCode,
+  ruleVersion,
+  patientId,
+  encounterId,
+  orderId,
+  actionMode,
+  severity,
+  title,
+  patientInfo,
+  orderInfo,
+  riskDescription,
+  evidence,
+  source,
+  onDecision,
+  onClose,
 }: OrderSafetyBlockerProps) {
-  const [selectedDecision, setSelectedDecision] = useState<DoctorDecision | null>(null);
-  const [reasonDialogVisible, setReasonDialogVisible] = useState(false);
+  const [reasonDialogOpen, setReasonDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
 
-  const handleDecision = useCallback(
-    (decision: DoctorDecision) => {
-      setSelectedDecision(decision);
-      switch (decision) {
-        case 'CANCEL':
-          onCancelOrder(event.event_id);
-          break;
-        case 'MODIFY':
-          onModifyDosage(event.event_id);
-          break;
-        case 'INSIST':
-          setReasonDialogVisible(true);
-          break;
+  const handleCancelOrder = useCallback(async () => {
+    setLoading(true);
+    try {
+      await onDecision('CANCEL');
+      setSuccessDialogOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [onDecision]);
+
+  const handleModifyDose = useCallback(async () => {
+    setLoading(true);
+    try {
+      await onDecision('MODIFY');
+      setSuccessDialogOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [onDecision]);
+
+  const handleContinue = useCallback(() => {
+    setReasonDialogOpen(true);
+  }, []);
+
+  const handleReasonConfirm = useCallback(
+    async (data: { reason: string; informedConsent: boolean; familyNotified: boolean }) => {
+      setLoading(true);
+      try {
+        await recordDecision({
+          rule_code: ruleCode,
+          rule_version: ruleVersion,
+          patient_id: patientId,
+          encounter_id: encounterId,
+          order_id: orderId,
+          action_mode: actionMode,
+          decision: 'CONTINUE',
+          decision_by: 'current_user', // 实际应从上下文获取
+          reason: data.reason,
+          informed_consent: data.informedConsent,
+          family_notified: data.familyNotified,
+        });
+        await onDecision('CONTINUE', data);
+        setReasonDialogOpen(false);
+        setSuccessDialogOpen(true);
+      } finally {
+        setLoading(false);
       }
     },
-    [event.event_id, onCancelOrder, onModifyDosage],
+    [ruleCode, ruleVersion, patientId, encounterId, orderId, actionMode, onDecision]
   );
 
-  const handleInsistConfirm = useCallback(
-    (reason: string, informedConsent: boolean) => {
-      setReasonDialogVisible(false);
-      onInsist(event.event_id, reason, informedConsent);
-    },
-    [event.event_id, onInsist],
-  );
-
-  const handleInsistCancel = useCallback(() => {
-    setReasonDialogVisible(false);
-    setSelectedDecision(null);
+  const handleReasonCancel = useCallback(() => {
+    setReasonDialogOpen(false);
   }, []);
+
+  const handleSuccessClose = useCallback(() => {
+    setSuccessDialogOpen(false);
+    onClose();
+  }, [onClose]);
+
+  const severityIcon = () => {
+    switch (severity) {
+      case 'CRITICAL':
+        return <StopOutlined style={{ color: 'var(--mk-danger)', fontSize: 24 }} />;
+      case 'HIGH':
+        return <WarningOutlined style={{ color: 'var(--mk-warning)', fontSize: 24 }} />;
+      case 'MEDIUM':
+        return <ExclamationCircleOutlined style={{ color: 'var(--mk-info)', fontSize: 24 }} />;
+      default:
+        return <ExclamationCircleOutlined style={{ color: 'var(--mk-info)', fontSize: 24 }} />;
+    }
+  };
+
+  const severityColor = () => {
+    switch (severity) {
+      case 'CRITICAL':
+        return 'var(--mk-danger)';
+      case 'HIGH':
+        return 'var(--mk-warning)';
+      case 'MEDIUM':
+        return 'var(--mk-info)';
+      default:
+        return 'var(--mk-info)';
+    }
+  };
 
   return (
     <>
       <Modal
-        open={visible}
         title={
           <Space>
-            <StopOutlined style={{ color: 'var(--mk-danger, #ff4d4f)', fontSize: 20 }} />
-            <span>医嘱拦截 — {event.rule_name}</span>
+            {severityIcon()}
+            <span>医嘱拦截 — {title}</span>
           </Space>
         }
+        open={open}
         footer={null}
-        closable={false}
-        maskClosable={false}
         width={560}
-        styles={{
-          body: { padding: '16px 24px' },
-        }}
+        maskClosable={false}
+        closable={false}
+        destroyOnClose
       >
-        {/* 患者信息 */}
-        <Descriptions
-          column={2}
-          size="small"
-          style={{ marginBottom: 16 }}
-          labelStyle={{ color: 'var(--mk-text-secondary, #8c8c8c)', width: 70 }}
-        >
-          <Descriptions.Item label="患者">
-            {event.patient_name || event.patient_id}
-            {event.patient_age && `  ${event.patient_age} 岁`}
-          </Descriptions.Item>
-          <Descriptions.Item label="住院号">
-            {event.admission_no || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="医嘱" span={2}>
-            <Text strong>{event.order_name}</Text>
-            {event.order_dosage && <Text type="secondary"> {event.order_dosage}</Text>}
-          </Descriptions.Item>
-        </Descriptions>
-
-        {/* 拦截原因 */}
-        <Alert
-          type="warning"
-          showIcon
-          icon={<ExclamationCircleOutlined />}
-          message={
-            <span>
-              <Text strong>⚠️ {event.intercept_reason}</Text>
-            </span>
-          }
-          style={{ marginBottom: 16 }}
-        />
-
-        {/* 来源 */}
-        {event.source && (
-          <div style={{ marginBottom: 16, fontSize: 12, color: 'var(--mk-text-secondary, #8c8c8c)' }}>
-            来源：{event.source.documentName}
-            {event.source.section && ` ${event.source.section}`}
-            {event.source.publishYear && ` (${event.source.publishYear})`}
-          </div>
-        )}
-
-        {/* 决策选项 */}
         <div style={{ marginBottom: 16 }}>
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
-            您必须确认以下之一才能继续：
-          </Text>
-          <Radio.Group
-            value={selectedDecision}
-            onChange={(e) => handleDecision(e.target.value)}
-            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-          >
-            <Radio value="CANCEL">
-              <CloseCircleOutlined style={{ color: 'var(--mk-danger, #ff4d4f)', marginRight: 4 }} />
-              取消该医嘱
-            </Radio>
-            <Radio value="MODIFY">
-              <EditOutlined style={{ color: 'var(--mk-warning, #faad14)', marginRight: 4 }} />
-              修改为低剂量方案
-            </Radio>
-            <Radio value="INSIST">
-              <ExclamationCircleOutlined style={{ color: 'var(--mk-info, #1890ff)', marginRight: 4 }} />
-              已评估出血/血栓风险，仍坚持使用（必须填写理由）
-            </Radio>
-          </Radio.Group>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text strong>患者：{patientInfo.name} {patientInfo.age}岁</Text>
+            <Text type="secondary">住院号 {patientInfo.patientId}</Text>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text>医嘱：{orderInfo.name}</Text>
+            <Text type="secondary">{orderInfo.dose} {orderInfo.frequency}</Text>
+          </div>
         </div>
 
-        {/* 底部按钮 */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <Divider style={{ margin: '12px 0' }} />
+
+        <div style={{ marginBottom: 16 }}>
+          <Tag color={severityColor()} style={{ marginBottom: 8 }}>
+            风险等级：{severity}
+          </Tag>
+          <Paragraph style={{ marginBottom: 8 }}>
+            <WarningOutlined style={{ color: 'var(--mk-warning)', marginRight: 8 }} />
+            {riskDescription}
+          </Paragraph>
+          <Paragraph type="secondary" style={{ marginBottom: 8, fontSize: 13 }}>
+            {evidence}
+          </Paragraph>
+          {source && (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              来源：{source.documentName}
+              {source.section && ` ${source.section}`}
+              {source.publishYear && ` (${source.publishYear})`}
+            </Text>
+          )}
+        </div>
+
+        <Divider style={{ margin: '12px 0' }} />
+
+        <div style={{ marginBottom: 16 }}>
+          <Text strong>您必须确认以下之一才能继续：</Text>
+          <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+            <li>
+              <Text>已评估出血/血栓风险，仍坚持使用（必须填写理由）</Text>
+            </li>
+            <li>
+              <Text>修改为低剂量方案</Text>
+            </li>
+            <li>
+              <Text>取消该医嘱</Text>
+            </li>
+          </ul>
+        </div>
+
+        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
           <Button
-            danger
             icon={<CloseCircleOutlined />}
-            onClick={() => handleDecision('CANCEL')}
+            onClick={handleCancelOrder}
+            loading={loading}
           >
             取消该医嘱
           </Button>
           <Button
             icon={<EditOutlined />}
-            onClick={() => handleDecision('MODIFY')}
+            onClick={handleModifyDose}
+            loading={loading}
           >
             修改剂量
           </Button>
           <Button
             type="primary"
-            icon={<ExclamationCircleOutlined />}
-            onClick={() => handleDecision('INSIST')}
+            danger
+            icon={<MedicineBoxOutlined />}
+            onClick={handleContinue}
+            loading={loading}
           >
             坚持使用
           </Button>
-        </div>
+        </Space>
       </Modal>
 
-      {/* 坚持使用理由对话框 */}
       <ReasonDialog
-        visible={reasonDialogVisible}
-        onConfirm={handleInsistConfirm}
-        onCancel={handleInsistCancel}
-        ruleName={event.rule_name}
-        orderName={event.order_name}
+        open={reasonDialogOpen}
+        onConfirm={handleReasonConfirm}
+        onCancel={handleReasonCancel}
+        loading={loading}
       />
+
+      <Modal
+        title="医嘱已记录"
+        open={successDialogOpen}
+        onOk={handleSuccessClose}
+        onCancel={handleSuccessClose}
+        footer={[
+          <Button key="close" onClick={handleSuccessClose}>
+            关闭
+          </Button>,
+        ]}
+        width={400}
+      >
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+          <MedicineBoxOutlined style={{ fontSize: 48, color: 'var(--mk-success)', marginBottom: 16 }} />
+          <Title level={4} style={{ marginBottom: 8 }}>决策已记录</Title>
+          <Text type="secondary">
+            您的决策已写入审计，药师审方时会看到您的理由
+          </Text>
+        </div>
+      </Modal>
     </>
   );
 }

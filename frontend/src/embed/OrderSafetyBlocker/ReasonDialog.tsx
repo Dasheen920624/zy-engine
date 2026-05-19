@@ -1,166 +1,130 @@
-import { useState, useCallback } from 'react';
-import { Modal, Form, Input, Checkbox, Button, Typography, Space, Alert } from 'antd';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { useState } from 'react';
+import { Modal, Form, Input, Checkbox, Button, Typography, Space } from 'antd';
+import type { ReasonDialogProps } from './OrderSafetyBlocker.types';
 
-const { Text } = Typography;
 const { TextArea } = Input;
+const { Text } = Typography;
 
-interface ReasonDialogProps {
-  /** 是否可见 */
-  visible: boolean;
-  /** 确认回调（带理由和知情同意） */
-  onConfirm: (reason: string, informedConsent: boolean) => void;
-  /** 取消回调 */
-  onCancel: () => void;
-  /** 规则名称 */
-  ruleName: string;
-  /** 医嘱名称 */
-  orderName: string;
-}
-
-/**
- * "坚持使用"理由对话框。
- * <p>
- * 要求：
- * <ul>
- *   <li>理由 ≥ 20 字</li>
- *   <li>勾选"已告知患者及家属出血风险"</li>
- *   <li>勾选"已签署知情同意书"</li>
- * </ul>
- * </p>
- */
 export default function ReasonDialog({
-  visible,
+  open,
   onConfirm,
   onCancel,
-  ruleName,
-  orderName,
+  loading = false,
 }: ReasonDialogProps) {
   const [form] = Form.useForm();
   const [reasonLength, setReasonLength] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleOk = useCallback(async () => {
+  const handleOk = async () => {
     try {
-      setSubmitting(true);
       const values = await form.validateFields();
-      onConfirm(values.reason, true);
-    } catch {
-      // 表单校验失败，不关闭
-    } finally {
-      setSubmitting(false);
+      if (values.reason.length < 20) {
+        return;
+      }
+      onConfirm({
+        reason: values.reason,
+        informedConsent: values.informedConsent || false,
+        familyNotified: values.familyNotified || false,
+      });
+    } catch (error) {
+      // Validation failed
     }
-  }, [form, onConfirm]);
+  };
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     form.resetFields();
     setReasonLength(0);
     onCancel();
-  }, [form, onCancel]);
+  };
 
-  const handleReasonChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setReasonLength(e.target.value.length);
-    },
-    [],
-  );
+  const handleReasonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setReasonLength(e.target.value.length);
+  };
 
   return (
     <Modal
-      open={visible}
-      title={
-        <Space>
-          <ExclamationCircleOutlined style={{ color: 'var(--mk-warning, #faad14)' }} />
-          <span>填写坚持使用理由</span>
-        </Space>
-      }
-      onOk={handleOk}
+      title="填写坚持使用理由"
+      open={open}
       onCancel={handleCancel}
-      okText="确认坚持使用并记录"
-      cancelText="取消"
-      okButtonProps={{ loading: submitting, danger: true }}
-      width={480}
+      footer={null}
+      width={520}
       maskClosable={false}
+      destroyOnClose
     >
-      <Alert
-        type="info"
-        message={
-          <span>
-            规则 <Text strong>{ruleName}</Text> 拦截了医嘱 <Text strong>{orderName}</Text>
-          </span>
-        }
-        style={{ marginBottom: 16 }}
-      />
-
-      <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
-        请说明您评估了哪些因素后决定坚持使用：
-      </Text>
+      <div style={{ marginBottom: 16 }}>
+        <Text type="secondary">
+          请说明您评估了哪些因素后决定坚持使用该医嘱：
+        </Text>
+      </div>
 
       <Form form={form} layout="vertical">
         <Form.Item
           name="reason"
+          label="坚持使用理由"
           rules={[
-            { required: true, message: '请填写理由' },
+            { required: true, message: '请填写坚持使用理由' },
             {
               validator: (_, value) => {
-                if (value && value.trim().length < 20) {
-                  return Promise.reject(new Error('理由不少于 20 字'));
+                if (value && value.length < 20) {
+                  return Promise.reject('理由至少需要20个字');
                 }
                 return Promise.resolve();
               },
             },
           ]}
-          extra={
-            <Text
-              type={reasonLength < 20 ? 'danger' : 'secondary'}
-              style={{ fontSize: 11 }}
-            >
-              {reasonLength}/20 字（最少 20 字）
-            </Text>
-          }
         >
           <TextArea
             rows={4}
-            placeholder="例如：患者已确诊深静脉血栓，血栓风险高于出血风险，已与家属沟通，签署知情同意。"
+            placeholder="请详细说明您对出血/血栓风险的评估，以及坚持使用的临床依据..."
             onChange={handleReasonChange}
-            maxLength={500}
             showCount
+            maxLength={500}
           />
         </Form.Item>
 
+        <div style={{ marginBottom: 8 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            当前字数：{reasonLength}/20（最少需要20个字）
+          </Text>
+        </div>
+
         <Form.Item
-          name="informedRisk"
+          name="informedConsent"
           valuePropName="checked"
           rules={[
             {
-              validator: (_, value) =>
-                value ? Promise.resolve() : Promise.reject(new Error('必须确认已告知出血风险')),
+              validator: (_, value) => {
+                if (!value) {
+                  return Promise.reject('必须勾选知情同意确认');
+                }
+                return Promise.resolve();
+              },
             },
           ]}
         >
-          <Checkbox>已告知患者及家属出血风险</Checkbox>
+          <Checkbox>已告知患者及家属出血风险，并签署知情同意书</Checkbox>
         </Form.Item>
 
         <Form.Item
-          name="signedConsent"
+          name="familyNotified"
           valuePropName="checked"
-          rules={[
-            {
-              validator: (_, value) =>
-                value ? Promise.resolve() : Promise.reject(new Error('必须确认已签署知情同意书')),
-            },
-          ]}
         >
-          <Checkbox>已签署知情同意书</Checkbox>
+          <Checkbox>已与家属充分沟通病情及治疗方案</Checkbox>
+        </Form.Item>
+
+        <Form.Item>
+          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+            <Button onClick={handleCancel}>取消</Button>
+            <Button
+              type="primary"
+              danger
+              onClick={handleOk}
+              loading={loading}
+            >
+              确认坚持使用并记录
+            </Button>
+          </Space>
         </Form.Item>
       </Form>
-
-      <Alert
-        type="warning"
-        showIcon
-        message="您的决策将写入审计记录，药师审方时会看到您的理由。"
-        style={{ marginTop: 8 }}
-      />
     </Modal>
   );
 }

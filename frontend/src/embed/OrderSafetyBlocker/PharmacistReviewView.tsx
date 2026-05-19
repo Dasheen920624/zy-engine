@@ -5,7 +5,7 @@ import {
   CloseCircleOutlined,
   SwapOutlined,
 } from '@ant-design/icons';
-import type { RuleActionLog } from './types';
+import type { RuleActionLog } from '../../api/ruleActionLog';
 
 const { Text, Paragraph } = Typography;
 
@@ -42,7 +42,7 @@ export default function PharmacistReviewView({
         return <Tag color="red">已取消医嘱</Tag>;
       case 'MODIFY':
         return <Tag color="orange">已修改剂量</Tag>;
-      case 'INSIST':
+      case 'CONTINUE':
         return <Tag color="blue">坚持使用</Tag>;
       default:
         return <Tag>{decision}</Tag>;
@@ -63,13 +63,10 @@ export default function PharmacistReviewView({
       {/* 医嘱信息 */}
       <Descriptions column={2} size="small" style={{ marginBottom: 16 }}>
         <Descriptions.Item label="医嘱" span={2}>
-          <Text strong>{actionLog.order_name}</Text>
-          <Text type="secondary" style={{ marginLeft: 8 }}>
-            ({actionLog.order_code})
-          </Text>
+          <Text strong>{actionLog.order_id}</Text>
         </Descriptions.Item>
         <Descriptions.Item label="规则">
-          {actionLog.rule_name || actionLog.rule_code}
+          {actionLog.rule_code}@{actionLog.rule_version}
         </Descriptions.Item>
         <Descriptions.Item label="动作模式">
           <Tag color="red">{actionLog.action_mode}</Tag>
@@ -82,7 +79,7 @@ export default function PharmacistReviewView({
         showIcon
         message={
           <span>
-            该医嘱已触发"{actionLog.rule_name || actionLog.rule_code}"拦截，医生
+            该医嘱已触发"{actionLog.rule_code}@{actionLog.rule_version}"拦截，医生
             {decisionLabel(actionLog.decision)}
           </span>
         }
@@ -101,9 +98,9 @@ export default function PharmacistReviewView({
         <div style={{ marginBottom: 8 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>医生</Text>
           <div>
-            <Text strong>{actionLog.doctor_name || actionLog.doctor_id}</Text>
+            <Text strong>{actionLog.decision_by}</Text>
             <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
-              {actionLog.created_time}
+              {actionLog.decision_time}
             </Text>
           </div>
         </div>
@@ -125,14 +122,14 @@ export default function PharmacistReviewView({
           </div>
         )}
 
-        {actionLog.informed_consent !== undefined && (
+        {(actionLog.informed_consent || actionLog.family_notified) && (
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>知情同意</Text>
             <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
               <Checkbox checked={actionLog.informed_consent} disabled>
                 已告知患者及家属出血风险
               </Checkbox>
-              <Checkbox checked={actionLog.informed_consent} disabled>
+              <Checkbox checked={actionLog.family_notified} disabled>
                 已签署知情同意书
               </Checkbox>
             </div>
@@ -153,20 +150,20 @@ export default function PharmacistReviewView({
           <Button
             type="primary"
             icon={<CheckCircleOutlined />}
-            onClick={() => onApprove?.(actionLog.action_log_id)}
+            onClick={() => onApprove?.(actionLog.log_id)}
           >
             通过审方
           </Button>
           <Button
             danger
             icon={<CloseCircleOutlined />}
-            onClick={() => onReject?.(actionLog.action_log_id, '')}
+            onClick={() => onReject?.(actionLog.log_id, '')}
           >
             驳回（必须写理由）
           </Button>
           <Button
             icon={<SwapOutlined />}
-            onClick={() => onEscalate?.(actionLog.action_log_id)}
+            onClick={() => onEscalate?.(actionLog.log_id)}
           >
             转主任会诊
           </Button>
