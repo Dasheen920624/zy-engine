@@ -405,3 +405,26 @@ CREATE TABLE tm_unmapped_queue (
 
 CREATE INDEX idx_tm_queue_status ON tm_unmapped_queue(tenant_id, governance_status, last_occurrence_time);
 CREATE INDEX idx_tm_queue_system ON tm_unmapped_queue(tenant_id, source_system, concept_type);
+
+-- ============================================================================
+-- Dify 工作流模板
+-- ============================================================================
+CREATE TABLE src_dify_template (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  workflow_code VARCHAR2(128) NOT NULL,
+  workflow_version VARCHAR2(64) NOT NULL,
+  workflow_name VARCHAR2(256),
+  description VARCHAR2(1000),
+  dify_app_code VARCHAR2(128),
+  timeout_ms NUMBER(10),
+  retry_count NUMBER(10),
+  template_json CLOB,
+  reference_document_code VARCHAR2(128),
+  reference_binding_type VARCHAR2(64),
+  status VARCHAR2(32) NOT NULL,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_src_dify_template UNIQUE (workflow_code, workflow_version)
+);
+
+CREATE INDEX idx_dify_tpl_code ON src_dify_template(tenant_id, workflow_code);
