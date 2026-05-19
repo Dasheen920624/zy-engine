@@ -31,7 +31,11 @@ public class ConfigPackageRepository {
     }
 
     /**
-     * 保存配置包（新增或更新）
+     * 保存配置包（新增或更新）。
+     *
+     * <p>原实现用 MySQL 专有 {@code ON DUPLICATE KEY UPDATE}，在 Oracle / DM / PostgreSQL /
+     * KingbaseES / H2 上都会抛语法错误（AUDIT §2.8）。改为同事务内 SELECT → UPDATE / INSERT
+     * 二选一的标准 ANSI SQL，依靠 cfg_config_package 的唯一键约束兜底并发，所有 5 个方言通用。
      */
     public void save(ConfigPackageEntity entity) {
         if (!properties.isEnabled() || !properties.hasRequiredCredentials()) {
@@ -42,28 +46,54 @@ public class ConfigPackageRepository {
             entity.setId(Ids.next());
         }
 
+        try (Connection connection = connection()) {
+            // 事务内执行：先按唯一键查 id，存在则 UPDATE，不存在则 INSERT。
+            // ConfigPackageService 应在 @Transactional 上下文中调用本方法以保证原子性。
+            Long existingId = findIdByUniqueKey(connection,
+                    entity.getTenantId(), entity.getPackageCode(), entity.getPackageVersion(),
+                    entity.getAssetType(), entity.getScopeLevel(), entity.getScopeCode());
+            if (existingId != null) {
+                entity.setId(existingId);
+                updateExisting(connection, entity);
+            } else {
+                insertNew(connection, entity);
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save config package failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private Long findIdByUniqueKey(Connection connection, String tenantId, String packageCode,
+                                    String packageVersion, String assetType, String scopeLevel,
+                                    String scopeCode) throws SQLException {
+        String sql = "SELECT id FROM cfg_config_package " +
+                "WHERE tenant_id = ? AND package_code = ? AND package_version = ? " +
+                "AND asset_type = ? AND scope_level = ? AND scope_code = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            int i = 1;
+            ps.setString(i++, tenantId);
+            ps.setString(i++, packageCode);
+            ps.setString(i++, packageVersion);
+            ps.setString(i++, assetType);
+            ps.setString(i++, scopeLevel);
+            ps.setString(i++, scopeCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void insertNew(Connection connection, ConfigPackageEntity entity) throws SQLException {
         String sql = "INSERT INTO cfg_config_package " +
                 "(id, tenant_id, package_code, package_version, asset_type, scope_level, scope_code, " +
                 "status, base_version, target_version, content_hash, declared_content_hash, " +
                 "manifest_json, diff_json, full_snapshot_json, created_by, reviewed_by, approved_by, " +
                 "created_time, reviewed_time, published_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-                "ON DUPLICATE KEY UPDATE " +
-                "status = VALUES(status), " +
-                "base_version = VALUES(base_version), " +
-                "target_version = VALUES(target_version), " +
-                "content_hash = VALUES(content_hash), " +
-                "declared_content_hash = VALUES(declared_content_hash), " +
-                "manifest_json = VALUES(manifest_json), " +
-                "diff_json = VALUES(diff_json), " +
-                "full_snapshot_json = VALUES(full_snapshot_json), " +
-                "reviewed_by = VALUES(reviewed_by), " +
-                "approved_by = VALUES(approved_by), " +
-                "reviewed_time = VALUES(reviewed_time), " +
-                "published_time = VALUES(published_time)";
-
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             int i = 1;
             ps.setLong(i++, entity.getId());
             ps.setString(i++, entity.getTenantId());
@@ -87,8 +117,33 @@ public class ConfigPackageRepository {
             ps.setTimestamp(i++, toTimestamp(entity.getReviewedTime()));
             ps.setTimestamp(i++, toTimestamp(entity.getPublishedTime()));
             ps.executeUpdate();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save config package failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void updateExisting(Connection connection, ConfigPackageEntity entity) throws SQLException {
+        // 与 ON DUPLICATE KEY UPDATE 原列清单一致；id/tenant_id/package_code/package_version/
+        // asset_type/scope_level/scope_code/created_by/created_time 不动（唯一键 + 创建审计）。
+        String sql = "UPDATE cfg_config_package SET " +
+                "status = ?, base_version = ?, target_version = ?, content_hash = ?, declared_content_hash = ?, " +
+                "manifest_json = ?, diff_json = ?, full_snapshot_json = ?, " +
+                "reviewed_by = ?, approved_by = ?, reviewed_time = ?, published_time = ? " +
+                "WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            int i = 1;
+            ps.setString(i++, entity.getStatus());
+            ps.setString(i++, entity.getBaseVersion());
+            ps.setString(i++, entity.getTargetVersion());
+            ps.setString(i++, entity.getContentHash());
+            ps.setString(i++, entity.getDeclaredContentHash());
+            ps.setString(i++, entity.getManifestJson());
+            ps.setString(i++, entity.getDiffJson());
+            ps.setString(i++, entity.getFullSnapshotJson());
+            ps.setString(i++, entity.getReviewedBy());
+            ps.setString(i++, entity.getApprovedBy());
+            ps.setTimestamp(i++, toTimestamp(entity.getReviewedTime()));
+            ps.setTimestamp(i++, toTimestamp(entity.getPublishedTime()));
+            ps.setLong(i++, entity.getId());
+            ps.executeUpdate();
         }
     }
 
