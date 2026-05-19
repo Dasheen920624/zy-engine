@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.medkernel.organization.OrganizationDirectoryService;
 import com.medkernel.persistence.EnginePersistenceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
@@ -23,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ConfigPackageService {
+    private static final Logger log = LoggerFactory.getLogger(ConfigPackageService.class);
     private static final String DEFAULT_TENANT_ID = "default";
     private static final List<String> SUPPORTED_ASSET_TYPES = Arrays.asList(
             "PATHWAY", "RULE", "GRAPH", "DIFY", "WORKFLOW", "TERMINOLOGY", "ADAPTER", "MIXED");
@@ -689,6 +692,10 @@ public class ConfigPackageService {
         try {
             return java.time.OffsetDateTime.parse(dateTimeStr).toLocalDateTime();
         } catch (Exception ex) {
+            // 配置包元数据时间格式异常不阻断整包加载，但要落日志便于线上定位脏数据来源。
+            if (log.isWarnEnabled()) {
+                log.warn("ConfigPackage parseDateTime failed: text='{}', err={}", dateTimeStr, ex.getMessage());
+            }
             return null;
         }
     }

@@ -5,6 +5,8 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -19,11 +21,23 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
+
     private static final long TOKEN_VALIDITY_MS = 8 * 60 * 60 * 1000L; // 8 hours
     private static final String CLAIM_USER_ID = "platform_user_id";
     private static final String CLAIM_TENANT_ID = "tenant_id";
     private static final String CLAIM_USERNAME = "username";
     private static final String CLAIM_DISPLAY_NAME = "display_name";
+
+    /**
+     * 已知默认密钥（与 SecurityProperties / application.yml 同步）。
+     * 启动时若仍为该值需要打出 WARN，提醒运维设置 MEDKERNEL_JWT_SECRET。
+     * 见 docs/engineering/AUDIT-20260519-V2重构后全量代码审计.md §5.1。
+     */
+    private static final String DEFAULT_INSECURE_SECRET =
+            "medkernel-default-jwt-secret-please-change-in-production-env-2026";
+
+    private static final int MIN_SECRET_LENGTH = 32;
 
     private final SecurityProperties properties;
     private Key signingKey;
@@ -34,7 +48,20 @@ public class JwtTokenProvider {
 
     @PostConstruct
     public void init() {
-        byte[] keyBytes = properties.getJwtSecret().getBytes(StandardCharsets.UTF_8);
+        String secret = properties.getJwtSecret();
+        if (secret == null || secret.isEmpty()) {
+            throw new IllegalStateException(
+                    "MEDKERNEL_JWT_SECRET 未配置；启动被阻止。请在环境变量中设置长度 >= "
+                            + MIN_SECRET_LENGTH + " 的强随机密钥。");
+        }
+        if (DEFAULT_INSECURE_SECRET.equals(secret)) {
+            log.warn("[security] MEDKERNEL_JWT_SECRET 仍为代码内置默认值，存在被伪造 JWT 风险；"
+                    + "生产/UAT 部署前必须通过环境变量覆盖。详见 AUDIT-20260519 §5.1。");
+        } else if (secret.length() < MIN_SECRET_LENGTH) {
+            log.warn("[security] MEDKERNEL_JWT_SECRET 长度 {} 小于建议值 {}，签名强度不足。",
+                    secret.length(), MIN_SECRET_LENGTH);
+        }
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
