@@ -1,0 +1,132 @@
+/* MedKernel design tokens.
+ * This is the only frontend style file allowed to define raw color values.
+ */
+
+:root {
+  --mk-brand-primary: #168bd3;
+  --mk-brand-primary-hover: #0f73b6;
+  --mk-brand-primary-active: #0b5a8f;
+  --mk-brand-primary-soft: #e8f6ff;
+  --mk-brand-primary-ghost: #f5fbff;
+
+  --mk-menu-bg: #2fa7e8;
+  --mk-menu-bg-hover: #178fd0;
+  --mk-menu-bg-active: #0b78bd;
+  --mk-menu-text: #ffffff;
+  --mk-menu-text-secondary: #cce8f9;
+
+  --mk-success: #12966e;
+  --mk-success-soft: #e4f7ef;
+  --mk-success-border: #a7f3d0;
+  --mk-warning: #c78200;
+  --mk-warning-soft: #fcf3df;
+  --mk-danger: #d33f49;
+  --mk-danger-soft: #fdecee;
+  --mk-danger-border: #fecaca;
+  --mk-info: #168bd3;
+  --mk-info-soft: #e8f6ff;
+
+  --mk-ai-primary: #5b4fd4;
+  --mk-ai-soft: #f0f0ff;
+  --mk-ai-confidence-high: #12966e;
+  --mk-ai-confidence-mid: #c78200;
+  --mk-ai-confidence-low: #d33f49;
+
+  --mk-text-primary: #1f2d3d;
+  --mk-text-secondary: #52677a;
+  --mk-text-tertiary: #7c8b99;
+  --mk-text-inverse: #ffffff;
+  --mk-text-inverse-muted: #cce8f9;
+
+  --mk-bg-page: #ffffff;
+  --mk-bg-soft: #f5fbff;
+  --mk-bg-panel: #ffffff;
+  --mk-bg-muted: #f4f6f9;
+  --mk-bg-inverse: #1e1e1e;
+  --mk-bg-disabled: #f4f6f9;
+  --mk-bg-overlay: rgba(31, 45, 61, 0.45);
+
+  --mk-border: #d8e8f3;
+  --mk-border-strong: #b8d8ec;
+  --mk-border-divider: #ebf2f8;
+  --mk-border-inverse: #0b78bd;
+
+  --mk-code-add: #4ade80;
+  --mk-code-del: #f87171;
+  --mk-code-text: #d4d4d4;
+  --mk-code-add-bg: rgba(74, 222, 128, 0.08);
+  --mk-code-del-bg: rgba(248, 113, 113, 0.08);
+
+  --mk-data-1: #168bd3;
+  --mk-data-2: #12966e;
+  --mk-data-3: #c78200;
+  --mk-data-4: #5b4fd4;
+  --mk-data-5: #d33f49;
+  --mk-data-6: #00a3c4;
+  --mk-data-7: #8b5cf6;
+  --mk-data-8: #f59e0b;
+
+  --mk-shadow-sm: 0 1px 2px rgba(31, 45, 61, 0.06);
+  --mk-shadow-md: 0 2px 8px rgba(31, 45, 61, 0.08);
+  --mk-shadow-lg: 0 4px 16px rgba(31, 45, 61, 0.12);
+  --mk-shadow-overlay: 0 12px 32px rgba(31, 45, 61, 0.18);
+
+  --mk-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", "Source Han Sans CN", Roboto, sans-serif;
+  --mk-font-mono: "JetBrains Mono", "Source Code Pro", Menlo, Consolas,
+    "Microsoft YaHei Mono", monospace;
+
+  --mk-text-xs: 12px;
+  --mk-text-sm: 13px;
+  --mk-text-base: 14px;
+  --mk-text-md: 16px;
+  --mk-text-lg: 18px;
+  --mk-text-xl: 22px;
+  --mk-text-2xl: 32px;
+
+  --mk-leading-tight: 1.3;
+  --mk-leading-base: 1.5;
+  --mk-leading-loose: 1.7;
+
+  --mk-weight-regular: 400;
+  --mk-weight-medium: 500;
+  --mk-weight-semibold: 600;
+
+  --mk-space-0: 0;
+  --mk-space-1: 4px;
+  --mk-space-2: 8px;
+  --mk-space-3: 12px;
+  --mk-space-4: 16px;
+  --mk-space-5: 20px;
+  --mk-space-6: 24px;
+  --mk-space-7: 32px;
+  --mk-space-8: 40px;
+  --mk-space-9: 48px;
+  --mk-space-10: 64px;
+
+  --mk-radius-sm: 4px;
+  --mk-radius-md: 6px;
+  --mk-radius-lg: 8px;
+  --mk-radius-full: 9999px;
+
+  --mk-border-width: 1px;
+  --mk-border-width-strong: 2px;
+
+  --mk-duration-instant: 100ms;
+  --mk-duration-fast: 200ms;
+  --mk-duration-base: 300ms;
+  --mk-duration-slow: 500ms;
+
+  --mk-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --mk-ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --mk-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --mk-z-base: 1;
+  --mk-z-sticky: 10;
+  --mk-z-dropdown: 100;
+  --mk-z-drawer: 1000;
+  --mk-z-modal: 1010;
+  --mk-z-tooltip: 1020;
+  --mk-z-toast: 1030;
+  --mk-z-debug: 9999;
+}

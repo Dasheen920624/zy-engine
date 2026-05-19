@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, Badge, Button, Card, Empty, Skeleton, Space, Table, Tag } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { fetchSystemProviders } from "../api/system";
-import { ApiError, ProviderStatus, SystemProviders } from "../api/types";
+import type { ApiError, ProviderStatus, SystemProviders } from "../api/types";
 
 export default function ProvidersStatusPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<

@@ -2,11 +2,11 @@
 
 请基于以下资料实现指定后端任务。开始前按最小阅读策略执行：
 
-- 必读：`medkernel-mvp/docs/00_总入口与AI接手导航.md`
-- 只读任务行：`medkernel-mvp/docs/02_任务台账.md`
-- 后端任务补读：`medkernel-mvp/docs/06_后端开发规范.md`
-- 涉及 DDL / 持久化 / 开发库 / 生产库时再补读：`medkernel-mvp/docs/数据库Provider与离线AI开发约定.md`
-- 涉及架构 Provider 或跨模块时再补读：`medkernel-mvp/docs/05_架构总图与服务边界.md`
+- 必读：`docs/engineering/00_总入口与AI接手导航.md`
+- 只读任务行：`docs/engineering/02_任务台账.md`
+- 后端任务补读：`docs/engineering/06_后端开发规范.md`
+- 涉及 DDL / 持久化 / 开发库 / 生产库时再补读：`docs/engineering/数据库Provider与离线AI开发约定.md`
+- 涉及架构 Provider 或跨模块时再补读：`docs/engineering/05_架构总图与服务边界.md`
 
 ## 模块
 
@@ -18,10 +18,10 @@
 
 ## 输入资料
 
-- 最小入口：`medkernel-mvp/docs/00_总入口与AI接手导航.md`
-- 任务台账：`medkernel-mvp/docs/02_任务台账.md`
-- 业务核查（医学/医保/质控任务才读）：`medkernel-mvp/docs/产品功能业务核查与开工清单.md`
-- 产品总纲（范围不清时才读）：`medkernel-mvp/docs/产品化方案与AI开发编排.md`
+- 最小入口：`docs/engineering/00_总入口与AI接手导航.md`
+- 任务台账：`docs/engineering/02_任务台账.md`
+- 业务核查（医学/医保/质控任务才读）：`docs/engineering/产品功能业务核查与开工清单.md`
+- 产品总纲（范围不清时才读）：`docs/01_产品事实源.md`
 - OpenAPI：`ai-dev-input/02_api_contracts/engines.openapi.yaml`
 - JSON Schema：`ai-dev-input/03_data_models/...`
 - DDL：`ai-dev-input/04_database/oracle/core_ddl.sql`、`ai-dev-input/04_database/dm/core_ddl.sql`、`ai-dev-input/04_database/postgres/core_ddl.sql`、`ai-dev-input/04_database/local/h2_core_ddl.sql`

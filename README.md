@@ -4,6 +4,8 @@
 
 面向集团化医院 / 多院区 / 专科医联体，提供路径引擎、规则引擎、图谱引擎、Dify AI 工作流、字典标准化、适配器中心、质控审计能力的产品化解决方案。支持单医院、集团化医院、多院区、卫生所/站点等多组织形态，支持国产化部署（Oracle / 达梦 / PostgreSQL / KingbaseES）。
 
+部署形态：院内 / 专网部署是当前优先交付形态；外网 / SaaS 基准服务可用于租户开通、标准知识包运营、脱敏治理包和客户演示。当前 MVP 尚未完成生产级外网账号、MFA、租户隔离、WAF/网关和合规闭环，不能直接裸露公网承载真实患者数据。
+
 ---
 
 ## 文档入口（任何人接手前先看这一份）
@@ -78,12 +80,16 @@ npm run dev
 
 ## 当前前端能力（已实现）
 
-仅 4 个能用页面（脚手架阶段）：
+当前可用页面：
 
-- `/dashboard` 工作台首页（占位）
+- `/dashboard` 工作台首页（功能状态总览）
 - `/system/providers` Provider 状态（接真实 API）
-- `/config-packages` 配置包列表（部分功能）
-- `/demo-validation` 演示与规则校验工作台（4 剧本 dry-run）
+- `/config/packages` 配置包中心（列表 / Review / diff / publish / export，支持 MSW 演示）
+
+当前占位页面：
+
+- `/demo-validation` 演示与规则校验工作台
+- `/provenance` 来源追溯
 
 完整页面规划见 [docs/04_页面规格书.md](docs/04_页面规格书.md) 共 18 个目标页面。
 

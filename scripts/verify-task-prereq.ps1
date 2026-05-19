@@ -10,7 +10,7 @@
 #
 # 检查项：
 #   1. git 工作树干净
-#   2. 远端 main 已同步
+#   2. 当前分支远端基线已同步
 #   3. 任务编号在台账存在
 #   4. 任务等级与你的等级匹配
 #   5. 依赖任务全部 DONE
@@ -56,6 +56,58 @@ function Show-Section($title) {
   Write-Host "=== $title ===" -ForegroundColor Cyan
 }
 
+function Get-GitBaseRef {
+  $upstream = git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>$null
+  if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($upstream)) {
+    return $upstream.Trim()
+  }
+
+  git rev-parse --verify origin/develop 2>$null | Out-Null
+  if ($LASTEXITCODE -eq 0) {
+    return "origin/develop"
+  }
+
+  git rev-parse --verify origin/main 2>$null | Out-Null
+  if ($LASTEXITCODE -eq 0) {
+    return "origin/main"
+  }
+
+  return $null
+}
+
+function Get-TaskAliases([string]$TaskId) {
+  $aliases = New-Object System.Collections.Generic.List[string]
+  $aliases.Add($TaskId)
+  if ($TaskId -match '^PR-V2-(\d{2})$') {
+    $aliases.Add("PR-$($matches[1])")
+  } elseif ($TaskId -match '^PR-(\d{2})$') {
+    $aliases.Add("PR-V2-$($matches[1])")
+  }
+  return $aliases | Select-Object -Unique
+}
+
+function Get-PlaybookTaskSection([string]$Content, [string]$TaskId) {
+  $aliases = Get-TaskAliases $TaskId
+  $sections = [regex]::Matches($Content, '(?ms)^##\s+\d+\.\s+.*?(?=^##\s+\d+\.|\z)')
+  foreach ($section in $sections) {
+    $heading = ($section.Value -split "`r?`n", 2)[0]
+    foreach ($alias in $aliases) {
+      $aliasPattern = [regex]::Escape($alias)
+      if ($heading -match $aliasPattern -or $section.Value -match "\*\*任务编号[:：]\*\*\s*$aliasPattern") {
+        return $section.Value
+      }
+    }
+  }
+  foreach ($section in $sections) {
+    foreach ($alias in $aliases) {
+      if ($section.Value -match [regex]::Escape($alias)) {
+        return $section.Value
+      }
+    }
+  }
+  return $null
+}
+
 Write-Host ""
 Write-Host "MedKernel | 接手前自检 | Task=$TaskId | Level=$Level" -ForegroundColor White
 Write-Host ("=" * 60)
@@ -74,22 +126,29 @@ if ([string]::IsNullOrWhiteSpace($status)) {
 }
 
 # ============================================================
-# 2. 远端 main 已同步
+# 2. 当前分支远端基线已同步
 # ============================================================
-Show-Section "2. 远端 main 已同步"
+Show-Section "2. 当前分支远端基线已同步"
 
 if (-not $SkipGitPull) {
   try {
     git fetch origin 2>&1 | Out-Null
-    $behind = git rev-list --count HEAD..origin/main
-    $ahead = git rev-list --count origin/main..HEAD
-    if ($behind -eq 0) {
-      Show-Pass "本地 HEAD 不落后 origin/main"
+    $baseRef = Get-GitBaseRef
+    if ([string]::IsNullOrWhiteSpace($baseRef)) {
+      Show-Warn "未找到当前分支 upstream，也未找到 origin/main；跳过远端同步检查"
+      $behind = 0
+      $ahead = 0
     } else {
-      Show-Fail "本地落后 origin/main $behind 个 commit，先 git pull --ff-only"
+      $behind = git rev-list --count HEAD..$baseRef
+      $ahead = git rev-list --count $baseRef..HEAD
+    }
+    if ($behind -eq 0) {
+      Show-Pass "本地 HEAD 不落后 $baseRef"
+    } else {
+      Show-Fail "本地落后 $baseRef $behind 个 commit，先 git pull --ff-only"
     }
     if ($ahead -gt 0) {
-      Show-Warn "本地超前 origin/main $ahead 个 commit（可能是上次任务未推送）"
+      Show-Warn "本地超前 $baseRef $ahead 个 commit（可能是上次任务未推送）"
     }
   } catch {
     Show-Warn "无法 fetch origin（网络/权限问题），跳过远端检查"
@@ -126,16 +185,15 @@ $inferredDifficulty = "未知"
 if (Test-Path $playbook) {
   $pb = Get-Content $playbook -Raw -Encoding UTF8
   # 抓取该 PR 卡片附近的"难度等级"行
-  $section = ($pb -split "## \d+\. $TaskId" | Select-Object -Index 1)
+  $section = Get-PlaybookTaskSection $pb $TaskId
   if ($section) {
-    $next = ($section -split "\n---")[0]
-    if ($next -match "难度\s*[:：]\s*(\S+)") {
+    if ($section -match "难度\s*[:：]\s*(\S+)") {
       $inferredDifficulty = $matches[1].Trim()
-    } elseif ($next -match "初级") {
+    } elseif ($section -match "初级") {
       $inferredDifficulty = "初级"
-    } elseif ($next -match "中级") {
+    } elseif ($section -match "中级") {
       $inferredDifficulty = "中级"
-    } elseif ($next -match "高级") {
+    } elseif ($section -match "高级") {
       $inferredDifficulty = "高级"
     }
   }
@@ -160,10 +218,9 @@ Show-Section "5. 依赖任务全部 DONE"
 
 if (Test-Path $playbook) {
   $pb = Get-Content $playbook -Raw -Encoding UTF8
-  $section = ($pb -split "## \d+\. $TaskId" | Select-Object -Index 1)
+  $section = Get-PlaybookTaskSection $pb $TaskId
   if ($section) {
-    $next = ($section -split "\n---")[0]
-    if ($next -match "依赖[:：]\s*([^\n]+)") {
+    if ($section -match "\*\*依赖[:：]\*\*\s*([^\r\n]+)" -or $section -match "依赖[:：]\s*([^\r\n]+)") {
       $depsLine = $matches[1]
       # 提取所有 PR-V2-XX、SEC-001 等编号
       $deps = [regex]::Matches($depsLine, "(?:PR-V2-\d+|[A-Z]+-\d+)") | ForEach-Object { $_.Value }
@@ -172,8 +229,9 @@ if (Test-Path $playbook) {
       } else {
         $ledgerContent = Get-Content $ledger -Raw -Encoding UTF8
         foreach ($dep in $deps) {
-          # 简单检查：依赖任务行是否含 DONE
-          if ($ledgerContent -match "\|\s*$([regex]::Escape($dep))[^\|]*\|[^\|]*\|\s*DONE\s*\|") {
+          $depEscaped = [regex]::Escape($dep)
+          $depLine = $ledgerContent -split "`n" | Where-Object { $_ -match "^\|\s*$depEscaped\s*\|" } | Select-Object -First 1
+          if ($depLine -and $depLine -match "\|\s*DONE\s*\|") {
             Show-Pass "依赖 $dep = DONE"
           } else {
             Show-Fail "依赖 $dep 未完成（台账非 DONE 状态），先做依赖任务"
