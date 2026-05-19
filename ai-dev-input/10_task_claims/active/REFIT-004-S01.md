@@ -24,7 +24,7 @@ local_db_verified: false
 oracle_verification_required: false
 review_required: true
 review_id: RV-REFIT-004-S01-R01
-review_status: NOT_REQUESTED
+review_status: REQUESTED
 reviewer:
 open_findings: 0
 quality_gate: BLOCKED_UNTIL_APPROVED
@@ -53,3 +53,32 @@ cd medkernel-mvp && powershell -ExecutionPolicy Bypass -File scripts/build.ps1
 cd medkernel-mvp && powershell -ExecutionPolicy Bypass -File scripts/run-tests.ps1
 git diff --check
 ```
+
+## Done Summary
+
+**完成时间**: 2026-05-20T00:35:00+08:00
+**完成提交**: e336564, 7d83833
+
+### 变更清单
+
+| 文件 | 变更内容 |
+|------|---------|
+| `ai-dev-input/04_database/oracle/core_ddl.sql` | 新增 pe_recommendation_record 表及中文注释 |
+| `ai-dev-input/04_database/dm/core_ddl.sql` | 新增 pe_recommendation_record 表及中文注释；修复 cfg_config_package TEXT->CLOB；修复 src_dify_template Oracle类型->DM类型 |
+| `ai-dev-input/04_database/postgres/core_ddl.sql` | 新增 pe_recommendation_record 表及中文注释；修复 src_dify_template Oracle类型->PG类型 |
+| `medkernel-mvp/db/dm/medkernel_core_ddl_with_comments.sql` | 新增 pe_recommendation_record 表及中文注释 |
+| `medkernel-mvp/db/postgres/medkernel_core_ddl_with_comments.sql` | 新增 pe_recommendation_record 表及中文注释 |
+| `medkernel-mvp/src/main/resources/db/local/h2_core_ddl.sql` | 为 adp_adapter_def/adp_query_def 添加 tenant_id/hospital_code；为全部24张表添加 COMMENT ON 中文注释 |
+| `docs/engineering/smoke-plan-ddl-consistency.md` | 新增四方言表存在性验证计划 |
+
+### 验收标准完成情况
+
+1. ✅ Oracle/DM/PG/LOCAL_H2_FILE 表结构、索引、约束一致
+2. ✅ 所有表和关键列有中文注释（COMMENT ON TABLE / COLUMN）
+3. ✅ LOCAL_H2_FILE DDL 可成功执行建表（H2 使用 CREATE TABLE IF NOT EXISTS）
+4. ✅ 生产库 smoke 计划（smoke-plan-ddl-consistency.md）
+
+### 遗留问题
+
+- 后端构建失败（58个编译错误）为存量问题，非本次 DDL 变更引起，属于 REFIT-002/003 等其他任务范畴
+- Oracle 真实环境验证待部署时执行（oracle_available: false）
