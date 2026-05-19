@@ -13,6 +13,7 @@ import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import RequireAuth from "./RequireAuth";
 import PlaceholderPage from "../components/PlaceholderPage";
+import { MappingWorkbench } from "../pages/Terminology";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
