@@ -510,3 +510,121 @@ export interface MappingSummary {
   totalAiCandidate: number;
   byConceptType: Record<ConceptType, number>;
 }
+
+// ─── 院级质控驾驶舱 (PR-V2-12) ───────────────────────────────────────────────
+
+/** 路径执行 KPI */
+export interface PathwayKpi {
+  totalEnrolled: number;
+  completed: number;
+  variationRate: number;
+  enrolledChange: number;
+  completedChange: number;
+  variationRateChange: number;
+}
+
+/** 规则命中 KPI */
+export interface RuleKpi {
+  realtimeBlock: number;
+  softReminder: number;
+  hitRate: number;
+  blockChange: number;
+  reminderChange: number;
+  hitRateChange: number;
+}
+
+/** 质控问题 KPI */
+export interface QcKpi {
+  totalIssues: number;
+  closedIssues: number;
+  rectificationRate: number;
+  totalChange: number;
+  closedChange: number;
+  rectificationRateChange: number;
+}
+
+/** 医保风险 KPI */
+export interface InsuranceKpi {
+  potentialRefund: number;
+  refundChange: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
+}
+
+/** 驾驶舱 4 KPI 聚合 */
+export interface DashboardKpis {
+  tenantId: string;
+  period: string;
+  departmentCode: string | null;
+  generatedTime: string;
+  pathway: PathwayKpi;
+  rule: RuleKpi;
+  qc: QcKpi;
+  insurance: InsuranceKpi;
+}
+
+/** 科室排名项 */
+export interface DepartmentRank {
+  name: string;
+  enrolled: number;
+  completionRate: number;
+  rectificationRate: number;
+  ruleHitRate: number;
+  stars: number;
+}
+
+/** 科室排名响应 */
+export interface DepartmentRankingResponse {
+  tenantId: string;
+  period: string;
+  departments: DepartmentRank[];
+  total: number;
+}
+
+/** 变异 TOP 项 */
+export interface VariationItem {
+  pathwayCode: string;
+  variationNode: string;
+  count: number;
+  reason: string;
+}
+
+/** 医生绩效项 */
+export interface DoctorPerformance {
+  name: string;
+  cases: number;
+  completionRate: number;
+  rectificationRate: number;
+  ruleHitRate: number;
+}
+
+/** 科室钻取详情 */
+export interface DepartmentDetail {
+  tenantId: string;
+  departmentCode: string;
+  period: string;
+  kpis: {
+    pathway: Pick<PathwayKpi, "totalEnrolled" | "completed" | "variationRate">;
+    rule: Pick<RuleKpi, "realtimeBlock" | "softReminder" | "hitRate">;
+    qc: Pick<QcKpi, "totalIssues" | "closedIssues" | "rectificationRate">;
+    insurance: Pick<InsuranceKpi, "potentialRefund" | "refundChange">;
+  };
+  topVariations: VariationItem[];
+  doctorPerformance: DoctorPerformance[];
+}
+
+/** 趋势数据项 */
+export interface TrendDay {
+  date: string;
+  pathwayCompletionRate: number;
+  ruleHitRate: number;
+  qcRectificationRate: number;
+  insuranceRiskAmount: number;
+}
+
+/** 趋势响应 */
+export interface TrendResponse {
+  tenantId: string;
+  days: number;
+  departmentCode: string | null;
+  trend: TrendDay[];
+}
