@@ -388,6 +388,59 @@ export interface ListPathwaysParams {
   size?: number;
 }
 
+// 质控预警相关（PR-V2-11）
+export type AlertSeverity = "CRITICAL" | "WARNING" | "INFO";
+export type AlertStatus = "PENDING" | "IN_PROGRESS" | "RESOLVED";
+
+export interface QualityAlert {
+  id: string;
+  time: string;
+  patient_id: string;
+  encounter_id: string;
+  doctor: string | null;
+  rule_code: string;
+  rule_name: string | null;
+  severity: AlertSeverity;
+  message: string | null;
+  scenario_code: string | null;
+  dept: string | null;
+  status: AlertStatus;
+  overtime: boolean;
+}
+
+export interface QualityAlertListResult {
+  items: QualityAlert[];
+  total: number;
+  page: number;
+  size: number;
+  total_pages: number;
+}
+
+export interface QualityAlertSummary {
+  critical: number;
+  warning: number;
+  info: number;
+  overtime: number;
+  total: number;
+}
+
+export interface ListAlertsParams {
+  dept?: string;
+  severity?: string;
+  date?: string;
+  status?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface AssignRequest {
+  assignee: string;
+  assignee_role: string;
+  deadline?: string;
+  note?: string;
+  assigned_by: string;
+}
+
 // 通用错误码（与 00_总入口 §9 一致）
 export type ApiErrorCode =
   | "SUCCESS"

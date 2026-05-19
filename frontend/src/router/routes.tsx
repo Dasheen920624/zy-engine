@@ -9,6 +9,7 @@ import PackageImportWizard from "../pages/ConfigPackages/PackageImportWizard";
 import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import WorkflowTodos from "../pages/WorkflowTodos";
 import { QualityDashboard, DepartmentDrillDown } from "../pages/Quality";
+import AlertList from "../pages/Quality/AlertList";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import RequireAuth from "./RequireAuth";
@@ -44,7 +45,7 @@ export const routes: RouteObject[] = [
           { path: "rule/validate", element: <PlaceholderPage title="规则校验工作台" /> },
           { path: "graph/explore", element: <PlaceholderPage title="图谱查询工作台" pr="PR-V2-05" /> },
           { path: "terminology/mapping", element: <MappingWorkbench /> },
-          { path: "qc/alerts", element: <PlaceholderPage title="质控预警列表" pr="PR-V2-11" /> },
+          { path: "qc/alerts", element: <AlertList /> },
           { path: "qc/dashboard", element: <QualityDashboard /> },
           { path: "qc/department/:deptCode", element: <DepartmentDrillDown /> },
           { path: "qc/insurance", element: <PlaceholderPage title="医保智能审核" pr="PR-V2-12" /> },
