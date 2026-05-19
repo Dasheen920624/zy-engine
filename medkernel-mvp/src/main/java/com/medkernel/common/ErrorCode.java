@@ -13,7 +13,10 @@ public enum ErrorCode {
     UNAUTHORIZED("UNAUTHORIZED", "authentication required"),
     FORBIDDEN("FORBIDDEN", "access denied"),
     LOGIN_FAILED("LOGIN_FAILED", "invalid username or password"),
-    USER_LOCKED("USER_LOCKED", "account is temporarily locked");
+    USER_LOCKED("USER_LOCKED", "account is temporarily locked"),
+    MISSING_SOURCE("MISSING_SOURCE", "asset has no valid source document binding"),
+    SOURCE_EXPIRED("SOURCE_EXPIRED", "source document has expired"),
+    SOURCE_NOT_REVIEWED("SOURCE_NOT_REVIEWED", "source document has not been reviewed");
 
     private final String code;
     private final String message;
