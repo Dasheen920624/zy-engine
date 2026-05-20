@@ -34,6 +34,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -1721,7 +1722,8 @@ public class EnginePersistenceService {
                 "/db/local/interop_ddl.sql",
                 "/db/local/mpi_ddl.sql",
                 "/db/local/sec_user_sync_ddl.sql",
-                "/db/local/ai_knowledge_job_ddl.sql"
+                "/db/local/ai_knowledge_job_ddl.sql",
+                "/db/local/cdss_trigger_point_ddl.sql"
         };
         List<String> statements = new ArrayList<String>();
         for (String resource : resources) {
