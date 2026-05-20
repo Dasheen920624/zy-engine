@@ -6,6 +6,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +61,7 @@ public class EmbedConfigController {
             String encounterId,
             Integer limit) {
         // TODO: 对接告警持久化存储
-        return ApiResult.success(List.of());
+        return ApiResult.success(Collections.<Map<String, Object>>emptyList());
     }
 
     /**
@@ -81,15 +84,29 @@ public class EmbedConfigController {
         alert.put("severity", "info");
         alert.put("title", "🩺 AMI/STEMI 路径推荐 (HIGH)");
         alert.put("evidence", "ECG ST 段抬高 + 持续胸痛 ≥ 30min");
-        alert.put("source", Map.of(
-                "documentName", "2023 ACC/AHA AMI 指南",
-                "section", "§4.2",
-                "publishYear", 2023));
+        Map<String, Object> source = new LinkedHashMap<>();
+        source.put("documentName", "2023 ACC/AHA AMI 指南");
+        source.put("section", "§4.2");
+        source.put("publishYear", 2023);
+        alert.put("source", source);
         alert.put("confidence", 92);
-        alert.put("actions", List.of(
-                Map.of("text", "一键入径", "intent", "primary", "action_type", "ENROLL_PATHWAY"),
-                Map.of("text", "查看完整证据", "intent", "secondary", "action_type", "VIEW_EVIDENCE"),
-                Map.of("text", "暂不入径", "intent", "tertiary", "action_type", "DISMISS")));
+        List<Map<String, Object>> actions = new ArrayList<>();
+        Map<String, Object> action1 = new LinkedHashMap<>();
+        action1.put("text", "一键入径");
+        action1.put("intent", "primary");
+        action1.put("action_type", "ENROLL_PATHWAY");
+        actions.add(action1);
+        Map<String, Object> action2 = new LinkedHashMap<>();
+        action2.put("text", "查看完整证据");
+        action2.put("intent", "secondary");
+        action2.put("action_type", "VIEW_EVIDENCE");
+        actions.add(action2);
+        Map<String, Object> action3 = new LinkedHashMap<>();
+        action3.put("text", "暂不入径");
+        action3.put("intent", "tertiary");
+        action3.put("action_type", "DISMISS");
+        actions.add(action3);
+        alert.put("actions", actions);
         alert.put("created_at", java.time.Instant.now().toString());
 
         eventBus.publishAlert(alert);

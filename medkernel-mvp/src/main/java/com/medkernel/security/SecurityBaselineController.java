@@ -3,7 +3,7 @@ package com.medkernel.security;
 import com.medkernel.audit.AuditChainService;
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
-import com.medkernel.common.OrganizationContext;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -85,7 +85,7 @@ public class SecurityBaselineController {
     public ApiResult<Map<String, Object>> getActiveKey(HttpServletRequest httpRequest) {
         KeyRotationService.KeyVersion key = keyRotationService.getActiveKey();
         if (key == null) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, "No active key found");
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "No active key found");
         }
         return ApiResult.success(key.toView());
     }

@@ -81,7 +81,7 @@ public class KnowledgeSyncController {
                     "同步模式必须为 FULL、INCREMENTAL 或 DRY_RUN");
         }
 
-        String triggeredBy = orgCtx.getUsername() != null ? orgCtx.getUsername() : "system";
+        String triggeredBy = com.medkernel.common.TraceContext.getUsername() != null ? com.medkernel.common.TraceContext.getUsername() : "system";
         KnowledgeSyncLog log = syncService.triggerManualSync(
                 tenantId, sourceCode, subscriptionId, syncMode, triggeredBy);
         return ApiResult.success(log);
@@ -191,7 +191,7 @@ public class KnowledgeSyncController {
             KnowledgeSyncLog log = syncService.executeApprovedSync(logId);
             return ApiResult.success(log);
         } catch (IllegalArgumentException ex) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, ex.getMessage());
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, ex.getMessage());
         } catch (IllegalStateException ex) {
             return ApiResult.failure(ErrorCode.CONFLICT, ex.getMessage());
         }
@@ -206,7 +206,7 @@ public class KnowledgeSyncController {
             KnowledgeSyncLog log = syncService.retrySync(logId);
             return ApiResult.success(log);
         } catch (IllegalArgumentException ex) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, ex.getMessage());
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, ex.getMessage());
         } catch (IllegalStateException ex) {
             return ApiResult.failure(ErrorCode.CONFLICT, ex.getMessage());
         }
@@ -219,13 +219,13 @@ public class KnowledgeSyncController {
     public ApiResult<String> cancelSync(@PathVariable Long logId,
                                          HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        String cancelledBy = orgCtx.getUsername() != null ? orgCtx.getUsername() : "system";
+        String cancelledBy = com.medkernel.common.TraceContext.getUsername() != null ? com.medkernel.common.TraceContext.getUsername() : "system";
 
         try {
             syncService.cancelSync(logId, cancelledBy);
             return ApiResult.success("同步已取消");
         } catch (IllegalArgumentException ex) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, ex.getMessage());
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, ex.getMessage());
         } catch (IllegalStateException ex) {
             return ApiResult.failure(ErrorCode.CONFLICT, ex.getMessage());
         }

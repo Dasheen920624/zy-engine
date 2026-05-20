@@ -9,6 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -47,10 +48,10 @@ public class ClinicalEventBus extends TextWebSocketHandler {
             if ("subscribe".equals(action)) {
                 String patientId = payload.get("patient_id");
                 String encounterId = payload.get("encounter_id");
-                subscriptions.put(session.getId(), Map.of(
-                        "patient_id", patientId != null ? patientId : "",
-                        "encounter_id", encounterId != null ? encounterId : ""
-                ));
+                Map<String, String> subscription = new LinkedHashMap<>();
+                subscription.put("patient_id", patientId != null ? patientId : "");
+                subscription.put("encounter_id", encounterId != null ? encounterId : "");
+                subscriptions.put(session.getId(), subscription);
                 log.info("Embed session {} subscribed to patient={}, encounter={}",
                         session.getId(), patientId, encounterId);
             }

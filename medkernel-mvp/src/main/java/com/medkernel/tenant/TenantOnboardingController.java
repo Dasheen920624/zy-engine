@@ -1,6 +1,7 @@
 package com.medkernel.tenant;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 
@@ -92,7 +93,9 @@ public class TenantOnboardingController {
     public ApiResult<Map<String, Object>> createServiceAccount(
             @RequestBody Map<String, Object> body,
             HttpServletRequest request) {
-        organizationContextService.applyExplicitFilters(body, request);
+        OrganizationContext orgContext = organizationContextService.resolve(request);
+        body.putIfAbsent("tenantId", orgContext.getTenantId());
+        body.putIfAbsent("hospitalCode", orgContext.getHospitalCode());
         Map<String, Object> account = tenantOnboardingService.createServiceAccount(body);
         return ApiResult.success(account);
     }

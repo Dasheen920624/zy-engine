@@ -11,6 +11,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,7 +139,7 @@ class UserSyncApiContractTests {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("taskType", "MANUAL");
 
-        List<Map<String, Object>> users = List.of(
+        List<Map<String, Object>> users = Arrays.asList(
                 createUser("EXT001", "user001", "用户001", "user001@example.com", "13800000001", "内科", "医生"),
                 createUser("EXT002", "user002", "用户002", "user002@example.com", "13800000002", "外科", "护士")
         );
@@ -156,7 +159,7 @@ class UserSyncApiContractTests {
     void triggerSyncWithEmptyUsersReturnsTask() throws Exception {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("taskType", "MANUAL");
-        body.put("users", List.of());
+        body.put("users", Collections.emptyList());
 
         Map<String, Object> result = invokePost("/api/user-sync/sources/4001/sync", body);
         assertEquals(Boolean.TRUE, result.get("success"), "success should be true");
@@ -181,7 +184,7 @@ class UserSyncApiContractTests {
         // First create a task
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("taskType", "MANUAL");
-        body.put("users", List.of());
+        body.put("users", Collections.emptyList());
 
         Map<String, Object> syncResult = invokePost("/api/user-sync/sources/4001/sync", body);
         Map<String, Object> taskData = asMap(syncResult.get("data"));
@@ -212,7 +215,7 @@ class UserSyncApiContractTests {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> invokeGet(String url) throws Exception {
-        String token = jwtTokenProvider.createToken("admin", 1L, 1001L);
+        String token = jwtTokenProvider.createToken(1L, 1001L, "admin", "管理员");
         MvcResult mvcResult = mockMvc.perform(get(url)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Tenant-Id", "1")
@@ -224,7 +227,7 @@ class UserSyncApiContractTests {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> invokePost(String url, Map<String, Object> body) throws Exception {
-        String token = jwtTokenProvider.createToken("admin", 1L, 1001L);
+        String token = jwtTokenProvider.createToken(1L, 1001L, "admin", "管理员");
         MvcResult mvcResult = mockMvc.perform(post(url)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Tenant-Id", "1")
@@ -248,6 +251,6 @@ class UserSyncApiContractTests {
         if (obj instanceof List) {
             return (List<Map<String, Object>>) obj;
         }
-        return List.of();
+        return Collections.emptyList();
     }
 }

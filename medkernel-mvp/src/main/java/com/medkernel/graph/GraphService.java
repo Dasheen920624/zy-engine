@@ -3,7 +3,6 @@ package com.medkernel.graph;
 import com.medkernel.audit.PublishGateService;
 import com.medkernel.common.TraceContext;
 import com.medkernel.persistence.EnginePersistenceService;
-import com.medkernel.provenance.PublishGateService;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Config;
 import org.neo4j.driver.Driver;
@@ -135,11 +134,7 @@ public class GraphService {
             auditDetail.put("gate_check_ready", gateResult.isReadyToPublish());
             persistenceService.saveAuditLog("GRAPH", "ACTIVATE", "GRAPH_VERSION", graphVersion, null, null, operatorId, auditDetail);
 
-<<<<<<< HEAD
-            // REFIT-003：激活前统一来源检查，与 RuleService 对齐——缺少来源文档绑定时阻断激活。
-            List<Map<String, Object>> referenceWarnings = new ArrayList<Map<String, Object>>();
-            if (entry.get("reference_document_code") == null) {
-                return entry;
+            return entry;
         } finally {
             graphVersionLock.unlock();
         }

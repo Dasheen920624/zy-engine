@@ -1,6 +1,7 @@
 package com.medkernel.notification;
 
-import com.medkernel.common.ApiException;
+import com.medkernel.common.ErrorCode;
+import com.medkernel.common.exception.BusinessException;
 import com.medkernel.organization.OrganizationContext;
 import org.springframework.stereotype.Service;
 
@@ -86,7 +87,7 @@ public class NotificationService {
     public Notification getNotification(String notificationCode) {
         Notification notification = notificationStore.get(notificationCode);
         if (notification == null) {
-            throw new ApiException("通知不存在: " + notificationCode);
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "通知不存在: " + notificationCode);
         }
         return notification;
     }

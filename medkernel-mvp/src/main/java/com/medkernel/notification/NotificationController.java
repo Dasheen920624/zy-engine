@@ -1,6 +1,7 @@
 package com.medkernel.notification;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,9 +30,11 @@ public class NotificationController {
     @PostMapping
     public ApiResult<Map<String, Object>> createNotification(@RequestBody Map<String, Object> body,
                                                              HttpServletRequest request) {
-        organizationContextService.applyExplicitFilters(body, request);
-        Notification notification = notificationService.createNotification(body, 
-                organizationContextService.getContext(request));
+        OrganizationContext orgContext = organizationContextService.resolve(request);
+        body.putIfAbsent("tenantId", orgContext.getTenantId());
+        body.putIfAbsent("hospitalCode", orgContext.getHospitalCode());
+        body.putIfAbsent("departmentCode", orgContext.getDepartmentCode());
+        Notification notification = notificationService.createNotification(body, orgContext);
         return ApiResult.success(notificationToMap(notification));
     }
 

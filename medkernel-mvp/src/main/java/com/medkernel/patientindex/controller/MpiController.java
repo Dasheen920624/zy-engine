@@ -18,7 +18,7 @@ import java.util.Map;
  * 患者主索引（MPI）REST 接口
  * 提供患者标识管理、就诊标识映射和冲突处理接口
  */
-@RestController
+@RestController("mpiIndexController")
 @RequestMapping("/api/mpi")
 public class MpiController {
     private final MpiService mpiService;

@@ -14,8 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 用户同步REST接口
@@ -40,7 +43,7 @@ public class UserSyncController {
     @GetMapping("/sources")
     public ApiResult<List<SyncSource>> listSources(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        return ApiResult.success(userSyncService.listSources(orgCtx.getTenantId()));
+        return ApiResult.success(userSyncService.listSources(toLong(orgCtx.getTenantId())));
     }
 
     /**
@@ -50,7 +53,7 @@ public class UserSyncController {
     public ApiResult<SyncSource> getSource(@PathVariable Long sourceId,
                                            HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        SyncSource source = userSyncService.getSource(orgCtx.getTenantId(), sourceId);
+        SyncSource source = userSyncService.getSource(toLong(orgCtx.getTenantId()), sourceId);
         if (source == null) {
             return ApiResult.notFound("Sync source not found");
         }
@@ -64,7 +67,7 @@ public class UserSyncController {
     public ApiResult<SyncSource> createSource(@RequestBody SyncSource source,
                                               HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        source.setTenantId(orgCtx.getTenantId());
+        source.setTenantId(toLong(orgCtx.getTenantId()));
         return ApiResult.success(userSyncService.createSource(source));
     }
 
@@ -77,7 +80,7 @@ public class UserSyncController {
                                               HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         source.setId(sourceId);
-        source.setTenantId(orgCtx.getTenantId());
+        source.setTenantId(toLong(orgCtx.getTenantId()));
         return ApiResult.success(userSyncService.updateSource(source));
     }
 
@@ -87,7 +90,7 @@ public class UserSyncController {
     @GetMapping("/tasks")
     public ApiResult<List<SyncTask>> listTasks(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        return ApiResult.success(userSyncService.listTasks(orgCtx.getTenantId()));
+        return ApiResult.success(userSyncService.listTasks(toLong(orgCtx.getTenantId())));
     }
 
     /**
@@ -97,7 +100,7 @@ public class UserSyncController {
     public ApiResult<SyncTask> getTask(@PathVariable Long taskId,
                                        HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        SyncTask task = userSyncService.getTask(orgCtx.getTenantId(), taskId);
+        SyncTask task = userSyncService.getTask(toLong(orgCtx.getTenantId()), taskId);
         if (task == null) {
             return ApiResult.notFound("Sync task not found");
         }
@@ -118,7 +121,7 @@ public class UserSyncController {
         List<UserSyncService.ExternalUser> externalUsers = getExternalUsers(request);
 
         SyncTask task = userSyncService.executeSync(
-                orgCtx.getTenantId(), sourceId, taskType, externalUsers);
+                toLong(orgCtx.getTenantId()), sourceId, taskType, externalUsers);
         return ApiResult.success(task);
     }
 
@@ -129,7 +132,7 @@ public class UserSyncController {
     public ApiResult<List<SyncLog>> listTaskLogs(@PathVariable Long taskId,
                                                   HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        return ApiResult.success(userSyncService.listLogs(orgCtx.getTenantId(), taskId));
+        return ApiResult.success(userSyncService.listLogs(toLong(orgCtx.getTenantId()), taskId));
     }
 
     /**
@@ -139,7 +142,7 @@ public class UserSyncController {
     private List<UserSyncService.ExternalUser> getExternalUsers(Map<String, Object> request) {
         List<Map<String, Object>> usersData = (List<Map<String, Object>>) request.get("users");
         if (usersData == null) {
-            return List.of();
+            return Collections.emptyList();
         }
 
         return usersData.stream()
@@ -151,6 +154,11 @@ public class UserSyncController {
                         (String) userData.get("phone"),
                         (String) userData.get("department"),
                         (String) userData.get("position")))
-                .toList();
+                .collect(Collectors.toList());
+    }
+
+    private static Long toLong(String value) {
+        if (value == null || value.isEmpty()) return null;
+        try { return Long.parseLong(value); } catch (NumberFormatException e) { return null; }
     }
 }

@@ -2,7 +2,7 @@ package com.medkernel.quality;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
-import com.medkernel.common.OrganizationContext;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -120,7 +120,7 @@ public class EvalController {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
         EvalIndicatorSet set = evalService.getSet(setCode, orgContext);
         if (set == null) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, "Indicator set not found: " + setCode);
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "Indicator set not found: " + setCode);
         }
         return ApiResult.success(set.toView());
     }
@@ -187,7 +187,7 @@ public class EvalController {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
         EvalIndicator indicator = evalService.getIndicator(indicatorCode, orgContext);
         if (indicator == null) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, "Indicator not found: " + indicatorCode);
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "Indicator not found: " + indicatorCode);
         }
         return ApiResult.success(indicator.toView());
     }
@@ -237,7 +237,7 @@ public class EvalController {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
         EvalResult result = evalScoringService.getResult(evalId, orgContext);
         if (result == null) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, "Evaluation result not found: " + evalId);
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "Evaluation result not found: " + evalId);
         }
         return ApiResult.success(result.toView());
     }

@@ -38,7 +38,12 @@ public class MpiHashUtil {
         if (name.length() == 1) {
             return "*";
         }
-        return name.charAt(0) + "*".repeat(name.length() - 1);
+        StringBuilder sb = new StringBuilder();
+        sb.append(name.charAt(0));
+        for (int i = 1; i < name.length(); i++) {
+            sb.append('*');
+        }
+        return sb.toString();
     }
     
     /**

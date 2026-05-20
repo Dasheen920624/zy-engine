@@ -104,10 +104,28 @@ public class QualityDashboardService {
 
         // 科室 KPI（简化版，范围限定到科室）
         Map<String, Object> kpis = new LinkedHashMap<>();
-        kpis.put("pathway", Map.of("totalEnrolled", 387, "completed", 356, "variationRate", 8.0));
-        kpis.put("rule", Map.of("realtimeBlock", 3, "softReminder", 285, "hitRate", 18.5));
-        kpis.put("qc", Map.of("totalIssues", 72, "closedIssues", 64, "rectificationRate", 88.9));
-        kpis.put("insurance", Map.of("potentialRefund", 4200, "refundChange", -8.5));
+        Map<String, Object> pathwayKpi = new LinkedHashMap<>();
+        pathwayKpi.put("totalEnrolled", 387);
+        pathwayKpi.put("completed", 356);
+        pathwayKpi.put("variationRate", 8.0);
+        kpis.put("pathway", pathwayKpi);
+
+        Map<String, Object> ruleKpi = new LinkedHashMap<>();
+        ruleKpi.put("realtimeBlock", 3);
+        ruleKpi.put("softReminder", 285);
+        ruleKpi.put("hitRate", 18.5);
+        kpis.put("rule", ruleKpi);
+
+        Map<String, Object> qcKpi = new LinkedHashMap<>();
+        qcKpi.put("totalIssues", 72);
+        qcKpi.put("closedIssues", 64);
+        qcKpi.put("rectificationRate", 88.9);
+        kpis.put("qc", qcKpi);
+
+        Map<String, Object> insuranceKpi = new LinkedHashMap<>();
+        insuranceKpi.put("potentialRefund", 4200);
+        insuranceKpi.put("refundChange", -8.5);
+        kpis.put("insurance", insuranceKpi);
         result.put("kpis", kpis);
 
         // 变异 TOP10

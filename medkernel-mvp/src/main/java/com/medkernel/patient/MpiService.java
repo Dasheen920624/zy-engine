@@ -243,7 +243,13 @@ public class MpiService {
     public int syncPatientIdentitiesFromAdapter(String tenantId, String adapterCode, String queryCode) {
         try {
             // 调用适配器获取外部患者数据
-            List<Map<String, Object>> externalPatients = adapterHubService.queryExternalData(adapterCode, queryCode, null);
+            Map<String, Object> adapterRequest = new HashMap<>();
+            adapterRequest.put("adapter_code", adapterCode);
+            adapterRequest.put("query_code", queryCode);
+            Map<String, Object> queryResult = adapterHubService.query(adapterRequest, tenantId, null);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> externalPatients = queryResult.get("rows") instanceof List
+                    ? (List<Map<String, Object>>) queryResult.get("rows") : new java.util.ArrayList<Map<String, Object>>();
             
             int syncCount = 0;
             for (Map<String, Object> patientData : externalPatients) {
@@ -275,7 +281,13 @@ public class MpiService {
     public int syncVisitIdentitiesFromAdapter(String tenantId, String adapterCode, String queryCode) {
         try {
             // 调用适配器获取外部就诊数据
-            List<Map<String, Object>> externalVisits = adapterHubService.queryExternalData(adapterCode, queryCode, null);
+            Map<String, Object> adapterRequest = new HashMap<>();
+            adapterRequest.put("adapter_code", adapterCode);
+            adapterRequest.put("query_code", queryCode);
+            Map<String, Object> queryResult = adapterHubService.query(adapterRequest, tenantId, null);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> externalVisits = queryResult.get("rows") instanceof List
+                    ? (List<Map<String, Object>>) queryResult.get("rows") : new java.util.ArrayList<Map<String, Object>>();
             
             int syncCount = 0;
             for (Map<String, Object> visitData : externalVisits) {

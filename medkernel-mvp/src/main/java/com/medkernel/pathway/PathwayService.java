@@ -10,7 +10,6 @@ import com.medkernel.dto.RecommendationCard;
 import com.medkernel.dto.RuleResult;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.persistence.EnginePersistenceService;
-import com.medkernel.provenance.PublishGateService;
 import com.medkernel.rule.RuleService;
 import com.medkernel.util.ClinicalFactUtils;
 import org.slf4j.Logger;

@@ -1,6 +1,7 @@
 package com.medkernel.rule;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -76,7 +77,7 @@ public class RuleActionLogController {
         organizationContextService.applyExplicitFilters(filters, httpRequest);
         RuleActionLog log = actionLogService.getById(logId);
         if (log == null) {
-            return ApiResult.error("DECISION_LOG_NOT_FOUND", "决策日志不存在: " + logId);
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "决策日志不存在: " + logId);
         }
         return ApiResult.success(log);
     }

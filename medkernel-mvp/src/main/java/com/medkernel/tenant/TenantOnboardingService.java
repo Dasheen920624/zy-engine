@@ -1,6 +1,7 @@
 package com.medkernel.tenant;
 
-import com.medkernel.common.ApiException;
+import com.medkernel.common.ErrorCode;
+import com.medkernel.common.exception.BusinessException;
 import com.medkernel.security.SecurityTenant;
 import org.springframework.stereotype.Service;
 
@@ -55,7 +56,7 @@ public class TenantOnboardingService {
     public Map<String, Object> reviewApplication(String applicationCode, Map<String, Object> request) {
         Map<String, Object> application = applicationStore.get(applicationCode);
         if (application == null) {
-            throw new ApiException("申请不存在: " + applicationCode);
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "申请不存在: " + applicationCode);
         }
 
         String action = (String) request.get("action");  // APPROVE/REJECT
@@ -159,17 +160,17 @@ public class TenantOnboardingService {
     public Map<String, Object> acceptInvitation(String invitationCode, Map<String, Object> request) {
         Map<String, Object> invitation = invitationStore.get(invitationCode);
         if (invitation == null) {
-            throw new ApiException("邀请不存在: " + invitationCode);
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "邀请不存在: " + invitationCode);
         }
 
         if (!"PENDING".equals(invitation.get("status"))) {
-            throw new ApiException("邀请状态无效: " + invitation.get("status"));
+            throw new BusinessException(ErrorCode.CONFLICT, "邀请状态无效: " + invitation.get("status"));
         }
 
         LocalDateTime expireTime = (LocalDateTime) invitation.get("expireTime");
         if (LocalDateTime.now().isAfter(expireTime)) {
             invitation.put("status", "EXPIRED");
-            throw new ApiException("邀请已过期");
+            throw new BusinessException(ErrorCode.CONFLICT, "邀请已过期");
         }
 
         String userId = (String) request.get("userId");
@@ -253,7 +254,7 @@ public class TenantOnboardingService {
     public Map<String, Object> revokeServiceAccount(String accountCode) {
         Map<String, Object> account = serviceAccountStore.get(accountCode);
         if (account == null) {
-            throw new ApiException("服务账号不存在: " + accountCode);
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "服务账号不存在: " + accountCode);
         }
 
         account.put("status", "REVOKED");

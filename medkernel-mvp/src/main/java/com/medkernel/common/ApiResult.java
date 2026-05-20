@@ -49,6 +49,13 @@ public class ApiResult<T> {
         return failure(errorCode, message, null);
     }
 
+    /**
+     * 返回 404 资源未找到响应。
+     */
+    public static <T> ApiResult<T> notFound(String message) {
+        return failure(ErrorCode.RESOURCE_NOT_FOUND, message);
+    }
+
     public static <T> ApiResult<T> failure(ErrorCode errorCode, String message, String messageKey) {
         ApiResult<T> result = new ApiResult<T>();
         result.success = false;

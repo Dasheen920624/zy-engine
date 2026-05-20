@@ -64,12 +64,13 @@ public class CdssService {
 
         List<Map<String, Object>> ruleResults;
         try {
-            OrganizationContext orgContext = OrganizationContext.builder()
-                    .tenantId(tenantId)
-                    .build();
-            ApiResult<List<Map<String, Object>>> result =
-                    ruleService.evaluateForScenario(evaluateRequest, orgContext);
-            ruleResults = result.getData() != null ? result.getData() : Collections.emptyList();
+            OrganizationContext orgContext = new OrganizationContext();
+            orgContext.setTenantId(tenantId);
+            Map<String, Object> result = ruleService.evaluateForScenario(evaluateRequest, orgContext);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> rawResults = result.get("rules") instanceof List
+                    ? (List<Map<String, Object>>) result.get("rules") : Collections.<Map<String, Object>>emptyList();
+            ruleResults = rawResults;
         } catch (Exception e) {
             // 规则引擎异常不阻断临床流程
             return Collections.emptyList();
@@ -132,8 +133,8 @@ public class CdssService {
         // 审计红线写入审计日志
         if (isAuditRedLine) {
             persistenceService.saveAuditLog("CDSS", "CRITICAL_OVERRIDE", "ALERT",
-                    alertId, null, operatorName,
-                    Map.of(
+                    alertId, alert.getPatientId(), null, operatorName,
+                    mapOf6(
                             "triggerPoint", alert.getTriggerPoint() != null ? alert.getTriggerPoint() : "",
                             "riskLevel", alert.getRiskLevel() != null ? alert.getRiskLevel().getCode() : "",
                             "overrideReason", overrideReason != null ? overrideReason : "",
@@ -146,8 +147,8 @@ public class CdssService {
         // 记录普通确认日志
         if (!isAuditRedLine) {
             persistenceService.saveAuditLog("CDSS", overrideType, "ALERT",
-                    alertId, null, operatorName,
-                    Map.of(
+                    alertId, alert.getPatientId(), null, operatorName,
+                    mapOf3(
                             "triggerPoint", alert.getTriggerPoint() != null ? alert.getTriggerPoint() : "",
                             "riskLevel", alert.getRiskLevel() != null ? alert.getRiskLevel().getCode() : "",
                             "overrideReason", overrideReason != null ? overrideReason : ""
@@ -204,6 +205,29 @@ public class CdssService {
             default:
                 return null;
         }
+    }
+
+    /** Java 8 兼容的 Map.of 替代：3 个键值对 */
+    private static Map<String, Object> mapOf3(String k1, Object v1, String k2, Object v2, String k3, Object v3) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put(k1, v1);
+        m.put(k2, v2);
+        m.put(k3, v3);
+        return m;
+    }
+
+    /** Java 8 兼容的 Map.of 替代：6 个键值对 */
+    private static Map<String, Object> mapOf6(String k1, Object v1, String k2, Object v2,
+                                              String k3, Object v3, String k4, Object v4,
+                                              String k5, Object v5, String k6, Object v6) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put(k1, v1);
+        m.put(k2, v2);
+        m.put(k3, v3);
+        m.put(k4, v4);
+        m.put(k5, v5);
+        m.put(k6, v6);
+        return m;
     }
 
     private CdssAlert convertToAlert(String triggerPoint, Map<String, Object> ruleResult,

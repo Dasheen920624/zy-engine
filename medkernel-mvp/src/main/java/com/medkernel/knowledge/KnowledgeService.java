@@ -1,6 +1,6 @@
 package com.medkernel.knowledge;
 
-import com.medkernel.common.OrganizationContext;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.stereotype.Service;
 

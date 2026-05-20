@@ -3,9 +3,9 @@ package com.medkernel.quality;
 import com.medkernel.cdss.CdssRiskLevel;
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
-import com.medkernel.common.OrganizationContext;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
-import com.medkernel.provenance.PublishGateService;
+import com.medkernel.audit.PublishGateService;
 import com.medkernel.provenance.SourceAssetBindingService;
 import org.springframework.stereotype.Service;
 

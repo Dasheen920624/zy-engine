@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.medkernel.audit.PublishGateService;
 import com.medkernel.organization.OrganizationDirectoryService;
 import com.medkernel.persistence.EnginePersistenceService;
-import com.medkernel.provenance.PublishGateService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

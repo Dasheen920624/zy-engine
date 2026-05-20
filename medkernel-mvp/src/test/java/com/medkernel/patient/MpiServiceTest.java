@@ -112,10 +112,15 @@ class MpiServiceTest {
         when(persistenceService.savePatientIdentity(any(PatientIdentity.class)))
                 .thenReturn(samplePatientIdentity);
 
-        List<Map<String, String>> identities = Arrays.asList(
-                Map.of("identityType", "HIS_PATIENT_ID", "externalId", "HIS001", "sourceSystem", "HIS"),
-                Map.of("identityType", "EMR_PATIENT_ID", "externalId", "EMR001", "sourceSystem", "EMR")
-        );
+        Map<String, String> id1 = new HashMap<>();
+        id1.put("identityType", "HIS_PATIENT_ID");
+        id1.put("externalId", "HIS001");
+        id1.put("sourceSystem", "HIS");
+        Map<String, String> id2 = new HashMap<>();
+        id2.put("identityType", "EMR_PATIENT_ID");
+        id2.put("externalId", "EMR001");
+        id2.put("sourceSystem", "EMR");
+        List<Map<String, String>> identities = Arrays.asList(id1, id2);
 
         int count = mpiService.batchRegisterPatientIdentities("T001", "P001", identities);
 
@@ -280,13 +285,18 @@ class MpiServiceTest {
 
     @Test
     void testSyncPatientIdentitiesFromAdapter() {
-        List<Map<String, Object>> externalData = Arrays.asList(
-                Map.of("patientId", "EXT001", "patientName", "张三"),
-                Map.of("patientId", "EXT002", "patientName", "李四")
-        );
+        Map<String, Object> ext1 = new HashMap<>();
+        ext1.put("patientId", "EXT001");
+        ext1.put("patientName", "张三");
+        Map<String, Object> ext2 = new HashMap<>();
+        ext2.put("patientId", "EXT002");
+        ext2.put("patientName", "李四");
+        List<Map<String, Object>> externalData = Arrays.asList(ext1, ext2);
 
-        when(adapterHubService.queryExternalData("HIS_ADAPTER", "QUERY_HIS_USERS", null))
-                .thenReturn(externalData);
+        Map<String, Object> adapterResult = new HashMap<>();
+        adapterResult.put("rows", externalData);
+        when(adapterHubService.query(any(Map.class), eq("T001"), any()))
+                .thenReturn(adapterResult);
         when(persistenceService.hashId("EXT001")).thenReturn("hash1234567890123456");
         when(persistenceService.hashId("EXT002")).thenReturn("hash2345678901234567");
         when(persistenceService.findPatientIdentityByExternalId(anyString(), anyString(), anyString(), anyString()))
@@ -302,12 +312,16 @@ class MpiServiceTest {
 
     @Test
     void testSyncVisitIdentitiesFromAdapter() {
-        List<Map<String, Object>> externalData = Arrays.asList(
-                Map.of("visitId", "VISIT001", "patientId", "EXT001", "visitType", "OUTPATIENT")
-        );
+        Map<String, Object> extVisit = new HashMap<>();
+        extVisit.put("visitId", "VISIT001");
+        extVisit.put("patientId", "EXT001");
+        extVisit.put("visitType", "OUTPATIENT");
+        List<Map<String, Object>> externalData = Arrays.asList(extVisit);
 
-        when(adapterHubService.queryExternalData("HIS_ADAPTER", "QUERY_HIS_VISITS", null))
-                .thenReturn(externalData);
+        Map<String, Object> adapterResult = new HashMap<>();
+        adapterResult.put("rows", externalData);
+        when(adapterHubService.query(any(Map.class), eq("T001"), any()))
+                .thenReturn(adapterResult);
         when(persistenceService.findPatientIdentityByExternalId("T001", "HIS_ADAPTER_PATIENT_ID", "HIS_ADAPTER", "EXT001"))
                 .thenReturn(samplePatientIdentity);
         when(persistenceService.hashId("VISIT001")).thenReturn("hash3456789012345678");

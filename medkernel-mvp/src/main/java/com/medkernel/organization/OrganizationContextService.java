@@ -66,6 +66,36 @@ public class OrganizationContextService {
         return context;
     }
 
+    /**
+     * 便捷方法：直接获取租户ID字符串。
+     */
+    public String resolveTenantId(HttpServletRequest request) {
+        OrganizationContext ctx = resolve(request);
+        return ctx.getTenantId();
+    }
+
+    /**
+     * 便捷方法：获取租户ID（Long类型）。
+     */
+    public Long getTenantId(HttpServletRequest request) {
+        String tenantId = resolveTenantId(request);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(tenantId);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * 便捷方法：等同于 resolve(request)，返回 OrganizationContext。
+     */
+    public OrganizationContext getContext(HttpServletRequest request) {
+        return resolve(request);
+    }
+
     public void applyExplicitFilters(Map<String, String> filters, HttpServletRequest request) {
         if (filters == null || request == null) {
             return;

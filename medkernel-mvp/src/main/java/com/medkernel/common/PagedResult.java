@@ -42,7 +42,7 @@ public class PagedResult<T> {
         int toIndex = Math.min(fromIndex + pageSize, allItems.size());
         List<T> pageItems = fromIndex < allItems.size()
                 ? allItems.subList(fromIndex, toIndex)
-                : List.of();
+                : java.util.Collections.emptyList();
         return new PagedResult<>(pageItems, total, safePage, pageSize);
     }
 

@@ -190,6 +190,51 @@ public class PublishGateService {
     }
 
     /**
+     * 检查资产是否满足发布门禁要求（兼容 provenance 包接口）。
+     *
+     * @param assetType 资产类型（RULE, PATHWAY, CONFIG_PACKAGE, ADAPTER, GRAPH, QC_METRIC）
+     * @param assetCode 资产编码
+     * @param tenantId  租户ID（可选，默认为 "default"）
+     * @return 检查结果 Map，包含 issues/warnings/passed 字段
+     */
+    public Map<String, Object> checkPublishGate(String assetType, String assetCode, String tenantId) {
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("asset_type", assetType);
+        result.put("asset_code", assetCode);
+        result.put("tenant_id", tenantId == null ? "default" : tenantId);
+
+        // 使用 checkSingle 进行来源绑定检查（基于 reference_document_code）
+        // 注意：此方法为兼容接口，实际来源检查应使用 checkSingle/checkBatch
+        GateCheckResult gateResult = checkSingle(assetType, assetCode, null);
+        result.put("issues", gateResult.toMapList());
+        result.put("warnings", new ArrayList<Map<String, Object>>());
+        result.put("passed", gateResult.isReadyToPublish());
+        return result;
+    }
+
+    /**
+     * 验证资产是否满足发布门禁，如果不满足则抛出异常。
+     *
+     * @param assetType 资产类型
+     * @param assetCode 资产编码
+     * @param tenantId  租户ID（可选）
+     * @throws IllegalStateException 如果不满足门禁要求
+     */
+    public void requirePublishGate(String assetType, String assetCode, String tenantId) {
+        Map<String, Object> result = checkPublishGate(assetType, assetCode, tenantId);
+        if (!Boolean.TRUE.equals(result.get("passed"))) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> issues = (List<Map<String, Object>>) result.get("issues");
+            StringBuilder sb = new StringBuilder();
+            sb.append("资产 ").append(assetCode).append(" 不满足发布门禁要求:");
+            for (Map<String, Object> issue : issues) {
+                sb.append("\n  - ").append(issue.get("message"));
+            }
+            throw new IllegalStateException(sb.toString());
+        }
+    }
+
+    /**
      * 将 GateCheckResult 转为可抛出的异常消息。
      */
     public String formatBlockingMessage(GateCheckResult result) {

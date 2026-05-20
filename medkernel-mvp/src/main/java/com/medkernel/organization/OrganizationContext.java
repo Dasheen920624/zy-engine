@@ -135,6 +135,41 @@ public class OrganizationContext {
         this.legacyOrgCode = legacyOrgCode;
     }
 
+    /**
+     * 获取组织编码（兼容旧代码，等同 legacyOrgCode）。
+     */
+    public String getOrgCode() {
+        return legacyOrgCode;
+    }
+
+    /**
+     * 获取用户ID（审计日志用）。MVP 阶段从 TraceContext 获取。
+     */
+    public String getUserId() {
+        return com.medkernel.common.TraceContext.getUsername();
+    }
+
+    /**
+     * 获取作用域级别（兼容旧代码，等同 effectiveScopeLevel）。
+     */
+    public String getScopeLevel() {
+        return effectiveScopeLevel;
+    }
+
+    /**
+     * 获取作用域编码（兼容旧代码，等同 effectiveScopeCode）。
+     */
+    public String getScopeCode() {
+        return effectiveScopeCode;
+    }
+
+    /**
+     * 获取组织来源（兼容旧代码，等同 source）。
+     */
+    public String getOrgSource() {
+        return source;
+    }
+
     public String getEffectiveScopeLevel() {
         return effectiveScopeLevel;
     }

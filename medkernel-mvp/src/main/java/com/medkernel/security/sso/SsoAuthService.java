@@ -1,5 +1,6 @@
 package com.medkernel.security.sso;
 
+import com.medkernel.security.IdentityBinding;
 import com.medkernel.security.JwtTokenProvider;
 import com.medkernel.security.SecurityPersistenceService;
 import org.slf4j.Logger;
@@ -102,12 +103,12 @@ public class SsoAuthService {
 
         // 查找绑定关系
         Long providerId = toLong(providerConfig.get("provider_id"));
-        Map<String, Object> binding = persistenceService.findIdentityBinding(tenantId, providerId, externalSubject);
+        IdentityBinding binding = persistenceService.findIdentityBinding(toLong(tenantId), providerId, externalSubject);
 
         Long platformUserId;
         if (binding != null) {
             // 已有绑定，直接使用
-            platformUserId = toLong(binding.get("user_id"));
+            platformUserId = binding.getUserId();
         } else {
             // 无绑定，检查自动开户策略
             boolean autoProvision = "true".equalsIgnoreCase(providerConfig.getOrDefault("auto_provision", "false"));
@@ -115,9 +116,10 @@ public class SsoAuthService {
                 // 自动开户：创建平台用户 + 绑定
                 String username = "sso-" + externalSubject;
                 String displayName = externalDisplayName != null ? externalDisplayName : externalSubject;
-                platformUserId = persistenceService.createUser(tenantId, username, "$2a$10$SSO_AUTO_PROVISION_NOT_FOR_LOGIN", displayName, "SSO");
-                persistenceService.createIdentityBinding(tenantId, platformUserId, providerId, externalSubject,
-                        providerConfig.getOrDefault("org_code", ""), externalDisplayName, "ACTIVE");
+                platformUserId = persistenceService.createUser(toLong(tenantId), username, displayName,
+                        null, null, "SSO", null, "ACTIVE");
+                persistenceService.createIdentityBinding(toLong(tenantId), platformUserId, providerId,
+                        externalSubject, providerConfig.getOrDefault("org_code", ""), externalDisplayName);
                 log.info("[SSO] Auto-provisioned user {} for external subject {} via provider {}",
                         platformUserId, externalSubject, providerCode);
             } else {
