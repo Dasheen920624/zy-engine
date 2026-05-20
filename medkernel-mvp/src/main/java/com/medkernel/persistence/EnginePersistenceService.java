@@ -1720,7 +1720,8 @@ public class EnginePersistenceService {
                 "/db/local/tenant_onboarding_ddl.sql",
                 "/db/local/interop_ddl.sql",
                 "/db/local/mpi_ddl.sql",
-                "/db/local/sec_user_sync_ddl.sql"
+                "/db/local/sec_user_sync_ddl.sql",
+                "/db/local/ai_knowledge_job_ddl.sql"
         };
         List<String> statements = new ArrayList<String>();
         for (String resource : resources) {
