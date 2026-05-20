@@ -151,8 +151,8 @@ submit_allowed:
 ## Completion
 
 ```text
-commit:
-push:
+commit: 62deed6
+push: pending
 tests: 编译错误为分支已有Java问题（WebSocket/TenantOnboarding/RuleAction），与DDL改动无关
 review: NOT_REQUESTED
 risks: 无（纯DDL文件变更，不影响运行时代码逻辑）
