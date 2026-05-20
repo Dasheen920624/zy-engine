@@ -49,6 +49,9 @@ http.interceptors.request.use((config) => {
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
+  // locale 透传
+  const locale = localStorage.getItem("medkernel_locale") || "zh-CN";
+  headers["Accept-Language"] = locale;
   config.headers = headers as never;
   return config;
 });

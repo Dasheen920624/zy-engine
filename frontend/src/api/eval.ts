@@ -229,3 +229,165 @@ export async function listEvalResults(params?: {
 export async function getEvalResult(evalId: string): Promise<EvalResultData> {
   return get<EvalResultData>(`/quality/eval/results/${encodeURIComponent(evalId)}`);
 }
+
+// ==================== 评估报告类型 ====================
+
+export interface EvalReportData {
+  report_id: string;
+  eval_id: string;
+  tenant_id: string;
+  set_code: string;
+  subject_type: string;
+  subject_id: string;
+  subject_name: string;
+  total_score: number;
+  max_possible_score: number;
+  score_percentage: number;
+  risk_level: string;
+  recommendations: string[];
+  status: "DRAFT" | "REVIEWED" | "REVIEW_REJECTED" | "CONDITIONALLY_APPROVED" | "ARCHIVED";
+  generated_at: string;
+  archived_at?: string;
+  abnormal_fact_count: number;
+  missing_fact_count: number;
+  org_context: Record<string, unknown>;
+}
+
+export interface EvalReportExport extends EvalReportData {
+  indicator_scores: IndicatorScore[];
+  abnormal_facts: EvalFact[];
+  missing_facts: EvalFact[];
+}
+
+export interface EvalReviewData {
+  review_id: string;
+  report_id: string;
+  tenant_id: string;
+  reviewer_id: string;
+  reviewer_name: string;
+  review_result: "APPROVED" | "REJECTED" | "CONDITIONALLY_APPROVED";
+  review_comment: string;
+  reviewed_at: string;
+}
+
+export interface EvalRectificationData {
+  rect_id: string;
+  report_id: string;
+  tenant_id: string;
+  title: string;
+  description: string;
+  assignee_id: string;
+  assignee_name: string;
+  priority: "HIGH" | "MEDIUM" | "LOW";
+  due_date: string;
+  related_facts: string;
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED";
+  updated_by: string;
+  update_note: string;
+  created_at: string;
+  updated_at?: string;
+  completed_at?: string;
+  org_context: Record<string, unknown>;
+}
+
+// ==================== 评估报告 API ====================
+
+export async function generateReport(evalId: string): Promise<EvalReportData> {
+  return post<EvalReportData>("/quality/eval/report/generate", { eval_id: evalId });
+}
+
+export async function exportReport(reportId: string): Promise<EvalReportExport> {
+  return get<EvalReportExport>(`/quality/eval/report/${encodeURIComponent(reportId)}/export`);
+}
+
+export async function getReport(reportId: string): Promise<EvalReportData> {
+  return get<EvalReportData>(`/quality/eval/report/${encodeURIComponent(reportId)}`);
+}
+
+export async function listReports(params?: {
+  status?: string;
+  subject_type?: string;
+}): Promise<EvalReportData[]> {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set("status", params.status);
+  if (params?.subject_type) qs.set("subject_type", params.subject_type);
+  const query = qs.toString();
+  return get<EvalReportData[]>(`/quality/eval/report/list${query ? `?${query}` : ""}`);
+}
+
+export async function archiveReport(reportId: string): Promise<EvalReportData> {
+  return post<EvalReportData>(`/quality/eval/report/${encodeURIComponent(reportId)}/archive`, {});
+}
+
+// ==================== 人工复核 API ====================
+
+export async function submitReview(
+  reportId: string,
+  data: {
+    reviewer_id: string;
+    reviewer_name: string;
+    review_result: "APPROVED" | "REJECTED" | "CONDITIONALLY_APPROVED";
+    review_comment: string;
+  },
+): Promise<EvalReviewData> {
+  return post<EvalReviewData>(`/quality/eval/report/${encodeURIComponent(reportId)}/review`, data);
+}
+
+export async function listReviews(reportId: string): Promise<EvalReviewData[]> {
+  return get<EvalReviewData[]>(`/quality/eval/report/${encodeURIComponent(reportId)}/reviews`);
+}
+
+// ==================== 整改任务 API ====================
+
+export async function createRectification(
+  reportId: string,
+  data: {
+    title: string;
+    description?: string;
+    assignee_id?: string;
+    assignee_name?: string;
+    priority?: string;
+    due_date?: string;
+    related_facts?: string;
+  },
+): Promise<EvalRectificationData> {
+  return post<EvalRectificationData>(`/quality/eval/report/${encodeURIComponent(reportId)}/rectification`, data);
+}
+
+export async function autoCreateRectifications(reportId: string): Promise<EvalRectificationData[]> {
+  return post<EvalRectificationData[]>(`/quality/eval/report/${encodeURIComponent(reportId)}/rectification/auto`, {});
+}
+
+export async function updateRectificationStatus(
+  rectId: string,
+  data: {
+    status: "IN_PROGRESS" | "COMPLETED";
+    updated_by?: string;
+    update_note?: string;
+  },
+): Promise<EvalRectificationData> {
+  return post<EvalRectificationData>(`/quality/eval/report/rectification/${encodeURIComponent(rectId)}/status`, data);
+}
+
+export async function listRectifications(params?: {
+  report_id?: string;
+  status?: string;
+}): Promise<EvalRectificationData[]> {
+  const qs = new URLSearchParams();
+  if (params?.report_id) qs.set("report_id", params.report_id);
+  if (params?.status) qs.set("status", params.status);
+  const query = qs.toString();
+  return get<EvalRectificationData[]>(`/quality/eval/report/rectification/list${query ? `?${query}` : ""}`);
+}
+
+// ==================== 再评估 API ====================
+
+export async function reEvaluate(
+  evalId: string,
+  inputData: Record<string, unknown>,
+): Promise<EvalResultData> {
+  return post<EvalResultData>("/quality/eval/report/re-evaluate", {
+    eval_id: evalId,
+    input_data: inputData,
+  });
+}

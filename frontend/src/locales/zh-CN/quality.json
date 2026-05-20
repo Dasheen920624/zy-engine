@@ -1,0 +1,60 @@
+{
+  "title": "质控管理",
+  "dashboard": {
+    "title": "院级质控驾驶舱",
+    "pathwayExecution": "路径执行",
+    "ruleHit": "规则命中",
+    "qcProblem": "质控问题",
+    "insuranceRisk": "医保风险",
+    "departmentRank": "科室排名",
+    "trend": "趋势分析"
+  },
+  "alert": {
+    "title": "质控预警",
+    "critical": "危急",
+    "warning": "警告",
+    "info": "提醒",
+    "overtime": "超时未改",
+    "assign": "派单",
+    "assignTo": "指派给",
+    "role": "角色",
+    "deadline": "整改截止",
+    "note": "备注"
+  },
+  "eval": {
+    "title": "智能评估",
+    "indicatorSet": "指标集",
+    "indicator": "指标",
+    "result": "评估结果",
+    "report": "评估报告",
+    "execute": "执行评估",
+    "score": "得分",
+    "riskLevel": "风险等级",
+    "abnormalFact": "异常事实",
+    "missingFact": "缺失事实",
+    "thresholdMet": "达标",
+    "thresholdNotMet": "未达标",
+    "weight": "权重",
+    "maxValue": "满分",
+    "subjectType": {
+      "EMR": "病历质量",
+      "INSURANCE": "医保合规",
+      "PATHWAY": "临床路径执行",
+      "DEPARTMENT": "科室综合",
+      "CONFIG": "配置质量"
+    },
+    "report": {
+      "generate": "生成报告",
+      "export": "导出报告",
+      "archive": "归档",
+      "review": "提交复核",
+      "reviewApproved": "通过",
+      "reviewRejected": "驳回",
+      "reviewConditional": "有条件通过",
+      "rectification": "整改任务",
+      "autoRectification": "自动整改",
+      "reEvaluate": "再评估",
+      "recommendations": "整改建议"
+    }
+  }
+}

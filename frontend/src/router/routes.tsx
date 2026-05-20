@@ -10,8 +10,10 @@ import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import WorkflowTodos from "../pages/WorkflowTodos";
 import { QualityDashboard, DepartmentDrillDown, EvalIndicatorSetList, EvalResultList } from "../pages/Quality";
 import AlertList from "../pages/Quality/AlertList";
+import EvalReportPage from "../pages/Quality/EvalReportPage";
 import { KnowledgePage } from "../pages/Knowledge";
 import { SecurityBaselinePage } from "../pages/Security";
+import AlertFatiguePage from "../pages/CDSS/AlertFatiguePage";
 import IdentityBindingManagement from "../pages/IdentityBindingManagement";
 import { NotificationList, NotificationDetail, NotificationSettings } from "../pages/Notification";
 import NotFound from "../pages/NotFound";
@@ -56,11 +58,13 @@ export const routes: RouteObject[] = [
           { path: "qc/dashboard", element: <QualityDashboard /> },
           { path: "qc/eval/sets", element: <EvalIndicatorSetList /> },
           { path: "qc/eval/results", element: <EvalResultList /> },
+          { path: "qc/eval/reports", element: <EvalReportPage /> },
           { path: "qc/department/:deptCode", element: <DepartmentDrillDown /> },
           { path: "qc/insurance", element: <PlaceholderPage title="医保智能审核" pr="PR-V2-12" /> },
           { path: "aik/sources", element: <KnowledgePage /> },
           { path: "aik/review", element: <PlaceholderPage title="知识审核台" pr="PR-V2-05" /> },
           { path: "security/baseline", element: <SecurityBaselinePage /> },
+          { path: "cdss/fatigue", element: <AlertFatiguePage /> },
           { path: "security/identity-binding", element: <IdentityBindingManagement /> },
           { path: "workflow/todos", element: <WorkflowTodos /> },
           { path: "notifications", element: <NotificationList recipientId="current-user" /> },
