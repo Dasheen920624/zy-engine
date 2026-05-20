@@ -19,5 +19,11 @@ public enum ActionMode {
      * 阻断模式：必须确认才能继续，用于高风险医疗安全场景
      * 必须配合 decision_required=true 使用
      */
-    BLOCK
+    BLOCK,
+
+    /**
+     * 上报模式：需上级确认才能继续，用于覆盖治理场景
+     * 当医生覆盖阻断级告警时，需上级医生二次确认
+     */
+    ESCALATE
 }
