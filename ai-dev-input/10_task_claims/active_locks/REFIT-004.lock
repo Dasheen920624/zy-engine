@@ -1,0 +1,7 @@
+task_id: REFIT-004
+claim_id: REFIT-004-S01
+owner: CodeBuddy
+branch: ai/REFIT-004/multi-db-ddl-unify
+git_base_commit: b37ffd9
+created_at: 2026-05-20T08:40:00+08:00
+last_heartbeat: 2026-05-20T08:40:00+08:00
