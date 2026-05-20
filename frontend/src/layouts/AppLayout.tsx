@@ -3,22 +3,32 @@ import { Outlet } from "react-router-dom";
 import TopNav from "./TopNav";
 import SideMenu from "./SideMenu";
 
-const { Content } = Layout;
+const { Content, Sider, Header } = Layout;
 
 /**
- * 应用主布局组件
- * 顶 + 侧 + 内容三段布局
+ * 应用主布局（PR-V2-03 原始两段式恢复版）。
+ *
+ * - 顶部 Header：产品标题 + 面包屑 + 组织上下文 + 用户
+ * - 左侧 Sider（固定 220px）：两段式分组菜单
+ * - 主内容区：路由 Outlet
  */
 export default function AppLayout() {
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      {/* 顶部导航栏 */}
-      <TopNav />
-      <Layout>
-        {/* 侧边菜单 */}
-        <SideMenu />
-        {/* 主内容区 */}
-        <Content style={{ padding: 24, overflow: "auto", background: "var(--mk-bg-layout)" }}>
+      <Header className="mk-app-header">
+        <TopNav />
+      </Header>
+      <Layout className="mk-app-body">
+        <Sider
+          width={220}
+          theme="light"
+          className="mk-app-sider"
+          breakpoint="lg"
+          collapsedWidth="0"
+        >
+          <SideMenu />
+        </Sider>
+        <Content className="mk-app-content">
           <Outlet />
         </Content>
       </Layout>

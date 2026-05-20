@@ -3,15 +3,25 @@ import {
   AppstoreOutlined,
   AuditOutlined,
   BellOutlined,
+  ClusterOutlined,
+  ContainerOutlined,
+  DatabaseOutlined,
+  DesktopOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
+  IdcardOutlined,
+  LineChartOutlined,
   MedicineBoxOutlined,
   NodeIndexOutlined,
   ReadOutlined,
+  RobotOutlined,
   SafetyCertificateOutlined,
   ShareAltOutlined,
+  ShopOutlined,
+  TeamOutlined,
   ToolOutlined,
   UnorderedListOutlined,
+  UserSwitchOutlined,
 } from "@ant-design/icons";
 
 export interface MenuItem {
@@ -19,261 +29,264 @@ export interface MenuItem {
   label: string;
   icon?: ReactNode;
   path?: string;
-  children?: MenuItem[];
-  roles?: string[]; // 允许访问的角色，为空则所有角色可见
+  roles?: string[];
   disabled?: boolean;
-  pr?: string; // 关联的 PR 编号，用于占位页显示
+  pr?: string;
+  /** 占位说明：用于占位页 placeholder hint */
+  placeholderHint?: string;
+}
+
+export interface MenuSection {
+  /** section key，纯标识，不展示给用户 */
+  key: string;
+  /** section 在侧边栏渲染的分组标题，null 表示无分组（顶部直放） */
+  label: string | null;
+  items: MenuItem[];
 }
 
 /**
- * 顶级菜单配置（11 项）
- * 按 04_页面规格书.md §0.2 的 18 页面清单生成
+ * 两段式侧边栏菜单结构（PR-V2-03 原始设计 + 2026-05 全功能扩展）。
+ *
+ * 设计原则：
+ * 1) 工作台 + 演示 直接放最顶；
+ * 2) "配置治理" 收纳一切"医院/集团配置 + 引擎配置 + 字典 + 适配器 + 来源"等治理面；
+ * 3) "运营治理" 收纳一切"看板/质控/评估/AI 知识/待办/通知/患者主索引/身份/租户/系统监控"等运行面；
+ * 4) 单条菜单超过 12 行时仍按业务亲和分组，不让用户滚动找入口；
+ * 5) `pr` 字段保留任务编号溯源；`disabled`/`placeholderHint` 提示尚未完成的入口。
  */
-export const topMenuItems: MenuItem[] = [
+export const menuSections: MenuSection[] = [
+  // ─── 顶部直放：工作台 + 演示 ───────────────────────────
   {
-    key: "dashboard",
-    label: "工作台",
-    icon: <AppstoreOutlined />,
-    path: "/dashboard",
-  },
-  {
-    key: "pathway",
-    label: "路径",
-    icon: <NodeIndexOutlined />,
-    children: [
+    key: "top",
+    label: null,
+    items: [
       {
-        key: "pathway-templates",
-        label: "路径模板列表",
-        path: "/pathway/templates",
-        pr: "PR-V2-06",
+        key: "dashboard",
+        label: "工作台",
+        icon: <AppstoreOutlined />,
+        path: "/dashboard",
       },
       {
-        key: "pathway-editor",
-        label: "路径模板编辑器",
-        path: "/pathway/templates/:code/edit",
-        pr: "PR-V2-07",
-        disabled: true,
-      },
-      {
-        key: "pathway-diff",
-        label: "路径版本对比",
-        path: "/pathway/templates/:code/diff",
-        pr: "PR-V2-07",
-        disabled: true,
-      },
-      {
-        key: "pathway-patients",
-        label: "患者路径管理",
-        path: "/pathway/patients",
-        pr: "PR-V2-09",
+        key: "demo-validation",
+        label: "演示与校验",
+        icon: <ExperimentOutlined />,
+        path: "/demo-validation",
       },
     ],
   },
+
+  // ─── 配置治理 ─────────────────────────────────────────
   {
-    key: "rule",
-    label: "规则",
-    icon: <SafetyCertificateOutlined />,
-    children: [
-      {
-        key: "rule-definitions",
-        label: "规则库",
-        path: "/rule/definitions",
-        pr: "PR-V2-05",
-      },
-      {
-        key: "rule-editor",
-        label: "规则 DSL 编辑器",
-        path: "/rule/definitions/:code/edit",
-        pr: "PR-V2-05",
-        disabled: true,
-      },
-      {
-        key: "rule-validate",
-        label: "规则校验工作台",
-        path: "/rule/validate",
-      },
-    ],
-  },
-  {
-    key: "graph",
-    label: "图谱",
-    icon: <ShareAltOutlined />,
-    children: [
-      {
-        key: "graph-explore",
-        label: "图谱查询工作台",
-        path: "/graph/explore",
-        pr: "PR-V2-05",
-      },
-    ],
-  },
-  {
-    key: "terminology",
-    label: "字典",
-    icon: <MedicineBoxOutlined />,
-    children: [
-      {
-        key: "terminology-mapping",
-        label: "字典映射工作台",
-        path: "/terminology/mapping",
-        pr: "PR-V2-08",
-      },
-    ],
-  },
-  {
-    key: "config",
-    label: "配置",
-    icon: <FileSearchOutlined />,
-    children: [
+    key: "config-governance",
+    label: "配置治理",
+    items: [
       {
         key: "config-packages",
-        label: "配置包列表",
+        label: "配置包中心",
+        icon: <ContainerOutlined />,
         path: "/config/packages",
       },
       {
-        key: "config-import",
-        label: "配置包发布向导",
-        path: "/config/packages/import",
+        key: "pathway-templates",
+        label: "路径配置",
+        icon: <NodeIndexOutlined />,
+        path: "/pathway/templates",
+      },
+      {
+        key: "rule-definitions",
+        label: "规则配置",
+        icon: <SafetyCertificateOutlined />,
+        path: "/rule/definitions",
         pr: "PR-V2-05",
+        placeholderHint: "规则库列表与 DSL 编辑器规划中",
+      },
+      {
+        key: "graph-explore",
+        label: "图谱配置",
+        icon: <ShareAltOutlined />,
+        path: "/graph/explore",
+        pr: "PR-V2-05",
+        placeholderHint: "图谱查询工作台规划中",
+      },
+      {
+        key: "terminology-mapping",
+        label: "字典映射",
+        icon: <MedicineBoxOutlined />,
+        path: "/terminology/mapping",
+      },
+      {
+        key: "adapter-hub",
+        label: "适配器中心",
+        icon: <ClusterOutlined />,
+        path: "/adapter/hub",
+        placeholderHint: "ADAPT-001 已落地后端，前端列表待补",
+      },
+      {
+        key: "dify-workflows",
+        label: "Dify 工作流",
+        icon: <RobotOutlined />,
+        path: "/dify/workflows",
+        placeholderHint: "DIFY-002 模板后台已就绪，前端列表待补",
+      },
+      {
+        key: "provenance",
+        label: "来源追溯",
+        icon: <FileSearchOutlined />,
+        path: "/provenance",
       },
     ],
   },
+
+  // ─── 运营治理 ─────────────────────────────────────────
   {
-    key: "qc",
-    label: "质控",
-    icon: <AuditOutlined />,
-    children: [
-      {
-        key: "qc-alerts",
-        label: "质控预警列表",
-        path: "/qc/alerts",
-        pr: "PR-V2-11",
-      },
+    key: "operations-governance",
+    label: "运营治理",
+    items: [
       {
         key: "qc-dashboard",
         label: "院级质控驾驶舱",
+        icon: <LineChartOutlined />,
         path: "/qc/dashboard",
-        pr: "PR-V2-12",
       },
       {
-        key: "qc-insurance",
-        label: "医保智能审核",
-        path: "/qc/insurance",
-        pr: "PR-V2-12",
+        key: "qc-alerts",
+        label: "质控预警",
+        icon: <AuditOutlined />,
+        path: "/qc/alerts",
       },
-    ],
-  },
-  {
-    key: "aik",
-    label: "知识",
-    icon: <ReadOutlined />,
-    children: [
+      {
+        key: "qc-eval-sets",
+        label: "评估指标库",
+        icon: <LineChartOutlined />,
+        path: "/qc/eval/sets",
+      },
+      {
+        key: "qc-eval-results",
+        label: "评估结果",
+        icon: <LineChartOutlined />,
+        path: "/qc/eval/results",
+      },
+      {
+        key: "cdss-fatigue",
+        label: "CDSS 提醒疲劳",
+        icon: <SafetyCertificateOutlined />,
+        path: "/cdss/fatigue",
+      },
       {
         key: "aik-review",
-        label: "知识审核台",
-        path: "/aik/review",
-        pr: "PR-V2-05",
+        label: "AI 知识审核",
+        icon: <ReadOutlined />,
+        path: "/aik/sources",
       },
-    ],
-  },
-  {
-    key: "system",
-    label: "系统",
-    icon: <ToolOutlined />,
-    children: [
-      {
-        key: "admin-users",
-        label: "用户管理",
-        path: "/admin/users",
-        pr: "PR-V2-04",
-      },
-      {
-        key: "admin-audit",
-        label: "审计日志",
-        path: "/admin/audit",
-        pr: "PR-V2-04",
-      },
-      {
-        key: "system-providers",
-        label: "Provider 状态",
-        path: "/system/providers",
-      },
-    ],
-  },
-  {
-    key: "workflow",
-    label: "待办",
-    icon: <UnorderedListOutlined />,
-    children: [
       {
         key: "workflow-todos",
         label: "待办中心",
+        icon: <UnorderedListOutlined />,
         path: "/workflow/todos",
       },
       {
         key: "notifications",
         label: "通知中心",
-        path: "/notifications",
         icon: <BellOutlined />,
+        path: "/notifications",
+      },
+    ],
+  },
+
+  // ─── 用户与组织 ───────────────────────────────────────
+  {
+    key: "tenant-identity",
+    label: "用户与组织",
+    items: [
+      {
+        key: "mpi",
+        label: "患者主索引",
+        icon: <IdcardOutlined />,
+        path: "/mpi/patients",
+        placeholderHint: "MPI-001 后端已落地，前端管理页待补",
+      },
+      {
+        key: "identity-bindings",
+        label: "身份绑定管理",
+        icon: <UserSwitchOutlined />,
+        path: "/security/identity-binding",
+      },
+      {
+        key: "tenant-onboarding",
+        label: "租户开通",
+        icon: <ShopOutlined />,
+        path: "/tenant/onboarding",
+        placeholderHint: "SEC-011 后端已落地，前端向导待补",
+      },
+    ],
+  },
+
+  // ─── 系统 ─────────────────────────────────────────────
+  {
+    key: "system",
+    label: "系统",
+    items: [
+      {
+        key: "security-baseline",
+        label: "安全基线",
+        icon: <SafetyCertificateOutlined />,
+        path: "/security/baseline",
+      },
+      {
+        key: "system-providers",
+        label: "Provider 状态",
+        icon: <DesktopOutlined />,
+        path: "/system/providers",
+      },
+      {
+        key: "admin-users",
+        label: "用户管理",
+        icon: <TeamOutlined />,
+        path: "/admin/users",
+        placeholderHint: "SEC-001 后端能力到位，前端管理页待补",
+      },
+      {
+        key: "admin-audit",
+        label: "审计日志",
+        icon: <DatabaseOutlined />,
+        path: "/admin/audit",
+        placeholderHint: "AUDIT-001 后端能力到位，前端查询页待补",
       },
       {
         key: "notification-settings",
         label: "通知设置",
+        icon: <ToolOutlined />,
         path: "/notifications/settings",
       },
     ],
   },
-  {
-    key: "demo",
-    label: "演示",
-    icon: <ExperimentOutlined />,
-    path: "/demo-validation",
-  },
 ];
 
 /**
- * 根据当前路径获取顶级菜单 key
+ * 扁平化所有菜单项，便于路由匹配 / 面包屑 / 占位页查找。
  */
-export function getTopMenuKeyByPath(pathname: string): string {
-  for (const item of topMenuItems) {
-    if (item.path && pathname.startsWith(item.path)) {
-      return item.key;
-    }
-    if (item.children) {
-      for (const child of item.children) {
-        if (child.path && pathname.startsWith(child.path)) {
-          return item.key;
-        }
-      }
-    }
-  }
-  return "dashboard";
+export function getAllMenuItems(): MenuItem[] {
+  return menuSections.flatMap((s) => s.items);
 }
 
 /**
- * 获取指定顶级菜单的子菜单
+ * 根据当前 pathname 找到匹配的 MenuItem（精确前缀匹配）。
+ * 用于：高亮当前菜单、面包屑、占位页 hint。
  */
-export function getSideMenuItems(topKey: string): MenuItem[] {
-  const topItem = topMenuItems.find((item) => item.key === topKey);
-  return topItem?.children || [];
+export function findMenuItemByPath(pathname: string): MenuItem | undefined {
+  return getAllMenuItems().find(
+    (it) => it.path && (it.path === pathname || pathname.startsWith(it.path + "/")),
+  );
 }
 
 /**
- * 所有路由路径列表（用于注册路由）
+ * 根据当前 pathname 找到所在的 section（用于面包屑生成"配置治理 / 路径配置"二段式）。
  */
-export function getAllRoutes(): { path: string; pr?: string }[] {
-  const routes: { path: string; pr?: string }[] = [];
-  for (const item of topMenuItems) {
-    if (item.path) {
-      routes.push({ path: item.path, pr: item.pr });
-    }
-    if (item.children) {
-      for (const child of item.children) {
-        if (child.path) {
-          routes.push({ path: child.path, pr: child.pr });
-        }
-      }
+export function findSectionByPath(pathname: string): MenuSection | undefined {
+  for (const section of menuSections) {
+    if (section.items.some((it) => it.path && (it.path === pathname || pathname.startsWith(it.path + "/")))) {
+      return section;
     }
   }
-  return routes;
+  return undefined;
 }
