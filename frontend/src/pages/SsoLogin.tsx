@@ -35,6 +35,7 @@ export default function SsoLogin() {
 
     // 加载 SSO 身份源列表
     loadProviders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadProviders = async () => {
@@ -124,7 +125,7 @@ export default function SsoLogin() {
         </div>
 
         {error && (
-          <div style={{ color: "red", marginBottom: 16, padding: 8, background: "#fff2f2", borderRadius: 4 }}>
+          <div style={{ color: "var(--mk-danger)", marginBottom: 16, padding: 8, background: "var(--mk-danger-bg)", borderRadius: 4 }}>
             {error}
           </div>
         )}
@@ -167,7 +168,7 @@ export default function SsoLogin() {
                 <Button
                   block
                   onClick={() => setLdapProvider(null)}
-                  style={{ background: "#f0f0f0", border: "none" }}
+                  style={{ background: "var(--mk-bg-secondary)", border: "none" }}
                 >
                   返回
                 </Button>
@@ -194,7 +195,7 @@ export default function SsoLogin() {
               ))
             )}
             <div style={{ textAlign: "center", marginTop: 16 }}>
-              <a href="/login" style={{ color: "#1890ff" }}>使用账号密码登录</a>
+              <a href="/login" style={{ color: "var(--mk-primary)" }}>使用账号密码登录</a>
             </div>
           </div>
         )}

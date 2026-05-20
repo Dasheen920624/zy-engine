@@ -6,8 +6,8 @@ import {
   unbindIdentity,
   mergeBindings,
   findConflicts,
-  IdentityBinding,
-  BindingConflict,
+  type IdentityBinding,
+  type BindingConflict,
 } from '../api/identityBinding';
 
 const IdentityBindingManagement: React.FC = () => {
@@ -42,14 +42,14 @@ const IdentityBindingManagement: React.FC = () => {
       setLoading(true);
       const data = await listBindingsByUser(Number(userId));
       setBindings(data);
-    } catch (err: any) {
-      message.error(err.message || '加载绑定列表失败');
+    } catch (err: unknown) {
+      message.error(err instanceof Error ? err.message : '加载绑定列表失败');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBind = async (values: any) => {
+  const handleBind = async (values: Record<string, string>) => {
     try {
       await bindIdentity({
         userId: Number(userId),
@@ -61,8 +61,8 @@ const IdentityBindingManagement: React.FC = () => {
       setBindModalVisible(false);
       bindForm.resetFields();
       loadBindings();
-    } catch (err: any) {
-      message.error(err.message || '绑定失败');
+    } catch (err: unknown) {
+      message.error(err instanceof Error ? err.message : '绑定失败');
     }
   };
 
@@ -71,12 +71,12 @@ const IdentityBindingManagement: React.FC = () => {
       await unbindIdentity(bindingId);
       message.success('解绑成功');
       loadBindings();
-    } catch (err: any) {
-      message.error(err.message || '解绑失败');
+    } catch (err: unknown) {
+      message.error(err instanceof Error ? err.message : '解绑失败');
     }
   };
 
-  const handleMerge = async (values: any) => {
+  const handleMerge = async (values: Record<string, string>) => {
     try {
       const result = await mergeBindings({
         sourceUserId: Number(values.sourceUserId),
@@ -87,8 +87,8 @@ const IdentityBindingManagement: React.FC = () => {
       mergeForm.resetFields();
       loadBindings();
       loadConflicts();
-    } catch (err: any) {
-      message.error(err.message || '合并失败');
+    } catch (err: unknown) {
+      message.error(err instanceof Error ? err.message : '合并失败');
     }
   };
 
@@ -114,7 +114,7 @@ const IdentityBindingManagement: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: IdentityBinding) =>
+      render: (_: unknown, record: IdentityBinding) =>
         record.bindingStatus === 'ACTIVE' ? (
           <Popconfirm title="确认解绑？" onConfirm={() => handleUnbind(record.id)}>
             <Button type="link" danger>解绑</Button>

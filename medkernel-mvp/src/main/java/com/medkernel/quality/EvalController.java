@@ -28,11 +28,14 @@ import java.util.Map;
 @RequestMapping("/api/quality/eval")
 public class EvalController {
     private final EvalService evalService;
+    private final EvalScoringService evalScoringService;
     private final OrganizationContextService organizationContextService;
 
     public EvalController(EvalService evalService,
+                          EvalScoringService evalScoringService,
                           OrganizationContextService organizationContextService) {
         this.evalService = evalService;
+        this.evalScoringService = evalScoringService;
         this.organizationContextService = organizationContextService;
     }
 
@@ -187,5 +190,55 @@ public class EvalController {
             return ApiResult.failure(ErrorCode.NOT_FOUND, "Indicator not found: " + indicatorCode);
         }
         return ApiResult.success(indicator.toView());
+    }
+
+    // ==================== 评分引擎 API ====================
+
+    @PostMapping("/evaluate")
+    public ApiResult<Map<String, Object>> evaluate(
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        String setCode = (String) request.get("set_code");
+        String subjectId = (String) request.get("subject_id");
+        String subjectName = (String) request.get("subject_name");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> inputData = (Map<String, Object>) request.get("input_data");
+
+        if (setCode == null || subjectId == null || inputData == null) {
+            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "set_code, subject_id and input_data are required");
+        }
+        try {
+            EvalResult result = evalScoringService.evaluate(setCode, subjectId, subjectName, inputData, orgContext);
+            return ApiResult.success(result.toView());
+        } catch (IllegalArgumentException e) {
+            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping("/results")
+    public ApiResult<List<Map<String, Object>>> listResults(
+            @RequestParam(required = false) String set_code,
+            @RequestParam(required = false) String subject_type,
+            HttpServletRequest httpRequest) {
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        List<EvalResult> results = evalScoringService.listResults(set_code, subject_type, orgContext);
+        List<Map<String, Object>> views = new ArrayList<Map<String, Object>>();
+        for (EvalResult result : results) {
+            views.add(result.toView());
+        }
+        return ApiResult.success(views);
+    }
+
+    @GetMapping("/results/{evalId}")
+    public ApiResult<Map<String, Object>> getResult(
+            @PathVariable String evalId,
+            HttpServletRequest httpRequest) {
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        EvalResult result = evalScoringService.getResult(evalId, orgContext);
+        if (result == null) {
+            return ApiResult.failure(ErrorCode.NOT_FOUND, "Evaluation result not found: " + evalId);
+        }
+        return ApiResult.success(result.toView());
     }
 }

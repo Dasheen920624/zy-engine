@@ -8,7 +8,7 @@ import ConfigPackages from "../pages/ConfigPackages";
 import PackageImportWizard from "../pages/ConfigPackages/PackageImportWizard";
 import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import WorkflowTodos from "../pages/WorkflowTodos";
-import { QualityDashboard, DepartmentDrillDown, EvalIndicatorSetList } from "../pages/Quality";
+import { QualityDashboard, DepartmentDrillDown, EvalIndicatorSetList, EvalResultList } from "../pages/Quality";
 import AlertList from "../pages/Quality/AlertList";
 import { KnowledgePage } from "../pages/Knowledge";
 import { SecurityBaselinePage } from "../pages/Security";
@@ -55,6 +55,7 @@ export const routes: RouteObject[] = [
           { path: "qc/alerts", element: <AlertList /> },
           { path: "qc/dashboard", element: <QualityDashboard /> },
           { path: "qc/eval/sets", element: <EvalIndicatorSetList /> },
+          { path: "qc/eval/results", element: <EvalResultList /> },
           { path: "qc/department/:deptCode", element: <DepartmentDrillDown /> },
           { path: "qc/insurance", element: <PlaceholderPage title="医保智能审核" pr="PR-V2-12" /> },
           { path: "aik/sources", element: <KnowledgePage /> },

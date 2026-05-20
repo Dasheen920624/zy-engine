@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Card, Divider, Form, Input, Typography, message } from "antd";
 import { LockOutlined, UserOutlined, LoginOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
 import { setAuth } from "../store/auth";
-import { initiateSsoLogin, ldapDirectLogin } from "../api/sso";
+import { initiateSso, ldapAuthenticate, listSsoProviders } from "../api/sso";
 
 const { Title, Text } = Typography;
 
@@ -19,6 +19,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [ldapVisible, setLdapVisible] = useState(false);
   const [ldapForm] = Form.useForm();
+
+  const [ssoProviders, setSsoProviders] = useState<Array<{id: number; providerCode: string; providerName: string; providerType: string}>>([]);
+
+  useEffect(() => {
+    listSsoProviders().then(setSsoProviders).catch(() => {});
+  }, []);
 
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
@@ -35,12 +41,13 @@ export default function Login() {
     }
   };
 
-  const handleSsoLogin = async (providerCode: string) => {
+  const handleSsoLogin = async (providerId: number) => {
     setLoading(true);
     try {
-      const result = await initiateSsoLogin(providerCode);
-      // 跳转到外部 SSO 系统的登录页
-      window.location.href = result.login_url;
+      const result = await initiateSso(providerId);
+      if (result.redirectUrl) {
+        window.location.href = result.redirectUrl;
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "SSO 登录发起失败";
       message.error(msg);
@@ -51,27 +58,15 @@ export default function Login() {
   const handleLdapLogin = async (values: { username: string; password: string }) => {
     setLoading(true);
     try {
-      const result = await ldapDirectLogin({
-        provider: "ldap",
-        username: values.username,
-        password: values.password,
-      });
-      if (result.success && result.token) {
-        setAuth(result.token, {
-          id: result.platform_user_id ?? 0,
-          tenant_id: 0,
-          username: result.external_subject ?? "ldap-user",
-          display_name: result.external_subject ?? "LDAP User",
-          status: "ACTIVE",
-          roles: [],
-          permissions: [],
-          org_scopes: [],
-        });
-        message.success("LDAP 登录成功");
-        navigate("/dashboard", { replace: true });
-      } else {
-        message.error(result.error ?? "LDAP 认证失败");
+      const ldapProvider = ssoProviders.find(p => p.providerType === "LDAP-AD");
+      if (!ldapProvider) {
+        message.error("未找到 LDAP 身份源");
+        return;
       }
+      const result = await ldapAuthenticate(ldapProvider.id, values.username, values.password);
+      setAuth(result.token, result.user);
+      message.success("LDAP 登录成功");
+      navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "LDAP 登录失败";
       message.error(msg);
@@ -137,17 +132,34 @@ export default function Login() {
 
         {/* SSO 登录按钮 */}
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          {SSO_PROVIDERS.map((p) => (
-            <Button
-              key={p.code}
-              icon={<LoginOutlined />}
-              loading={loading}
-              onClick={() => handleSsoLogin(p.code)}
-              style={{ flex: 1 }}
-            >
-              {p.label}
-            </Button>
-          ))}
+          {ssoProviders
+            .filter(p => p.providerType !== "LDAP-AD")
+            .map((p) => (
+              <Button
+                key={p.id}
+                icon={<LoginOutlined />}
+                loading={loading}
+                onClick={() => handleSsoLogin(p.id)}
+                style={{ flex: 1 }}
+              >
+                {p.providerName}
+              </Button>
+            ))}
+          {ssoProviders.filter(p => p.providerType !== "LDAP-AD").length === 0 && (
+            <>
+              {SSO_PROVIDERS.map((p) => (
+                <Button
+                  key={p.code}
+                  icon={<LoginOutlined />}
+                  loading={loading}
+                  onClick={() => message.info("请先配置 SSO 身份源")}
+                  style={{ flex: 1 }}
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </>
+          )}
         </div>
 
         {/* LDAP 登录 */}

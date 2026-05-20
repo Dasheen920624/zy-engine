@@ -160,3 +160,72 @@ export async function updateEvalIndicator(
 export async function deleteEvalIndicator(indicatorCode: string): Promise<EvalIndicator> {
   return del<EvalIndicator>(`/quality/eval/indicators/${encodeURIComponent(indicatorCode)}`);
 }
+
+// ==================== 评分引擎类型 ====================
+
+export interface IndicatorScore {
+  indicator_code: string;
+  indicator_name: string;
+  indicator_type: string;
+  weight: number;
+  raw_score: number;
+  weighted_score: number;
+  max_value: number;
+  risk_level: string;
+  unit?: string;
+  threshold_met: boolean;
+  explanation: string;
+}
+
+export interface EvalFact {
+  fact_type: "ABNORMAL" | "MISSING";
+  indicator_code: string;
+  indicator_name: string;
+  description: string;
+  severity: string;
+}
+
+export interface EvalResultData {
+  eval_id: string;
+  tenant_id: string;
+  set_code: string;
+  subject_type: string;
+  subject_id: string;
+  subject_name: string;
+  total_score: number;
+  max_possible_score: number;
+  score_percentage: number;
+  risk_level: string;
+  indicator_scores: IndicatorScore[];
+  abnormal_facts: EvalFact[];
+  missing_facts: EvalFact[];
+  evaluated_by: string;
+  evaluated_at: string;
+  org_context: Record<string, unknown>;
+}
+
+// ==================== 评分引擎 API ====================
+
+export async function executeEvaluation(params: {
+  set_code: string;
+  subject_id: string;
+  subject_name?: string;
+  input_data: Record<string, unknown>;
+}): Promise<EvalResultData> {
+  return post<EvalResultData>("/quality/eval/evaluate", params);
+}
+
+export async function listEvalResults(params?: {
+  set_code?: string;
+  subject_type?: string;
+}): Promise<EvalResultData[]> {
+  const qs = new URLSearchParams();
+  if (params?.set_code) qs.set("set_code", params.set_code);
+  if (params?.subject_type) qs.set("subject_type", params.subject_type);
+  const query = qs.toString();
+  return get<EvalResultData[]>(`/quality/eval/results${query ? `?${query}` : ""}`);
+}
+
+export async function getEvalResult(evalId: string): Promise<EvalResultData> {
+  return get<EvalResultData>(`/quality/eval/results/${encodeURIComponent(evalId)}`);
+}
