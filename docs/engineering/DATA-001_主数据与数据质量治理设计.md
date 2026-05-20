@@ -6,7 +6,7 @@
 > 创建时间：2026-05-20
 > 完成时间：2026-05-20 06:25
 > 依赖：DOC-008 ✅ DONE, ORG-003 ✅ DONE, TERM-001 ✅ DONE
-> commit: xxx
+> commit: cfa9a8e
 
 ## 1. 概述
 
