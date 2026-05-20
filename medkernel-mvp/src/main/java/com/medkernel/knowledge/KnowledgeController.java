@@ -21,16 +21,20 @@ import java.util.Map;
 
 /**
  * 医疗知识需求订阅和来源注册 API。
+ * AIK-003: 新增同步相关端点。
  */
 @RestController
 @RequestMapping("/api/knowledge")
 public class KnowledgeController {
     private final KnowledgeService knowledgeService;
+    private final KnowledgeSyncService syncService;
     private final OrganizationContextService organizationContextService;
 
     public KnowledgeController(KnowledgeService knowledgeService,
+                               KnowledgeSyncService syncService,
                                OrganizationContextService organizationContextService) {
         this.knowledgeService = knowledgeService;
+        this.syncService = syncService;
         this.organizationContextService = organizationContextService;
     }
 
@@ -199,5 +203,106 @@ public class KnowledgeController {
             return ApiResult.failure(ErrorCode.NOT_FOUND, "Subscription not found: " + subscriptionId);
         }
         return ApiResult.success(sub.toView());
+    }
+
+    // ==================== AIK-003: 同步 API ====================
+
+    /**
+     * 手动触发知识同步。
+     */
+    @PostMapping("/sync")
+    public ApiResult<Map<String, Object>> syncKnowledge(
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        String sourceCode = (String) request.get("source_code");
+        String subscriptionId = (String) request.get("subscription_id");
+        Boolean dryRun = (Boolean) request.getOrDefault("dry_run", false);
+        String triggeredBy = (String) request.getOrDefault("triggered_by", "system");
+
+        try {
+            Map<String, Object> result = syncService.syncKnowledge(
+                    sourceCode, subscriptionId, dryRun, triggeredBy);
+            return ApiResult.success(result);
+        } catch (IllegalArgumentException e) {
+            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
+        }
+    }
+
+    /**
+     * 差异预览（dry-run）。
+     */
+    @PostMapping("/sync/preview")
+    public ApiResult<Map<String, Object>> previewSyncDiff(
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        String sourceCode = (String) request.get("source_code");
+        String subscriptionId = (String) request.get("subscription_id");
+
+        try {
+            Map<String, Object> preview = syncService.previewDiff(sourceCode, subscriptionId);
+            return ApiResult.success(preview);
+        } catch (Exception e) {
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
+        }
+    }
+
+    /**
+     * 重试失败的同步任务。
+     */
+    @PostMapping("/sync/{taskCode}/retry")
+    public ApiResult<Map<String, Object>> retrySync(
+            @PathVariable String taskCode,
+            @RequestBody(required = false) Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        boolean dryRun = false;
+        String triggeredBy = "system";
+
+        if (request != null) {
+            dryRun = Boolean.TRUE.equals(request.get("dry_run"));
+            if (request.containsKey("triggered_by")) {
+                triggeredBy = (String) request.get("triggered_by");
+            }
+        }
+
+        try {
+            Map<String, Object> result = syncService.retrySync(taskCode, dryRun, triggeredBy);
+            return ApiResult.success(result);
+        } catch (IllegalArgumentException e) {
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, e.getMessage());
+        } catch (IllegalStateException e) {
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
+        }
+    }
+
+    /**
+     * 查询同步任务列表。
+     */
+    @GetMapping("/sync/tasks")
+    public ApiResult<List<Map<String, Object>>> listSyncTasks(
+            @RequestParam(required = false) String sourceCode,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false, defaultValue = "50") int limit,
+            HttpServletRequest httpRequest) {
+        List<Map<String, Object>> tasks = syncService.listSyncTasks(sourceCode, status, limit);
+        return ApiResult.success(tasks);
+    }
+
+    /**
+     * 查询同步任务详情。
+     */
+    @GetMapping("/sync/tasks/{taskCode}")
+    public ApiResult<Map<String, Object>> getSyncTask(
+            @PathVariable String taskCode,
+            HttpServletRequest httpRequest) {
+        Map<String, Object> task = syncService.getSyncTask(taskCode);
+        if (task == null) {
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "Sync task not found: " + taskCode);
+        }
+        return ApiResult.success(task);
     }
 }
