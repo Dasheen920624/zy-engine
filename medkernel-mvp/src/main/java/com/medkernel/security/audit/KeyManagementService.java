@@ -11,6 +11,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.Connection;
@@ -154,7 +155,7 @@ public class KeyManagementService {
             GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
 
-            byte[] ciphertext = cipher.doFinal(plaintext.getBytes());
+            byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
 
             // 组合 IV + ciphertext 并 Base64 编码
             byte[] combined = new byte[iv.length + ciphertext.length];
@@ -211,7 +212,7 @@ public class KeyManagementService {
         cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
 
         byte[] plaintext = cipher.doFinal(ciphertext);
-        return new String(plaintext);
+        return new String(plaintext, StandardCharsets.UTF_8);
     }
 
     /**

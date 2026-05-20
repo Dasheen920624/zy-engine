@@ -13,8 +13,8 @@ const preview: Preview = {
     backgrounds: {
       default: "light",
       values: [
-        { name: "light", value: "#f5fbff" },
-        { name: "white", value: "#ffffff" },
+        { name: "light", value: "var(--mk-bg-soft)" },
+        { name: "white", value: "var(--mk-bg-page)" },
       ],
     },
   },

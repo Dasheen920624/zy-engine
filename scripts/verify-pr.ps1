@@ -293,6 +293,14 @@ if ($diff) {
     if ($currentDiffFile -match 'frontend/src/styles/tokens\.(css|ts)$') {
       continue
     }
+    # 文档类文件（markdown / ADR / 审计报告）允许引用硬编码颜色作为示例代码块。
+    if ($currentDiffFile -match '\.(md|mdx)$') {
+      continue
+    }
+    # eslint 规则脚本本身就要列举禁用颜色字面量，跳过。
+    if ($currentDiffFile -match 'eslint-rules/.+\.(js|cjs|mjs|ts)$') {
+      continue
+    }
     if (
       $line -match '#[0-9a-fA-F]{3,8}\b' -and
       $line -notmatch '^\+\s*//' -and
