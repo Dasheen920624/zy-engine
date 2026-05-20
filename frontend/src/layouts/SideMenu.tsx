@@ -53,7 +53,7 @@ function renderMenuItem(item: MenuItem): AntMenuItem {
       key: item.path || item.key,
       icon: item.icon,
       label: (
-        <span style={{ color: "var(--mk-text-disabled, #9ca3af)" }}>
+        <span style={{ color: "var(--mk-text-tertiary)" }}>
           {item.label}
           {item.pr && (
             <span style={{ fontSize: 11, marginLeft: 4 }}>({item.pr})</span>
