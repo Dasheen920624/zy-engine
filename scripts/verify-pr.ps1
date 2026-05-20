@@ -1,4 +1,4 @@
-﻿# 提交前自检脚本：AI 完成 PR 后必须跑通此脚本才能 commit + push。
+# 提交前自检脚本：AI 完成 PR 后必须跑通此脚本才能 commit + push。
 #
 # 用法：
 #   .\scripts\verify-pr.ps1 -TaskId PR-V2-01
