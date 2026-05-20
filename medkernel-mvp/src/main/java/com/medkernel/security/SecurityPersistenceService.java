@@ -609,10 +609,10 @@ public class SecurityPersistenceService {
      */
     public void saveIdentityProvider(IdentityProvider provider) {
         String updateSql = "UPDATE sec_identity_provider SET provider_name = ?, provider_type = ?, "
-                + "adapter_code = ?, query_code = ?, priority = ?, status = ?, config_json = ?, "
+                + "adapter_code = ?, sync_mode = ?, sync_cron = ?, priority = ?, status = ?, "
                 + "updated_by = ?, updated_time = ? WHERE tenant_id = ? AND provider_code = ?";
         String insertSql = "INSERT INTO sec_identity_provider (id, tenant_id, provider_code, provider_name, "
-                + "provider_type, adapter_code, query_code, priority, status, config_json, created_by, created_time) "
+                + "provider_type, adapter_code, sync_mode, sync_cron, priority, status, created_by, created_time) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = connection()) {
@@ -621,10 +621,10 @@ public class SecurityPersistenceService {
                 ps.setString(1, provider.getProviderName());
                 ps.setString(2, provider.getProviderType());
                 ps.setString(3, provider.getAdapterCode());
-                ps.setString(4, provider.getQueryCode());
-                ps.setInt(5, provider.getPriority());
-                ps.setString(6, provider.getStatus());
-                ps.setString(7, provider.getConfigJson());
+                ps.setString(4, provider.getSyncMode());
+                ps.setString(5, provider.getSyncCron());
+                ps.setInt(6, provider.getPriority());
+                ps.setString(7, provider.getStatus());
                 ps.setString(8, provider.getUpdatedBy());
                 ps.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
                 ps.setLong(10, provider.getTenantId());
@@ -643,10 +643,10 @@ public class SecurityPersistenceService {
                 ps.setString(4, provider.getProviderName());
                 ps.setString(5, provider.getProviderType());
                 ps.setString(6, provider.getAdapterCode());
-                ps.setString(7, provider.getQueryCode());
-                ps.setInt(8, provider.getPriority());
-                ps.setString(9, provider.getStatus());
-                ps.setString(10, provider.getConfigJson());
+                ps.setString(7, provider.getSyncMode());
+                ps.setString(8, provider.getSyncCron());
+                ps.setInt(9, provider.getPriority());
+                ps.setString(10, provider.getStatus());
                 ps.setString(11, provider.getCreatedBy());
                 ps.setTimestamp(12, Timestamp.valueOf(LocalDateTime.now()));
                 ps.executeUpdate();
@@ -661,8 +661,10 @@ public class SecurityPersistenceService {
      */
     public List<IdentityProvider> findIdentityProvidersByTenant(Long tenantId) {
         String sql = "SELECT id, tenant_id, provider_code, provider_name, provider_type, "
-                + "adapter_code, query_code, priority, status, config_json, created_by, created_time, "
-                + "updated_by, updated_time FROM sec_identity_provider WHERE tenant_id = ? ORDER BY priority";
+                + "adapter_code, sync_mode, sync_cron, priority, status, "
+                + "last_sync_time, last_sync_result, last_sync_summary, "
+                + "created_by, created_time, updated_by, updated_time "
+                + "FROM sec_identity_provider WHERE tenant_id = ? ORDER BY priority";
         List<IdentityProvider> providers = new ArrayList<>();
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -683,8 +685,10 @@ public class SecurityPersistenceService {
      */
     public IdentityProvider findIdentityProviderById(Long providerId) {
         String sql = "SELECT id, tenant_id, provider_code, provider_name, provider_type, "
-                + "adapter_code, query_code, priority, status, config_json, created_by, created_time, "
-                + "updated_by, updated_time FROM sec_identity_provider WHERE id = ?";
+                + "adapter_code, sync_mode, sync_cron, priority, status, "
+                + "last_sync_time, last_sync_result, last_sync_summary, "
+                + "created_by, created_time, updated_by, updated_time "
+                + "FROM sec_identity_provider WHERE id = ?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, providerId);
@@ -719,8 +723,8 @@ public class SecurityPersistenceService {
      * 按 (tenantId, providerId, externalSubject) 查找绑定。
      */
     public IdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
-        String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_name, "
-                + "external_org_code, external_org_name, external_position, status, last_sync_time, "
+        String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
+                + "external_display_name, binding_status, last_verified_time, "
                 + "created_by, created_time, updated_by, updated_time "
                 + "FROM sec_identity_binding WHERE tenant_id = ? AND provider_id = ? AND external_subject = ?";
         try (Connection connection = connection();
@@ -743,8 +747,8 @@ public class SecurityPersistenceService {
      * 按用户 ID 查找所有绑定。
      */
     public List<IdentityBinding> findBindingsByUserId(Long userId) {
-        String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_name, "
-                + "external_org_code, external_org_name, external_position, status, last_sync_time, "
+        String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
+                + "external_display_name, binding_status, last_verified_time, "
                 + "created_by, created_time, updated_by, updated_time "
                 + "FROM sec_identity_binding WHERE user_id = ?";
         List<IdentityBinding> bindings = new ArrayList<>();
@@ -766,30 +770,28 @@ public class SecurityPersistenceService {
      * 保存绑定（UPDATE + INSERT 两阶段 upsert）。
      */
     public void saveIdentityBinding(IdentityBinding binding) {
-        String updateSql = "UPDATE sec_identity_binding SET user_id = ?, external_name = ?, "
-                + "external_org_code = ?, external_org_name = ?, external_position = ?, status = ?, "
-                + "last_sync_time = ?, updated_by = ?, updated_time = ? "
+        String updateSql = "UPDATE sec_identity_binding SET user_id = ?, "
+                + "external_org_code = ?, external_display_name = ?, binding_status = ?, "
+                + "last_verified_time = ?, updated_by = ?, updated_time = ? "
                 + "WHERE tenant_id = ? AND provider_id = ? AND external_subject = ?";
         String insertSql = "INSERT INTO sec_identity_binding (id, tenant_id, user_id, provider_id, "
-                + "external_subject, external_name, external_org_code, external_org_name, external_position, "
-                + "status, last_sync_time, created_by, created_time) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "external_subject, external_org_code, external_display_name, "
+                + "binding_status, last_verified_time, created_by, created_time) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = connection()) {
             // Try UPDATE first
             try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
                 ps.setLong(1, binding.getUserId());
-                ps.setString(2, binding.getExternalName());
-                ps.setString(3, binding.getExternalOrgCode());
-                ps.setString(4, binding.getExternalOrgName());
-                ps.setString(5, binding.getExternalPosition());
-                ps.setString(6, binding.getStatus());
-                ps.setTimestamp(7, binding.getLastSyncTime() != null ? Timestamp.valueOf(binding.getLastSyncTime()) : null);
-                ps.setString(8, binding.getUpdatedBy());
-                ps.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
-                ps.setLong(10, binding.getTenantId());
-                ps.setLong(11, binding.getProviderId());
-                ps.setString(12, binding.getExternalSubject());
+                ps.setString(2, binding.getExternalOrgCode());
+                ps.setString(3, binding.getExternalDisplayName());
+                ps.setString(4, binding.getBindingStatus());
+                ps.setTimestamp(5, binding.getLastVerifiedTime() != null ? Timestamp.valueOf(binding.getLastVerifiedTime()) : null);
+                ps.setString(6, binding.getUpdatedBy());
+                ps.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
+                ps.setLong(8, binding.getTenantId());
+                ps.setLong(9, binding.getProviderId());
+                ps.setString(10, binding.getExternalSubject());
                 int updated = ps.executeUpdate();
                 if (updated > 0) {
                     return;
@@ -803,14 +805,12 @@ public class SecurityPersistenceService {
                 ps.setLong(3, binding.getUserId());
                 ps.setLong(4, binding.getProviderId());
                 ps.setString(5, binding.getExternalSubject());
-                ps.setString(6, binding.getExternalName());
-                ps.setString(7, binding.getExternalOrgCode());
-                ps.setString(8, binding.getExternalOrgName());
-                ps.setString(9, binding.getExternalPosition());
-                ps.setString(10, binding.getStatus());
-                ps.setTimestamp(11, binding.getLastSyncTime() != null ? Timestamp.valueOf(binding.getLastSyncTime()) : null);
-                ps.setString(12, binding.getCreatedBy());
-                ps.setTimestamp(13, Timestamp.valueOf(LocalDateTime.now()));
+                ps.setString(6, binding.getExternalOrgCode());
+                ps.setString(7, binding.getExternalDisplayName());
+                ps.setString(8, binding.getBindingStatus());
+                ps.setTimestamp(9, binding.getLastVerifiedTime() != null ? Timestamp.valueOf(binding.getLastVerifiedTime()) : null);
+                ps.setString(10, binding.getCreatedBy());
+                ps.setTimestamp(11, Timestamp.valueOf(LocalDateTime.now()));
                 ps.executeUpdate();
             }
         } catch (SQLException ex) {
@@ -822,7 +822,7 @@ public class SecurityPersistenceService {
      * 更新绑定的最近同步时间。
      */
     public void updateBindingSyncTime(Long bindingId) {
-        String sql = "UPDATE sec_identity_binding SET last_sync_time = ? WHERE id = ?";
+        String sql = "UPDATE sec_identity_binding SET last_verified_time = ? WHERE id = ?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
@@ -1131,60 +1131,6 @@ public class SecurityPersistenceService {
     }
 
     // --- Mapper methods ---
-
-    private IdentityProvider mapIdentityProvider(ResultSet rs) throws SQLException {
-        IdentityProvider provider = new IdentityProvider();
-        provider.setId(rs.getLong("id"));
-        provider.setTenantId(rs.getLong("tenant_id"));
-        provider.setProviderCode(rs.getString("provider_code"));
-        provider.setProviderName(rs.getString("provider_name"));
-        provider.setProviderType(rs.getString("provider_type"));
-        provider.setAdapterCode(rs.getString("adapter_code"));
-        provider.setQueryCode(rs.getString("query_code"));
-        provider.setPriority(rs.getInt("priority"));
-        provider.setStatus(rs.getString("status"));
-        provider.setConfigJson(rs.getString("config_json"));
-        provider.setCreatedBy(rs.getString("created_by"));
-        Timestamp createdTime = rs.getTimestamp("created_time");
-        if (createdTime != null) {
-            provider.setCreatedTime(createdTime.toLocalDateTime());
-        }
-        provider.setUpdatedBy(rs.getString("updated_by"));
-        Timestamp updatedTime = rs.getTimestamp("updated_time");
-        if (updatedTime != null) {
-            provider.setUpdatedTime(updatedTime.toLocalDateTime());
-        }
-        return provider;
-    }
-
-    private IdentityBinding mapIdentityBinding(ResultSet rs) throws SQLException {
-        IdentityBinding binding = new IdentityBinding();
-        binding.setId(rs.getLong("id"));
-        binding.setTenantId(rs.getLong("tenant_id"));
-        binding.setUserId(rs.getLong("user_id"));
-        binding.setProviderId(rs.getLong("provider_id"));
-        binding.setExternalSubject(rs.getString("external_subject"));
-        binding.setExternalName(rs.getString("external_name"));
-        binding.setExternalOrgCode(rs.getString("external_org_code"));
-        binding.setExternalOrgName(rs.getString("external_org_name"));
-        binding.setExternalPosition(rs.getString("external_position"));
-        binding.setStatus(rs.getString("status"));
-        Timestamp lastSyncTime = rs.getTimestamp("last_sync_time");
-        if (lastSyncTime != null) {
-            binding.setLastSyncTime(lastSyncTime.toLocalDateTime());
-        }
-        binding.setCreatedBy(rs.getString("created_by"));
-        Timestamp createdTime = rs.getTimestamp("created_time");
-        if (createdTime != null) {
-            binding.setCreatedTime(createdTime.toLocalDateTime());
-        }
-        binding.setUpdatedBy(rs.getString("updated_by"));
-        Timestamp updatedTime = rs.getTimestamp("updated_time");
-        if (updatedTime != null) {
-            binding.setUpdatedTime(updatedTime.toLocalDateTime());
-        }
-        return binding;
-    }
 
     private UserSyncJob mapSyncJob(ResultSet rs) throws SQLException {
         UserSyncJob job = new UserSyncJob();

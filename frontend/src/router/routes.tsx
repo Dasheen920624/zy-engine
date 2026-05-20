@@ -15,6 +15,7 @@ import { SecurityBaselinePage } from "../pages/Security";
 import { NotificationList, NotificationDetail, NotificationSettings } from "../pages/Notification";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
+import SsoLogin from "../pages/SsoLogin";
 import RequireAuth from "./RequireAuth";
 import PlaceholderPage from "../components/PlaceholderPage";
 import { MappingWorkbench } from "../pages/Terminology";
@@ -24,6 +25,7 @@ import PathwayEditor from "../pages/Pathway/PathwayEditor";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
+  { path: "/sso-login", element: <SsoLogin /> },
   {
     element: <RequireAuth />,
     children: [

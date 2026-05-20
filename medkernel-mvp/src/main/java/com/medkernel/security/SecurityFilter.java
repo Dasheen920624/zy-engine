@@ -40,6 +40,8 @@ public class SecurityFilter implements Filter {
             "/api/auth/health",
             "/api/health",
             "/api/system/org-context",
+            "/api/security/sso/callback",
+            "/api/security/sso/saml/acs",
             "/actuator/health"
     ));
 
