@@ -292,7 +292,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     title: "CDSS 提醒疲劳",
     description: "CDSS-001..003：医生覆盖记录与提醒疲劳治理",
     status: "READY",
-    path: "/cdss/alert-fatigue",
+    path: "/cdss/fatigue",
   },
   {
     group: "运营治理",
@@ -300,7 +300,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     title: "AI 知识审核",
     description: "AIK-001..006：医疗知识订阅、AI 生产任务、模型调用日志、版权治理",
     status: "READY",
-    path: "/aik/review",
+    path: "/aik/sources",
   },
   {
     group: "运营治理",
@@ -335,7 +335,7 @@ const TENANT_IDENTITY_CARDS: CapabilityCard[] = [
     title: "身份绑定管理",
     description: "SEC-012：多身份源绑定、合并、解绑、冲突检测",
     status: "READY",
-    path: "/identity/bindings",
+    path: "/security/identity-binding",
   },
   {
     group: "用户与组织",

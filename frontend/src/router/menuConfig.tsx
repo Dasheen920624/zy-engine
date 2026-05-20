@@ -170,13 +170,13 @@ export const menuSections: MenuSection[] = [
         key: "cdss-fatigue",
         label: "CDSS 提醒疲劳",
         icon: <SafetyCertificateOutlined />,
-        path: "/cdss/alert-fatigue",
+        path: "/cdss/fatigue",
       },
       {
         key: "aik-review",
         label: "AI 知识审核",
         icon: <ReadOutlined />,
-        path: "/aik/review",
+        path: "/aik/sources",
       },
       {
         key: "workflow-todos",
@@ -209,7 +209,7 @@ export const menuSections: MenuSection[] = [
         key: "identity-bindings",
         label: "身份绑定管理",
         icon: <UserSwitchOutlined />,
-        path: "/identity/bindings",
+        path: "/security/identity-binding",
       },
       {
         key: "tenant-onboarding",
