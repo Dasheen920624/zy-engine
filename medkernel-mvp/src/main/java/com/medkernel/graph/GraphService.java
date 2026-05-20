@@ -110,13 +110,16 @@ public class GraphService {
             entry.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
             entry.put("published_time", nowText());
 
+            // REFIT-003：激活前统一来源检查，与 RuleService 对齐——缺少来源文档绑定时阻断激活。
             List<Map<String, Object>> referenceWarnings = new ArrayList<Map<String, Object>>();
             if (entry.get("reference_document_code") == null) {
                 Map<String, Object> warning = new LinkedHashMap<String, Object>();
-                warning.put("severity", "WARN");
+                warning.put("severity", "ERROR");
                 warning.put("field", "reference_document_code");
-                warning.put("message", "图谱版本缺少来源文档绑定（reference_document_code）");
+                warning.put("message", "图谱版本缺少来源文档绑定（reference_document_code），激活将被阻断");
                 referenceWarnings.add(warning);
+                entry.put("reference_warnings", referenceWarnings);
+                throw new IllegalArgumentException("graph version is not ready to activate: " + referenceWarnings);
             }
             entry.put("reference_warnings", referenceWarnings);
             return entry;

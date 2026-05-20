@@ -159,6 +159,11 @@ public class PathwayService {
             config.put("pathway_code", pathwayCode);
             config.put("version", versionNo);
         }
+        // REFIT-003：发布前统一来源检查，与 RuleService 对齐——缺少来源文档绑定时阻断发布。
+        List<Map<String, Object>> referenceWarnings = configSupport.collectMissingReferences(config);
+        if (!referenceWarnings.isEmpty()) {
+            throw new IllegalArgumentException("pathway is not ready to publish: " + referenceWarnings);
+        }
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
         activePublishedVersions.put(pathwayCode, versionNo);
         persistenceService.savePathwayVersion(pathwayCode, versionNo, "PUBLISHED", config);
@@ -170,7 +175,7 @@ public class PathwayService {
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
         result.put("persistence", persistenceService.providerName());
-        result.put("reference_warnings", configSupport.collectMissingReferences(config));
+        result.put("reference_warnings", referenceWarnings);
         audit("PUBLISH", "PATHWAY", pathwayCode, null, result,
                 string(request == null ? null : request.get("approved_by"), null));
         return result;
