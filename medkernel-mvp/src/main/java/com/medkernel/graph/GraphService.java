@@ -984,4 +984,34 @@ public class GraphService {
     private String nowText() {
         return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
     }
+
+    // =========================================================================
+    // GRAPH-005: 包级数据访问方法（供 GraphSyncService 使用）
+    // =========================================================================
+
+    /**
+     * 获取指定版本的节点列表（包级访问，供 GraphSyncService）。
+     */
+    List<Map<String, Object>> getNodesByVersion(String graphVersion) {
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> entry : graphNodes.values()) {
+            if (graphVersion == null || graphVersion.equalsIgnoreCase(String.valueOf(entry.get("graph_version")))) {
+                result.add(entry);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 获取指定版本的边列表（包级访问，供 GraphSyncService）。
+     */
+    List<Map<String, Object>> getEdgesByVersion(String graphVersion) {
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> entry : graphEdges) {
+            if (graphVersion == null || graphVersion.equalsIgnoreCase(String.valueOf(entry.get("graph_version")))) {
+                result.add(entry);
+            }
+        }
+        return result;
+    }
 }

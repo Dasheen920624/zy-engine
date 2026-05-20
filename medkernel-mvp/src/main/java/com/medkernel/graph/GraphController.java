@@ -19,10 +19,13 @@ import java.util.Map;
 @RequestMapping("/api/graph")
 public class GraphController {
     private final GraphService graphService;
+    private final GraphSyncService graphSyncService;
     private final OrganizationContextService organizationContextService;
 
-    public GraphController(GraphService graphService, OrganizationContextService organizationContextService) {
+    public GraphController(GraphService graphService, GraphSyncService graphSyncService,
+                           OrganizationContextService organizationContextService) {
         this.graphService = graphService;
+        this.graphSyncService = graphSyncService;
         this.organizationContextService = organizationContextService;
     }
 
@@ -152,5 +155,88 @@ public class GraphController {
         filters.put("limit", limit);
         organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(graphService.listGraphEdges(filters));
+    }
+
+    // =========================================================================
+    // GRAPH-005: Neo4j 同步（dry-run + 重试）
+    // =========================================================================
+
+    /**
+     * 将图谱数据同步到 Neo4j。
+     *
+     * @param graphVersion 图谱版本号
+     * @param dryRun       是否干运行（仅预览不同步）
+     * @param httpRequest  HTTP 请求（用于获取操作人信息）
+     * @return 同步任务结果
+     */
+    @PostMapping("/versions/{graphVersion}/sync")
+    public ApiResult<Map<String, Object>> syncToNeo4j(@PathVariable String graphVersion,
+                                                      @RequestParam(defaultValue = "false") boolean dryRun,
+                                                      HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
+        String triggeredBy = httpRequest.getHeader("X-Operator-Id");
+        GraphSyncTask task = graphSyncService.syncToNeo4j(graphVersion, dryRun, triggeredBy);
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("task_code", task.getTaskCode());
+        result.put("task_type", task.getTaskType());
+        result.put("target_system", task.getTargetSystem());
+        result.put("target_version", task.getTargetVersion());
+        result.put("status", task.getStatus());
+        result.put("dry_run", task.isDryRun());
+        result.put("total_count", task.getTotalCount());
+        result.put("success_count", task.getSuccessCount());
+        result.put("failed_count", task.getFailedCount());
+        result.put("skip_count", task.getSkipCount());
+        result.put("duration_ms", task.getDurationMs());
+        result.put("error_message", task.getErrorMessage());
+        result.put("triggered_by", task.getTriggeredBy());
+        result.put("started_time", task.getStartedTime());
+        result.put("finished_time", task.getFinishedTime());
+        return ApiResult.success(result);
+    }
+
+    /**
+     * 重试失败的同步任务。
+     *
+     * @param taskCode    原任务编码
+     * @param dryRun      是否干运行
+     * @param httpRequest HTTP 请求
+     * @return 重试后的同步任务结果
+     */
+    @PostMapping("/sync-tasks/{taskCode}/retry")
+    public ApiResult<Map<String, Object>> retrySync(@PathVariable String taskCode,
+                                                    @RequestParam(defaultValue = "false") boolean dryRun,
+                                                    HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
+        String triggeredBy = httpRequest.getHeader("X-Operator-Id");
+        GraphSyncTask task = graphSyncService.retrySync(taskCode, dryRun, triggeredBy);
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("task_code", task.getTaskCode());
+        result.put("status", task.getStatus());
+        return ApiResult.success(result);
+    }
+
+    /**
+     * 列出同步任务。
+     */
+    @GetMapping("/sync-tasks")
+    public ApiResult<List<Map<String, Object>>> listSyncTasks(@RequestParam(required = false) String status,
+                                                              @RequestParam(required = false) String limit,
+                                                              HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        filters.put("status", status);
+        filters.put("limit", limit);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
+        return ApiResult.success(graphSyncService.listSyncTasks(filters));
+    }
+
+    /**
+     * 获取同步任务详情。
+     */
+    @GetMapping("/sync-tasks/{taskCode}")
+    public ApiResult<Map<String, Object>> getSyncTask(@PathVariable String taskCode,
+                                                      HttpServletRequest httpRequest) {
+        organizationContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
+        return ApiResult.success(graphSyncService.getSyncTask(taskCode));
     }
 }
