@@ -66,6 +66,16 @@
   3. 修复表结构一致性（添加pe_recommendation_record表）
   4. 验证所有数据库方言表结构一致
 
+### REFIT-007 已实现功能验收证据补齐和专业优化池
+- **状态**: 已完成
+- **完成时间**: 2026-05-20
+- **主要成果**:
+  1. 创建3个自动化脚本：验收证据填充（45后端+43前端）、优化池生成
+  2. 88个FA文件填充真实代码数据（API端点、代码目录、DDL表、测试文件）
+  3. 质量评估：59 BRONZE、31 REJECTED（0 GOLD/SILVER）
+  4. 优化池83个发现：1 P0、44 P1、38 P2
+- **验收脚本**: `medkernel-mvp/scripts/fill-acceptance-evidence.py`, `fill-remaining-evidence.py`, `update-optimization-pool.py`
+
 ## 工具和脚本
 
 ### 转换工具
@@ -74,6 +84,11 @@
 
 ### 比较工具
 - `/tmp/compare_tables_v3.py`: 多数据库表结构比较
+
+### 验收证据工具
+- `medkernel-mvp/scripts/fill-acceptance-evidence.py`: 核心后端45个任务验收证据自动生成
+- `medkernel-mvp/scripts/fill-remaining-evidence.py`: 前端/V2/文档/架构43个任务验收证据生成
+- `medkernel-mvp/scripts/update-optimization-pool.py`: 从Findings生成优化任务池
 
 ## 注意事项
 

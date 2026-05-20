@@ -7,8 +7,8 @@ claim_id: COMP-001-S01
 review_id: RV-COMP-001-S01-R01
 title: 合规基线与证据包
 owner: CodeBuddy
-status: PENDING
-quality_level: SILVER
+status: ASSESSED
+quality_level: REJECTED SILVER
 created_at: 2026-05-20T00:40:00+08:00
 updated_at: 2026-05-20T00:40:00+08:00
 commit: eb34855
@@ -50,21 +50,21 @@ security_or_ops_reviewer: 安全负责人（等保测评、合规审查）
 ## Acceptance Checklist
 
 ```text
-business_story_complete: ✅ 合规基线覆盖等保2.0、三法、医疗AI监管
-target_role_can_complete_task: ✅ 合规责任矩阵明确
-api_contract_stable: N/A
-trace_id_and_audit_complete: N/A
-source_traceability_complete: N/A
-organization_scope_complete: N/A
-production_db_schema_synced: N/A
-development_db_local_h2_verified: N/A
-table_and_column_comments_complete: N/A
-required_code_comments_complete: N/A
-frontend_states_complete: N/A
-tests_and_smoke_complete: N/A
-security_privacy_checked: ✅ 安全和隐私要求已覆盖
-docs_and_examples_updated: ✅ 合规文档已创建
-optimization_task_registered_if_needed: ✅ 后续行动项已列出
+business_story_complete: skip
+target_role_can_complete_task: skip
+api_contract_stable: yes
+trace_id_and_audit_complete: skip
+source_traceability_complete: skip
+organization_scope_complete: skip
+production_db_schema_synced: skip
+development_db_local_h2_verified: skip
+table_and_column_comments_complete: skip
+required_code_comments_complete: skip
+frontend_states_complete: skip
+tests_and_smoke_complete: skip
+security_privacy_checked: yes
+docs_and_examples_updated: yes
+optimization_task_registered_if_needed: pending
 ```
 
 ## Evidence
@@ -97,10 +97,10 @@ optimization_owner: 安全团队
 ## Verdict
 
 ```text
-quality_level: SILVER
+quality_level: REJECTED SILVER
 approved_for_customer_demo: false
 approved_for_integration: true
 needs_optimization_task: COMP-002（合规检查清单和整改闭环）
 remaining_risk: 部分合规项待实现，需要后续任务补充
-final_decision: 通过，建立合规基线框架，具体实现由后续任务补充
+final_decision: 自动评估 - 仅通过 3 项，低于最低标准 通过，建立合规基线框架，具体实现由后续任务补充
 ```

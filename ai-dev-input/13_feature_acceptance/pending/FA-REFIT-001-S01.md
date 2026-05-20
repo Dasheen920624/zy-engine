@@ -7,8 +7,8 @@ claim_id: REFIT-001-S01
 review_id: RV-REFIT-001-S01-R01
 title: 已实现能力全量盘点与一致性基线
 owner: CodeBuddy
-status: PENDING
-quality_level: SILVER
+status: ASSESSED
+quality_level: REJECTED SILVER
 created_at: 2026-05-19T21:00:00+08:00
 updated_at: 2026-05-19T21:00:00+08:00
 commit:
@@ -52,21 +52,21 @@ security_or_ops_reviewer: pending
 ## Acceptance Checklist
 
 ```text
-business_story_complete: true
-target_role_can_complete_task: true
-api_contract_stable: true
-trace_id_and_audit_complete: true
-source_traceability_complete: true
-organization_scope_complete: true
-production_db_schema_synced: true
-development_db_local_h2_verified: true
-table_and_column_comments_complete: true
-required_code_comments_complete: true
-frontend_states_complete: true
-tests_and_smoke_complete: true
-security_privacy_checked: true
-docs_and_examples_updated: true
-optimization_task_registered_if_needed: true
+business_story_complete: skip
+target_role_can_complete_task: skip
+api_contract_stable: yes
+trace_id_and_audit_complete: yes
+source_traceability_complete: yes
+organization_scope_complete: yes
+production_db_schema_synced: skip
+development_db_local_h2_verified: skip
+table_and_column_comments_complete: skip
+required_code_comments_complete: skip
+frontend_states_complete: skip
+tests_and_smoke_complete: skip
+security_privacy_checked: skip
+docs_and_examples_updated: yes
+optimization_task_registered_if_needed: pending
 ```
 
 ## Evidence
@@ -189,10 +189,10 @@ optimization_owner: CodeBuddy
 ## Verdict
 
 ```text
-quality_level: SILVER
+quality_level: REJECTED SILVER
 approved_for_customer_demo: false
 approved_for_integration: true
 needs_optimization_task: REFIT-002, REFIT-004, GRAPH-006, PROV-002F, PROV-003F, DIFY-002
 remaining_risk: P0级finding需要优先处理
-final_decision: 批准进入下一阶段，但需要优先处理P0级finding
+final_decision: 自动评估 - 仅通过 5 项，低于最低标准 批准进入下一阶段，但需要优先处理P0级finding
 ```
