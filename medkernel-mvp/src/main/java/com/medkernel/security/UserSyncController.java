@@ -1,179 +1,130 @@
 package com.medkernel.security;
 
 import com.medkernel.common.ApiResult;
-import com.medkernel.common.ErrorCode;
-import org.springframework.web.bind.annotation.*;
+import com.medkernel.organization.OrganizationContext;
+import com.medkernel.organization.OrganizationContextService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 /**
- * 用户同步控制器：管理院内用户体系同步
+ * 用户同步 API：院内身份源用户同步管理。
  */
 @RestController
-@RequestMapping("/api/security")
+@RequestMapping("/api/security/sync")
 public class UserSyncController {
 
     private final UserSyncService userSyncService;
-    private final SecurityPersistenceService persistenceService;
+    private final OrganizationContextService organizationContextService;
 
-    public UserSyncController(UserSyncService userSyncService, SecurityPersistenceService persistenceService) {
+    public UserSyncController(UserSyncService userSyncService,
+                              OrganizationContextService organizationContextService) {
         this.userSyncService = userSyncService;
-        this.persistenceService = persistenceService;
+        this.organizationContextService = organizationContextService;
     }
 
     /**
-     * 全量同步
+     * 查询身份源列表。
      */
-    @PostMapping("/identity-providers/{providerId}/sync/full")
-    public ApiResult<UserSyncJob> fullSync(@PathVariable Long providerId,
-                                           @RequestParam String tenantId,
-                                           @RequestParam(defaultValue = "SYSTEM") String triggeredBy) {
-        try {
-            UserSyncJob job = userSyncService.fullSync(providerId, tenantId, triggeredBy);
-            return ApiResult.success(job);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "全量同步失败: " + e.getMessage());
-        }
+    @GetMapping("/providers")
+    public ApiResult<List<IdentityProvider>> listProviders(HttpServletRequest httpRequest) {
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(userSyncService.listProviders(resolveTenantId(orgCtx)));
     }
 
     /**
-     * 增量同步
+     * 保存身份源配置。
      */
-    @PostMapping("/identity-providers/{providerId}/sync/incremental")
-    public ApiResult<UserSyncJob> incrementalSync(@PathVariable Long providerId,
-                                                  @RequestParam String tenantId,
-                                                  @RequestParam(defaultValue = "SYSTEM") String triggeredBy) {
-        try {
-            UserSyncJob job = userSyncService.incrementalSync(providerId, tenantId, triggeredBy);
-            return ApiResult.success(job);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "增量同步失败: " + e.getMessage());
-        }
+    @PostMapping("/providers")
+    public ApiResult<IdentityProvider> saveProvider(@RequestBody IdentityProvider provider,
+                                                     HttpServletRequest httpRequest) {
+        OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, toMap(provider));
+        provider.setTenantId(resolveTenantId(orgCtx));
+        return ApiResult.success(userSyncService.saveProvider(provider));
     }
 
     /**
-     * 手动同步
+     * 全量同步。
      */
-    @PostMapping("/identity-providers/{providerId}/sync/manual")
-    public ApiResult<UserSyncJob> manualSync(@PathVariable Long providerId,
-                                             @RequestParam String tenantId,
-                                             @RequestBody List<String> externalSubjects,
-                                             @RequestParam(defaultValue = "ADMIN") String triggeredBy) {
-        try {
-            if (externalSubjects == null || externalSubjects.isEmpty()) {
-                return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "外部用户标识列表不能为空");
-            }
-            UserSyncJob job = userSyncService.manualSync(providerId, tenantId, externalSubjects, triggeredBy);
-            return ApiResult.success(job);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "手动同步失败: " + e.getMessage());
-        }
+    @PostMapping("/providers/{providerId}/full")
+    public ApiResult<SyncReport> syncFull(@PathVariable Long providerId,
+                                           HttpServletRequest httpRequest) {
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        String operator = resolveOperator(httpRequest);
+        return ApiResult.success(userSyncService.syncAll(resolveTenantId(orgCtx), providerId, operator));
     }
 
     /**
-     * 获取同步任务状态
+     * 增量同步。
      */
-    @GetMapping("/sync-jobs/{jobId}")
-    public ApiResult<UserSyncJob> getSyncJobStatus(@PathVariable Long jobId) {
-        try {
-            UserSyncJob job = userSyncService.getSyncJobStatus(jobId);
-            if (job == null) {
-                return ApiResult.failure(ErrorCode.NOT_FOUND, "同步任务不存在");
-            }
-            return ApiResult.success(job);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "获取同步任务状态失败: " + e.getMessage());
-        }
+    @PostMapping("/providers/{providerId}/incremental")
+    public ApiResult<SyncReport> syncIncremental(@PathVariable Long providerId,
+                                                   HttpServletRequest httpRequest) {
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        String operator = resolveOperator(httpRequest);
+        return ApiResult.success(userSyncService.syncIncremental(resolveTenantId(orgCtx), providerId, operator));
     }
 
     /**
-     * 获取同步历史
+     * 手动同步。
      */
-    @GetMapping("/identity-providers/{providerId}/sync-jobs")
-    public ApiResult<List<UserSyncJob>> getSyncHistory(@PathVariable Long providerId,
-                                                       @RequestParam String tenantId,
-                                                       @RequestParam(defaultValue = "20") int limit) {
-        try {
-            List<UserSyncJob> jobs = userSyncService.getSyncHistory(providerId, tenantId, limit);
-            return ApiResult.success(jobs);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "获取同步历史失败: " + e.getMessage());
-        }
+    @PostMapping("/providers/{providerId}/manual")
+    public ApiResult<SyncReport> syncManual(@PathVariable Long providerId,
+                                              HttpServletRequest httpRequest) {
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        String operator = resolveOperator(httpRequest);
+        return ApiResult.success(userSyncService.syncManual(resolveTenantId(orgCtx), providerId, operator));
     }
 
     /**
-     * 获取同步任务详情
+     * 查询同步日志。
      */
-    @GetMapping("/sync-jobs/{jobId}/details")
-    public ApiResult<List<UserSyncDetail>> getSyncJobDetails(@PathVariable Long jobId,
-                                                             @RequestParam(defaultValue = "100") int limit) {
+    @GetMapping("/logs")
+    public ApiResult<List<Map<String, Object>>> listSyncLogs(
+            @RequestParam(required = false) Long providerId,
+            @RequestParam(required = false, defaultValue = "20") int limit,
+            HttpServletRequest httpRequest) {
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(userSyncService.listSyncLogs(resolveTenantId(orgCtx), providerId, limit));
+    }
+
+    // ---- 内部方法 ----
+
+    private Long resolveTenantId(OrganizationContext orgCtx) {
         try {
-            List<UserSyncDetail> details = persistenceService.findSyncDetailsByJobId(jobId, limit);
-            return ApiResult.success(details);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "获取同步任务详情失败: " + e.getMessage());
+            return Long.parseLong(orgCtx.getTenantId());
+        } catch (NumberFormatException ex) {
+            return 1L;
         }
     }
 
-    /**
-     * 获取身份源列表
-     */
-    @GetMapping("/identity-providers")
-    public ApiResult<List<IdentityProvider>> getIdentityProviders(@RequestParam String tenantId) {
-        try {
-            List<IdentityProvider> providers = persistenceService.findIdentityProvidersByTenant(Long.parseLong(tenantId));
-            return ApiResult.success(providers);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "获取身份源列表失败: " + e.getMessage());
+    private String resolveOperator(HttpServletRequest request) {
+        String username = request.getHeader("X-Username");
+        if (username != null && !username.trim().isEmpty()) {
+            return username.trim();
         }
+        return "system";
     }
 
-    /**
-     * 创建身份源
-     */
-    @PostMapping("/identity-providers")
-    public ApiResult<IdentityProvider> createIdentityProvider(@RequestBody IdentityProvider provider) {
-        try {
-            if (provider.getProviderCode() == null || provider.getProviderCode().trim().isEmpty()) {
-                return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "身份源编码不能为空");
-            }
-            if (provider.getProviderName() == null || provider.getProviderName().trim().isEmpty()) {
-                return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "身份源名称不能为空");
-            }
-            provider.setId(com.medkernel.common.Ids.next());
-            persistenceService.saveIdentityProvider(provider);
-            return ApiResult.success(provider);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "创建身份源失败: " + e.getMessage());
+    private Map<String, Object> toMap(IdentityProvider provider) {
+        java.util.HashMap<String, Object> map = new java.util.HashMap<>();
+        if (provider.getTenantId() != null) {
+            map.put("tenant_id", String.valueOf(provider.getTenantId()));
         }
-    }
-
-    /**
-     * 获取身份源详情
-     */
-    @GetMapping("/identity-providers/{providerId}")
-    public ApiResult<IdentityProvider> getIdentityProvider(@PathVariable Long providerId) {
-        try {
-            IdentityProvider provider = persistenceService.findIdentityProviderById(providerId);
-            if (provider == null) {
-                return ApiResult.failure(ErrorCode.NOT_FOUND, "身份源不存在");
-            }
-            return ApiResult.success(provider);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "获取身份源详情失败: " + e.getMessage());
+        if (provider.getProviderType() != null) {
+            map.put("provider_type", provider.getProviderType());
         }
-    }
-
-    /**
-     * 删除身份源
-     */
-    @DeleteMapping("/identity-providers/{providerId}")
-    public ApiResult<Void> deleteIdentityProvider(@PathVariable Long providerId) {
-        try {
-            persistenceService.deleteIdentityProvider(providerId);
-            return ApiResult.success(null);
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "删除身份源失败: " + e.getMessage());
+        if (provider.getProviderName() != null) {
+            map.put("provider_name", provider.getProviderName());
         }
+        return map;
     }
 }

@@ -69,7 +69,7 @@ public class SecurityPersistenceService {
     public SecurityUser findByUsername(String username) {
         String sql = "SELECT u.id, u.tenant_id, u.username, u.password_hash, u.display_name, "
                 + "u.email, u.phone, u.avatar_url, u.status, u.last_login_time, u.last_login_ip, "
-                + "u.login_attempts, u.locked_until "
+                + "u.login_attempts, u.locked_until, u.user_type, u.employee_id "
                 + "FROM sec_user u WHERE u.username = ?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -95,7 +95,7 @@ public class SecurityPersistenceService {
     public SecurityUser findById(Long userId) {
         String sql = "SELECT u.id, u.tenant_id, u.username, u.password_hash, u.display_name, "
                 + "u.email, u.phone, u.avatar_url, u.status, u.last_login_time, u.last_login_ip, "
-                + "u.login_attempts, u.locked_until "
+                + "u.login_attempts, u.locked_until, u.user_type, u.employee_id "
                 + "FROM sec_user u WHERE u.id = ?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -260,7 +260,306 @@ public class SecurityPersistenceService {
         if (lockedUntil != null) {
             user.setLockedUntil(lockedUntil.toLocalDateTime());
         }
+        user.setUserType(rs.getString("user_type"));
+        user.setEmployeeId(rs.getString("employee_id"));
         return user;
+    }
+
+    /**
+     * 根据租户和身份源类型查找身份源配置。
+     */
+    public IdentityProvider findIdentityProviderByType(Long tenantId, String providerType) {
+        String sql = "SELECT id, tenant_id, provider_code, provider_name, provider_type, adapter_code, "
+                + "sync_mode, sync_cron, priority, status, "
+                + "last_sync_time, last_sync_result, last_sync_summary, "
+                + "created_by, created_time, updated_by, updated_time "
+                + "FROM sec_identity_provider WHERE tenant_id = ? AND provider_type = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, tenantId);
+            ps.setString(2, providerType);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapIdentityProvider(rs);
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("find identity provider failed: " + ex.getMessage(), ex);
+        }
+        return null;
+    }
+
+    /**
+     * 查找租户下所有身份源配置。
+     */
+    public List<IdentityProvider> findAllIdentityProviders(Long tenantId) {
+        String sql = "SELECT id, tenant_id, provider_code, provider_name, provider_type, adapter_code, "
+                + "sync_mode, sync_cron, priority, status, "
+                + "last_sync_time, last_sync_result, last_sync_summary, "
+                + "created_by, created_time, updated_by, updated_time "
+                + "FROM sec_identity_provider WHERE tenant_id = ? ORDER BY priority";
+        List<IdentityProvider> providers = new ArrayList<IdentityProvider>();
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, tenantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    providers.add(mapIdentityProvider(rs));
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("find identity providers failed: " + ex.getMessage(), ex);
+        }
+        return providers;
+    }
+
+    /**
+     * 根据外部身份查找绑定关系。
+     */
+    public IdentityBinding findIdentityBinding(Long tenantId, Long providerId, String externalSubject) {
+        String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
+                + "external_display_name, binding_status, last_verified_time, "
+                + "created_by, created_time, updated_by, updated_time "
+                + "FROM sec_identity_binding WHERE tenant_id = ? AND provider_id = ? AND external_subject = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, tenantId);
+            ps.setLong(2, providerId);
+            ps.setString(3, externalSubject);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapIdentityBinding(rs);
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("find identity binding failed: " + ex.getMessage(), ex);
+        }
+        return null;
+    }
+
+    /**
+     * 查找用户的所有身份绑定。
+     */
+    public List<IdentityBinding> findIdentityBindingsByUser(Long tenantId, Long userId) {
+        String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
+                + "external_display_name, binding_status, last_verified_time, "
+                + "created_by, created_time, updated_by, updated_time "
+                + "FROM sec_identity_binding WHERE tenant_id = ? AND user_id = ?";
+        List<IdentityBinding> bindings = new ArrayList<IdentityBinding>();
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, tenantId);
+            ps.setLong(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bindings.add(mapIdentityBinding(rs));
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("find identity bindings by user failed: " + ex.getMessage(), ex);
+        }
+        return bindings;
+    }
+
+    /**
+     * 创建平台用户（同步时使用）。
+     */
+    public Long createUser(Long tenantId, String username, String displayName, String email, String phone,
+                           String userType, String employeeId, String status) {
+        Long userId = Ids.next();
+        String sql = "INSERT INTO sec_user (id, tenant_id, username, password_hash, display_name, email, phone, "
+                + "status, user_type, employee_id, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.setLong(2, tenantId);
+            ps.setString(3, username);
+            ps.setString(4, "");
+            ps.setString(5, displayName);
+            ps.setString(6, email);
+            ps.setString(7, phone);
+            ps.setString(8, status);
+            ps.setString(9, userType);
+            ps.setString(10, employeeId);
+            ps.setTimestamp(11, Timestamp.valueOf(LocalDateTime.now()));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("create user failed: " + ex.getMessage(), ex);
+        }
+        return userId;
+    }
+
+    /**
+     * 更新用户同步信息（显示名、邮箱、电话、状态、工号）。
+     */
+    public void updateUserSync(Long userId, String displayName, String email, String phone,
+                               String status, String employeeId) {
+        String sql = "UPDATE sec_user SET display_name = ?, email = ?, phone = ?, status = ?, "
+                + "employee_id = ?, updated_time = ? WHERE id = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, displayName);
+            ps.setString(2, email);
+            ps.setString(3, phone);
+            ps.setString(4, status);
+            ps.setString(5, employeeId);
+            ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setLong(7, userId);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("update user sync failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 创建身份绑定。
+     */
+    public void createIdentityBinding(Long tenantId, Long userId, Long providerId,
+                                       String externalSubject, String externalOrgCode,
+                                       String externalDisplayName) {
+        Long bindingId = Ids.next();
+        String sql = "INSERT INTO sec_identity_binding (id, tenant_id, user_id, provider_id, external_subject, "
+                + "external_org_code, external_display_name, binding_status, "
+                + "last_verified_time, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, bindingId);
+            ps.setLong(2, tenantId);
+            ps.setLong(3, userId);
+            ps.setLong(4, providerId);
+            ps.setString(5, externalSubject);
+            ps.setString(6, externalOrgCode);
+            ps.setString(7, externalDisplayName);
+            ps.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("create identity binding failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 保存同步日志。
+     */
+    public void saveSyncLog(Long tenantId, Long providerId, String syncType, String syncStatus,
+                            int totalCount, int createdCount, int updatedCount, int disabledCount,
+                            int conflictCount, int errorCount, String errorDetail) {
+        Long logId = Ids.next();
+        String sql = "INSERT INTO sec_user_sync_log (id, tenant_id, provider_id, sync_type, sync_status, "
+                + "total_count, created_count, updated_count, disabled_count, conflict_count, error_count, "
+                + "error_detail, started_time, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, logId);
+            ps.setLong(2, tenantId);
+            ps.setLong(3, providerId);
+            ps.setString(4, syncType);
+            ps.setString(5, syncStatus);
+            ps.setInt(6, totalCount);
+            ps.setInt(7, createdCount);
+            ps.setInt(8, updatedCount);
+            ps.setInt(9, disabledCount);
+            ps.setInt(10, conflictCount);
+            ps.setInt(11, errorCount);
+            ps.setString(12, errorDetail);
+            ps.setTimestamp(13, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setTimestamp(14, Timestamp.valueOf(LocalDateTime.now()));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            log.error("save sync log failed", ex);
+        }
+    }
+
+    /**
+     * 更新身份源同步状态。
+     */
+    public void updateProviderSyncStatus(Long providerId, String syncResult, String syncSummary) {
+        String sql = "UPDATE sec_identity_provider SET last_sync_time = ?, last_sync_result = ?, "
+                + "last_sync_summary = ?, updated_time = ? WHERE id = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(2, syncResult);
+            ps.setString(3, syncSummary);
+            ps.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setLong(5, providerId);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            log.error("update provider sync status failed", ex);
+        }
+    }
+
+    /**
+     * 根据工号查找用户。
+     */
+    public SecurityUser findUserByEmployeeId(Long tenantId, String employeeId) {
+        String sql = "SELECT u.id, u.tenant_id, u.username, u.password_hash, u.display_name, "
+                + "u.email, u.phone, u.avatar_url, u.status, u.last_login_time, u.last_login_ip, "
+                + "u.login_attempts, u.locked_until, u.user_type, u.employee_id "
+                + "FROM sec_user u WHERE u.tenant_id = ? AND u.employee_id = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, tenantId);
+            ps.setString(2, employeeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    SecurityUser user = mapUser(rs);
+                    user.setRoles(findUserRoles(user.getId()));
+                    user.setPermissions(findUserPermissions(user.getId()));
+                    user.setOrgScopes(findUserOrgScopes(user.getId()));
+                    return user;
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("find user by employee id failed: " + ex.getMessage(), ex);
+        }
+        return null;
+    }
+
+    private IdentityProvider mapIdentityProvider(ResultSet rs) throws SQLException {
+        IdentityProvider provider = new IdentityProvider();
+        provider.setId(rs.getLong("id"));
+        provider.setTenantId(rs.getLong("tenant_id"));
+        provider.setProviderCode(rs.getString("provider_code"));
+        provider.setProviderName(rs.getString("provider_name"));
+        provider.setProviderType(rs.getString("provider_type"));
+        provider.setAdapterCode(rs.getString("adapter_code"));
+        provider.setSyncMode(rs.getString("sync_mode"));
+        provider.setSyncCron(rs.getString("sync_cron"));
+        provider.setPriority(rs.getInt("priority"));
+        provider.setStatus(rs.getString("status"));
+        Timestamp lastSync = rs.getTimestamp("last_sync_time");
+        if (lastSync != null) { provider.setLastSyncTime(lastSync.toLocalDateTime()); }
+        provider.setLastSyncResult(rs.getString("last_sync_result"));
+        provider.setLastSyncSummary(rs.getString("last_sync_summary"));
+        provider.setCreatedBy(rs.getString("created_by"));
+        Timestamp created = rs.getTimestamp("created_time");
+        if (created != null) { provider.setCreatedTime(created.toLocalDateTime()); }
+        provider.setUpdatedBy(rs.getString("updated_by"));
+        Timestamp updated = rs.getTimestamp("updated_time");
+        if (updated != null) { provider.setUpdatedTime(updated.toLocalDateTime()); }
+        return provider;
+    }
+
+    private IdentityBinding mapIdentityBinding(ResultSet rs) throws SQLException {
+        IdentityBinding binding = new IdentityBinding();
+        binding.setId(rs.getLong("id"));
+        binding.setTenantId(rs.getLong("tenant_id"));
+        binding.setUserId(rs.getLong("user_id"));
+        binding.setProviderId(rs.getLong("provider_id"));
+        binding.setExternalSubject(rs.getString("external_subject"));
+        binding.setExternalOrgCode(rs.getString("external_org_code"));
+        binding.setExternalDisplayName(rs.getString("external_display_name"));
+        binding.setBindingStatus(rs.getString("binding_status"));
+        Timestamp verified = rs.getTimestamp("last_verified_time");
+        if (verified != null) { binding.setLastVerifiedTime(verified.toLocalDateTime()); }
+        binding.setCreatedBy(rs.getString("created_by"));
+        Timestamp created = rs.getTimestamp("created_time");
+        if (created != null) { binding.setCreatedTime(created.toLocalDateTime()); }
+        binding.setUpdatedBy(rs.getString("updated_by"));
+        Timestamp updated = rs.getTimestamp("updated_time");
+        if (updated != null) { binding.setUpdatedTime(updated.toLocalDateTime()); }
+        return binding;
     }
 
     private List<String> loadSchemaStatements(String resourcePath) {
