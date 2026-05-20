@@ -1,0 +1,26 @@
+{
+  "dataset_id": "PATHWAY-CANDIDATES-001",
+  "description": "路径候选识别测试数据",
+  "category": "pathway",
+  "version": "1.0.0",
+  "records": [
+    {
+      "id": "PC-001",
+      "patient_id": "P-AMI-001",
+      "diagnosis_code": "I21.0",
+      "diagnosis_name": "急性透壁性前壁心肌梗死",
+      "expected_pathways": ["AMI-ST段抬高型心肌梗死临床路径"],
+      "candidate_confidence": 0.95,
+      "trigger_rule": "STEMI_CANDIDATE"
+    },
+    {
+      "id": "PC-002",
+      "patient_id": "P-AMI-002",
+      "diagnosis_code": "I21.1",
+      "diagnosis_name": "急性透壁性下壁心肌梗死",
+      "expected_pathways": ["AMI-ST段抬高型心肌梗死临床路径"],
+      "candidate_confidence": 0.90,
+      "trigger_rule": "STEMI_CANDIDATE"
+    }
+  ]
+}

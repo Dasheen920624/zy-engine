@@ -2,6 +2,7 @@ package com.medkernel.system;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.dify.DifyProperties;
+import com.medkernel.dify.ModelGatewayService;
 import com.medkernel.graph.GraphProperties;
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.EnginePersistenceService;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -19,15 +21,18 @@ public class HealthController {
     private final EnginePersistenceService persistenceService;
     private final GraphProperties graphProperties;
     private final DifyProperties difyProperties;
+    private final ModelGatewayService modelGatewayService;
 
     public HealthController(EnginePersistenceProperties databaseProperties,
                             EnginePersistenceService persistenceService,
                             GraphProperties graphProperties,
-                            DifyProperties difyProperties) {
+                            DifyProperties difyProperties,
+                            ModelGatewayService modelGatewayService) {
         this.databaseProperties = databaseProperties;
         this.persistenceService = persistenceService;
         this.graphProperties = graphProperties;
         this.difyProperties = difyProperties;
+        this.modelGatewayService = modelGatewayService;
     }
 
     @GetMapping("/health")
@@ -56,6 +61,7 @@ public class HealthController {
         providers.put("database", databaseProvider(databaseReady));
         providers.put("graph", graphProvider(graphReady));
         providers.put("dify", difyProvider(difyReady));
+        providers.put("model_gateway", modelGatewayProvider());
         data.put("providers", providers);
 
         Map<String, Object> capabilities = new LinkedHashMap<String, Object>();
@@ -78,9 +84,10 @@ public class HealthController {
         provider.put("configured", databaseProperties.isEnabled());
         provider.put("ready", ready);
         provider.put("status", ready ? "READY" : "DISABLED");
-        // database_role 是契约字段（测试与运维都依赖），保留；具体方言/驱动细节不暴露。
-        provider.put("database_role", databaseProperties.roleName());
+        // database_role 表达产品主存储职责，运行时实际介质由 provider/effective_runtime_role 表示。
+        provider.put("database_role", "PRODUCTION_AUTHORITY");
         provider.put("provider", persistenceService.providerName());
+        provider.put("effective_runtime_role", databaseProperties.roleName());
         provider.put("production_ready", ready && databaseProperties.productionAuthority());
         // 隐藏 schema_init / dialect / production_authority 等部署细节，避免暴露内部基础设施拓扑；
         // 仅在 degraded 时给出通用 reason，不再回显具体的中文失败描述（避免帮助攻击者识别状态）。
@@ -109,6 +116,34 @@ public class HealthController {
         provider.put("provider", ready ? "DIFY" : "LOCAL_TEMPLATE_FALLBACK");
         // 不再暴露具体 timeout_ms 数值（可被用于猜测服务负载/超时调优策略）。
         provider.put("degraded_reason", ready ? null : "DIFY_PROVIDER_UNAVAILABLE");
+        return provider;
+    }
+
+    private Map<String, Object> modelGatewayProvider() {
+        boolean gatewayEnabled = modelGatewayService.isEnabled();
+        List<Map<String, Object>> providerList = modelGatewayService.listProviders();
+        boolean anyReady = false;
+        for (Map<String, Object> p : providerList) {
+            Object ready = p.get("ready");
+            if (Boolean.TRUE.equals(ready)) {
+                anyReady = true;
+                break;
+            }
+        }
+
+        Map<String, Object> provider = new LinkedHashMap<String, Object>();
+        provider.put("role", "MODEL_GATEWAY");
+        provider.put("enabled", gatewayEnabled);
+        provider.put("ready", gatewayEnabled && anyReady);
+        provider.put("status", gatewayEnabled && anyReady ? "READY" : (gatewayEnabled ? "PARTIAL" : "DISABLED"));
+        provider.put("providers", providerList);
+
+        Map<String, Object> chains = new LinkedHashMap<String, Object>();
+        String[] callTypes = {"RESEARCH", "EXTRACT", "EMBEDDING", "RERANK", "CRITIC", "WORKFLOW"};
+        for (String callType : callTypes) {
+            chains.put(callType, modelGatewayService.getDegradationChain(callType).get("chain"));
+        }
+        provider.put("degradation_chains", chains);
         return provider;
     }
 

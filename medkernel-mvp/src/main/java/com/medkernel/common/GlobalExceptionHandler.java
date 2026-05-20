@@ -1,5 +1,12 @@
 package com.medkernel.common;
 
+import com.medkernel.common.exception.AdapterTimeoutException;
+import com.medkernel.common.exception.ConfigNotFoundException;
+import com.medkernel.common.exception.DataMissingException;
+import com.medkernel.common.exception.DifyTimeoutException;
+import com.medkernel.common.exception.EngineTimeoutException;
+import com.medkernel.common.exception.MissingSourceException;
+import com.medkernel.common.exception.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -13,10 +20,70 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.sql.SQLException;
 
+/**
+ * 全局异常处理。错误码 → HTTP 状态映射严格对齐 06_后端开发规范 §5.2 表格。
+ *
+ * <p>顺序：先匹配业务异常（{@link ValidationException} 等），再匹配 Spring 框架异常，
+ * 最后兜底 {@link Exception}。{@link com.medkernel.security.SecurityExceptionHandler}
+ * 通过 {@code @Order(-1)} 在本处理器之前接管 {@link com.medkernel.security.AuthException}。
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    // ─── 业务异常（6 类，与 ErrorCode 对齐） ─────────────────────────────
+
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResult<Void> handleBusinessValidation(ValidationException ex) {
+        log.warn("[traceId={}] business validation: {}", TraceContext.getTraceId(), ex.getMessage());
+        return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
+    }
+
+    @ExceptionHandler(ConfigNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResult<Void> handleConfigNotFound(ConfigNotFoundException ex) {
+        log.warn("[traceId={}] config not found: {}", TraceContext.getTraceId(), ex.getMessage());
+        return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
+    }
+
+    @ExceptionHandler(DataMissingException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResult<Void> handleDataMissing(DataMissingException ex) {
+        log.warn("[traceId={}] data missing: {}", TraceContext.getTraceId(), ex.getMessage());
+        return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
+    }
+
+    @ExceptionHandler(EngineTimeoutException.class)
+    @ResponseStatus(HttpStatus.GATEWAY_TIMEOUT)
+    public ApiResult<Void> handleEngineTimeout(EngineTimeoutException ex) {
+        log.warn("[traceId={}] engine timeout: {}", TraceContext.getTraceId(), ex.getMessage());
+        return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
+    }
+
+    @ExceptionHandler(AdapterTimeoutException.class)
+    @ResponseStatus(HttpStatus.GATEWAY_TIMEOUT)
+    public ApiResult<Void> handleAdapterTimeout(AdapterTimeoutException ex) {
+        log.warn("[traceId={}] adapter timeout: {}", TraceContext.getTraceId(), ex.getMessage());
+        return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
+    }
+
+    @ExceptionHandler(DifyTimeoutException.class)
+    @ResponseStatus(HttpStatus.GATEWAY_TIMEOUT)
+    public ApiResult<Void> handleDifyTimeout(DifyTimeoutException ex) {
+        log.warn("[traceId={}] dify timeout: {}", TraceContext.getTraceId(), ex.getMessage());
+        return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
+    }
+
+    @ExceptionHandler(MissingSourceException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResult<Void> handleMissingSource(MissingSourceException ex) {
+        log.warn("[traceId={}] missing source: {}", TraceContext.getTraceId(), ex.getMessage());
+        return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
+    }
+
+    // ─── Spring 框架异常 ───────────────────────────────────────────────
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

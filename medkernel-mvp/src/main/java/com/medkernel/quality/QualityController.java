@@ -3,6 +3,9 @@ package com.medkernel.quality;
 import com.medkernel.common.ApiResult;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,5 +47,41 @@ public class QualityController {
         filters.put("workflowStatus", workflowStatus);
         organizationContextService.applyExplicitFilters(filters, request);
         return ApiResult.success(qualityService.metrics(filters));
+    }
+
+    @GetMapping("/alerts")
+    public ApiResult<Map<String, Object>> listAlerts(
+            @RequestParam(required = false) String dept,
+            @RequestParam(required = false) String severity,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false, defaultValue = "1") String page,
+            @RequestParam(required = false, defaultValue = "20") String size,
+            HttpServletRequest request) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        filters.put("dept", dept);
+        filters.put("severity", severity);
+        filters.put("date", date);
+        filters.put("status", status);
+        filters.put("page", page);
+        filters.put("size", size);
+        organizationContextService.applyExplicitFilters(filters, request);
+        return ApiResult.success(qualityService.listAlerts(filters));
+    }
+
+    @GetMapping("/alerts/summary")
+    public ApiResult<Map<String, Object>> alertSummary(HttpServletRequest request) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        organizationContextService.applyExplicitFilters(filters, request);
+        return ApiResult.success(qualityService.alertSummary(filters));
+    }
+
+    @PostMapping("/problems/{id}/assign")
+    public ApiResult<Map<String, Object>> assignProblem(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        organizationContextService.resolveWithBody(httpRequest, request);
+        return ApiResult.success(qualityService.assignProblem(id, request));
     }
 }

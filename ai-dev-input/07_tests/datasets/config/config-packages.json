@@ -1,0 +1,21 @@
+{
+  "dataset_id": "CONFIG-PACKAGES-001",
+  "description": "配置包测试数据",
+  "category": "config",
+  "version": "1.0.0",
+  "records": [
+    {
+      "id": "CFG-001",
+      "package_name": "AMI-STEMI-v1",
+      "version": "1.0.0",
+      "description": "AMI STEMI 临床路径配置包",
+      "status": "published",
+      "contains": {
+        "pathways": 1,
+        "rules": 5,
+        "graph_nodes": 12,
+        "terminology_mappings": 8
+      }
+    }
+  ]
+}

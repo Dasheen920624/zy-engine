@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS pe_variation_record (
   id NUMBER(20) PRIMARY KEY,
   instance_id NUMBER(20) NOT NULL,
   patient_id VARCHAR2(64) NOT NULL,
-  encounter_id VARCHAR2(64) NOT NULL,
+  encounter_id VARCHAR2(64) not null,
   node_code VARCHAR2(64),
   variation_type VARCHAR2(64) NOT NULL,
   reason VARCHAR2(1000),
@@ -205,24 +205,28 @@ CREATE TABLE IF NOT EXISTS tm_concept_mapping (
 
 CREATE TABLE IF NOT EXISTS adp_adapter_def (
   id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL DEFAULT 'default',
+  hospital_code VARCHAR2(64) NOT NULL DEFAULT 'DEFAULT_HOSPITAL',
   adapter_code VARCHAR2(64) NOT NULL,
   adapter_name VARCHAR2(200) NOT NULL,
   adapter_type VARCHAR2(32) NOT NULL,
   status VARCHAR2(32) NOT NULL,
   config_json CLOB NOT NULL,
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT uk_adp_adapter_def UNIQUE (adapter_code)
+  CONSTRAINT uk_adp_adapter_def UNIQUE (tenant_id, hospital_code, adapter_code)
 );
 
 CREATE TABLE IF NOT EXISTS adp_query_def (
   id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL DEFAULT 'default',
+  hospital_code VARCHAR2(64) NOT NULL DEFAULT 'DEFAULT_HOSPITAL',
   adapter_code VARCHAR2(64) NOT NULL,
   query_code VARCHAR2(64) NOT NULL,
   query_name VARCHAR2(200) NOT NULL,
   query_config CLOB NOT NULL,
   status VARCHAR2(32) NOT NULL,
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT uk_adp_query_def UNIQUE (adapter_code, query_code)
+  CONSTRAINT uk_adp_query_def UNIQUE (tenant_id, hospital_code, adapter_code, query_code)
 );
 
 CREATE TABLE IF NOT EXISTS ge_graph_version (
@@ -418,3 +422,117 @@ CREATE TABLE IF NOT EXISTS tm_unmapped_queue (
 
 CREATE INDEX IF NOT EXISTS idx_tm_queue_status ON tm_unmapped_queue(tenant_id, governance_status, last_occurrence_time);
 CREATE INDEX IF NOT EXISTS idx_tm_queue_system ON tm_unmapped_queue(tenant_id, source_system, concept_type);
+
+-- ============================================================================
+-- 统一待办和审批工作流
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS wf_todo_task (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  task_code VARCHAR2(128) NOT NULL,
+  business_type VARCHAR2(64) NOT NULL,
+  business_code VARCHAR2(128) NOT NULL,
+  business_version VARCHAR2(64),
+  title VARCHAR2(500) NOT NULL,
+  description VARCHAR2(2000),
+  priority VARCHAR2(32) NOT NULL,
+  status VARCHAR2(32) NOT NULL,
+  assigned_type VARCHAR2(32) NOT NULL,
+  assigned_to VARCHAR2(128),
+  created_by VARCHAR2(64) NOT NULL,
+  due_time TIMESTAMP,
+  completed_by VARCHAR2(64),
+  completed_time TIMESTAMP,
+  completed_comment VARCHAR2(1000),
+  cancelled_by VARCHAR2(64),
+  cancelled_time TIMESTAMP,
+  cancel_reason VARCHAR2(1000),
+  tenant_code VARCHAR2(64),
+  group_code VARCHAR2(64),
+  hospital_code VARCHAR2(64),
+  campus_code VARCHAR2(64),
+  site_code VARCHAR2(64),
+  department_code VARCHAR2(64),
+  scope_level VARCHAR2(32),
+  scope_code VARCHAR2(64),
+  metadata_json CLOB,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_wf_todo_task UNIQUE (tenant_id, task_code)
+);
+
+CREATE TABLE IF NOT EXISTS wf_approval_action (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  task_id NUMBER(20) NOT NULL,
+  task_code VARCHAR2(128) NOT NULL,
+  action_type VARCHAR2(32) NOT NULL,
+  action_result VARCHAR2(32) NOT NULL,
+  operator_id VARCHAR2(64) NOT NULL,
+  operator_name VARCHAR2(100),
+  comment VARCHAR2(2000),
+  delegate_to VARCHAR2(64),
+  delegate_to_name VARCHAR2(100),
+  tenant_code VARCHAR2(64),
+  group_code VARCHAR2(64),
+  hospital_code VARCHAR2(64),
+  campus_code VARCHAR2(64),
+  site_code VARCHAR2(64),
+  department_code VARCHAR2(64),
+  scope_level VARCHAR2(32),
+  scope_code VARCHAR2(64),
+  detail_json CLOB,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT fk_wf_action_task FOREIGN KEY (task_id) REFERENCES wf_todo_task(id)
+);
+
+CREATE TABLE IF NOT EXISTS wf_approval_rule (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  rule_code VARCHAR2(128) NOT NULL,
+  rule_name VARCHAR2(200) NOT NULL,
+  business_type VARCHAR2(64) NOT NULL,
+  approval_type VARCHAR2(32) NOT NULL,
+  approver_type VARCHAR2(32) NOT NULL,
+  approver_value VARCHAR2(200) NOT NULL,
+  timeout_hours NUMBER(10),
+  timeout_action VARCHAR2(32),
+  priority NUMBER(10) DEFAULT 0 NOT NULL,
+  status VARCHAR2(32) NOT NULL,
+  description VARCHAR2(500),
+  created_by VARCHAR2(64),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_by VARCHAR2(64),
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_wf_approval_rule UNIQUE (tenant_id, rule_code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_wf_todo_tenant ON wf_todo_task(tenant_id, status, business_type);
+CREATE INDEX IF NOT EXISTS idx_wf_todo_assigned ON wf_todo_task(tenant_id, assigned_type, assigned_to, status);
+CREATE INDEX IF NOT EXISTS idx_wf_todo_due ON wf_todo_task(tenant_id, due_time, status);
+CREATE INDEX IF NOT EXISTS idx_wf_action_task ON wf_approval_action(tenant_id, task_id);
+CREATE INDEX IF NOT EXISTS idx_wf_action_operator ON wf_approval_action(tenant_id, operator_id);
+CREATE INDEX IF NOT EXISTS idx_wf_rule_type ON wf_approval_rule(tenant_id, business_type, status);
+
+-- ============================================================================
+-- Dify 工作流模板
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS src_dify_template (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  workflow_code VARCHAR2(128) NOT NULL,
+  workflow_version VARCHAR2(64) NOT NULL,
+  workflow_name VARCHAR2(256),
+  description VARCHAR2(1000),
+  dify_app_code VARCHAR2(128),
+  timeout_ms NUMBER(10),
+  retry_count NUMBER(10),
+  template_json CLOB,
+  reference_document_code VARCHAR2(128),
+  reference_binding_type VARCHAR2(64),
+  status VARCHAR2(32) NOT NULL,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_src_dify_template UNIQUE (workflow_code, workflow_version)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dify_tpl_code ON src_dify_template(tenant_id, workflow_code);

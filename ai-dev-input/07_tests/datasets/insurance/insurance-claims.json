@@ -1,0 +1,34 @@
+{
+  "dataset_id": "INSURANCE-CLAIMS-001",
+  "description": "医保质控测试数据",
+  "category": "insurance",
+  "version": "1.0.0",
+  "records": [
+    {
+      "id": "INS-001",
+      "patient_id": "P-AMI-001",
+      "claim_type": "住院",
+      "insurance_type": "城镇职工基本医疗保险",
+      "admission_date": "2025-03-15",
+      "total_amount": 45000.00,
+      "reimbursable_amount": 36000.00,
+      "diagnosis_codes": ["I21.0"],
+      "procedure_codes": ["36.07"],
+      "status": "pending_review",
+      "qc_issues": []
+    },
+    {
+      "id": "INS-002",
+      "patient_id": "P-AMI-002",
+      "claim_type": "住院",
+      "insurance_type": "城乡居民基本医疗保险",
+      "admission_date": "2025-03-16",
+      "total_amount": 38000.00,
+      "reimbursable_amount": 28000.00,
+      "diagnosis_codes": ["I21.1"],
+      "procedure_codes": [],
+      "status": "qc_alert",
+      "qc_issues": ["诊断与治疗不匹配", "缺少必要检查"]
+    }
+  ]
+}

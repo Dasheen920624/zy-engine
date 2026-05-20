@@ -29,12 +29,16 @@ public class ConfigPackageController {
     }
 
     @PostMapping
-    public ApiResult<List<Map<String, Object>>> importPackages(@RequestBody Object request) {
+    public ApiResult<List<Map<String, Object>>> importPackages(@RequestBody Object request,
+                                                               HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         return ApiResult.success(configPackageService.importPackages(request));
     }
 
     @PostMapping("/import")
-    public ApiResult<List<Map<String, Object>>> importPackagesAlias(@RequestBody Object request) {
+    public ApiResult<List<Map<String, Object>>> importPackagesAlias(@RequestBody Object request,
+                                                                     HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         return ApiResult.success(configPackageService.importPackages(request));
     }
 

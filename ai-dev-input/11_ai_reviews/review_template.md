@@ -48,6 +48,10 @@ production_development_schema_synced:
 table_and_column_comments_complete:
 required_code_comments_complete:
 feature_acceptance_created:
+develop_health_status_before_pickup:        # GREEN / YELLOW / RED（来自 ai-dev-input/00_DEVELOP_HEALTH.md）
+develop_health_status_after_commit:         # GREEN / YELLOW / RED
+mvn_compile_local_passed:                   # YES / NO（必须 YES 才能进 review）
+mvn_test_local_passed:                      # YES / NO / SKIPPED_REASON
 ```
 
 ## Verification Submitted By Builder
@@ -59,6 +63,8 @@ git diff --check:
 local h2 smoke:
 oracle ddl:
 oracle smoke:
+mvn_compile_evidence:        # 粘贴 mvn -q compile 末尾 5 行（含 BUILD SUCCESS）
+mvn_test_evidence:           # 粘贴 mvn test 末尾 5 行（含 Tests run: X, Failures: 0, Errors: 0）
 other:
 ```
 

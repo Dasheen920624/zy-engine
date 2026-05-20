@@ -1,5 +1,8 @@
 package com.medkernel.rule;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -11,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public class RuleDslEvaluator {
+
+    private static final Logger log = LoggerFactory.getLogger(RuleDslEvaluator.class);
+
     public EvaluationOutcome evaluate(Map<String, Object> rule, Map<String, Object> patientContext) {
         EvaluationOutcome outcome = new EvaluationOutcome();
         Object condition = rule.get("condition");
@@ -247,10 +253,16 @@ public class RuleDslEvaluator {
         }
         try {
             return OffsetDateTime.parse(text);
-        } catch (Exception ignored) {
+        } catch (Exception offsetEx) {
             try {
                 return LocalDateTime.parse(text);
-            } catch (Exception ex) {
+            } catch (Exception localEx) {
+                // 规则 DSL 取到的时间字段格式既不是 OffsetDateTime 也不是 LocalDateTime；
+                // 不抛异常以免单条脏数据阻断整批规则评估，但要落日志便于线上定位。
+                if (log.isWarnEnabled()) {
+                    log.warn("rule dsl parseTime failed: text='{}', offsetErr={}, localErr={}",
+                            text, offsetEx.getMessage(), localEx.getMessage());
+                }
                 return null;
             }
         }

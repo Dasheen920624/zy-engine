@@ -170,3 +170,95 @@ INSERT INTO sec_user_org_scope (id, tenant_id, user_id, scope_level, scope_code,
 INSERT INTO sec_user_org_scope (id, tenant_id, user_id, scope_level, scope_code, scope_name, created_by) VALUES (3007, 1, 1007, 'HOSPITAL', 'ZYHOSPITAL', '中医院', 'system');
 INSERT INTO sec_user_org_scope (id, tenant_id, user_id, scope_level, scope_code, scope_name, created_by) VALUES (3008, 1, 1008, 'HOSPITAL', 'ZYHOSPITAL', '中医院', 'system');
 INSERT INTO sec_user_org_scope (id, tenant_id, user_id, scope_level, scope_code, scope_name, created_by) VALUES (3009, 1, 1009, 'PLATFORM', 'DEFAULT', '全部', 'system');
+
+-- ============================================================
+-- SEC-006: 院内用户体系同步 (Identity Provider & Sync)
+-- ============================================================
+
+-- 身份源配置表：注册院内 HIS/EMR/OA/LDAP 等外部身份源
+CREATE TABLE sec_identity_provider (
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  provider_code VARCHAR(64) NOT NULL,
+  provider_name VARCHAR(200) NOT NULL,
+  provider_type VARCHAR(32) NOT NULL,
+  adapter_code VARCHAR(64),
+  query_code VARCHAR(64),
+  priority INT DEFAULT 100 NOT NULL,
+  status VARCHAR(32) DEFAULT 'ACTIVE' NOT NULL,
+  config_json TEXT,
+  created_by VARCHAR(64),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_by VARCHAR(64),
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_sec_identity_provider UNIQUE (tenant_id, provider_code)
+);
+
+-- 外部身份绑定表：将平台用户绑定到外部系统身份
+CREATE TABLE sec_identity_binding (
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  provider_id BIGINT NOT NULL,
+  external_subject VARCHAR(200) NOT NULL,
+  external_name VARCHAR(200),
+  external_org_code VARCHAR(64),
+  external_org_name VARCHAR(200),
+  external_position VARCHAR(200),
+  status VARCHAR(32) DEFAULT 'ACTIVE' NOT NULL,
+  last_sync_time TIMESTAMP,
+  created_by VARCHAR(64),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_by VARCHAR(64),
+  updated_time TIMESTAMP,
+  CONSTRAINT uk_sec_identity_binding UNIQUE (tenant_id, provider_id, external_subject)
+);
+
+-- 同步任务记录表：记录每次同步任务的状态和统计
+CREATE TABLE sec_user_sync_job (
+  id BIGINT PRIMARY KEY,
+  tenant_id BIGINT NOT NULL,
+  provider_id BIGINT NOT NULL,
+  sync_type VARCHAR(32) NOT NULL,
+  status VARCHAR(32) DEFAULT 'RUNNING' NOT NULL,
+  total_count INT DEFAULT 0 NOT NULL,
+  created_count INT DEFAULT 0 NOT NULL,
+  updated_count INT DEFAULT 0 NOT NULL,
+  disabled_count INT DEFAULT 0 NOT NULL,
+  skipped_count INT DEFAULT 0 NOT NULL,
+  error_count INT DEFAULT 0 NOT NULL,
+  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  finished_at TIMESTAMP,
+  triggered_by VARCHAR(64),
+  error_message TEXT,
+  CONSTRAINT uk_sec_user_sync_job UNIQUE (id)
+);
+
+-- 同步明细表：记录每个外部用户的同步动作和结果
+CREATE TABLE sec_user_sync_detail (
+  id BIGINT PRIMARY KEY,
+  job_id BIGINT NOT NULL,
+  tenant_id BIGINT NOT NULL,
+  external_subject VARCHAR(200) NOT NULL,
+  external_name VARCHAR(200),
+  action VARCHAR(32) NOT NULL,
+  platform_user_id BIGINT,
+  message VARCHAR(1000),
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- 索引
+CREATE INDEX idx_identity_binding_user ON sec_identity_binding(tenant_id, user_id);
+CREATE INDEX idx_identity_binding_external ON sec_identity_binding(tenant_id, provider_id, external_subject);
+CREATE INDEX idx_sync_job_tenant ON sec_user_sync_job(tenant_id, provider_id, started_at);
+CREATE INDEX idx_sync_detail_job ON sec_user_sync_detail(job_id);
+
+-- 种子数据：身份源配置样例
+INSERT INTO sec_identity_provider (id, tenant_id, provider_code, provider_name, provider_type, adapter_code, query_code, priority, status, created_by)
+VALUES (4001, 1, 'HIS_MAIN', 'HIS主系统', 'HIS', 'HIS_ADAPTER', 'QUERY_HIS_USERS', 10, 'ACTIVE', 'system');
+
+INSERT INTO sec_identity_provider (id, tenant_id, provider_code, provider_name, provider_type, adapter_code, query_code, priority, status, created_by)
+VALUES (4002, 1, 'EMR_SYSTEM', '电子病历系统', 'EMR', 'EMR_ADAPTER', 'QUERY_EMR_USERS', 20, 'ACTIVE', 'system');
+
+INSERT INTO sec_identity_provider (id, tenant_id, provider_code, provider_name, provider_type, adapter_code, query_code, priority, status, created_by)
+VALUES (4003, 1, 'OA_SYSTEM', '办公自动化系统', 'OA', null, null, 30, 'ACTIVE', 'system');

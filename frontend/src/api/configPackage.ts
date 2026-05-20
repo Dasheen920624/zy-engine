@@ -4,6 +4,14 @@ import type {
   ConfigPackageDetail,
   ConfigPackageReview,
   ConfigPackageSummary,
+  ImportConfirmRequest,
+  ImportImpactRequest,
+  ImportImpactResult,
+  ImportSourceCheckRequest,
+  ImportSourceCheckResult,
+  ImportUploadResult,
+  ImportValidateRequest,
+  ImportValidateResult,
   PackageStatus,
   PublishRequest,
   ScopeLevel,
@@ -75,4 +83,28 @@ export async function exportPackage(
   return post(
     `/config-packages/${encodeURIComponent(packageCode)}/${encodeURIComponent(packageVersion)}/export`,
   );
+}
+
+// ─── 配置包导入 API ───────────────────────────────────────────────
+
+export async function importPackageUpload(file: File): Promise<ImportUploadResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return post<ImportUploadResult>("/config-packages/import/upload", formData);
+}
+
+export async function importPackageValidate(request: ImportValidateRequest): Promise<ImportValidateResult> {
+  return post<ImportValidateResult>("/config-packages/import/validate", request);
+}
+
+export async function importPackageSourceCheck(request: ImportSourceCheckRequest): Promise<ImportSourceCheckResult> {
+  return post<ImportSourceCheckResult>("/config-packages/import/source-check", request);
+}
+
+export async function importPackageImpact(request: ImportImpactRequest): Promise<ImportImpactResult> {
+  return post<ImportImpactResult>("/config-packages/import/impact", request);
+}
+
+export async function importPackageConfirm(request: ImportConfirmRequest): Promise<ConfigPackageDetail> {
+  return post<ConfigPackageDetail>("/config-packages/import/confirm", request);
 }

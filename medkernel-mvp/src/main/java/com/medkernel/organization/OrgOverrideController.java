@@ -26,7 +26,9 @@ public class OrgOverrideController {
     }
 
     @PostMapping("/entries")
-    public ApiResult<List<Map<String, Object>>> importEntries(@RequestBody Object request) {
+    public ApiResult<List<Map<String, Object>>> importEntries(@RequestBody Object request,
+                                                              HttpServletRequest httpRequest) {
+        organizationContextService.resolve(httpRequest);
         return ApiResult.success(orgOverrideService.importEntries(request));
     }
 
@@ -37,7 +39,8 @@ public class OrgOverrideController {
             @RequestParam(required = false) String scopeCode,
             @RequestParam(required = false) String assetType,
             @RequestParam(required = false) String overrideKey,
-            @RequestParam(required = false) String limit) {
+            @RequestParam(required = false) String limit,
+            HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
         filters.put("tenantId", tenantId);
         filters.put("scopeLevel", scopeLevel);
@@ -45,6 +48,7 @@ public class OrgOverrideController {
         filters.put("assetType", assetType);
         filters.put("overrideKey", overrideKey);
         filters.put("limit", limit);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(orgOverrideService.listEntries(filters));
     }
 
@@ -72,7 +76,9 @@ public class OrgOverrideController {
     }
 
     @GetMapping("/count")
-    public ApiResult<Map<String, Object>> entryCount() {
+    public ApiResult<Map<String, Object>> entryCount(HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("entry_count", orgOverrideService.entryCount());
         return ApiResult.success(result);

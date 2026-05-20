@@ -64,7 +64,8 @@ public class RuleEngineController {
                                                             @RequestParam(required = false) String scopeLevel,
                                                             @RequestParam(required = false) String scopeCode,
                                                             @RequestParam(required = false) String limit,
-                                                            @RequestParam(required = false) String offset) {
+                                                            @RequestParam(required = false) String offset,
+                                                            HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
         filters.put("scenarioCode", scenarioCode);
         filters.put("packageCode", packageCode);
@@ -82,11 +83,16 @@ public class RuleEngineController {
         filters.put("scopeCode", scopeCode);
         filters.put("limit", limit);
         filters.put("offset", offset);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(ruleService.listEvaluations(filters));
     }
 
     @GetMapping("/results/{resultId}")
-    public ApiResult<Map<String, Object>> getResult(@PathVariable String resultId) {
+    public ApiResult<Map<String, Object>> getResult(@PathVariable String resultId,
+                                                    HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        filters.put("resultId", resultId);
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
         return ApiResult.success(ruleService.getEvaluation(resultId));
     }
 }

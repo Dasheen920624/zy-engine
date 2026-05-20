@@ -191,7 +191,7 @@ public class PathwayConfigSupport {
                 warning.put("element_code", nodeCode);
                 warning.put("field", "reference_document_code");
                 warning.put("severity", "WARN");
-                warning.put("message", "节点缺少来源文档绑定（reference_document_code）");
+                warning.put("message", "节点缺少来源文档绑定（reference_document_code），发布将被阻断");
                 warnings.add(warning);
             }
         }

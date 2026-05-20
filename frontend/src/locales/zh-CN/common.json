@@ -1,0 +1,88 @@
+{
+  "app": {
+    "title": "MedKernel 医疗知识引擎",
+    "loading": "加载中..."
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "新建",
+    "search": "搜索",
+    "filter": "筛选",
+    "export": "导出",
+    "import": "导入",
+    "refresh": "刷新",
+    "back": "返回",
+    "detail": "详情",
+    "status": "状态",
+    "action": "操作",
+    "name": "名称",
+    "code": "编码",
+    "description": "描述",
+    "version": "版本",
+    "time": "时间",
+    "type": "类型",
+    "yes": "是",
+    "no": "否",
+    "all": "全部",
+    "none": "无",
+    "success": "操作成功",
+    "error": "操作失败",
+    "required": "此项为必填"
+  },
+  "status": {
+    "DRAFT": "草稿",
+    "PUBLISHED": "已发布",
+    "DEPRECATED": "已废弃",
+    "PENDING": "待处理",
+    "IN_PROGRESS": "进行中",
+    "COMPLETED": "已完成",
+    "ACTIVE": "启用",
+    "DISABLED": "禁用",
+    "ARCHIVED": "已归档",
+    "REVIEWED": "已复核",
+    "REVIEW_REJECTED": "复核驳回",
+    "CONDITIONALLY_APPROVED": "有条件通过"
+  },
+  "risk": {
+    "CRITICAL": "严重",
+    "HIGH": "高",
+    "MEDIUM": "中",
+    "LOW": "低",
+    "INFO": "信息"
+  },
+  "priority": {
+    "HIGH": "高",
+    "MEDIUM": "中",
+    "LOW": "低"
+  },
+  "nav": {
+    "dashboard": "仪表盘",
+    "config": "配置包",
+    "pathway": "临床路径",
+    "rule": "规则库",
+    "terminology": "字典映射",
+    "quality": "质控管理",
+    "knowledge": "知识管理",
+    "security": "安全管理",
+    "workflow": "待办事项",
+    "notification": "通知中心",
+    "cdss": "临床决策",
+    "admin": "系统管理"
+  },
+  "error": {
+    "validation": "数据校验失败",
+    "data_missing": "数据缺失",
+    "unauthorized": "未授权，请先登录",
+    "forbidden": "权限不足",
+    "not_found": "资源不存在",
+    "config_not_found": "配置包不存在",
+    "timeout": "请求超时",
+    "db_error": "数据库错误",
+    "unknown": "未知错误",
+    "network": "网络连接失败"
+  }
+}

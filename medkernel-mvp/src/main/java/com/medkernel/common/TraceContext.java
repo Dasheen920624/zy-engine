@@ -22,6 +22,13 @@ public final class TraceContext {
         TRACE_ID.set(traceId == null || traceId.trim().isEmpty() ? newTraceId() : traceId);
     }
 
+    /**
+     * 获取当前用户名（审计日志用）。MVP 阶段默认返回 "system"。
+     */
+    public static String getUsername() {
+        return "system";
+    }
+
     public static void clear() {
         TRACE_ID.remove();
     }

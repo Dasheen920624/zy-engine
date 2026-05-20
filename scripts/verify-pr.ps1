@@ -199,6 +199,44 @@ if ($BaseRef -ne "HEAD" -and -not (Test-GitRef $BaseRef)) {
 }
 
 # ============================================================
+# 0.5 develop 健康哨兵预检（不论 SkipBackend，强制跑 mvn compile）
+# ============================================================
+Show-Section "0.5 develop 健康哨兵 — 强制 mvn compile"
+
+$healthFile = Join-Path $ProjectRoot "ai-dev-input/00_DEVELOP_HEALTH.md"
+if (Test-Path $healthFile) {
+  $healthRaw = Get-Content -LiteralPath $healthFile -Raw -Encoding UTF8
+  $reportedHealth = "UNKNOWN"
+  if ($healthRaw -match '🔴') { $reportedHealth = "RED" }
+  elseif ($healthRaw -match '🟡') { $reportedHealth = "YELLOW" }
+  elseif ($healthRaw -match '🟢') { $reportedHealth = "GREEN" }
+  Write-Host "  哨兵声明：$reportedHealth"
+} else {
+  Show-Warn "ai-dev-input/00_DEVELOP_HEALTH.md 缺失，强烈建议补建"
+  $reportedHealth = "UNKNOWN"
+}
+
+if (Get-Command mvn -ErrorAction SilentlyContinue) {
+  Write-Host "  跑 mvn -q -f medkernel-mvp/pom.xml compile（无视 SkipBackend）..."
+  $compileOutput = & mvn -q -f medkernel-mvp/pom.xml compile 2>&1
+  if ($LASTEXITCODE -eq 0) {
+    Show-Pass "mvn compile PASS（实测 GREEN-or-YELLOW）"
+    if ($reportedHealth -eq "RED") {
+      Show-Warn "哨兵仍标 RED 但本地 compile 通过 — 若已确认所有 FIX-DEV-* 完成，请同步更新 ai-dev-input/00_DEVELOP_HEALTH.md 状态"
+    }
+  } else {
+    Show-Fail "mvn compile FAIL — develop 处于 RED 状态"
+    $compileOutput | Select-String -Pattern '\[ERROR\]' | Select-Object -First 8 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+    if ($reportedHealth -ne "RED") {
+      Show-Fail "哨兵未声明 RED 但实测编译失败 — 请立即按 ai-dev-input/00_DEVELOP_HEALTH.md '状态转换协议' 把哨兵改为 RED 并 commit"
+    }
+    Write-Host "  → 本次 PR 不允许通过，先解决编译错误（领 FIX-DEV-* 任务）" -ForegroundColor Red
+  }
+} else {
+  Show-Warn "mvn 未安装，跳过编译预检 — CI 会再跑一次"
+}
+
+# ============================================================
 # 1. 工作树或 PR 差异有改动
 # ============================================================
 Show-Section "1. 工作树或 PR 差异有改动"
@@ -253,6 +291,14 @@ if ($diff) {
       continue
     }
     if ($currentDiffFile -match 'frontend/src/styles/tokens\.(css|ts)$') {
+      continue
+    }
+    # 文档类文件（markdown / ADR / 审计报告）允许引用硬编码颜色作为示例代码块。
+    if ($currentDiffFile -match '\.(md|mdx)$') {
+      continue
+    }
+    # eslint 规则脚本本身就要列举禁用颜色字面量，跳过。
+    if ($currentDiffFile -match 'eslint-rules/.+\.(js|cjs|mjs|ts)$') {
       continue
     }
     if (

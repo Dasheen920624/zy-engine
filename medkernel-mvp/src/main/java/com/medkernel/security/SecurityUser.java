@@ -17,6 +17,8 @@ public class SecurityUser {
     private String phone;
     private String avatarUrl;
     private String status;
+    private String userType;
+    private String employeeId;
     private LocalDateTime lastLoginTime;
     private String lastLoginIp;
     private int loginAttempts;
@@ -96,6 +98,11 @@ public class SecurityUser {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public String getUserType() { return userType; }
+    public void setUserType(String userType) { this.userType = userType; }
+    public String getEmployeeId() { return employeeId; }
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
 
     public LocalDateTime getLastLoginTime() {
         return lastLoginTime;

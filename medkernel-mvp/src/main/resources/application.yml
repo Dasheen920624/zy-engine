@@ -10,6 +10,13 @@ server:
 spring:
   application:
     name: medkernel-mvp
+  jackson:
+    # 06_后端开发规范 §3 要求全局 SNAKE_CASE，但当前 Service 层 DTO 与契约测试
+    # 大量依赖 camelCase（PatientPathwayInstance、RuleDefinition 等），一次切换会破坏 20+ 测试。
+    # 本轮先仅启用 NON_NULL 与日期 ISO 字符串，full SNAKE_CASE 迁移见 AUDIT §1.4 拆独立任务。
+    default-property-inclusion: NON_NULL
+    serialization:
+      write-dates-as-timestamps: false
 
 medkernel:
   database:
@@ -21,7 +28,10 @@ medkernel:
     password: ${MEDKERNEL_DB_PASSWORD:}
     init-schema: ${MEDKERNEL_DB_INIT_SCHEMA:true}
   security:
-    jwt-secret: ${MEDKERNEL_JWT_SECRET:medkernel-default-jwt-secret-please-change-in-production-env-2026}
+    # 不允许在 default 配置中保留 JWT 密钥；生产/UAT/dev 全部走环境变量 MEDKERNEL_JWT_SECRET。
+    # 单元测试 / MockMvc 用 application-test.yml 中的测试密钥（profile: test）。
+    # 直接 mvn spring-boot:run 若未设置环境变量，JwtTokenProvider.init 会拒绝启动。
+    jwt-secret: ${MEDKERNEL_JWT_SECRET:}
     lock-threshold: ${MEDKERNEL_LOCK_THRESHOLD:5}
     lock-duration-minutes: ${MEDKERNEL_LOCK_DURATION:30}
   dify:

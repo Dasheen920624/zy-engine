@@ -138,6 +138,28 @@ CREATE TABLE IF NOT EXISTS pe_variation_record (
 COMMENT ON TABLE  pe_variation_record IS '路径变异记录（带组织上下文）';
 COMMENT ON COLUMN pe_variation_record.org_source IS '组织来源：HEADER/QUERY/BODY/DEFAULT/NONE';
 
+CREATE TABLE IF NOT EXISTS pe_recommendation_record (
+  id BIGINT PRIMARY KEY,
+  recommendation_id VARCHAR(128) NOT NULL,
+  patient_id VARCHAR(64) NOT NULL,
+  encounter_id VARCHAR(64) NOT NULL,
+  scenario VARCHAR(64) NOT NULL,
+  target_code VARCHAR(128) NOT NULL,
+  target_name VARCHAR(200),
+  score DECIMAL(8,2),
+  confidence VARCHAR(32),
+  action_level VARCHAR(32),
+  card_json TEXT,
+  trace_id VARCHAR(128),
+  created_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uk_pe_recommendation UNIQUE (recommendation_id)
+);
+COMMENT ON TABLE pe_recommendation_record IS '推荐记录（AI 推荐结果持久化）';
+COMMENT ON COLUMN pe_recommendation_record.recommendation_id IS '推荐ID（全局唯一）';
+COMMENT ON COLUMN pe_recommendation_record.scenario IS '推荐场景';
+COMMENT ON COLUMN pe_recommendation_record.card_json IS '推荐卡片完整 JSON';
+COMMENT ON COLUMN pe_recommendation_record.trace_id IS '关联的追踪ID';
+
 -- ============================================================================
 -- 规则引擎
 -- ============================================================================
@@ -480,6 +502,34 @@ CREATE TABLE IF NOT EXISTS tm_unmapped_queue (
 
 CREATE INDEX IF NOT EXISTS idx_tm_queue_status ON tm_unmapped_queue (tenant_id, governance_status, last_occurrence_time);
 CREATE INDEX IF NOT EXISTS idx_tm_queue_system ON tm_unmapped_queue (tenant_id, source_system, concept_type);
+
+-- ============================================================================
+-- Dify 工作流模板
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS src_dify_template (
+  id NUMBER(20) PRIMARY KEY,
+  tenant_id VARCHAR2(64) NOT NULL,
+  workflow_code VARCHAR2(128) NOT NULL,
+  workflow_version VARCHAR2(64) NOT NULL,
+  workflow_name VARCHAR2(256),
+  description VARCHAR2(1000),
+  dify_app_code VARCHAR2(128),
+  timeout_ms NUMBER(10),
+  retry_count NUMBER(10),
+  template_json CLOB,
+  reference_document_code VARCHAR2(128),
+  reference_binding_type VARCHAR2(64),
+  status VARCHAR2(32) NOT NULL,
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT uk_src_dify_template UNIQUE (workflow_code, workflow_version)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dify_tpl_code ON src_dify_template(tenant_id, workflow_code);
+
+COMMENT ON TABLE src_dify_template IS 'Dify 工作流模板表';
+COMMENT ON COLUMN src_dify_template.workflow_code IS '工作流编码';
+COMMENT ON COLUMN src_dify_template.workflow_version IS '工作流版本';
+COMMENT ON COLUMN src_dify_template.template_json IS '模板配置JSON（含input_defaults/input_mappings/required_inputs/degraded_outputs）';
 
 COMMENT ON TABLE tm_unmapped_queue IS '术语未映射治理队列';
 COMMENT ON COLUMN tm_unmapped_queue.id IS '主键ID';

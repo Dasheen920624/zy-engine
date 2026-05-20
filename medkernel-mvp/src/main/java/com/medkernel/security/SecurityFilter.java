@@ -1,5 +1,7 @@
 package com.medkernel.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.common.TraceContext;
 import io.jsonwebtoken.Claims;
@@ -38,13 +40,17 @@ public class SecurityFilter implements Filter {
             "/api/auth/health",
             "/api/health",
             "/api/system/org-context",
+            "/api/security/sso/callback",
+            "/api/security/sso/saml/acs",
             "/actuator/health"
     ));
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final ObjectMapper objectMapper;
 
-    public SecurityFilter(JwtTokenProvider jwtTokenProvider) {
+    public SecurityFilter(JwtTokenProvider jwtTokenProvider, ObjectMapper objectMapper) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -71,9 +77,10 @@ public class SecurityFilter implements Filter {
             httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             httpResponse.setContentType("application/json;charset=UTF-8");
             httpResponse.setHeader(TraceContext.HEADER, traceId);
-            httpResponse.getWriter().write("{\"success\":false,\"code\":\"" + ErrorCode.UNAUTHORIZED.getCode()
-                    + "\",\"message\":\"" + ErrorCode.UNAUTHORIZED.getMessage()
-                    + "\",\"traceId\":\"" + traceId + "\"}");
+            // 走 Jackson 序列化 ApiResult，确保字段名（含 trace_id）与全局 envelope 契约一致，
+            // 避免手写 JSON 引入字段名漂移或 message 转义破坏 JSON（AUDIT §1.4 + §5.2）。
+            ApiResult<Void> body = ApiResult.failure(ErrorCode.UNAUTHORIZED, ErrorCode.UNAUTHORIZED.getMessage());
+            objectMapper.writeValue(httpResponse.getWriter(), body);
             return;
         }
 

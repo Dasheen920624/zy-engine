@@ -49,6 +49,9 @@ http.interceptors.request.use((config) => {
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
+  // locale 透传
+  const locale = localStorage.getItem("medkernel_locale") || "zh-CN";
+  headers["Accept-Language"] = locale;
   config.headers = headers as never;
   return config;
 });
@@ -62,6 +65,7 @@ http.interceptors.response.use(
         body.message || "未知错误",
         body.trace_id || (resp.headers["x-trace-id"] as string) || "",
         resp.status,
+        body.message_key,
       );
     }
     return resp;
@@ -92,7 +96,7 @@ http.interceptors.response.use(
         error.message ||
         "网络异常或后端不可达";
     }
-    throw new ApiError(code as never, message, traceId, status);
+    throw new ApiError(code as never, message, traceId, status, error.response?.data?.message_key);
   },
 );
 
@@ -107,5 +111,15 @@ export async function get<T>(url: string, config?: AxiosRequestConfig): Promise<
 
 export async function post<T>(url: string, body?: unknown, config?: AxiosRequestConfig): Promise<T> {
   const resp = await http.post<ApiResult<T>>(url, body, config);
+  return resp.data.data as T;
+}
+
+export async function put<T>(url: string, body?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  const resp = await http.put<ApiResult<T>>(url, body, config);
+  return resp.data.data as T;
+}
+
+export async function del<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  const resp = await http.delete<ApiResult<T>>(url, config);
   return resp.data.data as T;
 }

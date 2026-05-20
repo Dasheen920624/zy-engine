@@ -1,6 +1,8 @@
 package com.medkernel.pathway;
 
 import com.medkernel.adapter.AdapterHubService;
+import com.medkernel.audit.PublishGateService;
+import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientNodeState;
 import com.medkernel.dto.PatientTaskState;
@@ -38,6 +40,7 @@ public class PathwayService {
     private final RuleService ruleService;
     private final AdapterHubService adapterHubService;
     private final EnginePersistenceService persistenceService;
+    private final PublishGateService publishGateService;
     private final PathwayConfigSupport configSupport = new PathwayConfigSupport();
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
     private final Map<String, Map<String, Object>> pathwayDrafts = new ConcurrentHashMap<String, Map<String, Object>>();
@@ -47,10 +50,11 @@ public class PathwayService {
     private final Map<String, List<PathwayVariationRecord>> variationRecords = new ConcurrentHashMap<String, List<PathwayVariationRecord>>();
 
     public PathwayService(RuleService ruleService, AdapterHubService adapterHubService,
-                          EnginePersistenceService persistenceService) {
+                          EnginePersistenceService persistenceService, PublishGateService publishGateService) {
         this.ruleService = ruleService;
         this.adapterHubService = adapterHubService;
         this.persistenceService = persistenceService;
+        this.publishGateService = publishGateService;
     }
 
     /**
@@ -113,6 +117,44 @@ public class PathwayService {
         return result;
     }
 
+    public Map<String, Object> saveDraft(String pathwayCode, Map<String, Object> draft, String tenantId) {
+        Map<String, Object> existing = pathwayDrafts.get(pathwayCode);
+        if (existing != null) {
+            existing.putAll(draft);
+            existing.put("pathway_code", pathwayCode);
+            existing.put("tenant_id", tenantId);
+        } else {
+            draft.put("pathway_code", pathwayCode);
+            draft.put("tenant_id", tenantId);
+            pathwayDrafts.put(pathwayCode, draft);
+        }
+        persistenceService.savePathwayDraft(pathwayCode, pathwayDrafts.get(pathwayCode));
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("status", "DRAFT");
+        result.put("persistence", persistenceService.providerName());
+        audit("SAVE_DRAFT", "PATHWAY", pathwayCode, null, result, null);
+        return result;
+    }
+
+    public Map<String, Object> submitReview(String pathwayCode, String tenantId) {
+        Map<String, Object> config = pathwayDrafts.get(pathwayCode);
+        if (config == null) {
+            throw new IllegalArgumentException("No draft found for pathway: " + pathwayCode);
+        }
+        config.put("review_status", "PENDING_REVIEW");
+        config.put("tenant_id", tenantId);
+        persistenceService.savePathwayDraft(pathwayCode, config);
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("review_status", "PENDING_REVIEW");
+        result.put("persistence", persistenceService.providerName());
+        audit("SUBMIT_REVIEW", "PATHWAY", pathwayCode, null, result, null);
+        return result;
+    }
+
     public Map<String, Object> publish(String pathwayCode, Map<String, Object> request) {
         Map<String, Object> config = pathwayDrafts.get(pathwayCode);
         String versionNo = string(request.get("version_no"), configSupport.versionNo(config, "1.0.0"));
@@ -121,20 +163,31 @@ public class PathwayService {
             config.put("pathway_code", pathwayCode);
             config.put("version", versionNo);
         }
+
+        String tenantId = string(config.get("tenant_id"), null);
+
+        // 路径节点来源绑定检查：医学路径缺来源必须阻断发布，避免"先发布后补证据"。
+        List<Map<String, Object>> missingRefs = configSupport.collectMissingReferences(config);
+        String operatorId = string(request == null ? null : request.get("approved_by"), null);
+        PublishGateService.GateCheckResult gateResult = publishGateService.checkPathwayReferences(missingRefs);
+        publishGateService.auditGateCheck("PATHWAY", "PUBLISH_GATE", "PATHWAY", pathwayCode, operatorId, gateResult);
+        if (!gateResult.isReadyToPublish()) {
+            throw new MissingSourceException(publishGateService.formatBlockingMessage(gateResult));
+        }
+
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
         activePublishedVersions.put(pathwayCode, versionNo);
         persistenceService.savePathwayVersion(pathwayCode, versionNo, "PUBLISHED", config);
         persistenceService.updatePathwayStatus(pathwayCode, "PUBLISHED",
-                string(config.get("tenant_id"), null), string(config.get("org_code"), null));
+                tenantId, string(config.get("org_code"), null));
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("pathway_code", pathwayCode);
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
         result.put("persistence", persistenceService.providerName());
-        result.put("reference_warnings", configSupport.collectMissingReferences(config));
-        audit("PUBLISH", "PATHWAY", pathwayCode, null, result,
-                string(request == null ? null : request.get("approved_by"), null));
+        result.put("reference_warnings", gateResult.toMapList());
+        audit("PUBLISH", "PATHWAY", pathwayCode, null, result, operatorId);
         return result;
     }
 
@@ -193,6 +246,116 @@ public class PathwayService {
             list.add(item);
         }
         return list;
+    }
+
+    public Map<String, Object> listPathwaysFiltered(Map<String, String> filters) {
+        List<Map<String, Object>> all = listPathways();
+
+        // 为每条记录补充 name/status/instanceCount/completionRate/dept 等前端所需字段
+        for (Map<String, Object> item : all) {
+            String pathwayCode = string(item.get("pathway_code"), null);
+            Map<String, Object> draft = pathwayCode == null ? null : pathwayDrafts.get(pathwayCode);
+            if (draft != null) {
+                item.put("pathway_name", string(draft.get("pathway_name"), pathwayCode));
+                item.put("specialty_code", string(draft.get("specialty_code"), null));
+                item.put("disease_code", string(draft.get("disease_code"), null));
+                item.put("dept", string(draft.get("dept"), null));
+            } else {
+                item.put("pathway_name", pathwayCode);
+            }
+            // 综合状态：有草稿且无已发布=DRAFT；有已发布=PUBLISHED；有草稿+已发布=DRAFT+PUBLISHED
+            String draftStatus = string(item.get("draft_status"), "NONE");
+            List<?> versions = (List<?>) item.get("published_versions");
+            boolean hasPublished = versions != null && !versions.isEmpty();
+            if ("DRAFT".equals(draftStatus) && hasPublished) {
+                item.put("status", "DRAFT");
+            } else if ("DRAFT".equals(draftStatus)) {
+                item.put("status", "DRAFT");
+            } else if (hasPublished) {
+                item.put("status", "PUBLISHED");
+            } else {
+                item.put("status", "NONE");
+            }
+            // 入径数和完成率来自实例聚合
+            String activeVersion = string(item.get("active_published_version"), null);
+            Map<String, String> instanceFilters = new LinkedHashMap<String, String>();
+            instanceFilters.put("pathwayCode", pathwayCode);
+            instanceFilters.put("limit", String.valueOf(Integer.MAX_VALUE));
+            List<PatientPathwayInstance> instances = listInstances(instanceFilters);
+            int instanceCount = instances.size();
+            int completedCount = 0;
+            for (PatientPathwayInstance inst : instances) {
+                if ("COMPLETED".equals(inst.getStatus()) || "EXITED".equals(inst.getStatus())) {
+                    completedCount++;
+                }
+            }
+            item.put("instance_count", instanceCount);
+            item.put("completion_rate", instanceCount == 0 ? 0.0
+                    : Math.round(completedCount * 10000.0 / instanceCount) / 100.0);
+        }
+
+        // 筛选
+        String search = filterValue(filters, "search");
+        String statusFilter = filterValue(filters, "status");
+        String deptFilter = filterValue(filters, "dept");
+
+        List<Map<String, Object>> filtered = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> item : all) {
+            if (statusFilter != null && !statusFilter.equalsIgnoreCase(string(item.get("status"), null))) {
+                continue;
+            }
+            if (deptFilter != null && !deptFilter.equalsIgnoreCase(string(item.get("dept"), null))
+                    && !deptFilter.equalsIgnoreCase(string(item.get("specialty_code"), null))) {
+                continue;
+            }
+            if (search != null) {
+                String name = string(item.get("pathway_name"), "").toLowerCase();
+                String code = string(item.get("pathway_code"), "").toLowerCase();
+                String keyword = search.toLowerCase();
+                if (!name.contains(keyword) && !code.contains(keyword)) {
+                    continue;
+                }
+            }
+            filtered.add(item);
+        }
+
+        // 分页
+        int page = filterInt(filters, "page", 1);
+        int size = filterInt(filters, "size", 20);
+        if (page < 1) page = 1;
+        if (size < 1) size = 20;
+        int total = filtered.size();
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, total);
+        List<Map<String, Object>> pageData = fromIndex < total
+                ? filtered.subList(fromIndex, toIndex) : Collections.<Map<String, Object>>emptyList();
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("items", pageData);
+        result.put("total", total);
+        result.put("page", page);
+        result.put("size", size);
+        result.put("total_pages", (total + size - 1) / size);
+        return result;
+    }
+
+    public Map<String, Object> deletePathway(String pathwayCode) {
+        Map<String, Object> draft = pathwayDrafts.get(pathwayCode);
+        if (draft == null) {
+            throw new IllegalArgumentException("pathway draft not found: " + pathwayCode);
+        }
+        List<String> versions = publishedVersions(pathwayCode);
+        if (!versions.isEmpty()) {
+            throw new IllegalArgumentException("cannot delete published pathway, please retire first: " + pathwayCode);
+        }
+        pathwayDrafts.remove(pathwayCode);
+        persistenceService.deletePathwayDraft(pathwayCode);
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("pathway_code", pathwayCode);
+        result.put("status", "DELETED");
+        result.put("persistence", persistenceService.providerName());
+        audit("DELETE_DRAFT", "PATHWAY", pathwayCode, null, result, null);
+        return result;
     }
 
     public Map<String, Object> diffPathway(String pathwayCode, String fromVersion, String toVersion) {
@@ -1527,7 +1690,8 @@ public class PathwayService {
         adapterRequest.put("adapter_code", adapterCode);
         adapterRequest.put("query_code", queryCode);
         adapterRequest.put("params", params);
-        Map<String, Object> adapterResult = adapterHubService.query(adapterRequest);
+        Map<String, Object> adapterResult = adapterHubService.query(adapterRequest,
+                instance.getTenantId(), instance.getHospitalCode());
 
         snapshot.put("source", source);
         snapshot.put("adapter_query", adapterResult);

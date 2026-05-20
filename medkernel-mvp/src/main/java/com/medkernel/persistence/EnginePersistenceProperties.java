@@ -50,6 +50,13 @@ public class EnginePersistenceProperties {
         return url;
     }
 
+    /**
+     * 获取 JDBC URL（兼容旧代码，等同 getUrl）。
+     */
+    public String getJdbcUrl() {
+        return url;
+    }
+
     public void setUrl(String url) {
         this.url = url;
     }

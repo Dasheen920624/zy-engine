@@ -68,12 +68,37 @@ $stamp = Get-Date -Format "yyyyMMddHHmmss"
 $ruleCode = "R_ORACLE_ORG_SMOKE_$stamp"
 $packageCode = "PKG_ORACLE_ORG_SMOKE"
 $packageVersion = "2026.05"
+$sourceDocCode = "SRC_ORACLE_ORG_SMOKE_$stamp"
 $patient = Get-Content -LiteralPath $patientFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $patient.encounter.encounter_id = "E_ORACLE_ORG_SMOKE_$stamp"
 
 $headers = @{
   "X-Tenant-Id" = $TenantId
   "X-Hospital-Code" = $HospitalCode
+}
+
+$sourceDocBody = @{
+  tenant_id = $TenantId
+  operator_id = "ORACLE_ORG_SMOKE"
+  documents = @(
+    @{
+      document_code = $sourceDocCode
+      title = "Oracle smoke来源文档"
+      source_type = "GUIDELINE"
+      source_uri = "https://example.org/smoke/oracle-org"
+      publisher = "MedKernel Smoke"
+      effective_date = "2026-01-01"
+      expiry_date = "2030-12-31"
+      review_status = "REVIEWED"
+      reviewed_by = "ORACLE_ORG_SMOKE"
+      reviewed_time = (Get-Date).ToString("o")
+      content_hash = "sha256:oracle-org-smoke-$stamp"
+    }
+  )
+} | ConvertTo-Json -Depth 20
+$sourceDocImport = Invoke-RestMethod -Uri "$BaseUrl/provenance/source-documents" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $sourceDocBody
+if (-not $sourceDocImport.success -or $sourceDocImport.data.imported_count -ne 1) {
+  throw "Source document import failed."
 }
 
 $ruleImportBody = @{
@@ -91,6 +116,9 @@ $ruleImportBody = @{
       priority = 100
       enabled = $true
       severity = "HIGH"
+      reference_document_code = $sourceDocCode
+      reference_citation_id = "CIT_ORACLE_ORG_SMOKE_$stamp"
+      reference_binding_type = "EVIDENCE"
       condition = @{
         all = @(
           @{
@@ -176,6 +204,10 @@ SELECT 'AUDIT=' || COUNT(*)
    AND scope_level = 'HOSPITAL'
    AND scope_code = '$hospitalSql'
    AND target_code = '$ruleSql';
+SELECT 'SOURCE_DOC=' || COUNT(*)
+  FROM src_document
+ WHERE tenant_id = '$tenantSql'
+   AND document_code = '$(Escape-SqlLiteral $sourceDocCode)';
 EXIT
 "@
 
@@ -186,6 +218,7 @@ if ($LASTEXITCODE -ne 0) {
 $ruleDefCount = Read-Count -Lines $sqlOutput -Name "RULE_DEF"
 $ruleExecCount = Read-Count -Lines $sqlOutput -Name "RULE_EXEC"
 $auditCount = Read-Count -Lines $sqlOutput -Name "AUDIT"
+$sourceDocCount = Read-Count -Lines $sqlOutput -Name "SOURCE_DOC"
 
 if ($ruleDefCount -lt 1) {
   throw "Oracle RE_RULE_DEF org persistence check failed."
@@ -196,8 +229,11 @@ if ($ruleExecCount -lt 1) {
 if ($auditCount -lt 1) {
   throw "Oracle ENGINE_AUDIT_LOG org persistence check failed."
 }
+if ($sourceDocCount -lt 1) {
+  throw "Oracle SRC_DOCUMENT persistence check failed."
+}
 
 Write-Host "Oracle org smoke test passed."
 Write-Host "Rule: $ruleCode"
 Write-Host "Tenant/Hospital: $TenantId/$HospitalCode"
-Write-Host "Counts: RE_RULE_DEF=$ruleDefCount, RE_RULE_EXEC_LOG=$ruleExecCount, ENGINE_AUDIT_LOG=$auditCount"
+Write-Host "Counts: RE_RULE_DEF=$ruleDefCount, RE_RULE_EXEC_LOG=$ruleExecCount, ENGINE_AUDIT_LOG=$auditCount, SRC_DOCUMENT=$sourceDocCount"

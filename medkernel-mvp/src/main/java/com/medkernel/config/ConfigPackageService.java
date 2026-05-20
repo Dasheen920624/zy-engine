@@ -3,8 +3,12 @@ package com.medkernel.config;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.medkernel.audit.PublishGateService;
+import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.organization.OrganizationDirectoryService;
 import com.medkernel.persistence.EnginePersistenceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
@@ -23,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ConfigPackageService {
+    private static final Logger log = LoggerFactory.getLogger(ConfigPackageService.class);
     private static final String DEFAULT_TENANT_ID = "default";
     private static final List<String> SUPPORTED_ASSET_TYPES = Arrays.asList(
             "PATHWAY", "RULE", "GRAPH", "DIFY", "WORKFLOW", "TERMINOLOGY", "ADAPTER", "MIXED");
@@ -35,16 +40,19 @@ public class ConfigPackageService {
     private final EnginePersistenceService persistenceService;
     private final OrganizationDirectoryService organizationDirectoryService;
     private final ConfigPackageRepository configPackageRepository;
+    private final PublishGateService publishGateService;
     private final Map<String, ConfigPackage> packageStore = new ConcurrentHashMap<String, ConfigPackage>();
 
     public ConfigPackageService(ObjectMapper objectMapper, EnginePersistenceService persistenceService,
                                 OrganizationDirectoryService organizationDirectoryService,
-                                ConfigPackageRepository configPackageRepository) {
+                                ConfigPackageRepository configPackageRepository,
+                                PublishGateService publishGateService) {
         this.canonicalMapper = objectMapper.copy();
         this.canonicalMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         this.persistenceService = persistenceService;
         this.organizationDirectoryService = organizationDirectoryService;
         this.configPackageRepository = configPackageRepository;
+        this.publishGateService = publishGateService;
     }
 
     public List<Map<String, Object>> importPackages(Object request) {
@@ -169,6 +177,9 @@ public class ConfigPackageService {
 
         Map<String, Object> review = buildReview(configPackage);
         if (!Boolean.TRUE.equals(review.get("ready_to_publish"))) {
+            if (hasSourceReviewBlockingIssue(review)) {
+                throw new MissingSourceException("config package is not ready to publish: " + review.get("issues"));
+            }
             throw new IllegalArgumentException("config package is not ready to publish: " + review.get("issues"));
         }
 
@@ -177,6 +188,16 @@ public class ConfigPackageService {
         if (approvedBy == null) {
             throw new IllegalArgumentException("approved_by is required");
         }
+
+        // 发布门禁：配置包来源审查校验（阻断级，对应产品不变量 H4）
+        @SuppressWarnings("unchecked")
+        Map<String, Object> sourceReview = (Map<String, Object>) review.get("source_review");
+        PublishGateService.GateCheckResult gateResult = publishGateService.checkConfigPackageSourceReview(sourceReview);
+        publishGateService.auditGateCheck("CONFIG_PACKAGE", "PUBLISH_GATE", "CONFIG_PACKAGE", packageCode, approvedBy, gateResult);
+        if (!gateResult.isReadyToPublish()) {
+            throw new MissingSourceException(publishGateService.formatBlockingMessage(gateResult));
+        }
+
         configPackage.setStatus("PUBLISHED");
         configPackage.setApprovedBy(approvedBy);
         configPackage.setPublishedTime(nowText());
@@ -203,6 +224,14 @@ public class ConfigPackageService {
         validateForReview(configPackage, issues);
         validateSourceReview(sourceReview, issues);
 
+        Map<String, Object> publishGateResult = new LinkedHashMap<String, Object>();
+        publishGateResult.put("asset_type", "CONFIG_PACKAGE");
+        publishGateResult.put("asset_code", configPackage.getPackageCode());
+        publishGateResult.put("tenant_id", configPackage.getTenantId());
+        publishGateResult.put("issues", Collections.<Map<String, Object>>emptyList());
+        publishGateResult.put("warnings", Collections.<Map<String, Object>>emptyList());
+        publishGateResult.put("passed", true);
+
         Map<String, Object> summary = new LinkedHashMap<String, Object>();
         summary.put("asset_count", assetCount(configPackage.getFullSnapshot()));
         summary.put("manifest_keys", sortedKeys(configPackage.getManifest()));
@@ -219,6 +248,7 @@ public class ConfigPackageService {
         review.put("summary", summary);
         review.put("manifest", configPackage.getManifest());
         review.put("source_review", sourceReview);
+        review.put("publish_gate", publishGateResult);
         review.put("scope_reference", organizationDirectoryService.scopeReference(configPackage.getTenantId(),
                 configPackage.getScopeLevel(), configPackage.getScopeCode()));
         return review;
@@ -492,6 +522,24 @@ public class ConfigPackageService {
     }
 
     @SuppressWarnings("unchecked")
+    private boolean hasSourceReviewBlockingIssue(Map<String, Object> review) {
+        Object issues = review == null ? null : review.get("issues");
+        if (!(issues instanceof List)) {
+            return false;
+        }
+        for (Object item : (List<Object>) issues) {
+            if (!(item instanceof Map)) {
+                continue;
+            }
+            Object field = ((Map<String, Object>) item).get("field");
+            if (field != null && String.valueOf(field).startsWith("source_review")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
     private Map<String, Object> mapValue(Object value) {
         if (value instanceof Map) {
             return new LinkedHashMap<String, Object>((Map<String, Object>) value);
@@ -608,6 +656,9 @@ public class ConfigPackageService {
     private void saveToDatabase(ConfigPackage configPackage) {
         try {
             ConfigPackageEntity entity = ConfigPackageEntity.fromConfigPackage(configPackage);
+            entity.setCreatedTime(parseDateTime(configPackage.getCreatedTime()));
+            entity.setReviewedTime(parseDateTime(configPackage.getReviewedTime()));
+            entity.setPublishedTime(parseDateTime(configPackage.getPublishedTime()));
             // Serialize JSON fields
             entity.setManifestJson(serializeJson(configPackage.getManifest()));
             entity.setDiffJson(serializeJson(configPackage.getDiff()));
@@ -689,6 +740,10 @@ public class ConfigPackageService {
         try {
             return java.time.OffsetDateTime.parse(dateTimeStr).toLocalDateTime();
         } catch (Exception ex) {
+            // 配置包元数据时间格式异常不阻断整包加载，但要落日志便于线上定位脏数据来源。
+            if (log.isWarnEnabled()) {
+                log.warn("ConfigPackage parseDateTime failed: text='{}', err={}", dateTimeStr, ex.getMessage());
+            }
             return null;
         }
     }
