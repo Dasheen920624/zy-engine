@@ -1723,7 +1723,8 @@ public class EnginePersistenceService {
                 "/db/local/mpi_ddl.sql",
                 "/db/local/sec_user_sync_ddl.sql",
                 "/db/local/ai_knowledge_job_ddl.sql",
-                "/db/local/cdss_trigger_point_ddl.sql"
+                "/db/local/cdss_trigger_point_ddl.sql",
+                "/db/local/model_provider_config_ddl.sql"
         };
         List<String> statements = new ArrayList<String>();
         for (String resource : resources) {
