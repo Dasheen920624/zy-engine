@@ -12,6 +12,7 @@ import { QualityDashboard, DepartmentDrillDown, EvalIndicatorSetList } from "../
 import AlertList from "../pages/Quality/AlertList";
 import { KnowledgePage } from "../pages/Knowledge";
 import { SecurityBaselinePage } from "../pages/Security";
+import IdentityBindingManagement from "../pages/IdentityBindingManagement";
 import { NotificationList, NotificationDetail, NotificationSettings } from "../pages/Notification";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
@@ -59,6 +60,7 @@ export const routes: RouteObject[] = [
           { path: "aik/sources", element: <KnowledgePage /> },
           { path: "aik/review", element: <PlaceholderPage title="知识审核台" pr="PR-V2-05" /> },
           { path: "security/baseline", element: <SecurityBaselinePage /> },
+          { path: "security/identity-binding", element: <IdentityBindingManagement /> },
           { path: "workflow/todos", element: <WorkflowTodos /> },
           { path: "notifications", element: <NotificationList recipientId="current-user" /> },
           { path: "notifications/:notificationCode", element: <NotificationDetail /> },
