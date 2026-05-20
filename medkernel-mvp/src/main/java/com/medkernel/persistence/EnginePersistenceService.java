@@ -1725,7 +1725,8 @@ public class EnginePersistenceService {
                 "/db/local/ai_knowledge_job_ddl.sql",
                 "/db/local/cdss_trigger_point_ddl.sql",
                 "/db/local/model_provider_config_ddl.sql",
-                "/db/local/cdss_override_log_ddl.sql"
+                "/db/local/cdss_override_log_ddl.sql",
+                "/db/local/quality_finding_ddl.sql"
         };
         List<String> statements = new ArrayList<String>();
         for (String resource : resources) {
