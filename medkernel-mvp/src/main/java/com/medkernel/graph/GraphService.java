@@ -1,5 +1,7 @@
 package com.medkernel.graph;
 
+import com.medkernel.audit.PublishGateService;
+import com.medkernel.common.TraceContext;
 import com.medkernel.persistence.EnginePersistenceService;
 import com.medkernel.provenance.PublishGateService;
 import org.neo4j.driver.AuthTokens;
@@ -101,9 +103,14 @@ public class GraphService {
                 throw new IllegalArgumentException("graph version not found: " + graphVersion);
             }
 
-            // REFIT-003: 发布门禁 - 检查来源文档绑定
-            String tenantId = string(entry.get("tenant_id"), null);
-            publishGateService.requirePublishGate("GRAPH", graphVersion, tenantId);
+            // 发布门禁：来源绑定检查（阻断级，对应产品不变量 H4）
+            String refDoc = string(entry.get("reference_document_code"), null);
+            PublishGateService.GateCheckResult gateResult = publishGateService.checkGraphReference(graphVersion, refDoc);
+            String operatorId = string(request == null ? null : request.get("published_by"), "SYSTEM");
+            publishGateService.auditGateCheck("GRAPH", "ACTIVATE", "GRAPH_VERSION", graphVersion, operatorId, gateResult);
+            if (!gateResult.isReadyToPublish()) {
+                throw new IllegalStateException(publishGateService.formatBlockingMessage(gateResult));
+            }
 
             // 同一版本号即唯一键，激活时把所有同 family 前缀（::之前）的其他版本置 RETIRED，便于多版本共存时切换。
             String family = versionFamily(graphVersion);
@@ -116,22 +123,23 @@ public class GraphService {
                 }
             }
             entry.put("status", "ACTIVE");
-            entry.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
+            entry.put("published_by", operatorId);
             entry.put("published_time", nowText());
+            entry.put("reference_warnings", gateResult.toMapList());
 
+            // 审计日志：图谱版本激活操作
+            Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
+            auditDetail.put("graph_version", graphVersion);
+            auditDetail.put("action", "ACTIVATE");
+            auditDetail.put("operator_id", operatorId);
+            auditDetail.put("gate_check_ready", gateResult.isReadyToPublish());
+            persistenceService.saveAuditLog("GRAPH", "ACTIVATE", "GRAPH_VERSION", graphVersion, null, null, operatorId, auditDetail);
+
+<<<<<<< HEAD
             // REFIT-003：激活前统一来源检查，与 RuleService 对齐——缺少来源文档绑定时阻断激活。
             List<Map<String, Object>> referenceWarnings = new ArrayList<Map<String, Object>>();
             if (entry.get("reference_document_code") == null) {
-                Map<String, Object> warning = new LinkedHashMap<String, Object>();
-                warning.put("severity", "ERROR");
-                warning.put("field", "reference_document_code");
-                warning.put("message", "图谱版本缺少来源文档绑定（reference_document_code），激活将被阻断");
-                referenceWarnings.add(warning);
-                entry.put("reference_warnings", referenceWarnings);
-                throw new IllegalArgumentException("graph version is not ready to activate: " + referenceWarnings);
-            }
-            entry.put("reference_warnings", referenceWarnings);
-            return entry;
+                return entry;
         } finally {
             graphVersionLock.unlock();
         }
@@ -157,15 +165,25 @@ public class GraphService {
             }
 
             target.put("status", "ACTIVE");
-            target.put("published_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
+            String operatorId = string(request == null ? null : request.get("published_by"), "SYSTEM");
+            target.put("published_by", operatorId);
             target.put("published_time", nowText());
 
             Map<String, Object> result = new LinkedHashMap<String, Object>();
             result.put("graph_version", graphVersion);
             result.put("status", "ACTIVE");
             result.put("previous_active_version", previousActiveVersion);
-            result.put("rolled_back_by", string(request == null ? null : request.get("published_by"), "SYSTEM"));
+            result.put("rolled_back_by", operatorId);
             result.put("rolled_back_time", nowText());
+
+            // 审计日志：图谱版本回滚操作
+            Map<String, Object> auditDetail = new LinkedHashMap<String, Object>();
+            auditDetail.put("graph_version", graphVersion);
+            auditDetail.put("action", "ROLLBACK");
+            auditDetail.put("previous_active_version", previousActiveVersion);
+            auditDetail.put("operator_id", operatorId);
+            persistenceService.saveAuditLog("GRAPH", "ROLLBACK", "GRAPH_VERSION", graphVersion, null, null, operatorId, auditDetail);
+
             return result;
         } finally {
             graphVersionLock.unlock();

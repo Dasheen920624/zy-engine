@@ -1,6 +1,7 @@
 package com.medkernel.pathway;
 
 import com.medkernel.adapter.AdapterHubService;
+import com.medkernel.audit.PublishGateService;
 import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientNodeState;
 import com.medkernel.dto.PatientTaskState;
@@ -167,10 +168,13 @@ public class PathwayService {
         String tenantId = string(config.get("tenant_id"), null);
         publishGateService.requirePublishGate("PATHWAY", pathwayCode, tenantId);
 
-        // REFIT-003：配置级来源检查——节点缺少 reference_document_code 时阻断发布。
-        List<Map<String, Object>> referenceWarnings = configSupport.collectMissingReferences(config);
-        if (!referenceWarnings.isEmpty()) {
-            throw new IllegalArgumentException("pathway is not ready to publish: " + referenceWarnings);
+        // 发布门禁：路径节点来源绑定检查（阻断级，对应产品不变量 H4）
+        List<Map<String, Object>> missingRefs = configSupport.collectMissingReferences(config);
+        String operatorId = string(request == null ? null : request.get("approved_by"), null);
+        PublishGateService.GateCheckResult gateResult = publishGateService.checkPathwayReferences(missingRefs);
+        publishGateService.auditGateCheck("PATHWAY", "PUBLISH_GATE", "PATHWAY", pathwayCode, operatorId, gateResult);
+        if (!gateResult.isReadyToPublish()) {
+            throw new IllegalStateException(publishGateService.formatBlockingMessage(gateResult));
         }
 
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);
@@ -184,9 +188,8 @@ public class PathwayService {
         result.put("version_no", versionNo);
         result.put("status", "PUBLISHED");
         result.put("persistence", persistenceService.providerName());
-        result.put("reference_warnings", referenceWarnings);
-        audit("PUBLISH", "PATHWAY", pathwayCode, null, result,
-                string(request == null ? null : request.get("approved_by"), null));
+        result.put("reference_warnings", gateResult.toMapList());
+        audit("PUBLISH", "PATHWAY", pathwayCode, null, result, operatorId);
         return result;
     }
 
