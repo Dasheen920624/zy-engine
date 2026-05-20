@@ -2,7 +2,7 @@ package com.medkernel.quality;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
-import com.medkernel.common.OrganizationContext;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -67,7 +67,7 @@ public class EvalReportController {
             Map<String, Object> export = evalReportService.exportReport(reportId, orgContext);
             return ApiResult.success(export);
         } catch (IllegalArgumentException e) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, e.getMessage());
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, e.getMessage());
         }
     }
 
@@ -81,7 +81,7 @@ public class EvalReportController {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
         EvalReportService.EvalReport report = evalReportService.getReport(reportId, orgContext);
         if (report == null) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, "Report not found: " + reportId);
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "Report not found: " + reportId);
         }
         return ApiResult.success(report.toView());
     }

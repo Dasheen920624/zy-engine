@@ -5,6 +5,7 @@ import com.medkernel.common.exception.ConfigNotFoundException;
 import com.medkernel.common.exception.DataMissingException;
 import com.medkernel.common.exception.DifyTimeoutException;
 import com.medkernel.common.exception.EngineTimeoutException;
+import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.common.exception.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +73,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.GATEWAY_TIMEOUT)
     public ApiResult<Void> handleDifyTimeout(DifyTimeoutException ex) {
         log.warn("[traceId={}] dify timeout: {}", TraceContext.getTraceId(), ex.getMessage());
+        return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
+    }
+
+    @ExceptionHandler(MissingSourceException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResult<Void> handleMissingSource(MissingSourceException ex) {
+        log.warn("[traceId={}] missing source: {}", TraceContext.getTraceId(), ex.getMessage());
         return ApiResult.failure(ex.getErrorCode(), summarize(ex.getMessage(), 200));
     }
 

@@ -1,6 +1,6 @@
 package com.medkernel.security;
 
-import com.medkernel.audit.AuditChainService;
+import com.medkernel.audit.BaselineAuditChainService;
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
@@ -25,11 +25,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/security")
 public class SecurityBaselineController {
-    private final AuditChainService auditChainService;
+    private final BaselineAuditChainService auditChainService;
     private final KeyRotationService keyRotationService;
     private final OrganizationContextService organizationContextService;
 
-    public SecurityBaselineController(AuditChainService auditChainService,
+    public SecurityBaselineController(BaselineAuditChainService auditChainService,
                                       KeyRotationService keyRotationService,
                                       OrganizationContextService organizationContextService) {
         this.auditChainService = auditChainService;
@@ -63,7 +63,7 @@ public class SecurityBaselineController {
         String operatorId = (String) request.get("operator_id");
         String detailJson = (String) request.get("detail_json");
 
-        AuditChainService.AuditChainRecord record = auditChainService.appendToChain(
+        BaselineAuditChainService.AuditChainRecord record = auditChainService.appendToChain(
                 auditLogId, tenantId, engineType, actionType,
                 targetType, targetCode, operatorId, detailJson);
         return ApiResult.success(record.toView());

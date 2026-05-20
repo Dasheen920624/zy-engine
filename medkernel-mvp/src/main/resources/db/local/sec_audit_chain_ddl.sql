@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_encryption_key_status ON sec_encryption_key(statu
 CREATE INDEX IF NOT EXISTS idx_audit_chain_checkpoint_time ON sec_audit_chain_checkpoint(checkpoint_time);
 
 -- 5. 种子数据：初始加密密钥
-INSERT INTO sec_encryption_key (id, key_id, key_version, algorithm, key_material, status, activated_at, description, created_by)
-VALUES (10001, 'master-key-001', 1, 'AES-256-GCM',
-  'base64:AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=', -- 示例密钥，生产环境应使用安全随机数
+MERGE INTO sec_encryption_key (id, key_id, key_version, algorithm, key_material, status, activated_at, description, created_by)
+KEY(key_id, key_version) VALUES (10001, 'master-key-001', 1, 'AES-256-GCM',
+  'base64:AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=',
   'ACTIVE', CURRENT_TIMESTAMP, '系统初始加密密钥', 'system');

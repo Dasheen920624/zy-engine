@@ -1,6 +1,6 @@
 package com.medkernel.quality;
 
-import com.medkernel.common.OrganizationContext;
+import com.medkernel.organization.OrganizationContext;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

@@ -106,7 +106,7 @@ public class InteropAdapterService {
      * 获取所有支持的互联互通适配器列表
      */
     public List<Map<String, Object>> listInteropAdapters(String tenantId, String hospitalCode) {
-        String prefix = tenantId + "::" + hospitalCode + "::";
+        String prefix = canonical(tenantId) + "::" + canonical(hospitalCode) + "::";
         List<InteropAdapterDefinition> list = new ArrayList<>();
         for (Map.Entry<String, InteropAdapterDefinition> entry : adapterDefinitions.entrySet()) {
             if (entry.getKey().startsWith(prefix)) {
@@ -133,7 +133,7 @@ public class InteropAdapterService {
      * 获取所有CDS Hooks服务列表
      */
     public List<Map<String, Object>> listCdsHooksServices(String tenantId, String hospitalCode) {
-        String prefix = tenantId + "::" + hospitalCode + "::";
+        String prefix = canonical(tenantId) + "::" + canonical(hospitalCode) + "::";
         List<CdsHooksServiceDefinition> list = new ArrayList<>();
         for (Map.Entry<String, CdsHooksServiceDefinition> entry : cdsHooksDefinitions.entrySet()) {
             if (entry.getKey().startsWith(prefix)) {
@@ -152,7 +152,7 @@ public class InteropAdapterService {
      * 获取所有SMART on FHIR应用列表
      */
     public List<Map<String, Object>> listSmartApps(String tenantId, String hospitalCode) {
-        String prefix = tenantId + "::" + hospitalCode + "::";
+        String prefix = canonical(tenantId) + "::" + canonical(hospitalCode) + "::";
         List<SmartAppDefinition> list = new ArrayList<>();
         for (Map.Entry<String, SmartAppDefinition> entry : smartAppDefinitions.entrySet()) {
             if (entry.getKey().startsWith(prefix)) {

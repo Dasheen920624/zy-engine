@@ -1,6 +1,7 @@
 package com.medkernel.graph;
 
 import com.medkernel.audit.PublishGateService;
+import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.common.TraceContext;
 import com.medkernel.persistence.EnginePersistenceService;
 import org.neo4j.driver.AuthTokens;
@@ -102,13 +103,12 @@ public class GraphService {
                 throw new IllegalArgumentException("graph version not found: " + graphVersion);
             }
 
-            // 发布门禁：来源绑定检查（阻断级，对应产品不变量 H4）
             String refDoc = string(entry.get("reference_document_code"), null);
             PublishGateService.GateCheckResult gateResult = publishGateService.checkGraphReference(graphVersion, refDoc);
             String operatorId = string(request == null ? null : request.get("published_by"), "SYSTEM");
             publishGateService.auditGateCheck("GRAPH", "ACTIVATE", "GRAPH_VERSION", graphVersion, operatorId, gateResult);
             if (!gateResult.isReadyToPublish()) {
-                throw new IllegalStateException(publishGateService.formatBlockingMessage(gateResult));
+                throw new MissingSourceException(publishGateService.formatBlockingMessage(gateResult));
             }
 
             // 同一版本号即唯一键，激活时把所有同 family 前缀（::之前）的其他版本置 RETIRED，便于多版本共存时切换。

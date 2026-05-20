@@ -1,5 +1,7 @@
 package com.medkernel.security;
 
+import org.springframework.stereotype.Service;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 支持多版本密钥、旧令牌宽限期、密钥版本号嵌入 JWT。
  * 提供密钥轮换操作和密钥状态查询。
  */
+@Service
 public class KeyRotationService {
     private static final String HASH_ALGORITHM = "SHA-256";
     private static final AtomicLong KEY_VERSION_SEQ = new AtomicLong(1);

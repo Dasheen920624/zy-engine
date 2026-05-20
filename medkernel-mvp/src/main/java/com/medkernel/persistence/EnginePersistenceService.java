@@ -1300,6 +1300,7 @@ public class EnginePersistenceService {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, SYSTIMESTAMP)";
         try (Connection connection = connection()) {
             String tenantId = string(binding.getTenantId(), "default");
+            String citationCode = storageCitationCode(binding);
             int affected;
             try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
                 int i = 1;
@@ -1308,7 +1309,7 @@ public class EnginePersistenceService {
                 ps.setString(i++, binding.getAssetType());
                 ps.setString(i++, binding.getAssetCode());
                 ps.setString(i++, "1");
-                ps.setString(i++, binding.getCitationId());
+                ps.setString(i++, citationCode);
                 ps.setString(i++, binding.getBindingType());
                 affected = ps.executeUpdate();
             }
@@ -1320,7 +1321,7 @@ public class EnginePersistenceService {
                     ips.setString(i++, binding.getAssetType());
                     ips.setString(i++, binding.getAssetCode());
                     ips.setString(i++, "1");
-                    ips.setString(i++, binding.getCitationId());
+                    ips.setString(i++, citationCode);
                     ips.setString(i++, binding.getBindingType());
                     ips.setString(i++, binding.getCreatedBy());
                     ips.executeUpdate();
@@ -1361,6 +1362,7 @@ public class EnginePersistenceService {
                 "citation_code, binding_role, status, created_by, created_time) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, CURRENT_TIMESTAMP)";
         String tenantId = string(binding.getTenantId(), "default");
+        String citationCode = storageCitationCode(binding);
         try (Connection connection = connection()) {
             int updated;
             try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
@@ -1370,7 +1372,7 @@ public class EnginePersistenceService {
                 ps.setString(i++, binding.getAssetType());
                 ps.setString(i++, binding.getAssetCode());
                 ps.setString(i++, "1");
-                ps.setString(i++, binding.getCitationId());
+                ps.setString(i++, citationCode);
                 ps.setString(i++, binding.getBindingType());
                 updated = ps.executeUpdate();
             }
@@ -1382,7 +1384,7 @@ public class EnginePersistenceService {
                     ps.setString(i++, binding.getAssetType());
                     ps.setString(i++, binding.getAssetCode());
                     ps.setString(i++, "1");
-                    ps.setString(i++, binding.getCitationId());
+                    ps.setString(i++, citationCode);
                     ps.setString(i++, binding.getBindingType());
                     ps.setString(i++, binding.getCreatedBy());
                     ps.executeUpdate();
@@ -1391,6 +1393,14 @@ public class EnginePersistenceService {
         } catch (SQLException ex) {
             throw new IllegalStateException("save local source asset binding failed: " + ex.getMessage(), ex);
         }
+    }
+
+    private String storageCitationCode(SourceAssetBinding binding) {
+        String citationId = string(binding.getCitationId(), null);
+        if (citationId != null) {
+            return citationId;
+        }
+        return "DOC_REF_" + string(binding.getDocumentCode(), "DOCUMENT");
     }
 
     private SourceAssetBinding toSourceAssetBinding(ResultSet rs) throws SQLException {
@@ -1716,17 +1726,24 @@ public class EnginePersistenceService {
                 "/db/local/h2_core_ddl.sql",
                 "/db/local/re_rule_eval_result_ddl.sql",
                 "/db/local/sec_ddl.sql",
+                "/db/local/sec_sso_ddl.sql",
+                "/db/local/sec_user_sync_ddl.sql",
+                "/db/local/sec_multi_identity_ddl.sql",
+                "/db/local/sec_audit_chain_ddl.sql",
                 "/db/local/notify_ddl.sql",
                 "/db/local/wf_ddl.sql",
                 "/db/local/tenant_onboarding_ddl.sql",
                 "/db/local/interop_ddl.sql",
                 "/db/local/mpi_ddl.sql",
-                "/db/local/sec_user_sync_ddl.sql",
                 "/db/local/ai_knowledge_job_ddl.sql",
+                "/db/local/ai_knowledge_sync_log_ddl.sql",
                 "/db/local/cdss_trigger_point_ddl.sql",
                 "/db/local/model_provider_config_ddl.sql",
                 "/db/local/cdss_override_log_ddl.sql",
                 "/db/local/quality_finding_ddl.sql",
+                "/db/local/ops_ddl.sql",
+                "/db/local/ops_sync_task_ddl.sql",
+                "/db/local/data_governance_ddl.sql",
                 "/db/local/ai_governance_ddl.sql",
                 "/db/local/clinical_safety_ddl.sql",
                 "/db/local/knowledge_package_ddl.sql",

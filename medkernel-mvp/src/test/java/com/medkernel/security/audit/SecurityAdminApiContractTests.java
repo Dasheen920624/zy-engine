@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -213,7 +214,7 @@ class SecurityAdminApiContractTests {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> invokeGet(String url) throws Exception {
-        String token = jwtTokenProvider.createToken("admin", 1L, 1001L);
+        String token = authToken();
         MvcResult mvcResult = mockMvc.perform(get(url)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Tenant-Id", "1")
@@ -225,7 +226,7 @@ class SecurityAdminApiContractTests {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> invokePost(String url, Map<String, Object> body) throws Exception {
-        String token = jwtTokenProvider.createToken("admin", 1L, 1001L);
+        String token = authToken();
         MvcResult mvcResult = mockMvc.perform(post(url)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Tenant-Id", "1")
@@ -234,6 +235,10 @@ class SecurityAdminApiContractTests {
                 .andReturn();
         String content = mvcResult.getResponse().getContentAsString();
         return objectMapper.readValue(content, Map.class);
+    }
+
+    private String authToken() {
+        return jwtTokenProvider.createToken(1001L, 1L, "admin", "系统管理员");
     }
 
     @SuppressWarnings("unchecked")
@@ -249,6 +254,6 @@ class SecurityAdminApiContractTests {
         if (obj instanceof List) {
             return (List<Map<String, Object>>) obj;
         }
-        return List.of();
+        return Collections.emptyList();
     }
 }

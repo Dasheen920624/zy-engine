@@ -49,6 +49,7 @@ public enum ErrorCode {
     // --- 资源冲突(409) -------------------------------------------------------
     CONFLICT("CONFLICT", "resource conflict", "error.conflict"),
     VERSION_CONFLICT("VERSION_CONFLICT", "version conflict, please refresh and retry", "error.version_conflict"),
+    DUPLICATE_EXTERNAL_ACCOUNT("DUPLICATE_EXTERNAL_ACCOUNT", "external account is already bound", "error.identity.duplicate_external_account"),
 
     // --- 来源校验(400) -------------------------------------------------------
     MISSING_SOURCE("MISSING_SOURCE", "asset has no valid source document binding", "error.source.missing"),

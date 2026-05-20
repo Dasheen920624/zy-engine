@@ -172,12 +172,12 @@ public class PublishGateService {
         }
         for (Map<String, Object> ref : missingReferences) {
             String elementCode = string(ref.get("element_code"), "unknown");
-            String severity = string(ref.get("severity"), "WARN");
+            String elementType = string(ref.get("element_type"), "PATHWAY");
+            String field = string(ref.get("field"), "reference_document_code");
             String message = string(ref.get("message"), "缺少来源文档绑定");
-            // 路径节点缺少来源视为 ERROR（阻断发布）
-            result.addIssue("ERROR", "reference_document_code",
+            result.addIssue("ERROR", field,
                     "路径元素 " + elementCode + "：" + message,
-                    elementCode, "PATHWAY");
+                    elementCode, elementType);
         }
         return result;
     }
@@ -380,6 +380,8 @@ public class PublishGateService {
                 map.put("message", issue.message);
                 map.put("asset_code", issue.assetCode);
                 map.put("asset_type", issue.assetType);
+                map.put("element_code", issue.assetCode);
+                map.put("element_type", issue.assetType);
                 list.add(map);
             }
             return list;

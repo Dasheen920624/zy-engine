@@ -1,6 +1,6 @@
 package com.medkernel.cdss;
 
-import com.medkernel.common.OrganizationContext;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import com.medkernel.persistence.EnginePersistenceService;
 import org.springframework.stereotype.Service;

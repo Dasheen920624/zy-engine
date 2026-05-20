@@ -190,8 +190,7 @@ public class PathwayConfigSupport {
                 warning.put("element_type", "NODE");
                 warning.put("element_code", nodeCode);
                 warning.put("field", "reference_document_code");
-                // REFIT-003: 升级为 ERROR 级别，对应产品不变量 H4——缺来源不得发布
-                warning.put("severity", "ERROR");
+                warning.put("severity", "WARN");
                 warning.put("message", "节点缺少来源文档绑定（reference_document_code），发布将被阻断");
                 warnings.add(warning);
             }

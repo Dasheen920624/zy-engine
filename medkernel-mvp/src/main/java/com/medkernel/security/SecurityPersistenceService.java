@@ -976,14 +976,13 @@ public class SecurityPersistenceService {
         String sql = "SELECT id, tenant_id, provider_id, sync_type, status, total_count, "
                 + "created_count, updated_count, disabled_count, skipped_count, error_count, "
                 + "started_at, finished_at, triggered_by, error_message "
-                + "FROM sec_user_sync_job WHERE tenant_id = ? ORDER BY started_at DESC LIMIT ?";
+                + "FROM sec_user_sync_job WHERE tenant_id = ? ORDER BY started_at DESC";
         List<UserSyncJob> jobs = new ArrayList<>();
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, tenantId);
-            ps.setInt(2, limit);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
+                while (rs.next() && jobs.size() < limit) {
                     jobs.add(mapSyncJob(rs));
                 }
             }
@@ -1072,14 +1071,13 @@ public class SecurityPersistenceService {
      */
     public List<UserSyncDetail> findSyncDetailsByJobId(Long jobId, int limit) {
         String sql = "SELECT id, job_id, tenant_id, external_subject, external_name, action, "
-                + "platform_user_id, message, created_time FROM sec_user_sync_detail WHERE job_id = ? ORDER BY created_time DESC LIMIT ?";
+                + "platform_user_id, message, created_time FROM sec_user_sync_detail WHERE job_id = ? ORDER BY created_time DESC";
         List<UserSyncDetail> details = new ArrayList<>();
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, jobId);
-            ps.setInt(2, limit);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
+                while (rs.next() && details.size() < limit) {
                     details.add(mapSyncDetail(rs));
                 }
             }

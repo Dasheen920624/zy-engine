@@ -2,6 +2,7 @@ package com.medkernel.pathway;
 
 import com.medkernel.adapter.AdapterHubService;
 import com.medkernel.audit.PublishGateService;
+import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientNodeState;
 import com.medkernel.dto.PatientTaskState;
@@ -163,17 +164,15 @@ public class PathwayService {
             config.put("version", versionNo);
         }
 
-        // REFIT-003: 发布门禁 - 检查来源文档绑定（PublishGateService 检查绑定+文档状态）
         String tenantId = string(config.get("tenant_id"), null);
-        publishGateService.requirePublishGate("PATHWAY", pathwayCode, tenantId);
 
-        // 发布门禁：路径节点来源绑定检查（阻断级，对应产品不变量 H4）
+        // 路径节点来源绑定检查：医学路径缺来源必须阻断发布，避免"先发布后补证据"。
         List<Map<String, Object>> missingRefs = configSupport.collectMissingReferences(config);
         String operatorId = string(request == null ? null : request.get("approved_by"), null);
         PublishGateService.GateCheckResult gateResult = publishGateService.checkPathwayReferences(missingRefs);
         publishGateService.auditGateCheck("PATHWAY", "PUBLISH_GATE", "PATHWAY", pathwayCode, operatorId, gateResult);
         if (!gateResult.isReadyToPublish()) {
-            throw new IllegalStateException(publishGateService.formatBlockingMessage(gateResult));
+            throw new MissingSourceException(publishGateService.formatBlockingMessage(gateResult));
         }
 
         publishedPathways.put(pathwayKey(pathwayCode, versionNo), config);

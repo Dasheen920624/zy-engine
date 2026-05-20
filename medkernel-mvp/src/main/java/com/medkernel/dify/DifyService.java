@@ -664,11 +664,7 @@ public class DifyService {
         if (degraded instanceof Map) {
             template.setDegradedOutputs(new LinkedHashMap<String, Object>((Map<String, Object>) degraded));
         }
-        // REFIT-003：导入时统一来源检查，与 RuleService 对齐——缺少来源文档绑定时阻断导入。
         String refDocCode = string(entry.get("reference_document_code"), null);
-        if (refDocCode == null || refDocCode.trim().isEmpty()) {
-            throw new IllegalArgumentException("reference_document_code is required for dify workflow template");
-        }
         template.setReferenceDocumentCode(refDocCode);
         template.setReferenceBindingType(string(entry.get("reference_binding_type"), null));
         return template;

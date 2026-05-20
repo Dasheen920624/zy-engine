@@ -210,13 +210,6 @@ class PublishGateServiceTest {
 
     @Test
     void checkBatch_shouldBlockWhenAnyAssetMissing() {
-        when(persistenceService.listSourceDocuments()).thenReturn(Collections.<SourceDocument>emptyList());
-
-        SourceDocument validDoc = new SourceDocument();
-        validDoc.setDocumentCode("DOC_OK");
-        validDoc.setExpiryDate("2099-12-31T23:59:59+08:00");
-        validDoc.setReviewStatus("REVIEWED");
-
         List<Map<String, Object>> assets = new ArrayList<>();
         Map<String, Object> asset1 = new LinkedHashMap<>();
         asset1.put("asset_code", "R001");

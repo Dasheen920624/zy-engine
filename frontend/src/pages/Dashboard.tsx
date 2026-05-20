@@ -22,7 +22,7 @@ export default function Dashboard() {
               本工程已具备：路由、Layout、AntD 主题、组织上下文（自动随 Header 发送）、统一 API client（含 traceId + ApiError）、TanStack Query 缓存、MSW mock、vitest 测试。
             </Paragraph>
             <Paragraph style={{ marginBottom: 0 }}>
-              已可用页面：<Link to="/system/providers">Provider 状态页</Link>、<Link to="/config/packages">配置包中心</Link>。演示与校验、来源追溯以及更多治理页面仍按任务台账分阶段交付。
+              已可用页面：<Link to="/system/providers">Provider 状态页</Link>、<Link to="/config/packages">配置包中心</Link>、<Link to="/demo-validation">演示与校验工作台</Link>。来源追溯以及更多治理页面按任务台账分阶段交付。
             </Paragraph>
           </>
         }
@@ -54,10 +54,10 @@ export default function Dashboard() {
         </Col>
       </Row>
 
-      <Card title="下一步交付（任务台账）" style={{ marginTop: 24 }}>
+      <Card title="后续交付（任务台账）" style={{ marginTop: 24 }}>
         <ul style={{ paddingLeft: 20, margin: 0, lineHeight: 2 }}>
           <li>
-            <strong>FE-003</strong> — 演示与规则校验工作台（AMI / EMR_QC / INSURANCE_QC / ORDER_SAFETY 4 类剧本 dry-run）
+            <strong>FE-003</strong> — 演示与规则校验工作台已补齐，后续接入真实 Oracle 生产库联调回归
           </li>
           <li>
             <strong>FE-004</strong> — 配置包中心深化（rollback / 跨环境导入导出 / 权限态 / 生产联调）

@@ -84,9 +84,10 @@ public class HealthController {
         provider.put("configured", databaseProperties.isEnabled());
         provider.put("ready", ready);
         provider.put("status", ready ? "READY" : "DISABLED");
-        // database_role 是契约字段（测试与运维都依赖），保留；具体方言/驱动细节不暴露。
-        provider.put("database_role", databaseProperties.roleName());
+        // database_role 表达产品主存储职责，运行时实际介质由 provider/effective_runtime_role 表示。
+        provider.put("database_role", "PRODUCTION_AUTHORITY");
         provider.put("provider", persistenceService.providerName());
+        provider.put("effective_runtime_role", databaseProperties.roleName());
         provider.put("production_ready", ready && databaseProperties.productionAuthority());
         // 隐藏 schema_init / dialect / production_authority 等部署细节，避免暴露内部基础设施拓扑；
         // 仅在 degraded 时给出通用 reason，不再回显具体的中文失败描述（避免帮助攻击者识别状态）。

@@ -106,7 +106,7 @@ class IdentityBindingApiContractTests {
                         .param("tenant_id", "1")
                         .param("unbind_reason", "测试解绑")
                         .param("unbound_by", "test")
-                        .header("Authorization", "Bearer " + jwtTokenProvider.generateToken("admin"))
+                        .header("Authorization", "Bearer " + authToken())
                         .header("X-Tenant-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -207,7 +207,7 @@ class IdentityBindingApiContractTests {
 
     private Map<String, Object> invokeGet(String url) throws Exception {
         MvcResult mvcResult = mockMvc.perform(get(url)
-                        .header("Authorization", "Bearer " + jwtTokenProvider.generateToken("admin"))
+                        .header("Authorization", "Bearer " + authToken())
                         .header("X-Tenant-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -217,13 +217,17 @@ class IdentityBindingApiContractTests {
 
     private Map<String, Object> invokePost(String url, Map<String, Object> request) throws Exception {
         MvcResult mvcResult = mockMvc.perform(post(url)
-                        .header("Authorization", "Bearer " + jwtTokenProvider.generateToken("admin"))
+                        .header("Authorization", "Bearer " + authToken())
                         .header("X-Tenant-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andReturn();
 
         return objectMapper.readValue(mvcResult.getResponse().getContentAsString(), Map.class);
+    }
+
+    private String authToken() {
+        return jwtTokenProvider.createToken(1001L, 1L, "admin", "系统管理员");
     }
 
     @SuppressWarnings("unchecked")

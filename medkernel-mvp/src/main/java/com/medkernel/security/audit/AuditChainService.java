@@ -1,7 +1,7 @@
 package com.medkernel.security.audit;
 
-import com.medkernel.common.Ids;
 import com.medkernel.persistence.EnginePersistenceProperties;
+import com.medkernel.persistence.Ids;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
 
 /**
@@ -75,6 +74,7 @@ public class AuditChainService {
         checkpoint.setCheckpointTime(LocalDateTime.now());
         checkpoint.setChainStatus("IN_PROGRESS");
         checkpoint.setCreatedBy("system");
+        checkpoint.setCreatedTime(LocalDateTime.now());
 
         try {
             List<AuditRecord> records = getAllRecords(tableName);
@@ -154,14 +154,22 @@ public class AuditChainService {
         try {
             MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
             byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
+            return toHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 not available", e);
         }
     }
 
+    private String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
+    }
+
     private String getPreviousChainHash(String tableName) {
-        String sql = "SELECT chain_hash FROM " + tableName + " ORDER BY id DESC LIMIT 1";
+        String sql = "SELECT chain_hash FROM " + tableName + " ORDER BY id DESC";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

@@ -1,5 +1,7 @@
 package com.medkernel.audit;
 
+import org.springframework.stereotype.Service;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -18,7 +20,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * 每条审计记录包含 prev_hash（前一条的 record_hash）和 record_hash（本条内容的 SHA-256），
  * 形成不可篡改的链式结构。
  */
-public class AuditChainService {
+@Service
+public class BaselineAuditChainService {
     private static final String HASH_ALGORITHM = "SHA-256";
     private static final AtomicLong SEQ = new AtomicLong(1);
     private final Map<Long, AuditChainRecord> chainStore = new ConcurrentHashMap<Long, AuditChainRecord>();

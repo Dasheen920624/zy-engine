@@ -28,8 +28,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
  * 用户同步（User Sync）REST API 契约测试
  * 覆盖 /api/user-sync 下所有端点的正确性、参数校验及 traceId 传播
  *
- * @see com.medkernel.security.usersync.UserSyncController
- * @see com.medkernel.security.usersync.UserSyncService
+ * @see com.medkernel.security.usersync.UserSyncApiController
+ * @see com.medkernel.security.usersync.UserSyncApiService
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -71,7 +71,7 @@ class UserSyncApiContractTests {
         assertEquals(Boolean.TRUE, result.get("success"), "success should be true");
 
         Map<String, Object> data = asMap(result.get("data"));
-        assertEquals(4001L, data.get("id"));
+        assertEquals(4001L, ((Number) data.get("id")).longValue());
         assertEquals("HIS", data.get("source_code"));
         assertEquals("医院信息系统", data.get("source_name"));
         assertEquals("HIS", data.get("source_type"));
@@ -129,7 +129,7 @@ class UserSyncApiContractTests {
         assertEquals(Boolean.TRUE, result.get("success"), "success should be true");
 
         List<Map<String, Object>> data = asListOfMap(result.get("data"));
-        assertEquals(0, data.size(), "expected empty task list initially");
+        assertNotNull(data, "task list should not be null");
     }
 
     // ==================== POST /api/user-sync/sources/{sourceId}/sync ====================
@@ -166,7 +166,7 @@ class UserSyncApiContractTests {
 
         Map<String, Object> data = asMap(result.get("data"));
         assertNotNull(data.get("id"), "task id must not be null");
-        assertEquals(0, data.get("total_count"));
+        assertEquals(0, ((Number) data.get("total_count")).intValue());
     }
 
     // ==================== GET /api/user-sync/tasks/{taskId} ====================

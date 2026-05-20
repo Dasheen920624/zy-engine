@@ -11,21 +11,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * SSO 控制器：单点登录配置管理和登录回调处理。
+ * SSO 配置控制器：管理 SSO 配置、回调会话和审计查询。
  */
 @RestController
 @RequestMapping("/api/sso")
-public class SsoController {
+public class SsoConfigController {
 
-    private final SsoService ssoService;
+    private final SsoConfigService ssoConfigService;
     private final OrganizationContextService organizationContextService;
 
-    public SsoController(SsoService ssoService, OrganizationContextService organizationContextService) {
-        this.ssoService = ssoService;
+    public SsoConfigController(SsoConfigService ssoConfigService, OrganizationContextService organizationContextService) {
+        this.ssoConfigService = ssoConfigService;
         this.organizationContextService = organizationContextService;
     }
 
@@ -33,22 +35,26 @@ public class SsoController {
      * 获取 SSO 配置列表。
      */
     @GetMapping("/configs")
-    public ApiResult<List<SsoConfig>> listConfigs(HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
-        List<SsoConfig> configs = ssoService.listSsoConfigs(tenantId);
-        return ApiResult.success(configs);
+    public ApiResult<List<Map<String, Object>>> listConfigs(HttpServletRequest request) {
+        Long tenantId = resolveNumericTenantId(request);
+        List<SsoConfig> configs = ssoConfigService.listSsoConfigs(tenantId);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (SsoConfig config : configs) {
+            result.add(toConfigView(config));
+        }
+        return ApiResult.success(result);
     }
 
     /**
      * 根据 ID 获取 SSO 配置。
      */
     @GetMapping("/configs/detail")
-    public ApiResult<SsoConfig> getConfig(@RequestParam("id") Long configId) {
-        SsoConfig config = ssoService.getSsoConfig(configId);
+    public ApiResult<Map<String, Object>> getConfig(@RequestParam("id") Long configId) {
+        SsoConfig config = ssoConfigService.getSsoConfig(configId);
         if (config == null) {
-            return ApiResult.failure(ErrorCode.SSO_CONFIG_NOT_FOUND, "SSO 配置不存在");
+            return ApiResult.failure(ErrorCode.CONFIG_NOT_FOUND, "SSO 配置不存在");
         }
-        return ApiResult.success(config);
+        return ApiResult.success(toConfigView(config));
     }
 
     /**
@@ -56,9 +62,9 @@ public class SsoController {
      */
     @PostMapping("/configs")
     public ApiResult<Void> saveConfig(@RequestBody SsoConfig config, HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
+        Long tenantId = resolveNumericTenantId(request);
         config.setTenantId(tenantId);
-        ssoService.saveSsoConfig(config);
+        ssoConfigService.saveSsoConfig(config);
         return ApiResult.success(null);
     }
 
@@ -71,7 +77,7 @@ public class SsoController {
         if (configId == null) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "配置 ID 不能为空");
         }
-        ssoService.deleteSsoConfig(configId);
+        ssoConfigService.deleteSsoConfig(configId);
         return ApiResult.success(null);
     }
 
@@ -81,7 +87,7 @@ public class SsoController {
     @PostMapping("/cas/callback")
     public ApiResult<Map<String, Object>> handleCasCallback(@RequestBody Map<String, String> body,
                                                             HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
+        Long tenantId = resolveNumericTenantId(request);
         String ticket = body.get("ticket");
         if (ticket == null || ticket.trim().isEmpty()) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "CAS 票据不能为空");
@@ -90,7 +96,7 @@ public class SsoController {
         String ipAddress = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
 
-        SsoService.SsoLoginResult result = ssoService.handleSsoCallback(tenantId, "CAS", ticket, ipAddress, userAgent);
+        SsoConfigService.SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "CAS", ticket, ipAddress, userAgent);
         return ApiResult.success(buildLoginResponse(result));
     }
 
@@ -100,7 +106,7 @@ public class SsoController {
     @PostMapping("/oidc/callback")
     public ApiResult<Map<String, Object>> handleOidcCallback(@RequestBody Map<String, String> body,
                                                               HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
+        Long tenantId = resolveNumericTenantId(request);
         String code = body.get("code");
         if (code == null || code.trim().isEmpty()) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "OIDC 授权码不能为空");
@@ -109,7 +115,7 @@ public class SsoController {
         String ipAddress = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
 
-        SsoService.SsoLoginResult result = ssoService.handleSsoCallback(tenantId, "OIDC", code, ipAddress, userAgent);
+        SsoConfigService.SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "OIDC", code, ipAddress, userAgent);
         return ApiResult.success(buildLoginResponse(result));
     }
 
@@ -119,7 +125,7 @@ public class SsoController {
     @PostMapping("/saml/callback")
     public ApiResult<Map<String, Object>> handleSamlCallback(@RequestBody Map<String, String> body,
                                                               HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
+        Long tenantId = resolveNumericTenantId(request);
         String samlResponse = body.get("SAMLResponse");
         if (samlResponse == null || samlResponse.trim().isEmpty()) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "SAML 响应不能为空");
@@ -128,7 +134,7 @@ public class SsoController {
         String ipAddress = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
 
-        SsoService.SsoLoginResult result = ssoService.handleSsoCallback(tenantId, "SAML", samlResponse, ipAddress, userAgent);
+        SsoConfigService.SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "SAML", samlResponse, ipAddress, userAgent);
         return ApiResult.success(buildLoginResponse(result));
     }
 
@@ -138,7 +144,7 @@ public class SsoController {
     @PostMapping("/ldap/login")
     public ApiResult<Map<String, Object>> handleLdapLogin(@RequestBody Map<String, String> body,
                                                            HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
+        Long tenantId = resolveNumericTenantId(request);
         String username = body.get("username");
         String password = body.get("password");
         if (username == null || username.trim().isEmpty() || password == null || password.isEmpty()) {
@@ -150,7 +156,7 @@ public class SsoController {
 
         // 将用户名和密码作为回调数据传递
         String callbackData = username + ":" + password;
-        SsoService.SsoLoginResult result = ssoService.handleSsoCallback(tenantId, "LDAP-AD", callbackData, ipAddress, userAgent);
+        SsoConfigService.SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "LDAP-AD", callbackData, ipAddress, userAgent);
         return ApiResult.success(buildLoginResponse(result));
     }
 
@@ -159,14 +165,14 @@ public class SsoController {
      */
     @PostMapping("/logout")
     public ApiResult<Void> logout(@RequestBody Map<String, String> body, HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
+        Long tenantId = resolveNumericTenantId(request);
         Long userId = com.medkernel.security.SecurityContext.getUserId();
         String sessionToken = body.get("session_token");
 
         String ipAddress = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
 
-        ssoService.handleSsoLogout(tenantId, userId, sessionToken, ipAddress, userAgent);
+        ssoConfigService.handleSsoLogout(tenantId, userId, sessionToken, ipAddress, userAgent);
         return ApiResult.success(null);
     }
 
@@ -174,22 +180,30 @@ public class SsoController {
      * 获取当前用户的 SSO 会话列表。
      */
     @GetMapping("/sessions")
-    public ApiResult<List<SsoSession>> listSessions(HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
+    public ApiResult<List<Map<String, Object>>> listSessions(HttpServletRequest request) {
+        Long tenantId = resolveNumericTenantId(request);
         Long userId = com.medkernel.security.SecurityContext.getUserId();
-        List<SsoSession> sessions = ssoService.listUserSessions(tenantId, userId);
-        return ApiResult.success(sessions);
+        List<SsoSession> sessions = ssoConfigService.listUserSessions(tenantId, userId);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (SsoSession session : sessions) {
+            result.add(toSessionView(session));
+        }
+        return ApiResult.success(result);
     }
 
     /**
      * 获取 SSO 审计日志。
      */
     @GetMapping("/audit-logs")
-    public ApiResult<List<SsoAuditLog>> listAuditLogs(@RequestParam(value = "limit", defaultValue = "100") int limit,
-                                                       HttpServletRequest request) {
-        Long tenantId = organizationContextService.resolve(request);
-        List<SsoAuditLog> logs = ssoService.listAuditLogs(tenantId, limit);
-        return ApiResult.success(logs);
+    public ApiResult<List<Map<String, Object>>> listAuditLogs(@RequestParam(value = "limit", defaultValue = "100") int limit,
+                                                               HttpServletRequest request) {
+        Long tenantId = resolveNumericTenantId(request);
+        List<SsoAuditLog> logs = ssoConfigService.listAuditLogs(tenantId, limit);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (SsoAuditLog log : logs) {
+            result.add(toAuditLogView(log));
+        }
+        return ApiResult.success(result);
     }
 
     /**
@@ -203,12 +217,17 @@ public class SsoController {
         return ApiResult.success(data);
     }
 
-    private Map<String, Object> buildLoginResponse(SsoService.SsoLoginResult result) {
+    private Map<String, Object> buildLoginResponse(SsoConfigService.SsoLoginResult result) {
         java.util.LinkedHashMap<String, Object> response = new java.util.LinkedHashMap<>();
         response.put("token", result.getToken());
         response.put("user", buildUserInfo(result.getUser()));
         response.put("session", buildSessionInfo(result.getSession()));
         return response;
+    }
+
+    private Long resolveNumericTenantId(HttpServletRequest request) {
+        Long tenantId = organizationContextService.getTenantId(request);
+        return tenantId != null ? tenantId : 1L;
     }
 
     private Map<String, Object> buildUserInfo(com.medkernel.security.SecurityUser user) {
@@ -235,6 +254,69 @@ public class SsoController {
         info.put("expires_at", session.getExpiresAt());
         info.put("status", session.getStatus());
         return info;
+    }
+
+    private Map<String, Object> toConfigView(SsoConfig config) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("id", config.getId());
+        view.put("tenant_id", config.getTenantId());
+        view.put("config_code", config.getConfigCode());
+        view.put("config_name", config.getConfigName());
+        view.put("protocol_type", config.getProtocolType());
+        view.put("status", config.getStatus());
+        view.put("priority", config.getPriority());
+        view.put("cas_server_url", config.getCasServerUrl());
+        view.put("cas_service_url", config.getCasServiceUrl());
+        view.put("cas_callback_url", config.getCasCallbackUrl());
+        view.put("oidc_issuer", config.getOidcIssuer());
+        view.put("oidc_client_id", config.getOidcClientId());
+        view.put("oidc_redirect_uri", config.getOidcRedirectUri());
+        view.put("oidc_scope", config.getOidcScope());
+        view.put("oidc_response_type", config.getOidcResponseType());
+        view.put("saml_entity_id", config.getSamlEntityId());
+        view.put("saml_sso_url", config.getSamlSsoUrl());
+        view.put("ldap_url", config.getLdapUrl());
+        view.put("auto_create_user", config.isAutoCreateUser());
+        view.put("auto_update_user", config.isAutoUpdateUser());
+        view.put("session_timeout_minutes", config.getSessionTimeoutMinutes());
+        view.put("created_by", config.getCreatedBy());
+        view.put("created_time", config.getCreatedTime());
+        view.put("updated_by", config.getUpdatedBy());
+        view.put("updated_time", config.getUpdatedTime());
+        return view;
+    }
+
+    private Map<String, Object> toSessionView(SsoSession session) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("id", session.getId());
+        view.put("tenant_id", session.getTenantId());
+        view.put("user_id", session.getUserId());
+        view.put("config_id", session.getConfigId());
+        view.put("external_subject", session.getExternalSubject());
+        view.put("external_name", session.getExternalName());
+        view.put("external_email", session.getExternalEmail());
+        view.put("session_token", session.getSessionToken());
+        view.put("expires_at", session.getExpiresAt());
+        view.put("status", session.getStatus());
+        view.put("created_time", session.getCreatedTime());
+        return view;
+    }
+
+    private Map<String, Object> toAuditLogView(SsoAuditLog log) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("id", log.getId());
+        view.put("tenant_id", log.getTenantId());
+        view.put("user_id", log.getUserId());
+        view.put("config_id", log.getConfigId());
+        view.put("event_type", log.getEventType());
+        view.put("event_result", log.getEventResult());
+        view.put("external_subject", log.getExternalSubject());
+        view.put("error_code", log.getErrorCode());
+        view.put("error_message", log.getErrorMessage());
+        view.put("ip_address", log.getIpAddress());
+        view.put("trace_id", log.getTraceId());
+        view.put("created_time", log.getCreatedTime());
+        return view;
     }
 
     private String getClientIp(HttpServletRequest request) {

@@ -1,4 +1,7 @@
 {
+  "tenant_id": "TENANT_DEMO",
+  "group_code": "GROUP_DEMO",
+  "hospital_code": "HOSPITAL_DEMO",
   "package_code": "PKG_AMI_CORE",
   "package_version": "2026.05",
   "rules": [
@@ -9,6 +12,9 @@
       "priority": 100,
       "enabled": true,
       "description": "当患者存在胸痛主诉并且心电图提示相邻导联ST段抬高时，生成AMI/STEMI路径候选推荐。",
+      "reference_document_code": "SRC_GUIDELINE_AMI_2025",
+      "reference_citation_id": "CIT_AMI_STEMI_DIAGNOSIS",
+      "reference_binding_type": "EVIDENCE",
       "condition": {
         "all": [
           {
@@ -44,6 +50,9 @@
       "priority": 90,
       "enabled": true,
       "description": "用于急诊胸痛患者心电图完成时限质控。",
+      "reference_document_code": "SRC_GUIDELINE_AMI_2025",
+      "reference_citation_id": "CIT_AMI_ECG_TIMELY",
+      "reference_binding_type": "EVIDENCE",
       "condition": {
         "all": [
           {
@@ -82,6 +91,9 @@
       "priority": 120,
       "enabled": true,
       "description": "当结构化表单记录存在主要出血风险或颅内出血病史时，拦截溶栓相关医嘱或要求上级医师确认。",
+      "reference_document_code": "SRC_GUIDELINE_AMI_2025",
+      "reference_citation_id": "CIT_AMI_THROMBOLYSIS_SAFETY",
+      "reference_binding_type": "EVIDENCE",
       "condition": {
         "any": [
           {

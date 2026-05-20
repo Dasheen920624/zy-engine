@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
+import type { FC } from "react";
 import { useBlocker } from "react-router-dom";
 import { Modal } from "antd";
 
@@ -6,7 +7,7 @@ interface UnsavedChangesGuardProps {
   dirty: boolean;
 }
 
-const UnsavedChangesGuard: React.FC<UnsavedChangesGuardProps> = ({ dirty }) => {
+const UnsavedChangesGuard: FC<UnsavedChangesGuardProps> = ({ dirty }) => {
   const blocker = useBlocker(dirty);
 
   // beforeunload for browser close / refresh

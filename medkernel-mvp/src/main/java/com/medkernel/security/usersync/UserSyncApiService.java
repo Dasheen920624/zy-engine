@@ -25,15 +25,15 @@ import java.util.List;
  * 用户同步服务：支持 HIS/EMR/OA/统一身份平台用户同步
  */
 @Service
-public class UserSyncService {
+public class UserSyncApiService {
 
-    private static final Logger log = LoggerFactory.getLogger(UserSyncService.class);
+    private static final Logger log = LoggerFactory.getLogger(UserSyncApiService.class);
 
     private final EnginePersistenceProperties properties;
     private final SecurityPersistenceService securityPersistenceService;
 
-    public UserSyncService(EnginePersistenceProperties properties,
-                           SecurityPersistenceService securityPersistenceService) {
+    public UserSyncApiService(EnginePersistenceProperties properties,
+                              SecurityPersistenceService securityPersistenceService) {
         this.properties = properties;
         this.securityPersistenceService = securityPersistenceService;
     }
@@ -279,8 +279,23 @@ public class UserSyncService {
             }
 
             updateTaskStatus(task.getId(), "COMPLETED", totalCount, successCount, failedCount, skipCount, null);
+            task.setStatus("COMPLETED");
+            task.setTotalCount(totalCount);
+            task.setSuccessCount(successCount);
+            task.setFailedCount(failedCount);
+            task.setSkipCount(skipCount);
+            task.setEndTime(LocalDateTime.now());
+            task.setUpdatedTime(LocalDateTime.now());
         } catch (Exception ex) {
             updateTaskStatus(task.getId(), "FAILED", totalCount, successCount, failedCount, skipCount, ex.getMessage());
+            task.setStatus("FAILED");
+            task.setTotalCount(totalCount);
+            task.setSuccessCount(successCount);
+            task.setFailedCount(failedCount);
+            task.setSkipCount(skipCount);
+            task.setErrorMessage(ex.getMessage());
+            task.setEndTime(LocalDateTime.now());
+            task.setUpdatedTime(LocalDateTime.now());
             throw ex;
         }
 

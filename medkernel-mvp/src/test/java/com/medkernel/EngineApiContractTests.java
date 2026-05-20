@@ -445,7 +445,7 @@ class EngineApiContractTests {
         publishBody.put("approved_by", "JUNIT_APPROVER");
         Map<String, Object> response = invokePostExpectingClientError(
                 "/api/config-packages/PKG_CONFIG_SOURCE_BLOCK/2026.05.01/publish", publishBody);
-        assertEquals("VALIDATION_ERROR", response.get("code"));
+        assertEquals("MISSING_SOURCE", response.get("code"));
         assertTrue(String.valueOf(response.get("message")).contains("source_review"));
     }
 
@@ -1917,6 +1917,8 @@ class EngineApiContractTests {
         versionEntry.put("name", "JUnit 测试图谱");
         versionEntry.put("status", "DRAFT");
         versionEntry.put("description", "JUnit 用例的图谱版本");
+        versionEntry.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        versionEntry.put("reference_binding_type", "EVIDENCE");
 
         Map<String, Object> versionsBody = new LinkedHashMap<String, Object>();
         versionsBody.put("versions", Arrays.asList(versionEntry));
@@ -2054,6 +2056,8 @@ class EngineApiContractTests {
         Map<String, Object> nodeIdentify = new LinkedHashMap<String, Object>();
         nodeIdentify.put("node_code", "NODE_IDENTIFY");
         nodeIdentify.put("node_name", "识别");
+        nodeIdentify.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        nodeIdentify.put("reference_binding_type", "EVIDENCE");
         nodeIdentify.put("tasks", Arrays.asList(task));
         Map<String, Object> transition = new LinkedHashMap<String, Object>();
         transition.put("to_node", "NODE_TREATMENT");
@@ -2063,6 +2067,8 @@ class EngineApiContractTests {
         Map<String, Object> nodeTreatment = new LinkedHashMap<String, Object>();
         nodeTreatment.put("node_code", "NODE_TREATMENT");
         nodeTreatment.put("node_name", "治疗");
+        nodeTreatment.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        nodeTreatment.put("reference_binding_type", "EVIDENCE");
 
         Map<String, Object> stage = new LinkedHashMap<String, Object>();
         stage.put("stage_code", "STAGE_MAIN");
@@ -2743,7 +2749,7 @@ class EngineApiContractTests {
         publishBody.put("approved_by", "ADMIN");
         Map<String, Object> publishResp = invokePostExpectingClientError(
                 "/api/rules/packages/PKG_NO_REF/publish", publishBody);
-        assertEquals("VALIDATION_ERROR", publishResp.get("code"));
+        assertEquals("MISSING_SOURCE", publishResp.get("code"));
     }
 
     @Test
@@ -3293,14 +3299,9 @@ class EngineApiContractTests {
 
         Map<String, Object> publishBody = new LinkedHashMap<>();
         publishBody.put("approved_by", "ADMIN");
-        Map<String, Object> publishResp = invokePost("/api/pathways/PW_NO_REF/publish", publishBody);
-        Map<String, Object> publishData = asMap(publishResp.get("data"));
-        assertEquals("PUBLISHED", publishData.get("status"));
-
-        List<Map<String, Object>> warnings = asListOfMap(publishData.get("reference_warnings"));
-        assertFalse(warnings.isEmpty());
-        assertEquals("UNBOUND_NODE", warnings.get(0).get("element_code"));
-        assertEquals("WARN", warnings.get(0).get("severity"));
+        Map<String, Object> publishResp = invokePostExpectingClientError("/api/pathways/PW_NO_REF/publish", publishBody);
+        assertEquals("MISSING_SOURCE", publishResp.get("code"));
+        assertTrue(String.valueOf(publishResp.get("message")).contains("UNBOUND_NODE"));
     }
 
     @Test
@@ -3334,14 +3335,10 @@ class EngineApiContractTests {
 
         Map<String, Object> activateBody = new LinkedHashMap<>();
         activateBody.put("published_by", "ADMIN");
-        Map<String, Object> activateResp = invokePost("/api/graph/versions/AMI_GRAPH_NO_REF_2026_01/activate", activateBody);
-        Map<String, Object> data = asMap(activateResp.get("data"));
-        assertEquals("ACTIVE", data.get("status"));
-
-        List<Map<String, Object>> warnings = asListOfMap(data.get("reference_warnings"));
-        assertFalse(warnings.isEmpty());
-        assertEquals("WARN", warnings.get(0).get("severity"));
-        assertEquals("reference_document_code", warnings.get(0).get("field"));
+        Map<String, Object> activateResp = invokePostExpectingClientError(
+                "/api/graph/versions/AMI_GRAPH_NO_REF_2026_01/activate", activateBody);
+        assertEquals("MISSING_SOURCE", activateResp.get("code"));
+        assertTrue(String.valueOf(activateResp.get("message")).contains("reference_document_code"));
     }
 
     @Test
@@ -3474,10 +3471,14 @@ class EngineApiContractTests {
         Map<String, Object> v1 = new LinkedHashMap<>();
         v1.put("graph_version", "AMI_ROLLBACK_V1");
         v1.put("name", "AMI图谱V1");
+        v1.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        v1.put("reference_binding_type", "EVIDENCE");
 
         Map<String, Object> v2 = new LinkedHashMap<>();
         v2.put("graph_version", "AMI_ROLLBACK_V2");
         v2.put("name", "AMI图谱V2");
+        v2.put("reference_document_code", "SRC_GUIDELINE_AMI_2025");
+        v2.put("reference_binding_type", "EVIDENCE");
 
         Map<String, Object> importBody = new LinkedHashMap<>();
         importBody.put("versions", Arrays.asList(v1, v2));

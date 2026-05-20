@@ -33,6 +33,57 @@
         "specialty": "EMERGENCY",
         "workflow": "CHEST_PAIN_CENTER"
       }
+    },
+    {
+      "document_code": "SRC_EMR_RECORD_STANDARD_2010",
+      "title": "病历书写基本规范（2010版）",
+      "source_type": "REGULATION",
+      "source_uri": "https://example.org/regulations/emr-writing-2010",
+      "publisher": "国家卫生健康委",
+      "effective_date": "2010-03-01",
+      "expiry_date": "2030-12-31",
+      "review_status": "REVIEWED",
+      "reviewed_by": "CHIEF_REVIEWER",
+      "reviewed_time": "2026-05-17T10:00:00+08:00",
+      "content_hash": "sha256:emr-standard-2010-v1",
+      "metadata": {
+        "specialty": "MEDICAL_RECORD",
+        "source_level": "NATIONAL"
+      }
+    },
+    {
+      "document_code": "SRC_INSURANCE_DRUG_CATALOG_2024",
+      "title": "国家基本医疗保险药品目录（2024年版）",
+      "source_type": "REGULATION",
+      "source_uri": "https://example.org/insurance/drug-catalog-2024",
+      "publisher": "国家医保局",
+      "effective_date": "2024-01-01",
+      "expiry_date": "2028-12-31",
+      "review_status": "REVIEWED",
+      "reviewed_by": "INSURANCE_REVIEWER",
+      "reviewed_time": "2026-05-17T10:10:00+08:00",
+      "content_hash": "sha256:insurance-drug-catalog-2024-v1",
+      "metadata": {
+        "specialty": "INSURANCE",
+        "source_level": "NATIONAL"
+      }
+    },
+    {
+      "document_code": "SRC_ANTIBIOTIC_GUIDELINE_2015",
+      "title": "抗菌药物临床应用指导原则（2015年版）",
+      "source_type": "GUIDELINE",
+      "source_uri": "https://example.org/guidelines/antibiotic-2015",
+      "publisher": "国家卫生健康委",
+      "effective_date": "2015-08-01",
+      "expiry_date": "2030-12-31",
+      "review_status": "REVIEWED",
+      "reviewed_by": "PHARMACY_REVIEWER",
+      "reviewed_time": "2026-05-17T10:20:00+08:00",
+      "content_hash": "sha256:antibiotic-guideline-2015-v1",
+      "metadata": {
+        "specialty": "PHARMACY",
+        "source_level": "NATIONAL"
+      }
     }
   ]
 }

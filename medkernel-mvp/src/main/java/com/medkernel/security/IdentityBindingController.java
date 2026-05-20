@@ -1,6 +1,7 @@
 package com.medkernel.security;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +22,7 @@ import java.util.Map;
  * 身份绑定管理 API：多身份源绑定、合并和解绑。
  */
 @RestController
-@RequestMapping("/api/security/bindings")
+@RequestMapping("/api/security/identity")
 public class IdentityBindingController {
 
     private final IdentityBindingService bindingService;
@@ -34,33 +37,47 @@ public class IdentityBindingController {
     /**
      * 查询用户的身份绑定列表。
      */
-    @GetMapping("/users/{userId}")
-    public ApiResult<List<IdentityBinding>> listBindingsByUser(@PathVariable Long userId,
-                                                                 HttpServletRequest httpRequest) {
+    @GetMapping("/bindings/user/{userId}")
+    public ApiResult<List<Map<String, Object>>> listBindingsByUser(@PathVariable Long userId,
+                                                                    HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        return ApiResult.success(bindingService.listBindingsByUser(resolveTenantId(orgCtx), userId));
+        return ApiResult.success(toBindingViews(bindingService.listBindingsByUser(resolveTenantId(orgCtx), userId)));
+    }
+
+    @GetMapping("/bindings/{bindingId}")
+    public ApiResult<Map<String, Object>> getBinding(@PathVariable Long bindingId) {
+        IdentityBinding binding = bindingService.getBindingById(bindingId);
+        if (binding == null) {
+            return ApiResult.notFound("identity binding not found");
+        }
+        return ApiResult.success(toBindingView(binding));
     }
 
     /**
      * 绑定外部身份到平台用户。
      */
-    @PostMapping("/bind")
-    public ApiResult<IdentityBinding> bindIdentity(@RequestBody Map<String, Object> body,
-                                                     HttpServletRequest httpRequest) {
+    @PostMapping("/bindings")
+    public ApiResult<Long> bindIdentity(@RequestBody Map<String, Object> body,
+                                        HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, body);
-        Long userId = Long.valueOf(String.valueOf(body.get("userId")));
-        Long providerId = Long.valueOf(String.valueOf(body.get("providerId")));
-        String externalSubject = String.valueOf(body.get("externalSubject"));
-        String externalDisplayName = String.valueOf(body.getOrDefault("externalDisplayName", ""));
+        Long userId = longValue(body, "user_id", "userId");
+        Long providerId = longValue(body, "provider_id", "providerId");
+        String externalSubject = stringValue(body, "external_subject", "externalSubject");
+        String externalDisplayName = stringValue(body, "external_display_name", "externalDisplayName");
         String operator = resolveOperator(httpRequest);
-        return ApiResult.success(bindingService.bindIdentity(
-                resolveTenantId(orgCtx), userId, providerId, externalSubject, externalDisplayName, operator));
+        try {
+            IdentityBinding binding = bindingService.bindIdentity(
+                    resolveTenantId(orgCtx), userId, providerId, externalSubject, externalDisplayName, operator);
+            return ApiResult.success(binding.getId());
+        } catch (IllegalStateException ex) {
+            return ApiResult.failure(ErrorCode.DUPLICATE_EXTERNAL_ACCOUNT, ex.getMessage());
+        }
     }
 
     /**
      * 解绑：标记为 DETACHED，保留审计。
      */
-    @DeleteMapping("/{bindingId}")
+    @DeleteMapping("/bindings/{bindingId}")
     public ApiResult<String> unbindIdentity(@PathVariable Long bindingId,
                                               HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -76,11 +93,26 @@ public class IdentityBindingController {
     public ApiResult<Map<String, Object>> mergeBindings(@RequestBody Map<String, Object> body,
                                                           HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, body);
-        Long sourceUserId = Long.valueOf(String.valueOf(body.get("sourceUserId")));
-        Long targetUserId = Long.valueOf(String.valueOf(body.get("targetUserId")));
+        Long sourceUserId = longValue(body, "source_user_id", "sourceUserId");
+        Long targetUserId = longValue(body, "target_user_id", "targetUserId");
+        String mergeReason = stringValue(body, "merge_reason", "mergeReason");
         String operator = resolveOperator(httpRequest);
         return ApiResult.success(bindingService.mergeBindings(
-                resolveTenantId(orgCtx), sourceUserId, targetUserId, operator));
+                resolveTenantId(orgCtx), sourceUserId, targetUserId, mergeReason, operator));
+    }
+
+    @GetMapping("/merge/user/{userId}")
+    public ApiResult<List<Map<String, Object>>> listMergeRecords(@PathVariable Long userId,
+                                                                  HttpServletRequest httpRequest) {
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(bindingService.listMergeRecordsByUser(resolveTenantId(orgCtx), userId));
+    }
+
+    @GetMapping("/unbind/user/{userId}")
+    public ApiResult<List<Map<String, Object>>> listUnbindRecords(@PathVariable Long userId,
+                                                                   HttpServletRequest httpRequest) {
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(bindingService.listUnbindRecordsByUser(resolveTenantId(orgCtx), userId));
     }
 
     /**
@@ -106,5 +138,50 @@ public class IdentityBindingController {
             return username.trim();
         }
         return "system";
+    }
+
+    private Long longValue(Map<String, Object> body, String snakeKey, String camelKey) {
+        Object value = body.get(snakeKey);
+        if (value == null) {
+            value = body.get(camelKey);
+        }
+        if (value == null) {
+            throw new IllegalArgumentException(snakeKey + " is required");
+        }
+        return Long.valueOf(String.valueOf(value));
+    }
+
+    private String stringValue(Map<String, Object> body, String snakeKey, String camelKey) {
+        Object value = body.get(snakeKey);
+        if (value == null) {
+            value = body.get(camelKey);
+        }
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private List<Map<String, Object>> toBindingViews(List<IdentityBinding> bindings) {
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (IdentityBinding binding : bindings) {
+            result.add(toBindingView(binding));
+        }
+        return result;
+    }
+
+    private Map<String, Object> toBindingView(IdentityBinding binding) {
+        Map<String, Object> view = new LinkedHashMap<String, Object>();
+        view.put("id", binding.getId());
+        view.put("tenant_id", binding.getTenantId());
+        view.put("user_id", binding.getUserId());
+        view.put("provider_id", binding.getProviderId());
+        view.put("external_subject", binding.getExternalSubject());
+        view.put("external_org_code", binding.getExternalOrgCode());
+        view.put("external_display_name", binding.getExternalDisplayName());
+        view.put("binding_status", binding.getBindingStatus());
+        view.put("last_verified_time", binding.getLastVerifiedTime());
+        view.put("created_by", binding.getCreatedBy());
+        view.put("created_time", binding.getCreatedTime());
+        view.put("updated_by", binding.getUpdatedBy());
+        view.put("updated_time", binding.getUpdatedTime());
+        return view;
     }
 }

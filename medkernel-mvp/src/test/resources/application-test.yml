@@ -6,5 +6,17 @@
 # 严禁复制到 application-*.yml 或任何真实部署环境。
 
 medkernel:
+  database:
+    role: development
+    enabled: true
+    dialect: h2
+    url: jdbc:h2:mem:medkernel_contract_test;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    init-schema: true
   security:
     jwt-secret: test-only-jwt-secret-do-not-use-in-production-medkernel-2026
+  dify:
+    enabled: false
+  graph:
+    enabled: false

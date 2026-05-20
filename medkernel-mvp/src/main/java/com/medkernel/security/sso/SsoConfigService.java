@@ -1,8 +1,8 @@
 package com.medkernel.security.sso;
 
 import com.medkernel.common.ErrorCode;
-import com.medkernel.common.Ids;
 import com.medkernel.persistence.EnginePersistenceProperties;
+import com.medkernel.persistence.Ids;
 import com.medkernel.security.AuthException;
 import com.medkernel.security.JwtTokenProvider;
 import com.medkernel.security.SecurityPersistenceService;
@@ -23,20 +23,20 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * SSO 服务：处理 CAS/OIDC/SAML/LDAP-AD 单点登录。
+ * SSO 配置服务：处理配置管理、回调会话和审计日志。
  */
 @Service
-public class SsoService {
+public class SsoConfigService {
 
-    private static final Logger log = LoggerFactory.getLogger(SsoService.class);
+    private static final Logger log = LoggerFactory.getLogger(SsoConfigService.class);
 
     private final EnginePersistenceProperties properties;
     private final SecurityPersistenceService securityPersistenceService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public SsoService(EnginePersistenceProperties properties,
-                      SecurityPersistenceService securityPersistenceService,
-                      JwtTokenProvider jwtTokenProvider) {
+    public SsoConfigService(EnginePersistenceProperties properties,
+                            SecurityPersistenceService securityPersistenceService,
+                            JwtTokenProvider jwtTokenProvider) {
         this.properties = properties;
         this.securityPersistenceService = securityPersistenceService;
         this.jwtTokenProvider = jwtTokenProvider;
@@ -116,7 +116,7 @@ public class SsoService {
                 + "ldap_url, ldap_base_dn, ldap_bind_dn, ldap_bind_password, ldap_user_search_base, ldap_user_search_filter, "
                 + "ldap_group_search_base, ldap_group_search_filter, ldap_use_ssl, ldap_use_starttls, "
                 + "attribute_mapping, role_mapping, auto_create_user, auto_update_user, session_timeout_minutes, "
-                + "created_by, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "created_by, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = connection()) {
             // Try UPDATE first
@@ -235,7 +235,7 @@ public class SsoService {
         // 1. 查找对应的 SSO 配置
         SsoConfig config = findActiveSsoConfig(tenantId, protocolType);
         if (config == null) {
-            throw new AuthException(ErrorCode.SSO_CONFIG_NOT_FOUND, "未找到有效的 SSO 配置");
+            throw new AuthException(ErrorCode.CONFIG_NOT_FOUND, "未找到有效的 SSO 配置");
         }
 
         // 2. 根据协议类型处理回调
@@ -254,7 +254,7 @@ public class SsoService {
                 externalUser = handleLdapCallback(config, callbackData);
                 break;
             default:
-                throw new AuthException(ErrorCode.SSO_PROTOCOL_NOT_SUPPORTED, "不支持的 SSO 协议");
+                throw new AuthException(ErrorCode.VALIDATION_ERROR, "不支持的 SSO 协议");
         }
 
         // 3. 查找或创建平台用户
@@ -318,14 +318,13 @@ public class SsoService {
     public List<SsoAuditLog> listAuditLogs(Long tenantId, int limit) {
         String sql = "SELECT id, tenant_id, user_id, config_id, event_type, event_result, external_subject, "
                 + "error_code, error_message, ip_address, user_agent, trace_id, created_time "
-                + "FROM sec_sso_audit_log WHERE tenant_id = ? ORDER BY created_time DESC LIMIT ?";
+                + "FROM sec_sso_audit_log WHERE tenant_id = ? ORDER BY created_time DESC";
         List<SsoAuditLog> logs = new ArrayList<>();
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, tenantId);
-            ps.setInt(2, limit);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
+                while (rs.next() && logs.size() < limit) {
                     logs.add(mapSsoAuditLog(rs));
                 }
             }
@@ -346,7 +345,7 @@ public class SsoService {
                 + "ldap_group_search_base, ldap_group_search_filter, ldap_use_ssl, ldap_use_starttls, "
                 + "attribute_mapping, role_mapping, auto_create_user, auto_update_user, session_timeout_minutes, "
                 + "created_by, created_time, updated_by, updated_time "
-                + "FROM sec_sso_config WHERE tenant_id = ? AND protocol_type = ? AND status = 'ACTIVE' ORDER BY priority LIMIT 1";
+                + "FROM sec_sso_config WHERE tenant_id = ? AND protocol_type = ? AND status = 'ACTIVE' ORDER BY priority";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, tenantId);
@@ -368,7 +367,7 @@ public class SsoService {
         // 2. 获取用户信息
         // 3. 返回 SsoUserInfo
         log.info("CAS callback handling not implemented yet");
-        throw new AuthException(ErrorCode.SSO_PROTOCOL_NOT_SUPPORTED, "CAS 协议处理尚未实现");
+        throw new AuthException(ErrorCode.VALIDATION_ERROR, "CAS 协议处理尚未实现");
     }
 
     private SsoUserInfo handleOidcCallback(SsoConfig config, String callbackData) {
@@ -378,7 +377,7 @@ public class SsoService {
         // 3. 获取用户信息
         // 4. 返回 SsoUserInfo
         log.info("OIDC callback handling not implemented yet");
-        throw new AuthException(ErrorCode.SSO_PROTOCOL_NOT_SUPPORTED, "OIDC 协议处理尚未实现");
+        throw new AuthException(ErrorCode.VALIDATION_ERROR, "OIDC 协议处理尚未实现");
     }
 
     private SsoUserInfo handleSamlCallback(SsoConfig config, String callbackData) {
@@ -388,7 +387,7 @@ public class SsoService {
         // 3. 获取用户信息
         // 4. 返回 SsoUserInfo
         log.info("SAML callback handling not implemented yet");
-        throw new AuthException(ErrorCode.SSO_PROTOCOL_NOT_SUPPORTED, "SAML 协议处理尚未实现");
+        throw new AuthException(ErrorCode.VALIDATION_ERROR, "SAML 协议处理尚未实现");
     }
 
     private SsoUserInfo handleLdapCallback(SsoConfig config, String callbackData) {
@@ -398,7 +397,7 @@ public class SsoService {
         // 3. 搜索用户信息
         // 4. 返回 SsoUserInfo
         log.info("LDAP-AD callback handling not implemented yet");
-        throw new AuthException(ErrorCode.SSO_PROTOCOL_NOT_SUPPORTED, "LDAP-AD 协议处理尚未实现");
+        throw new AuthException(ErrorCode.VALIDATION_ERROR, "LDAP-AD 协议处理尚未实现");
     }
 
     private SecurityUser findOrCreatePlatformUser(Long tenantId, SsoConfig config, SsoUserInfo externalUser) {
@@ -415,7 +414,7 @@ public class SsoService {
             user = securityPersistenceService.findById(userId);
         }
         if (user == null) {
-            throw new AuthException(ErrorCode.SSO_USER_NOT_FOUND, "未找到对应的平台用户");
+            throw new AuthException(ErrorCode.RESOURCE_NOT_FOUND, "未找到对应的平台用户");
         }
         return user;
     }

@@ -7,6 +7,7 @@ import type {
   ConfigPackageSummary,
   ConfigPackageDetail,
   ConfigPackageReview,
+  UserInfo,
 } from "../api/types";
 
 function wrap<T>(data: T, traceId = "fe-mock-trace"): ApiResult<T> {
@@ -20,6 +21,32 @@ function wrap<T>(data: T, traceId = "fe-mock-trace"): ApiResult<T> {
 }
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "/medkernel/api";
+
+const demoUser: UserInfo = {
+  id: 1002,
+  tenant_id: 1,
+  username: "zhao01",
+  display_name: "赵医生",
+  email: "zhao01@example.org",
+  phone: "13800000002",
+  status: "ACTIVE",
+  roles: ["DOCTOR"],
+  permissions: [
+    "dashboard:view",
+    "demo-validation:run",
+    "config-package:view",
+    "config-package:review",
+    "source:view",
+  ],
+  org_scopes: [
+    {
+      scope_level: "HOSPITAL",
+      scope_code: "HOSPITAL_DEMO",
+      scope_name: "演示医院",
+    },
+  ],
+  last_login_time: new Date().toISOString(),
+};
 
 // ─── Mock 场景数据 (FE-003) ───────────────────────────────────────────
 
@@ -153,6 +180,14 @@ const mockScenarios: Record<string, EvaluateResponse> = {
         severity: "MEDIUM",
         action_type: "REMIND",
         message: "既往史空白。",
+        source_document: {
+          title: "病历书写基本规范（卫医政发〔2010〕11号）",
+          institution: "国家卫健委",
+          version: "2010",
+          section: "第十八条 既往史",
+          evidence_level: "POLICY",
+          reviewer: "QC_DR_LI",
+        },
       },
     ],
     org_source: "BODY",
@@ -196,6 +231,14 @@ const mockScenarios: Record<string, EvaluateResponse> = {
         severity: "MEDIUM",
         action_type: "REMIND",
         message: "本次住院费用超过同病种均值 2 倍，请关注费用合理性。",
+        source_document: {
+          title: "演示医院医保费用审核规则 v2026.05",
+          institution: "演示医院医保办",
+          version: "2026.05",
+          section: "DRG 费用偏离预警",
+          evidence_level: "LOCAL_POLICY",
+          reviewer: "INSURANCE_REVIEWER",
+        },
       },
     ],
     org_source: "HEADER",
@@ -248,7 +291,7 @@ const mockResultSummaries: RuleEngineResultSummary[] = Object.values(mockScenari
   scenario_code: r.scenario_code,
   package_code: r.package_code,
   package_version: r.package_version,
-  patient_id: r.hits[0]?.facts_matched?.patient_id as string | undefined,
+  patient_id: r.hits?.[0]?.facts_matched?.patient_id as string | undefined,
   encounter_id: undefined,
   evaluated_count: r.evaluated_count,
   hit_count: r.hit_count,
@@ -416,6 +459,34 @@ const mockPackageReviews: Record<string, ConfigPackageReview> = {
 // ─── Handlers ─────────────────────────────────────────────────────────
 
 export const handlers = [
+  http.post(`${baseURL}/auth/login`, async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as { username?: string; password?: string };
+    if (body.username === "zhao01" && body.password === "demo123") {
+      return HttpResponse.json(
+        wrap({
+          token: "mock-jwt-zhao01-demo",
+          user: demoUser,
+        }),
+      );
+    }
+    return HttpResponse.json(
+      {
+        success: false,
+        code: "LOGIN_FAILED",
+        message: "用户名或密码错误",
+        data: null,
+        trace_id: "mock-auth-failed",
+      },
+      { status: 401 },
+    );
+  }),
+
+  http.get(`${baseURL}/auth/me`, () => HttpResponse.json(wrap(demoUser))),
+
+  http.post(`${baseURL}/auth/logout`, () => HttpResponse.json(wrap(null))),
+
+  http.get(`${baseURL}/security/sso/providers`, () => HttpResponse.json(wrap([]))),
+
   http.get(`${baseURL}/system/providers`, () => {
     const payload: SystemProviders = {
       run_mode: "HYBRID",
@@ -473,7 +544,8 @@ export const handlers = [
   http.post(`${baseURL}/rule-engine/evaluate`, async ({ request }) => {
     const body = (await request.json()) as { scenario_code?: string };
     const code = body?.scenario_code;
-    const result = code ? mockScenarios[code] : undefined;
+    const lookupCode = code === "PATHWAY_ENTRY" ? "AMI_RECOMMEND" : code;
+    const result = lookupCode ? mockScenarios[lookupCode] : undefined;
     if (!result) {
       return HttpResponse.json(
         {
@@ -489,6 +561,7 @@ export const handlers = [
     // 每次返回新的 result_id 和时间戳
     const fresh: EvaluateResponse = {
       ...result,
+      scenario_code: (code || result.scenario_code) as EvaluateResponse["scenario_code"],
       result_id: `res-${code?.toLowerCase()}-${Date.now()}`,
       trace_id: `mock-${code?.toLowerCase()}-${Date.now()}`,
       created_time: new Date().toISOString(),
@@ -503,7 +576,8 @@ export const handlers = [
       items?: unknown[];
     };
     const code = body?.scenario_code;
-    const base = code ? mockScenarios[code] : undefined;
+    const lookupCode = code === "PATHWAY_ENTRY" ? "AMI_RECOMMEND" : code;
+    const base = lookupCode ? mockScenarios[lookupCode] : undefined;
     if (!base) {
       return HttpResponse.json(
         {
@@ -520,6 +594,7 @@ export const handlers = [
     const batchId = `batch-${Date.now()}`;
     const results: EvaluateResponse[] = items.map((_, i) => ({
       ...base,
+      scenario_code: (code || base.scenario_code) as EvaluateResponse["scenario_code"],
       result_id: `res-${code?.toLowerCase()}-${Date.now()}-${i}`,
       batch_id: batchId,
       trace_id: `mock-batch-${Date.now()}-${i}`,
@@ -543,7 +618,8 @@ export const handlers = [
     const scenarioCode = url.searchParams.get("scenarioCode");
     let filtered = mockResultSummaries;
     if (scenarioCode) {
-      filtered = filtered.filter((r) => r.scenario_code === scenarioCode);
+      const lookupCode = scenarioCode === "PATHWAY_ENTRY" ? "AMI_RECOMMEND" : scenarioCode;
+      filtered = filtered.filter((r) => r.scenario_code === lookupCode || r.scenario_code === scenarioCode);
     }
     return HttpResponse.json(wrap(filtered));
   }),

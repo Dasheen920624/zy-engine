@@ -1,6 +1,8 @@
 {
-  "tenant_id": "default",
-  "org_code": "ZYHOSPITAL",
+  "tenant_id": "TENANT_DEMO",
+  "group_code": "GROUP_DEMO",
+  "hospital_code": "HOSPITAL_DEMO",
+  "org_code": "HOSPITAL_DEMO",
   "pathway_code": "AMI_STEMI",
   "pathway_name": "急性ST段抬高型心肌梗死诊疗路径",
   "version": "1.0.0",
@@ -28,6 +30,9 @@
           "node_name": "胸痛识别",
           "node_type": "ASSESSMENT",
           "sla_minutes": 10,
+          "reference_document_code": "SRC_GUIDELINE_AMI_2025",
+          "reference_citation_id": "CIT_AMI_STEMI_DIAGNOSIS",
+          "reference_binding_type": "EVIDENCE",
           "entry_condition": {
             "any": [
               {
@@ -87,6 +92,9 @@
           "node_name": "再灌注策略评估",
           "node_type": "TREATMENT_DECISION",
           "sla_minutes": 30,
+          "reference_document_code": "SRC_GUIDELINE_AMI_2025",
+          "reference_citation_id": "CIT_AMI_REPERFUSION",
+          "reference_binding_type": "EVIDENCE",
           "tasks": [
             {
               "task_code": "TASK_PCI_ACCESS",
@@ -133,6 +141,9 @@
           "node_code": "AMI_INPATIENT_TREATMENT",
           "node_name": "住院治疗与监测",
           "node_type": "TREATMENT",
+          "reference_document_code": "SRC_GUIDELINE_AMI_2025",
+          "reference_citation_id": "CIT_AMI_INPATIENT_TREATMENT",
+          "reference_binding_type": "EVIDENCE",
           "tasks": [
             {
               "task_code": "TASK_ANTITHROMBOTIC",
@@ -161,6 +172,9 @@
           "node_code": "AMI_DISCHARGE_PREVENTION",
           "node_name": "出院二级预防",
           "node_type": "DISCHARGE",
+          "reference_document_code": "SRC_GUIDELINE_AMI_2025",
+          "reference_citation_id": "CIT_AMI_DISCHARGE_PREVENTION",
+          "reference_binding_type": "EVIDENCE",
           "tasks": [
             {
               "task_code": "TASK_DISCHARGE_MED",

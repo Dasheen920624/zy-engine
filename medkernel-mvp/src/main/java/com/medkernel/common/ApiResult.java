@@ -78,6 +78,11 @@ public class ApiResult<T> {
         return code;
     }
 
+    @JsonProperty("error_code")
+    public String getErrorCode() {
+        return success ? null : code;
+    }
+
     public void setCode(String code) {
         this.code = code;
     }
@@ -118,4 +123,3 @@ public class ApiResult<T> {
         this.data = data;
     }
 }
-

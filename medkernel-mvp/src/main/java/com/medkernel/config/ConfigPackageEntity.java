@@ -239,7 +239,14 @@ public class ConfigPackageEntity {
         configPackage.setCreatedBy(this.createdBy);
         configPackage.setReviewedBy(this.reviewedBy);
         configPackage.setApprovedBy(this.approvedBy);
+        configPackage.setCreatedTime(toText(this.createdTime));
+        configPackage.setReviewedTime(toText(this.reviewedTime));
+        configPackage.setPublishedTime(toText(this.publishedTime));
         // JSON字段需要在Service层反序列化
         return configPackage;
+    }
+
+    private static String toText(LocalDateTime value) {
+        return value == null ? null : value.toString();
     }
 }

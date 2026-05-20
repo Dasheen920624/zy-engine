@@ -1,6 +1,7 @@
 package com.medkernel.rule;
 
 import com.medkernel.common.TraceContext;
+import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.dto.RuleResult;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.persistence.EnginePersistenceService;
@@ -100,7 +101,7 @@ public class RuleService {
         List<Map<String, Object>> referenceIssues = new ArrayList<Map<String, Object>>();
         collectReferenceIssues(definition, referenceIssues);
         if (!referenceIssues.isEmpty()) {
-            throw new IllegalArgumentException("rule is not ready to publish: " + referenceIssues);
+            throw new MissingSourceException("rule is not ready to publish: " + referenceIssues);
         }
         String approvedBy = string(request.get("approved_by"), null);
         markPublished(definition, approvedBy);
@@ -137,6 +138,9 @@ public class RuleService {
 
         Map<String, Object> review = buildPackageReview(packageCode, packageVersion, rules);
         if (!Boolean.TRUE.equals(review.get("ready_to_publish"))) {
+            if (hasReferenceBlockingIssue(review)) {
+                throw new MissingSourceException("rule package is not ready to publish: " + review.get("issues"));
+            }
             throw new IllegalArgumentException("rule package is not ready to publish: " + review.get("issues"));
         }
 
@@ -295,6 +299,24 @@ public class RuleService {
             issue.put("message", "规则缺少来源文档绑定（reference_document_code），发布将被阻断");
             issues.add(issue);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean hasReferenceBlockingIssue(Map<String, Object> review) {
+        Object value = review == null ? null : review.get("issues");
+        if (!(value instanceof List)) {
+            return false;
+        }
+        for (Object item : (List<Object>) value) {
+            if (!(item instanceof Map)) {
+                continue;
+            }
+            Object field = ((Map<String, Object>) item).get("field");
+            if ("reference_document_code".equals(String.valueOf(field))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")

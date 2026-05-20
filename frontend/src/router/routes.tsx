@@ -3,7 +3,7 @@ import type { RouteObject } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import Dashboard from "../pages/Dashboard";
 import ProvidersStatus from "../pages/ProvidersStatus";
-import DemoValidation from "../pages/DemoValidationPlaceholder";
+import DemoValidation from "../pages/DemoValidation";
 import ConfigPackages from "../pages/ConfigPackages";
 import PackageImportWizard from "../pages/ConfigPackages/PackageImportWizard";
 import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";

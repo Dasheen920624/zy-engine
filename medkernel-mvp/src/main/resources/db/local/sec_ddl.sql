@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS sec_user (
   email VARCHAR2(200),
   phone VARCHAR2(32),
   avatar_url VARCHAR2(500),
+  user_type VARCHAR2(32) DEFAULT 'STAFF' NOT NULL,
+  employee_id VARCHAR2(64),
   status VARCHAR2(32) NOT NULL,          -- 状态：ACTIVE/DISABLED/LOCKED
   last_login_time TIMESTAMP,
   last_login_ip VARCHAR2(64),
@@ -42,6 +44,9 @@ CREATE TABLE IF NOT EXISTS sec_user (
   updated_time TIMESTAMP,
   CONSTRAINT uk_sec_user UNIQUE (tenant_id, username)
 );
+
+ALTER TABLE sec_user ADD COLUMN IF NOT EXISTS user_type VARCHAR2(32) DEFAULT 'STAFF' NOT NULL;
+ALTER TABLE sec_user ADD COLUMN IF NOT EXISTS employee_id VARCHAR2(64);
 
 -- 角色表：预置和自定义角色
 CREATE TABLE IF NOT EXISTS sec_role (
@@ -140,15 +145,15 @@ MERGE INTO sec_role (id, tenant_id, role_code, role_name, role_type, status, cre
 MERGE INTO sec_role (id, tenant_id, role_code, role_name, role_type, status, created_by) KEY(tenant_id, role_code) VALUES (109, 1, 'PLATFORM_OPS', '平台运营', 'PLATFORM', 'ACTIVE', 'system');
 
 -- 初始化演示用户
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1001, 1, 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '系统管理员', 'ACTIVE', 'system');
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1002, 1, 'zhao01', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '赵医生', 'ACTIVE', 'system');
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1003, 1, 'qian02', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '钱护士', 'ACTIVE', 'system');
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1004, 1, 'sun03', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '孙医保', 'ACTIVE', 'system');
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1005, 1, 'li04', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '李信息', 'ACTIVE', 'system');
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1006, 1, 'zhou05', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '周实施', 'ACTIVE', 'system');
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1007, 1, 'wu06', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '吴院长', 'ACTIVE', 'system');
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1008, 1, 'zheng07', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '郑专家', 'ACTIVE', 'system');
-MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, status, created_by) KEY(tenant_id, username) VALUES (1009, 1, 'wang08', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '王运营', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1001, 1, 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '系统管理员', 'ADMIN', 'EMP-ADMIN-001', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1002, 1, 'zhao01', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '赵医生', 'DOCTOR', 'EMP-DOC-001', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1003, 1, 'qian02', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '钱护士', 'NURSE', 'EMP-NURSE-001', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1004, 1, 'sun03', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '孙医保', 'INSURANCE', 'EMP-INS-001', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1005, 1, 'li04', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '李信息', 'IT_ADMIN', 'EMP-IT-001', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1006, 1, 'zhou05', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '周实施', 'IMPLEMENTER', 'EMP-IMP-001', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1007, 1, 'wu06', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '吴院长', 'HOSPITAL_LEADER', 'EMP-LEAD-001', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1008, 1, 'zheng07', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '郑专家', 'MEDICAL_EXPERT', 'EMP-EXP-001', 'ACTIVE', 'system');
+MERGE INTO sec_user (id, tenant_id, username, password_hash, display_name, user_type, employee_id, status, created_by) KEY(tenant_id, username) VALUES (1009, 1, 'wang08', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '王运营', 'PLATFORM_OPS', 'EMP-OPS-001', 'ACTIVE', 'system');
 
 -- 用户角色关联
 MERGE INTO sec_user_role (id, tenant_id, user_id, role_id, created_by) KEY(tenant_id, user_id, role_id) VALUES (2001, 1, 1001, 101, 'system');

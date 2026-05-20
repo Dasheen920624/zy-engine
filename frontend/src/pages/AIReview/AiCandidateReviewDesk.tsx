@@ -62,6 +62,27 @@ const CANDIDATE_TYPE_LABEL: Record<string, string> = {
   KNOWLEDGE: "知识",
 };
 
+function mockReviewStatus(index: number) {
+  if (index < 5) return "PENDING";
+  if (index < 12) return "APPROVED";
+  if (index < 16) return "REJECTED";
+  return "MODIFIED";
+}
+
+function mockReviewNote(index: number) {
+  if (index < 5) return "";
+  if (index < 12) return "审核通过";
+  if (index < 16) return "内容不准确";
+  return "已修正术语";
+}
+
+function confidenceTextType(value?: number) {
+  if (value === undefined || value === null) return undefined;
+  if (value >= 0.8) return "success";
+  if (value >= 0.6) return "warning";
+  return "danger";
+}
+
 // ==================== 模拟数据 ====================
 
 const MOCK_SUMMARY: ReviewSummary = {
@@ -88,10 +109,10 @@ const MOCK_CANDIDATES: AiCandidateReview[] = Array.from(
     modelName: ["gpt-4o", "claude-3", "qwen-72b"][i % 3],
     confidence: 0.6 + Math.random() * 0.4,
     candidateContent: `AI生成的候选内容示例 #${i + 1}`,
-    reviewStatus: i < 5 ? "PENDING" : i < 12 ? "APPROVED" : i < 16 ? "REJECTED" : "MODIFIED",
+    reviewStatus: mockReviewStatus(i),
     reviewedBy: i < 5 ? "" : ["admin", "reviewer1", "reviewer2"][i % 3],
     reviewedTime: i < 5 ? "" : "2026-05-19 10:30:00",
-    reviewNote: i < 5 ? "" : i < 12 ? "审核通过" : i < 16 ? "内容不准确" : "已修正术语",
+    reviewNote: mockReviewNote(i),
     modifiedContent: i >= 16 ? `修正后的内容 #${i + 1}` : "",
     qualityFindings: i % 3 === 0 ? "置信度偏低，建议人工复核" : "",
     priority: ["HIGH", "MEDIUM", "LOW"][i % 3],
@@ -242,8 +263,8 @@ export default function AiCandidateReviewDesk() {
       key: "confidence",
       width: 90,
       render: (v: number) =>
-        v != null ? (
-          <Text type={v >= 0.8 ? "success" : v >= 0.6 ? "warning" : "danger"}>
+        v !== null && v !== undefined ? (
+          <Text type={confidenceTextType(v)}>
             {(v * 100).toFixed(1)}%
           </Text>
         ) : (
@@ -576,13 +597,7 @@ export default function AiCandidateReviewDesk() {
                 <Text type="secondary">置信度</Text>
                 <div style={{ marginBottom: 12 }}>
                   <Text
-                    type={
-                      reviewingRecord.confidence >= 0.8
-                        ? "success"
-                        : reviewingRecord.confidence >= 0.6
-                        ? "warning"
-                        : "danger"
-                    }
+                    type={confidenceTextType(reviewingRecord.confidence)}
                   >
                     {((reviewingRecord.confidence ?? 0) * 100).toFixed(1)}%
                   </Text>
@@ -618,7 +633,7 @@ export default function AiCandidateReviewDesk() {
               <Text type="secondary">候选内容</Text>
               <div
                 style={{
-                  background: "var(--mk-bg-secondary, #f5f5f5)",
+                  background: "var(--mk-bg-muted)",
                   padding: 12,
                   borderRadius: 6,
                   marginTop: 4,
@@ -636,7 +651,7 @@ export default function AiCandidateReviewDesk() {
                 <Text type="secondary">质检发现</Text>
                 <div
                   style={{
-                    background: "var(--mk-bg-warning, #fffbe6)",
+                    background: "var(--mk-warning-soft)",
                     padding: 12,
                     borderRadius: 6,
                     marginTop: 4,
@@ -662,7 +677,7 @@ export default function AiCandidateReviewDesk() {
                     <Text type="secondary">修改后内容</Text>
                     <div
                       style={{
-                        background: "var(--mk-bg-secondary, #f5f5f5)",
+                        background: "var(--mk-bg-muted)",
                         padding: 12,
                         borderRadius: 6,
                         marginTop: 4,

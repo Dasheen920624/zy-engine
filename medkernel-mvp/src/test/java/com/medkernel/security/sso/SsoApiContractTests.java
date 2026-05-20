@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,8 +26,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
  * SSO（单点登录）REST API 契约测试
  * 覆盖 /api/sso 下所有端点的正确性、参数校验及 traceId 传播
  *
- * @see com.medkernel.security.sso.SsoController
- * @see com.medkernel.security.sso.SsoService
+ * @see com.medkernel.security.sso.SsoConfigController
+ * @see com.medkernel.security.sso.SsoConfigService
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -278,7 +279,7 @@ class SsoApiContractTests {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> invokeGet(String url) throws Exception {
-        String token = jwtTokenProvider.createToken("admin", 1L, 1001L);
+        String token = authToken();
         MvcResult mvcResult = mockMvc.perform(get(url)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Tenant-Id", "1")
@@ -290,7 +291,7 @@ class SsoApiContractTests {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> invokePost(String url, Map<String, Object> body) throws Exception {
-        String token = jwtTokenProvider.createToken("admin", 1L, 1001L);
+        String token = authToken();
         MvcResult mvcResult = mockMvc.perform(post(url)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Tenant-Id", "1")
@@ -299,6 +300,10 @@ class SsoApiContractTests {
                 .andReturn();
         String content = mvcResult.getResponse().getContentAsString();
         return objectMapper.readValue(content, Map.class);
+    }
+
+    private String authToken() {
+        return jwtTokenProvider.createToken(1001L, 1L, "admin", "系统管理员");
     }
 
     @SuppressWarnings("unchecked")
@@ -314,6 +319,6 @@ class SsoApiContractTests {
         if (obj instanceof List) {
             return (List<Map<String, Object>>) obj;
         }
-        return List.of();
+        return Collections.emptyList();
     }
 }

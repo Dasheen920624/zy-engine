@@ -189,7 +189,7 @@ export default function Login() {
 
         <div style={{ textAlign: "center", marginTop: 8 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            演示账号：demo1 / demo123
+            演示账号：zhao01 / demo123
           </Text>
         </div>
       </Card>

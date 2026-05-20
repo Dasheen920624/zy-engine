@@ -84,7 +84,7 @@ export interface RawSystemProviders {
 
 // ─── 规则引擎 (FE-003) ───────────────────────────────────────────────
 
-export type ScenarioCode = "AMI_RECOMMEND" | "EMR_QC" | "INSURANCE_QC" | "ORDER_SAFETY";
+export type ScenarioCode = "PATHWAY_ENTRY" | "AMI_RECOMMEND" | "EMR_QC" | "INSURANCE_QC" | "ORDER_SAFETY";
 
 export type Severity = "HIGH" | "MEDIUM" | "LOW" | "INFO";
 
@@ -114,12 +114,20 @@ export interface HitItem {
   rule_code: string;
   rule_name?: string;
   rule_version?: string;
+  version_no?: string;
   package_code?: string;
+  package_version?: string;
   severity: Severity;
+  hit?: boolean;
   action_type?: string;
   message: string;
   condition_summary?: string;
   facts_matched?: Record<string, unknown>;
+  actions?: string[];
+  evidence?: Record<string, unknown>[];
+  reference_document_code?: string;
+  reference_citation_id?: string;
+  reference_binding_type?: string;
   suggested_actions?: string[];
   source_document?: {
     title: string;
@@ -137,12 +145,16 @@ export interface EvaluateResponse {
   batch_id?: string;
   scenario_code: ScenarioCode;
   package_code?: string;
+  rule_package_code?: string;
   package_version?: string;
+  rule_package_version?: string;
   evaluated_count: number;
   hit_count: number;
   elapsed_ms: number;
   trace_id: string;
-  hits: HitItem[];
+  hits?: HitItem[];
+  results?: HitItem[];
+  warnings?: Array<{ severity?: string; code?: string; message?: string }>;
   org_source?: string;
   tenant_id?: string;
   hospital_code?: string;

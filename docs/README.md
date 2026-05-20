@@ -117,8 +117,9 @@ docs/
 
 ```
 1. docs/02_场景剧本图.md（6 大剧本）
-2. docs/engineering/09_内网部署与版本管理.md
-3. deploy/README.md
+2. docs/产品手册.md（客户演示与学习）
+3. docs/engineering/09_内网部署与版本管理.md
+4. deploy/README.md
 ```
 
 ---
@@ -140,6 +141,7 @@ docs/
 | [用户体系与身份联邦详细设计方案](engineering/用户体系与身份联邦详细设计方案.md) | SEC-001 / SSO / LDAP / API 客户端详细方案 |
 | [AI医疗知识工厂与字典映射方案](engineering/AI医疗知识工厂与字典映射方案.md) | AIK-* 系列详细方案 |
 | [产品功能业务核查与开工清单](engineering/产品功能业务核查与开工清单.md) | 医学/医保/质控开工前核查 |
+| [产品手册](产品手册.md) | 客户演示、演示数据、Oracle 主库验证与学习路径 |
 
 ---
 

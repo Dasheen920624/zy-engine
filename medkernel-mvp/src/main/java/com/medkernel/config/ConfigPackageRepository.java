@@ -113,7 +113,7 @@ public class ConfigPackageRepository {
             ps.setString(i++, entity.getCreatedBy());
             ps.setString(i++, entity.getReviewedBy());
             ps.setString(i++, entity.getApprovedBy());
-            ps.setTimestamp(i++, toTimestamp(entity.getCreatedTime()));
+            ps.setTimestamp(i++, toTimestamp(entity.getCreatedTime() == null ? LocalDateTime.now() : entity.getCreatedTime()));
             ps.setTimestamp(i++, toTimestamp(entity.getReviewedTime()));
             ps.setTimestamp(i++, toTimestamp(entity.getPublishedTime()));
             ps.executeUpdate();

@@ -1,7 +1,7 @@
 package com.medkernel.security.audit;
 
-import com.medkernel.common.Ids;
 import com.medkernel.persistence.EnginePersistenceProperties;
+import com.medkernel.persistence.Ids;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class KeyManagementService {
         String sql = "SELECT id, key_id, key_version, algorithm, key_material, status, " +
                      "activated_at, deprecated_at, expires_at, description, " +
                      "created_by, created_time, updated_by, updated_time " +
-                     "FROM sec_encryption_key WHERE status = 'ACTIVE' ORDER BY key_version DESC LIMIT 1";
+                     "FROM sec_encryption_key WHERE status = 'ACTIVE' ORDER BY key_version DESC";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -171,7 +172,7 @@ public class KeyManagementService {
      */
     public String decrypt(String encryptedText) {
         if (encryptedText == null || !encryptedText.startsWith("ENC(") || !encryptedText.endsWith(")")) {
-            return encryptedText;
+            throw new IllegalArgumentException("Encrypted text must use ENC(...) format");
         }
 
         String base64Data = encryptedText.substring(4, encryptedText.length() - 1);
@@ -239,7 +240,7 @@ public class KeyManagementService {
     private String generateKeyMaterial() {
         try {
             KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-            keyGen.init(256);
+            keyGen.init(preferredAesKeySize());
             SecretKey secretKey = keyGen.generateKey();
             return Base64.getEncoder().encodeToString(secretKey.getEncoded());
         } catch (NoSuchAlgorithmException e) {
@@ -248,8 +249,26 @@ public class KeyManagementService {
     }
 
     private SecretKey decodeKey(String keyMaterial) {
-        byte[] decodedKey = Base64.getDecoder().decode(keyMaterial);
+        String encoded = keyMaterial != null && keyMaterial.startsWith("base64:")
+                ? keyMaterial.substring("base64:".length())
+                : keyMaterial;
+        byte[] decodedKey = Base64.getDecoder().decode(encoded);
+        if (maxAllowedAesKeySize() < 256 && decodedKey.length > 16) {
+            decodedKey = Arrays.copyOf(decodedKey, 16);
+        }
         return new SecretKeySpec(decodedKey, "AES");
+    }
+
+    private int preferredAesKeySize() {
+        return maxAllowedAesKeySize() >= 256 ? 256 : 128;
+    }
+
+    private int maxAllowedAesKeySize() {
+        try {
+            return Cipher.getMaxAllowedKeyLength("AES");
+        } catch (Exception e) {
+            return 128;
+        }
     }
 
     private List<EncryptionKey> getAllActiveKeys() {

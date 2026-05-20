@@ -21,20 +21,16 @@ import java.util.Map;
 
 /**
  * 医疗知识需求订阅和来源注册 API。
- * AIK-003: 新增同步相关端点。
  */
 @RestController
 @RequestMapping("/api/knowledge")
 public class KnowledgeController {
     private final KnowledgeService knowledgeService;
-    private final KnowledgeSyncService syncService;
     private final OrganizationContextService organizationContextService;
 
     public KnowledgeController(KnowledgeService knowledgeService,
-                               KnowledgeSyncService syncService,
                                OrganizationContextService organizationContextService) {
         this.knowledgeService = knowledgeService;
-        this.syncService = syncService;
         this.organizationContextService = organizationContextService;
     }
 
@@ -203,127 +199,5 @@ public class KnowledgeController {
             return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "Subscription not found: " + subscriptionId);
         }
         return ApiResult.success(sub.toView());
-    }
-
-    // ==================== AIK-003: 同步 API ====================
-
-    /**
-     * 手动触发知识同步。
-     */
-    @PostMapping("/sync")
-    public ApiResult<Map<String, Object>> syncKnowledge(
-            @RequestBody Map<String, Object> request,
-            HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
-        String sourceCode = (String) request.get("source_code");
-        String subscriptionId = (String) request.get("subscription_id");
-        String syncMode = Boolean.TRUE.equals(request.get("dry_run")) ? "DRY_RUN" : "FULL";
-        String triggeredBy = (String) request.getOrDefault("triggered_by", "system");
-
-        try {
-            Long tenantId = orgContext.getTenantId() != null ? Long.parseLong(orgContext.getTenantId()) : null;
-            KnowledgeSyncLog logEntry = syncService.triggerManualSync(
-                    tenantId, sourceCode, subscriptionId, syncMode, triggeredBy);
-            return ApiResult.success(syncLogToMap(logEntry));
-        } catch (IllegalArgumentException e) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
-        } catch (IllegalStateException e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
-        }
-    }
-
-    /**
-     * 差异预览（dry-run）。
-     */
-    @PostMapping("/sync/preview")
-    public ApiResult<Map<String, Object>> previewSyncDiff(
-            @RequestBody Map<String, Object> request,
-            HttpServletRequest httpRequest) {
-        organizationContextService.resolveWithBody(httpRequest, request);
-        Long logId = request.get("log_id") != null ? Long.parseLong(request.get("log_id").toString()) : null;
-
-        try {
-            KnowledgeSyncLog logEntry = syncService.previewDiff(logId);
-            return ApiResult.success(syncLogToMap(logEntry));
-        } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
-        }
-    }
-
-    /**
-     * 重试失败的同步任务。
-     */
-    @PostMapping("/sync/{logId}/retry")
-    public ApiResult<Map<String, Object>> retrySync(
-            @PathVariable Long logId,
-            HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
-
-        try {
-            KnowledgeSyncLog logEntry = syncService.retrySync(logId);
-            return ApiResult.success(syncLogToMap(logEntry));
-        } catch (IllegalArgumentException e) {
-            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, e.getMessage());
-        } catch (IllegalStateException e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
-        }
-    }
-
-    /**
-     * 查询同步日志列表。
-     */
-    @GetMapping("/sync/logs")
-    public ApiResult<List<Map<String, Object>>> listSyncLogs(
-            @RequestParam(required = false) String sourceCode,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false, defaultValue = "50") int limit,
-            HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
-        Long tenantId = orgContext.getTenantId() != null ? Long.parseLong(orgContext.getTenantId()) : null;
-        List<KnowledgeSyncLog> logs = syncService.listSyncLogs(tenantId, sourceCode, status, null, limit);
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (KnowledgeSyncLog logEntry : logs) {
-            result.add(syncLogToMap(logEntry));
-        }
-        return ApiResult.success(result);
-    }
-
-    /**
-     * 查询同步日志详情。
-     */
-    @GetMapping("/sync/logs/{logId}")
-    public ApiResult<Map<String, Object>> getSyncLog(
-            @PathVariable Long logId,
-            HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
-        KnowledgeSyncLog logEntry = syncService.getSyncLog(logId);
-        if (logEntry == null) {
-            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "Sync log not found: " + logId);
-        }
-        return ApiResult.success(syncLogToMap(logEntry));
-    }
-
-    private Map<String, Object> syncLogToMap(KnowledgeSyncLog logEntry) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put("id", logEntry.getId());
-        map.put("syncCode", logEntry.getSyncCode());
-        map.put("sourceCode", logEntry.getSourceCode());
-        map.put("subscriptionId", logEntry.getSubscriptionId());
-        map.put("syncType", logEntry.getSyncType());
-        map.put("syncMode", logEntry.getSyncMode());
-        map.put("status", logEntry.getStatus());
-        map.put("diffSummary", logEntry.getDiffSummary());
-        map.put("itemsAdded", logEntry.getItemsAdded());
-        map.put("itemsUpdated", logEntry.getItemsUpdated());
-        map.put("itemsDeleted", logEntry.getItemsDeleted());
-        map.put("itemsTotal", logEntry.getItemsTotal());
-        map.put("reviewStatus", logEntry.getReviewStatus());
-        map.put("errorCode", logEntry.getErrorCode());
-        map.put("errorMessage", logEntry.getErrorMessage());
-        map.put("triggeredBy", logEntry.getTriggeredBy());
-        map.put("startedTime", logEntry.getStartedTime());
-        map.put("completedTime", logEntry.getCompletedTime());
-        map.put("createdTime", logEntry.getCreatedTime());
-        return map;
     }
 }

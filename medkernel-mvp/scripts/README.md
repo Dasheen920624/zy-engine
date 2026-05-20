@@ -14,6 +14,7 @@
 .\scripts\start-local-db.cmd
 .\scripts\start-oracle.cmd
 .\scripts\run-oracle-ddl.cmd
+.\scripts\seed-oracle-demo.cmd
 .\scripts\verify-encoding.cmd
 .\scripts\run-rule-smoke.cmd
 .\scripts\run-pathway-smoke.cmd
@@ -39,6 +40,7 @@
 | `start-local-db.cmd` / `start-local-db.ps1` | 启动本地 H2 文件数据库模式，默认端口 `18082` |
 | `start-oracle.cmd` / `start-oracle.ps1` | 启动 Oracle 持久化模式，默认端口 `18081` |
 | `run-oracle-ddl.cmd` / `run-oracle-ddl.ps1` | 初始化 Oracle 核心表、索引、组织上下文迁移、中文表备注和字段备注 |
+| `seed-oracle-demo.cmd` / `seed-oracle-demo.ps1` | 清理 `TENANT_DEMO` 演示范围数据，通过 API 写入组织、来源、规则、路径、配置包和一次患者路径验证，并用 SQLPlus 校验落入 Oracle |
 | `verify-encoding.cmd` / `verify-encoding.ps1` | 校验常见乱码特征，并验证 JSON 样例可解析 |
 | `run-rule-smoke.cmd` / `run-rule-smoke.ps1` | 导入、发布并模拟执行 AMI 样例规则 |
 | `run-pathway-smoke.cmd` / `run-pathway-smoke.ps1` | 导入、发布并执行 AMI 样例路径闭环 |
@@ -76,6 +78,14 @@ Oracle 真实落库校验需要先启动 Oracle 模式，再执行：
 ```powershell
 .\scripts\run-oracle-org-smoke.cmd
 ```
+
+客户演示数据需要先执行 DDL、启动 Oracle 模式，再执行：
+
+```powershell
+.\scripts\seed-oracle-demo.cmd
+```
+
+该脚本默认只清理并重建 `TENANT_DEMO / HOSPITAL_DEMO` 演示范围数据，不会清空整库。需要保留已有演示日志时可加 `-SkipCleanup`。
 
 普通 `run-tests.cmd` 只运行 Maven/JUnit，默认不连接 Oracle；需要跨实例落表验证时使用上述 Oracle smoke。
 

@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 患者主索引（MPI）核心服务
  * 支持患者标识映射、脱敏引用、hash 匹配和冲突处理
  */
-@Service
+@Service("patientIndexMpiService")
 public class MpiService {
     private static final Logger logger = LoggerFactory.getLogger(MpiService.class);
     
@@ -173,6 +173,7 @@ public class MpiService {
         long start = System.currentTimeMillis();
         String mpiId = optional(request, "mpi_id");
         String patientName = optional(request, "patient_name");
+        String birthDate = optional(request, "birth_date");
         String idCardNo = optional(request, "id_card_no");
         String phone = optional(request, "phone");
         
@@ -184,9 +185,10 @@ public class MpiService {
         } else if (patientName != null || idCardNo != null || phone != null) {
             // 按 hash 匹配查询
             String nameHash = patientName != null ? MpiHashUtil.hash(patientName) : null;
+            String birthDateHash = birthDate != null ? MpiHashUtil.hash(birthDate) : null;
             String idCardHash = idCardNo != null ? MpiHashUtil.hash(idCardNo) : null;
             String phoneHash = phone != null ? MpiHashUtil.hash(phone) : null;
-            patient = findPatientByHash(tenantId, nameHash, null, idCardHash);
+            patient = findPatientByHash(tenantId, nameHash, birthDateHash, idCardHash);
         }
         
         Map<String, Object> result = new LinkedHashMap<>();

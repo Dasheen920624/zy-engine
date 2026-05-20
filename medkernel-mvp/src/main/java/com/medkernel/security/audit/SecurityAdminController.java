@@ -92,7 +92,7 @@ public class SecurityAdminController {
     public ApiResult<Map<String, Object>> getActiveKey() {
         EncryptionKey key = keyManagementService.getActiveKey();
         if (key == null) {
-            return ApiResult.failure(ErrorCode.NOT_FOUND, "未找到活跃的加密密钥");
+            return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "未找到活跃的加密密钥");
         }
 
         return ApiResult.success(serializeKey(key, false));
@@ -162,7 +162,7 @@ public class SecurityAdminController {
             result.put("decrypted", decrypted);
             return ApiResult.success(result);
         } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.INTERNAL_ERROR, "解密失败: " + e.getMessage());
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "解密失败: " + e.getMessage());
         }
     }
 
