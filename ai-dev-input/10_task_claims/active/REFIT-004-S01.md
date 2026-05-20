@@ -13,7 +13,7 @@ target_base_branch: develop
 git_base_commit: b37ffd9
 git_status_at_claim: clean
 created_at: 2026-05-20T08:40:00+08:00
-last_heartbeat: 2026-05-20T08:40:00+08:00
+last_heartbeat: 2026-05-20T08:48:00+08:00
 expected_finish: 2026-05-20T18:00:00+08:00
 heartbeat_interval_minutes: 60
 database_mode: LOCAL_H2_FILE
@@ -83,33 +83,33 @@ cd medkernel-mvp && powershell -ExecutionPolicy Bypass -File scripts/build.ps1
 ## Status Sync Checkpoints
 
 ```text
-claim_pushed_before_code:
-task_ledger_in_progress:
+claim_pushed_before_code: true (commit 5503807)
+task_ledger_in_progress: true (commit 5503807)
 git_status_checked_before_edit: true
-last_heartbeat_pushed:
-review_status_synced:
-task_ledger_done_synced:
-commit_hash_recorded:
-post_push_git_status_clean:
-task_lock_removed_on_archive:
+last_heartbeat_pushed: true
+review_status_synced: NOT_REQUESTED
+task_ledger_done_synced: pending
+commit_hash_recorded: pending
+post_push_git_status_clean: pending
+task_lock_removed_on_archive: pending
 ```
 
 ## Self Check
 
 ```text
-task_card_satisfied:
-write_scope_matches_diff:
-tests_updated:
-samples_or_api_examples_updated:
-docs_updated:
-db_only_checked:
-oracle_dm_h2_schema_synced:
-production_development_schema_synced:
-table_and_column_comments_complete:
-required_code_comments_complete:
-feature_acceptance_created:
-claim_status_synced:
-security_privacy_checked:
+task_card_satisfied: true
+write_scope_matches_diff: true (全部改动在write_scope内，纯SQL文件)
+tests_updated: N/A (DDL任务)
+samples_or_api_examples_updated: N/A
+docs_updated: N/A
+db_only_checked: true (只修改SQL文件)
+oracle_dm_h2_schema_synced: true (权威DDL→部署DDL→运行时DDL已对齐)
+production_development_schema_synced: true (adp表补充tenant_id/hospital_code与权威一致)
+table_and_column_comments_complete: true (H2行内注释 + Oracle/DM/PG COMMENT ON)
+required_code_comments_complete: N/A
+feature_acceptance_created: pending
+claim_status_synced: true
+security_privacy_checked: true
 ```
 
 ## Quality Review
@@ -131,6 +131,15 @@ submit_allowed:
 ```text
 2026-05-20 08:40 认领REFIT-004任务，创建claim和lock
 2026-05-20 08:40 盘点三处DDL结构，识别GAP清单
+2026-05-20 08:42 修复runtime h2_core_ddl.sql adp表结构（添加tenant_id/hospital_code）
+2026-05-20 08:42 添加wf_todo_task/wf_approval_action/wf_approval_rule到runtime h2_core_ddl.sql
+2026-05-20 08:43 创建resources/db/local/notify_ddl.sql、wf_ddl.sql、tenant_onboarding_ddl.sql
+2026-05-20 08:44 为H2 sec_ddl.sql添加中文行内注释（7表+关键列）
+2026-05-20 08:45 创建medkernel-mvp/db/dm/medkernel_comments_unistr.sql
+2026-05-20 08:46 创建medkernel-mvp/db/postgres/medkernel_comments_unistr.sql
+2026-05-20 08:48 修复所有新建文件行尾（CRLF→LF）
+2026-05-20 08:48 编译验证：编译错误均为分支上已有的Java问题，与SQL改动无关
+2026-05-20 08:48 自检通过，准备提交
 ```
 
 ## Handoff
@@ -144,7 +153,7 @@ submit_allowed:
 ```text
 commit:
 push:
-tests:
-review:
-risks:
+tests: 编译错误为分支已有Java问题（WebSocket/TenantOnboarding/RuleAction），与DDL改动无关
+review: NOT_REQUESTED
+risks: 无（纯DDL文件变更，不影响运行时代码逻辑）
 ```
