@@ -1,0 +1,52 @@
+{
+  "dataset_id": "AMI-ORDERS-001",
+  "description": "AMI 患者医嘱测试数据",
+  "category": "order",
+  "version": "1.0.0",
+  "records": [
+    {
+      "id": "ORD-001",
+      "patient_id": "P-AMI-001",
+      "order_type": "medication",
+      "order_name": "阿司匹林肠溶片",
+      "dosage": "300mg",
+      "frequency": "立即",
+      "status": "executed",
+      "ordered_by": "赵医生",
+      "ordered_time": "2025-03-15T08:35:00"
+    },
+    {
+      "id": "ORD-002",
+      "patient_id": "P-AMI-001",
+      "order_type": "medication",
+      "order_name": "氯吡格雷片",
+      "dosage": "300mg",
+      "frequency": "立即",
+      "status": "executed",
+      "ordered_by": "赵医生",
+      "ordered_time": "2025-03-15T08:35:00"
+    },
+    {
+      "id": "ORD-003",
+      "patient_id": "P-AMI-001",
+      "order_type": "procedure",
+      "order_name": "PCI 介入手术",
+      "dosage": null,
+      "frequency": "一次",
+      "status": "scheduled",
+      "ordered_by": "赵医生",
+      "ordered_time": "2025-03-15T09:00:00"
+    },
+    {
+      "id": "ORD-004",
+      "patient_id": "P-AMI-001",
+      "order_type": "lab",
+      "order_name": "心电图",
+      "dosage": null,
+      "frequency": "急查",
+      "status": "completed",
+      "ordered_by": "赵医生",
+      "ordered_time": "2025-03-15T08:32:00"
+    }
+  ]
+}
