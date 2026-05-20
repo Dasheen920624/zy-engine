@@ -2,6 +2,17 @@
 
 > ⚠️ **任何一项不勾不允许合并。**
 
+## 0.1 develop 健康前置（接手前必读）
+
+- [ ] 我接手前已查 [`ai-dev-input/00_DEVELOP_HEALTH.md`](../ai-dev-input/00_DEVELOP_HEALTH.md)
+- [ ] 当时状态：⬜ GREEN  ⬜ YELLOW  ⬜ RED
+- [ ] 若 RED，我领的是 `FIX-DEV-*` 修复任务（编号：_________），不是新业务任务
+- [ ] 我本地跑过 `cd medkernel-mvp && mvn -q compile` 且 PASS（粘贴最后 5 行到下方）
+
+```text
+（贴 mvn 输出末尾，含 BUILD SUCCESS）
+```
+
 ## 0. 任务信息
 
 - **PR 编号**：PR-V2-XX（或其它任务编号）

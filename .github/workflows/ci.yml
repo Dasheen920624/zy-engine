@@ -31,6 +31,11 @@ jobs:
       - name: Verify encoding and JSON samples
         run: .\medkernel-mvp\scripts\verify-encoding.cmd
 
+      # 显式独立 mvn compile，便于在 CI 日志里立刻看到"编译失败"vs"测试失败"vs"打包失败"。
+      # 这一步对应 ai-dev-input/00_DEVELOP_HEALTH.md 的 GREEN/RED 判定。
+      - name: Compile only (gates DEVELOP_HEALTH)
+        run: mvn -q -f medkernel-mvp\pom.xml compile
+
       - name: Build backend MVP
         run: .\medkernel-mvp\scripts\build.cmd
 
