@@ -1,6 +1,0 @@
-task_id: INTEROP-001
-claim_id: INTEROP-001-S01
-owner: CodeBuddy
-locked_at: 2026-05-20T06:33:00+08:00
-expires_at: 2026-05-21T06:33:00+08:00
-heartbeat_interval_minutes: 60
