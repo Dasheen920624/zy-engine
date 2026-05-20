@@ -90,8 +90,12 @@ frontend/
 └── src/
     ├── main.tsx            # 入口：QueryClient + Router + 主题 Provider
     ├── App.tsx             # 路由出口
+<<<<<<< HEAD
     ├── styles/tokens.css   # 设计系统 CSS Variables
     ├── styles/tokens.ts    # 运行时主题色 token（唯一允许定义 JS 色值）
+=======
+    ├── styles/tokens.css   # 设计系统 CSS Variables（唯一允许定义色值）
+>>>>>>> origin/codex/product-audit-cleanup
     ├── styles/global.css   # 全局样式（与原型对齐）
     ├── theme/
     │   ├── tokens.ts       # 主题 registry + 自定义主题色派生
