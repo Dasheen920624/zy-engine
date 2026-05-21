@@ -92,6 +92,13 @@ export const menuSections: MenuSection[] = [
         path: "/pathway/templates",
       },
       {
+        key: "patient-pathways",
+        label: "患者路径管理",
+        icon: <UserSwitchOutlined />,
+        path: "/pathway/patients",
+        pr: "PATHWAY-ENGINE-COMPLETE",
+      },
+      {
         key: "terminology-mapping",
         label: "字典映射",
         icon: <MedicineBoxOutlined />,

@@ -1,96 +1,316 @@
-import type React from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Button, Descriptions, Spin, Typography, Tag } from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
-import { StatusBadge, SourceInfo } from "../../components";
-import { getPathway } from "../../api/pathway";
-import type { PathwayDetail } from "../../api/types";
+/**
+ * 路径模板详情页（路由 /pathway/templates/:code）—— PATHWAY-ENGINE-COMPLETE 重写。
+ *
+ * 主要改动相对旧版（96 行 inline-style 实现）：
+ *  - 零 inline style：全 CSS Modules + var(--mk-*) token
+ *  - 版本时间轴（draft + 已发布 + 激活）
+ *  - 引用警告卡（reference_warnings 缺失项可见，ADR-0004）
+ *  - 实例统计 + 变异统计（调 /pathway-instances/summary + /pathway-variations/summary）
+ *  - 草稿 / 已发布 JSON：CodeMirror 6 只读视图（统一 PR-FINAL-11 引入的依赖）
+ *  - 来源追溯 <SourceInfo>（已有，按 reference_sources 渲染）
+ *  - 编辑 / 对比 / 删除 按钮明显化
+ */
 
-const { Title } = Typography;
+import { useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button, Empty, Result, Space, Spin, Statistic, Tabs, Tag, Typography, message, Popconfirm } from "antd";
+import {
+  ArrowLeftOutlined,
+  DeleteOutlined,
+  DiffOutlined,
+  EditOutlined,
+} from "@ant-design/icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import CodeMirror from "@uiw/react-codemirror";
+import { json } from "@codemirror/lang-json";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { SourceInfo } from "../../components";
+import {
+  deletePathway,
+  getPathway,
+  nodeCompletionSummary,
+  summarizePatientPathwayInstances,
+  summarizeVariations,
+} from "../../api/pathway";
+import { formatPercent, stringifyJson } from "./helpers/pathwayFormatters";
+import PathwayTimeline from "./components/PathwayTimeline";
+import ReferenceWarnings from "./components/ReferenceWarnings";
+import styles from "./styles.module.css";
 
-const PathwayDetail: React.FC = () => {
-  const { code } = useParams<{ code: string }>();
+const { Title, Text } = Typography;
+
+export default function PathwayDetail() {
+  const params = useParams<{ code: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const code = params.code ?? "";
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["pathway", code],
-    queryFn: () => getPathway(code ?? ""),
-    enabled: !!code,
+  const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
+
+  const detailQuery = useQuery({
+    queryKey: ["pathway", code, selectedVersion],
+    queryFn: () => getPathway(code, selectedVersion ?? undefined),
+    enabled: Boolean(code),
   });
 
-  if (isLoading) {
+  const instanceSummaryQuery = useQuery({
+    queryKey: ["pathway-instance-summary", code],
+    queryFn: () => summarizePatientPathwayInstances({ pathway_code: code }),
+    enabled: Boolean(code),
+  });
+
+  const nodeCompletionQuery = useQuery({
+    queryKey: ["pathway-node-completion", code],
+    queryFn: () => nodeCompletionSummary({ pathway_code: code }),
+    enabled: Boolean(code),
+  });
+
+  const variationSummaryQuery = useQuery({
+    queryKey: ["pathway-variation-summary", code],
+    queryFn: () => summarizeVariations({ pathway_code: code }),
+    enabled: Boolean(code),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deletePathway(code),
+    onSuccess: () => {
+      message.success("路径已删除");
+      queryClient.invalidateQueries({ queryKey: ["pathways"] });
+      navigate("/pathway/templates");
+    },
+    onError: (err: Error) => message.error(`删除失败：${err.message}`),
+  });
+
+  const detail = detailQuery.data;
+
+  const tabs = useMemo(() => {
+    if (!detail) return [];
+    return [
+      {
+        key: "draft",
+        label: "草稿配置",
+        children: detail.draft_config ? (
+          <div className={styles.jsonContainer} aria-label="draft-config-json">
+            <CodeMirror
+              value={stringifyJson(detail.draft_config)}
+              extensions={[json()]}
+              theme={oneDark}
+              editable={false}
+              basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: false }}
+            />
+          </div>
+        ) : (
+          <div className={styles.jsonReadOnlyEmpty}>无草稿</div>
+        ),
+      },
+      {
+        key: "published",
+        label: detail.active_published_version
+          ? `已发布 · v${detail.active_published_version}`
+          : "已发布版本",
+        children: detail.published_config ? (
+          <div className={styles.jsonContainer} aria-label="published-config-json">
+            <CodeMirror
+              value={stringifyJson(detail.published_config)}
+              extensions={[json()]}
+              theme={oneDark}
+              editable={false}
+              basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: false }}
+            />
+          </div>
+        ) : (
+          <div className={styles.jsonReadOnlyEmpty}>暂无已发布版本</div>
+        ),
+      },
+    ];
+  }, [detail]);
+
+  if (detailQuery.isLoading) {
     return (
-      <div style={{ padding: 24, textAlign: "center" }}>
-        <Spin size="large" />
+      <div className={styles.page}>
+        <Spin tip="加载路径详情中..." />
       </div>
     );
   }
 
-  const detail: PathwayDetail | undefined = data;
+  if (detailQuery.isError || !detail) {
+    return (
+      <Result
+        status="404"
+        title="路径未找到"
+        subTitle={`未找到路径 ${code}，可能已被删除或无权访问。`}
+        extra={
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/pathway/templates")}>
+            返回路径库
+          </Button>
+        }
+      />
+    );
+  }
+
+  const instanceSummary = instanceSummaryQuery.data;
+  const nodeCompletion = nodeCompletionQuery.data;
+  const variationSummary = variationSummaryQuery.data;
+  const completionRate =
+    nodeCompletion && nodeCompletion.total > 0
+      ? (nodeCompletion.by_node ?? []).reduce((acc, n) => acc + n.completion_rate, 0) /
+        ((nodeCompletion.by_node ?? []).length || 1)
+      : null;
 
   return (
-    <div style={{ padding: 24 }}>
-      <Button
-        icon={<ArrowLeftOutlined />}
-        style={{ marginBottom: 16 }}
-        onClick={() => navigate("/pathway/templates")}
-      >
-        返回列表
-      </Button>
-
-      <Title level={3}>
-        {detail?.pathway_code || code}
-        <SourceInfo source={{ documentName: detail?.pathway_code ?? "", documentId: detail?.pathway_code ?? "" }} />
-      </Title>
-
-      <Descriptions bordered column={2} style={{ marginBottom: 24 }}>
-        <Descriptions.Item label="路径编码">{detail?.pathway_code}</Descriptions.Item>
-        <Descriptions.Item label="草稿状态">
-          <StatusBadge status={detail?.draft_status === "DRAFT" ? "draft" : "retired"} />
-        </Descriptions.Item>
-        <Descriptions.Item label="已发布版本">
-          {detail?.published_versions?.map((v) => (
-            <Tag key={v}>{v}</Tag>
-          )) || "—"}
-        </Descriptions.Item>
-        <Descriptions.Item label="当前激活版本">
-          {detail?.active_published_version || "—"}
-        </Descriptions.Item>
-        <Descriptions.Item label="选中版本">
-          {detail?.selected_version || "—"}
-        </Descriptions.Item>
-      </Descriptions>
-
-      {detail?.reference_warnings && detail.reference_warnings.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <Typography.Text type="warning">
-            引用警告：{detail.reference_warnings.length} 项缺失引用
-          </Typography.Text>
-        </div>
-      )}
-
-      {detail?.draft_config && (
-        <>
-          <Title level={4}>草稿配置</Title>
-          <pre style={{ background: "var(--mk-bg-base)", padding: 16, borderRadius: 8, overflow: "auto" }}>
-            {JSON.stringify(detail.draft_config, null, 2)}
-          </pre>
-        </>
-      )}
-
-      {detail?.published_config && (
-        <>
-          <Title level={4} style={{ marginTop: 24 }}>
-            已发布配置
+    <div className={styles.page}>
+      <header className={styles.pageHeader}>
+        <div>
+          <Button
+            type="link"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate("/pathway/templates")}
+          >
+            返回路径库
+          </Button>
+          <Title level={3} className={styles.pageTitle}>
+            {detail.pathway_code}
           </Title>
-          <pre style={{ background: "var(--mk-bg-base)", padding: 16, borderRadius: 8, overflow: "auto" }}>
-            {JSON.stringify(detail.published_config, null, 2)}
-          </pre>
-        </>
-      )}
+          <Space size="middle" wrap>
+            {detail.active_published_version && (
+              <Tag color="success">激活 v{detail.active_published_version}</Tag>
+            )}
+            {detail.draft_status === "DRAFT" && <Tag color="warning">含未发布草稿</Tag>}
+            {selectedVersion && selectedVersion !== detail.active_published_version && (
+              <Tag color="processing">查看 v{selectedVersion}</Tag>
+            )}
+            <SourceInfo
+              variant="inline"
+              source={{
+                documentName: detail.pathway_code,
+                documentId: detail.pathway_code,
+              }}
+              review={{ status: (detail.reference_warnings?.length ?? 0) > 0 ? "missing" : "reviewed" }}
+              version={detail.active_published_version ?? undefined}
+            />
+          </Space>
+        </div>
+        <div className={styles.headerActions}>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => navigate(`/pathway/templates/${encodeURIComponent(code)}/edit`)}
+          >
+            编辑草稿
+          </Button>
+          <Button
+            icon={<DiffOutlined />}
+            onClick={() => navigate(`/pathway/templates/${encodeURIComponent(code)}/diff`)}
+            disabled={(detail.published_versions?.length ?? 0) < 2}
+          >
+            版本对比
+          </Button>
+          <Popconfirm
+            title="确认删除该路径？"
+            description="删除后无法恢复；建议先回滚或导出。"
+            okText="删除"
+            okButtonProps={{ danger: true }}
+            cancelText="取消"
+            onConfirm={() => deleteMutation.mutate()}
+          >
+            <Button danger icon={<DeleteOutlined />} loading={deleteMutation.isPending}>
+              删除
+            </Button>
+          </Popconfirm>
+        </div>
+      </header>
+
+      <ReferenceWarnings warnings={detail.reference_warnings ?? []} />
+
+      <div className={styles.detailGrid}>
+        <div className={styles.detailMain}>
+          {/* ─── 元信息 ─── */}
+          <section className={styles.sectionCard} aria-label="pathway-meta">
+            <h3 className={styles.sectionTitle}>元信息</h3>
+            <dl className={styles.metaList}>
+              <dt className={styles.metaLabel}>路径编码</dt>
+              <dd className={styles.metaValue}>{detail.pathway_code}</dd>
+              <dt className={styles.metaLabel}>草稿状态</dt>
+              <dd className={styles.metaValue}>
+                {detail.draft_status === "DRAFT" ? "有未发布草稿" : "—"}
+              </dd>
+              <dt className={styles.metaLabel}>已发布版本</dt>
+              <dd className={styles.metaValue}>
+                {detail.published_versions?.length
+                  ? detail.published_versions.map((v) => <Tag key={v}>v{v}</Tag>)
+                  : "—"}
+              </dd>
+              <dt className={styles.metaLabel}>当前激活版本</dt>
+              <dd className={styles.metaValue}>{detail.active_published_version || "—"}</dd>
+              <dt className={styles.metaLabel}>查看版本</dt>
+              <dd className={styles.metaValue}>{detail.selected_version || selectedVersion || "—"}</dd>
+              <dt className={styles.metaLabel}>引用来源</dt>
+              <dd className={styles.metaValue}>
+                {detail.reference_sources && detail.reference_sources.length > 0
+                  ? `${detail.reference_sources.length} 项`
+                  : "—"}
+              </dd>
+            </dl>
+          </section>
+
+          {/* ─── 草稿 / 已发布 JSON 切换 ─── */}
+          <section className={styles.sectionCard} aria-label="pathway-config">
+            <h3 className={styles.sectionTitle}>路径配置</h3>
+            <Tabs items={tabs} />
+          </section>
+        </div>
+
+        <aside className={styles.detailSide}>
+          {/* ─── 版本时间轴 ─── */}
+          <section className={styles.sectionCard} aria-label="pathway-versions">
+            <h3 className={styles.sectionTitle}>版本时间轴</h3>
+            <PathwayTimeline
+              draftStatus={detail.draft_status}
+              publishedVersions={detail.published_versions ?? []}
+              activeVersion={detail.active_published_version}
+              selectedVersion={detail.selected_version ?? selectedVersion}
+              onPickVersion={setSelectedVersion}
+              onDiffVersion={(v) => navigate(`/pathway/templates/${encodeURIComponent(code)}/diff?to=${encodeURIComponent(v)}`)}
+            />
+          </section>
+
+          {/* ─── 实例统计 ─── */}
+          <section className={styles.sectionCard} aria-label="pathway-instance-summary">
+            <h3 className={styles.sectionTitle}>实例统计</h3>
+            {instanceSummaryQuery.isLoading ? (
+              <Spin />
+            ) : instanceSummary ? (
+              <div className={styles.statRow}>
+                <Statistic title="总数" value={instanceSummary.total ?? 0} />
+                <Statistic title="进行中" value={instanceSummary.active ?? 0} />
+                <Statistic title="完成" value={instanceSummary.completed ?? 0} />
+                <Statistic title="退出" value={instanceSummary.exited ?? 0} />
+                {completionRate !== null && (
+                  <Statistic title="平均完成率" value={formatPercent(completionRate)} />
+                )}
+              </div>
+            ) : (
+              <Empty description="暂无统计" />
+            )}
+          </section>
+
+          {/* ─── 变异统计 ─── */}
+          <section className={styles.sectionCard} aria-label="pathway-variation-summary">
+            <h3 className={styles.sectionTitle}>变异统计</h3>
+            {variationSummaryQuery.isLoading ? (
+              <Spin />
+            ) : variationSummary ? (
+              <div className={styles.statRow}>
+                <Statistic title="累计变异" value={variationSummary.total ?? 0} />
+                {variationSummary.by_type?.map((row) => (
+                  <Statistic key={row.variation_type} title={row.variation_type} value={row.count} />
+                ))}
+              </div>
+            ) : (
+              <Text type="secondary">暂无变异</Text>
+            )}
+          </section>
+        </aside>
+      </div>
     </div>
   );
-};
-
-export default PathwayDetail;
+}
