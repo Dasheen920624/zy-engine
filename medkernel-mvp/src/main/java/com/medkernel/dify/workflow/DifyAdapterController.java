@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.dify.workflow;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.organization.OrganizationContextService;
