@@ -24,17 +24,17 @@
 | PR | 标题 | 阶段 | 状态 | 负责 AI 级别 | 估时 |
 |---|---|:---:|:---:|:---:|:---:|
 | **PR-FINAL-00** | tokens 主色 + 命名/菜单统一 | 1 | ✅ DONE | 架构师 | 1 天 |
-| **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | 🟡 TODO | 架构师 | 1 天 |
-| **PR-FINAL-02** | 删 patientindex 整包（ADR-0005）| 1 | 🟡 TODO | 架构师 | 2 天 |
-| **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | 🟡 TODO | 架构师 | 1 天 |
+| **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | ✅ DONE · Codex-GPT5 · 2026-05-21T22:12+08:00 | 架构师 | 1 天 |
+| **PR-FINAL-02** | 删 patientindex 整包（ADR-0005）| 1 | ✅ DONE | 架构师 | 2 天 |
+| **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | ✅ DONE | 架构师 | 1 天 |
 | **PR-FINAL-04** | CSS Modules 框架 + Login/Dashboard 示范抽取 | 1 | 🟡 TODO | 高级 | 2 天 |
 | **PR-FINAL-05** | ESLint `no-inline-style` + 守门脚本 | 1 | ✅ DONE | 架构师 | 0.5 天 |
-| **PR-FINAL-06** | LoginPage 4 Tab 重写（国情合规 12 条）| 1 | 🟡 TODO | 高级 | 2 天 |
+| **PR-FINAL-06** | LoginPage 4 Tab 重写（国情合规 12 条）| 1 | ✅ DONE · Codex-GPT5 · 2026-05-21T22:41+08:00 | 高级 | 2 天 |
 | **PR-FINAL-07** | `/mpi/patients` 患者主索引页 | 2 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-08** | `/admin/users` 用户管理页 | 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-09** | `/admin/audit` 审计日志查询页 | 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-10** | `/tenant/onboarding` 租户开通向导 | 2 | 🟡 TODO | 高级 | 4 天 |
-| **PR-FINAL-11** | `/rule/definitions` 规则库 + DSL 编辑器 | 2 | 🟡 TODO | 高级 | 8 天 |
+| **PR-FINAL-11** | `/rule/definitions` 规则库 + DSL 编辑器 | 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-21 | 高级 | 8 天 |
 | **PR-FINAL-12** | `/adapter/hub` 适配器中心 | 2 | 🟡 TODO | 中级 | 4 天 |
 | **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-14** | 砍菜单 + Dashboard PENDING 卡更新 | 2 | 🟡 TODO | 初级 | 0.5 天 |
@@ -171,6 +171,84 @@ private Connection connection() throws SQLException {
 // 同时删除 loadDriver() / 重试循环 / sleepQuietly 等 helper（如果存在）
 ```
 
+### ✅ PR-FINAL-02：删 patientindex 整包（DONE 2026-05-21）
+
+**ADR**：ADR-0005（PRODUCT_ARCHITECTURE_FINAL.md §3）
+
+**修改**：
+- 删除 `medkernel-mvp/src/main/java/com/medkernel/patientindex/` 整目录 8 个文件：
+  - `controller/MpiController.java`（99 行）— 旧 `/api/mpi/*` 7 端点
+  - `service/MpiService.java`（608 行）— 内存态 ConcurrentHashMap demo 实现
+  - `entity/` 5 个 POJO（687 行）：`MpiPatientIndexEntity` / `MpiEncounterEntity` / `MpiIdentifierMappingEntity` / `MpiIdentifierConflictEntity` / `MpiInsuranceSettlementEntity`
+  - `util/MpiHashUtil.java`（81 行）
+- 删除 `medkernel-mvp/src/test/java/com/medkernel/patientindex/MpiApiContractTests.java`
+- **合计 ~1500 行 Java + 测试**
+- **`patient/` 包完整保留**：MpiController 17 端点 + MpiService + MpiPersistenceService 835 行 + IdentityConflict / PatientIdentity / VisitIdentity
+- DDL：旧 patientindex 0 表定义（生产部署 / ai-dev-input 参考 DDL 都查过），**无需 DEPRECATED 注释**
+- 前端：0 引用 `/api/mpi/*` 旧端点 → **0 前端改动**
+
+**关键确认**：旧 patientindex 是纯内存态 demo 代码——`MpiService` 全程 ConcurrentHashMap 存储，0 处 JDBC 调用，0 张数据库表。删除 0 数据库影响 / 0 运行时影响 / 0 测试影响（同包测试已一并删除）。
+
+**后续注意**：
+- PR-FINAL-07（`/mpi/patients` 患者主索引页）的"前置 PR-FINAL-02"现已就绪，可以开工
+- 所有 MPI 业务请走 `/api/v1/mpi/*`（`patient/MpiController` 17 端点完整方案），不要再造 `patientindex/` 包
+
+### ✅ PR-FINAL-03：删 security/UserSyncController 双副本（DONE 2026-05-21）
+
+**ADR**：ADR-0006（PRODUCT_ARCHITECTURE_FINAL.md §3）
+
+**修改**：
+- 删除 5 个 Java 文件：
+  - `security/UserSyncController.java`（旧 `/api/security/sync/*` 6 端点）
+  - `security/UserSyncService.java`（provider 模型同步逻辑）
+  - `security/UserSyncJob.java`（实体）
+  - `security/UserSyncDetail.java`（实体）
+  - `security/SyncReport.java`（DTO）
+- **保留** `security/IdentityProvider.java`（SSO 共用：`SsoService` × 13 / `SsoController` × 1 / `SecurityPersistenceService` × 14 处引用，删了 SSO 会崩）
+- 重构 `security/SecurityPersistenceService.java`：
+  - 删 9 个旧方法（createSyncJob / updateSyncJob / findSyncJobsByTenant / findSyncJobById / insertSyncDetails / findSyncDetailsByJobId × 2 / mapSyncJob / mapSyncDetail）
+  - **保留** IdentityProvider 全套 CRUD（findIdentityProviderByType / findAllIdentityProviders / saveIdentityProvider / findIdentityProvidersByTenant / findIdentityProviderById / deleteIdentityProvider）—— SsoService 仍在用
+  - 净减 216 行（1179 → 963）
+- DDL：`ai-dev-input/04_database/{local,pg,oracle,dm}/sec_*.sql` 4 个参考 DDL 文件中的旧 `sec_user_sync_job` / `sec_user_sync_detail` 表已由 PR-FINAL-15 彻底删除；系统未上线，不保留 DEPRECATED 脏表
+- 前端 `frontend/src` 0 引用 `/api/security/sync` → **0 前端改动**
+
+**确认**：旧 UserSyncService 实际上是僵尸代码——生产部署 DDL `medkernel-mvp/src/main/resources/db/local/sec_ddl.sql` **从未建过** `sec_user_sync_job`/`sec_user_sync_detail` 表，任何对旧 API 的调用必然 SQL 失败。删除 0 运行时影响。
+
+**后续注意**：
+- PR-FINAL-08（`/admin/users` 用户管理页）的"前置 PR-FINAL-03" 现已就绪，可以开工
+- 任何 AI 想做"院内身份源 / 全量同步 / 增量同步"前端 → 走 `/api/user-sync/*`（`security/usersync/UserSyncApiController`）source/task 模型，不要再造 `provider` 路径
+
+### ✅ PR-FINAL-11：规则库 + DSL 编辑器（DONE 2026-05-21）
+
+**修改**：
+- `frontend/src/api/rule.ts`（新建）：规则模块前端契约——封装 `/api/rules/*` + `/api/rule-engine/*`；本地 view 类型 `RuleDefinition` / `RuleExecLog` / `RuleExecLogSummary`（避免触碰架构师专属 `api/types.ts`）
+- `frontend/src/pages/Rule/`（新建整包）：
+  - `RuleList.tsx`：列表 + 搜索 + 类型/状态筛选 + 分页
+  - `RuleDetail.tsx`：元信息 + 来源追溯（`<SourceInfo>`）+ DSL 只读视图 + 触发历史时间轴 + 触发聚合
+  - `RuleEditor/index.tsx`：DSL 编辑器主容器（路由 `/rule/definitions/:code/edit` / `new/edit`）
+  - `RuleEditor/DslEditor.tsx`：JSON DSL 文本编辑器 + 实时 Schema 校验
+  - `RuleEditor/DryRunPanel.tsx`：场景选择 + facts JSON + `/api/rules/simulate`
+  - `RuleEditor/EditorHeader.tsx`：保存草稿 / 发布按钮 + DSL 校验状态
+  - `components/RuleTypeTag.tsx` / `SeverityTag.tsx` / `ExecLogTimeline.tsx` / `SourceCitationCard.tsx`
+  - `helpers/ruleSchema.ts`：轻量 DSL 校验器（与 `rule_dsl.schema.json` 对齐，不引入 ajv）
+  - `helpers/ruleFormatters.ts`：类型/严重度/状态/时间/scope 纯函数格式化
+  - `helpers/ruleSamples.ts`：5 个国情场景样本（AMI / EMR-QC / 红线 / 医保 / 路径准入）
+  - `styles.module.css`：100% var(--mk-*) token，零 inline style
+  - `__tests__/`：18+ 测试（helpers / 组件 / 列表页 / 详情页 / 试运行）
+- `frontend/src/router/menuConfig.tsx`：M1 知识工厂分组新增「规则库」入口（SafetyCertificateOutlined 图标，从隐藏注释加回）
+- `frontend/src/router/routes.tsx`：`/rule/definitions` `/rule/definitions/:code` `/rule/definitions/:code/edit` 从 PlaceholderPage 改为真实组件
+- `frontend/package.json`：无新增运行时或测试依赖
+
+**国情合规**：
+- 所有医学规则必须显示来源（ADR-0004）—— `<SourceInfo>` 通过 `<SourceCitationCard>` 承载
+- 试运行 5 个场景样本全部使用国内场景（AMI/STEMI、病历时限、红线医嘱、医保审核、卒中溶栓准入）
+- DSL 编辑器中文注释 + 中文错误提示
+- 来源缺失自动渲染「来源缺失」状态卡（不静默通过）
+
+**后续注意**：
+- PR-FINAL-14 砍菜单时无需动 rule-definitions（本 PR 已加回）
+- PR-FINAL-19 inline 抽取无需动本模块（本模块全程 0 inline）
+
 ---
 
 ## 3. 共享文件清单（必须由架构师 AI 领单）
@@ -188,7 +266,7 @@ private Connection connection() throws SQLException {
 | `medkernel-mvp/src/main/resources/application.yml` | 架构师 | 后端全局配置 |
 | `medkernel-mvp/src/main/java/com/medkernel/common/**` | 架构师 | 通用层（ApiResult / ErrorCode / Exception）|
 | `medkernel-mvp/src/main/java/com/medkernel/persistence/**` | 架构师 | 持久化基础设施 |
-| `medkernel-mvp/src/main/java/com/medkernel/dify/` 整包 | 架构师 | LLM Gateway / Dify |
+| `medkernel-mvp/src/main/java/com/medkernel/dify/workflow/` 整包 | 架构师 | Dify 可选 WORKFLOW Provider |
 | `medkernel-mvp/src/main/java/com/medkernel/patient/` `patientindex/` | 架构师 | ADR-0005 双副本 |
 | `medkernel-mvp/src/main/java/com/medkernel/security/UserSyncController*` `security/usersync/**` | 架构师 | ADR-0006 双副本 |
 | `scripts/verify-pr.ps1` `verify-task-prereq.ps1` `check-inline-style-count.ps1` | 架构师 | CI 门禁 |
@@ -301,13 +379,13 @@ private Connection connection() throws SQLException {
   - `RuleList.tsx`（规则库列表 + 分类 + 状态）
   - `RuleDetail.tsx`（规则详情 + 触发历史 + 关联路径）
   - `RuleEditor/index.tsx`（DSL 编辑器主容器）
-  - `RuleEditor/DslEditor.tsx`（CodeMirror 6 或 Monaco 编辑器 + 语法高亮）
+  - `RuleEditor/DslEditor.tsx`（JSON DSL 文本编辑器 + 实时 Schema 校验）
   - `RuleEditor/DryRunPanel.tsx`（试运行 + 样本数据 + 命中结果）
   - `RuleEditor/PreviewPanel.tsx`（规则可视化预览）
   - `styles.module.css`
 - `menuConfig.tsx` 加 rule-definitions 回 M1 知识工厂（恢复 SafetyCertificateOutlined 图标）
 - `routes.tsx` 改为真实组件
-- **依赖新引入**：CodeMirror 6（推荐，bundle 小）
+- **依赖新引入**：不新增编辑器运行时依赖，优先复用 AntD 文本域，避免锁文件漂移
 
 **重要约束**：
 - DSL 编辑器组件本身可能 > 500 行（行数硬上限例外），需要拆分子组件

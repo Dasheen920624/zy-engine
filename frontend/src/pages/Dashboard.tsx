@@ -1,5 +1,6 @@
 import { Card, Col, Row, Statistic, Tag, Typography, Space } from "antd";
 import { Link } from "react-router-dom";
+import styles from "./Dashboard.module.css";
 import {
   ApartmentOutlined,
   AuditOutlined,
@@ -40,23 +41,23 @@ export default function Dashboard() {
   return (
     <div>
       <div className="mk-page-header">
-        <Title level={3} style={{ margin: 0 }}>
+        <Title level={3} className={styles.pageTitle}>
           工作台
         </Title>
-        <Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 0 }}>
+        <Paragraph type="secondary" className={styles.pageDescription}>
           集团医疗智能中枢 MedKernel · 知识工厂 / 质控驾驶舱 / 用户与身份 / 平台监控 四大模块
         </Paragraph>
       </div>
 
       {/* 核心指标 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[16, 16]} className={styles.metricsRow}>
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title="已落地后端模块"
               value={28}
               valueStyle={{ color: "var(--mk-brand-primary-active)" }}
-              suffix={<Text type="secondary" style={{ fontSize: 12 }}>个 Java 包</Text>}
+              suffix={<Text type="secondary" className={styles.statSuffix}>个 Java 包</Text>}
             />
           </Card>
         </Col>
@@ -66,7 +67,7 @@ export default function Dashboard() {
               title="已落地前端页面"
               value={20}
               valueStyle={{ color: "var(--mk-brand-primary-active)" }}
-              suffix={<Text type="secondary" style={{ fontSize: 12 }}>个模块</Text>}
+              suffix={<Text type="secondary" className={styles.statSuffix}>个模块</Text>}
             />
           </Card>
         </Col>
@@ -76,7 +77,7 @@ export default function Dashboard() {
               title="契约测试"
               value="248 / 248"
               valueStyle={{ color: "var(--mk-success)" }}
-              suffix={<Text type="secondary" style={{ fontSize: 12 }}>0 错</Text>}
+              suffix={<Text type="secondary" className={styles.statSuffix}>0 错</Text>}
             />
           </Card>
         </Col>
@@ -129,12 +130,12 @@ function CapabilitySection({
   cards: CapabilityCard[];
 }) {
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ marginBottom: 12 }}>
-        <Title level={4} style={{ margin: 0 }}>
+    <div className={styles.section}>
+      <div className={styles.sectionHead}>
+        <Title level={4} className={styles.pageTitle}>
           {title}
         </Title>
-        <Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 0, fontSize: 13 }}>
+        <Paragraph type="secondary" className={styles.sectionDescription}>
           {description}
         </Paragraph>
       </div>
@@ -152,20 +153,20 @@ function CapabilitySection({
 function CardItem({ card }: { card: CapabilityCard }) {
   const tag = STATUS_TAG[card.status];
   const body = (
-    <Card hoverable style={{ height: "100%" }}>
-      <Space direction="vertical" size={8} style={{ width: "100%" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 18, color: "var(--mk-brand-primary)" }}>
+    <Card hoverable className={styles.card}>
+      <Space direction="vertical" size={8} className={styles.cardSpace}>
+        <div className={styles.cardHeader}>
+          <span className={styles.cardIcon}>
             {card.icon}
           </span>
           <Text strong>{card.title}</Text>
-          <Tag color={tag.color} style={{ marginLeft: "auto", marginRight: 0 }}>
+          <Tag color={tag.color} className={styles.cardStatusTag}>
             {tag.label}
           </Tag>
         </div>
         <Paragraph
           type="secondary"
-          style={{ marginBottom: 0, fontSize: 13, lineHeight: 1.6 }}
+          className={styles.cardDescription}
         >
           {card.description}
         </Paragraph>

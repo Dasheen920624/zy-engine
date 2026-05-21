@@ -1,6 +1,6 @@
 package com.medkernel.quality;
 
-import com.medkernel.dify.DifyService;
+import com.medkernel.dify.workflow.DifyService;
 import com.medkernel.pathway.PathwayService;
 import com.medkernel.rule.RuleService;
 import org.springframework.stereotype.Service;

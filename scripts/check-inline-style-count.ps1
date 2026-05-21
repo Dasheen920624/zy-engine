@@ -12,8 +12,10 @@
 #   抽取完毕后跑 ./scripts/check-inline-style-count.ps1 -UpdateBaseline
 #   会把新值写回本文件（仅本地，需手工 commit）。
 #
-# v0.3-final baseline: 582（初始扫描值，2026-05-21）
-# v0.3-final 目标: ≤ 100（PR-FINAL-04 / PR-FINAL-19 抽取至 CSS Modules）
+# v0.3-final baseline 演进：
+#   582 - PR-FINAL-05 初始扫描值（2026-05-21）
+#   555 - PR-FINAL-04 Login + Dashboard 抽取（2026-05-21，-27）
+# v0.3-final 目标: ≤ 100（PR-FINAL-19 抽取剩余 ~430 处至 CSS Modules）
 
 param(
     [switch]$UpdateBaseline,
@@ -22,8 +24,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# v0.3-final baseline，2026-05-21 初始扫描值
-$script:Baseline = 582
+# v0.3-final baseline（2026-05-21 PR-FINAL-04 抽取后）
+$script:Baseline = 555
 
 # 根路径推断（脚本在 scripts/ 下，仓库根在上一级）
 $repoRoot = Split-Path -Parent $PSScriptRoot
