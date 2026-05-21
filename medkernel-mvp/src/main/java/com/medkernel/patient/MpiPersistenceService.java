@@ -84,18 +84,49 @@ public class MpiPersistenceService {
         }
         identity.setUpdatedTime(LocalDateTime.now());
 
+        // 原实现用 MySQL 专有 ON DUPLICATE KEY UPDATE，Oracle/DM/PG/Kingbase/H2 均不支持。
+        // 改为同事务内"按唯一键 SELECT → UPDATE 或 INSERT"二选一（AUDIT-20260520 §2.2 已要求统一修）。
+        try (Connection connection = connection()) {
+            Long existingId = findPatientIdentityIdByUniqueKey(connection,
+                    identity.getTenantId(), identity.getIdentityType(),
+                    identity.getSourceSystem(), identity.getExternalId());
+            if (existingId != null) {
+                identity.setId(existingId);
+                updatePatientIdentity(connection, identity);
+            } else {
+                insertPatientIdentity(connection, identity);
+            }
+            return identity;
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save patient identity failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private Long findPatientIdentityIdByUniqueKey(Connection connection, String tenantId,
+                                                  String identityType, String sourceSystem,
+                                                  String externalId) throws SQLException {
+        String sql = "SELECT id FROM mpi_patient_identity "
+                + "WHERE tenant_id = ? AND identity_type = ? AND source_system = ? AND external_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, tenantId);
+            ps.setString(2, identityType);
+            ps.setString(3, sourceSystem);
+            ps.setString(4, externalId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void insertPatientIdentity(Connection connection, PatientIdentity identity) throws SQLException {
         String sql = "INSERT INTO mpi_patient_identity (id, tenant_id, platform_patient_id, identity_type, "
                 + "external_id, id_hash, source_system, status, confidence, manually_verified, "
                 + "verified_by, verified_time, merged_to_id, remarks, created_time, updated_time) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE "
-                + "platform_patient_id = VALUES(platform_patient_id), status = VALUES(status), "
-                + "confidence = VALUES(confidence), manually_verified = VALUES(manually_verified), "
-                + "verified_by = VALUES(verified_by), verified_time = VALUES(verified_time), "
-                + "merged_to_id = VALUES(merged_to_id), remarks = VALUES(remarks), updated_time = VALUES(updated_time)";
-
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, identity.getId());
             ps.setString(2, identity.getTenantId());
             ps.setString(3, identity.getPlatformPatientId());
@@ -113,9 +144,26 @@ public class MpiPersistenceService {
             ps.setTimestamp(15, Timestamp.valueOf(identity.getCreatedTime()));
             ps.setTimestamp(16, Timestamp.valueOf(identity.getUpdatedTime()));
             ps.executeUpdate();
-            return identity;
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save patient identity failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void updatePatientIdentity(Connection connection, PatientIdentity identity) throws SQLException {
+        // 与原 ON DUPLICATE KEY UPDATE 子句列清单一致，id/tenant_id/identity_type/source_system/external_id/id_hash/created_time 不动。
+        String sql = "UPDATE mpi_patient_identity SET platform_patient_id = ?, status = ?, "
+                + "confidence = ?, manually_verified = ?, verified_by = ?, verified_time = ?, "
+                + "merged_to_id = ?, remarks = ?, updated_time = ? WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, identity.getPlatformPatientId());
+            ps.setString(2, identity.getStatus());
+            ps.setObject(3, identity.getConfidence());
+            ps.setObject(4, identity.getManuallyVerified() != null ? (identity.getManuallyVerified() ? 1 : 0) : null);
+            ps.setString(5, identity.getVerifiedBy());
+            ps.setTimestamp(6, identity.getVerifiedTime() != null ? Timestamp.valueOf(identity.getVerifiedTime()) : null);
+            ps.setObject(7, identity.getMergedToId());
+            ps.setString(8, identity.getRemarks());
+            ps.setTimestamp(9, Timestamp.valueOf(identity.getUpdatedTime()));
+            ps.setLong(10, identity.getId());
+            ps.executeUpdate();
         }
     }
 
@@ -254,17 +302,48 @@ public class MpiPersistenceService {
         }
         identity.setUpdatedTime(LocalDateTime.now());
 
+        // 跨数据库通用 upsert（见 savePatientIdentity 注释）。
+        try (Connection connection = connection()) {
+            Long existingId = findVisitIdentityIdByUniqueKey(connection,
+                    identity.getTenantId(), identity.getIdentityType(),
+                    identity.getSourceSystem(), identity.getExternalId());
+            if (existingId != null) {
+                identity.setId(existingId);
+                updateVisitIdentity(connection, identity);
+            } else {
+                insertVisitIdentity(connection, identity);
+            }
+            return identity;
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save visit identity failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private Long findVisitIdentityIdByUniqueKey(Connection connection, String tenantId,
+                                                String identityType, String sourceSystem,
+                                                String externalId) throws SQLException {
+        String sql = "SELECT id FROM mpi_visit_identity "
+                + "WHERE tenant_id = ? AND identity_type = ? AND source_system = ? AND external_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, tenantId);
+            ps.setString(2, identityType);
+            ps.setString(3, sourceSystem);
+            ps.setString(4, externalId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void insertVisitIdentity(Connection connection, VisitIdentity identity) throws SQLException {
         String sql = "INSERT INTO mpi_visit_identity (id, tenant_id, platform_visit_id, platform_patient_id, "
                 + "visit_type, identity_type, external_id, id_hash, source_system, visit_date, "
                 + "department_code, status, remarks, created_time, updated_time) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE "
-                + "platform_patient_id = VALUES(platform_patient_id), status = VALUES(status), "
-                + "visit_date = VALUES(visit_date), department_code = VALUES(department_code), "
-                + "remarks = VALUES(remarks), updated_time = VALUES(updated_time)";
-
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, identity.getId());
             ps.setString(2, identity.getTenantId());
             ps.setString(3, identity.getPlatformVisitId());
@@ -281,9 +360,21 @@ public class MpiPersistenceService {
             ps.setTimestamp(14, Timestamp.valueOf(identity.getCreatedTime()));
             ps.setTimestamp(15, Timestamp.valueOf(identity.getUpdatedTime()));
             ps.executeUpdate();
-            return identity;
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save visit identity failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void updateVisitIdentity(Connection connection, VisitIdentity identity) throws SQLException {
+        String sql = "UPDATE mpi_visit_identity SET platform_patient_id = ?, status = ?, "
+                + "visit_date = ?, department_code = ?, remarks = ?, updated_time = ? WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, identity.getPlatformPatientId());
+            ps.setString(2, identity.getStatus());
+            ps.setObject(3, identity.getVisitDate() != null ? java.sql.Date.valueOf(identity.getVisitDate()) : null);
+            ps.setString(4, identity.getDepartmentCode());
+            ps.setString(5, identity.getRemarks());
+            ps.setTimestamp(6, Timestamp.valueOf(identity.getUpdatedTime()));
+            ps.setLong(7, identity.getId());
+            ps.executeUpdate();
         }
     }
 
@@ -386,19 +477,40 @@ public class MpiPersistenceService {
         }
         conflict.setUpdatedTime(LocalDateTime.now());
 
+        // 跨数据库通用 upsert：mpi_identity_conflict 业务唯一键即 id 主键（DDL 无其它 UNIQUE 约束）。
+        // 行为：传入 id 已存在 → UPDATE 可变列；不存在 → INSERT 全列。
+        try (Connection connection = connection()) {
+            if (existsIdentityConflictById(connection, conflict.getId())) {
+                updateIdentityConflict(connection, conflict);
+            } else {
+                insertIdentityConflict(connection, conflict);
+            }
+            return conflict;
+        } catch (SQLException ex) {
+            throw new IllegalStateException("save identity conflict failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private boolean existsIdentityConflictById(Connection connection, Long id) throws SQLException {
+        if (id == null) {
+            return false;
+        }
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT 1 FROM mpi_identity_conflict WHERE id = ?")) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private void insertIdentityConflict(Connection connection, IdentityConflict conflict) throws SQLException {
         String sql = "INSERT INTO mpi_identity_conflict (id, tenant_id, conflict_type, severity, "
                 + "patient_identity_ids, visit_identity_ids, conflict_description, status, "
                 + "resolution_type, resolution_notes, resolved_by, resolved_time, "
                 + "target_patient_identity_id, created_time, updated_time) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE "
-                + "severity = VALUES(severity), status = VALUES(status), "
-                + "resolution_type = VALUES(resolution_type), resolution_notes = VALUES(resolution_notes), "
-                + "resolved_by = VALUES(resolved_by), resolved_time = VALUES(resolved_time), "
-                + "target_patient_identity_id = VALUES(target_patient_identity_id), updated_time = VALUES(updated_time)";
-
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, conflict.getId());
             ps.setString(2, conflict.getTenantId());
             ps.setString(3, conflict.getConflictType());
@@ -415,9 +527,25 @@ public class MpiPersistenceService {
             ps.setTimestamp(14, Timestamp.valueOf(conflict.getCreatedTime()));
             ps.setTimestamp(15, Timestamp.valueOf(conflict.getUpdatedTime()));
             ps.executeUpdate();
-            return conflict;
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save identity conflict failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void updateIdentityConflict(Connection connection, IdentityConflict conflict) throws SQLException {
+        // 与原 ON DUPLICATE KEY UPDATE 子句列清单一致：id/tenant_id/conflict_type/patient_identity_ids/visit_identity_ids/conflict_description/created_time 不动。
+        String sql = "UPDATE mpi_identity_conflict SET severity = ?, status = ?, "
+                + "resolution_type = ?, resolution_notes = ?, resolved_by = ?, resolved_time = ?, "
+                + "target_patient_identity_id = ?, updated_time = ? WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, conflict.getSeverity());
+            ps.setString(2, conflict.getStatus());
+            ps.setString(3, conflict.getResolutionType());
+            ps.setString(4, conflict.getResolutionNotes());
+            ps.setString(5, conflict.getResolvedBy());
+            ps.setTimestamp(6, conflict.getResolvedTime() != null ? Timestamp.valueOf(conflict.getResolvedTime()) : null);
+            ps.setObject(7, conflict.getTargetPatientIdentityId());
+            ps.setTimestamp(8, Timestamp.valueOf(conflict.getUpdatedTime()));
+            ps.setLong(9, conflict.getId());
+            ps.executeUpdate();
         }
     }
 
