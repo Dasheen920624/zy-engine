@@ -7,12 +7,13 @@ slice: S01
 title: 路径引擎前端完整功能（详情重写 + 版本对比 + 患者路径管理 + 变异）
 owner: claude-opus-4-7@pathway-engine-complete
 role: senior
+status: ACTIVE
 target_base_branch: develop
-branch: claude/pathway-engine-complete
-git_base_commit: 67f271a
+branch: claude/pathway-engine-followup
+git_base_commit: 046ed72
 git_status_at_claim: clean
 created_at: 2026-05-21T22:50+08:00
-last_heartbeat: 2026-05-21T22:50+08:00
+last_heartbeat: 2026-05-22T06:15+08:00
 expected_finish: 2026-05-22T04:00+08:00
 heartbeat_interval_minutes: 60
 database_mode: not_required
