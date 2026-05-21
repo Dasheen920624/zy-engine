@@ -33,11 +33,11 @@
 | **PR-FINAL-07** | `/mpi/patients` 患者主索引页 | 2 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-08** | `/admin/users` 用户管理页 | 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-09** | `/admin/audit` 审计日志查询页 | 2 | 🟡 TODO | 中级 | 3 天 |
-| **PR-FINAL-10** | `/tenant/onboarding` 租户开通向导 | 2 | 🟢 IN REVIEW · Codex-GPT5（实装） + Claude-Opus-4.7（cherry-pick 重整） · 2026-05-22 | 高级 | 4 天 |
+| **PR-FINAL-10** | `/tenant/onboarding` 租户开通向导 | 2 | ✅ DONE · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick）· 2026-05-22 (#33) | 高级 | 4 天 |
 | **PR-FINAL-11** | `/rule/definitions` 规则库 + DSL 编辑器 | 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-21 | 高级 | 8 天 |
 | **PR-FINAL-12** | `/adapter/hub` 适配器中心 | 2 | 🟡 TODO | 中级 | 4 天 |
-| **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | 🟢 IN REVIEW · Claude-Opus-4.7 · 2026-05-22 | 中级 | 3 天 |
-| **PR-FINAL-14** | 砍菜单 + Dashboard PENDING 卡更新 | 2 | 🟡 TODO | 初级 | 0.5 天 |
+| **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 (#32) | 中级 | 3 天 |
+| **PR-FINAL-14** | 砍菜单 + Dashboard PENDING 卡更新 | 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 | 初级 | 0.5 天 |
 | **PR-FINAL-15a** | HikariCP 框架接入 + 5 核心 PersistenceService 改造 | 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-15b** | 剩余 24 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | 🟡 TODO | 架构师 | 5 天 |
@@ -48,7 +48,7 @@
 | **PR-FINAL-21** | E2E 6 剧本 fixture + Playwright | 3 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-22** | 国密 SM2/SM3/SM4（BouncyCastle）| 4 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-23** | 数据分级 + HEALTH_DATA SM4 加密 | 4 | 🟡 TODO | 架构师 | 5 天 |
-| **PR-FINAL-24** | actuator + Prometheus + Grafana 5 看板 | 4 | 🟢 IN REVIEW · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick 重整）· 2026-05-22 | 高级 | 4 天 |
+| **PR-FINAL-24** | actuator + Prometheus + Grafana 5 看板 | 4 | ✅ DONE · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick）· 2026-05-22 (#34) | 高级 | 4 天 |
 | **PR-FINAL-25** | Flyway DB migration + KingbaseES 实测 | 4 | 🟡 TODO | 架构师 | 5 天 |
 
 **总计**：约 102 工作日（5 AI 并行 = 4-5 周）

@@ -241,7 +241,7 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
     icon: <RobotOutlined />,
     title: "AI 工作流引擎",
     description: "ADR-0013 LLM Gateway：国产大模型直连为主，Dify 退化为可选 WORKFLOW Provider",
-    status: "PENDING",
+    status: "READY",
     path: "/ai-workflows",
   },
   {
@@ -343,7 +343,7 @@ const TENANT_IDENTITY_CARDS: CapabilityCard[] = [
     icon: <IdcardOutlined />,
     title: "租户开通",
     description: "SEC-011：外网客户租户开通、本地密码 + MFA、服务账号",
-    status: "PENDING",
+    status: "READY",
     path: "/tenant/onboarding",
   },
 ];
