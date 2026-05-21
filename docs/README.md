@@ -1,7 +1,19 @@
-# 医疗智能引擎平台 — 文档中心
+# 集团医疗智能中枢 MedKernel — 文档中心
 
-> 版本：V2.0 · 2026-05-18  
+> 版本：V3.0 · 2026-05-21（产品架构最终白皮书发布）  
 > 这是项目所有文档的**唯一权威导航**。任何 AI、产品、前端、后端、QA、实施工程师从这里开始。
+
+---
+
+## 0. 🔥 v0.3 起，AI 接手任何任务前必读三件套（15 分钟）
+
+| # | 文档 | 一句话 | 阅读时长 |
+|---|---|---|:---:|
+| 1 | [`AI_CHARTER.md`](AI_CHARTER.md) | **AI 必读 1 页纸** — 7 红线 + 后端/前端/文档硬约束 + 提交流程 + KD-001~007 | 5 分钟 |
+| 2 | [`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md) | **产品架构最终白皮书** — 三产品 × 四大模块 + Controller 归档 + 27 菜单/路由对照表 + ADR-0005~0010 + v1.0 GA 七维度准入 | 10 分钟 |
+| 3 | [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md) | **AI 团队标准化执行 SOP** — 角色分工 + 10 步领任务流程 + 多 AI 冲突仲裁 + 验收 DoD + 紧急处置预案 | 10 分钟（按需查） |
+
+**配套**：[`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)（演示体验 + 中国国情合规 12+7 条）+ [`engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md)（工程债时间表 KD-001~007）+ [`engineering/AUDIT-20260521-V3-基线核查.md`](engineering/AUDIT-20260521-V3-基线核查.md)（基线核查报告）。
 
 ---
 

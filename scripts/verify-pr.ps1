@@ -341,6 +341,60 @@ if ($diff) {
   } else {
     Show-Pass "无引用已删除路径"
   }
+
+  # 2.4 [AUDIT-20260521 §3] Java 包目录禁连字符（违反 Java 命名 + 06_后端开发规范 §3）
+  $hyphenPackageFiles = git ls-files "medkernel-mvp/src/main/java/com/medkernel/**" 2>$null `
+    | Where-Object { $_ -match '/com/medkernel/[^/]*-[^/]*/' }
+  if ($hyphenPackageFiles) {
+    Show-Fail "包目录含连字符（违反 Java 包名规范）— $(@($hyphenPackageFiles).Count) 个文件"
+    $hyphenPackageFiles | Select-Object -First 3 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+  } else {
+    Show-Pass "包目录命名合规（无连字符）"
+  }
+
+  # 2.5 [AUDIT-20260521 §3] MySQL 专有 ON DUPLICATE KEY UPDATE（5 方言均不支持）
+  $onDuplicateViolations = $addedLines | Where-Object {
+    $_ -match 'ON\s+DUPLICATE\s+KEY\s+UPDATE' -and
+    $_ -notmatch '^\+\+\+' -and
+    $_ -notmatch '^\+\s*//' -and
+    $_ -notmatch '^\+\s*\*' -and
+    $_ -notmatch '原实现' -and
+    $_ -notmatch '原列清单'
+  }
+  if ($onDuplicateViolations) {
+    Show-Fail "本次新增 MySQL 专有 ON DUPLICATE KEY UPDATE ($($onDuplicateViolations.Count) 处) — Oracle/DM/PG/Kingbase/H2 均不支持；改 SELECT→UPDATE/INSERT 二选一"
+    $onDuplicateViolations | Select-Object -First 3 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+  } else {
+    Show-Pass "无新增 ON DUPLICATE KEY UPDATE"
+  }
+
+  # 2.6 [AUDIT-20260521 §3] DriverManager.getConnection 净增（KD-004，HikariCP 接入前不许新增）
+  $driverManagerViolations = $addedLines | Where-Object {
+    $_ -match 'DriverManager\.getConnection' -and
+    $_ -notmatch '^\+\+\+' -and
+    $_ -notmatch '^\+\s*//' -and
+    $_ -notmatch '^\+\s*\*'
+  }
+  if ($driverManagerViolations) {
+    Show-Fail "本次新增 DriverManager.getConnection ($($driverManagerViolations.Count) 处) — KD-004 已禁止新增；用注入的 DataSource（HikariCP 接入见 FIX-DEV-HIKARI）"
+    $driverManagerViolations | Select-Object -First 3 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+  } else {
+    Show-Pass "无新增 DriverManager.getConnection"
+  }
+
+  # 2.7 [AUDIT-20260521 §3] 新增 @RequestBody Map<String, Object> Controller（必须 DTO + @Valid）
+  $rawMapViolations = $addedLines | Where-Object {
+    $_ -match '@RequestBody\s+Map\s*<\s*String\s*,\s*Object\s*>' -and
+    $_ -notmatch '^\+\+\+' -and
+    $_ -notmatch '^\+\s*//' -and
+    $_ -notmatch '^\+\s*\*'
+  }
+  if ($rawMapViolations) {
+    Show-Fail "本次新增 @RequestBody Map<String, Object> ($($rawMapViolations.Count) 处) — Controller 入参必须 DTO + @Valid（06_后端开发规范 §3 + §14）"
+    $rawMapViolations | Select-Object -First 3 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+  } else {
+    Show-Pass "无新增 raw Map<String, Object> Controller"
+  }
 } else {
   Show-Warn "无 diff 可分析（可能首次提交）"
 }
