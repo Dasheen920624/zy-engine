@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
 import { setAuth } from "../store/auth";
 import { initiateSso, ldapAuthenticate, listSsoProviders } from "../api/sso";
+import styles from "./Login.module.css";
 
 const { Title, Text } = Typography;
 
@@ -79,7 +80,7 @@ export default function Login() {
     <div className="mk-login-shell">
       <Card className="mk-login-card">
         <div className="mk-login-header">
-          <Title level={3} style={{ marginBottom: 4 }}>
+          <Title level={3} className={styles.brandTitle}>
             集团医疗智能中枢
           </Title>
           <Text type="secondary">MedKernel · 管理工作台</Text>
@@ -113,7 +114,7 @@ export default function Login() {
             />
           </Form.Item>
 
-          <Form.Item style={{ marginBottom: 12 }}>
+          <Form.Item className={styles.formItemTight}>
             <Button
               type="primary"
               htmlType="submit"
@@ -126,12 +127,12 @@ export default function Login() {
           </Form.Item>
         </Form>
 
-        <Divider style={{ margin: "12px 0" }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>其他登录方式</Text>
+        <Divider className={styles.divider}>
+          <Text type="secondary" className={styles.smallHint}>其他登录方式</Text>
         </Divider>
 
         {/* SSO 登录按钮 */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <div className={styles.ssoRow}>
           {ssoProviders
             .filter(p => p.providerType !== "LDAP-AD")
             .map((p) => (
@@ -140,7 +141,7 @@ export default function Login() {
                 icon={<LoginOutlined />}
                 loading={loading}
                 onClick={() => handleSsoLogin(p.id)}
-                style={{ flex: 1 }}
+                className={styles.ssoButton}
               >
                 {p.providerName}
               </Button>
@@ -153,7 +154,7 @@ export default function Login() {
                   icon={<LoginOutlined />}
                   loading={loading}
                   onClick={() => message.info("请先配置 SSO 身份源")}
-                  style={{ flex: 1 }}
+                  className={styles.ssoButton}
                 >
                   {p.label}
                 </Button>
@@ -166,7 +167,7 @@ export default function Login() {
         <Button
           type="link"
           onClick={() => setLdapVisible(!ldapVisible)}
-          style={{ padding: 0, marginBottom: 8 }}
+          className={styles.ldapToggle}
         >
           LDAP-AD 域账号登录
         </Button>
@@ -179,7 +180,7 @@ export default function Login() {
             <Form.Item name="password" rules={[{ required: true, message: "请输入密码" }]}>
               <Input.Password prefix={<LockOutlined />} placeholder="域密码" />
             </Form.Item>
-            <Form.Item style={{ marginBottom: 0 }}>
+            <Form.Item className={styles.formItemFlush}>
               <Button type="primary" htmlType="submit" loading={loading} block>
                 LDAP 登录
               </Button>
@@ -187,8 +188,8 @@ export default function Login() {
           </Form>
         )}
 
-        <div style={{ textAlign: "center", marginTop: 8 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+        <div className={styles.demoHint}>
+          <Text type="secondary" className={styles.smallHint}>
             演示账号：zhao01 / demo123
           </Text>
         </div>

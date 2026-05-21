@@ -277,7 +277,16 @@ COMMENT ON COLUMN sec_identity_binding.external_position IS '外部系统岗位'
 COMMENT ON COLUMN sec_identity_binding.status IS '状态：ACTIVE/UNBOUND';
 COMMENT ON COLUMN sec_identity_binding.last_sync_time IS '最近同步时间';
 
--- 同步任务记录表：记录每次同步任务的状态和统计
+-- ============================================================
+-- ⚠️ DEPRECATED v0.3-final (PR-FINAL-03, ADR-0006)
+-- 旧 security.UserSyncController（/api/security/sync/*）已删除。
+-- 新设计采用 source/task/log 三表模型（sec_sync_source/task/log），
+-- 详见 security.usersync.UserSyncApiController（/api/user-sync/*）。
+-- 表定义保留是为了避免给已部署实例制造 DROP 失败，
+-- 真正的清理（Flyway DROP TABLE）放在 PR-FINAL-25。
+-- 新开发不要再用这两张表。
+-- ============================================================
+-- [DEPRECATED] 同步任务记录表
 CREATE TABLE sec_user_sync_job (
   id BIGINT PRIMARY KEY,
   tenant_id BIGINT NOT NULL,
@@ -310,7 +319,7 @@ COMMENT ON COLUMN sec_user_sync_job.error_count IS '错误用户数';
 COMMENT ON COLUMN sec_user_sync_job.triggered_by IS '触发人（user_id 或 SCHEDULED）';
 COMMENT ON COLUMN sec_user_sync_job.error_message IS '错误消息';
 
--- 同步明细表：记录每个外部用户的同步动作和结果
+-- [DEPRECATED v0.3-final, ADR-0006] 同步明细表 — 见上方说明
 CREATE TABLE sec_user_sync_detail (
   id BIGINT PRIMARY KEY,
   job_id BIGINT NOT NULL,

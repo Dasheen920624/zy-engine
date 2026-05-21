@@ -1,0 +1,64 @@
+/* MedKernel · 工作台首页 CSS Modules 示范（PR-FINAL-04）
+ *
+ * 规约：所有颜色/字号/间距/圆角/阴影/字体必须走 tokens（var(--mk-*)），
+ * 严禁 hex / px / rem 字面量。详见 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md §6.
+ */
+
+.pageTitle {
+  margin: 0;
+}
+
+.pageDescription {
+  margin: var(--mk-space-1) 0 0;
+}
+
+.metricsRow {
+  margin-bottom: var(--mk-space-6);
+}
+
+.statSuffix {
+  font-size: var(--mk-text-xs);
+}
+
+.section {
+  margin-bottom: var(--mk-space-6);
+}
+
+.sectionHead {
+  margin-bottom: var(--mk-space-3);
+}
+
+.sectionDescription {
+  margin: var(--mk-space-1) 0 0;
+  font-size: var(--mk-text-sm);
+}
+
+.card {
+  height: 100%;
+}
+
+.cardSpace {
+  width: 100%;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+}
+
+.cardIcon {
+  font-size: var(--mk-text-lg);
+  color: var(--mk-brand-primary);
+}
+
+.cardStatusTag {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.cardDescription {
+  margin-bottom: 0;
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-base);
+}

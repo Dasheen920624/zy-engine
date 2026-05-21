@@ -161,7 +161,7 @@
 
 ## 3. 双副本 ADR 决策（ADR-0005 / ADR-0006）
 
-### ADR-0005 · MpiController 双副本归并 → 保留 `patient/MpiController`
+### ADR-0005 · MpiController 双副本归并 → 保留 `patient/MpiController` ✅ 已执行
 
 **决策**：保留 `patient/MpiController`（`/api/v1/mpi/*` 17 端点完整方案），删除 `patientindex/controller/MpiController`（`/api/mpi/*` 7 端点不完整方案）。
 
@@ -171,16 +171,24 @@
 3. URL 风格 `/api/v1/mpi/*` 带版本号，更符合 RESTful 演进
 4. `patient/MpiPersistenceService` 已在本 PR 修复 3 处 ON DUPLICATE KEY UPDATE，技术债清零
 
-**实施**：
-- 删除 `medkernel-mvp/src/main/java/com/medkernel/patientindex/` 整目录（含 entity / service / util / controller）
-- 数据迁移脚本 `db/migrations/V0.3.0__merge_patientindex_to_patient.sql`（如有产线数据从 `mpi_*` 表搬到 `patient_*` 表）
-- 前端 `frontend/src/api/mpi.ts` 改为只引用 `/api/v1/mpi/*`
-- 更新 V3 功能矩阵 §1.3
+**实施**：✅ 由 PR-FINAL-02 完成（2026-05-21）
+- 删除 `medkernel-mvp/src/main/java/com/medkernel/patientindex/` 整目录 8 个文件：
+  - `controller/MpiController.java`（99 行）— 旧 `/api/mpi/*` 7 端点
+  - `service/MpiService.java`（608 行）— 内存态 ConcurrentHashMap 实现
+  - `entity/` 5 个实体：`MpiPatientIndexEntity` / `MpiEncounterEntity` / `MpiIdentifierMappingEntity` / `MpiIdentifierConflictEntity` / `MpiInsuranceSettlementEntity`（共 687 行 POJO）
+  - `util/MpiHashUtil.java`（81 行）— SHA-256 + 盐字符串工具
+  - **合计 1475 行**
+- 删除测试 `medkernel-mvp/src/test/java/com/medkernel/patientindex/MpiApiContractTests.java`（与被删 API 一一对应）
+- **`patient/` 包完整保留**：`MpiController` 17 端点 / `MpiService` / `MpiPersistenceService` 835 行 / `IdentityConflict` / `PatientIdentity` / `VisitIdentity`
+- 前端 `frontend/src/api/mpi.ts` 0 引用 `/api/mpi/*`（仅前端路由 `/mpi/patients` 是占位，目标 URL，不是 API）→ **0 前端改动**
+- DDL：旧 `patientindex` 0 张表定义在任何 DDL 中（grep 验证），无需 DEPRECATED 注释——比 ADR-0006 删得还干净
 
-**owner**：架构组中立 AI（不要 MPI-001 原作者，避免立场偏向）  
-**估时**：3 天
+**关键确认**：旧 `patientindex/MpiService` 全程 ConcurrentHashMap 内存态，无任何 JDBC 调用（`grep PreparedStatement\|Connection\|DriverManager patientindex/` = 0），属于纯内存 demo 代码——删除 0 数据库影响 / 0 运行时影响。
 
-### ADR-0006 · UserSyncController 双副本归并 → 保留 `security/usersync/UserSyncApiController`
+**owner**：架构师 AI（Claude-Opus-4.7）  
+**实际工时**：1 PR / 0.5 天（领单卡估时 2 天）
+
+### ADR-0006 · UserSyncController 双副本归并 → 保留 `security/usersync/UserSyncApiController` ✅ 已执行
 
 **决策**：保留 `security/usersync/UserSyncApiController`（source/task 模型，新设计），删除 `security/UserSyncController`（provider 模型，旧设计）。
 
@@ -189,10 +197,18 @@
 2. 旧 `provider` 模型与 SSO 配置的 provider 概念重名，造成 API 混淆
 3. `usersync` 子包独立后，与 `security.sso` `security.audit` `security.IdentityBinding` 横向并列，包结构更清晰
 
-**实施**：同上模式 — 删旧 / 迁数据 / 改前端引用 / 更新文档
+**实施**：✅ 由 PR-FINAL-03 完成（2026-05-21）
+- 删除 5 个 Java 文件：`security/UserSyncController.java` `UserSyncService.java` `UserSyncJob.java` `UserSyncDetail.java` `SyncReport.java`
+- `security/IdentityProvider.java` 保留（SSO 共用，被 `SsoService` / `SsoController` 大量引用）
+- `SecurityPersistenceService.java` 删 9 个旧方法：`createSyncJob` / `updateSyncJob` / `findSyncJobsByTenant` / `findSyncJobById` / `insertSyncDetails` / `findSyncDetailsByJobId`（×2 重载） / 私有 `mapSyncJob` / `mapSyncDetail`（净减 216 行）；IdentityProvider 相关 CRUD 完整保留
+- 前端 `frontend/src/api` 0 引用 `/api/security/sync` → **0 前端改动**（旧 endpoint 从未被前端用过）
+- DDL：`ai-dev-input/04_database/{local,pg,oracle,dm}/sec_*.sql` 共 4 个文件，`sec_user_sync_job` / `sec_user_sync_detail` 表定义保留并加 DEPRECATED 标记；真正 DROP 留给 PR-FINAL-25 Flyway 迁移
+- 生产部署 `medkernel-mvp/src/main/resources/db/local/sec_user_sync_ddl.sql` 是**新** source/task/log 三表 DDL，本就独立——0 改动
 
-**owner**：架构组中立 AI  
-**估时**：2 天
+**确认**：旧 UserSyncService 实际上是僵尸代码——`medkernel-mvp/src/main/resources/db/local/sec_ddl.sql`（生产部署 DDL）**从未建过** `sec_user_sync_job`/`sec_user_sync_detail` 表，任何对旧 API 的调用一定会 SQL 失败。删除 0 运行时影响。
+
+**owner**：架构师 AI（Claude-Opus-4.7）  
+**实际工时**：1 PR / 0.5 天（领单卡估时 1 天）
 
 ---
 
