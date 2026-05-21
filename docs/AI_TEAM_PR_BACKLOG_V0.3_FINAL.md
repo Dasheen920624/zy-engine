@@ -39,7 +39,7 @@
 | **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-14** | 砍菜单 + Dashboard PENDING 卡更新 | 2 | 🟡 TODO | 初级 | 0.5 天 |
 | **PR-FINAL-15a** | HikariCP 框架接入 + 5 核心 PersistenceService 改造 | 3 | ✅ DONE | 架构师 | 2 天 |
-| **PR-FINAL-15b** | 剩余 25 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | 🟡 TODO | 中级 | 2 天 |
+| **PR-FINAL-15b** | 剩余 24 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-17** | 拆 EnginePersistenceService（2175 行）| 3 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | 🟡 TODO | 架构师 | 14 天 |
@@ -119,12 +119,35 @@
 4. 高并发下不再无限制创建连接（max-pool-size=20）
 5. ORA-12518 / Listener refused 由 pool 层重试（业务层不再关心）
 
-**剩余 25 个文件由 PR-FINAL-15b 接力**（同一模板的 mechanical work，中级 AI 可领）：
+**剩余 24 个文件由 PR-FINAL-15b 接力**（同一模板的 mechanical work，2026-05-21 已 DONE）：
 - security: UserSyncService / IdentityBindingService / SsoConfigService / KeyManagementService / AuditChainService / UserSyncApiService
 - knowledge: KnowledgeSyncService / KnowledgePackageService / AssetQualityService / AiKnowledgeJobService / AiCandidateReviewService
 - datagovernance: QualityRuleRepository / PatientRepository / QualityCheckRepository / DoctorRepository / DepartmentRepository
 - cdss: SafetyRedLineService / ClinicalSafetyService / CdssOverrideService
 - 其它: dify/AiGovernanceService / rule/RuleEvalResultRepository / ops/OpsSyncTaskService / config/ConfigPackageRepository / adapter/TriggerPointService
+
+### ✅ PR-FINAL-15b：剩余 24 个 Service 的 HikariCP 全量迁移（DONE 2026-05-21）
+
+**目标**：闭环 PR-FINAL-15a 留下的"剩余 24 个文件"，把全仓库 29 个直接 DriverManager.getConnection() 全部收敛到 EngineDataSourceConfig 暴露的 DataSource。
+
+**改造文件**：上方 §2 表格列出的 24 个 Service。
+
+**改造模板**（每个文件 4 处）：
+- import：加 `javax.sql.DataSource`，删 `java.sql.DriverManager`
+- 字段：加 `private final DataSource dataSource;`
+- 构造函数：参数列表加 `DataSource dataSource`，函数体加 `this.dataSource = dataSource;`
+- `connection()` 方法：内部改用 `dataSource.getConnection()`，删 `DriverManager.getConnection(url, user, pass)`
+
+**结果**：
+- 24 文件 +161 / -151（净 +10 行）— 极其干净的批量改造
+- 全 src `grep DriverManager` 仅余 1 个文件（EngineDataSourceConfig 自身，合法例外）
+- 全 src `grep dataSource.getConnection()` 命中 29 文件（PR-FINAL-15a 5 个 + 本 PR 24 个）
+
+**至此 PR-FINAL-15 全量完成**：29 处散落的 DriverManager.getConnection() 全部收敛到 HikariCP 连接池。`@Transactional` 在所有 Service 中真正生效。
+
+**关联**：
+- 前置 PR-FINAL-15a（PR #21，新建 EngineDataSourceConfig）
+- 解锁 PR-FINAL-17/18：拆超长 Service 时新 Repository 直接注入 DataSource，不需再造 connection() 方法
 
 **改造模板**（PR-FINAL-15b 照搬本 PR 的 5 个示范）：
 ```java

@@ -1,4 +1,4 @@
-package com.medkernel.ops.service;
+﻿package com.medkernel.ops.service;
 
 import com.medkernel.common.TraceContext;
 import com.medkernel.ops.entity.OpsSyncTask;
@@ -35,10 +35,12 @@ public class OpsSyncTaskService {
 
     private final EnginePersistenceProperties properties;
     private final ExecutorService executorService;
+    private final DataSource dataSource;
 
-    public OpsSyncTaskService(EnginePersistenceProperties properties) {
+    public OpsSyncTaskService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
         this.executorService = Executors.newFixedThreadPool(4);
+        this.dataSource = dataSource;
     }
 
     // ==================== 任务查询 ====================
@@ -454,8 +456,7 @@ public class OpsSyncTaskService {
      * 获取数据库连接
      */
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
     }
 
     // ==================== 任务执行器接口 ====================

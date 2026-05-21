@@ -1,4 +1,4 @@
-package com.medkernel.knowledge;
+﻿package com.medkernel.knowledge;
 
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,9 +29,11 @@ public class AiKnowledgeJobService {
     private static final Logger log = LoggerFactory.getLogger(AiKnowledgeJobService.class);
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public AiKnowledgeJobService(EnginePersistenceProperties properties) {
+    public AiKnowledgeJobService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -396,7 +398,6 @@ public class AiKnowledgeJobService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
     }
 }

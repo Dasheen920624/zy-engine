@@ -1,11 +1,11 @@
-package com.medkernel.cdss;
+﻿package com.medkernel.cdss;
 
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,9 +32,11 @@ import java.util.UUID;
 public class SafetyRedLineService {
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public SafetyRedLineService(EnginePersistenceProperties properties) {
+    public SafetyRedLineService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     // ─── 红线定义管理 ──────────────────────────────────────────────
@@ -565,12 +567,8 @@ public class SafetyRedLineService {
     }
 
     private Connection connection() throws SQLException {
-        loadDriver();
-        SQLException last = null;
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
-            } catch (SQLException ex) {
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
+    } catch (SQLException ex) {
                 last = ex;
                 if (!shouldRetryConnection(ex) || attempt == 3) {
                     throw ex;

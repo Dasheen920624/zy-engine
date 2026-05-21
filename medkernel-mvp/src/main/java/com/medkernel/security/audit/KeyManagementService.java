@@ -1,4 +1,4 @@
-package com.medkernel.security.audit;
+﻿package com.medkernel.security.audit;
 
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -38,9 +38,11 @@ public class KeyManagementService {
     private static final int GCM_IV_LENGTH = 12;
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public KeyManagementService(EnginePersistenceProperties properties) {
+    public KeyManagementService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -366,7 +368,6 @@ public class KeyManagementService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
     }
 }

@@ -1,4 +1,4 @@
-package com.medkernel.config;
+﻿package com.medkernel.config;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,7 +7,7 @@ import com.medkernel.persistence.Ids;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,10 +24,14 @@ import java.util.List;
 public class ConfigPackageRepository {
     private final EnginePersistenceProperties properties;
     private final ObjectMapper objectMapper;
+    private final DataSource dataSource;
 
-    public ConfigPackageRepository(EnginePersistenceProperties properties, ObjectMapper objectMapper) {
+    public ConfigPackageRepository(EnginePersistenceProperties properties,
+                                   ObjectMapper objectMapper,
+                                   DataSource dataSource) {
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -317,14 +321,9 @@ public class ConfigPackageRepository {
     }
 
     private Connection connection() throws SQLException {
-        // PKG-004 历史调用 properties.getConnection() 实际不存在，REVIEW-FIX-001 改为与项目其他 Repository 一致的 DriverManager 直连。
-        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException(driverClass + " not found", ex);
-        }
-        return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 走 HikariCP 连接池（EngineDataSourceConfig 暴露的 DataSource）。
+        // HikariCP 通过 jdbcUrl 自动 Class.forName 加载驱动，不再需要手工选 driverClass。
+        return dataSource.getConnection();
     }
 
     private ConfigPackageEntity mapResultSet(ResultSet rs) throws SQLException {

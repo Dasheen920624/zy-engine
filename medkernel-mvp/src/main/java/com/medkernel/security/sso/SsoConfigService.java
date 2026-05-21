@@ -1,4 +1,4 @@
-package com.medkernel.security.sso;
+﻿package com.medkernel.security.sso;
 
 import com.medkernel.common.ErrorCode;
 import com.medkernel.persistence.EnginePersistenceProperties;
@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,13 +33,16 @@ public class SsoConfigService {
     private final EnginePersistenceProperties properties;
     private final SecurityPersistenceService securityPersistenceService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final DataSource dataSource;
 
     public SsoConfigService(EnginePersistenceProperties properties,
                             SecurityPersistenceService securityPersistenceService,
-                            JwtTokenProvider jwtTokenProvider) {
+                            JwtTokenProvider jwtTokenProvider,
+                            DataSource dataSource) {
         this.properties = properties;
         this.securityPersistenceService = securityPersistenceService;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -680,8 +683,7 @@ public class SsoConfigService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
     }
 
     // 内部类
