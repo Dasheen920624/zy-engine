@@ -103,8 +103,14 @@ export const menuSections: MenuSection[] = [
         icon: <FileSearchOutlined />,
         path: "/provenance",
       },
+      {
+        key: "rule-definitions",
+        label: "规则库",
+        icon: <SafetyCertificateOutlined />,
+        path: "/rule/definitions",
+        pr: "PR-FINAL-11",
+      },
       // 以下入口待实装（参考 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md），实装后从下方移到上方：
-      //   key: rule-definitions   path: /rule/definitions   PR-FINAL-11
       //   key: graph-explore      path: /graph/explore      PR-V0.4
       //   key: adapter-hub        path: /adapter/hub        PR-FINAL-12
       //   key: ai-workflows       path: /ai-workflows       PR-FINAL-13 （旧 dify-workflows）
