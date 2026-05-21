@@ -1,8 +1,8 @@
-# 医疗智能引擎平台 · 前端治理控制台
+# 集团医疗智能中枢 MedKernel · 管理工作台前端
 
-本目录是医疗智能引擎平台 **正式前端工程**。当前已具备路由、Layout、组织上下文、API client、查询缓存、MSW mock、单元测试、Provider 状态页和配置包中心。业务页面由 FE-003～FE-010 继续逐步落地。
+本目录是 MedKernel **正式前端工程**。当前已具备路由、Layout、组织上下文、API client、查询缓存、MSW mock、单元测试、Provider 状态页和配置包中心。业务页面按 [`docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md`](../docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md) 接力落地。
 
-命名口径：前端统一称为“治理控制台”，不再写死“内网管理台”。它可以部署在院内、专网、VPN/零信任网关后，也可以作为外网基准服务的控制台；但当前 MVP 未完成生产级外网账号、MFA、租户隔离和网关/WAF，不应直接裸露公网承载真实患者数据。
+命名口径（v0.3-final 收口）：对外统一称「**集团医疗智能中枢 · MedKernel**」，工作台称「**管理工作台**」。可部署在院内、专网、VPN/零信任网关后；外网 SaaS 形态见 [`docs/DEPLOYMENT_DUAL_MODE.md`](../docs/DEPLOYMENT_DUAL_MODE.md)。
 
 ## 技术栈
 

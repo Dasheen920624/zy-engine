@@ -119,9 +119,9 @@ export default function SsoLogin() {
       <Card className="mk-login-card">
         <div className="mk-login-header">
           <Title level={3} style={{ marginBottom: 4 }}>
-            医疗智能引擎平台
+            集团医疗智能中枢
           </Title>
-          <Text type="secondary">治理控制台 · 单点登录</Text>
+          <Text type="secondary">MedKernel · 单点登录</Text>
         </div>
 
         {error && (
