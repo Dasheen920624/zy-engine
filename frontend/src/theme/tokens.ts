@@ -114,7 +114,7 @@ export const BUILT_IN_THEMES: ThemeDefinition[] = [
   {
     id: "medkernel-blue",
     label: "MedKernel 蓝",
-    description: "经典医疗治理控制台蓝色主题",
+    description: "经典医疗管理工作台蓝色主题",
     overrides: buildBrandOverrides(COLOR_TOKEN.medkernelBluePrimary, COLOR_TOKEN.medkernelBlueMenu),
   },
   {

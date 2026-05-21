@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.llm;
 
 import com.medkernel.common.TraceContext;
 import com.medkernel.knowledge.AiKnowledgeJobService;

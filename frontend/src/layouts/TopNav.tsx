@@ -49,8 +49,8 @@ export default function TopNav() {
   return (
     <div className="mk-top-nav">
       <div className="mk-top-nav__brand" onClick={() => navigate("/dashboard")}>
-        <div className="mk-top-nav__brand-title">医疗智能引擎平台</div>
-        <div className="mk-top-nav__brand-subtitle">medkernel · 内网管理台</div>
+        <div className="mk-top-nav__brand-title">集团医疗智能中枢</div>
+        <div className="mk-top-nav__brand-subtitle">MedKernel · 管理工作台</div>
       </div>
 
       <div className="mk-top-nav__breadcrumb">

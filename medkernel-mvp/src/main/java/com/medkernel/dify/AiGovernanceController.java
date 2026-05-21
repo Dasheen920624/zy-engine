@@ -2,6 +2,9 @@ package com.medkernel.dify;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
+import com.medkernel.llm.AiModelRegistry;
+import com.medkernel.llm.ModelEvalTask;
+import com.medkernel.llm.PromptTemplate;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "医疗智能引擎平台治理控制台前端",
+  "description": "集团医疗智能中枢 MedKernel · 管理工作台前端",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

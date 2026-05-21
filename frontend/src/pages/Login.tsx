@@ -80,9 +80,9 @@ export default function Login() {
       <Card className="mk-login-card">
         <div className="mk-login-header">
           <Title level={3} style={{ marginBottom: 4 }}>
-            医疗智能引擎平台
+            集团医疗智能中枢
           </Title>
-          <Text type="secondary">治理控制台 · 用户登录</Text>
+          <Text type="secondary">MedKernel · 管理工作台</Text>
         </div>
 
         <Form

@@ -1,5 +1,8 @@
 /* MedKernel design tokens (clinical-navy 默认主题 CSS 变量).
  *
+ * v0.3-final：主色统一为「医蓝 #1565c0」，与卫健委「健康码 / 医保电子凭证」同色系，
+ * 中国医院 CIO 第一眼有信任感。变更依据 docs/v0.3-DEMO-REDESIGN.md §1.2。
+ *
  * This is the only CSS file allowed to define raw color values (forbidden-patterns §1.1).
  * Sibling files in the token layer (all whitelisted by ESLint no-hardcoded-color):
  *   - styles/tokens.ts        原色板 hex 字面量，供 JS 端主题切换使用（不与本文件重复，是不同表达层）
@@ -11,17 +14,17 @@
  */
 
 :root {
-  --mk-brand-primary: #0b8fa6;
-  --mk-brand-primary-hover: #12a8c5;
-  --mk-brand-primary-active: #066979;
-  --mk-brand-primary-soft: #e6f8fb;
-  --mk-brand-primary-ghost: #f4fcfd;
+  --mk-brand-primary: #1565c0;
+  --mk-brand-primary-hover: #1976d2;
+  --mk-brand-primary-active: #0d47a1;
+  --mk-brand-primary-soft: #e3f2fd;
+  --mk-brand-primary-ghost: #f5faff;
 
-  --mk-menu-bg: #001d33;
-  --mk-menu-bg-hover: #062a48;
-  --mk-menu-bg-active: #000b14;
-  --mk-menu-text: #f2fbff;
-  --mk-menu-text-secondary: #9bb6c9;
+  --mk-menu-bg: #0a1e33;
+  --mk-menu-bg-hover: #122d4a;
+  --mk-menu-bg-active: #061528;
+  --mk-menu-text: #f2f6fb;
+  --mk-menu-text-secondary: #9bb1c9;
 
   --mk-success: #12966e;
   --mk-success-soft: #e4f7ef;
@@ -31,8 +34,8 @@
   --mk-danger: #d33f49;
   --mk-danger-soft: #fdecee;
   --mk-danger-border: #fecaca;
-  --mk-info: #0b8fa6;
-  --mk-info-soft: #e6f8fb;
+  --mk-info: #1565c0;
+  --mk-info-soft: #e3f2fd;
 
   --mk-ai-primary: #5b4fd4;
   --mk-ai-soft: #f0f0ff;
@@ -54,10 +57,10 @@
   --mk-bg-disabled: #f4f6f9;
   --mk-bg-overlay: rgba(31, 45, 61, 0.45);
 
-  --mk-border: #d8e8f3;
-  --mk-border-strong: #b8d8ec;
-  --mk-border-divider: #ebf2f8;
-  --mk-border-inverse: #16a6d9;
+  --mk-border: #d6e3ef;
+  --mk-border-strong: #b7cde0;
+  --mk-border-divider: #eaf0f6;
+  --mk-border-inverse: #1976d2;
 
   --mk-code-add: #4ade80;
   --mk-code-del: #f87171;
@@ -65,7 +68,7 @@
   --mk-code-add-bg: rgba(74, 222, 128, 0.08);
   --mk-code-del-bg: rgba(248, 113, 113, 0.08);
 
-  --mk-data-1: #0b8fa6;
+  --mk-data-1: #1565c0;
   --mk-data-2: #12966e;
   --mk-data-3: #c78200;
   --mk-data-4: #5b4fd4;
@@ -79,8 +82,8 @@
   --mk-shadow-lg: 0 4px 16px rgba(31, 45, 61, 0.12);
   --mk-shadow-overlay: 0 12px 32px rgba(31, 45, 61, 0.18);
 
-  --mk-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Microsoft YaHei", "Source Han Sans CN", Roboto, sans-serif;
+  --mk-font-family: "PingFang SC", "Microsoft YaHei", "Source Han Sans CN",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --mk-font-mono: "JetBrains Mono", "Source Code Pro", Menlo, Consolas,
     "Microsoft YaHei Mono", monospace;
 
