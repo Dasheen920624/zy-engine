@@ -24,7 +24,7 @@
 | PR | 标题 | 阶段 | 状态 | 负责 AI 级别 | 估时 |
 |---|---|:---:|:---:|:---:|:---:|
 | **PR-FINAL-00** | tokens 主色 + 命名/菜单统一 | 1 | ✅ DONE | 架构师 | 1 天 |
-| **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | 🟡 TODO | 架构师 | 1 天 |
+| **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | 🟦 IN_PROGRESS · Codex-GPT5 · 2026-05-21T22:08+08:00 | 架构师 | 1 天 |
 | **PR-FINAL-02** | 删 patientindex 整包（ADR-0005）| 1 | 🟡 TODO | 架构师 | 2 天 |
 | **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | 🟡 TODO | 架构师 | 1 天 |
 | **PR-FINAL-04** | CSS Modules 框架 + Login/Dashboard 示范抽取 | 1 | 🟡 TODO | 高级 | 2 天 |
