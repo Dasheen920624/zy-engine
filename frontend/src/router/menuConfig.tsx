@@ -13,6 +13,7 @@ import {
   ReadOutlined,
   RobotOutlined,
   SafetyCertificateOutlined,
+  ShopOutlined,
   ToolOutlined,
   UnorderedListOutlined,
   UserSwitchOutlined,
@@ -198,10 +199,16 @@ export const menuSections: MenuSection[] = [
         icon: <UserSwitchOutlined />,
         path: "/security/identity-binding",
       },
+      {
+        key: "tenant-onboarding",
+        label: "租户开通向导",
+        icon: <ShopOutlined />,
+        path: "/tenant/onboarding",
+        pr: "PR-FINAL-10",
+      },
       // 以下入口待实装：
       //   key: mpi                path: /mpi/patients        PR-FINAL-07
       //   key: admin-users        path: /admin/users         PR-FINAL-08
-      //   key: tenant-onboarding  path: /tenant/onboarding   PR-FINAL-10
     ],
   },
 

@@ -31,6 +31,7 @@ import {
 } from "../pages/Pathway";
 import { RuleList, RuleDetail, RuleEditor } from "../pages/Rule";
 import { AiWorkflowsPage } from "../pages/AiWorkflows";
+import TenantOnboarding from "../pages/Tenant/Onboarding";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
@@ -84,7 +85,7 @@ export const routes: RouteObject[] = [
           { path: "adapter/hub", element: <PlaceholderPage title="适配器中心" pr="ADAPT-001" /> },
           { path: "dify/workflows", element: <Navigate to="/ai-workflows" replace /> },
           { path: "ai-workflows", element: <AiWorkflowsPage /> },
-          { path: "tenant/onboarding", element: <PlaceholderPage title="租户开通" pr="SEC-011" /> },
+          { path: "tenant/onboarding", element: <TenantOnboarding /> },
           { path: "*", element: <NotFound /> },
         ],
       },
