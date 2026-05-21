@@ -2,6 +2,7 @@
 
 claim_id: PR-FINAL-11-S01
 task_id: PR-FINAL-11
+status: COMPLETED
 task_lock_path: ai-dev-input/10_task_claims/active_locks/PR-FINAL-11.lock
 slice: S01
 title: 规则库 + DSL 编辑器（完整版：列表/详情/编辑器/试运行）
