@@ -134,7 +134,7 @@
 | `system/HealthController` | `system/SystemController`（合并 health + providers + org-context） | 拆 3 个端点到 3 个 Controller 没必要 |
 | `security/SsoController` | （并入 `security/sso/SsoConfigController`） | `security/SsoController` 与 `security/sso/SsoAuthController` 职责重叠 |
 | `quality/QualityController` | `quality/QualityFacadeController` | 与 `QualityDashboardController` 区分（前者是综合/列表，后者是看板专用） |
-| `dify/AiGovernanceController` | `quality/AiGovernanceController` | "AI 治理"属于 M3 质控范畴，不是 M1 Dify 范畴 |
+| `dify/AiGovernanceController` | `quality/AiGovernanceController`（PR-FINAL-01 已完成） | "AI 治理"属于 M3 质控范畴，不是 M1 Dify 范畴 |
 
 ### 2.3 保留但补 DTO（35 个 Controller 用 raw Map）
 

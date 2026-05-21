@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.dify.workflow;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

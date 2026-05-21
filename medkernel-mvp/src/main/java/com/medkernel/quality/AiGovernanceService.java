@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.quality;
 
 import com.medkernel.llm.AiModelRegistry;
 import com.medkernel.llm.ModelEvalTask;

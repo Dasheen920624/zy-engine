@@ -24,7 +24,7 @@
 | PR | 标题 | 阶段 | 状态 | 负责 AI 级别 | 估时 |
 |---|---|:---:|:---:|:---:|:---:|
 | **PR-FINAL-00** | tokens 主色 + 命名/菜单统一 | 1 | ✅ DONE | 架构师 | 1 天 |
-| **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | 🟦 IN_PROGRESS · Codex-GPT5 · 2026-05-21T22:08+08:00 | 架构师 | 1 天 |
+| **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | ✅ DONE · Codex-GPT5 · 2026-05-21T22:12+08:00 | 架构师 | 1 天 |
 | **PR-FINAL-02** | 删 patientindex 整包（ADR-0005）| 1 | 🟡 TODO | 架构师 | 2 天 |
 | **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | 🟡 TODO | 架构师 | 1 天 |
 | **PR-FINAL-04** | CSS Modules 框架 + Login/Dashboard 示范抽取 | 1 | 🟡 TODO | 高级 | 2 天 |
@@ -105,7 +105,7 @@
 | `medkernel-mvp/src/main/resources/application.yml` | 架构师 | 后端全局配置 |
 | `medkernel-mvp/src/main/java/com/medkernel/common/**` | 架构师 | 通用层（ApiResult / ErrorCode / Exception）|
 | `medkernel-mvp/src/main/java/com/medkernel/persistence/**` | 架构师 | 持久化基础设施 |
-| `medkernel-mvp/src/main/java/com/medkernel/dify/` 整包 | 架构师 | LLM Gateway / Dify |
+| `medkernel-mvp/src/main/java/com/medkernel/dify/workflow/` 整包 | 架构师 | Dify 可选 WORKFLOW Provider |
 | `medkernel-mvp/src/main/java/com/medkernel/patient/` `patientindex/` | 架构师 | ADR-0005 双副本 |
 | `medkernel-mvp/src/main/java/com/medkernel/security/UserSyncController*` `security/usersync/**` | 架构师 | ADR-0006 双副本 |
 | `scripts/verify-pr.ps1` `verify-task-prereq.ps1` `check-inline-style-count.ps1` | 架构师 | CI 门禁 |
