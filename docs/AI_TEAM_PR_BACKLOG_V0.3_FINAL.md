@@ -25,7 +25,7 @@
 |---|---|:---:|:---:|:---:|:---:|
 | **PR-FINAL-00** | tokens 主色 + 命名/菜单统一 | 1 | ✅ DONE | 架构师 | 1 天 |
 | **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | 🟡 TODO | 架构师 | 1 天 |
-| **PR-FINAL-02** | 删 patientindex 整包（ADR-0005）| 1 | 🟡 TODO | 架构师 | 2 天 |
+| **PR-FINAL-02** | 删 patientindex 整包（ADR-0005）| 1 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | 🟡 TODO | 架构师 | 1 天 |
 | **PR-FINAL-04** | CSS Modules 框架 + Login/Dashboard 示范抽取 | 1 | 🟡 TODO | 高级 | 2 天 |
 | **PR-FINAL-05** | ESLint `no-inline-style` + 守门脚本 | 1 | ✅ DONE | 架构师 | 0.5 天 |
@@ -87,6 +87,28 @@
 - 写新代码：用 `.module.css`（vite 默认支持，详见 §6）；动态样式必须用 inline 时加 `// eslint-disable-next-line medkernel/no-inline-style` 说明理由
 - 抽取存量：每减少一次 inline，跑 `./scripts/check-inline-style-count.ps1 -UpdateBaseline` 把 baseline 下调
 - CI 拦截：scripts/verify-pr.ps1 调用本脚本，新数量 > baseline 时 PR FAIL
+
+### ✅ PR-FINAL-02：删 patientindex 整包（DONE 2026-05-21）
+
+**ADR**：ADR-0005（PRODUCT_ARCHITECTURE_FINAL.md §3）
+
+**修改**：
+- 删除 `medkernel-mvp/src/main/java/com/medkernel/patientindex/` 整目录 8 个文件：
+  - `controller/MpiController.java`（99 行）— 旧 `/api/mpi/*` 7 端点
+  - `service/MpiService.java`（608 行）— 内存态 ConcurrentHashMap demo 实现
+  - `entity/` 5 个 POJO（687 行）：`MpiPatientIndexEntity` / `MpiEncounterEntity` / `MpiIdentifierMappingEntity` / `MpiIdentifierConflictEntity` / `MpiInsuranceSettlementEntity`
+  - `util/MpiHashUtil.java`（81 行）
+- 删除 `medkernel-mvp/src/test/java/com/medkernel/patientindex/MpiApiContractTests.java`
+- **合计 ~1500 行 Java + 测试**
+- **`patient/` 包完整保留**：MpiController 17 端点 + MpiService + MpiPersistenceService 835 行 + IdentityConflict / PatientIdentity / VisitIdentity
+- DDL：旧 patientindex 0 表定义（生产部署 / ai-dev-input 参考 DDL 都查过），**无需 DEPRECATED 注释**
+- 前端：0 引用 `/api/mpi/*` 旧端点 → **0 前端改动**
+
+**关键确认**：旧 patientindex 是纯内存态 demo 代码——`MpiService` 全程 ConcurrentHashMap 存储，0 处 JDBC 调用，0 张数据库表。删除 0 数据库影响 / 0 运行时影响 / 0 测试影响（同包测试已一并删除）。
+
+**后续注意**：
+- PR-FINAL-07（`/mpi/patients` 患者主索引页）的"前置 PR-FINAL-02"现已就绪，可以开工
+- 所有 MPI 业务请走 `/api/v1/mpi/*`（`patient/MpiController` 17 端点完整方案），不要再造 `patientindex/` 包
 
 ---
 

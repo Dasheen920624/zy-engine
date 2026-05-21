@@ -161,7 +161,7 @@
 
 ## 3. 双副本 ADR 决策（ADR-0005 / ADR-0006）
 
-### ADR-0005 · MpiController 双副本归并 → 保留 `patient/MpiController`
+### ADR-0005 · MpiController 双副本归并 → 保留 `patient/MpiController` ✅ 已执行
 
 **决策**：保留 `patient/MpiController`（`/api/v1/mpi/*` 17 端点完整方案），删除 `patientindex/controller/MpiController`（`/api/mpi/*` 7 端点不完整方案）。
 
@@ -171,14 +171,22 @@
 3. URL 风格 `/api/v1/mpi/*` 带版本号，更符合 RESTful 演进
 4. `patient/MpiPersistenceService` 已在本 PR 修复 3 处 ON DUPLICATE KEY UPDATE，技术债清零
 
-**实施**：
-- 删除 `medkernel-mvp/src/main/java/com/medkernel/patientindex/` 整目录（含 entity / service / util / controller）
-- 数据迁移脚本 `db/migrations/V0.3.0__merge_patientindex_to_patient.sql`（如有产线数据从 `mpi_*` 表搬到 `patient_*` 表）
-- 前端 `frontend/src/api/mpi.ts` 改为只引用 `/api/v1/mpi/*`
-- 更新 V3 功能矩阵 §1.3
+**实施**：✅ 由 PR-FINAL-02 完成（2026-05-21）
+- 删除 `medkernel-mvp/src/main/java/com/medkernel/patientindex/` 整目录 8 个文件：
+  - `controller/MpiController.java`（99 行）— 旧 `/api/mpi/*` 7 端点
+  - `service/MpiService.java`（608 行）— 内存态 ConcurrentHashMap 实现
+  - `entity/` 5 个实体：`MpiPatientIndexEntity` / `MpiEncounterEntity` / `MpiIdentifierMappingEntity` / `MpiIdentifierConflictEntity` / `MpiInsuranceSettlementEntity`（共 687 行 POJO）
+  - `util/MpiHashUtil.java`（81 行）— SHA-256 + 盐字符串工具
+  - **合计 1475 行**
+- 删除测试 `medkernel-mvp/src/test/java/com/medkernel/patientindex/MpiApiContractTests.java`（与被删 API 一一对应）
+- **`patient/` 包完整保留**：`MpiController` 17 端点 / `MpiService` / `MpiPersistenceService` 835 行 / `IdentityConflict` / `PatientIdentity` / `VisitIdentity`
+- 前端 `frontend/src/api/mpi.ts` 0 引用 `/api/mpi/*`（仅前端路由 `/mpi/patients` 是占位，目标 URL，不是 API）→ **0 前端改动**
+- DDL：旧 `patientindex` 0 张表定义在任何 DDL 中（grep 验证），无需 DEPRECATED 注释——比 ADR-0006 删得还干净
 
-**owner**：架构组中立 AI（不要 MPI-001 原作者，避免立场偏向）  
-**估时**：3 天
+**关键确认**：旧 `patientindex/MpiService` 全程 ConcurrentHashMap 内存态，无任何 JDBC 调用（`grep PreparedStatement\|Connection\|DriverManager patientindex/` = 0），属于纯内存 demo 代码——删除 0 数据库影响 / 0 运行时影响。
+
+**owner**：架构师 AI（Claude-Opus-4.7）  
+**实际工时**：1 PR / 0.5 天（领单卡估时 2 天）
 
 ### ADR-0006 · UserSyncController 双副本归并 → 保留 `security/usersync/UserSyncApiController`
 
