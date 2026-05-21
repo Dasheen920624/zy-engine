@@ -1,21 +1,19 @@
-package com.medkernel.dify;
+package com.medkernel.llm;
 
 import java.time.LocalDateTime;
 
-public class AiModelRegistry {
+public class PromptTemplate {
     private Long id;
     private Long tenantId;
-    private String modelCode;
-    private String modelName;
-    private String modelProvider;      // DIFY/LOCAL/OPENAI/OTHER
-    private String modelVersion;
-    private String modelType;          // RESEARCH/EXTRACT/EMBEDDING/RERANK/CRITIC/GENERAL
-    private String endpointUrl;
-    private String apiKeyRef;          // API密钥引用（不直接存储密钥）
-    private int timeoutMs;
-    private int maxTokens;
-    private double temperature;
-    private String status;             // REGISTERED/REVIEWING/APPROVED/ONLINE/OFFLINE/DEPRECATED
+    private String templateCode;
+    private String templateName;
+    private String templateType;       // SYSTEM/USER/ASSISTANT
+    private String modelType;          // 适用模型类型
+    private String content;            // 提示词内容
+    private String version;            // 版本号
+    private String variables;          // 模板变量 JSON
+    private String hash;               // 内容哈希
+    private String status;             // DRAFT/REVIEWING/APPROVED/PUBLISHED/DEPRECATED
     private String reviewStatus;       // PENDING/APPROVED/REJECTED
     private String reviewedBy;
     private LocalDateTime reviewedTime;
@@ -43,36 +41,28 @@ public class AiModelRegistry {
         this.tenantId = tenantId;
     }
 
-    public String getModelCode() {
-        return modelCode;
+    public String getTemplateCode() {
+        return templateCode;
     }
 
-    public void setModelCode(String modelCode) {
-        this.modelCode = modelCode;
+    public void setTemplateCode(String templateCode) {
+        this.templateCode = templateCode;
     }
 
-    public String getModelName() {
-        return modelName;
+    public String getTemplateName() {
+        return templateName;
     }
 
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
+    public void setTemplateName(String templateName) {
+        this.templateName = templateName;
     }
 
-    public String getModelProvider() {
-        return modelProvider;
+    public String getTemplateType() {
+        return templateType;
     }
 
-    public void setModelProvider(String modelProvider) {
-        this.modelProvider = modelProvider;
-    }
-
-    public String getModelVersion() {
-        return modelVersion;
-    }
-
-    public void setModelVersion(String modelVersion) {
-        this.modelVersion = modelVersion;
+    public void setTemplateType(String templateType) {
+        this.templateType = templateType;
     }
 
     public String getModelType() {
@@ -83,44 +73,36 @@ public class AiModelRegistry {
         this.modelType = modelType;
     }
 
-    public String getEndpointUrl() {
-        return endpointUrl;
+    public String getContent() {
+        return content;
     }
 
-    public void setEndpointUrl(String endpointUrl) {
-        this.endpointUrl = endpointUrl;
+    public void setContent(String content) {
+        this.content = content;
     }
 
-    public String getApiKeyRef() {
-        return apiKeyRef;
+    public String getVersion() {
+        return version;
     }
 
-    public void setApiKeyRef(String apiKeyRef) {
-        this.apiKeyRef = apiKeyRef;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
-    public int getTimeoutMs() {
-        return timeoutMs;
+    public String getVariables() {
+        return variables;
     }
 
-    public void setTimeoutMs(int timeoutMs) {
-        this.timeoutMs = timeoutMs;
+    public void setVariables(String variables) {
+        this.variables = variables;
     }
 
-    public int getMaxTokens() {
-        return maxTokens;
+    public String getHash() {
+        return hash;
     }
 
-    public void setMaxTokens(int maxTokens) {
-        this.maxTokens = maxTokens;
-    }
-
-    public double getTemperature() {
-        return temperature;
-    }
-
-    public void setTemperature(double temperature) {
-        this.temperature = temperature;
+    public void setHash(String hash) {
+        this.hash = hash;
     }
 
     public String getStatus() {

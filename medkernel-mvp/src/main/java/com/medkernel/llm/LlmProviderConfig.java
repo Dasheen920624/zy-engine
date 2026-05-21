@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.llm;
 
 /**
  * 单个 LLM Provider 的配置数据类。

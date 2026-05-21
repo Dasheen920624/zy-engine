@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.llm;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
