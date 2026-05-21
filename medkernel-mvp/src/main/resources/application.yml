@@ -31,12 +31,18 @@ medkernel:
     # EngineDataSourceConfig 读这里的配置构造 @Bean DataSource，所有 PersistenceService
     # 通过注入 DataSource 拿连接，@Transactional 真正生效（同 Service 内多 DAO 走同 connection）。
     hikari:
-      maximum-pool-size: ${MEDKERNEL_DB_POOL_MAX:20}          # 单实例最大并发连接数（医院专网 8 核机器经验值）
-      minimum-idle: ${MEDKERNEL_DB_POOL_MIN_IDLE:2}            # 长连接保活下限，避免冷启
-      connection-timeout-ms: ${MEDKERNEL_DB_POOL_TIMEOUT:3000} # 拿不到连接 3s 抛异常，避免请求堆积
-      idle-timeout-ms: ${MEDKERNEL_DB_POOL_IDLE_TIMEOUT:600000}# 10 分钟未用回收
-      max-lifetime-ms: ${MEDKERNEL_DB_POOL_MAX_LIFETIME:1800000} # 30 分钟强制重连，避开 DBA 端断连
-      leak-detection-threshold-ms: ${MEDKERNEL_DB_POOL_LEAK:2000} # 拿连接 > 2s 未释放打 WARN（排查泄漏）
+      # 单实例最大并发连接数（医院专网 8 核机器经验值）
+      maximum-pool-size: ${MEDKERNEL_DB_POOL_MAX:20}
+      # 长连接保活下限，避免冷启
+      minimum-idle: ${MEDKERNEL_DB_POOL_MIN_IDLE:2}
+      # 拿不到连接 3s 抛异常，避免请求堆积
+      connection-timeout-ms: ${MEDKERNEL_DB_POOL_TIMEOUT:3000}
+      # 10 分钟未用回收
+      idle-timeout-ms: ${MEDKERNEL_DB_POOL_IDLE_TIMEOUT:600000}
+      # 30 分钟强制重连，避开 DBA 端断连
+      max-lifetime-ms: ${MEDKERNEL_DB_POOL_MAX_LIFETIME:1800000}
+      # 拿连接 > 2s 未释放打 WARN（排查泄漏）
+      leak-detection-threshold-ms: ${MEDKERNEL_DB_POOL_LEAK:2000}
       pool-name: MedKernelHikari
   security:
     # 不允许在 default 配置中保留 JWT 密钥；生产/UAT/dev 全部走环境变量 MEDKERNEL_JWT_SECRET。
