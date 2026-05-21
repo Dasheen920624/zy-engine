@@ -5,10 +5,10 @@ import { menuSections, type MenuItem } from "../router/menuConfig";
 type AntMenuItem = Required<MenuProps>["items"][number];
 
 /**
- * 左侧两段式分组菜单（PR-V2-03 原始设计）。
+ * 左侧分组菜单（v0.3-final 命名收口）。
  *
  * 顶部：工作台 / 演示与校验 直放；
- * 之后：配置治理 / 运营治理 / 用户与组织 / 系统 四组，每组用 AntD Menu `type: 'group'` 显示标题。
+ * 之后：知识工厂 / 质控驾驶舱 / 用户与身份 / 平台监控 四组（M1/M3/M4），每组用 AntD Menu `type: 'group'` 显示标题。
  */
 export default function SideMenu() {
   const location = useLocation();

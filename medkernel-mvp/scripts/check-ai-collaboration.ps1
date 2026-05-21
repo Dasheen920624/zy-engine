@@ -1,4 +1,4 @@
-﻿param(
+param(
   [string]$TaskId = "",
   [string]$ClaimId = "",
   [switch]$Strict
@@ -45,7 +45,7 @@ if ($activeClaims.Count -eq 0) {
     $content = Get-Content -Path $claim.FullName -Raw
     $claimStatus = Get-MetadataField $content "status"
     $claimTask = Get-MetadataField $content "task_id"
-    $claimId = Get-MetadataField $content "claim_id"
+    $activeClaimId = Get-MetadataField $content "claim_id"
     $heartbeat = Get-MetadataField $content "last_heartbeat"
     $writeScope = Get-MetadataField $content "write_scope"
     $taskLockPath = Get-MetadataField $content "task_lock_path"
@@ -93,8 +93,8 @@ if ($activeClaims.Count -eq 0) {
         $lockContent = Get-Content -LiteralPath $lockPath -Raw
         $lockClaimId = Get-MetadataField $lockContent "claim_id"
         $lockTaskId = Get-MetadataField $lockContent "task_id"
-        if ($lockClaimId -ne $claimId -or $lockTaskId -ne $claimTask) {
-          $issue = ("task_lock_mismatch lock={0} expected_claim={1} actual_claim={2} expected_task={3} actual_task={4}" -f $expectedLockPath, $claimId, $lockClaimId, $claimTask, $lockTaskId)
+        if ($lockClaimId -ne $activeClaimId -or $lockTaskId -ne $claimTask) {
+          $issue = ("task_lock_mismatch lock={0} expected_claim={1} actual_claim={2} expected_task={3} actual_task={4}" -f $expectedLockPath, $activeClaimId, $lockClaimId, $claimTask, $lockTaskId)
           $collaborationIssues += $issue
           Write-Output $issue
         }
@@ -114,7 +114,7 @@ if ($activeClaims.Count -eq 0) {
 
     $claimRecords += [pscustomobject]@{
       File = $claim.Name
-      ClaimId = $claimId
+      ClaimId = $activeClaimId
       TaskId = $claimTask
       Status = $claimStatus
       WriteScope = $writeScope
@@ -141,10 +141,10 @@ if ($activeLocks.Count -eq 0) {
   foreach ($lock in $activeLocks) {
     $content = Get-Content -Path $lock.FullName -Raw
     $lockTask = Get-MetadataField $content "task_id"
-    $lockClaim = Get-MetadataField $content "claim_id"
+    $lockClaimId = Get-MetadataField $content "claim_id"
     $expectedName = if (![string]::IsNullOrWhiteSpace($lockTask)) { "$lockTask.lock" } else { "" }
-    Write-Output ("{0} task_id={1} claim_id={2}" -f $lock.Name, $lockTask, $lockClaim)
-    if ([string]::IsNullOrWhiteSpace($lockTask) -or [string]::IsNullOrWhiteSpace($lockClaim)) {
+    Write-Output ("{0} task_id={1} claim_id={2}" -f $lock.Name, $lockTask, $lockClaimId)
+    if ([string]::IsNullOrWhiteSpace($lockTask) -or [string]::IsNullOrWhiteSpace($lockClaimId)) {
       $issue = ("task_lock_missing_fields file={0}" -f $lock.Name)
       $collaborationIssues += $issue
       Write-Output $issue
@@ -154,15 +154,15 @@ if ($activeLocks.Count -eq 0) {
       $collaborationIssues += $issue
       Write-Output $issue
     }
-    $matchingClaim = $claimRecords | Where-Object { $_.ClaimId -eq $lockClaim -and $_.TaskId -eq $lockTask } | Select-Object -First 1
+    $matchingClaim = $claimRecords | Where-Object { $_.ClaimId -eq $lockClaimId -and $_.TaskId -eq $lockTask } | Select-Object -First 1
     if ($null -eq $matchingClaim) {
-      $issue = ("orphan_task_lock file={0} task_id={1} claim_id={2}" -f $lock.Name, $lockTask, $lockClaim)
+      $issue = ("orphan_task_lock file={0} task_id={1} claim_id={2}" -f $lock.Name, $lockTask, $lockClaimId)
       $collaborationIssues += $issue
       Write-Output $issue
     }
     $lockRecords += [pscustomobject]@{
       File = $lock.Name
-      ClaimId = $lockClaim
+      ClaimId = $lockClaimId
       TaskId = $lockTask
     }
   }

@@ -3,7 +3,7 @@ package com.medkernel.persistence;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medkernel.common.TraceContext;
-import com.medkernel.dify.DifyWorkflowTemplate;
+import com.medkernel.dify.workflow.DifyWorkflowTemplate;
 import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientTaskState;
 import com.medkernel.dto.PathwayVariationRecord;
@@ -17,12 +17,12 @@ import com.medkernel.util.ClinicalFactUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,12 +47,16 @@ public class EnginePersistenceService {
 
     private final EnginePersistenceProperties properties;
     private final ObjectMapper objectMapper;
+    private final DataSource dataSource;
     private final List<Map<String, Object>> auditRecords =
             Collections.synchronizedList(new ArrayList<Map<String, Object>>());
 
-    public EnginePersistenceService(EnginePersistenceProperties properties, ObjectMapper objectMapper) {
+    public EnginePersistenceService(EnginePersistenceProperties properties,
+                                    ObjectMapper objectMapper,
+                                    DataSource dataSource) {
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.dataSource = dataSource;
     }
 
     /** 判断持久化服务是否已启用且具备必要凭证。 */
@@ -1694,30 +1698,10 @@ public class EnginePersistenceService {
     }
 
     private Connection connection() throws SQLException {
-        loadDriver();
-        SQLException last = null;
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
-            } catch (SQLException ex) {
-                last = ex;
-                // Oracle监听偶发拒绝连接时先短暂重试，P2阶段会替换为正式连接池。
-                if (!shouldRetryConnection(ex) || attempt == 3) {
-                    throw ex;
-                }
-                sleepQuietly(500L * attempt);
-            }
-        }
-        throw last;
-    }
-
-    private void loadDriver() throws SQLException {
-        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException(driverClass + " not found", ex);
-        }
+        // PR-FINAL-15: 全部走 HikariCP 连接池（EngineDataSourceConfig 暴露的 DataSource）。
+        // HikariCP 内部自带连接获取重试、失效检测、leak detection（threshold=2s）等机制，
+        // 不再需要自己 loadDriver() / 3 次重试循环 / shouldRetryConnection 判断。
+        return dataSource.getConnection();
     }
 
     private List<String> loadLocalSchemaStatements() {
@@ -1901,18 +1885,9 @@ public class EnginePersistenceService {
                 : DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(value.toInstant().atOffset(ZoneOffset.UTC));
     }
 
-    private boolean shouldRetryConnection(SQLException ex) {
-        String message = ex.getMessage();
-        return message != null && (message.contains("ORA-12518") || message.contains("Listener refused"));
-    }
-
-    private void sleepQuietly(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
-    }
+    // PR-FINAL-15: 已删 shouldRetryConnection / sleepQuietly。
+    // HikariCP 自带连接获取超时（connectionTimeoutMs=3s）+ 失效检测，
+    // ORA-12518 等监听器拒绝由 pool 层重试，业务层不再关心。
 
     private long extractNumericId(String text) {
         if (text == null) {

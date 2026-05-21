@@ -26,7 +26,7 @@ export const antTheme = {
     borderRadius: 6,
     borderRadiusSM: 4,
     borderRadiusLG: 8,
-    fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Source Han Sans CN", sans-serif',
+    fontFamily: '"PingFang SC", "Microsoft YaHei", "Source Han Sans CN", -apple-system, BlinkMacSystemFont, sans-serif',
     fontSize: 14,
     fontSizeSM: 13,
     fontSizeLG: 16,

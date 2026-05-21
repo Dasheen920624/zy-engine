@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,13 +32,16 @@ public class SsoService {
     private final SecurityPersistenceService persistenceService;
     private final JwtTokenProvider jwtTokenProvider;
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
     public SsoService(SecurityPersistenceService persistenceService,
                       JwtTokenProvider jwtTokenProvider,
-                      EnginePersistenceProperties properties) {
+                      EnginePersistenceProperties properties,
+                      DataSource dataSource) {
         this.persistenceService = persistenceService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -438,7 +441,7 @@ public class SsoService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15: 走 HikariCP 连接池（EngineDataSourceConfig 暴露的 DataSource）。
+        return dataSource.getConnection();
     }
 }

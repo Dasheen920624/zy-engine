@@ -1,0 +1,7 @@
+task_id: PR-FINAL-11
+claim_id: PR-FINAL-11-S01
+owner: claude-opus-4-7@angry-rhodes-1b24a7
+branch: claude/angry-rhodes-1b24a7
+git_base_commit: 67f271a
+created_at: 2026-05-21T22:00+08:00
+last_heartbeat: 2026-05-21T22:00+08:00
