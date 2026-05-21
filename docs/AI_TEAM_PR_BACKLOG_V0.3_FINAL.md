@@ -218,7 +218,11 @@ private Connection connection() throws SQLException {
 - PR-FINAL-08（`/admin/users` 用户管理页）的"前置 PR-FINAL-03" 现已就绪，可以开工
 - 任何 AI 想做"院内身份源 / 全量同步 / 增量同步"前端 → 走 `/api/user-sync/*`（`security/usersync/UserSyncApiController`）source/task 模型，不要再造 `provider` 路径
 
-### ✅ PR-FINAL-11：规则库 + DSL 编辑器（DONE 2026-05-21）
+### ✅ PR-FINAL-11：规则库 + DSL 编辑器（DONE 2026-05-21；路径引擎补刀以 follow-up PR 形式同期入 develop）
+
+> **范围扩展（2026-05-21 用户拍板）**：原 PR-FINAL-11 「规则库 + DSL 编辑器」已 squash merge 进 develop（commit `f20c2a7`）。在同一会话里把「路径引擎前端完整化」（PR-V2-07 路径版本对比 + PR-V2-09 患者路径管理 占位实装的补刀）以 follow-up PR 形式接力进入 develop，统一引入 CodeMirror 6 依赖、统一国情合规标准、统一 UI 风格。
+
+#### 规则模块（原 PR-FINAL-11 范围，已合 develop f20c2a7）
 
 **修改**：
 - `frontend/src/api/rule.ts`（新建）：规则模块前端契约——封装 `/api/rules/*` + `/api/rule-engine/*`；本地 view 类型 `RuleDefinition` / `RuleExecLog` / `RuleExecLogSummary`（避免触碰架构师专属 `api/types.ts`）
@@ -245,9 +249,42 @@ private Connection connection() throws SQLException {
 - DSL 编辑器中文注释 + 中文错误提示
 - 来源缺失自动渲染「来源缺失」状态卡（不静默通过）
 
-**后续注意**：
-- PR-FINAL-14 砍菜单时无需动 rule-definitions（本 PR 已加回）
-- PR-FINAL-19 inline 抽取无需动本模块（本模块全程 0 inline）
+#### 路径模块（PR-V2-07 + PR-V2-09 占位实装，合并到本 PR）
+
+- `frontend/src/api/pathway.ts`（扩展）：+14 端点（diff / 候选 / 入径 / 任务 / 实例查询 / 变异 / 聚合）；本地 view 类型 `PatientPathwayInstance` / `PatientNodeState` / `PatientTaskState` / `PathwayVariationRecord` / `RecommendationCard` / `PathwayDiffResult` 等
+- `frontend/src/pages/Pathway/PathwayDetail.tsx`（**重写**，96 行 → 240 行）：去 inline → CSS Modules + var(--mk-*)；版本时间轴；引用警告卡；草稿/已发布双 Tab 配置（CodeMirror 6 只读）；实例统计；变异统计；删除/编辑/对比操作
+- `frontend/src/pages/Pathway/PathwayDiff.tsx`（**新建**，PR-V2-07 占位实装）：`/pathway/templates/:code/diff?from=&to=` 版本对比；节点/连接/任务三段式增删改可视化；JSON 并排只读（CodeMirror 6）
+- `frontend/src/pages/Pathway/PatientPathway/`（**新建整包**，PR-V2-09 占位实装）：
+  - `PatientPathwayList.tsx`：列表 + 路径/状态/患者筛选 + 入径对话框
+  - `PatientPathwayDetail.tsx`：基本信息 + 节点进度时间轴 + 当前节点任务列表（完成 / 跳过 / 完成节点）+ 变异记录列表 + 变异对话框
+  - `AdmitDialog.tsx`：3 个国情样本 + facts JSON + 候选推荐 + 确认入径
+  - `VariationDialog.tsx`：7 种变异类型枚举 + 节点 + 原因填写
+  - `components/NodeProgressTimeline.tsx` / `TaskList.tsx` / `VariationCard.tsx`
+- `frontend/src/pages/Pathway/components/PathwayTimeline.tsx`（新建）：版本时间轴
+- `frontend/src/pages/Pathway/components/ReferenceWarnings.tsx`（新建）：引用警告卡（ADR-0004）
+- `frontend/src/pages/Pathway/helpers/`（新建）：pathwayFormatters / pathwayDiff / pathwaySamples / pathwaySamples.guards 纯函数
+- `frontend/src/pages/Pathway/styles.module.css`（新建）：路径模块整体样式 555 行
+- `frontend/src/pages/Pathway/__tests__/` + `helpers/__tests__/` + `components/__tests__/` + `PatientPathway/__tests__/` + `PatientPathway/components/__tests__/`：24+ 测试
+
+#### 共享改动
+
+- `frontend/src/router/menuConfig.tsx`：M1 知识工厂新增「规则库」+「患者路径管理」入口
+- `frontend/src/router/routes.tsx`：`/rule/definitions` 等 3 个 + `/pathway/templates/:code/diff` `/pathway/patients` `/pathway/patients/:instanceId` 全部从 PlaceholderPage 改为真实组件
+- `frontend/package.json`：新增 `@uiw/react-codemirror` `@codemirror/lang-json` `@codemirror/state` `@codemirror/theme-one-dark` + `@testing-library/user-event`（规则 + 路径模块共用）
+
+#### 国情合规（双模块共同）
+
+- ADR-0004 所有医学内容必须显示来源 → 规则用 `<SourceCitationCard>`；路径用 `<ReferenceWarnings>` + `<SourceInfo>`
+- 国情场景样本：规则模块 5 个（AMI/STEMI、病历时限、红线、医保、卒中）；路径入径 3 个（AMI/STEMI、卒中溶栓、COPD 急性加重）
+- 中文错误提示 + 中文枚举标签
+- 患者路径列表患者 ID 4+4 脱敏（身份证 GB 11643-1999 风格）
+- DSL / JSON 编辑器中文注释
+
+#### 后续注意
+
+- PR-FINAL-14 砍菜单时无需动 rule-definitions / patient-pathways（本 PR 已加回）
+- PR-FINAL-19 inline 抽取无需动本 PR 触及的两个模块（规则 0 inline 新增；路径 -8 inline → 守门由 582 降至 574）
+- 后端 `PathwayService` 1950 行未拆，属 PR-FINAL-18 范围（架构师任务）
 
 ---
 
