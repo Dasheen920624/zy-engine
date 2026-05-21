@@ -11,7 +11,7 @@ frontend_reviewer: Codex-GPT5
 test_reviewer: Codex-GPT5
 status: APPROVED
 created_at: 2026-05-21T22:41:50+08:00
-updated_at: 2026-05-21T22:41:50+08:00
+updated_at: 2026-05-21T22:46:10+08:00
 branch: codex/pr-final-06-login-tabs
 database_mode: N/A
 oracle_available: false
@@ -80,8 +80,8 @@ review_status: APPROVED
 approved_by: Codex-GPT5
 approved_at: 2026-05-21T22:41:50+08:00
 submit_allowed: true
-commit: pending
-push: pending
+commit: eeee2f269631
+push: origin/codex/pr-final-06-login-tabs
 risks: SMS submit is demo-bridged until backend compliance SMS APIs land.
 feature_acceptance_status: PENDING_PRODUCT_ACCEPTANCE
 ```

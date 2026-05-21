@@ -13,7 +13,7 @@ target_base_branch: develop
 git_base_commit: 67f271af50220778b9e572d2f6fd2a889bcfa1b3
 git_status_at_claim: clean
 created_at: 2026-05-21T22:21:25+08:00
-last_heartbeat: 2026-05-21T22:41:50+08:00
+last_heartbeat: 2026-05-21T22:46:10+08:00
 expected_finish: 2026-05-23T22:21:25+08:00
 heartbeat_interval_minutes: 60
 database_mode: N/A for schema; frontend login page only
@@ -54,13 +54,14 @@ ai-dev-input/10_task_claims/active_locks/PR-FINAL-06.lock
 ```text
 2026-05-21T22:21:25+08:00 Claimed PR-FINAL-06 from develop after confirming no remote PR-FINAL-06 branch.
 2026-05-21T22:41:50+08:00 Completed unified four-tab login page, deleted legacy Login/SsoLogin duplication, and aligned frontend lint with inline-style baseline guard.
+2026-05-21T22:46:10+08:00 Recorded implementation commit and push target.
 ```
 
 ## Completion
 
 ```text
-commit: pending
-push: pending
+commit: eeee2f269631
+push: origin/codex/pr-final-06-login-tabs
 tests: eslint changed files PASS; eslint full PASS via bundled Node 24; typecheck PASS; vite build PASS; vitest 39 PASS; inline-style count PASS 561/582; Playwright smoke PASS; login.spec.ts 4 PASS
 review: RV-PR-FINAL-06-S01-R01 APPROVED
 risks: SMS login uses demo bridge until PR-V3-COMPLIANCE-BACKEND provides /api/auth/sms/*; system Node 12 cannot run modern frontend npm scripts locally, so verification used bundled Node 24.
