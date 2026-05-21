@@ -11,6 +11,7 @@ import {
   MedicineBoxOutlined,
   NodeIndexOutlined,
   ReadOutlined,
+  RobotOutlined,
   SafetyCertificateOutlined,
   ToolOutlined,
   UnorderedListOutlined,
@@ -117,10 +118,16 @@ export const menuSections: MenuSection[] = [
         path: "/rule/definitions",
         pr: "PR-FINAL-11",
       },
+      {
+        key: "ai-workflows",
+        label: "AI 工作流引擎",
+        icon: <RobotOutlined />,
+        path: "/ai-workflows",
+        pr: "PR-FINAL-13",
+      },
       // 以下入口待实装（参考 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md），实装后从下方移到上方：
       //   key: graph-explore      path: /graph/explore      PR-V0.4
       //   key: adapter-hub        path: /adapter/hub        PR-FINAL-12
-      //   key: ai-workflows       path: /ai-workflows       PR-FINAL-13 （旧 dify-workflows）
     ],
   },
 
