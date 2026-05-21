@@ -13,6 +13,46 @@ public class EnginePersistenceProperties {
     private String url;
     private String username;
     private String password;
+    /** PR-FINAL-15: HikariCP 连接池嵌套配置。null 时 EngineDataSourceConfig 用默认值。 */
+    private HikariOptions hikari = new HikariOptions();
+
+    public HikariOptions getHikari() {
+        return hikari;
+    }
+
+    public void setHikari(HikariOptions hikari) {
+        this.hikari = hikari;
+    }
+
+    /**
+     * HikariCP 连接池配置（绑定 medkernel.database.hikari.*）。
+     * 字段命名与 HikariCP 语义对齐但加 -Ms 后缀以避免与 Spring Boot
+     * spring.datasource.hikari.connection-timeout 配置冲突。
+     */
+    public static class HikariOptions {
+        private int maximumPoolSize = 20;
+        private int minimumIdle = 2;
+        private long connectionTimeoutMs = 3000;
+        private long idleTimeoutMs = 600000;
+        private long maxLifetimeMs = 1800000;
+        private long leakDetectionThresholdMs = 2000;
+        private String poolName = "MedKernelHikari";
+
+        public int getMaximumPoolSize() { return maximumPoolSize; }
+        public void setMaximumPoolSize(int maximumPoolSize) { this.maximumPoolSize = maximumPoolSize; }
+        public int getMinimumIdle() { return minimumIdle; }
+        public void setMinimumIdle(int minimumIdle) { this.minimumIdle = minimumIdle; }
+        public long getConnectionTimeoutMs() { return connectionTimeoutMs; }
+        public void setConnectionTimeoutMs(long connectionTimeoutMs) { this.connectionTimeoutMs = connectionTimeoutMs; }
+        public long getIdleTimeoutMs() { return idleTimeoutMs; }
+        public void setIdleTimeoutMs(long idleTimeoutMs) { this.idleTimeoutMs = idleTimeoutMs; }
+        public long getMaxLifetimeMs() { return maxLifetimeMs; }
+        public void setMaxLifetimeMs(long maxLifetimeMs) { this.maxLifetimeMs = maxLifetimeMs; }
+        public long getLeakDetectionThresholdMs() { return leakDetectionThresholdMs; }
+        public void setLeakDetectionThresholdMs(long leakDetectionThresholdMs) { this.leakDetectionThresholdMs = leakDetectionThresholdMs; }
+        public String getPoolName() { return poolName; }
+        public void setPoolName(String poolName) { this.poolName = poolName; }
+    }
 
     public boolean isEnabled() {
         return enabled;

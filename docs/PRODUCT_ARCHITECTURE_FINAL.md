@@ -231,6 +231,26 @@
 
 **禁止**：新文件 > 500 行（verify-pr 2.x 加规则）；新 Service 写在 `*PersistenceService` 集合文件里。
 
+### 4.1 持久化基础设施：HikariCP 连接池接入（PR-FINAL-15a ✅ 已落地）
+
+**问题**：实测全 src 有 29 个文件直接调 `DriverManager.getConnection(url, user, pass)`，每个 PersistenceService 自带一份 `private Connection connection()` 私有方法。后果：
+- `@Transactional` 不生效（同 Service 内多 DAO 走不同 connection，事务不共享）
+- 高并发下无限制创建连接（一次请求多次 `DriverManager.getConnection` = 多次 TCP handshake + DB-side auth）
+- 无连接泄漏检测（拿了不还会一直累积）
+- 无 pool 监控（运维不知道连接池水位）
+
+**解决**：引入 HikariCP（Spring Boot 2.7 默认连接池，业界事实标准）：
+1. `pom.xml` 加 `spring-boot-starter-jdbc` 自带 HikariCP 4.0.3
+2. `EngineDataSourceConfig.java` 暴露 `@Bean DataSource`：跳过 Spring Boot DataSourceAutoConfiguration（项目用自定义 `medkernel.database.*` 命名空间，避免 prefix 冲突），显式构造 `HikariDataSource`（jdbcUrl + username + password 从 EnginePersistenceProperties 读，pool 参数从 `medkernel.database.hikari.*` 读）
+3. 29 个 PersistenceService 改造模板（注入 `DataSource` + 改 `connection()` 内部实现，调用点全部不动）
+4. HikariCP 通过 `jdbcUrl` 自动 `Class.forName` 加载驱动，多方言（Oracle/DM/PG/Kingbase/H2）由 jdbcUrl 自驱动，**不再需要各 Service 自己 `loadDriver()`**
+
+**当前进度（2026-05-21）**：
+- ✅ PR-FINAL-15a 完成：HikariCP 框架 + 5 核心 PersistenceService（EnginePersistenceService / SecurityPersistenceService / OrganizationPersistenceService / MpiPersistenceService / SsoService）
+- 🟡 PR-FINAL-15b 待领（中级 AI）：剩余 24 个 Service 同模板改造（mechanical work，4 大类：knowledge×5 / datagovernance×5 / cdss×3 / security 子包×5 / 其它×6）
+
+**配套约束**：新代码不允许 `import java.sql.DriverManager`（example 见 EngineDataSourceConfig 头注释）。
+
 ---
 
 ## 5. API 设计统一规范

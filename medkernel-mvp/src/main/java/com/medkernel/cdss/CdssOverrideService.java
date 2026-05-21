@@ -6,7 +6,7 @@ import com.medkernel.persistence.Ids;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,9 +31,11 @@ import java.util.Map;
 public class CdssOverrideService {
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public CdssOverrideService(EnginePersistenceProperties properties) {
+    public CdssOverrideService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -492,41 +494,7 @@ public class CdssOverrideService {
     }
 
     private Connection connection() throws SQLException {
-        loadDriver();
-        SQLException last = null;
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
-            } catch (SQLException ex) {
-                last = ex;
-                if (!shouldRetryConnection(ex) || attempt == 3) {
-                    throw ex;
-                }
-                sleepQuietly(500L * attempt);
-            }
-        }
-        throw last;
-    }
-
-    private void loadDriver() throws SQLException {
-        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException(driverClass + " not found", ex);
-        }
-    }
-
-    private boolean shouldRetryConnection(SQLException ex) {
-        String message = ex.getMessage();
-        return message != null && (message.contains("ORA-12518") || message.contains("Listener refused"));
-    }
-
-    private void sleepQuietly(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 }

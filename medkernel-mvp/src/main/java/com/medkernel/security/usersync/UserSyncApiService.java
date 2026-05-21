@@ -20,6 +20,7 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import javax.sql.DataSource;
 
 /**
  * 用户同步服务：支持 HIS/EMR/OA/统一身份平台用户同步
@@ -31,11 +32,14 @@ public class UserSyncApiService {
 
     private final EnginePersistenceProperties properties;
     private final SecurityPersistenceService securityPersistenceService;
+    private final DataSource dataSource;
 
     public UserSyncApiService(EnginePersistenceProperties properties,
-                              SecurityPersistenceService securityPersistenceService) {
+                              SecurityPersistenceService securityPersistenceService,
+                              DataSource dataSource) {
         this.properties = properties;
         this.securityPersistenceService = securityPersistenceService;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -658,8 +662,8 @@ public class UserSyncApiService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 
     /**

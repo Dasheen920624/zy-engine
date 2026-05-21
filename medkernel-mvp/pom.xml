@@ -45,6 +45,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
+        <!-- PR-FINAL-15: HikariCP via spring-boot-starter-jdbc.
+             不引入 spring-boot-starter-data-jpa 是为了保持轻量 raw-JDBC 风格；
+             starter-jdbc 自带 HikariCP 4.0.3（Spring Boot 2.7 默认），
+             我们用 EngineDataSourceConfig 显式构造 DataSource Bean（跳过 auto-config）。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.neo4j.driver</groupId>
             <artifactId>neo4j-java-driver</artifactId>

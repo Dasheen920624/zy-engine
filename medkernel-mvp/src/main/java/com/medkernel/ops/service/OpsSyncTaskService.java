@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.sql.DataSource;
 
 /**
  * 异步任务服务：统一的异步任务执行、重试、审计机制
@@ -35,10 +36,12 @@ public class OpsSyncTaskService {
 
     private final EnginePersistenceProperties properties;
     private final ExecutorService executorService;
+    private final DataSource dataSource;
 
-    public OpsSyncTaskService(EnginePersistenceProperties properties) {
+    public OpsSyncTaskService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
         this.executorService = Executors.newFixedThreadPool(4);
+        this.dataSource = dataSource;
     }
 
     // ==================== 任务查询 ====================
@@ -454,8 +457,8 @@ public class OpsSyncTaskService {
      * 获取数据库连接
      */
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 
     // ==================== 任务执行器接口 ====================

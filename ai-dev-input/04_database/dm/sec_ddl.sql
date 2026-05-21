@@ -214,53 +214,12 @@ CREATE TABLE sec_identity_binding (
   CONSTRAINT uk_sec_identity_binding UNIQUE (tenant_id, provider_id, external_subject)
 );
 
--- ============================================================
--- ⚠️ DEPRECATED v0.3-final (PR-FINAL-03, ADR-0006)
--- 旧 security.UserSyncController（/api/security/sync/*）已删除。
--- 新设计采用 source/task/log 三表模型（sec_sync_source/task/log），
--- 详见 security.usersync.UserSyncApiController（/api/user-sync/*）。
--- 表定义保留是为了避免给已部署实例制造 DROP 失败，
--- 真正的清理（Flyway DROP TABLE）放在 PR-FINAL-25。
--- 新开发不要再用这两张表。
--- ============================================================
--- [DEPRECATED] 同步任务记录表
-CREATE TABLE sec_user_sync_job (
-  id BIGINT PRIMARY KEY,
-  tenant_id BIGINT NOT NULL,
-  provider_id BIGINT NOT NULL,
-  sync_type VARCHAR(32) NOT NULL,
-  status VARCHAR(32) DEFAULT 'RUNNING' NOT NULL,
-  total_count INT DEFAULT 0 NOT NULL,
-  created_count INT DEFAULT 0 NOT NULL,
-  updated_count INT DEFAULT 0 NOT NULL,
-  disabled_count INT DEFAULT 0 NOT NULL,
-  skipped_count INT DEFAULT 0 NOT NULL,
-  error_count INT DEFAULT 0 NOT NULL,
-  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  finished_at TIMESTAMP,
-  triggered_by VARCHAR(64),
-  error_message TEXT,
-  CONSTRAINT uk_sec_user_sync_job UNIQUE (id)
-);
-
--- [DEPRECATED v0.3-final, ADR-0006] 同步明细表 — 见上方说明
-CREATE TABLE sec_user_sync_detail (
-  id BIGINT PRIMARY KEY,
-  job_id BIGINT NOT NULL,
-  tenant_id BIGINT NOT NULL,
-  external_subject VARCHAR(200) NOT NULL,
-  external_name VARCHAR(200),
-  action VARCHAR(32) NOT NULL,
-  platform_user_id BIGINT,
-  message VARCHAR(1000),
-  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
+-- 注：旧 sec_user_sync_job / sec_user_sync_detail 已在 PR-FINAL-03 删除（ADR-0006）
+--    新设计 source/task/log 三表见 medkernel-mvp/src/main/resources/db/local/sec_user_sync_ddl.sql
 
 -- 索引
 CREATE INDEX idx_identity_binding_user ON sec_identity_binding(tenant_id, user_id);
 CREATE INDEX idx_identity_binding_external ON sec_identity_binding(tenant_id, provider_id, external_subject);
-CREATE INDEX idx_sync_job_tenant ON sec_user_sync_job(tenant_id, provider_id, started_at);
-CREATE INDEX idx_sync_detail_job ON sec_user_sync_detail(job_id);
 
 -- 种子数据：身份源配置样例
 INSERT INTO sec_identity_provider (id, tenant_id, provider_code, provider_name, provider_type, adapter_code, query_code, priority, status, created_by)

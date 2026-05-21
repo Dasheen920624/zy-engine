@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,11 +31,14 @@ public class TriggerPointService {
 
     private final EnginePersistenceProperties properties;
     private final AdapterHubService adapterHubService;
+    private final DataSource dataSource;
 
     public TriggerPointService(EnginePersistenceProperties properties,
-                                AdapterHubService adapterHubService) {
+                                AdapterHubService adapterHubService,
+                                DataSource dataSource) {
         this.properties = properties;
         this.adapterHubService = adapterHubService;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -274,7 +277,7 @@ public class TriggerPointService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 }

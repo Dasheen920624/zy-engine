@@ -1,4 +1,4 @@
-﻿# check-inline-style-count.ps1 — v0.3-final 风格统一守门
+# check-inline-style-count.ps1 — v0.3-final 风格统一守门
 #
 # 统计 frontend/src 下 `style={{` 出现次数（即 JSX 内联 style 对象数）。
 # 当数量 > baseline（保存在本文件 $script:Baseline 常量）时退出码 1，CI FAIL。
@@ -25,7 +25,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # v0.3-final baseline（2026-05-21 PR-FINAL-04 抽取后）
-$script:Baseline = 555
+$script:Baseline = 545
 
 # 根路径推断（脚本在 scripts/ 下，仓库根在上一级）
 $repoRoot = Split-Path -Parent $PSScriptRoot

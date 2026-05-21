@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,9 +27,11 @@ public class AiGovernanceService {
     private static final Logger log = LoggerFactory.getLogger(AiGovernanceService.class);
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public AiGovernanceService(EnginePersistenceProperties properties) {
+    public AiGovernanceService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     // =========================================================================
@@ -659,7 +661,7 @@ public class AiGovernanceService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 }
