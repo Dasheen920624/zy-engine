@@ -5,15 +5,19 @@
 
 ---
 
-## 0. 🔥 v0.3 起，AI 接手任何任务前必读三件套（15 分钟）
+## 0. 🔥 顶层 5 大权威文档（任何角色接手前必看的目录）
 
-| # | 文档 | 一句话 | 阅读时长 |
-|---|---|---|:---:|
-| 1 | [`AI_CHARTER.md`](AI_CHARTER.md) | **AI 必读 1 页纸** — 7 红线 + 后端/前端/文档硬约束 + 提交流程 + KD-001~007 | 5 分钟 |
-| 2 | [`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md) | **产品架构最终白皮书** — 三产品 × 四大模块 + Controller 归档 + 27 菜单/路由对照表 + ADR-0005~0010 + v1.0 GA 七维度准入 | 10 分钟 |
-| 3 | [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md) | **AI 团队标准化执行 SOP** — 角色分工 + 10 步领任务流程 + 多 AI 冲突仲裁 + 验收 DoD + 紧急处置预案 | 10 分钟（按需查） |
+| # | 文档 | 一句话 | 阅读时长 | 受众 |
+|---|---|---|:---:|---|
+| 1 | [`AI_CHARTER.md`](AI_CHARTER.md) | **AI 必读 1 页纸** — 7 红线 + 硬约束 + 提交流程 + KD-001~007 | 5 分钟 | 所有 AI |
+| 2 | [`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md) | **产品架构最终白皮书** — 三产品×四大模块 + Controller 归档 + 27 菜单/路由对照 + ADR-0005~0010 + v1.0 GA 七维度 | 10 分钟 | 架构师 / 高级 AI / 产品 |
+| 3 | [`COMPREHENSIVE_REVIEW.md`](COMPREHENSIVE_REVIEW.md) | **全方位最终评审** — 20 维度全栈评审 + 25 个 P0 + 法律合规清单 + 等保 2.0 三级落地 | 15 分钟 | 产品 / 架构 / CTO / 合规 |
+| 4 | [`DEPLOYMENT_DUAL_MODE.md`](DEPLOYMENT_DUAL_MODE.md) | **内外网双部署规格** — 内网（医院本地+国产化）vs 外网（SaaS）差异化矩阵 + 选型决策树 + 双形态 PR 拆分 | 10 分钟 | 实施工程师 / SRE / 售前 |
+| 5 | [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md) | **AI 团队 SOP** — 角色 / 10 步流程 / 多 AI 冲突仲裁 / DoD / 紧急处置 | 10 分钟（按需查） | 所有 AI |
 
-**配套**：[`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)（演示体验 + 中国国情合规 12+7 条）+ [`engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md)（工程债时间表 KD-001~007）+ [`engineering/AUDIT-20260521-V3-基线核查.md`](engineering/AUDIT-20260521-V3-基线核查.md)（基线核查报告）。
+**v0.3 路径配套**：[`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)（演示体验 + 国情合规 12+7 条）+ [`engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md)（工程债时间表 KD-001~007）+ [`engineering/AUDIT-20260521-V3-基线核查.md`](engineering/AUDIT-20260521-V3-基线核查.md)（基线核查）。
+
+**阅读顺序（首次接手）**：1 → 2 → 3 → 4（部署相关任务）或 5（开发任务）→ 配套
 
 ---
 
