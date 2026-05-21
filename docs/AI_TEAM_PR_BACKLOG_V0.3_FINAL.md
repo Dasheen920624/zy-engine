@@ -33,7 +33,7 @@
 | **PR-FINAL-07** | `/mpi/patients` 患者主索引页 | 2 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-08** | `/admin/users` 用户管理页 | 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-09** | `/admin/audit` 审计日志查询页 | 2 | 🟡 TODO | 中级 | 3 天 |
-| **PR-FINAL-10** | `/tenant/onboarding` 租户开通向导 | 2 | 🟡 TODO | 高级 | 4 天 |
+| **PR-FINAL-10** | `/tenant/onboarding` 租户开通向导 | 2 | 🟢 IN REVIEW · Codex-GPT5（实装） + Claude-Opus-4.7（cherry-pick 重整） · 2026-05-22 | 高级 | 4 天 |
 | **PR-FINAL-11** | `/rule/definitions` 规则库 + DSL 编辑器 | 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-21 | 高级 | 8 天 |
 | **PR-FINAL-12** | `/adapter/hub` 适配器中心 | 2 | 🟡 TODO | 中级 | 4 天 |
 | **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | 🟢 IN REVIEW · Claude-Opus-4.7 · 2026-05-22 | 中级 | 3 天 |
