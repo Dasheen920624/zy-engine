@@ -21,9 +21,14 @@ import LoginPage from "../pages/auth/LoginPage";
 import RequireAuth from "./RequireAuth";
 import PlaceholderPage from "../components/PlaceholderPage";
 import { MappingWorkbench } from "../pages/Terminology";
-import PathwayList from "../pages/Pathway/PathwayList";
-import PathwayDetail from "../pages/Pathway/PathwayDetail";
-import PathwayEditor from "../pages/Pathway/PathwayEditor";
+import {
+  PathwayList,
+  PathwayDetail,
+  PathwayDiff,
+  PathwayEditor,
+  PatientPathwayList,
+  PatientPathwayDetail,
+} from "../pages/Pathway";
 import { RuleList, RuleDetail, RuleEditor } from "../pages/Rule";
 
 export const routes: RouteObject[] = [
@@ -47,8 +52,9 @@ export const routes: RouteObject[] = [
           { path: "pathway/templates", element: <PathwayList /> },
           { path: "pathway/templates/:code", element: <PathwayDetail /> },
           { path: "pathway/templates/:code/edit", element: <PathwayEditor /> },
-          { path: "pathway/templates/:code/diff", element: <PlaceholderPage title="路径版本对比" pr="PR-V2-07" /> },
-          { path: "pathway/patients", element: <PlaceholderPage title="患者路径管理" pr="PR-V2-09" /> },
+          { path: "pathway/templates/:code/diff", element: <PathwayDiff /> },
+          { path: "pathway/patients", element: <PatientPathwayList /> },
+          { path: "pathway/patients/:instanceId", element: <PatientPathwayDetail /> },
           { path: "rule/definitions", element: <RuleList /> },
           { path: "rule/definitions/:code", element: <RuleDetail /> },
           { path: "rule/definitions/:code/edit", element: <RuleEditor /> },
