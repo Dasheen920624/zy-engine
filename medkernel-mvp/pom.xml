@@ -53,6 +53,18 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
+        <!-- PR-FINAL-24: Actuator + Prometheus 指标暴露（阶段 4 合规上线起点）。
+             - actuator: /actuator/health|info|metrics|prometheus 端点
+             - micrometer-registry-prometheus: 把 Hikari/JVM/HTTP/业务指标导出到 Prometheus 格式
+             配置详见 application.yml 的 management.* 段；运维落地详见 deploy/monitoring/。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.neo4j.driver</groupId>
             <artifactId>neo4j-java-driver</artifactId>

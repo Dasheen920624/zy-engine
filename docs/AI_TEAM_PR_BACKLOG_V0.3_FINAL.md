@@ -48,7 +48,7 @@
 | **PR-FINAL-21** | E2E 6 剧本 fixture + Playwright | 3 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-22** | 国密 SM2/SM3/SM4（BouncyCastle）| 4 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-23** | 数据分级 + HEALTH_DATA SM4 加密 | 4 | 🟡 TODO | 架构师 | 5 天 |
-| **PR-FINAL-24** | actuator + Prometheus + Grafana 5 看板 | 4 | 🟡 TODO | 高级 | 4 天 |
+| **PR-FINAL-24** | actuator + Prometheus + Grafana 5 看板 | 4 | 🟢 IN REVIEW · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick 重整）· 2026-05-22 | 高级 | 4 天 |
 | **PR-FINAL-25** | Flyway DB migration + KingbaseES 实测 | 4 | 🟡 TODO | 架构师 | 5 天 |
 
 **总计**：约 102 工作日（5 AI 并行 = 4-5 周）

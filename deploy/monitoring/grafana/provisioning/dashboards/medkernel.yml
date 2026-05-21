@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: MedKernel
+    orgId: 1
+    folder: MedKernel
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/medkernel

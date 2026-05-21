@@ -1,0 +1,93 @@
+groups:
+  - name: medkernel-backend
+    interval: 30s
+    rules:
+      - alert: MedKernelBackendDown
+        expr: up{job="medkernel-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel backend scrape target is down
+          description: Prometheus cannot scrape the internal actuator endpoint on port 18081.
+
+      - alert: MedKernelApiP95LatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="medkernel-mvp"}[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel API P95 latency is above 1s
+          description: API latency is above the v0.3-final warning threshold for 5 minutes.
+
+      - alert: MedKernelApiP95LatencyCritical
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="medkernel-mvp"}[2m])) by (le)) > 3
+        for: 2m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel API P95 latency is above 3s
+          description: API latency is above the critical threshold for 2 minutes.
+
+      - alert: MedKernelApi5xxRateHigh
+        expr: sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[5m])), 0.001) > 0.005
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel API 5xx rate is above 0.5%
+          description: HTTP 5xx error ratio crossed the warning threshold.
+
+      - alert: MedKernelApi5xxRateCritical
+        expr: sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status=~"5.."}[2m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[2m])), 0.001) > 0.02
+        for: 2m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel API 5xx rate is above 2%
+          description: HTTP 5xx error ratio crossed the critical threshold.
+
+      - alert: MedKernelJvmHeapHigh
+        expr: sum(jvm_memory_used_bytes{application="medkernel-mvp",area="heap"}) / clamp_min(sum(jvm_memory_max_bytes{application="medkernel-mvp",area="heap"}), 1) > 0.75
+        for: 10m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel JVM heap usage is above 75%
+          description: JVM heap pressure is above the warning threshold.
+
+      - alert: MedKernelJvmHeapCritical
+        expr: sum(jvm_memory_used_bytes{application="medkernel-mvp",area="heap"}) / clamp_min(sum(jvm_memory_max_bytes{application="medkernel-mvp",area="heap"}), 1) > 0.90
+        for: 2m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel JVM heap usage is above 90%
+          description: JVM heap pressure is above the critical threshold.
+
+      - alert: MedKernelProviderNotReady
+        expr: medkernel_provider_configured{provider=~"database|model_gateway"} == 1 and on(provider) medkernel_provider_ready{provider=~"database|model_gateway"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel provider is not ready
+          description: A core provider readiness metric has reported 0 for 5 minutes.
+
+      - alert: MedKernelHikariPoolSaturation
+        expr: max(hikaricp_connections_active{application="medkernel-mvp"} / clamp_min(hikaricp_connections_max{application="medkernel-mvp"}, 1)) > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel HikariCP pool usage is above 80%
+          description: The database connection pool is approaching saturation.

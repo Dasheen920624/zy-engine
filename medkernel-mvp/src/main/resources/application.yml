@@ -7,6 +7,42 @@ server:
       enabled: true
       force: true
 
+# PR-FINAL-24: Actuator + Prometheus 端点配置
+# - management.server.port=18081 与业务端口 18080 分离（运维只暴露 18080 给外网）
+# - actuator base-path: /medkernel/actuator/{health,info,metrics,prometheus}
+# - 仅 when_authorized 时返回 health details，避免泄露内部连接信息
+management:
+  server:
+    port: ${MEDKERNEL_MANAGEMENT_PORT:18081}
+    address: ${MEDKERNEL_MANAGEMENT_ADDRESS:127.0.0.1}
+  endpoints:
+    web:
+      base-path: ${MEDKERNEL_MANAGEMENT_BASE_PATH:/medkernel/actuator}
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: ${MEDKERNEL_MANAGEMENT_HEALTH_DETAILS:when_authorized}
+    prometheus:
+      enabled: true
+  health:
+    neo4j:
+      enabled: ${MEDKERNEL_MANAGEMENT_NEO4J_HEALTH_ENABLED:false}
+  info:
+    env:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      service: medkernel
+
+info:
+  app:
+    name: medkernel-mvp
+    version: 0.1.0-SNAPSHOT
+
 spring:
   application:
     name: medkernel-mvp
