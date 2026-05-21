@@ -34,7 +34,7 @@
 | **PR-FINAL-08** | `/admin/users` 用户管理页 | 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-09** | `/admin/audit` 审计日志查询页 | 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-10** | `/tenant/onboarding` 租户开通向导 | 2 | 🟡 TODO | 高级 | 4 天 |
-| **PR-FINAL-11** | `/rule/definitions` 规则库 + DSL 编辑器 | 2 | 🟡 TODO | 高级 | 8 天 |
+| **PR-FINAL-11** | `/rule/definitions` 规则库 + DSL 编辑器 | 2 | 🟢 IN REVIEW | 高级 | 8 天 |
 | **PR-FINAL-12** | `/adapter/hub` 适配器中心 | 2 | 🟡 TODO | 中级 | 4 天 |
 | **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-14** | 砍菜单 + Dashboard PENDING 卡更新 | 2 | 🟡 TODO | 初级 | 0.5 天 |
@@ -87,6 +87,37 @@
 - 写新代码：用 `.module.css`（vite 默认支持，详见 §6）；动态样式必须用 inline 时加 `// eslint-disable-next-line medkernel/no-inline-style` 说明理由
 - 抽取存量：每减少一次 inline，跑 `./scripts/check-inline-style-count.ps1 -UpdateBaseline` 把 baseline 下调
 - CI 拦截：scripts/verify-pr.ps1 调用本脚本，新数量 > baseline 时 PR FAIL
+
+### 🟢 PR-FINAL-11：规则库 + DSL 编辑器（IN REVIEW 2026-05-21）
+
+**修改**：
+- `frontend/src/api/rule.ts`（新建）：规则模块前端契约——封装 `/api/rules/*` + `/api/rule-engine/*`；本地 view 类型 `RuleDefinition` / `RuleExecLog` / `RuleExecLogSummary`（避免触碰架构师专属 `api/types.ts`）
+- `frontend/src/pages/Rule/`（新建整包）：
+  - `RuleList.tsx`：列表 + 搜索 + 类型/状态筛选 + 分页
+  - `RuleDetail.tsx`：元信息 + 来源追溯（`<SourceInfo>`）+ DSL 只读视图（CodeMirror 6）+ 触发历史时间轴 + 触发聚合
+  - `RuleEditor/index.tsx`：DSL 编辑器主容器（路由 `/rule/definitions/:code/edit` / `new/edit`）
+  - `RuleEditor/DslEditor.tsx`：CodeMirror 6 JSON 编辑器 + 折叠 + 实时 Schema 校验
+  - `RuleEditor/DryRunPanel.tsx`：场景选择 + facts JSON + `/api/rules/simulate`
+  - `RuleEditor/EditorHeader.tsx`：保存草稿 / 发布按钮 + DSL 校验状态
+  - `components/RuleTypeTag.tsx` / `SeverityTag.tsx` / `ExecLogTimeline.tsx` / `SourceCitationCard.tsx`
+  - `helpers/ruleSchema.ts`：轻量 DSL 校验器（与 `rule_dsl.schema.json` 对齐，不引入 ajv）
+  - `helpers/ruleFormatters.ts`：类型/严重度/状态/时间/scope 纯函数格式化
+  - `helpers/ruleSamples.ts`：5 个国情场景样本（AMI / EMR-QC / 红线 / 医保 / 路径准入）
+  - `styles.module.css`：100% var(--mk-*) token，零 inline style
+  - `__tests__/`：18+ 测试（helpers / 组件 / 列表页 / 详情页 / 试运行）
+- `frontend/src/router/menuConfig.tsx`：M1 知识工厂分组新增「规则库」入口（SafetyCertificateOutlined 图标，从隐藏注释加回）
+- `frontend/src/router/routes.tsx`：`/rule/definitions` `/rule/definitions/:code` `/rule/definitions/:code/edit` 从 PlaceholderPage 改为真实组件
+- `frontend/package.json`：新增 `@uiw/react-codemirror` `@codemirror/lang-json` `@codemirror/state` `@codemirror/theme-one-dark` + `@testing-library/user-event`
+
+**国情合规**：
+- 所有医学规则必须显示来源（ADR-0004）—— `<SourceInfo>` 通过 `<SourceCitationCard>` 承载
+- 试运行 5 个场景样本全部使用国内场景（AMI/STEMI、病历时限、红线医嘱、医保审核、卒中溶栓准入）
+- DSL 编辑器中文注释 + 中文错误提示
+- 来源缺失自动渲染「来源缺失」状态卡（不静默通过）
+
+**后续注意**：
+- PR-FINAL-14 砍菜单时无需动 rule-definitions（本 PR 已加回）
+- PR-FINAL-19 inline 抽取无需动本模块（本模块全程 0 inline）
 
 ---
 

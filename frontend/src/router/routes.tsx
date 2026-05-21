@@ -25,6 +25,7 @@ import { MappingWorkbench } from "../pages/Terminology";
 import PathwayList from "../pages/Pathway/PathwayList";
 import PathwayDetail from "../pages/Pathway/PathwayDetail";
 import PathwayEditor from "../pages/Pathway/PathwayEditor";
+import { RuleList, RuleDetail, RuleEditor } from "../pages/Rule";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -49,8 +50,9 @@ export const routes: RouteObject[] = [
           { path: "pathway/templates/:code/edit", element: <PathwayEditor /> },
           { path: "pathway/templates/:code/diff", element: <PlaceholderPage title="路径版本对比" pr="PR-V2-07" /> },
           { path: "pathway/patients", element: <PlaceholderPage title="患者路径管理" pr="PR-V2-09" /> },
-          { path: "rule/definitions", element: <PlaceholderPage title="规则库" pr="PR-V2-05" /> },
-          { path: "rule/definitions/:code/edit", element: <PlaceholderPage title="规则 DSL 编辑器" pr="PR-V2-05" /> },
+          { path: "rule/definitions", element: <RuleList /> },
+          { path: "rule/definitions/:code", element: <RuleDetail /> },
+          { path: "rule/definitions/:code/edit", element: <RuleEditor /> },
           { path: "rule/validate", element: <PlaceholderPage title="规则校验工作台" /> },
           { path: "graph/explore", element: <PlaceholderPage title="图谱查询工作台" pr="PR-V2-05" /> },
           { path: "terminology/mapping", element: <MappingWorkbench /> },

@@ -1,0 +1,378 @@
+/* MedKernel · 规则库 / DSL 编辑器 CSS Modules（PR-FINAL-11）
+ *
+ * 规约：所有颜色 / 字号 / 间距 / 圆角 / 阴影 / 字体必须走 tokens（var(--mk-*)），
+ * 严禁 hex / px / rem 字面量。详见 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md §6。
+ */
+
+/* ─── 共享页框 ─── */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-5);
+  padding: var(--mk-space-6);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mk-space-4);
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.pageSubtitle {
+  margin: var(--mk-space-1) 0 0;
+  color: var(--mk-text-secondary);
+  font-size: var(--mk-text-sm);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+  flex-wrap: wrap;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-3);
+  flex-wrap: wrap;
+  padding: var(--mk-space-3) var(--mk-space-4);
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-md);
+}
+
+.toolbarLabel {
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-secondary);
+}
+
+.searchInput {
+  width: 280px;
+}
+
+.filterSelect {
+  width: 160px;
+}
+
+/* ─── 列表表格容器 ─── */
+.tableCard {
+  background: var(--mk-bg-panel);
+  border-radius: var(--mk-radius-md);
+  box-shadow: var(--mk-shadow-sm);
+}
+
+.tableEmpty {
+  padding: var(--mk-space-9) 0;
+  text-align: center;
+}
+
+.tableEmptyHint {
+  color: var(--mk-text-tertiary);
+  margin-top: var(--mk-space-2);
+}
+
+.ruleNameLink {
+  color: var(--mk-brand-primary);
+  font-weight: var(--mk-weight-medium);
+}
+
+.ruleNameLink:hover {
+  color: var(--mk-brand-primary-hover);
+  text-decoration: underline;
+}
+
+.ruleCodeMono {
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
+  color: var(--mk-text-tertiary);
+  display: block;
+  margin-top: var(--mk-space-1);
+}
+
+/* ─── 类型 tag ─── */
+.typeTag {
+  font-size: var(--mk-text-xs);
+  font-weight: var(--mk-weight-medium);
+}
+
+/* ─── 详情页 ─── */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--mk-space-5);
+}
+
+@media (max-width: 1100px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detailMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-5);
+}
+
+.detailSide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-5);
+}
+
+.sectionCard {
+  background: var(--mk-bg-panel);
+  border: var(--mk-border-width) solid var(--mk-border-divider);
+  border-radius: var(--mk-radius-md);
+  padding: var(--mk-space-5);
+}
+
+.sectionTitle {
+  margin: 0 0 var(--mk-space-3);
+  font-size: var(--mk-text-md);
+  font-weight: var(--mk-weight-semibold);
+}
+
+.metaList {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--mk-space-3) var(--mk-space-4);
+  margin: 0;
+}
+
+.metaLabel {
+  color: var(--mk-text-secondary);
+  font-size: var(--mk-text-sm);
+}
+
+.metaValue {
+  color: var(--mk-text-primary);
+  font-size: var(--mk-text-sm);
+  word-break: break-all;
+}
+
+.scopeChips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--mk-space-1);
+}
+
+/* ─── DSL 只读 / 编辑器 ─── */
+.dslContainer {
+  border: var(--mk-border-width) solid var(--mk-border-divider);
+  border-radius: var(--mk-radius-md);
+  overflow: hidden;
+  background: var(--mk-bg-soft);
+}
+
+.dslReadOnly {
+  max-height: 480px;
+  overflow: auto;
+}
+
+.dslEditor {
+  min-height: 380px;
+}
+
+.dslHint {
+  display: block;
+  margin-top: var(--mk-space-2);
+  color: var(--mk-text-tertiary);
+  font-size: var(--mk-text-xs);
+}
+
+/* ─── 编辑器主框 ─── */
+.editorLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--mk-space-5);
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .editorLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mk-space-3);
+  padding: var(--mk-space-3) var(--mk-space-4);
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-md);
+  flex-wrap: wrap;
+}
+
+.editorTitle {
+  font-size: var(--mk-text-md);
+  font-weight: var(--mk-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+  color: var(--mk-text-primary);
+}
+
+.editorActions {
+  display: flex;
+  gap: var(--mk-space-2);
+  flex-wrap: wrap;
+}
+
+.validationOk {
+  color: var(--mk-success);
+  font-size: var(--mk-text-sm);
+}
+
+.validationError {
+  color: var(--mk-danger);
+  font-size: var(--mk-text-sm);
+}
+
+.errorList {
+  margin: var(--mk-space-2) 0 0;
+  padding: 0 0 0 var(--mk-space-5);
+  color: var(--mk-danger);
+  font-size: var(--mk-text-sm);
+}
+
+.errorListItem {
+  margin-bottom: var(--mk-space-1);
+}
+
+/* ─── 试运行面板 ─── */
+.dryRunCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-3);
+}
+
+.dryRunFormItem {
+  margin-bottom: var(--mk-space-3);
+}
+
+.factsTextarea {
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-sm);
+  min-height: 160px;
+}
+
+.dryRunSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mk-space-2);
+  padding: var(--mk-space-3);
+  background: var(--mk-brand-primary-ghost);
+  border-radius: var(--mk-radius-md);
+  border: var(--mk-border-width) solid var(--mk-brand-primary-soft);
+}
+
+.dryRunSummaryItem {
+  font-size: var(--mk-text-sm);
+}
+
+.dryRunSummaryLabel {
+  color: var(--mk-text-secondary);
+  margin-right: var(--mk-space-1);
+}
+
+.dryRunSummaryValue {
+  color: var(--mk-text-primary);
+  font-weight: var(--mk-weight-semibold);
+}
+
+.dryRunMessage {
+  margin-top: var(--mk-space-2);
+  padding: var(--mk-space-3);
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-md);
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-secondary);
+}
+
+/* ─── 触发历史时间轴 ─── */
+.execLogList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-2);
+  max-height: 380px;
+  overflow: auto;
+}
+
+.execLogItem {
+  display: grid;
+  grid-template-columns: max-content 1fr max-content;
+  gap: var(--mk-space-3);
+  padding: var(--mk-space-3);
+  border: var(--mk-border-width) solid var(--mk-border-divider);
+  border-radius: var(--mk-radius-md);
+  background: var(--mk-bg-panel);
+  align-items: center;
+}
+
+.execLogItemHit {
+  border-color: var(--mk-warning);
+  background: var(--mk-warning-soft);
+}
+
+.execLogItemMiss {
+  background: var(--mk-bg-panel);
+}
+
+.execLogItemError {
+  border-color: var(--mk-danger);
+  background: var(--mk-danger-soft);
+}
+
+.execLogMessage {
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-primary);
+  word-break: break-all;
+}
+
+.execLogTrace {
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
+  color: var(--mk-text-tertiary);
+  display: block;
+}
+
+.execLogTime {
+  font-size: var(--mk-text-xs);
+  color: var(--mk-text-tertiary);
+  white-space: nowrap;
+}
+
+.execLogElapsed {
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
+  color: var(--mk-text-secondary);
+}
+
+.execLogEmpty {
+  padding: var(--mk-space-7) 0;
+  text-align: center;
+  color: var(--mk-text-tertiary);
+  font-size: var(--mk-text-sm);
+}
+
+/* ─── 复用块 ─── */
+.inlineBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-space-1);
+}
+
+.skeletonBlock {
+  height: var(--mk-space-9);
+  background: var(--mk-bg-muted);
+  border-radius: var(--mk-radius-sm);
+}
