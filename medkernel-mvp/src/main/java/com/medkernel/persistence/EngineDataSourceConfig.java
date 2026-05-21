@@ -23,7 +23,7 @@ import javax.sql.DataSource;
  *     早退，不会真的去拿 connection。
  *
  * 关键：所有 PersistenceService 通过注入 DataSource 拿连接，
- * 替代历史上 29 处散落的 DriverManager.getConnection(url, user, pass) 调用。
+ * 替代历史上 29 处散落的直连 JDBC 取连接调用。
  * 这使得：
  *  - @Transactional 真正生效（同 Service 内多 DAO 走同 connection）
  *  - 连接池监控可观测（pool name = MedKernelHikari）
@@ -31,8 +31,8 @@ import javax.sql.DataSource;
  *  - 高并发下不再无限制创建连接（max-pool-size = 20，可配置）
  *
  * 配套约束（verify-pr.ps1 守门）：
- *  - 任何新代码不允许 import java.sql.DriverManager
- *  - 任何新代码不允许调用 DriverManager.getConnection()
+ *  - 任何新代码不允许自行绕过 DataSource 取连接
+ *  - 任何新代码不允许重复实现连接重试循环
  *  - 例外：本文件自身
  */
 @Configuration
