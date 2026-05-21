@@ -11,9 +11,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button, Empty, Result, Space, Spin, Statistic, Typography } from "antd";
 import { ArrowLeftOutlined, EditOutlined, HistoryOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import CodeMirror from "@uiw/react-codemirror";
-import { json } from "@codemirror/lang-json";
-import { oneDark } from "@codemirror/theme-one-dark";
 import {
   getRule,
   listRuleExecLogs,
@@ -145,18 +142,9 @@ export default function RuleDetail() {
           <section className={styles.sectionCard} aria-label="rule-dsl-readonly">
             <h3 className={styles.sectionTitle}>规则 DSL（只读）</h3>
             <div className={`${styles.dslContainer} ${styles.dslReadOnly}`}>
-              <CodeMirror
-                value={dslText}
-                extensions={[json()]}
-                theme={oneDark}
-                editable={false}
-                basicSetup={{
-                  lineNumbers: true,
-                  foldGutter: true,
-                  highlightActiveLine: false,
-                }}
-                aria-label="dsl-readonly"
-              />
+              <pre className={styles.dslReadOnlyPre} aria-label="dsl-readonly">
+                {dslText}
+              </pre>
             </div>
           </section>
 

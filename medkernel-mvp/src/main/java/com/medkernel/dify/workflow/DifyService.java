@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.dify.workflow;
 
 import com.medkernel.common.ErrorCode;
 import com.medkernel.common.TraceContext;

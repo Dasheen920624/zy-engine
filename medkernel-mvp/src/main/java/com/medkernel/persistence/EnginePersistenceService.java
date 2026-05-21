@@ -3,7 +3,7 @@ package com.medkernel.persistence;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medkernel.common.TraceContext;
-import com.medkernel.dify.DifyWorkflowTemplate;
+import com.medkernel.dify.workflow.DifyWorkflowTemplate;
 import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientTaskState;
 import com.medkernel.dto.PathwayVariationRecord;

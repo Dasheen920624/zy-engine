@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConfigProvider } from "antd";
@@ -80,15 +79,12 @@ describe("RuleList page", () => {
   });
 
   it("filters rules by local search", async () => {
-    const user = userEvent.setup();
     renderPage();
     await waitFor(() => {
       expect(screen.getByText("AMI/STEMI 候选入径规则")).toBeInTheDocument();
     });
     const input = screen.getByLabelText("rule-search") as HTMLInputElement;
-    await user.clear(input);
-    await user.type(input, "EMR");
-    await user.tab();
+    fireEvent.change(input, { target: { value: "EMR" } });
     await waitFor(() => {
       expect(screen.getByText("入院记录时限")).toBeInTheDocument();
       expect(screen.queryByText("AMI/STEMI 候选入径规则")).not.toBeInTheDocument();

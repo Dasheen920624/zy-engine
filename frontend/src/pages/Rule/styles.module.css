@@ -176,8 +176,25 @@
   overflow: auto;
 }
 
-.dslEditor {
-  min-height: 380px;
+.dslTextArea {
+  min-height: calc(var(--mk-space-10) * 6);
+  border: 0;
+  border-radius: 0;
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-relaxed);
+  resize: vertical;
+}
+
+.dslReadOnlyPre {
+  margin: 0;
+  padding: var(--mk-space-4);
+  color: var(--mk-text-primary);
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-relaxed);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .dslHint {

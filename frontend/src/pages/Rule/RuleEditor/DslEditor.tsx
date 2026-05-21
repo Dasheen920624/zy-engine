@@ -1,15 +1,11 @@
 /**
- * DSL 编辑器：CodeMirror 6 JSON 语法高亮 + 折叠 + 行号 + 实时 Schema 校验。
+ * DSL 编辑器：JSON 文本编辑 + 实时 Schema 校验。
  *
- * 包装 @uiw/react-codemirror（社区事实标准）。
  * Schema 校验委托给 helpers/ruleSchema.ts（不引入 ajv，保持 bundle 小）。
  */
 
-import { useEffect, useMemo, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { json } from "@codemirror/lang-json";
-import { oneDark } from "@codemirror/theme-one-dark";
-import type { Extension } from "@codemirror/state";
+import { useEffect, useState } from "react";
+import { Input } from "antd";
 import {
   safeParseJson,
   validateRuleDsl,
@@ -22,7 +18,6 @@ export interface DslEditorProps {
   onChange: (value: string) => void;
   onValidationChange?: (result: { valid: boolean; errors: DslValidationError[] }) => void;
   readOnly?: boolean;
-  minHeight?: string;
 }
 
 export default function DslEditor({
@@ -30,11 +25,8 @@ export default function DslEditor({
   onChange,
   onValidationChange,
   readOnly = false,
-  minHeight = "380px",
 }: DslEditorProps) {
   const [errors, setErrors] = useState<DslValidationError[]>([]);
-
-  const extensions: Extension[] = useMemo(() => [json()], []);
 
   useEffect(() => {
     const parsed = safeParseJson(value);
@@ -51,23 +43,14 @@ export default function DslEditor({
   return (
     <div>
       <div className={styles.dslContainer}>
-        <CodeMirror
+        <Input.TextArea
           value={value}
-          onChange={(next) => onChange(next)}
-          extensions={extensions}
-          theme={oneDark}
-          editable={!readOnly}
-          basicSetup={{
-            lineNumbers: true,
-            highlightActiveLine: true,
-            foldGutter: true,
-            bracketMatching: true,
-            closeBrackets: true,
-            autocompletion: true,
-            indentOnInput: true,
-          }}
-          minHeight={minHeight}
-          className={styles.dslEditor}
+          onChange={(event) => onChange(event.target.value)}
+          readOnly={readOnly}
+          rows={18}
+          spellCheck={false}
+          className={styles.dslTextArea}
+          aria-label="rule-dsl-json"
         />
       </div>
       {errors.length > 0 ? (

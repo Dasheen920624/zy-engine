@@ -3,7 +3,7 @@
  *
  * 子组件：
  *   - EditorHeader：标题 + 校验状态 + 保存/发布按钮
- *   - DslEditor：CodeMirror 6 JSON 编辑器
+ *   - DslEditor：JSON DSL 编辑器
  *   - DryRunPanel：试运行（场景 + facts + simulate）
  */
 

@@ -23,12 +23,6 @@ vi.mock("../../../api/rule", async () => {
   };
 });
 
-vi.mock("@uiw/react-codemirror", () => ({
-  default: ({ value }: { value: string }) => (
-    <div data-testid="codemirror-mock">{value}</div>
-  ),
-}));
-
 const SAMPLE_RULE: RuleDefinition = {
   rule_code: "R_AMI_STEMI_CANDIDATE",
   rule_name: "AMI/STEMI 候选入径规则",
@@ -123,12 +117,12 @@ describe("RuleDetail page", () => {
     });
   });
 
-  it("renders DSL JSON snapshot via mocked CodeMirror", async () => {
+  it("renders DSL JSON snapshot", async () => {
     renderPage();
     await waitFor(() => {
-      const cm = screen.getByTestId("codemirror-mock");
-      expect(cm.textContent).toContain("R_AMI_STEMI_CANDIDATE");
-      expect(cm.textContent).toContain("chief_complaints.code");
+      const dsl = screen.getByLabelText("dsl-readonly");
+      expect(dsl.textContent).toContain("R_AMI_STEMI_CANDIDATE");
+      expect(dsl.textContent).toContain("chief_complaints.code");
     });
   });
 

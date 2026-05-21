@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.quality;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;

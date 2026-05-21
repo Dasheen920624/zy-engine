@@ -1,4 +1,4 @@
-package com.medkernel.dify;
+package com.medkernel.dify.workflow;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

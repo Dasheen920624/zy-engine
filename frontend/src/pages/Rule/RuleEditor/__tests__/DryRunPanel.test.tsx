@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConfigProvider } from "antd";
@@ -54,10 +53,9 @@ describe("DryRunPanel", () => {
 
   it("calls simulateRule on click and renders hit summary", async () => {
     vi.mocked(simulateRule).mockResolvedValue(SAMPLE_HIT);
-    const user = userEvent.setup();
     renderPanel({ ruleCode: "DEMO" });
     const button = screen.getByLabelText("trigger-dry-run");
-    await user.click(button);
+    fireEvent.click(button);
     await waitFor(() => {
       expect(screen.getByText("命中提示")).toBeInTheDocument();
     });
