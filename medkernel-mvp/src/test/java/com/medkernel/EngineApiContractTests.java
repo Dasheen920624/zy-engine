@@ -7,6 +7,7 @@ import com.medkernel.persistence.OrganizationPersistenceService;
 import com.medkernel.organization.OrganizationUnit;
 import com.medkernel.provenance.SourceDocument;
 import com.medkernel.security.JwtTokenProvider;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import javax.sql.DataSource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -100,7 +102,7 @@ class EngineApiContractTests {
         properties.setPassword("");
         properties.setInitSchema(true);
 
-        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper);
+        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper, testDataSource(properties));
         service.initializeLocalSchema();
         service.saveAuditLog("TEST", "LOCAL_DB_WRITE", "CONTRACT", "LOCAL_H2", null, null, "JUNIT",
                 new LinkedHashMap<String, Object>());
@@ -120,7 +122,7 @@ class EngineApiContractTests {
         properties.setPassword("");
         properties.setInitSchema(true);
 
-        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper);
+        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper, testDataSource(properties));
         service.initializeLocalSchema();
 
         SourceDocument document = new SourceDocument();
@@ -160,10 +162,11 @@ class EngineApiContractTests {
         properties.setPassword("");
         properties.setInitSchema(true);
 
-        EnginePersistenceService engineService = new EnginePersistenceService(properties, objectMapper);
+        DataSource dataSource = testDataSource(properties);
+        EnginePersistenceService engineService = new EnginePersistenceService(properties, objectMapper, dataSource);
         engineService.initializeLocalSchema();
 
-        OrganizationPersistenceService orgService = new OrganizationPersistenceService(properties);
+        OrganizationPersistenceService orgService = new OrganizationPersistenceService(properties, dataSource);
         assertTrue(orgService.enabled());
 
         OrganizationUnit group = new OrganizationUnit();
@@ -2182,6 +2185,14 @@ class EngineApiContractTests {
         MvcResult result = mockMvc.perform(get(path).header("Authorization", testBearerToken())).andReturn();
         assertEquals(200, result.getResponse().getStatus(), "GET " + path + " unexpected status");
         return parse(result);
+    }
+
+    private DataSource testDataSource(EnginePersistenceProperties properties) {
+        JdbcDataSource dataSource = new JdbcDataSource();
+        dataSource.setURL(properties.getUrl());
+        dataSource.setUser(properties.getUsername());
+        dataSource.setPassword(properties.getPassword());
+        return dataSource;
     }
 
     private Map<String, Object> invokePost(String path, Object body) throws Exception {
