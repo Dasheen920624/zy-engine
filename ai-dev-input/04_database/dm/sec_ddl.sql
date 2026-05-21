@@ -214,7 +214,16 @@ CREATE TABLE sec_identity_binding (
   CONSTRAINT uk_sec_identity_binding UNIQUE (tenant_id, provider_id, external_subject)
 );
 
--- 同步任务记录表：记录每次同步任务的状态和统计
+-- ============================================================
+-- ⚠️ DEPRECATED v0.3-final (PR-FINAL-03, ADR-0006)
+-- 旧 security.UserSyncController（/api/security/sync/*）已删除。
+-- 新设计采用 source/task/log 三表模型（sec_sync_source/task/log），
+-- 详见 security.usersync.UserSyncApiController（/api/user-sync/*）。
+-- 表定义保留是为了避免给已部署实例制造 DROP 失败，
+-- 真正的清理（Flyway DROP TABLE）放在 PR-FINAL-25。
+-- 新开发不要再用这两张表。
+-- ============================================================
+-- [DEPRECATED] 同步任务记录表
 CREATE TABLE sec_user_sync_job (
   id BIGINT PRIMARY KEY,
   tenant_id BIGINT NOT NULL,
@@ -234,7 +243,7 @@ CREATE TABLE sec_user_sync_job (
   CONSTRAINT uk_sec_user_sync_job UNIQUE (id)
 );
 
--- 同步明细表：记录每个外部用户的同步动作和结果
+-- [DEPRECATED v0.3-final, ADR-0006] 同步明细表 — 见上方说明
 CREATE TABLE sec_user_sync_detail (
   id BIGINT PRIMARY KEY,
   job_id BIGINT NOT NULL,

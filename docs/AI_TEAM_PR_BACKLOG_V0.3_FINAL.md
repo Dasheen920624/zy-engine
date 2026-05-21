@@ -26,7 +26,7 @@
 | **PR-FINAL-00** | tokens 主色 + 命名/菜单统一 | 1 | ✅ DONE | 架构师 | 1 天 |
 | **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | 🟡 TODO | 架构师 | 1 天 |
 | **PR-FINAL-02** | 删 patientindex 整包（ADR-0005）| 1 | 🟡 TODO | 架构师 | 2 天 |
-| **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | 🟡 TODO | 架构师 | 1 天 |
+| **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | ✅ DONE | 架构师 | 1 天 |
 | **PR-FINAL-04** | CSS Modules 框架 + Login/Dashboard 示范抽取 | 1 | 🟡 TODO | 高级 | 2 天 |
 | **PR-FINAL-05** | ESLint `no-inline-style` + 守门脚本 | 1 | ✅ DONE | 架构师 | 0.5 天 |
 | **PR-FINAL-06** | LoginPage 4 Tab 重写（国情合规 12 条）| 1 | 🟡 TODO | 高级 | 2 天 |
@@ -87,6 +87,31 @@
 - 写新代码：用 `.module.css`（vite 默认支持，详见 §6）；动态样式必须用 inline 时加 `// eslint-disable-next-line medkernel/no-inline-style` 说明理由
 - 抽取存量：每减少一次 inline，跑 `./scripts/check-inline-style-count.ps1 -UpdateBaseline` 把 baseline 下调
 - CI 拦截：scripts/verify-pr.ps1 调用本脚本，新数量 > baseline 时 PR FAIL
+
+### ✅ PR-FINAL-03：删 security/UserSyncController 双副本（DONE 2026-05-21）
+
+**ADR**：ADR-0006（PRODUCT_ARCHITECTURE_FINAL.md §3）
+
+**修改**：
+- 删除 5 个 Java 文件：
+  - `security/UserSyncController.java`（旧 `/api/security/sync/*` 6 端点）
+  - `security/UserSyncService.java`（provider 模型同步逻辑）
+  - `security/UserSyncJob.java`（实体）
+  - `security/UserSyncDetail.java`（实体）
+  - `security/SyncReport.java`（DTO）
+- **保留** `security/IdentityProvider.java`（SSO 共用：`SsoService` × 13 / `SsoController` × 1 / `SecurityPersistenceService` × 14 处引用，删了 SSO 会崩）
+- 重构 `security/SecurityPersistenceService.java`：
+  - 删 9 个旧方法（createSyncJob / updateSyncJob / findSyncJobsByTenant / findSyncJobById / insertSyncDetails / findSyncDetailsByJobId × 2 / mapSyncJob / mapSyncDetail）
+  - **保留** IdentityProvider 全套 CRUD（findIdentityProviderByType / findAllIdentityProviders / saveIdentityProvider / findIdentityProvidersByTenant / findIdentityProviderById / deleteIdentityProvider）—— SsoService 仍在用
+  - 净减 216 行（1179 → 963）
+- DDL：`ai-dev-input/04_database/{local,pg,oracle,dm}/sec_*.sql` 4 个参考 DDL 文件，`sec_user_sync_job` / `sec_user_sync_detail` 表定义保留并加 DEPRECATED 注释；真正 DROP TABLE 留给 PR-FINAL-25 Flyway 迁移（避免给已部署实例制造 schema 漂移）
+- 前端 `frontend/src` 0 引用 `/api/security/sync` → **0 前端改动**
+
+**确认**：旧 UserSyncService 实际上是僵尸代码——生产部署 DDL `medkernel-mvp/src/main/resources/db/local/sec_ddl.sql` **从未建过** `sec_user_sync_job`/`sec_user_sync_detail` 表，任何对旧 API 的调用必然 SQL 失败。删除 0 运行时影响。
+
+**后续注意**：
+- PR-FINAL-08（`/admin/users` 用户管理页）的"前置 PR-FINAL-03" 现已就绪，可以开工
+- 任何 AI 想做"院内身份源 / 全量同步 / 增量同步"前端 → 走 `/api/user-sync/*`（`security/usersync/UserSyncApiController`）source/task 模型，不要再造 `provider` 路径
 
 ---
 
