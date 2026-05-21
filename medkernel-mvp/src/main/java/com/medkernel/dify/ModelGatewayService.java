@@ -20,37 +20,59 @@ public class ModelGatewayService {
 
     private static final Logger log = LoggerFactory.getLogger(ModelGatewayService.class);
 
+    /**
+     * 默认降级链（ADR-0013 去 Dify 化策略）：
+     * - 国产大模型优先（QIANWEN/DEEPSEEK 通过 OpenAI 兼容协议直连，不依赖 Dify）
+     * - Ollama 本地兜底（医院内网部署可选）
+     * - LOCAL 规则降级（永远可用）
+     * - 仅 WORKFLOW 调用类型走 Dify（复杂多步流程场景）
+     */
     private static final Map<String, String> DEFAULT_DEGRADATION_CHAINS = new LinkedHashMap<String, String>();
 
     static {
-        DEFAULT_DEGRADATION_CHAINS.put("RESEARCH", "DIFY,LOCAL");
-        DEFAULT_DEGRADATION_CHAINS.put("EXTRACT", "DIFY,LOCAL");
-        DEFAULT_DEGRADATION_CHAINS.put("EMBEDDING", "LOCAL");
+        DEFAULT_DEGRADATION_CHAINS.put("RESEARCH", "QIANWEN,DEEPSEEK,OLLAMA_LOCAL,LOCAL");
+        DEFAULT_DEGRADATION_CHAINS.put("EXTRACT", "DEEPSEEK,QIANWEN,OLLAMA_LOCAL,LOCAL");
+        DEFAULT_DEGRADATION_CHAINS.put("EMBEDDING", "QIANWEN,LOCAL");
         DEFAULT_DEGRADATION_CHAINS.put("RERANK", "LOCAL");
-        DEFAULT_DEGRADATION_CHAINS.put("CRITIC", "DIFY,LOCAL");
-        DEFAULT_DEGRADATION_CHAINS.put("WORKFLOW", "DIFY,LOCAL_FALLBACK");
+        DEFAULT_DEGRADATION_CHAINS.put("CRITIC", "DEEPSEEK,QIANWEN,LOCAL");
+        DEFAULT_DEGRADATION_CHAINS.put("WORKFLOW", "DIFY,LOCAL");
     }
 
-    private final List<ModelProvider> providers;
+    private final List<ModelProvider> staticProviders;
+    private final LlmProviderFactory llmProviderFactory;
     private final AiKnowledgeJobService jobService;
     private final ModelGatewayProperties properties;
 
     private final Map<String, ModelProvider> providerMap = new LinkedHashMap<String, ModelProvider>();
+    private final List<ModelProvider> providers = new ArrayList<ModelProvider>();
 
-    public ModelGatewayService(List<ModelProvider> providers,
+    public ModelGatewayService(List<ModelProvider> staticProviders,
+                               LlmProviderFactory llmProviderFactory,
                                AiKnowledgeJobService jobService,
                                ModelGatewayProperties properties) {
-        this.providers = providers != null ? providers : Collections.<ModelProvider>emptyList();
+        this.staticProviders = staticProviders != null ? staticProviders : Collections.<ModelProvider>emptyList();
+        this.llmProviderFactory = llmProviderFactory;
         this.jobService = jobService;
         this.properties = properties;
     }
 
     @PostConstruct
     public void init() {
-        for (ModelProvider provider : providers) {
+        // 1) 注册静态 Provider（DifyModelProvider / LocalModelProvider，由 @Component 自动注入）
+        for (ModelProvider provider : staticProviders) {
             providerMap.put(provider.getProviderType(), provider);
+            providers.add(provider);
         }
-        log.info("ModelGateway initialized with {} providers: {}", providerMap.size(), providerMap.keySet());
+        // 2) 注册动态 Provider（LlmProviderFactory 根据 application.yml 配置创建的国产大模型）
+        if (llmProviderFactory != null) {
+            for (ModelProvider provider : llmProviderFactory.getDynamicProviders()) {
+                // 动态 Provider 优先级高，覆盖同名静态 Provider（理论上不会重名）
+                providerMap.put(provider.getProviderType(), provider);
+                providers.add(provider);
+            }
+        }
+        log.info("ModelGateway initialized with {} providers (static + dynamic): {}",
+                providerMap.size(), providerMap.keySet());
     }
 
     public Map<String, Object> invoke(String callType, Map<String, Object> request) {

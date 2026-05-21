@@ -11,9 +11,23 @@ import java.util.Map;
 public class ModelGatewayProperties {
     private Map<String, String> degradationChains = new LinkedHashMap<String, String>();
     private Map<String, Integer> providerTimeouts = new LinkedHashMap<String, Integer>();
+    /**
+     * 多 Provider 配置 — 启动时由 LlmProviderFactory 为每项创建一个 ModelProvider Bean。
+     * key 大写（如 QIANWEN / DEEPSEEK / KIMI / ZHIPU / OLLAMA_LOCAL），将成为 provider type。
+     * 详见 ADR-0013。
+     */
+    private Map<String, LlmProviderConfig> providers = new LinkedHashMap<String, LlmProviderConfig>();
     private boolean enabled = true;
     private int defaultTimeoutMs = 5000;
     private int maxRetryCount = 2;
+
+    public Map<String, LlmProviderConfig> getProviders() {
+        return providers;
+    }
+
+    public void setProviders(Map<String, LlmProviderConfig> providers) {
+        this.providers = providers;
+    }
 
     public Map<String, String> getDegradationChains() {
         return degradationChains;
