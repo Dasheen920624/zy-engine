@@ -188,7 +188,7 @@
 **owner**：架构师 AI（Claude-Opus-4.7）  
 **实际工时**：1 PR / 0.5 天（领单卡估时 2 天）
 
-### ADR-0006 · UserSyncController 双副本归并 → 保留 `security/usersync/UserSyncApiController`
+### ADR-0006 · UserSyncController 双副本归并 → 保留 `security/usersync/UserSyncApiController` ✅ 已执行
 
 **决策**：保留 `security/usersync/UserSyncApiController`（source/task 模型，新设计），删除 `security/UserSyncController`（provider 模型，旧设计）。
 
@@ -197,10 +197,18 @@
 2. 旧 `provider` 模型与 SSO 配置的 provider 概念重名，造成 API 混淆
 3. `usersync` 子包独立后，与 `security.sso` `security.audit` `security.IdentityBinding` 横向并列，包结构更清晰
 
-**实施**：同上模式 — 删旧 / 迁数据 / 改前端引用 / 更新文档
+**实施**：✅ 由 PR-FINAL-03 完成（2026-05-21）
+- 删除 5 个 Java 文件：`security/UserSyncController.java` `UserSyncService.java` `UserSyncJob.java` `UserSyncDetail.java` `SyncReport.java`
+- `security/IdentityProvider.java` 保留（SSO 共用，被 `SsoService` / `SsoController` 大量引用）
+- `SecurityPersistenceService.java` 删 9 个旧方法：`createSyncJob` / `updateSyncJob` / `findSyncJobsByTenant` / `findSyncJobById` / `insertSyncDetails` / `findSyncDetailsByJobId`（×2 重载） / 私有 `mapSyncJob` / `mapSyncDetail`（净减 216 行）；IdentityProvider 相关 CRUD 完整保留
+- 前端 `frontend/src/api` 0 引用 `/api/security/sync` → **0 前端改动**（旧 endpoint 从未被前端用过）
+- DDL：`ai-dev-input/04_database/{local,pg,oracle,dm}/sec_*.sql` 共 4 个文件，`sec_user_sync_job` / `sec_user_sync_detail` 表定义保留并加 DEPRECATED 标记；真正 DROP 留给 PR-FINAL-25 Flyway 迁移
+- 生产部署 `medkernel-mvp/src/main/resources/db/local/sec_user_sync_ddl.sql` 是**新** source/task/log 三表 DDL，本就独立——0 改动
 
-**owner**：架构组中立 AI  
-**估时**：2 天
+**确认**：旧 UserSyncService 实际上是僵尸代码——`medkernel-mvp/src/main/resources/db/local/sec_ddl.sql`（生产部署 DDL）**从未建过** `sec_user_sync_job`/`sec_user_sync_detail` 表，任何对旧 API 的调用一定会 SQL 失败。删除 0 运行时影响。
+
+**owner**：架构师 AI（Claude-Opus-4.7）  
+**实际工时**：1 PR / 0.5 天（领单卡估时 1 天）
 
 ---
 
