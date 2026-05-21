@@ -29,7 +29,7 @@
 | **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | ✅ DONE | 架构师 | 1 天 |
 | **PR-FINAL-04** | CSS Modules 框架 + Login/Dashboard 示范抽取 | 1 | 🟡 TODO | 高级 | 2 天 |
 | **PR-FINAL-05** | ESLint `no-inline-style` + 守门脚本 | 1 | ✅ DONE | 架构师 | 0.5 天 |
-| **PR-FINAL-06** | LoginPage 4 Tab 重写（国情合规 12 条）| 1 | 🟡 TODO | 高级 | 2 天 |
+| **PR-FINAL-06** | LoginPage 4 Tab 重写（国情合规 12 条）| 1 | ✅ DONE · Codex-GPT5 · 2026-05-21T22:41+08:00 | 高级 | 2 天 |
 | **PR-FINAL-07** | `/mpi/patients` 患者主索引页 | 2 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-08** | `/admin/users` 用户管理页 | 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-09** | `/admin/audit` 审计日志查询页 | 2 | 🟡 TODO | 中级 | 3 天 |
