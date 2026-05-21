@@ -1,0 +1,157 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "max": 1,
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "medkernel_provider_ready{provider=\"database\"}",
+          "legendFormat": "database",
+          "refId": "A"
+        }
+      ],
+      "title": "Database Provider Ready",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{application=\"medkernel-mvp\"}",
+          "legendFormat": "{{pool}} active",
+          "refId": "A"
+        },
+        {
+          "expr": "hikaricp_connections_idle{application=\"medkernel-mvp\"}",
+          "legendFormat": "{{pool}} idle",
+          "refId": "B"
+        },
+        {
+          "expr": "hikaricp_connections_max{application=\"medkernel-mvp\"}",
+          "legendFormat": "{{pool}} max",
+          "refId": "C"
+        }
+      ],
+      "title": "Hikari Connections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "hikaricp_connections_pending{application=\"medkernel-mvp\"}",
+          "legendFormat": "{{pool}} pending",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(hikaricp_connections_timeout_total{application=\"medkernel-mvp\"}[5m])",
+          "legendFormat": "{{pool}} timeout/s",
+          "refId": "B"
+        }
+      ],
+      "title": "Pool Pressure",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_acquire_seconds_sum{application=\"medkernel-mvp\"}[5m]) / clamp_min(rate(hikaricp_connections_acquire_seconds_count{application=\"medkernel-mvp\"}[5m]), 0.001)",
+          "legendFormat": "{{pool}} avg acquire",
+          "refId": "A"
+        }
+      ],
+      "title": "Connection Acquire Time",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "medkernel",
+    "database"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "MedKernel DB Pool",
+  "uid": "medkernel-db-pool",
+  "version": 1
+}
