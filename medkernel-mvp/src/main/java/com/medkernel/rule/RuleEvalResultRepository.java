@@ -1,4 +1,4 @@
-package com.medkernel.rule;
+﻿package com.medkernel.rule;
 
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -30,9 +30,11 @@ public class RuleEvalResultRepository {
     private static final Logger log = LoggerFactory.getLogger(RuleEvalResultRepository.class);
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public RuleEvalResultRepository(EnginePersistenceProperties properties) {
+    public RuleEvalResultRepository(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     public boolean enabled() {
@@ -252,8 +254,7 @@ public class RuleEvalResultRepository {
     }
 
     private Connection connection() throws SQLException {
-        loadDriver();
-        return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
     }
 
     private void loadDriver() throws SQLException {

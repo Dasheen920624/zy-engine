@@ -1,4 +1,4 @@
-package com.medkernel.knowledge;
+﻿package com.medkernel.knowledge;
 
 import com.medkernel.common.TraceContext;
 import com.medkernel.ops.entity.OpsSyncTask;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -48,13 +48,16 @@ public class KnowledgeSyncService {
     private final EnginePersistenceProperties properties;
     private final OpsSyncTaskService opsSyncTaskService;
     private final KnowledgeService knowledgeService;
+    private final DataSource dataSource;
 
     public KnowledgeSyncService(EnginePersistenceProperties properties,
                                  OpsSyncTaskService opsSyncTaskService,
-                                 KnowledgeService knowledgeService) {
+                                 KnowledgeService knowledgeService,
+                                 DataSource dataSource) {
         this.properties = properties;
         this.opsSyncTaskService = opsSyncTaskService;
         this.knowledgeService = knowledgeService;
+        this.dataSource = dataSource;
     }
 
     // ==================== 同步触发 ====================
@@ -660,7 +663,6 @@ public class KnowledgeSyncService {
      * 获取数据库连接。
      */
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
     }
 }

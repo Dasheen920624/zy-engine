@@ -1,4 +1,4 @@
-package com.medkernel.datagovernance.repository;
+﻿package com.medkernel.datagovernance.repository;
 
 import com.medkernel.datagovernance.entity.QualityCheckEntity;
 import com.medkernel.persistence.EnginePersistenceProperties;
@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,9 +25,11 @@ public class QualityCheckRepository {
     private static final Logger log = LoggerFactory.getLogger(QualityCheckRepository.class);
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public QualityCheckRepository(EnginePersistenceProperties properties) {
+    public QualityCheckRepository(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -133,9 +135,7 @@ public class QualityCheckRepository {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getJdbcUrl(),
-                properties.getUsername(),
-                properties.getPassword());
+        // PR-FINAL-15b: 走 HikariCP 连接池（EngineDataSourceConfig 暴露的 DataSource）。
+        return dataSource.getConnection();
     }
 }

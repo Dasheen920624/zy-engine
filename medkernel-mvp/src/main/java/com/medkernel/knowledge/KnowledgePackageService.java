@@ -1,4 +1,4 @@
-package com.medkernel.knowledge;
+﻿package com.medkernel.knowledge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -55,6 +55,7 @@ public class KnowledgePackageService {
     private final GraphService graphService;
     private final KnowledgeService knowledgeService;
     private final ObjectMapper objectMapper;
+    private final DataSource dataSource;
 
     private final Map<Long, KnowledgePackage> packageStore = new ConcurrentHashMap<Long, KnowledgePackage>();
 
@@ -65,7 +66,8 @@ public class KnowledgePackageService {
                                    PathwayService pathwayService,
                                    GraphService graphService,
                                    KnowledgeService knowledgeService,
-                                   ObjectMapper objectMapper) {
+                                   ObjectMapper objectMapper,
+                                   DataSource dataSource) {
         this.properties = properties;
         this.persistenceService = persistenceService;
         this.ruleService = ruleService;
@@ -75,6 +77,7 @@ public class KnowledgePackageService {
         this.knowledgeService = knowledgeService;
         this.objectMapper = objectMapper.copy();
         this.objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        this.dataSource = dataSource;
     }
 
     // ==================== 导出知识包 ====================
@@ -1199,13 +1202,8 @@ public class KnowledgePackageService {
     // ==================== 辅助方法 ====================
 
     private Connection connection() throws SQLException {
-        loadDriver();
-        SQLException last = null;
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                return DriverManager.getConnection(
-                        properties.getUrl(), properties.getUsername(), properties.getPassword());
-            } catch (SQLException ex) {
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
+    } catch (SQLException ex) {
                 last = ex;
                 if (attempt == 3) {
                     throw ex;

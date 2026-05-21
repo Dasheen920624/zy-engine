@@ -1,4 +1,4 @@
-package com.medkernel.security;
+﻿package com.medkernel.security;
 
 import com.medkernel.adapter.AdapterHubService;
 import com.medkernel.persistence.EnginePersistenceProperties;
@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,13 +31,16 @@ public class UserSyncService {
     private final SecurityPersistenceService persistenceService;
     private final AdapterHubService adapterHubService;
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
     public UserSyncService(SecurityPersistenceService persistenceService,
                            AdapterHubService adapterHubService,
-                           EnginePersistenceProperties properties) {
+                           EnginePersistenceProperties properties,
+                           DataSource dataSource) {
         this.persistenceService = persistenceService;
         this.adapterHubService = adapterHubService;
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -618,7 +621,6 @@ public class UserSyncService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
     }
 }

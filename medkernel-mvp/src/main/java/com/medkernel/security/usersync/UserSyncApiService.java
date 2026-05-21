@@ -1,4 +1,4 @@
-package com.medkernel.security.usersync;
+﻿package com.medkernel.security.usersync;
 
 import com.medkernel.common.OrgDefaults;
 import com.medkernel.common.TraceContext;
@@ -31,11 +31,14 @@ public class UserSyncApiService {
 
     private final EnginePersistenceProperties properties;
     private final SecurityPersistenceService securityPersistenceService;
+    private final DataSource dataSource;
 
     public UserSyncApiService(EnginePersistenceProperties properties,
-                              SecurityPersistenceService securityPersistenceService) {
+                              SecurityPersistenceService securityPersistenceService,
+                              DataSource dataSource) {
         this.properties = properties;
         this.securityPersistenceService = securityPersistenceService;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -658,8 +661,7 @@ public class UserSyncApiService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
     }
 
     /**
