@@ -185,7 +185,7 @@
 
 **关键确认**：旧 `patientindex/MpiService` 全程 ConcurrentHashMap 内存态，无任何 JDBC 调用（`grep PreparedStatement\|Connection\|DriverManager patientindex/` = 0），属于纯内存 demo 代码——删除 0 数据库影响 / 0 运行时影响。
 
-**owner**：架构师 AI（Claude-Opus-4.7）  
+**owner**：架构师 AI（Claude-Opus-4.7）
 **实际工时**：1 PR / 0.5 天（领单卡估时 2 天）
 
 ### ADR-0006 · UserSyncController 双副本归并 → 保留 `security/usersync/UserSyncApiController` ✅ 已执行
@@ -207,7 +207,7 @@
 
 **确认**：旧 UserSyncService 实际上是僵尸代码——`medkernel-mvp/src/main/resources/db/local/sec_ddl.sql`（生产部署 DDL）**从未建过** `sec_user_sync_job`/`sec_user_sync_detail` 表，任何对旧 API 的调用一定会 SQL 失败。删除 0 运行时影响。
 
-**owner**：架构师 AI（Claude-Opus-4.7）  
+**owner**：架构师 AI（Claude-Opus-4.7）
 **实际工时**：1 PR / 0.5 天（领单卡估时 1 天）
 
 ---
