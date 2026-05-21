@@ -17,8 +17,7 @@ import AlertFatiguePage from "../pages/CDSS/AlertFatiguePage";
 import IdentityBindingManagement from "../pages/IdentityBindingManagement";
 import { NotificationList, NotificationDetail, NotificationSettings } from "../pages/Notification";
 import NotFound from "../pages/NotFound";
-import Login from "../pages/Login";
-import SsoLogin from "../pages/SsoLogin";
+import LoginPage from "../pages/auth/LoginPage";
 import RequireAuth from "./RequireAuth";
 import PlaceholderPage from "../components/PlaceholderPage";
 import { MappingWorkbench } from "../pages/Terminology";
@@ -27,8 +26,8 @@ import PathwayDetail from "../pages/Pathway/PathwayDetail";
 import PathwayEditor from "../pages/Pathway/PathwayEditor";
 
 export const routes: RouteObject[] = [
-  { path: "/login", element: <Login /> },
-  { path: "/sso-login", element: <SsoLogin /> },
+  { path: "/login", element: <LoginPage /> },
+  { path: "/sso-login", element: <LoginPage initialTab="sso" /> },
   {
     element: <RequireAuth />,
     children: [

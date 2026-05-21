@@ -461,7 +461,10 @@ const mockPackageReviews: Record<string, ConfigPackageReview> = {
 export const handlers = [
   http.post(`${baseURL}/auth/login`, async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as { username?: string; password?: string };
-    if (body.username === "zhao01" && body.password === "demo123") {
+    if (
+      (body.username === "zhao01" && body.password === "demo123") ||
+      (body.username === "admin" && body.password === "admin123")
+    ) {
       return HttpResponse.json(
         wrap({
           token: "mock-jwt-zhao01-demo",
@@ -485,7 +488,58 @@ export const handlers = [
 
   http.post(`${baseURL}/auth/logout`, () => HttpResponse.json(wrap(null))),
 
-  http.get(`${baseURL}/security/sso/providers`, () => HttpResponse.json(wrap([]))),
+  http.get(`${baseURL}/security/sso/providers`, () => HttpResponse.json(wrap([
+    {
+      id: 1,
+      providerCode: "cas-main",
+      providerName: "集团 CAS 统一认证",
+      providerType: "CAS",
+      status: "ACTIVE",
+      adapterCode: "cas",
+    },
+    {
+      id: 2,
+      providerCode: "ldap-ad",
+      providerName: "院内 LDAP-AD",
+      providerType: "LDAP-AD",
+      status: "ACTIVE",
+      adapterCode: "ldap",
+    },
+  ]))),
+
+  http.post(`${baseURL}/security/sso/providers/:providerId/initiate`, ({ params }) => HttpResponse.json(wrap({
+    providerId: Number(params.providerId),
+    providerType: "CAS",
+    redirectUrl: "/sso-login?providerId=1&code=mock-code&state=mock-state",
+    state: "mock-state",
+  }))),
+
+  http.get(`${baseURL}/security/sso/callback`, () => HttpResponse.json(wrap({
+    token: "mock-jwt-sso-demo",
+    user: demoUser,
+  }))),
+
+  http.post(`${baseURL}/security/sso/ldap/authenticate`, async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as { username?: string; password?: string };
+    if (body.username && body.password) {
+      return HttpResponse.json(
+        wrap({
+          token: "mock-jwt-ldap-demo",
+          user: demoUser,
+        }),
+      );
+    }
+    return HttpResponse.json(
+      {
+        success: false,
+        code: "LDAP_AUTH_FAILED",
+        message: "LDAP 认证失败",
+        data: null,
+        trace_id: "mock-ldap-failed",
+      },
+      { status: 401 },
+    );
+  }),
 
   http.get(`${baseURL}/system/providers`, () => {
     const payload: SystemProviders = {
