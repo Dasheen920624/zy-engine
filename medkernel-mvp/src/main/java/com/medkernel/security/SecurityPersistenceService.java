@@ -7,13 +7,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,9 +34,11 @@ public class SecurityPersistenceService {
     private static final Logger log = LoggerFactory.getLogger(SecurityPersistenceService.class);
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public SecurityPersistenceService(EnginePersistenceProperties properties) {
+    public SecurityPersistenceService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     @PostConstruct
@@ -594,8 +596,8 @@ public class SecurityPersistenceService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15: 走 HikariCP 连接池（EngineDataSourceConfig 暴露的 DataSource）。
+        return dataSource.getConnection();
     }
 
     // ============================================================

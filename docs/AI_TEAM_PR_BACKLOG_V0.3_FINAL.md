@@ -38,7 +38,8 @@
 | **PR-FINAL-12** | `/adapter/hub` 适配器中心 | 2 | 🟡 TODO | 中级 | 4 天 |
 | **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | 🟡 TODO | 中级 | 3 天 |
 | **PR-FINAL-14** | 砍菜单 + Dashboard PENDING 卡更新 | 2 | 🟡 TODO | 初级 | 0.5 天 |
-| **PR-FINAL-15** | HikariCP 接入（29 处 DriverManager）| 3 | 🟡 TODO | 架构师 | 4 天 |
+| **PR-FINAL-15a** | HikariCP 框架接入 + 5 核心 PersistenceService 改造 | 3 | ✅ DONE | 架构师 | 2 天 |
+| **PR-FINAL-15b** | 剩余 25 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | 🟡 TODO | 中级 | 2 天 |
 | **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-17** | 拆 EnginePersistenceService（2175 行）| 3 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | 🟡 TODO | 架构师 | 14 天 |
@@ -87,6 +88,65 @@
 - 写新代码：用 `.module.css`（vite 默认支持，详见 §6）；动态样式必须用 inline 时加 `// eslint-disable-next-line medkernel/no-inline-style` 说明理由
 - 抽取存量：每减少一次 inline，跑 `./scripts/check-inline-style-count.ps1 -UpdateBaseline` 把 baseline 下调
 - CI 拦截：scripts/verify-pr.ps1 调用本脚本，新数量 > baseline 时 PR FAIL
+
+### ✅ PR-FINAL-15a：HikariCP 框架接入 + 5 核心 PersistenceService 改造（DONE 2026-05-21）
+
+**KD**：KD-004（29 处 `DriverManager.getConnection()` 散落 5+ 持久化类）
+
+**修改**：
+- `medkernel-mvp/pom.xml`：加 `spring-boot-starter-jdbc`（自带 HikariCP 4.0.3，Spring Boot 2.7 默认版本）
+- `medkernel-mvp/src/main/resources/application.yml`：新增 `medkernel.database.hikari.*` 配置段（max-pool-size=20 / connection-timeout-ms=3000 / leak-detection-threshold-ms=2000 / idle-timeout / max-lifetime 等可调）
+- `medkernel-mvp/src/main/java/com/medkernel/persistence/EnginePersistenceProperties.java`：新增内嵌 `HikariOptions` 类承载连接池参数
+- **新建** `medkernel-mvp/src/main/java/com/medkernel/persistence/EngineDataSourceConfig.java`：`@Configuration` 暴露 `@Bean DataSource`，显式构造 `HikariDataSource`（跳过 Spring Boot DataSourceAutoConfiguration，因为项目用自定义 `medkernel.database.*` 命名空间）
+- **5 个核心 PersistenceService 注入 DataSource + 改 connection() 方法**：
+  - `persistence/EnginePersistenceService.java`（2175 行，最重）— 删 `loadDriver()` + 3 次重试循环 + `shouldRetryConnection` / `sleepQuietly` helpers
+  - `persistence/OrganizationPersistenceService.java` — 删 `loadDriver()`（多方言驱动选择，HikariCP 自动）+ 重试循环
+  - `security/SecurityPersistenceService.java`（963 行）— 简化
+  - `patient/MpiPersistenceService.java`（835 行）— 简化
+  - `security/SsoService.java`（登录核心路径）— 简化
+- **附带清理（用户"系统未上线"指令落地）**：删除 `ai-dev-input/04_database/{local,pg,oracle,dm}/sec_*.sql` 中旧 `sec_user_sync_job` / `sec_user_sync_detail` 整段表定义（PR-FINAL-03 删 Java 时这些 schema 还在参考 DDL 中，本 PR 彻底删除——系统未上线，不需要 DEPRECATED 注释保留兼容）
+
+**关键设计**：
+- **保留 `connection()` 私有方法签名**：所有 `try (Connection c = connection())` 调用点不动 → 改动半径最小
+- **HikariCP 通过 jdbcUrl 自动 Class.forName 加载驱动**：不再需要每个 PersistenceService 自己 `loadDriver()`，多方言（Oracle/DM/PG/Kingbase/H2）由 jdbcUrl 自驱动
+- **@Bean destroyMethod = "close"**：Spring 容器关闭时自动 `HikariDataSource.close()` 释放 pool
+- **`@ConditionalOnMissingBean(DataSource.class)`**：允许单元测试注入 mock DataSource 覆盖
+
+**带来的核心收益**：
+1. `@Transactional` 真正生效（同 Service 内多 DAO 走同 connection）
+2. 连接池监控可观测（pool-name = `MedKernelHikari`）
+3. 连接泄漏检测（threshold 2s WARN）
+4. 高并发下不再无限制创建连接（max-pool-size=20）
+5. ORA-12518 / Listener refused 由 pool 层重试（业务层不再关心）
+
+**剩余 25 个文件由 PR-FINAL-15b 接力**（同一模板的 mechanical work，中级 AI 可领）：
+- security: UserSyncService / IdentityBindingService / SsoConfigService / KeyManagementService / AuditChainService / UserSyncApiService
+- knowledge: KnowledgeSyncService / KnowledgePackageService / AssetQualityService / AiKnowledgeJobService / AiCandidateReviewService
+- datagovernance: QualityRuleRepository / PatientRepository / QualityCheckRepository / DoctorRepository / DepartmentRepository
+- cdss: SafetyRedLineService / ClinicalSafetyService / CdssOverrideService
+- 其它: dify/AiGovernanceService / rule/RuleEvalResultRepository / ops/OpsSyncTaskService / config/ConfigPackageRepository / adapter/TriggerPointService
+
+**改造模板**（PR-FINAL-15b 照搬本 PR 的 5 个示范）：
+```java
+// import:
+import javax.sql.DataSource;   // 加
+// import java.sql.DriverManager; // 删
+
+// 字段:
+private final DataSource dataSource;
+
+// 构造函数加参数:
+public XxxService(..., DataSource dataSource) {
+    ...
+    this.dataSource = dataSource;
+}
+
+// connection() 方法:
+private Connection connection() throws SQLException {
+    return dataSource.getConnection();
+}
+// 同时删除 loadDriver() / 重试循环 / sleepQuietly 等 helper（如果存在）
+```
 
 ---
 

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,9 +36,11 @@ public class MpiPersistenceService {
     private static final Logger log = LoggerFactory.getLogger(MpiPersistenceService.class);
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public MpiPersistenceService(EnginePersistenceProperties properties) {
+    public MpiPersistenceService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     @PostConstruct
@@ -796,8 +798,9 @@ public class MpiPersistenceService {
     }
 
     private Connection connection() {
+        // PR-FINAL-15: 走 HikariCP 连接池（EngineDataSourceConfig 暴露的 DataSource）。
         try {
-            return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
+            return dataSource.getConnection();
         } catch (SQLException ex) {
             throw new IllegalStateException("get connection failed: " + ex.getMessage(), ex);
         }
