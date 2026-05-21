@@ -121,7 +121,7 @@ body {
   background: var(--mk-bg-muted);
 }
 
-/* ── 侧边菜单分组（配置治理 / 运营治理 / 用户与组织 / 系统） ─────── */
+/* ── 侧边菜单分组（知识工厂 / 质控驾驶舱 / 用户与身份 / 平台监控） ─── */
 
 .mk-side-menu {
   padding: var(--mk-space-2) 0;

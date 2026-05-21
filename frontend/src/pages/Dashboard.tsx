@@ -20,7 +20,7 @@ import {
 const { Title, Paragraph, Text } = Typography;
 
 interface CapabilityCard {
-  group: "配置治理" | "运营治理" | "用户与组织" | "系统";
+  group: "知识工厂" | "质控驾驶舱" | "用户与身份" | "系统";
   icon: React.ReactNode;
   title: string;
   description: string;
@@ -32,7 +32,7 @@ interface CapabilityCard {
  * 工作台首页（重构版，反映 2026-05 全功能版本）。
  *
  * - 顶部 4 个核心指标卡（演示用 hardcode，PR-V2-12 后接 /api/quality/summary）
- * - "配置治理" 8 卡 + "运营治理" 8 卡 + "用户与组织" 3 卡 + "系统" 5 卡
+ * - "知识工厂" 8 卡 + "质控驾驶舱" 8 卡 + "用户与身份" 3 卡 + "系统" 5 卡
  * - 每张卡含状态徽标：READY 可用 / BETA 体验 / PENDING 占位
  * - 设计意图：医院内网管理台首屏即可俯瞰平台 4 大治理域的运行情况
  */
@@ -44,7 +44,7 @@ export default function Dashboard() {
           工作台
         </Title>
         <Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 0 }}>
-          集团化医疗智能引擎平台 · 配置治理 / 运营治理 / 用户与组织 / 系统 四大治理域
+          集团医疗智能中枢 MedKernel · 知识工厂 / 质控驾驶舱 / 用户与身份 / 平台监控 四大模块
         </Paragraph>
       </div>
 
@@ -93,25 +93,25 @@ export default function Dashboard() {
       </Row>
 
       <CapabilitySection
-        title="配置治理"
-        description="配置包、路径、规则、图谱、字典、适配器、Dify 与来源——一切对医院 / 集团运营产生影响的资产都在此版本化"
+        title="知识工厂"
+        description="配置包、路径、规则、图谱、字典、适配器、AI 工作流引擎与来源——一切对医院 / 集团运营产生影响的资产都在此版本化"
         cards={CONFIG_GOVERNANCE_CARDS}
       />
 
       <CapabilitySection
-        title="运营治理"
-        description="质控驾驶舱、智能评估、CDSS 警报疲劳、AI 知识审核、待办与通知——把 AI 决策可监管化"
+        title="质控驾驶舱"
+        description="质控大盘、智能评估、CDSS 警报疲劳、AI 知识审核、待办与通知——把 AI 决策可监管化"
         cards={OPERATIONS_GOVERNANCE_CARDS}
       />
 
       <CapabilitySection
-        title="用户与组织"
+        title="用户与身份"
         description="患者主索引、多身份源绑定、外网租户开通——支持院内 + 外网双轨身份治理"
         cards={TENANT_IDENTITY_CARDS}
       />
 
       <CapabilitySection
-        title="系统"
+        title="平台监控"
         description="安全基线、Provider 状态、审计日志、用户/通知设置——平台可观测可维护"
         cards={SYSTEM_CARDS}
       />
@@ -188,7 +188,7 @@ const STATUS_TAG: Record<CapabilityCard["status"], { color: string; label: strin
 
 const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
   {
-    group: "配置治理",
+    group: "知识工厂",
     icon: <ApartmentOutlined />,
     title: "配置包中心",
     description: "PKG-001..004 / PROV-004：配置包版本化、Review、Diff、发布与回滚",
@@ -196,7 +196,7 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/config/packages",
   },
   {
-    group: "配置治理",
+    group: "知识工厂",
     icon: <NodeIndexOutlined />,
     title: "路径配置",
     description: "PATH-001..008：临床路径模板列表、版本对比、X6 画布编辑器",
@@ -204,7 +204,7 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/pathway/templates",
   },
   {
-    group: "配置治理",
+    group: "知识工厂",
     icon: <SafetyCertificateOutlined />,
     title: "规则配置",
     description: "RULE-001..008：规则 DSL、命中证据、来源卡片、dry-run 模拟",
@@ -212,7 +212,7 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/rule/definitions",
   },
   {
-    group: "配置治理",
+    group: "知识工厂",
     icon: <ShareAltOutlined />,
     title: "图谱配置",
     description: "GRAPH-001..005：Neo4j 投影、Dry-run 同步、版本管理",
@@ -220,7 +220,7 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/graph/explore",
   },
   {
-    group: "配置治理",
+    group: "知识工厂",
     icon: <MedicineBoxOutlined />,
     title: "字典映射",
     description: "TERM-001/002：本地术语 ↔ ICD/RxNorm/LOINC 映射工作台",
@@ -228,7 +228,7 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/terminology/mapping",
   },
   {
-    group: "配置治理",
+    group: "知识工厂",
     icon: <ClusterOutlined />,
     title: "适配器中心",
     description: "ADAPT-001 / INTEROP-001：HIS/EMR/LIS 适配器、组织绑定、CDS Hooks",
@@ -236,15 +236,15 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/adapter/hub",
   },
   {
-    group: "配置治理",
+    group: "知识工厂",
     icon: <RobotOutlined />,
-    title: "Dify 工作流",
-    description: "DIFY-001/002：Dify AI 工作流模板与执行记录（持久化已通）",
+    title: "AI 工作流引擎",
+    description: "ADR-0013 LLM Gateway：国产大模型直连为主，Dify 退化为可选 WORKFLOW Provider",
     status: "PENDING",
-    path: "/dify/workflows",
+    path: "/ai-workflows",
   },
   {
-    group: "配置治理",
+    group: "知识工厂",
     icon: <FileSearchOutlined />,
     title: "来源追溯",
     description: "PROV-001..003 / REFIT-003：医学/医保来源、引用、资产绑定、发布门禁",
@@ -255,7 +255,7 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
 
 const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
   {
-    group: "运营治理",
+    group: "质控驾驶舱",
     icon: <LineChartOutlined />,
     title: "院级质控驾驶舱",
     description: "PR-V2-12：医院 / 集团多组织下钻的质控指标看板",
@@ -263,7 +263,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/qc/dashboard",
   },
   {
-    group: "运营治理",
+    group: "质控驾驶舱",
     icon: <AuditOutlined />,
     title: "质控预警",
     description: "PR-V2-11：质控告警工单列表 + 派单",
@@ -271,7 +271,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/qc/alerts",
   },
   {
-    group: "运营治理",
+    group: "质控驾驶舱",
     icon: <LineChartOutlined />,
     title: "评估指标库",
     description: "EVAL-001/002：智能评估指标模型与评分引擎",
@@ -279,7 +279,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/qc/eval/sets",
   },
   {
-    group: "运营治理",
+    group: "质控驾驶舱",
     icon: <LineChartOutlined />,
     title: "评估结果",
     description: "EVAL-002：评估结果与历史对比报告",
@@ -287,7 +287,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/qc/eval/results",
   },
   {
-    group: "运营治理",
+    group: "质控驾驶舱",
     icon: <SafetyCertificateOutlined />,
     title: "CDSS 提醒疲劳",
     description: "CDSS-001..003：医生覆盖记录与提醒疲劳治理",
@@ -295,7 +295,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/cdss/fatigue",
   },
   {
-    group: "运营治理",
+    group: "质控驾驶舱",
     icon: <ReadOutlined />,
     title: "AI 知识审核",
     description: "AIK-001..006：医疗知识订阅、AI 生产任务、模型调用日志、版权治理",
@@ -303,7 +303,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/aik/sources",
   },
   {
-    group: "运营治理",
+    group: "质控驾驶舱",
     icon: <AuditOutlined />,
     title: "待办中心",
     description: "WF-001：审核 / 发布 / 回滚 / 整改 / 合规等统一待办与审批",
@@ -311,7 +311,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
     path: "/workflow/todos",
   },
   {
-    group: "运营治理",
+    group: "质控驾驶舱",
     icon: <AuditOutlined />,
     title: "通知中心",
     description: "NOTIFY-001：业务通知、订阅设置、已读未读管理",
@@ -322,7 +322,7 @@ const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
 
 const TENANT_IDENTITY_CARDS: CapabilityCard[] = [
   {
-    group: "用户与组织",
+    group: "用户与身份",
     icon: <IdcardOutlined />,
     title: "患者主索引",
     description: "MPI-001：跨院区患者主索引、就诊标识、合并冲突治理",
@@ -330,7 +330,7 @@ const TENANT_IDENTITY_CARDS: CapabilityCard[] = [
     path: "/mpi/patients",
   },
   {
-    group: "用户与组织",
+    group: "用户与身份",
     icon: <IdcardOutlined />,
     title: "身份绑定管理",
     description: "SEC-012：多身份源绑定、合并、解绑、冲突检测",
@@ -338,7 +338,7 @@ const TENANT_IDENTITY_CARDS: CapabilityCard[] = [
     path: "/security/identity-binding",
   },
   {
-    group: "用户与组织",
+    group: "用户与身份",
     icon: <IdcardOutlined />,
     title: "租户开通",
     description: "SEC-011：外网客户租户开通、本地密码 + MFA、服务账号",
