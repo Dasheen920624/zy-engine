@@ -1,4 +1,4 @@
-﻿package com.medkernel.knowledge;
+package com.medkernel.knowledge;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -1202,25 +1202,8 @@ public class KnowledgePackageService {
     // ==================== 辅助方法 ====================
 
     private Connection connection() throws SQLException {
-        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
-    } catch (SQLException ex) {
-                last = ex;
-                if (attempt == 3) {
-                    throw ex;
-                }
-                sleepQuietly(500L * attempt);
-            }
-        }
-        throw last;
-    }
-
-    private void loadDriver() throws SQLException {
-        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException(driverClass + " not found", ex);
-        }
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 
     private void setNullableLong(PreparedStatement ps, int index, Long value) throws SQLException {
@@ -1322,11 +1305,4 @@ public class KnowledgePackageService {
         return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
     }
 
-    private void sleepQuietly(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
-    }
 }

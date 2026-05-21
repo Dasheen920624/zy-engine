@@ -1,4 +1,4 @@
-﻿package com.medkernel.cdss;
+package com.medkernel.cdss;
 
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
@@ -668,37 +668,7 @@ public class ClinicalSafetyService {
     }
 
     private Connection connection() throws SQLException {
-        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
-    } catch (SQLException ex) {
-                last = ex;
-                if (!shouldRetryConnection(ex) || attempt == 3) {
-                    throw ex;
-                }
-                sleepQuietly(500L * attempt);
-            }
-        }
-        throw last;
-    }
-
-    private void loadDriver() throws SQLException {
-        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException(driverClass + " not found", ex);
-        }
-    }
-
-    private boolean shouldRetryConnection(SQLException ex) {
-        String message = ex.getMessage();
-        return message != null && (message.contains("ORA-12518") || message.contains("Listener refused"));
-    }
-
-    private void sleepQuietly(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 }

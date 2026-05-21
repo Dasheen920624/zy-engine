@@ -1,4 +1,4 @@
-﻿package com.medkernel.ops.service;
+package com.medkernel.ops.service;
 
 import com.medkernel.common.TraceContext;
 import com.medkernel.ops.entity.OpsSyncTask;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.sql.DataSource;
 
 /**
  * 异步任务服务：统一的异步任务执行、重试、审计机制
@@ -456,7 +457,8 @@ public class OpsSyncTaskService {
      * 获取数据库连接
      */
     private Connection connection() throws SQLException {
-        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 
     // ==================== 任务执行器接口 ====================

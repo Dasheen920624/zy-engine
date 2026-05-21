@@ -1,4 +1,4 @@
-﻿package com.medkernel.datagovernance.repository;
+package com.medkernel.datagovernance.repository;
 
 import com.medkernel.datagovernance.entity.QualityCheckEntity;
 import com.medkernel.persistence.EnginePersistenceProperties;

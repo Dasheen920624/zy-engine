@@ -1,4 +1,4 @@
-﻿package com.medkernel.security.audit;
+package com.medkernel.security.audit;
 
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
@@ -297,7 +297,8 @@ public class AuditChainService {
     }
 
     private Connection connection() throws SQLException {
-        // PR-FINAL-15b: 璧?HikariCP 杩炴帴姹狅紙EngineDataSourceConfig 鏆撮湶鐨?DataSource锛夈€?        return dataSource.getConnection();
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 
     /**
