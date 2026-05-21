@@ -27,7 +27,7 @@ medkernel:
     username: ${MEDKERNEL_DB_USERNAME:MEDKERNEL}
     password: ${MEDKERNEL_DB_PASSWORD:}
     init-schema: ${MEDKERNEL_DB_INIT_SCHEMA:true}
-    # PR-FINAL-15: HikariCP 连接池配置（替代 29 处散落的 DriverManager.getConnection 直连）。
+    # PR-FINAL-15: HikariCP 连接池配置（替代 29 处散落的旧式 JDBC 直连）。
     # EngineDataSourceConfig 读这里的配置构造 @Bean DataSource，所有 PersistenceService
     # 通过注入 DataSource 拿连接，@Transactional 真正生效（同 Service 内多 DAO 走同 connection）。
     hikari:
