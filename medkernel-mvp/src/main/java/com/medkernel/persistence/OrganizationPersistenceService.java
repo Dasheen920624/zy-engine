@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,8 +26,10 @@ public class OrganizationPersistenceService {
     private static final Logger log = LoggerFactory.getLogger(OrganizationPersistenceService.class);
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public OrganizationPersistenceService(EnginePersistenceProperties properties) {
+    public OrganizationPersistenceService(EnginePersistenceProperties properties, DataSource dataSource) {
+        this.dataSource = dataSource;
         this.properties = properties;
     }
 
@@ -202,48 +204,8 @@ public class OrganizationPersistenceService {
     }
 
     private Connection connection() throws SQLException {
-        loadDriver();
-        SQLException last = null;
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                return DriverManager.getConnection(
-                        properties.getUrl(), properties.getUsername(), properties.getPassword());
-            } catch (SQLException ex) {
-                last = ex;
-                if (attempt == 3) {
-                    throw ex;
-                }
-                sleepQuietly(500L * attempt);
-            }
-        }
-        throw last;
-    }
-
-    private void loadDriver() throws SQLException {
-        // 根据 dialect 选驱动类，与多方言 DDL 对齐；不限于 H2/Oracle，否则 DM/PG 用户无法启动。
-        String dialect = properties.providerName();
-        String driverClass;
-        if (properties.localFileDatabase()) {
-            driverClass = "org.h2.Driver";
-        } else if ("DM".equals(dialect)) {
-            driverClass = "dm.jdbc.driver.DmDriver";
-        } else if ("POSTGRESQL".equals(dialect) || "KINGBASE".equals(dialect)) {
-            driverClass = "org.postgresql.Driver";
-        } else {
-            driverClass = "oracle.jdbc.OracleDriver";
-        }
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException(driverClass + " not found", ex);
-        }
-    }
-
-    private void sleepQuietly(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
+        // PR-FINAL-15: 走 HikariCP 连接池（EngineDataSourceConfig 暴露的 DataSource）。
+        // HikariCP 启动期通过 jdbcUrl 自动 Class.forName 加载驱动，不再需要 loadDriver()。
+        return dataSource.getConnection();
     }
 }

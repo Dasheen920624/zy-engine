@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -38,9 +38,11 @@ public class AuditChainService {
     private static final String INITIAL_CHAIN_HASH = "0000000000000000000000000000000000000000000000000000000000000000";
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public AuditChainService(EnginePersistenceProperties properties) {
+    public AuditChainService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -295,8 +297,8 @@ public class AuditChainService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 
     /**

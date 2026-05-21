@@ -3,22 +3,15 @@ import {
   AppstoreOutlined,
   AuditOutlined,
   BellOutlined,
-  ClusterOutlined,
   ContainerOutlined,
-  DatabaseOutlined,
   DesktopOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
-  IdcardOutlined,
   LineChartOutlined,
   MedicineBoxOutlined,
   NodeIndexOutlined,
   ReadOutlined,
-  RobotOutlined,
   SafetyCertificateOutlined,
-  ShareAltOutlined,
-  ShopOutlined,
-  TeamOutlined,
   ToolOutlined,
   UnorderedListOutlined,
   UserSwitchOutlined,
@@ -45,17 +38,23 @@ export interface MenuSection {
 }
 
 /**
- * 两段式侧边栏菜单结构（PR-V2-03 原始设计 + 2026-05 全功能扩展）。
+ * 侧边栏菜单结构（v0.3-final）。
  *
- * 设计原则：
- * 1) 工作台 + 演示 直接放最顶；
- * 2) "配置治理" 收纳一切"医院/集团配置 + 引擎配置 + 字典 + 适配器 + 来源"等治理面；
- * 3) "运营治理" 收纳一切"看板/质控/评估/AI 知识/待办/通知/患者主索引/身份/租户/系统监控"等运行面；
- * 4) 单条菜单超过 12 行时仍按业务亲和分组，不让用户滚动找入口；
- * 5) `pr` 字段保留任务编号溯源；`disabled`/`placeholderHint` 提示尚未完成的入口。
+ * 命名收口（PRODUCT_ARCHITECTURE_FINAL.md §1.1，禁止再用旧叫法）：
+ *   M1「知识工厂」← 旧「配置治理」
+ *   M3「质控驾驶舱」← 旧「运营治理」
+ *   M4「用户与身份」← 旧「用户与组织」
+ *   M4「平台监控」← 旧「系统」
+ *
+ * 占位入口隐藏策略（v0.3-final）：所有未实装的页面**不出现在菜单**，避免客户点击翻车。
+ * 路由本身保留为 PlaceholderPage 兜底（直接访问 URL 仍能看到 hint），AI 团队按 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md 接力实装后再加回菜单。
+ *
+ * Dify 退化为可选 Provider（ADR-0013 去 Dify 化）：菜单改为「AI 工作流引擎」，去 Dify 品牌。
+ *
+ * `pr` 字段保留任务编号溯源；`placeholderHint` 仅用于 URL 兜底场景，菜单层面不再展示。
  */
 export const menuSections: MenuSection[] = [
-  // ─── 顶部直放：工作台 + 演示 ───────────────────────────
+  // ─── 顶部直放：工作台 ───────────────────────────────────
   {
     key: "top",
     label: null,
@@ -75,10 +74,10 @@ export const menuSections: MenuSection[] = [
     ],
   },
 
-  // ─── 配置治理 ─────────────────────────────────────────
+  // ─── M1 知识工厂 ──────────────────────────────────────
   {
-    key: "config-governance",
-    label: "配置治理",
+    key: "knowledge-factory",
+    label: "知识工厂",
     items: [
       {
         key: "config-packages",
@@ -93,40 +92,10 @@ export const menuSections: MenuSection[] = [
         path: "/pathway/templates",
       },
       {
-        key: "rule-definitions",
-        label: "规则配置",
-        icon: <SafetyCertificateOutlined />,
-        path: "/rule/definitions",
-        pr: "PR-V2-05",
-        placeholderHint: "规则库列表与 DSL 编辑器规划中",
-      },
-      {
-        key: "graph-explore",
-        label: "图谱配置",
-        icon: <ShareAltOutlined />,
-        path: "/graph/explore",
-        pr: "PR-V2-05",
-        placeholderHint: "图谱查询工作台规划中",
-      },
-      {
         key: "terminology-mapping",
         label: "字典映射",
         icon: <MedicineBoxOutlined />,
         path: "/terminology/mapping",
-      },
-      {
-        key: "adapter-hub",
-        label: "适配器中心",
-        icon: <ClusterOutlined />,
-        path: "/adapter/hub",
-        placeholderHint: "ADAPT-001 已落地后端，前端列表待补",
-      },
-      {
-        key: "dify-workflows",
-        label: "Dify 工作流",
-        icon: <RobotOutlined />,
-        path: "/dify/workflows",
-        placeholderHint: "DIFY-002 模板后台已就绪，前端列表待补",
       },
       {
         key: "provenance",
@@ -134,13 +103,24 @@ export const menuSections: MenuSection[] = [
         icon: <FileSearchOutlined />,
         path: "/provenance",
       },
+      {
+        key: "rule-definitions",
+        label: "规则库",
+        icon: <SafetyCertificateOutlined />,
+        path: "/rule/definitions",
+        pr: "PR-FINAL-11",
+      },
+      // 以下入口待实装（参考 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md），实装后从下方移到上方：
+      //   key: graph-explore      path: /graph/explore      PR-V0.4
+      //   key: adapter-hub        path: /adapter/hub        PR-FINAL-12
+      //   key: ai-workflows       path: /ai-workflows       PR-FINAL-13 （旧 dify-workflows）
     ],
   },
 
-  // ─── 运营治理 ─────────────────────────────────────────
+  // ─── M3 质控驾驶舱 ────────────────────────────────────
   {
-    key: "operations-governance",
-    label: "运营治理",
+    key: "cockpit",
+    label: "质控驾驶舱",
     items: [
       {
         key: "qc-dashboard",
@@ -193,38 +173,28 @@ export const menuSections: MenuSection[] = [
     ],
   },
 
-  // ─── 用户与组织 ───────────────────────────────────────
+  // ─── M4 用户与身份 ────────────────────────────────────
   {
-    key: "tenant-identity",
-    label: "用户与组织",
+    key: "identity",
+    label: "用户与身份",
     items: [
-      {
-        key: "mpi",
-        label: "患者主索引",
-        icon: <IdcardOutlined />,
-        path: "/mpi/patients",
-        placeholderHint: "MPI-001 后端已落地，前端管理页待补",
-      },
       {
         key: "identity-bindings",
         label: "身份绑定管理",
         icon: <UserSwitchOutlined />,
         path: "/security/identity-binding",
       },
-      {
-        key: "tenant-onboarding",
-        label: "租户开通",
-        icon: <ShopOutlined />,
-        path: "/tenant/onboarding",
-        placeholderHint: "SEC-011 后端已落地，前端向导待补",
-      },
+      // 以下入口待实装：
+      //   key: mpi                path: /mpi/patients        PR-FINAL-07
+      //   key: admin-users        path: /admin/users         PR-FINAL-08
+      //   key: tenant-onboarding  path: /tenant/onboarding   PR-FINAL-10
     ],
   },
 
-  // ─── 系统 ─────────────────────────────────────────────
+  // ─── M4 平台监控 ──────────────────────────────────────
   {
-    key: "system",
-    label: "系统",
+    key: "platform",
+    label: "平台监控",
     items: [
       {
         key: "security-baseline",
@@ -239,25 +209,13 @@ export const menuSections: MenuSection[] = [
         path: "/system/providers",
       },
       {
-        key: "admin-users",
-        label: "用户管理",
-        icon: <TeamOutlined />,
-        path: "/admin/users",
-        placeholderHint: "SEC-001 后端能力到位，前端管理页待补",
-      },
-      {
-        key: "admin-audit",
-        label: "审计日志",
-        icon: <DatabaseOutlined />,
-        path: "/admin/audit",
-        placeholderHint: "AUDIT-001 后端能力到位，前端查询页待补",
-      },
-      {
         key: "notification-settings",
         label: "通知设置",
         icon: <ToolOutlined />,
         path: "/notifications/settings",
       },
+      // 以下入口待实装：
+      //   key: admin-audit        path: /admin/audit         PR-FINAL-09
     ],
   },
 ];
@@ -280,7 +238,7 @@ export function findMenuItemByPath(pathname: string): MenuItem | undefined {
 }
 
 /**
- * 根据当前 pathname 找到所在的 section（用于面包屑生成"配置治理 / 路径配置"二段式）。
+ * 根据当前 pathname 找到所在的 section（用于面包屑生成"知识工厂 / 路径配置"二段式）。
  */
 export function findSectionByPath(pathname: string): MenuSection | undefined {
   for (const section of menuSections) {

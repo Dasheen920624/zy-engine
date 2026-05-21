@@ -1,9 +1,9 @@
 package com.medkernel.system;
 
 import com.medkernel.common.ApiResult;
-import com.medkernel.dify.DifyProperties;
-import com.medkernel.dify.ModelGatewayService;
+import com.medkernel.dify.workflow.DifyProperties;
 import com.medkernel.graph.GraphProperties;
+import com.medkernel.llm.ModelGatewayService;
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.EnginePersistenceService;
 import org.springframework.web.bind.annotation.GetMapping;

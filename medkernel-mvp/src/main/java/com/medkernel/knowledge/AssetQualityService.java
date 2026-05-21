@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,9 +32,11 @@ public class AssetQualityService {
     private static final int DEFAULT_EXPIRY_DAYS = 365;
 
     private final EnginePersistenceProperties properties;
+    private final DataSource dataSource;
 
-    public AssetQualityService(EnginePersistenceProperties properties) {
+    public AssetQualityService(EnginePersistenceProperties properties, DataSource dataSource) {
         this.properties = properties;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -773,7 +775,7 @@ public class AssetQualityService {
     }
 
     private Connection connection() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getUrl(), properties.getUsername(), properties.getPassword());
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 }

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -55,6 +55,7 @@ public class KnowledgePackageService {
     private final GraphService graphService;
     private final KnowledgeService knowledgeService;
     private final ObjectMapper objectMapper;
+    private final DataSource dataSource;
 
     private final Map<Long, KnowledgePackage> packageStore = new ConcurrentHashMap<Long, KnowledgePackage>();
 
@@ -65,7 +66,8 @@ public class KnowledgePackageService {
                                    PathwayService pathwayService,
                                    GraphService graphService,
                                    KnowledgeService knowledgeService,
-                                   ObjectMapper objectMapper) {
+                                   ObjectMapper objectMapper,
+                                   DataSource dataSource) {
         this.properties = properties;
         this.persistenceService = persistenceService;
         this.ruleService = ruleService;
@@ -75,6 +77,7 @@ public class KnowledgePackageService {
         this.knowledgeService = knowledgeService;
         this.objectMapper = objectMapper.copy();
         this.objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        this.dataSource = dataSource;
     }
 
     // ==================== 导出知识包 ====================
@@ -1199,30 +1202,8 @@ public class KnowledgePackageService {
     // ==================== 辅助方法 ====================
 
     private Connection connection() throws SQLException {
-        loadDriver();
-        SQLException last = null;
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                return DriverManager.getConnection(
-                        properties.getUrl(), properties.getUsername(), properties.getPassword());
-            } catch (SQLException ex) {
-                last = ex;
-                if (attempt == 3) {
-                    throw ex;
-                }
-                sleepQuietly(500L * attempt);
-            }
-        }
-        throw last;
-    }
-
-    private void loadDriver() throws SQLException {
-        String driverClass = properties.localFileDatabase() ? "org.h2.Driver" : "oracle.jdbc.OracleDriver";
-        try {
-            Class.forName(driverClass);
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException(driverClass + " not found", ex);
-        }
+        // PR-FINAL-15b: use the shared HikariCP DataSource from EngineDataSourceConfig.
+        return dataSource.getConnection();
     }
 
     private void setNullableLong(PreparedStatement ps, int index, Long value) throws SQLException {
@@ -1324,11 +1305,4 @@ public class KnowledgePackageService {
         return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
     }
 
-    private void sleepQuietly(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
-    }
 }

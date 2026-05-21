@@ -1,8 +1,8 @@
-# 医疗智能引擎平台 · 前端治理控制台
+# 集团医疗智能中枢 MedKernel · 管理工作台前端
 
-本目录是医疗智能引擎平台 **正式前端工程**。当前已具备路由、Layout、组织上下文、API client、查询缓存、MSW mock、单元测试、Provider 状态页和配置包中心。业务页面由 FE-003～FE-010 继续逐步落地。
+本目录是 MedKernel **正式前端工程**。当前已具备路由、Layout、组织上下文、API client、查询缓存、MSW mock、单元测试、Provider 状态页和配置包中心。业务页面按 [`docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md`](../docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md) 接力落地。
 
-命名口径：前端统一称为“治理控制台”，不再写死“内网管理台”。它可以部署在院内、专网、VPN/零信任网关后，也可以作为外网基准服务的控制台；但当前 MVP 未完成生产级外网账号、MFA、租户隔离和网关/WAF，不应直接裸露公网承载真实患者数据。
+命名口径（v0.3-final 收口）：对外统一称「**集团医疗智能中枢 · MedKernel**」，工作台称「**管理工作台**」。可部署在院内、专网、VPN/零信任网关后；外网 SaaS 形态见 [`docs/DEPLOYMENT_DUAL_MODE.md`](../docs/DEPLOYMENT_DUAL_MODE.md)。
 
 ## 技术栈
 
@@ -168,6 +168,52 @@ setOrg({ ...org, hospital_code: "HOSPITAL_BETA" });
 - `ThemeSelector` 写入 `localStorage`，刷新后保留当前主题。
 - 自定义主题当前暴露主色和菜单色，自动派生 hover、active、soft、info、data-1 等变量。
 - 后期接租户配置时，只需要把后端返回的主题包转换为同样的 `ThemeDefinition` / `ThemeOverrides`。
+
+### CSS Modules（v0.3-final 起强制，PR-FINAL-04 落地）
+
+所有**静态样式**必须放进同名 `<Component>.module.css`（Vite 默认支持，无需额外配置）。JSX 内联 `style={{ ... }}` 已被 `medkernel/no-inline-style` ESLint 规则拦截，且 `scripts/check-inline-style-count.ps1` 守门「只减不增」（baseline 555，目标 ≤ 100）。
+
+**正确做法**：
+
+```tsx
+// frontend/src/pages/Mpi/PatientList.tsx
+import styles from "./PatientList.module.css";
+
+export function PatientList() {
+  return (
+    <div className={styles.page}>
+      <header className={styles.header}>...</header>
+    </div>
+  );
+}
+```
+
+```css
+/* frontend/src/pages/Mpi/PatientList.module.css */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-5);
+  padding: var(--mk-space-6);
+}
+.header {
+  border-bottom: 1px solid var(--mk-border-divider);
+}
+```
+
+**强制 token**：颜色 / 字号 / 间距 / 圆角 / 阴影 / 字体 一律走 `var(--mk-*)`，严禁 hex / px / rem 字面量。唯一允许写 hex 的文件：`src/styles/tokens.css` / `src/styles/tokens.ts` / `src/theme/tokens.ts`。
+
+**动态样式豁免**：仅当样式值依赖运行时变量（transform / motion / progress 宽度等），可保留 inline 并加 `// eslint-disable-next-line medkernel/no-inline-style` 说明理由。推荐用 CSS 变量注入：
+
+```tsx
+<div
+  className={styles.dial}
+  // eslint-disable-next-line medkernel/no-inline-style
+  style={{ "--dial-rotation": `${deg}deg` } as React.CSSProperties}
+/>
+```
+
+**示范**：`src/pages/Login.tsx + Login.module.css`、`src/pages/Dashboard.tsx + Dashboard.module.css`。
 
 ### TanStack Query
 

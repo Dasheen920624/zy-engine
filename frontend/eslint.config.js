@@ -7,10 +7,11 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 
-// MedKernel 自定义规则（强制 ADR-0003/0004 + 项目重命名决策）
+// MedKernel 自定义规则（强制 ADR-0003/0004/0014 + 项目重命名决策 + v0.3-final 风格统一）
 import noHardcodedColor from "./eslint-rules/no-hardcoded-color.js";
 import requireSourceInfo from "./eslint-rules/require-source-info-for-medical.js";
 import forbidDeprecatedNaming from "./eslint-rules/forbid-deprecated-naming.js";
+import noInlineStyle from "./eslint-rules/no-inline-style.js";
 
 export default tseslint.config(
   {
@@ -36,6 +37,7 @@ export default tseslint.config(
           "no-hardcoded-color": noHardcodedColor,
           "require-source-info-for-medical": requireSourceInfo,
           "forbid-deprecated-naming": forbidDeprecatedNaming,
+          "no-inline-style": noInlineStyle,
         },
       },
     },
@@ -108,10 +110,13 @@ export default tseslint.config(
       "object-shorthand": "warn",
       "no-nested-ternary": "warn",
 
-      // === MedKernel 自定义规则（ADR-0003/0004 + 重命名） ===
+      // === MedKernel 自定义规则（ADR-0003/0004/0014 + 重命名 + 风格统一） ===
       "medkernel/no-hardcoded-color": "error",
       "medkernel/require-source-info-for-medical": "warn",
       "medkernel/forbid-deprecated-naming": "error",
+      // v0.3-final：存量 582 处 inline style 渐进式抽取，先 warn 不阻断 CI；
+      // CI 跑数量监控（scripts/check-inline-style-count.ps1）实现"只减不增"。
+      "medkernel/no-inline-style": "warn",
     },
   },
   {
