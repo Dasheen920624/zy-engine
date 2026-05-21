@@ -30,6 +30,7 @@ import {
   PatientPathwayDetail,
 } from "../pages/Pathway";
 import { RuleList, RuleDetail, RuleEditor } from "../pages/Rule";
+import { AiWorkflowsPage } from "../pages/AiWorkflows";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
@@ -82,7 +83,7 @@ export const routes: RouteObject[] = [
           { path: "mpi/patients", element: <PlaceholderPage title="患者主索引" pr="MPI-001" /> },
           { path: "adapter/hub", element: <PlaceholderPage title="适配器中心" pr="ADAPT-001" /> },
           { path: "dify/workflows", element: <Navigate to="/ai-workflows" replace /> },
-          { path: "ai-workflows", element: <PlaceholderPage title="AI 工作流引擎" pr="PR-FINAL-13" /> },
+          { path: "ai-workflows", element: <AiWorkflowsPage /> },
           { path: "tenant/onboarding", element: <PlaceholderPage title="租户开通" pr="SEC-011" /> },
           { path: "*", element: <NotFound /> },
         ],

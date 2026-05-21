@@ -36,7 +36,7 @@
 | **PR-FINAL-10** | `/tenant/onboarding` 租户开通向导 | 2 | 🟡 TODO | 高级 | 4 天 |
 | **PR-FINAL-11** | `/rule/definitions` 规则库 + DSL 编辑器 | 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-21 | 高级 | 8 天 |
 | **PR-FINAL-12** | `/adapter/hub` 适配器中心 | 2 | 🟡 TODO | 中级 | 4 天 |
-| **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | 🟡 TODO | 中级 | 3 天 |
+| **PR-FINAL-13** | `/ai-workflows` AI 工作流引擎页（替代旧 Dify 工作流）| 2 | 🟢 IN REVIEW · Claude-Opus-4.7 · 2026-05-22 | 中级 | 3 天 |
 | **PR-FINAL-14** | 砍菜单 + Dashboard PENDING 卡更新 | 2 | 🟡 TODO | 初级 | 0.5 天 |
 | **PR-FINAL-15a** | HikariCP 框架接入 + 5 核心 PersistenceService 改造 | 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-15b** | 剩余 24 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | ✅ DONE | 架构师 | 2 天 |
