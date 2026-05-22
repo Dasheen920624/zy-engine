@@ -62,3 +62,12 @@
   font-size: var(--mk-text-sm);
   line-height: var(--mk-leading-base);
 }
+
+/* 统计卡片数值颜色 */
+.statValuePrimary {
+  color: var(--mk-brand-primary-active);
+}
+
+.statValueSuccess {
+  color: var(--mk-success);
+}
