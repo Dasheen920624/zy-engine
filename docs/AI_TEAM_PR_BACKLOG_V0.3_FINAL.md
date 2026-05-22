@@ -42,7 +42,7 @@
 | **PR-FINAL-15b** | 剩余 24 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`6938ca5`) | 架构师 | 5 天 |
 | **PR-FINAL-17** | 拆 EnginePersistenceService（2175 行）| 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`ea8f5f9`) | 架构师 | 5 天 |
-| **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | 🟡 TODO | 架构师 | 14 天 |
+| **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | 🔵 IN_PROGRESS · Codex-GPT5 · 2026-05-22 | 架构师 | 14 天 |
 | **PR-FINAL-19** | 抽取剩余 ~430 处 inline → CSS Modules | 3 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-20** | springdoc-openapi + 前端 types 自动生成 | 3 | 🟡 TODO | 架构师 | 3 天 |
 | **PR-FINAL-21** | E2E 6 剧本 fixture + Playwright | 3 | 🟡 TODO | 高级 | 5 天 |
