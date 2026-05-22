@@ -222,6 +222,115 @@ AI 完成一组功能后建议：
 - 在最终回复中提示"建议下一次 tag：vX.Y.Z（理由：xxx）"。
 - 不自行 `git tag`。
 
-## 8. 演进
+## 8. 分支保护规则（GA-REL-01）
+
+### 8.1 main 分支保护
+
+| 规则 | 要求 |
+|---|---|
+| 直接 push | 禁止。仅接受 `develop → main` PR |
+| PR 审批 | 至少 1 人 approve（非 AI） |
+| CI 检查 | 全部 PASS（backend-build-test、guard-rules、ai-collaboration-guard） |
+| 合并策略 | Merge commit（保留完整历史） |
+| force push | 禁止 |
+| 删除 | 禁止 |
+
+GitHub 仓库设置路径：Settings → Branches → Branch protection rules → `main`
+
+### 8.2 develop 分支保护
+
+| 规则 | 要求 |
+|---|---|
+| 直接 push | 允许（AI 任务分支合并后推送） |
+| PR 审批 | 不强制（但建议 AI 任务通过 PR 合入） |
+| CI 检查 | 全部 PASS |
+| 合并策略 | Merge commit 或 Squash merge |
+| force push | 禁止 |
+| 删除 | 禁止 |
+
+### 8.3 AI 任务分支规范
+
+| 规则 | 要求 |
+|---|---|
+| 命名 | `ai/<TASK-ID>/<slug>`（如 `ai/GA-REL-01/release-protection`） |
+| 基线 | 必须基于 `origin/develop` 创建 |
+| 合入 | 完成后 merge 到 `develop`，不直接 push `main` |
+| 清理 | 合并后可删除任务分支 |
+
+### 8.4 发布路径
+
+```
+ai/<TASK-ID>/<slug> → develop → main → tag v* → Release Evidence
+```
+
+1. AI 在任务分支开发，完成后合并到 develop
+2. 用户发起 `develop → main` PR，CI 全部 PASS 后 approve 合入
+3. 用户在 main 上打 tag `vX.Y.Z`
+4. CI 自动触发 Release Evidence 工作流（`.github/workflows/release.yml`）
+5. 工作流生成 release manifest 并创建 GitHub Release
+
+## 9. Release Evidence（GA-REL-01）
+
+### 9.1 自动化流程
+
+当 `v*` tag 推送到 GitHub 时，`release.yml` 工作流自动执行：
+
+1. **校验 tag 格式**：确认符合 semver（`vMAJOR.MINOR.PATCH[-prerelease][+build]`）
+2. **校验 tag 基线**：确认 tag commit 在 main 分支历史线上
+3. **校验分支保护**：确认 main 是 develop 的祖先
+4. **构建后端**：`mvn package` 生成 JAR
+5. **计算 SHA256**：对 JAR 计算哈希值
+6. **生成 release manifest**：包含版本号、git hash、构建时间、组件 SHA256
+7. **创建 GitHub Release**：附带 manifest 和自动生成的 changelog
+
+### 9.2 Release Manifest 格式
+
+```json
+{
+  "version": "1.0.0",
+  "git_hash": "a1b2c3d",
+  "build_time": "2026-05-23T20:00:00+08:00",
+  "build_host": "github-ci",
+  "tag": "v1.0.0",
+  "components": {
+    "backend": {
+      "jar": "lib/medkernel.jar",
+      "sha256": "..."
+    }
+  },
+  "branch_protection": {
+    "main": "protected: only develop->main PR allowed",
+    "develop": "integration: AI task branches merge here"
+  }
+}
+```
+
+### 9.3 Tag 校验脚本
+
+打 tag 前可运行校验脚本确认合规：
+
+```powershell
+pwsh scripts/verify-tag.ps1 -Tag v1.0.0
+pwsh scripts/verify-tag.ps1 -Tag v1.0.0 -Strict  # 严格模式，任何问题抛异常
+```
+
+校验项：
+1. tag 格式符合 semver
+2. tag commit 存在
+3. tag 基于 main 分支
+4. develop 包含 tag 的所有 commit
+5. VERSIONING.md 存在且包含版本策略
+6. CHANGELOG.md 存在且包含该版本条目
+
+### 9.4 CI 中的分支保护执行
+
+`ci.yml` 中的 `guard-rules` job 已实现以下保护：
+
+- PR 到 main 必须来自 develop（不允许 AI 直接 PR 到 main）
+- PR 到 develop 不允许从 main 合回
+- AI 任务分支命名校验（`ai/<TASK-ID>/<slug>`）
+- verify-pr.ps1 执行 DoD 自检
+
+## 10. 演进
 
 修改本文属于 DOC 任务。版本号格式变更需独立 ARCH 任务讨论。
