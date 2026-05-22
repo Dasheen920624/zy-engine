@@ -1,0 +1,7 @@
+task_id: GA-QA-01
+claim_id: GA-QA-01-S01
+owner: TraeAI-1
+branch: ai/GA-QA-01/jacoco-coverage
+git_base_commit: b121607767073f8bdd6f0be005f58a41d7d3920a
+created_at: 2026-05-23T19:35:00+08:00
+last_heartbeat: 2026-05-23T19:35:00+08:00
