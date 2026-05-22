@@ -30,6 +30,7 @@ feature_acceptance_required: true
 feature_acceptance_id: FA-PR-FINAL-17-S01
 write_scope:
   - medkernel-mvp/src/main/java/com/medkernel/persistence/EnginePersistenceService.java
+  - medkernel-mvp/src/main/java/com/medkernel/persistence/PersistenceRepositorySupport.java
   - medkernel-mvp/src/main/java/com/medkernel/audit/**
   - medkernel-mvp/src/main/java/com/medkernel/common/**
   - medkernel-mvp/src/main/java/com/medkernel/pathway/**

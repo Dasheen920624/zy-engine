@@ -1,19 +1,22 @@
 package com.medkernel.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medkernel.common.TraceContext;
+import com.medkernel.audit.AuditLogRepository;
+import com.medkernel.common.IdAllocatorRepository;
 import com.medkernel.dify.workflow.DifyWorkflowTemplate;
 import com.medkernel.dto.PatientPathwayInstance;
 import com.medkernel.dto.PatientTaskState;
 import com.medkernel.dto.PathwayVariationRecord;
 import com.medkernel.dto.RecommendationCard;
+import com.medkernel.dto.RuleResult;
+import com.medkernel.pathway.PathwayInstanceRepository;
 import com.medkernel.provenance.SourceAssetBinding;
 import com.medkernel.provenance.SourceCitation;
 import com.medkernel.provenance.SourceDocument;
-import com.medkernel.dto.RuleResult;
+import com.medkernel.provenance.SourceDocumentRepository;
 import com.medkernel.rule.RuleDefinition;
-import com.medkernel.util.ClinicalFactUtils;
+import com.medkernel.rule.RuleExecLogRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -29,41 +32,51 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
-public class EnginePersistenceService {
-    private static final int MAX_AUDIT_RECORDS = 500;
+public class EnginePersistenceService extends PersistenceRepositorySupport {
+    private final PathwayInstanceRepository pathwayInstanceRepository;
+    private final RuleExecLogRepository ruleExecLogRepository;
+    private final SourceDocumentRepository sourceDocumentRepository;
+    private final AuditLogRepository auditLogRepository;
 
-    private final EnginePersistenceProperties properties;
-    private final ObjectMapper objectMapper;
-    private final DataSource dataSource;
-    private final List<Map<String, Object>> auditRecords =
-            Collections.synchronizedList(new ArrayList<Map<String, Object>>());
+    @Autowired
+    public EnginePersistenceService(EnginePersistenceProperties properties,
+                                    ObjectMapper objectMapper,
+                                    DataSource dataSource,
+                                    IdAllocatorRepository idAllocatorRepository,
+                                    PathwayInstanceRepository pathwayInstanceRepository,
+                                    RuleExecLogRepository ruleExecLogRepository,
+                                    SourceDocumentRepository sourceDocumentRepository,
+                                    AuditLogRepository auditLogRepository) {
+        super(properties, objectMapper, dataSource, idAllocatorRepository);
+        this.pathwayInstanceRepository = pathwayInstanceRepository;
+        this.ruleExecLogRepository = ruleExecLogRepository;
+        this.sourceDocumentRepository = sourceDocumentRepository;
+        this.auditLogRepository = auditLogRepository;
+    }
 
     public EnginePersistenceService(EnginePersistenceProperties properties,
                                     ObjectMapper objectMapper,
                                     DataSource dataSource) {
-        this.properties = properties;
-        this.objectMapper = objectMapper;
-        this.dataSource = dataSource;
+        this(properties, objectMapper, dataSource, new IdAllocatorRepository());
     }
 
-    /** 判断持久化服务是否已启用且具备必要凭证。 */
-    public boolean enabled() {
-        return properties.isEnabled() && properties.hasRequiredCredentials();
+    private EnginePersistenceService(EnginePersistenceProperties properties,
+                                     ObjectMapper objectMapper,
+                                     DataSource dataSource,
+                                     IdAllocatorRepository idAllocatorRepository) {
+        this(properties, objectMapper, dataSource, idAllocatorRepository,
+                new PathwayInstanceRepository(properties, objectMapper, dataSource, idAllocatorRepository),
+                new RuleExecLogRepository(properties, objectMapper, dataSource, idAllocatorRepository),
+                new SourceDocumentRepository(properties, objectMapper, dataSource, idAllocatorRepository),
+                new AuditLogRepository(properties, objectMapper, dataSource, idAllocatorRepository));
     }
-
     /** 返回当前持久化提供者名称，未启用时返回 IN_MEMORY。 */
     public String providerName() {
         return enabled() ? properties.providerName() : "IN_MEMORY";
@@ -108,7 +121,7 @@ public class EnginePersistenceService {
             String name = string(config.get("pathway_name"), pathwayCode);
             String specialty = string(config.get("specialty_code"), null);
             String disease = string(config.get("disease_code"), pathwayCode);
-            long id = Ids.next();
+            long id = nextId(tenantId);
             int affected;
             try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
                 int i = 1;
@@ -172,7 +185,7 @@ public class EnginePersistenceService {
                 "VALUES (?, ?, ?, ?, ?, SYSTIMESTAMP)";
         String json = toJson(config);
         try (Connection connection = connection()) {
-            long id = Ids.next();
+            long id = nextId();
             int affected;
             try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
                 int i = 1;
@@ -298,191 +311,32 @@ public class EnginePersistenceService {
 
     /** 保存推荐卡记录（pe_recommendation_record），仅 INSERT。 */
     public void saveRecommendation(RecommendationCard card) {
-        if (!enabled()) {
-            return;
-        }
-        String sql = "INSERT INTO pe_recommendation_record " +
-                "(id, recommendation_id, patient_id, encounter_id, scenario, target_code, target_name, score, confidence, action_level, card_json, trace_id, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            int i = 1;
-            ps.setLong(i++, Ids.next());
-            ps.setString(i++, card.getRecommendationId());
-            ps.setString(i++, card.getPatientId());
-            ps.setString(i++, card.getEncounterId());
-            ps.setString(i++, card.getScenario());
-            ps.setString(i++, card.getTargetCode());
-            ps.setString(i++, card.getTargetName());
-            ps.setDouble(i++, card.getScore());
-            ps.setString(i++, card.getConfidence());
-            ps.setString(i++, card.getActionLevel());
-            ps.setString(i++, toJson(card));
-            ps.setString(i++, TraceContext.getTraceId());
-            ps.executeUpdate();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save recommendation failed: " + ex.getMessage(), ex);
-        }
+        pathwayInstanceRepository.saveRecommendation(card);
     }
 
     /** 保存或更新患者路径实例（pe_patient_instance），使用 UPDATE+INSERT 两阶段实现 UPSERT。 */
     public void savePatientInstance(PatientPathwayInstance instance, String admittedBy) {
-        if (!enabled()) {
-            return;
-        }
-        if (properties.localFileDatabase()) {
-            savePatientInstanceLocal(instance, admittedBy);
-            return;
-        }
-        String updateSql = "UPDATE pe_patient_instance SET current_node_code=?, updated_time=SYSTIMESTAMP " +
-                "WHERE tenant_id=? AND org_code=? AND encounter_id=? AND pathway_code=? AND status='ACTIVE'";
-        String insertSql = "INSERT INTO pe_patient_instance (id, tenant_id, org_code, patient_id, encounter_id, pathway_code, version_no, status, current_node_code, admitted_by, admission_time, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, SYSTIMESTAMP, SYSTIMESTAMP)";
-        try (Connection connection = connection()) {
-            long id = extractNumericId(instance.getInstanceId());
-            String tenantId = string(instance.getTenantId(), "default");
-            String orgCode = string(instance.getLegacyOrgCode(), string(instance.getHospitalCode(), "ZYHOSPITAL"));
-            int affected;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                ps.setString(i++, instance.getCurrentNodeCode());
-                ps.setString(i++, tenantId);
-                ps.setString(i++, orgCode);
-                ps.setString(i++, instance.getEncounterId());
-                ps.setString(i++, instance.getPathwayCode());
-                affected = ps.executeUpdate();
-            }
-            if (affected == 0) {
-                try (PreparedStatement ips = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ips.setLong(i++, id);
-                    ips.setString(i++, tenantId);
-                    ips.setString(i++, orgCode);
-                    ips.setString(i++, instance.getPatientId());
-                    ips.setString(i++, instance.getEncounterId());
-                    ips.setString(i++, instance.getPathwayCode());
-                    ips.setString(i++, instance.getVersionNo());
-                    ips.setString(i++, instance.getCurrentNodeCode());
-                    ips.setString(i++, admittedBy);
-                    ips.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save patient instance failed: " + ex.getMessage(), ex);
-        }
+        pathwayInstanceRepository.savePatientInstance(instance, admittedBy);
     }
 
     /** 更新节点状态（pe_patient_node_state），nodeName 默认取 nodeCode。 */
     public void updateNodeState(PatientPathwayInstance instance, String nodeCode, String status) {
-        updateNodeState(instance, nodeCode, nodeCode, status);
+        pathwayInstanceRepository.updateNodeState(instance, nodeCode, status);
     }
 
     /** 保存节点状态记录（pe_patient_node_state），仅 INSERT。 */
     public void updateNodeState(PatientPathwayInstance instance, String nodeCode, String nodeName, String status) {
-        if (!enabled()) {
-            return;
-        }
-        String sql = "INSERT INTO pe_patient_node_state (id, instance_id, node_code, node_name, status, enter_time, complete_time, timeout_flag, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, SYSTIMESTAMP, ?, 0, SYSTIMESTAMP)";
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            int i = 1;
-            ps.setLong(i++, Ids.next());
-            ps.setLong(i++, extractNumericId(instance.getInstanceId()));
-            ps.setString(i++, nodeCode);
-            ps.setString(i++, nodeName);
-            ps.setString(i++, status);
-            ps.setTimestamp(i++, "COMPLETED".equals(status) ? new Timestamp(System.currentTimeMillis()) : null);
-            ps.executeUpdate();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save node state failed: " + ex.getMessage(), ex);
-        }
+        pathwayInstanceRepository.updateNodeState(instance, nodeCode, nodeName, status);
     }
 
     /** 保存或更新任务状态（pe_patient_task_state），使用 UPDATE+INSERT 两阶段实现 UPSERT。 */
     public void saveTaskState(PatientTaskState taskState) {
-        if (!enabled()) {
-            return;
-        }
-        if (properties.localFileDatabase()) {
-            saveTaskStateLocal(taskState);
-            return;
-        }
-        String updateSql = "UPDATE pe_patient_task_state SET task_name=?, task_type=?, status=?, result_json=?, updated_time=SYSTIMESTAMP " +
-                "WHERE instance_id=? AND node_code=? AND task_code=?";
-        String insertSql = "INSERT INTO pe_patient_task_state (id, instance_id, node_code, task_code, task_name, task_type, status, result_json, created_time, updated_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, SYSTIMESTAMP)";
-        try (Connection connection = connection()) {
-            long instanceId = extractNumericId(taskState.getInstanceId());
-            String resultJson = toJson(taskState.getResult());
-            int affected;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                ps.setString(i++, taskState.getTaskName());
-                ps.setString(i++, taskState.getTaskType());
-                ps.setString(i++, taskState.getStatus());
-                ps.setString(i++, resultJson);
-                ps.setLong(i++, instanceId);
-                ps.setString(i++, taskState.getNodeCode());
-                ps.setString(i++, taskState.getTaskCode());
-                affected = ps.executeUpdate();
-            }
-            if (affected == 0) {
-                try (PreparedStatement ips = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ips.setLong(i++, Ids.next());
-                    ips.setLong(i++, instanceId);
-                    ips.setString(i++, taskState.getNodeCode());
-                    ips.setString(i++, taskState.getTaskCode());
-                    ips.setString(i++, taskState.getTaskName());
-                    ips.setString(i++, taskState.getTaskType());
-                    ips.setString(i++, taskState.getStatus());
-                    ips.setString(i++, resultJson);
-                    ips.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save task state failed: " + ex.getMessage(), ex);
-        }
+        pathwayInstanceRepository.saveTaskState(taskState);
     }
 
     /** 保存变异记录（pe_variation_record），仅 INSERT。 */
     public void saveVariationRecord(PathwayVariationRecord variation) {
-        if (!enabled()) {
-            return;
-        }
-        String sql = "INSERT INTO pe_variation_record " +
-                "(id, instance_id, patient_id, encounter_id, node_code, variation_type, reason, operator_id, " +
-                "tenant_id, group_code, hospital_code, campus_code, site_code, department_code, scope_level, scope_code, org_source, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            String tenantId = string(variation.getTenantId(), "default");
-            String hospitalCode = string(variation.getHospitalCode(), string(variation.getLegacyOrgCode(), "ZYHOSPITAL"));
-            String scopeLevel = string(variation.getScopeLevel(), "HOSPITAL");
-            String scopeCode = string(variation.getScopeCode(), hospitalCode);
-            int i = 1;
-            ps.setLong(i++, Ids.next());
-            ps.setLong(i++, extractNumericId(variation.getInstanceId()));
-            ps.setString(i++, variation.getPatientId());
-            ps.setString(i++, variation.getEncounterId());
-            ps.setString(i++, variation.getNodeCode());
-            ps.setString(i++, variation.getVariationType());
-            ps.setString(i++, truncate(variation.getReason(), 1000));
-            ps.setString(i++, variation.getOperatorId());
-            ps.setString(i++, tenantId);
-            ps.setString(i++, variation.getGroupCode());
-            ps.setString(i++, hospitalCode);
-            ps.setString(i++, variation.getCampusCode());
-            ps.setString(i++, variation.getSiteCode());
-            ps.setString(i++, variation.getDepartmentCode());
-            ps.setString(i++, scopeLevel);
-            ps.setString(i++, scopeCode);
-            ps.setString(i++, variation.getOrgSource());
-            ps.executeUpdate();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save variation record failed: " + ex.getMessage(), ex);
-        }
+        pathwayInstanceRepository.saveVariationRecord(variation);
     }
 
     /** 保存或更新规则定义（re_rule_def），使用 UPDATE+INSERT 两阶段实现 UPSERT。 */
@@ -522,7 +376,7 @@ public class EnginePersistenceService {
             if (affected == 0) {
                 try (PreparedStatement ips = connection.prepareStatement(insertSql)) {
                     int i = 1;
-                    ips.setLong(i++, Ids.next());
+                    ips.setLong(i++, nextId(tenantId));
                     ips.setString(i++, tenantId);
                     ips.setString(i++, orgCode);
                     ips.setString(i++, definition.getRuleCode());
@@ -545,293 +399,48 @@ public class EnginePersistenceService {
     /** 保存规则执行日志（re_rule_exec_log），仅 INSERT。不含机构字段的重载版本。 */
     public void saveRuleExecLog(RuleResult result, String ruleVersion, Map<String, Object> patientContext,
                                 long elapsedMs, String resultStatus, String errorCode, String errorMessage) {
-        saveRuleExecLog(result, ruleVersion, patientContext, elapsedMs, resultStatus, errorCode, errorMessage, null);
+        ruleExecLogRepository.saveRuleExecLog(result, ruleVersion, patientContext, elapsedMs, resultStatus,
+                errorCode, errorMessage);
     }
 
     /** 保存规则执行日志（re_rule_exec_log），仅 INSERT。支持机构字段。 */
     public void saveRuleExecLog(RuleResult result, String ruleVersion, Map<String, Object> patientContext,
                                 long elapsedMs, String resultStatus, String errorCode, String errorMessage,
                                 Map<String, Object> orgFields) {
-        if (!enabled()) {
-            return;
-        }
-        String sql = "INSERT INTO re_rule_exec_log " +
-                "(id, trace_id, rule_code, rule_version, patient_id, encounter_id, event_id, hit_flag, severity, message, " +
-                "input_snapshot, output_snapshot, elapsed_ms, result_status, error_code, error_message, " +
-                "tenant_id, group_code, hospital_code, campus_code, site_code, department_code, scope_level, scope_code, org_source, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            int i = 1;
-            ps.setLong(i++, Ids.next());
-            ps.setString(i++, TraceContext.getTraceId());
-            ps.setString(i++, result.getRuleCode());
-            ps.setString(i++, ruleVersion);
-            ps.setString(i++, ClinicalFactUtils.patientId(patientContext));
-            ps.setString(i++, ClinicalFactUtils.encounterId(patientContext));
-            ps.setString(i++, null);
-            ps.setInt(i++, result.isHit() ? 1 : 0);
-            ps.setString(i++, result.getSeverity());
-            ps.setString(i++, truncate(result.getMessage(), 1000));
-            ps.setString(i++, toJson(patientContext));
-            ps.setString(i++, toJson(result));
-            ps.setLong(i++, elapsedMs);
-            ps.setString(i++, resultStatus);
-            ps.setString(i++, errorCode);
-            ps.setString(i++, truncate(errorMessage, 1000));
-            ps.setString(i++, orgValue(orgFields, "tenant_id", "tenantId"));
-            ps.setString(i++, orgValue(orgFields, "group_code", "groupCode"));
-            ps.setString(i++, orgValue(orgFields, "hospital_code", "hospitalCode"));
-            ps.setString(i++, orgValue(orgFields, "campus_code", "campusCode"));
-            ps.setString(i++, orgValue(orgFields, "site_code", "siteCode"));
-            ps.setString(i++, orgValue(orgFields, "department_code", "departmentCode"));
-            ps.setString(i++, orgValue(orgFields, "scope_level", "scopeLevel"));
-            ps.setString(i++, orgValue(orgFields, "scope_code", "scopeCode"));
-            ps.setString(i++, orgValue(orgFields, "org_source", "orgSource"));
-            ps.executeUpdate();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save rule exec log failed: " + ex.getMessage(), ex);
-        }
+        ruleExecLogRepository.saveRuleExecLog(result, ruleVersion, patientContext, elapsedMs, resultStatus,
+                errorCode, errorMessage, orgFields);
     }
 
     /** 保存或更新来源文档（src_document），使用 UPDATE+INSERT 两阶段实现 UPSERT。 */
     public void saveSourceDocument(SourceDocument document) {
-        if (!enabled()) {
-            return;
-        }
-        if (properties.localFileDatabase()) {
-            saveSourceDocumentLocal(document);
-            return;
-        }
-        String updateSql = "UPDATE src_document SET title=?, source_type=?, source_uri=?, publisher=?, " +
-                "effective_date=?, expiry_date=?, review_status=?, reviewed_by=?, reviewed_time=?, " +
-                "content_hash=?, metadata_json=?, created_by=COALESCE(?, created_by), updated_time=SYSTIMESTAMP " +
-                "WHERE tenant_id=? AND document_code=?";
-        String insertSql = "INSERT INTO src_document (id, tenant_id, document_code, title, source_type, source_uri, publisher, " +
-                "effective_date, expiry_date, review_status, reviewed_by, reviewed_time, content_hash, metadata_json, " +
-                "created_by, created_time, updated_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, SYSTIMESTAMP)";
-        try (Connection connection = connection()) {
-            int affected;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                setSourceDocumentUpdateValues(ps, document, i);
-                i += 12;
-                ps.setString(i++, string(document.getTenantId(), "default"));
-                ps.setString(i++, document.getDocumentCode());
-                affected = ps.executeUpdate();
-            }
-            if (affected == 0) {
-                try (PreparedStatement ips = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ips.setLong(i++, Ids.next());
-                    ips.setString(i++, string(document.getTenantId(), "default"));
-                    ips.setString(i++, document.getDocumentCode());
-                    ips.setString(i++, document.getTitle());
-                    ips.setString(i++, document.getSourceType());
-                    ips.setString(i++, document.getSourceUri());
-                    ips.setString(i++, document.getPublisher());
-                    ips.setDate(i++, parseSqlDate(document.getEffectiveDate()));
-                    ips.setDate(i++, parseSqlDate(document.getExpiryDate()));
-                    ips.setString(i++, document.getReviewStatus());
-                    ips.setString(i++, document.getReviewedBy());
-                    ips.setTimestamp(i++, parseTimestamp(document.getReviewedTime()));
-                    ips.setString(i++, document.getContentHash());
-                    ips.setString(i++, toJson(document.getMetadata()));
-                    ips.setString(i++, document.getCreatedBy());
-                    ips.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save source document failed: " + ex.getMessage(), ex);
-        }
+        sourceDocumentRepository.saveSourceDocument(document);
     }
 
     /** 查询所有来源文档，按租户、文档编码和更新时间排序。 */
     public List<SourceDocument> listSourceDocuments() {
-        if (!enabled()) {
-            return new ArrayList<SourceDocument>();
-        }
-        String sql = "SELECT tenant_id, document_code, title, source_type, source_uri, publisher, effective_date, " +
-                "expiry_date, review_status, reviewed_by, reviewed_time, content_hash, metadata_json, created_by, " +
-                "created_time, updated_time FROM src_document ORDER BY tenant_id, document_code, updated_time";
-        List<SourceDocument> documents = new ArrayList<SourceDocument>();
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                documents.add(toSourceDocument(rs));
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("list source documents failed: " + ex.getMessage(), ex);
-        }
-        return documents;
+        return sourceDocumentRepository.listSourceDocuments();
     }
 
     /** 按租户和文档编码查找单条来源文档。 */
     public SourceDocument findSourceDocument(String tenantId, String documentCode) {
-        if (!enabled()) {
-            return null;
-        }
-        String sql = "SELECT tenant_id, document_code, title, source_type, source_uri, publisher, effective_date, " +
-                "expiry_date, review_status, reviewed_by, reviewed_time, content_hash, metadata_json, created_by, " +
-                "created_time, updated_time FROM src_document WHERE tenant_id=? AND document_code=?";
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, string(tenantId, "default"));
-            ps.setString(2, documentCode);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? toSourceDocument(rs) : null;
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("find source document failed: " + ex.getMessage(), ex);
-        }
+        return sourceDocumentRepository.findSourceDocument(tenantId, documentCode);
     }
 
     /** 保存审计日志（engine_audit_log），仅 INSERT。同时写入内存缓冲区。 */
     public void saveAuditLog(String engineType, String actionType, String targetType, String targetCode,
                              String patientId, String encounterId, String operatorId, Map<String, Object> detail) {
-        String traceId = TraceContext.getTraceId();
-        recordAuditLog(traceId, engineType, actionType, targetType, targetCode,
+        auditLogRepository.saveAuditLog(engineType, actionType, targetType, targetCode,
                 patientId, encounterId, operatorId, detail);
-        if (!enabled()) {
-            return;
-        }
-        String sql = "INSERT INTO engine_audit_log " +
-                "(id, trace_id, engine_type, action_type, target_type, target_code, patient_id, encounter_id, operator_id, " +
-                "tenant_id, group_code, hospital_code, campus_code, site_code, department_code, scope_level, scope_code, org_source, detail_json, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP)";
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            int i = 1;
-            ps.setLong(i++, Ids.next());
-            ps.setString(i++, traceId);
-            ps.setString(i++, engineType);
-            ps.setString(i++, actionType);
-            ps.setString(i++, targetType);
-            ps.setString(i++, targetCode);
-            ps.setString(i++, patientId);
-            ps.setString(i++, encounterId);
-            ps.setString(i++, operatorId);
-            ps.setString(i++, orgValue(detail, "tenant_id", "tenantId"));
-            ps.setString(i++, orgValue(detail, "group_code", "groupCode"));
-            ps.setString(i++, orgValue(detail, "hospital_code", "hospitalCode"));
-            ps.setString(i++, orgValue(detail, "campus_code", "campusCode"));
-            ps.setString(i++, orgValue(detail, "site_code", "siteCode"));
-            ps.setString(i++, orgValue(detail, "department_code", "departmentCode"));
-            ps.setString(i++, orgValue(detail, "scope_level", "scopeLevel"));
-            ps.setString(i++, orgValue(detail, "scope_code", "scopeCode"));
-            ps.setString(i++, orgValue(detail, "org_source", "orgSource"));
-            ps.setString(i++, toJson(detail));
-            ps.executeUpdate();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save audit log failed: " + ex.getMessage(), ex);
-        }
     }
 
     /** 查询审计日志，支持多维度过滤（traceId/engineType/actionType/targetType/targetCode/patientId/encounterId/operatorId 及机构字段）。 */
     public List<Map<String, Object>> listAuditLogs(Map<String, String> filters) {
-        String traceId = filterValue(filters, "traceId");
-        String engineType = filterValue(filters, "engineType");
-        String actionType = filterValue(filters, "actionType");
-        String targetType = filterValue(filters, "targetType");
-        String targetCode = filterValue(filters, "targetCode");
-        String patientId = filterValue(filters, "patientId");
-        String encounterId = filterValue(filters, "encounterId");
-        String operatorId = filterValue(filters, "operatorId");
-        String tenantId = filterValue(filters, "tenantId");
-        String groupCode = filterValue(filters, "groupCode");
-        String hospitalCode = filterValue(filters, "hospitalCode");
-        String campusCode = filterValue(filters, "campusCode");
-        String siteCode = filterValue(filters, "siteCode");
-        String departmentCode = filterValue(filters, "departmentCode");
-        String scopeLevel = filterValue(filters, "scopeLevel");
-        String scopeCode = filterValue(filters, "scopeCode");
-        int limit = filterInt(filters, "limit", 100);
-        if (limit <= 0) {
-            limit = 100;
-        }
-
-        List<Map<String, Object>> snapshot;
-        synchronized (auditRecords) {
-            snapshot = new ArrayList<Map<String, Object>>(auditRecords);
-        }
-        Collections.reverse(snapshot);
-
-        List<Map<String, Object>> matched = new ArrayList<Map<String, Object>>();
-        for (Map<String, Object> record : snapshot) {
-            if (traceId != null && !traceId.equals(string(record.get("trace_id"), null))) {
-                continue;
-            }
-            if (engineType != null && !engineType.equalsIgnoreCase(string(record.get("engine_type"), null))) {
-                continue;
-            }
-            if (actionType != null && !actionType.equalsIgnoreCase(string(record.get("action_type"), null))) {
-                continue;
-            }
-            if (targetType != null && !targetType.equalsIgnoreCase(string(record.get("target_type"), null))) {
-                continue;
-            }
-            if (targetCode != null && !targetCode.equalsIgnoreCase(string(record.get("target_code"), null))) {
-                continue;
-            }
-            if (patientId != null && !patientId.equals(string(record.get("patient_id"), null))) {
-                continue;
-            }
-            if (encounterId != null && !encounterId.equals(string(record.get("encounter_id"), null))) {
-                continue;
-            }
-            if (operatorId != null && !operatorId.equals(string(record.get("operator_id"), null))) {
-                continue;
-            }
-            if (tenantId != null && !tenantId.equals(string(record.get("tenant_id"), null))) {
-                continue;
-            }
-            if (groupCode != null && !groupCode.equals(string(record.get("group_code"), null))) {
-                continue;
-            }
-            if (hospitalCode != null && !hospitalCode.equals(string(record.get("hospital_code"), null))) {
-                continue;
-            }
-            if (campusCode != null && !campusCode.equals(string(record.get("campus_code"), null))) {
-                continue;
-            }
-            if (siteCode != null && !siteCode.equals(string(record.get("site_code"), null))) {
-                continue;
-            }
-            if (departmentCode != null && !departmentCode.equals(string(record.get("department_code"), null))) {
-                continue;
-            }
-            if (scopeLevel != null && !scopeLevel.equalsIgnoreCase(string(record.get("scope_level"), null))) {
-                continue;
-            }
-            if (scopeCode != null && !scopeCode.equals(string(record.get("scope_code"), null))) {
-                continue;
-            }
-            matched.add(new LinkedHashMap<String, Object>(record));
-            if (matched.size() >= limit) {
-                break;
-            }
-        }
-        return matched;
+        return auditLogRepository.listAuditLogs(filters);
     }
 
     /** 按维度汇总审计日志，返回各维度的计数统计。 */
     public Map<String, Object> summarizeAuditLogs(Map<String, String> filters) {
-        Map<String, String> merged = new LinkedHashMap<String, String>();
-        if (filters != null) {
-            merged.putAll(filters);
-        }
-        merged.put("limit", String.valueOf(Integer.MAX_VALUE));
-        List<Map<String, Object>> records = listAuditLogs(merged);
-        Map<String, Object> summary = new LinkedHashMap<String, Object>();
-        summary.put("total", records.size());
-        summary.put("by_engine_type", aggregateAudit(records, "engine_type"));
-        summary.put("by_action_type", aggregateAudit(records, "action_type"));
-        summary.put("by_target_type", aggregateAudit(records, "target_type"));
-        summary.put("by_hospital_code", aggregateAudit(records, "hospital_code"));
-        summary.put("by_scope_level", aggregateAudit(records, "scope_level"));
-        return summary;
+        return auditLogRepository.summarizeAuditLogs(filters);
     }
 
     private void savePathwayDraftLocal(String pathwayCode, Map<String, Object> config) {
@@ -859,7 +468,7 @@ public class EnginePersistenceService {
             if (updated == 0) {
                 try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
                     int i = 1;
-                    ps.setLong(i++, Ids.next());
+                    ps.setLong(i++, nextId(tenantId));
                     ps.setString(i++, tenantId);
                     ps.setString(i++, orgCode);
                     ps.setString(i++, pathwayCode);
@@ -903,7 +512,7 @@ public class EnginePersistenceService {
             if (updated == 0) {
                 try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
                     int i = 1;
-                    ps.setLong(i++, Ids.next());
+                    ps.setLong(i++, nextId());
                     ps.setString(i++, pathwayCode);
                     ps.setString(i++, versionNo);
                     ps.setString(i++, status);
@@ -913,86 +522,6 @@ public class EnginePersistenceService {
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("save local pathway version failed: " + ex.getMessage(), ex);
-        }
-    }
-
-    private void savePatientInstanceLocal(PatientPathwayInstance instance, String admittedBy) {
-        String updateSql = "UPDATE pe_patient_instance SET current_node_code=?, updated_time=CURRENT_TIMESTAMP " +
-                "WHERE tenant_id=? AND org_code=? AND encounter_id=? AND pathway_code=? AND status='ACTIVE'";
-        String insertSql = "INSERT INTO pe_patient_instance " +
-                "(id, tenant_id, org_code, patient_id, encounter_id, pathway_code, version_no, status, current_node_code, admitted_by, admission_time, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-        long id = extractNumericId(instance.getInstanceId());
-        String tenantId = string(instance.getTenantId(), "default");
-        String orgCode = string(instance.getLegacyOrgCode(), string(instance.getHospitalCode(), "ZYHOSPITAL"));
-        try (Connection connection = connection()) {
-            int updated;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                ps.setString(i++, instance.getCurrentNodeCode());
-                ps.setString(i++, tenantId);
-                ps.setString(i++, orgCode);
-                ps.setString(i++, instance.getEncounterId());
-                ps.setString(i++, instance.getPathwayCode());
-                updated = ps.executeUpdate();
-            }
-            if (updated == 0) {
-                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ps.setLong(i++, id);
-                    ps.setString(i++, tenantId);
-                    ps.setString(i++, orgCode);
-                    ps.setString(i++, instance.getPatientId());
-                    ps.setString(i++, instance.getEncounterId());
-                    ps.setString(i++, instance.getPathwayCode());
-                    ps.setString(i++, instance.getVersionNo());
-                    ps.setString(i++, instance.getCurrentNodeCode());
-                    ps.setString(i++, admittedBy);
-                    ps.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save local patient instance failed: " + ex.getMessage(), ex);
-        }
-    }
-
-    private void saveTaskStateLocal(PatientTaskState taskState) {
-        String updateSql = "UPDATE pe_patient_task_state SET task_name=?, task_type=?, status=?, result_json=?, updated_time=CURRENT_TIMESTAMP " +
-                "WHERE instance_id=? AND node_code=? AND task_code=?";
-        String insertSql = "INSERT INTO pe_patient_task_state " +
-                "(id, instance_id, node_code, task_code, task_name, task_type, status, result_json, created_time, updated_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-        long instanceId = extractNumericId(taskState.getInstanceId());
-        String resultJson = toJson(taskState.getResult());
-        try (Connection connection = connection()) {
-            int updated;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                ps.setString(i++, taskState.getTaskName());
-                ps.setString(i++, taskState.getTaskType());
-                ps.setString(i++, taskState.getStatus());
-                ps.setString(i++, resultJson);
-                ps.setLong(i++, instanceId);
-                ps.setString(i++, taskState.getNodeCode());
-                ps.setString(i++, taskState.getTaskCode());
-                updated = ps.executeUpdate();
-            }
-            if (updated == 0) {
-                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ps.setLong(i++, Ids.next());
-                    ps.setLong(i++, instanceId);
-                    ps.setString(i++, taskState.getNodeCode());
-                    ps.setString(i++, taskState.getTaskCode());
-                    ps.setString(i++, taskState.getTaskName());
-                    ps.setString(i++, taskState.getTaskType());
-                    ps.setString(i++, taskState.getStatus());
-                    ps.setString(i++, resultJson);
-                    ps.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save local task state failed: " + ex.getMessage(), ex);
         }
     }
 
@@ -1026,7 +555,7 @@ public class EnginePersistenceService {
             if (updated == 0) {
                 try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
                     int i = 1;
-                    ps.setLong(i++, Ids.next());
+                    ps.setLong(i++, nextId(tenantId));
                     ps.setString(i++, tenantId);
                     ps.setString(i++, orgCode);
                     ps.setString(i++, definition.getRuleCode());
@@ -1046,96 +575,7 @@ public class EnginePersistenceService {
         }
     }
 
-    private void saveSourceDocumentLocal(SourceDocument document) {
-        String updateSql = "UPDATE src_document SET title=?, source_type=?, source_uri=?, publisher=?, " +
-                "effective_date=?, expiry_date=?, review_status=?, reviewed_by=?, reviewed_time=?, content_hash=?, " +
-                "metadata_json=?, created_by=COALESCE(?, created_by), updated_time=CURRENT_TIMESTAMP " +
-                "WHERE tenant_id=? AND document_code=?";
-        String insertSql = "INSERT INTO src_document (id, tenant_id, document_code, title, source_type, source_uri, " +
-                "publisher, effective_date, expiry_date, review_status, reviewed_by, reviewed_time, content_hash, " +
-                "metadata_json, created_by, created_time, updated_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-        try (Connection connection = connection()) {
-            int updated;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                setSourceDocumentUpdateValues(ps, document, i);
-                i += 12;
-                ps.setString(i++, string(document.getTenantId(), "default"));
-                ps.setString(i++, document.getDocumentCode());
-                updated = ps.executeUpdate();
-            }
-            if (updated == 0) {
-                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ps.setLong(i++, Ids.next());
-                    ps.setString(i++, string(document.getTenantId(), "default"));
-                    ps.setString(i++, document.getDocumentCode());
-                    ps.setString(i++, document.getTitle());
-                    ps.setString(i++, document.getSourceType());
-                    ps.setString(i++, document.getSourceUri());
-                    ps.setString(i++, document.getPublisher());
-                    ps.setDate(i++, parseSqlDate(document.getEffectiveDate()));
-                    ps.setDate(i++, parseSqlDate(document.getExpiryDate()));
-                    ps.setString(i++, document.getReviewStatus());
-                    ps.setString(i++, document.getReviewedBy());
-                    ps.setTimestamp(i++, parseTimestamp(document.getReviewedTime()));
-                    ps.setString(i++, document.getContentHash());
-                    ps.setString(i++, toJson(document.getMetadata()));
-                    ps.setString(i++, document.getCreatedBy());
-                    ps.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save local source document failed: " + ex.getMessage(), ex);
-        }
-    }
-
-    private void setSourceDocumentUpdateValues(PreparedStatement ps, SourceDocument document, int startIndex)
-            throws SQLException {
-        int i = startIndex;
-        ps.setString(i++, document.getTitle());
-        ps.setString(i++, document.getSourceType());
-        ps.setString(i++, document.getSourceUri());
-        ps.setString(i++, document.getPublisher());
-        ps.setDate(i++, parseSqlDate(document.getEffectiveDate()));
-        ps.setDate(i++, parseSqlDate(document.getExpiryDate()));
-        ps.setString(i++, document.getReviewStatus());
-        ps.setString(i++, document.getReviewedBy());
-        ps.setTimestamp(i++, parseTimestamp(document.getReviewedTime()));
-        ps.setString(i++, document.getContentHash());
-        ps.setString(i++, toJson(document.getMetadata()));
-        ps.setString(i++, document.getCreatedBy());
-    }
-
     @SuppressWarnings("unchecked")
-    private SourceDocument toSourceDocument(ResultSet rs) throws SQLException {
-        SourceDocument document = new SourceDocument();
-        document.setTenantId(rs.getString("tenant_id"));
-        document.setDocumentCode(rs.getString("document_code"));
-        document.setTitle(rs.getString("title"));
-        document.setSourceType(rs.getString("source_type"));
-        document.setSourceUri(rs.getString("source_uri"));
-        document.setPublisher(rs.getString("publisher"));
-        document.setEffectiveDate(formatDate(rs.getDate("effective_date")));
-        document.setExpiryDate(formatDate(rs.getDate("expiry_date")));
-        document.setReviewStatus(rs.getString("review_status"));
-        document.setReviewedBy(rs.getString("reviewed_by"));
-        document.setReviewedTime(formatTimestamp(rs.getTimestamp("reviewed_time")));
-        document.setContentHash(rs.getString("content_hash"));
-        String metadataJson = rs.getString("metadata_json");
-        if (metadataJson != null && !metadataJson.trim().isEmpty()) {
-            try {
-                document.setMetadata(objectMapper.readValue(metadataJson, LinkedHashMap.class));
-            } catch (IOException ex) {
-                document.setMetadata(new LinkedHashMap<String, Object>());
-            }
-        }
-        document.setCreatedBy(rs.getString("created_by"));
-        document.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
-        document.setUpdatedTime(formatTimestamp(rs.getTimestamp("updated_time")));
-        return document;
-    }
 
     // =========================================================================
     // SRC_CITATION 持久化
@@ -1148,134 +588,14 @@ public class EnginePersistenceService {
      * page↔page_no, quoteText↔excerpt_text, description↔summary_text, citationType↔evidence_level。
      */
     public void saveSourceCitation(SourceCitation citation) {
-        if (!enabled()) {
-            return;
-        }
-        if (properties.localFileDatabase()) {
-            saveSourceCitationLocal(citation);
-            return;
-        }
-        String updateSql = "UPDATE src_citation SET document_code=?, section_code=?, clause_no=?, " +
-                "page_no=?, excerpt_text=?, summary_text=?, evidence_level=?, status='ACTIVE' " +
-                "WHERE tenant_id=? AND citation_code=?";
-        String insertSql = "INSERT INTO src_citation (id, tenant_id, citation_code, document_code, section_code, " +
-                "clause_no, page_no, excerpt_text, summary_text, evidence_level, status, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', SYSTIMESTAMP)";
-        try (Connection connection = connection()) {
-            int affected;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                ps.setString(i++, citation.getDocumentCode());
-                ps.setString(i++, citation.getSection());
-                ps.setString(i++, citation.getClause());
-                ps.setString(i++, citation.getPage());
-                ps.setString(i++, citation.getQuoteText());
-                ps.setString(i++, citation.getDescription());
-                ps.setString(i++, citation.getCitationType());
-                ps.setString(i++, string(citation.getTenantId(), "default"));
-                ps.setString(i++, citation.getCitationId());
-                affected = ps.executeUpdate();
-            }
-            if (affected == 0) {
-                try (PreparedStatement ips = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ips.setLong(i++, Ids.next());
-                    ips.setString(i++, string(citation.getTenantId(), "default"));
-                    ips.setString(i++, citation.getCitationId());
-                    ips.setString(i++, citation.getDocumentCode());
-                    ips.setString(i++, citation.getSection());
-                    ips.setString(i++, citation.getClause());
-                    ips.setString(i++, citation.getPage());
-                    ips.setString(i++, citation.getQuoteText());
-                    ips.setString(i++, citation.getDescription());
-                    ips.setString(i++, citation.getCitationType());
-                    ips.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save source citation failed: " + ex.getMessage(), ex);
-        }
+        sourceDocumentRepository.saveSourceCitation(citation);
     }
 
     /**
      * 加载所有 SourceCitation，用于启动期重建内存索引。
      */
     public List<SourceCitation> listSourceCitations() {
-        if (!enabled()) {
-            return new ArrayList<SourceCitation>();
-        }
-        String sql = "SELECT tenant_id, citation_code, document_code, section_code, clause_no, " +
-                "page_no, excerpt_text, summary_text, evidence_level, created_time " +
-                "FROM src_citation ORDER BY tenant_id, citation_code";
-        List<SourceCitation> citations = new ArrayList<SourceCitation>();
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                citations.add(toSourceCitation(rs));
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("list source citations failed: " + ex.getMessage(), ex);
-        }
-        return citations;
-    }
-
-    private void saveSourceCitationLocal(SourceCitation citation) {
-        String updateSql = "UPDATE src_citation SET document_code=?, section_code=?, clause_no=?, " +
-                "page_no=?, excerpt_text=?, summary_text=?, evidence_level=?, status='ACTIVE' " +
-                "WHERE tenant_id=? AND citation_code=?";
-        String insertSql = "INSERT INTO src_citation (id, tenant_id, citation_code, document_code, " +
-                "section_code, clause_no, page_no, excerpt_text, summary_text, evidence_level, status, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP)";
-        try (Connection connection = connection()) {
-            int updated;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                ps.setString(i++, citation.getDocumentCode());
-                ps.setString(i++, citation.getSection());
-                ps.setString(i++, citation.getClause());
-                ps.setString(i++, citation.getPage());
-                ps.setString(i++, citation.getQuoteText());
-                ps.setString(i++, citation.getDescription());
-                ps.setString(i++, citation.getCitationType());
-                ps.setString(i++, string(citation.getTenantId(), "default"));
-                ps.setString(i++, citation.getCitationId());
-                updated = ps.executeUpdate();
-            }
-            if (updated == 0) {
-                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ps.setLong(i++, Ids.next());
-                    ps.setString(i++, string(citation.getTenantId(), "default"));
-                    ps.setString(i++, citation.getCitationId());
-                    ps.setString(i++, citation.getDocumentCode());
-                    ps.setString(i++, citation.getSection());
-                    ps.setString(i++, citation.getClause());
-                    ps.setString(i++, citation.getPage());
-                    ps.setString(i++, citation.getQuoteText());
-                    ps.setString(i++, citation.getDescription());
-                    ps.setString(i++, citation.getCitationType());
-                    ps.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save local source citation failed: " + ex.getMessage(), ex);
-        }
-    }
-
-    private SourceCitation toSourceCitation(ResultSet rs) throws SQLException {
-        SourceCitation citation = new SourceCitation();
-        citation.setTenantId(rs.getString("tenant_id"));
-        citation.setCitationId(rs.getString("citation_code"));
-        citation.setDocumentCode(rs.getString("document_code"));
-        citation.setSection(rs.getString("section_code"));
-        citation.setClause(rs.getString("clause_no"));
-        citation.setPage(rs.getString("page_no"));
-        citation.setQuoteText(rs.getString("excerpt_text"));
-        citation.setDescription(rs.getString("summary_text"));
-        citation.setCitationType(rs.getString("evidence_level"));
-        citation.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
-        return citation;
+        return sourceDocumentRepository.listSourceCitations();
     }
 
     // =========================================================================
@@ -1290,50 +610,7 @@ public class EnginePersistenceService {
      * bindingType↔binding_role, documentCode/confidence/description 无 DDL 列，仅内存保留。
      */
     public void saveSourceAssetBinding(SourceAssetBinding binding) {
-        if (!enabled()) {
-            return;
-        }
-        if (properties.localFileDatabase()) {
-            saveSourceAssetBindingLocal(binding);
-            return;
-        }
-        String updateSql = "UPDATE src_asset_binding SET status='ACTIVE', created_by=COALESCE(?, created_by) " +
-                "WHERE tenant_id=? AND asset_type=? AND asset_code=? AND asset_version=? AND citation_code=? AND binding_role=?";
-        String insertSql = "INSERT INTO src_asset_binding (id, tenant_id, asset_type, asset_code, asset_version, " +
-                "citation_code, binding_role, status, created_by, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, SYSTIMESTAMP)";
-        try (Connection connection = connection()) {
-            String tenantId = string(binding.getTenantId(), "default");
-            String citationCode = storageCitationCode(binding);
-            int affected;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                ps.setString(i++, binding.getCreatedBy());
-                ps.setString(i++, tenantId);
-                ps.setString(i++, binding.getAssetType());
-                ps.setString(i++, binding.getAssetCode());
-                ps.setString(i++, "1");
-                ps.setString(i++, citationCode);
-                ps.setString(i++, binding.getBindingType());
-                affected = ps.executeUpdate();
-            }
-            if (affected == 0) {
-                try (PreparedStatement ips = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ips.setLong(i++, extractNumericId(binding.getBindingId()));
-                    ips.setString(i++, tenantId);
-                    ips.setString(i++, binding.getAssetType());
-                    ips.setString(i++, binding.getAssetCode());
-                    ips.setString(i++, "1");
-                    ips.setString(i++, citationCode);
-                    ips.setString(i++, binding.getBindingType());
-                    ips.setString(i++, binding.getCreatedBy());
-                    ips.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save source asset binding failed: " + ex.getMessage(), ex);
-        }
+        sourceDocumentRepository.saveSourceAssetBinding(binding);
     }
 
     /**
@@ -1341,84 +618,7 @@ public class EnginePersistenceService {
      * 注意：DDL 不含 documentCode/confidence/description/updated_time 列，这些字段在重建后为 null。
      */
     public List<SourceAssetBinding> listSourceAssetBindings() {
-        if (!enabled()) {
-            return new ArrayList<SourceAssetBinding>();
-        }
-        String sql = "SELECT tenant_id, id, asset_type, asset_code, citation_code, binding_role, " +
-                "status, created_by, created_time FROM src_asset_binding ORDER BY tenant_id, id";
-        List<SourceAssetBinding> bindings = new ArrayList<SourceAssetBinding>();
-        try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                bindings.add(toSourceAssetBinding(rs));
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("list source asset bindings failed: " + ex.getMessage(), ex);
-        }
-        return bindings;
-    }
-
-    private void saveSourceAssetBindingLocal(SourceAssetBinding binding) {
-        String updateSql = "UPDATE src_asset_binding SET status='ACTIVE', created_by=COALESCE(?, created_by) " +
-                "WHERE tenant_id=? AND asset_type=? AND asset_code=? AND asset_version=? AND citation_code=? AND binding_role=?";
-        String insertSql = "INSERT INTO src_asset_binding (id, tenant_id, asset_type, asset_code, asset_version, " +
-                "citation_code, binding_role, status, created_by, created_time) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, CURRENT_TIMESTAMP)";
-        String tenantId = string(binding.getTenantId(), "default");
-        String citationCode = storageCitationCode(binding);
-        try (Connection connection = connection()) {
-            int updated;
-            try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-                int i = 1;
-                ps.setString(i++, binding.getCreatedBy());
-                ps.setString(i++, tenantId);
-                ps.setString(i++, binding.getAssetType());
-                ps.setString(i++, binding.getAssetCode());
-                ps.setString(i++, "1");
-                ps.setString(i++, citationCode);
-                ps.setString(i++, binding.getBindingType());
-                updated = ps.executeUpdate();
-            }
-            if (updated == 0) {
-                try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
-                    int i = 1;
-                    ps.setLong(i++, extractNumericId(binding.getBindingId()));
-                    ps.setString(i++, tenantId);
-                    ps.setString(i++, binding.getAssetType());
-                    ps.setString(i++, binding.getAssetCode());
-                    ps.setString(i++, "1");
-                    ps.setString(i++, citationCode);
-                    ps.setString(i++, binding.getBindingType());
-                    ps.setString(i++, binding.getCreatedBy());
-                    ps.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("save local source asset binding failed: " + ex.getMessage(), ex);
-        }
-    }
-
-    private String storageCitationCode(SourceAssetBinding binding) {
-        String citationId = string(binding.getCitationId(), null);
-        if (citationId != null) {
-            return citationId;
-        }
-        return "DOC_REF_" + string(binding.getDocumentCode(), "DOCUMENT");
-    }
-
-    private SourceAssetBinding toSourceAssetBinding(ResultSet rs) throws SQLException {
-        SourceAssetBinding binding = new SourceAssetBinding();
-        binding.setTenantId(rs.getString("tenant_id"));
-        binding.setBindingId("BIND_" + rs.getLong("id"));
-        binding.setAssetType(rs.getString("asset_type"));
-        binding.setAssetCode(rs.getString("asset_code"));
-        binding.setCitationId(rs.getString("citation_code"));
-        binding.setBindingType(rs.getString("binding_role"));
-        binding.setCreatedBy(rs.getString("created_by"));
-        binding.setCreatedTime(formatTimestamp(rs.getTimestamp("created_time")));
-        // DDL 不含 documentCode, confidence, description, updated_time 列，重建后为 null
-        return binding;
+        return sourceDocumentRepository.listSourceAssetBindings();
     }
 
     // =========================================================================
@@ -1469,7 +669,7 @@ public class EnginePersistenceService {
             if (affected == 0) {
                 try (PreparedStatement ips = connection.prepareStatement(insertSql)) {
                     int i = 1;
-                    ips.setLong(i++, Ids.next());
+                    ips.setLong(i++, nextId(tenantId));
                     ips.setString(i++, tenantId);
                     ips.setString(i++, template.getWorkflowCode());
                     ips.setString(i++, template.getWorkflowVersion());
@@ -1542,7 +742,7 @@ public class EnginePersistenceService {
             if (updated == 0) {
                 try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
                     int i = 1;
-                    ps.setLong(i++, Ids.next());
+                    ps.setLong(i++, nextId("default"));
                     ps.setString(i++, "default");
                     ps.setString(i++, template.getWorkflowCode());
                     ps.setString(i++, template.getWorkflowVersion());
@@ -1630,80 +830,6 @@ public class EnginePersistenceService {
         return config.isEmpty() ? null : toJson(config);
     }
 
-    private void recordAuditLog(String traceId, String engineType, String actionType, String targetType, String targetCode,
-                                String patientId, String encounterId, String operatorId, Map<String, Object> detail) {
-        Map<String, Object> record = new LinkedHashMap<String, Object>();
-        record.put("trace_id", traceId);
-        record.put("engine_type", engineType);
-        record.put("action_type", actionType);
-        record.put("target_type", targetType);
-        record.put("target_code", targetCode);
-        record.put("patient_id", patientId);
-        record.put("encounter_id", encounterId);
-        record.put("operator_id", operatorId);
-        record.put("detail", detail == null
-                ? new LinkedHashMap<String, Object>() : new LinkedHashMap<String, Object>(detail));
-        record.put("tenant_id", orgValue(detail, "tenant_id", "tenantId"));
-        record.put("group_code", orgValue(detail, "group_code", "groupCode"));
-        record.put("hospital_code", orgValue(detail, "hospital_code", "hospitalCode"));
-        record.put("campus_code", orgValue(detail, "campus_code", "campusCode"));
-        record.put("site_code", orgValue(detail, "site_code", "siteCode"));
-        record.put("department_code", orgValue(detail, "department_code", "departmentCode"));
-        record.put("scope_level", orgValue(detail, "scope_level", "scopeLevel"));
-        record.put("scope_code", orgValue(detail, "scope_code", "scopeCode"));
-        record.put("org_source", orgValue(detail, "org_source", "orgSource"));
-        record.put("created_time", nowText());
-        synchronized (auditRecords) {
-            auditRecords.add(record);
-            while (auditRecords.size() > MAX_AUDIT_RECORDS) {
-                auditRecords.remove(0);
-            }
-        }
-    }
-
-    private String orgValue(Map<String, Object> detail, String snakeKey, String camelKey) {
-        if (detail == null) {
-            return null;
-        }
-        String value = string(detail.get(snakeKey), null);
-        if (value == null) {
-            value = string(detail.get(camelKey), null);
-        }
-        return value;
-    }
-
-    private List<Map<String, Object>> aggregateAudit(List<Map<String, Object>> records, String dimension) {
-        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
-        for (Map<String, Object> record : records) {
-            String key = string(record.get(dimension), "UNKNOWN");
-            Integer count = counts.get(key);
-            counts.put(key, count == null ? 1 : count + 1);
-        }
-        List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(counts.entrySet());
-        Collections.sort(entries, new Comparator<Map.Entry<String, Integer>>() {
-            @Override
-            public int compare(Map.Entry<String, Integer> left, Map.Entry<String, Integer> right) {
-                int byCount = right.getValue().compareTo(left.getValue());
-                return byCount != 0 ? byCount : left.getKey().compareTo(right.getKey());
-            }
-        });
-        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-        for (Map.Entry<String, Integer> entry : entries) {
-            Map<String, Object> bucket = new LinkedHashMap<String, Object>();
-            bucket.put(dimension, entry.getKey());
-            bucket.put("count", entry.getValue());
-            result.add(bucket);
-        }
-        return result;
-    }
-
-    private Connection connection() throws SQLException {
-        // PR-FINAL-15: 全部走 HikariCP 连接池（EngineDataSourceConfig 暴露的 DataSource）。
-        // HikariCP 内部自带连接获取重试、失效检测、leak detection（threshold=2s）等机制，
-        // 不再需要自己 loadDriver() / 3 次重试循环 / shouldRetryConnection 判断。
-        return dataSource.getConnection();
-    }
-
     private List<String> loadLocalSchemaStatements() {
         // 按顺序加载本地开发库 DDL：核心表 + 业务追加表。新增 DDL 需要在此显式注册。
         String[] resources = new String[] {
@@ -1768,144 +894,19 @@ public class EnginePersistenceService {
         return statements;
     }
 
-    private String toJson(Object value) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException ex) {
-            throw new IllegalArgumentException("JSON serialization failed", ex);
-        }
-    }
-
     /**
      * 提供给其他 Service 复用的安全 JSON 序列化：null 返回 null，序列化异常返回 null 不抛出，
      * 避免持久化层因输入异常打断业务主链路。
      */
-    public String toJsonOrNull(Object value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException ex) {
-            return null;
-        }
-    }
-
-    private String string(Object value, String defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        }
-        String text = String.valueOf(value);
-        return text.trim().isEmpty() ? defaultValue : text;
-    }
 
     /**
      * 解析 Object 为 double，null 或不可解析时返回 defaultValue。
      * 用于 TERM-002 等场景下从 Map 提取置信度等浮点字段。
      */
-    private double doubleValue(Object value, double defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        }
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
-        }
-        try {
-            return Double.parseDouble(String.valueOf(value).trim());
-        } catch (NumberFormatException ex) {
-            return defaultValue;
-        }
-    }
-
-    private String filterValue(Map<String, String> filters, String key) {
-        if (filters == null) {
-            return null;
-        }
-        String value = filters.get(key);
-        return value == null || value.trim().isEmpty() ? null : value.trim();
-    }
-
-    private int filterInt(Map<String, String> filters, String key, int defaultValue) {
-        String value = filterValue(filters, key);
-        if (value == null) {
-            return defaultValue;
-        }
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ex) {
-            return defaultValue;
-        }
-    }
-
-    private String nowText() {
-        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
-    }
-
-    private String truncate(String text, int maxLength) {
-        if (text == null || text.length() <= maxLength) {
-            return text;
-        }
-        return text.substring(0, maxLength);
-    }
-
-    private java.sql.Date parseSqlDate(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        try {
-            return java.sql.Date.valueOf(LocalDate.parse(value.trim()));
-        } catch (RuntimeException ex) {
-            return null;
-        }
-    }
-
-    private Timestamp parseTimestamp(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        String text = value.trim();
-        try {
-            return Timestamp.from(OffsetDateTime.parse(text).toInstant());
-        } catch (RuntimeException ignored) {
-            try {
-                return Timestamp.valueOf(text.replace('T', ' '));
-            } catch (RuntimeException ex) {
-                return null;
-            }
-        }
-    }
-
-    private String formatDate(java.sql.Date value) {
-        return value == null ? null : value.toLocalDate().toString();
-    }
-
-    private String formatTimestamp(Timestamp value) {
-        return value == null
-                ? null
-                : DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(value.toInstant().atOffset(ZoneOffset.UTC));
-    }
 
     // PR-FINAL-15: 已删 shouldRetryConnection / sleepQuietly。
     // HikariCP 自带连接获取超时（connectionTimeoutMs=3s）+ 失效检测，
     // ORA-12518 等监听器拒绝由 pool 层重试，业务层不再关心。
-
-    private long extractNumericId(String text) {
-        if (text == null) {
-            return Ids.next();
-        }
-        String digits = text.replaceAll("\\D", "");
-        if (digits.length() > 15) {
-            digits = digits.substring(digits.length() - 15);
-        }
-        if (digits.isEmpty()) {
-            return Ids.next();
-        }
-        try {
-            return Long.parseLong(digits);
-        } catch (NumberFormatException ex) {
-            return Ids.next();
-        }
-    }
 
     // =========================================================================
     // 术语治理队列持久化
@@ -1948,7 +949,7 @@ public class EnginePersistenceService {
             if (affected == 0) {
                 try (PreparedStatement ips = connection.prepareStatement(insertSql)) {
                     int i = 1;
-                    ips.setLong(i++, Ids.next());
+                    ips.setLong(i++, nextId());
                     ips.setString(i++, string(entry.get("tenant_id"), "default"));
                     ips.setString(i++, string(entry.get("queue_id"), ""));
                     ips.setString(i++, string(entry.get("source_system"), ""));
@@ -2093,7 +1094,7 @@ public class EnginePersistenceService {
             if (updated == 0) {
                 try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
                     int i = 1;
-                    ps.setLong(i++, Ids.next());
+                    ps.setLong(i++, nextId());
                     ps.setString(i++, string(entry.get("tenant_id"), com.medkernel.common.OrgDefaults.DEFAULT_TENANT_ID));
                     ps.setString(i++, string(entry.get("queue_id"), ""));
                     ps.setString(i++, string(entry.get("source_system"), ""));
