@@ -8,7 +8,7 @@ title: 客户可见路由完整度
 owner: TraeAI-5
 role: senior
 status: ACTIVE
-branch: develop
+branch: ai/GA-UX-01/customer-routes
 target_base_branch: develop
 git_base_commit: b121607
 git_status_at_claim: clean

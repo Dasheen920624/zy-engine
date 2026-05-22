@@ -19,7 +19,7 @@ function Write-Section($Title) {
 }
 
 function Get-MetadataField($Content, $Name) {
-  $pattern = "(?m)^" + [regex]::Escape($Name) + ":\s*(.*)$"
+  $pattern = "(?m)^" + [regex]::Escape($Name) + ":[ \t]*(.*)$"
   $match = [regex]::Match($Content, $pattern)
   if ($match.Success) {
     return $match.Groups[1].Value.Trim()
@@ -127,6 +127,9 @@ if ($activeClaims.Count -eq 0) {
       "feature_acceptance_required"
     )
     $missingFields = foreach ($field in $requiredFields) {
+      if ($field -eq "write_scope" -and $writeScopeItems.Count -gt 0) {
+        continue
+      }
       if ([string]::IsNullOrWhiteSpace((Get-MetadataField $content $field))) {
         $field
       }
