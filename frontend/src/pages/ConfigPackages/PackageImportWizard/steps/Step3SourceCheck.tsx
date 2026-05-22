@@ -89,7 +89,7 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
           icon={<CloseCircleOutlined />}
           message="存在来源缺失，无法继续下一步"
           description={`缺失来源 ${source_review.missing_count} 条，过期来源 ${source_review.expired_count} 条，未审核 ${source_review.unreviewed_count} 条。请先补充来源信息后再继续。`}
-          style={{ marginBottom: 16 }}
+          className={styles.alertSpacing}
         />
       ) : (
         <Alert
@@ -98,7 +98,7 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
           icon={<CheckCircleOutlined />}
           message="来源审核通过"
           description="所有资产来源均已审核，可以继续下一步。"
-          style={{ marginBottom: 16 }}
+          className={styles.alertSpacing}
         />
       )}
 
@@ -108,7 +108,7 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
         column={2}
         size="small"
         labelStyle={{ color: "var(--mk-text-tertiary)" }}
-        style={{ marginBottom: 16 }}
+        className={styles.descriptionsSpacing}
       >
         <Descriptions.Item label="来源审核">
           <StatusBadge

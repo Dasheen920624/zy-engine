@@ -7,6 +7,7 @@ import { StatusBadge, OrgContextSelector } from "../../components";
 import { listPathways } from "../../api/pathway";
 import type { PathwaySummary, ListPathwaysParams } from "../../api/types";
 import ActionMenu from "./components/ActionMenu";
+import styles from "./styles.module.css";
 
 const { Title } = Typography;
 
@@ -95,12 +96,12 @@ const PathwayList: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={3} style={{ marginBottom: 24 }}>
+    <div className={styles.page}>
+      <Title level={3} className={styles.pageTitleWithSpacing}>
         路径模板库
       </Title>
 
-      <Space style={{ marginBottom: 16 }} size="middle">
+      <Space className={styles.listToolbar} size="middle">
         <OrgContextSelector />
         <Button
           type="primary"
@@ -115,13 +116,13 @@ const PathwayList: React.FC = () => {
           allowClear
           value={search || ""}
           onChange={(e) => updateFilter("search", e.target.value || undefined)}
-          style={{ width: 240 }}
+          className={styles.searchInput}
         />
         <Select
           value={status || ""}
           onChange={(v) => updateFilter("status", v || undefined)}
           options={statusOptions}
-          style={{ width: 120 }}
+          className={styles.statusFilter}
         />
       </Space>
 
@@ -146,17 +147,17 @@ const PathwayList: React.FC = () => {
         }}
         onRow={(record) => ({
           onClick: () => navigate(`/pathway/templates/${record.pathway_code}`),
-          style: { cursor: "pointer" },
         })}
+        rowClassName={() => styles.clickableRow}
         locale={{
           emptyText: (
-            <div style={{ padding: "40px 0" }}>
+            <div className={styles.tableEmpty}>
               <Typography.Text type="secondary">还没有路径模板</Typography.Text>
               <br />
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                style={{ marginTop: 16 }}
+                className={styles.emptyActionButton}
                 onClick={() => navigate("/pathway/templates/new/edit")}
               >
                 新建路径

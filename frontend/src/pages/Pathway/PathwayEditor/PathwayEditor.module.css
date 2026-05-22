@@ -1,0 +1,73 @@
+.editorPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.loadingState {
+  padding: 48px;
+  text-align: center;
+}
+
+.editorBody {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidePane {
+  height: 100%;
+  background: var(--mk-bg-elevated);
+  overflow: auto;
+}
+
+.leftPane {
+  border-right: 1px solid var(--mk-border);
+}
+
+.rightPane {
+  border-left: 1px solid var(--mk-border);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--mk-border);
+  background: var(--mk-bg-elevated);
+}
+
+.headerTitle {
+  font-size: 16px;
+}
+
+.autoSavingText {
+  font-size: 12px;
+}
+
+.emptyState {
+  padding: 24px;
+  text-align: center;
+}
+
+.nodePanel {
+  padding: 16px;
+  height: 100%;
+  overflow: auto;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.treeRootTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.treePanel {
+  padding: 8px;
+  height: 100%;
+  overflow: auto;
+}

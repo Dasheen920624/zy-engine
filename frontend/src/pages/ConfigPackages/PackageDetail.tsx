@@ -90,6 +90,12 @@ function changeTypeLabel(ct?: string): string {
   }
 }
 
+function diffLineClass(type: "add" | "del" | "neutral"): string {
+  if (type === "add") return styles.diffLineAdd;
+  if (type === "del") return styles.diffLineDel;
+  return styles.diffLineNeutral;
+}
+
 // diffLineColor() / diffLineBackground() 已废弃 → 改由 PackageDetail.module.css 中
 // `.diffLineAdd / .diffLineDel / .diffLineNeutral` token class 接管（PR-V3-INLINE-STYLE）
 
@@ -123,10 +129,6 @@ function ReviewCheckList({ issues }: { issues: ReviewIssue[] }) {
         <li
           key={i}
           className={styles.reviewItem}
-          style={{
-            borderBottom:
-              i < issues.length - 1 ? "var(--mk-border-width) solid var(--mk-border-divider)" : "none",
-          }}
         >
           <span className={styles.reviewItemIcon}>{issueIcon(issue.severity)}</span>
           <div>
@@ -211,11 +213,7 @@ function DiffView({ diff }: { diff?: Record<string, unknown> }) {
       {lines.map((line, i) => (
         <div
           key={i}
-          className={`${styles.diffLine} ${
-            line.type === "add" ? styles.diffLineAdd :
-            line.type === "del" ? styles.diffLineDel :
-            styles.diffLineNeutral
-          }`}
+          className={`${styles.diffLine} ${diffLineClass(line.type)}`}
         >
           {line.text}
         </div>
@@ -405,7 +403,7 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
                 column={1}
                 size="small"
                 labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
-                style={{ marginBottom: 16 }}
+                className={styles.marginBottomSmall}
               >
                 <Descriptions.Item label="包编码">
                   <code className={styles.codeFont}>{selectedPkg.package_code}</code>

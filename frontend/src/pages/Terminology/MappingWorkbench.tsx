@@ -475,12 +475,12 @@ export default function MappingWorkbench() {
             type="warning"
             showIcon
             closable
-            style={{ marginBottom: 16 }}
+            className={styles.alertSpacing}
           />
         )}
 
         {/* 统计卡片 */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Row gutter={16} className={styles.statsRow}>
           <Col span={6}>
             <Card size="small">
               <Statistic
@@ -524,12 +524,12 @@ export default function MappingWorkbench() {
         </Row>
 
         {/* 筛选条件 */}
-        <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Row gutter={16} className={styles.filterRow}>
           <Col span={6}>
             <Select
               placeholder="概念类型"
               allowClear
-              style={{ width: "100%" }}
+              className={styles.fullWidth}
               value={filterConceptType}
               onChange={setFilterConceptType}
               options={Object.entries(CONCEPT_TYPE_MAP).map(([value, { label }]) => ({
@@ -541,7 +541,7 @@ export default function MappingWorkbench() {
           <Col span={6}>
             <Select
               placeholder="标准字典"
-              style={{ width: "100%" }}
+              className={styles.fullWidth}
               value={filterStandardDict}
               onChange={setFilterStandardDict}
               options={STANDARD_DICT_OPTIONS}
@@ -567,7 +567,7 @@ export default function MappingWorkbench() {
               key: "unmapped",
               label: (
                 <span>
-                  未映射 <Badge count={displaySummary.totalUnmapped} style={{ marginLeft: 8 }} />
+                  未映射 <Badge count={displaySummary.totalUnmapped} className={styles.badgeSpacing} />
                 </span>
               ),
               children: (
@@ -585,7 +585,7 @@ export default function MappingWorkbench() {
               key: "mapped",
               label: (
                 <span>
-                  已映射 <Badge count={displaySummary.totalMapped} style={{ marginLeft: 8 }} />
+                  已映射 <Badge count={displaySummary.totalMapped} className={styles.badgeSpacing} />
                 </span>
               ),
               children: (
@@ -606,7 +606,7 @@ export default function MappingWorkbench() {
                   冲突{" "}
                   <Badge
                     count={displaySummary.totalConflict}
-                    style={{ marginLeft: 8 }}
+                    className={styles.badgeSpacing}
                     color="red"
                   />
                 </span>
@@ -629,7 +629,7 @@ export default function MappingWorkbench() {
                   AI候选{" "}
                   <Badge
                     count={displaySummary.totalAiCandidate}
-                    style={{ marginLeft: 8 }}
+                    className={styles.badgeSpacing}
                     color="blue"
                   />
                 </span>

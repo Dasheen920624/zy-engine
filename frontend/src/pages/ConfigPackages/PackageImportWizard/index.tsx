@@ -16,6 +16,7 @@ import {
   saveDraft,
 } from "./types";
 import type { WizardContext } from "./types";
+import styles from "./PackageImportWizard.module.css";
 
 export default function PackageImportWizard() {
   const navigate = useNavigate();
@@ -164,22 +165,15 @@ export default function PackageImportWizard() {
   return (
     <div>
       {/* 头部 */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className={styles.header}>
+        <div className={styles.titleGroup}>
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate("/config/packages")}
           >
             返回列表
           </Button>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>
+          <h1 className={styles.title}>
             配置包导入
           </h1>
         </div>
@@ -188,7 +182,7 @@ export default function PackageImportWizard() {
       {/* 步骤条 */}
       <Steps
         current={currentStep - 1}
-        style={{ marginBottom: 24 }}
+        className={styles.steps}
         items={WIZARD_STEPS.map((s) => ({
           title: s.title,
           description: s.description,
@@ -196,18 +190,12 @@ export default function PackageImportWizard() {
       />
 
       {/* 步骤内容 */}
-      <Card style={{ marginBottom: 16 }}>
+      <Card className={styles.stepCard}>
         {renderStep()}
       </Card>
 
       {/* 底部导航 */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div className={styles.footer}>
         <Button
           onClick={handlePrev}
           disabled={currentStep <= 1}

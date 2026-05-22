@@ -3,3 +3,23 @@
 .page {
   padding: 24px;
 }
+
+.cardSpacing {
+  margin-bottom: var(--mk-space-4);
+}
+
+.rowSpacing {
+  margin-bottom: var(--mk-space-4);
+}
+
+.rowTopSpacing {
+  margin-top: var(--mk-space-3);
+}
+
+.innerCardSpacing {
+  margin-bottom: var(--mk-space-3);
+}
+
+.fullWidth {
+  width: 100%;
+}

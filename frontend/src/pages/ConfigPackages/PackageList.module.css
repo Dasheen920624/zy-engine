@@ -16,6 +16,18 @@
   font-size: 12px;
 }
 
+.environmentText {
+  font-size: 12px;
+}
+
+.environmentProd {
+  color: var(--mk-danger);
+}
+
+.environmentTest {
+  color: var(--mk-text-secondary);
+}
+
 .filterLabel {
   font-size: 12px;
   display: block;
@@ -55,4 +67,12 @@
 /* 图标 */
 .iconMuted {
   color: var(--mk-text-tertiary);
+}
+
+.packageRow {
+  cursor: pointer;
+}
+
+.packageRowSelected {
+  background: var(--mk-brand-primary-soft);
 }

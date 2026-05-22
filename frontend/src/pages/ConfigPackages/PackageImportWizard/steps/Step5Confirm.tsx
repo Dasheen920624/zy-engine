@@ -48,7 +48,7 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
         icon={<ExclamationCircleOutlined />}
         message="此操作不可撤销"
         description="发布后配置包将写入目标环境，请仔细确认以下信息。"
-        style={{ marginBottom: 16 }}
+        className={styles.alertSpacing}
       />
 
       {/* 发布信息确认 */}
@@ -57,7 +57,7 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
         column={1}
         size="small"
         labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
-        style={{ marginBottom: 16 }}
+        className={styles.descriptionsSpacing}
       >
         <Descriptions.Item label="包编码">
           <code className={styles.monoCode}>{packageCode}</code>
@@ -71,7 +71,7 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
           {context.validateResult?.manifest.asset_type}
         </Descriptions.Item>
         <Descriptions.Item label="目标环境">
-          <span style={{ color: context.targetEnvironment === "production" ? "var(--mk-danger)" : "var(--mk-brand-primary)" }}>
+          <span className={context.targetEnvironment === "production" ? styles.textDanger : styles.textPrimary}>
             {context.targetEnvironment === "production" ? "生产环境" : "测试环境"}
           </span>
         </Descriptions.Item>
@@ -79,7 +79,7 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
           {context.impactResult?.impact.assets_affected ?? "—"}
         </Descriptions.Item>
         <Descriptions.Item label="冲突数">
-          <Text style={{ color: (context.impactResult?.impact.conflicts.length ?? 0) > 0 ? "var(--mk-warning)" : "var(--mk-success)" }}>
+          <Text className={(context.impactResult?.impact.conflicts.length ?? 0) > 0 ? styles.textWarning : styles.textSuccess}>
             {context.impactResult?.impact.conflicts.length ?? 0}
           </Text>
         </Descriptions.Item>
@@ -123,7 +123,7 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
             loading={publishMut.isPending}
             disabled={!canPublish}
             onClick={() => publishMut.mutate()}
-            style={{ minWidth: 120 }}
+            className={styles.publishButton}
           >
             确认发布
           </Button>

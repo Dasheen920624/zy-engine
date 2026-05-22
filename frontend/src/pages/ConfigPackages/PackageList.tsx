@@ -161,12 +161,7 @@ export default function PackageList({
       render: (_: unknown, r: ConfigPackageSummary) => {
         const isProd = r.status === "ACTIVE" || r.status === "PUBLISHED" || r.status === "SYNCED";
         return (
-          <span
-            style={{
-              fontSize: 12,
-              color: isProd ? "var(--mk-danger)" : "var(--mk-text-secondary)",
-            }}
-          >
+          <span className={`${styles.environmentText} ${isProd ? styles.environmentProd : styles.environmentTest}`}>
             {isProd ? "生产" : "测试"}
           </span>
         );
@@ -328,15 +323,13 @@ export default function PackageList({
           pagination={false}
           onRow={(r) => ({
             onClick: () => onSelectPkg(r),
-            style: {
-              cursor: "pointer",
-              background:
-                selectedPkg?.package_code === r.package_code &&
-                selectedPkg?.package_version === r.package_version
-                  ? "var(--mk-brand-primary-soft)"
-                  : undefined,
-            },
           })}
+          rowClassName={(r) =>
+            selectedPkg?.package_code === r.package_code &&
+            selectedPkg?.package_version === r.package_version
+              ? `${styles.packageRow} ${styles.packageRowSelected}`
+              : styles.packageRow
+          }
         />
       </Card>
     </div>

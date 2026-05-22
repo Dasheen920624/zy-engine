@@ -82,7 +82,7 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
         <Select
           value={context.targetEnvironment}
           onChange={onTargetEnvironmentChange}
-          style={{ width: 200 }}
+          className={styles.targetSelect}
           options={[
             { value: "production", label: "生产环境" },
             { value: "staging", label: "测试环境" },
@@ -98,7 +98,7 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
           icon={<WarningOutlined />}
           message="存在冲突"
           description={`发现 ${impact.conflicts.length} 个资产冲突，请仔细评估后再继续。`}
-          style={{ marginBottom: 16 }}
+          className={styles.alertSpacing}
         />
       ) : (
         <Alert
@@ -107,7 +107,7 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
           icon={<CheckCircleOutlined />}
           message="无冲突"
           description="未发现资产冲突，可以安全发布。"
-          style={{ marginBottom: 16 }}
+          className={styles.alertSpacing}
         />
       )}
 
@@ -117,7 +117,7 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
         column={2}
         size="small"
         labelStyle={{ color: "var(--mk-text-tertiary)" }}
-        style={{ marginBottom: 16 }}
+        className={styles.descriptionsSpacing}
       >
         <Descriptions.Item label="目标环境">
           <Tag color={target_environment === "production" ? "red" : "blue"}>
@@ -143,7 +143,7 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
       {hasConflicts && (
         <div>
           <h4 className={styles.sectionHeadingWarning}>
-            <WarningOutlined style={{ marginRight: 8 }} />
+            <WarningOutlined className={styles.iconWithMargin} />
             冲突明细
           </h4>
           <div className={styles.scrollableList}>

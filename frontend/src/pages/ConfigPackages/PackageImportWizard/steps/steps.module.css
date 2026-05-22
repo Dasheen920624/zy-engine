@@ -8,6 +8,14 @@
   color: var(--mk-text-tertiary);
 }
 
+.alertSpacing {
+  margin-bottom: var(--mk-space-4);
+}
+
+.descriptionsSpacing {
+  margin-bottom: var(--mk-space-4);
+}
+
 .fieldGroup {
   margin-bottom: var(--mk-spacing-md);
 }
@@ -74,6 +82,27 @@
 
 .textWarning {
   color: var(--mk-warning);
+}
+
+.uploadIcon {
+  color: var(--mk-brand-primary);
+  font-size: var(--mk-space-9);
+}
+
+.uploadText {
+  font-size: var(--mk-text-md);
+}
+
+.targetSelect {
+  width: 200px;
+}
+
+.iconWithMargin {
+  margin-right: var(--mk-space-2);
+}
+
+.publishButton {
+  min-width: 120px;
 }
 
 .formActions {

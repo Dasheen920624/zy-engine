@@ -25,6 +25,10 @@
   margin: 0;
 }
 
+.pageTitleWithSpacing {
+  margin: 0 0 var(--mk-space-6);
+}
+
 .pageSubtitle {
   margin: var(--mk-space-1) 0 0;
   color: var(--mk-text-secondary);
@@ -61,6 +65,14 @@
   width: 160px;
 }
 
+.statusFilter {
+  width: 120px;
+}
+
+.listToolbar {
+  margin-bottom: var(--mk-space-4);
+}
+
 .tableCard {
   background: var(--mk-bg-panel);
   border-radius: var(--mk-radius-md);
@@ -75,6 +87,14 @@
 .tableEmptyHint {
   color: var(--mk-text-tertiary);
   margin-top: var(--mk-space-2);
+}
+
+.emptyActionButton {
+  margin-top: var(--mk-space-4);
+}
+
+.clickableRow {
+  cursor: pointer;
 }
 
 /* ─── 详情页栅格 ─── */
