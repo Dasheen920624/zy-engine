@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Button, Card, Input, Select, Space, Statistic, Switch, Table, Tag, Typography } from "antd";
+import { Button, Card, Collapse, Input, Select, Space, Statistic, Switch, Table, Tag, Typography } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import type { StatusKey } from "../../components/StatusBadge/StatusBadge.types";
 import { StatusBadge, OrgContextSelector, SourceInfo } from "../../components";
@@ -153,9 +153,6 @@ const AlertList: React.FC = () => {
       <SourceInfo source={{ documentName: "质控预警", documentId: "quality-alerts" }} />
 
       <Space className={styles.filterBar} size="middle">
-        <OrgContextSelector />
-        <span>实时模式</span>
-        <Switch checked={realtimeMode} onChange={setRealtimeMode} />
         <Input
           placeholder="科室"
           value={dept || ""}
@@ -175,6 +172,22 @@ const AlertList: React.FC = () => {
           className={styles.selectNarrow}
         />
       </Space>
+
+      <Collapse
+        ghost
+        size="small"
+        items={[{
+          key: "advanced-filters",
+          label: "高级筛选",
+          children: (
+            <Space size="middle">
+              <OrgContextSelector />
+              <span>实时模式</span>
+              <Switch checked={realtimeMode} onChange={setRealtimeMode} />
+            </Space>
+          ),
+        }]}
+      />
 
       <Space className={styles.summaryBar} size="large">
         <Card size="small"><Statistic title="危急" value={summary?.critical || 0} valueStyle={{ color: "var(--mk-danger)" }} /></Card>

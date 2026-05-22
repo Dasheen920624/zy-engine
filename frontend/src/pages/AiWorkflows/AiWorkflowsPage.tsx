@@ -10,7 +10,7 @@
  */
 
 import { useMemo } from "react";
-import { Alert, Button, Spin, Tabs, Typography } from "antd";
+import { Alert, Button, Collapse, Spin, Tabs, Typography } from "antd";
 import { ReloadOutlined, RobotOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -143,7 +143,7 @@ export default function AiWorkflowsPage() {
         <h3 className={styles.heroTitle}>本平台 AI 编排核心方针</h3>
         <ul className={styles.heroPoints}>
           <li className={styles.heroPoint}>
-            <span className={styles.heroPointAccent}>8 家国产大模型直连</span>：通义 / DeepSeek / Kimi / 智谱 / 豆包 / Yi / 百川 / 阶跃，全部走 OpenAI 兼容协议，不依赖 Dify
+            <span className={styles.heroPointAccent}>8 家国产大模型直连</span>：全部走 OpenAI 兼容协议，不依赖 Dify
           </li>
           <li className={styles.heroPoint}>
             <span className={styles.heroPointAccent}>Ollama 本地兜底</span>：医院内网部署可选，断网也能推理
@@ -151,10 +151,25 @@ export default function AiWorkflowsPage() {
           <li className={styles.heroPoint}>
             <span className={styles.heroPointAccent}>LOCAL 规则兜底</span>：永远可用，保证临床场景不会因 LLM 不可用而失服
           </li>
-          <li className={styles.heroPoint}>
-            <span className={styles.heroPointAccent}>Dify 仅 WORKFLOW</span>：仅复杂多步流程编排时使用，主调用链已收敛到国产直连
-          </li>
         </ul>
+        <Collapse
+          ghost
+          size="small"
+          items={[{
+            key: "advanced-config",
+            label: "高级配置",
+            children: (
+              <ul className={styles.heroPoints}>
+                <li className={styles.heroPoint}>
+                  <span className={styles.heroPointAccent}>8 家国产大模型</span>：通义 / DeepSeek / Kimi / 智谱 / 豆包 / Yi / 百川 / 阶跃
+                </li>
+                <li className={styles.heroPoint}>
+                  <span className={styles.heroPointAccent}>Dify 仅 WORKFLOW</span>：仅复杂多步流程编排时使用，主调用链已收敛到国产直连
+                </li>
+              </ul>
+            ),
+          }]}
+        />
       </section>
 
       <div className={styles.tabsCard}>

@@ -4,6 +4,7 @@ import {
   Alert,
   Button,
   Card,
+  Collapse,
   Input,
   Select,
   Space,
@@ -217,20 +218,6 @@ export default function PackageList({
         <div className={styles.filterBar}>
           <div className={styles.filterField}>
             <Text type="secondary" className={styles.filterLabel}>
-              配置内容
-            </Text>
-            <Select
-              allowClear
-              placeholder="全部"
-              className={styles.filterSelect}
-              size="small"
-              value={filters.assetType}
-              onChange={(v) => onFilterChange({ assetType: v })}
-              options={ASSET_TYPE_OPTIONS}
-            />
-          </div>
-          <div className={styles.filterField}>
-            <Text type="secondary" className={styles.filterLabel}>
               状态
             </Text>
             <Select
@@ -245,16 +232,16 @@ export default function PackageList({
           </div>
           <div className={styles.filterField}>
             <Text type="secondary" className={styles.filterLabel}>
-              组织范围
+              配置内容
             </Text>
             <Select
               allowClear
               placeholder="全部"
               className={styles.filterSelect}
               size="small"
-              value={filters.scopeLevel}
-              onChange={(v) => onFilterChange({ scopeLevel: v })}
-              options={SCOPE_OPTIONS}
+              value={filters.assetType}
+              onChange={(v) => onFilterChange({ assetType: v })}
+              options={ASSET_TYPE_OPTIONS}
             />
           </div>
           <div className={styles.filterFieldWide}>
@@ -271,7 +258,6 @@ export default function PackageList({
             />
           </div>
           <Space>
-            <OrgContextSelector />
             <Button size="small" icon={<FilterOutlined />} onClick={onFilterReset}>
               重置
             </Button>
@@ -284,6 +270,7 @@ export default function PackageList({
             </Button>
             <Button
               size="small"
+              type="primary"
               icon={<ImportOutlined />}
               onClick={() => navigate("/config/packages/import")}
             >
@@ -291,6 +278,33 @@ export default function PackageList({
             </Button>
           </Space>
         </div>
+        <Collapse
+          ghost
+          size="small"
+          items={[{
+            key: "advanced-filters",
+            label: "高级筛选",
+            children: (
+              <Space size="middle">
+                <div className={styles.filterField}>
+                  <Text type="secondary" className={styles.filterLabel}>
+                    组织范围
+                  </Text>
+                  <Select
+                    allowClear
+                    placeholder="全部"
+                    className={styles.filterSelect}
+                    size="small"
+                    value={filters.scopeLevel}
+                    onChange={(v) => onFilterChange({ scopeLevel: v })}
+                    options={SCOPE_OPTIONS}
+                  />
+                </div>
+                <OrgContextSelector />
+              </Space>
+            ),
+          }]}
+        />
       </Card>
 
       {/* 列表错误 */}

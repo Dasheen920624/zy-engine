@@ -166,13 +166,6 @@ export default function GraphExplore() {
       key: "evidence_count",
       width: 80,
     },
-    {
-      title: "图谱版本",
-      dataIndex: "graph_version",
-      key: "graph_version",
-      width: 120,
-      render: (version: string) => <Tag color="blue">{version}</Tag>,
-    },
   ];
 
   const evidenceColumns: ColumnsType<GraphEvidence> = [

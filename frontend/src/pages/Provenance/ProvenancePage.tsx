@@ -18,6 +18,7 @@ import {
   BranchesOutlined,
   FileSearchOutlined,
   LinkOutlined,
+  PlusOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
@@ -336,6 +337,15 @@ export default function ProvenancePage() {
           <Paragraph type="secondary">
             管理医学知识来源文档、引用片段和资产绑定，确保知识的可追溯性和权威性。
           </Paragraph>
+        </div>
+        <div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => message.info("新建来源文档功能开发中")}
+          >
+            新建来源文档
+          </Button>
         </div>
       </div>
 

@@ -158,17 +158,12 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
               </Button>
             </Dropdown>
             <Button 
+              type="primary"
               icon={<CheckOutlined />} 
               onClick={handleBatchMarkAsRead}
               disabled={!summary || summary.unread === 0}
             >
               全部已读
-            </Button>
-            <Button 
-              icon={<ReloadOutlined />} 
-              onClick={loadNotifications}
-            >
-              刷新
             </Button>
           </Space>
         }

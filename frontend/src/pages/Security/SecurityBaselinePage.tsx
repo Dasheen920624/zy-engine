@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   Col,
+  Collapse,
   Descriptions,
   Form,
   Input,
@@ -10,11 +11,11 @@ import {
   Row,
   Space,
   Spin,
+  Statistic,
   Table,
   Tag,
   message,
   Popconfirm,
-  Statistic,
 } from "antd";
 import {
   SafetyCertificateOutlined,
@@ -187,29 +188,55 @@ const SecurityBaselinePage: React.FC = () => {
           {baseline && (
             <Row gutter={16}>
               <Col span={6}>
-                <Statistic title="JWT 算法" value={baseline.jwt_algorithm} />
+                <Statistic
+                  title="JWT 签名"
+                  value={baseline.jwt_algorithm ? "已满足" : "缺证据"}
+                  valueStyle={{ color: baseline.jwt_algorithm ? "var(--mk-success)" : "var(--mk-warning)" }}
+                />
               </Col>
               <Col span={6}>
-                <Statistic title="活跃密钥" value={baseline.active_key_id} />
+                <Statistic
+                  title="密钥管理"
+                  value={baseline.active_key_id ? "已满足" : "需整改"}
+                  valueStyle={{ color: baseline.active_key_id ? "var(--mk-success)" : "var(--mk-danger)" }}
+                />
               </Col>
               <Col span={6}>
-                <Statistic title="密钥版本数" value={baseline.total_key_versions} />
+                <Statistic
+                  title="传输加密"
+                  value={baseline.tls_min_version ? "已满足" : "需整改"}
+                  valueStyle={{ color: baseline.tls_min_version ? "var(--mk-success)" : "var(--mk-danger)" }}
+                />
               </Col>
               <Col span={6}>
-                <Statistic title="TLS 最低版本" value={baseline.tls_min_version} />
+                <Statistic
+                  title="密钥版本"
+                  value={baseline.total_key_versions}
+                />
               </Col>
             </Row>
           )}
-          {baseline && (
-            <Descriptions column={3} size="small" className={styles.baselineDescriptions} bordered>
-              <Descriptions.Item label="密码哈希算法">{baseline.password_hash_algorithm}</Descriptions.Item>
-              <Descriptions.Item label="HSTS">{baseline.hsts_enabled ? "已启用" : "未启用"}</Descriptions.Item>
-              <Descriptions.Item label="SBOM 格式">{baseline.sbom_format}</Descriptions.Item>
-              <Descriptions.Item label="宽限期密钥">{baseline.grace_keys}</Descriptions.Item>
-              <Descriptions.Item label="已退役密钥">{baseline.retired_keys}</Descriptions.Item>
-              <Descriptions.Item label="已撤销密钥">{baseline.revoked_keys}</Descriptions.Item>
-            </Descriptions>
-          )}
+          <Collapse
+            ghost
+            size="small"
+            items={[{
+              key: "advanced-params",
+              label: "高级选项",
+              children: baseline ? (
+                <Descriptions column={3} size="small" bordered>
+                  <Descriptions.Item label="JWT 算法">{baseline.jwt_algorithm}</Descriptions.Item>
+                  <Descriptions.Item label="密码哈希算法">{baseline.password_hash_algorithm}</Descriptions.Item>
+                  <Descriptions.Item label="TLS 最低版本">{baseline.tls_min_version}</Descriptions.Item>
+                  <Descriptions.Item label="HSTS">{baseline.hsts_enabled ? "已启用" : "未启用"}</Descriptions.Item>
+                  <Descriptions.Item label="SBOM 格式">{baseline.sbom_format}</Descriptions.Item>
+                  <Descriptions.Item label="活跃密钥ID">{baseline.active_key_id}</Descriptions.Item>
+                  <Descriptions.Item label="宽限期密钥">{baseline.grace_keys}</Descriptions.Item>
+                  <Descriptions.Item label="已退役密钥">{baseline.retired_keys}</Descriptions.Item>
+                  <Descriptions.Item label="已撤销密钥">{baseline.revoked_keys}</Descriptions.Item>
+                </Descriptions>
+              ) : null,
+            }]}
+          />
         </Card>
 
         <Row gutter={16}>
