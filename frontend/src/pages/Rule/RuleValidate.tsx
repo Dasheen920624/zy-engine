@@ -77,16 +77,17 @@ export default function RuleValidate() {
       scenario_code: string;
       patient_context: string;
     }) => {
-      let patient_context: Record<string, unknown>;
+      let parsed: Record<string, unknown>;
       try {
-        patient_context = JSON.parse(values.patient_context);
+        parsed = JSON.parse(values.patient_context);
       } catch {
         throw new Error("患者上下文 JSON 格式错误");
       }
 
+      // 用户从 JSON 编辑器输入，需 runtime 校验后转入契约结构；当前 trust UI 提示用户按模板填写。
       const request: EvaluateRequest = {
-        scenario_code: values.scenario_code,
-        patient_context,
+        scenario_code: values.scenario_code as EvaluateRequest["scenario_code"],
+        patient_context: parsed as EvaluateRequest["patient_context"],
         tenant_id,
       };
 
@@ -356,25 +357,25 @@ export default function RuleValidate() {
                   />
                 )}
 
-                {evaluateResult.summary && (
+                {evaluateResult.result_id && (
                   <Card size="small" title="评估摘要" className={styles.summaryCard}>
                     <Space direction="vertical" className={styles.summarySpace}>
                       <Text>
                         <Text strong>评估ID：</Text>
-                        {evaluateResult.eval_id}
+                        {evaluateResult.result_id}
                       </Text>
                       <Text>
                         <Text strong>耗时：</Text>
-                        {evaluateResult.duration_ms} ms
+                        {evaluateResult.elapsed_ms} ms
                       </Text>
                       <Text>
                         <Text strong>规则总数：</Text>
-                        {evaluateResult.summary.total_rules}
+                        {evaluateResult.evaluated_count}
                       </Text>
                       <Text>
                         <Text strong>命中率：</Text>
-                        {evaluateResult.summary.hit_rate
-                          ? `${(evaluateResult.summary.hit_rate * 100).toFixed(1)}%`
+                        {evaluateResult.evaluated_count
+                          ? `${((evaluateResult.hit_count / evaluateResult.evaluated_count) * 100).toFixed(1)}%`
                           : "-"}
                       </Text>
                     </Space>

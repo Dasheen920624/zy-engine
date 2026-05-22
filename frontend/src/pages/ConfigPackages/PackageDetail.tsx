@@ -90,29 +90,8 @@ function changeTypeLabel(ct?: string): string {
   }
 }
 
-function diffLineColor(type: "add" | "del" | "neutral"): string {
-  switch (type) {
-    case "add":
-      return "var(--mk-code-add)";
-    case "del":
-      return "var(--mk-code-del)";
-    case "neutral":
-    default:
-      return "var(--mk-code-text)";
-  }
-}
-
-function diffLineBackground(type: "add" | "del" | "neutral"): string {
-  switch (type) {
-    case "add":
-      return "var(--mk-code-add-bg)";
-    case "del":
-      return "var(--mk-code-del-bg)";
-    case "neutral":
-    default:
-      return "transparent";
-  }
-}
+// diffLineColor() / diffLineBackground() 已废弃 → 改由 PackageDetail.module.css 中
+// `.diffLineAdd / .diffLineDel / .diffLineNeutral` token class 接管（PR-V3-INLINE-STYLE）
 
 function issueIcon(severity: string) {
   switch (severity) {

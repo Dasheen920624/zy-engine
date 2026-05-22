@@ -1,6 +1,8 @@
 import { Avatar, Dropdown, Tag, Tooltip } from "antd";
 import {
   LogoutOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   SettingOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -12,14 +14,36 @@ import {
   findSectionByPath,
 } from "../router/menuConfig";
 import ThemeSelector from "../theme/ThemeSelector";
+import styles from "./TopNav.module.css";
+
+interface TopNavProps {
+  /** 桌面态 sider 是否折叠；移动态时此字段表示 drawer 是否打开。 */
+  collapsed: boolean;
+  /** 当前是否移动端尺寸（< 768px）。 */
+  isMobile: boolean;
+  /** 折叠按钮点击回调（由 AppLayout 决定切桌面态折叠还是移动态 drawer）。 */
+  onToggleCollapse: () => void;
+}
+
+/** 拆出 aria-label 构造避免嵌套三元（ESLint no-nested-ternary）。 */
+function buildTriggerAriaLabel(isMobile: boolean, collapsed: boolean): string {
+  if (isMobile) {
+    return collapsed ? "关闭菜单" : "打开菜单";
+  }
+  return collapsed ? "展开菜单" : "折叠菜单";
+}
 
 /**
- * 顶部导航栏（PR-V2-03 原始设计）。
+ * 顶部导航栏（PR-FINAL-26：CSS Module + 折叠按钮 + 0 inline style）。
  *
- * 左：产品标题 + 子标题；中：面包屑（section / page）；右：主题切换 + 组织上下文 Tag + 版本号 + 用户头像。
- * 菜单从顶部移除，全部下沉到 SideMenu 的两段式分组，避免横竖菜单同时争注意力。
+ * 左：折叠按钮 → 品牌 → 面包屑；右：主题 + 组织 Tag + 版本 + 用户。
+ * 折叠按钮在桌面态切 220px ↔ 64px；移动态切 drawer 显隐。
  */
-export default function TopNav() {
+export default function TopNav({
+  collapsed,
+  isMobile,
+  onToggleCollapse,
+}: TopNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [org] = useOrgContext();
@@ -46,51 +70,75 @@ export default function TopNav() {
     },
   ];
 
+  // 折叠按钮 icon：桌面态折叠 → Unfold(展开)；其余 → Fold(折叠)
+  // 移动态固定 Fold（因为点击是「打开 drawer」语义）
+  const FoldIcon = !isMobile && collapsed ? MenuUnfoldOutlined : MenuFoldOutlined;
+  const triggerAriaLabel = buildTriggerAriaLabel(isMobile, collapsed);
+
+  const goHome = () => navigate("/dashboard");
+
   return (
-    <div className="mk-top-nav">
-      <div className="mk-top-nav__brand" onClick={() => navigate("/dashboard")}>
-        <div className="mk-top-nav__brand-title">集团医疗智能中枢</div>
-        <div className="mk-top-nav__brand-subtitle">MedKernel · 管理工作台</div>
+    <div className={styles.nav}>
+      <button
+        type="button"
+        className={styles.collapseTrigger}
+        onClick={onToggleCollapse}
+        aria-label={triggerAriaLabel}
+        data-testid="sidebar-collapse-trigger"
+      >
+        <FoldIcon />
+      </button>
+
+      <div
+        className={styles.brand}
+        onClick={goHome}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            goHome();
+          }
+        }}
+      >
+        <div className={styles.brandTitle}>集团医疗智能中枢</div>
+        <div className={styles.brandSubtitle}>MedKernel · 管理工作台</div>
       </div>
 
-      <div className="mk-top-nav__breadcrumb">
+      <div className={styles.breadcrumb}>
         <Link to="/dashboard">首页</Link>
         {section?.label && (
           <>
-            <span className="mk-top-nav__breadcrumb-sep">/</span>
-            <span className="mk-top-nav__breadcrumb-section">
-              {section.label}
-            </span>
+            <span className={styles.breadcrumbSep}>/</span>
+            <span className={styles.breadcrumbSection}>{section.label}</span>
           </>
         )}
         {current?.label && (
           <>
-            <span className="mk-top-nav__breadcrumb-sep">/</span>
-            <span className="mk-top-nav__breadcrumb-current">
-              {current.label}
-            </span>
+            <span className={styles.breadcrumbSep}>/</span>
+            <span className={styles.breadcrumbCurrent}>{current.label}</span>
           </>
         )}
       </div>
 
-      <div className="mk-top-nav__actions">
+      <div className={styles.actions}>
         <ThemeSelector />
         <Tooltip title="组织上下文 · Header X-* 自动随请求发送">
-          <Tag className="mk-tag-primary" style={{ margin: 0 }}>
+          <Tag className={`mk-tag-primary ${styles.tagReset}`}>
             {org.hospital_code || org.group_code || org.tenant_id || "DEFAULT"}
             {org.department_code ? ` / ${org.department_code}` : ""}
           </Tag>
         </Tooltip>
-        <Tag style={{ margin: 0 }}>v0.2</Tag>
+        <Tag className={styles.tagReset}>v0.2</Tag>
         {authenticated && user && (
           <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-            <div className="mk-top-nav__user">
+            <div className={styles.user}>
               <Avatar
                 size="small"
                 icon={<UserOutlined />}
                 src={user.avatar_url}
               />
-              <span style={{ color: "var(--mk-text-primary)", fontSize: 13 }}>
+              <span className={styles.userName}>
                 {user.display_name || user.username}
               </span>
             </div>
