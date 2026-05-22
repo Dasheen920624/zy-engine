@@ -1,0 +1,7 @@
+task_id: GA-PERF-01
+claim_id: GA-PERF-01-S01
+owner: TraeAI-1
+branch: ai/GA-PERF-01/perf-baseline
+git_base_commit: 3865a14
+created_at: 2026-05-23T21:30+08:00
+last_heartbeat: 2026-05-23T21:30+08:00
