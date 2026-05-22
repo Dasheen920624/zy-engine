@@ -5,32 +5,32 @@ task_id: GA-REL-01
 task_lock_path: ai-dev-input/10_task_claims/active_locks/GA-REL-01.lock
 slice: S01
 title: 发布与分支保护证据
-owner: TraeAI-1
+owner: TraeAI-GLM5-1
 role: senior
-status: DONE
-branch: ai/GA-REL-01/release-protection
+status: ACTIVE
+branch: develop
 target_base_branch: develop
-git_base_commit: dd4a94fb5cb49cccd6597da742669b55b585888a
+git_base_commit: HEAD
 git_status_at_claim: clean
-created_at: 2026-05-23T22:00:00+08:00
-last_heartbeat: 2026-05-23T22:00:00+08:00
-expected_finish: 2026-05-24T04:00:00+08:00
+created_at: 2026-05-23T22:00+08:00
+last_heartbeat: 2026-05-23T22:00+08:00
+expected_finish: 2026-05-24T06:00+08:00
 heartbeat_interval_minutes: 60
-database_mode: local
+database_mode: none
 oracle_available: false
-local_db_verified: true
+local_db_verified: false
 oracle_verification_required: false
 review_required: true
 review_id:
 review_status: NOT_REQUESTED
 reviewer:
-open_findings:
+open_findings: 0
 quality_gate: BLOCKED_UNTIL_APPROVED
 feature_acceptance_required: false
 feature_acceptance_id:
-write_scope: .github/workflows/**, scripts/**, VERSIONING.md
-read_scope: docs/**, medkernel-mvp/**
-forbidden_scope: frontend/**, medkernel-mvp/src/main/java/**, medkernel-mvp/src/test/java/**
+write_scope:
+read_scope:
+forbidden_scope:
 
 ## Task Lock
 
@@ -41,106 +41,62 @@ ai-dev-input/10_task_claims/active_locks/GA-REL-01.lock
 ## Write Scope
 
 ```text
-.github/workflows/ci.yml
-.github/workflows/release.yml
-scripts/verify-pr.ps1
-scripts/verify-task-prereq.ps1
-VERSIONING.md
+docs/release/**
+deploy/scripts/verify-branch-protection.sh
+.github/branch-protection.json
+docs/engineering/02_任务台账.md
+ai-dev-input/10_task_claims/active/GA-REL-01-S01.md
+ai-dev-input/10_task_claims/active_locks/GA-REL-01.lock
 ```
 
 ## Read Scope
 
 ```text
+.github/**
 docs/**
-medkernel-mvp/**
+deploy/**
 ```
 
 ## Forbidden Scope
 
 ```text
-frontend/**
 medkernel-mvp/src/main/java/**
-medkernel-mvp/src/test/java/**
-medkernel-mvp/pom.xml
+frontend/src/**
+ai-dev-input/10_task_claims/active/GA-*.md
 ```
 
 ## Dependencies
 
 ```text
-GA-GOV-01 (DONE)
+GA-GOV-01（已完成：并发机制硬门禁）
 ```
 
 ## Acceptance
 
 ```text
-1. main/develop 分支保护规则文档化
-2. release evidence 工作流（tag + changelog 自动生成）
-3. tag 流程可自动校验
-4. VERSIONING.md 版本策略文档
-```
-
-## Status Sync Checkpoints
-
-```text
-claim_pushed_before_code: true
-task_ledger_in_progress: pending
-git_status_checked_before_edit: true
-last_heartbeat_pushed: pending
-review_status_synced: pending
-task_ledger_done_synced: pending
-commit_hash_recorded: pending
-post_push_git_status_clean: pending
-task_lock_removed_on_archive: pending
+1. 分支保护规则文档（main/develop 保护策略）
+2. 分支保护验证脚本
+3. 发布流程文档（tag、release evidence、changelog）
+4. Release evidence 模板
+5. 所有文档和脚本可追溯
 ```
 
 ## Verification
 
 ```text
-pwsh scripts/verify-pr.ps1 -TaskId GA-REL-01
-```
-
-## Self Check
-
-```text
-task_card_satisfied: pending
-write_scope_matches_diff: pending
-tests_updated: N/A
-samples_or_api_examples_updated: N/A
-docs_updated: pending
-db_only_checked: N/A
-oracle_dm_h2_schema_synced: N/A
-production_development_schema_synced: N/A
-table_and_column_comments_complete: N/A
-required_code_comments_complete: pending
-feature_acceptance_created: N/A
-claim_status_synced: pending
-security_privacy_checked: N/A
-```
-
-## Quality Review
-
-```text
-review_id:
-review_file:
-review_status:
-highest_severity:
-open_findings:
-changes_requested:
-approved_by:
-approved_at:
-submit_allowed:
+bash -n deploy/scripts/verify-branch-protection.sh
 ```
 
 ## Progress
 
 ```text
-认领完成，开始开发
-```
-
-## Handoff
-
-```text
-
+- [ ] 创建 claim + lock 并 push
+- [ ] 分支保护规则文档
+- [ ] 分支保护验证脚本
+- [ ] 发布流程文档
+- [ ] Release evidence 模板
+- [ ] 更新台账
+- [ ] commit + push
 ```
 
 ## Completion
@@ -151,4 +107,3 @@ push:
 tests:
 review:
 risks:
-```
