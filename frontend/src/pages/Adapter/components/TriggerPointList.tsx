@@ -55,7 +55,7 @@ export default function TriggerPointList() {
       if (execPayload.trim()) {
         try {
           payload = JSON.parse(execPayload) as Record<string, unknown>;
-        } catch (e) {
+        } catch {
           throw new Error("payload 不是合法 JSON");
         }
       }

@@ -227,7 +227,7 @@ export async function listSmartApps(): Promise<SmartApp[]> {
 export async function listTriggerPoints(
   filters: TriggerPointFilters = {},
 ): Promise<TriggerPoint[]> {
-  return get<TriggerPoint[]>(`/cdss/triggers${buildQs(filters)}`);
+  return get<TriggerPoint[]>(`/cdss/triggers${buildQs({ ...filters })}`);
 }
 
 /** 注册新触发点 */

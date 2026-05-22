@@ -85,6 +85,7 @@ describe("RuleList page", () => {
     });
     const input = screen.getByLabelText("rule-search") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "EMR" } });
+    fireEvent.blur(input);
     await waitFor(() => {
       expect(screen.getByText("入院记录时限")).toBeInTheDocument();
       expect(screen.queryByText("AMI/STEMI 候选入径规则")).not.toBeInTheDocument();

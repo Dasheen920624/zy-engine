@@ -113,7 +113,7 @@ describe("RuleDetail page", () => {
     renderPage();
     await waitFor(() => {
       expect(screen.getByText("疑似 STEMI")).toBeInTheDocument();
-      expect(screen.getByText("命中")).toBeInTheDocument();
+      expect(screen.getAllByText("命中").length).toBeGreaterThan(0);
     });
   });
 

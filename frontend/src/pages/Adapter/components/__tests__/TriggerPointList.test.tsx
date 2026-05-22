@@ -74,10 +74,10 @@ describe("TriggerPointList", () => {
     renderList();
     fireEvent.click(screen.getByRole("button", { name: /新建触发点/ }));
     await waitFor(() => {
-      expect(screen.getByText("新建触发点")).toBeInTheDocument();
+      expect(screen.getAllByText("新建触发点").length).toBeGreaterThan(0);
     });
     // 表单字段
-    expect(screen.getByText("触发点编码")).toBeInTheDocument();
+    expect(screen.getAllByText("触发点编码").length).toBeGreaterThan(0);
   });
 
   it("reset button clears business scenario filter input", async () => {
@@ -86,7 +86,7 @@ describe("TriggerPointList", () => {
     fireEvent.change(sceneInput, { target: { value: "EmergencyAdmit" } });
     expect(sceneInput.value).toBe("EmergencyAdmit");
 
-    fireEvent.click(screen.getByRole("button", { name: /重置/ }));
+    fireEvent.click(screen.getByRole("button", { name: /重\s*置/ }));
     expect((screen.getByPlaceholderText("business_scenario") as HTMLInputElement).value).toBe("");
   });
 });

@@ -165,12 +165,12 @@ function buildQs(params: Record<string, unknown>): string {
 
 /** 审计日志列表（按 filter 过滤；返回 raw 列表，UI 自行渲染/分页客户端） */
 export async function listAuditLogs(filters: AuditLogFilters = {}): Promise<AuditLogEntry[]> {
-  return get<AuditLogEntry[]>(`/audit-logs${buildQs(filters)}`);
+  return get<AuditLogEntry[]>(`/audit-logs${buildQs({ ...filters })}`);
 }
 
 /** 审计日志聚合（同 filter，返回 by_engine_type / by_action_type 等维度统计） */
 export async function summarizeAuditLogs(filters: AuditLogFilters = {}): Promise<AuditLogSummary> {
-  return get<AuditLogSummary>(`/audit-logs/summary${buildQs(filters)}`);
+  return get<AuditLogSummary>(`/audit-logs/summary${buildQs({ ...filters })}`);
 }
 
 /** 触发指定审计表链完整性校验（POST，会写一条 checkpoint 到 sec_audit_chain_checkpoint） */

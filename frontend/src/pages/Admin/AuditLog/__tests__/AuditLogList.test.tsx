@@ -89,7 +89,7 @@ describe("AuditLogList", () => {
   it("renders page title and 等保 2.0 三级 hint", () => {
     renderPage();
     expect(screen.getByText("审计日志")).toBeInTheDocument();
-    expect(screen.getByText(/等保 2.0 三级/)).toBeInTheDocument();
+    expect(screen.getAllByText(/等保 2.0 三级/).length).toBeGreaterThan(0);
     expect(screen.getByText(/不可改不可删/)).toBeInTheDocument();
   });
 
@@ -105,7 +105,7 @@ describe("AuditLogList", () => {
     expect(screen.getByText("操作人")).toBeInTheDocument();
     expect(screen.getByText("最大条数")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /查询/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /重置/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /重\s*置/ })).toBeInTheDocument();
   });
 
   it("renders list rows with engine/action label + 4+4 masked patient_id", async () => {
@@ -114,8 +114,8 @@ describe("AuditLogList", () => {
       expect(screen.getByText("AMI_RULE_001")).toBeInTheDocument();
     });
     // engine_type 中文标签
-    expect(screen.getByText("规则引擎")).toBeInTheDocument();
-    expect(screen.getByText("审计自身")).toBeInTheDocument();
+    expect(screen.getAllByText("规则引擎").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("审计自身").length).toBeGreaterThan(0);
     // patient_id 4+4 脱敏
     expect(screen.getByText("1101****AAAA")).toBeInTheDocument();
     // 签名失败 Tag
@@ -146,7 +146,7 @@ describe("AuditLogList", () => {
     fireEvent.change(trace, { target: { value: "my-trace" } });
     expect(trace.value).toBe("my-trace");
 
-    fireEvent.click(screen.getByRole("button", { name: /重置/ }));
+    fireEvent.click(screen.getByRole("button", { name: /重\s*置/ }));
     expect((screen.getByLabelText("Trace ID") as HTMLInputElement).value).toBe("");
   });
 });

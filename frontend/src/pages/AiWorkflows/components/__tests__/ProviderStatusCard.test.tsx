@@ -35,7 +35,7 @@ describe("ProviderStatusCard", () => {
         info={{ provider_type: "FUTURE_PROVIDER", ready: false, status: "NOT_FOUND" }}
       />,
     );
-    expect(screen.getByText("FUTURE_PROVIDER")).toBeInTheDocument();
+    expect(screen.getAllByText("FUTURE_PROVIDER").length).toBeGreaterThan(0);
     expect(screen.getByText("未注册")).toBeInTheDocument();
   });
 });

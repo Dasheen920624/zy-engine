@@ -32,6 +32,7 @@ import {
 import { RuleList, RuleDetail, RuleEditor } from "../pages/Rule";
 import { AiWorkflowsPage } from "../pages/AiWorkflows";
 import TenantOnboarding from "../pages/Tenant/Onboarding";
+import { MpiPatientsPage } from "../pages/Mpi";
 import { AuditLogList } from "../pages/Admin/AuditLog";
 import { AdapterHubPage } from "../pages/Adapter";
 
@@ -83,7 +84,7 @@ export const routes: RouteObject[] = [
           { path: "notifications/settings", element: <NotificationSettings /> },
           { path: "admin/users", element: <PlaceholderPage title="用户管理" pr="PR-V2-04" /> },
           { path: "admin/audit", element: <AuditLogList /> },
-          { path: "mpi/patients", element: <PlaceholderPage title="患者主索引" pr="MPI-001" /> },
+          { path: "mpi/patients", element: <MpiPatientsPage /> },
           { path: "adapter/hub", element: <AdapterHubPage /> },
           { path: "dify/workflows", element: <Navigate to="/ai-workflows" replace /> },
           { path: "ai-workflows", element: <AiWorkflowsPage /> },
