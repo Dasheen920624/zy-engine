@@ -11,8 +11,8 @@ status: PENDING_PRODUCT_ACCEPTANCE
 quality_level: GOLD
 created_at: 2026-05-22T14:12+08:00
 updated_at: 2026-05-22T14:12+08:00
-commit: PENDING_FINAL_COMMIT
-push: origin/develop pending final status-sync push
+commit: 973bfc5
+push: origin/develop pending status-sync push
 
 ## Scope
 
@@ -76,7 +76,7 @@ new_file_line_guard:
   PASS — largest new Java file GraphQueryService.java is 466 lines
 
 verify-pr:
-  PENDING_FINAL_RUN
+  PASS — .\scripts\verify-pr.ps1 -TaskId PR-FINAL-18; 16 PASS / 0 FAIL / 2 WARN
 
 local_h2:
   PASS — SpringBootTest active profile uses LOCAL_H2_FILE
@@ -109,5 +109,5 @@ approved_for_customer_demo: true
 approved_for_integration: true
 needs_optimization_task: false
 remaining_risk: The remaining large RuleService/PathwayService/KnowledgePackageService orchestration methods are deliberately left compatible for future incremental slices; this task closes the first five-domain boundary extraction requested by PR-FINAL-18.
-final_decision: Ready for develop after final verify-pr, commit and push.
+final_decision: Ready for develop after status-sync commit and push.
 ```

@@ -55,7 +55,7 @@ build: PASS — medkernel-mvp/scripts/build.ps1; target/medkernel-mvp-0.1.0-SNAP
 git diff --check: PASS
 collaboration_check: PASS — medkernel-mvp/scripts/check-ai-collaboration.ps1; active scopes do not overlap AI-GOV-002
 new_file_line_guard: PASS — all new Java files <= 466 lines
-verify-pr: PENDING_FINAL_RUN
+verify-pr: PASS — .\scripts\verify-pr.ps1 -TaskId PR-FINAL-18; 16 PASS / 0 FAIL / 2 WARN
 ```
 
 ## Review Checklist
@@ -106,8 +106,8 @@ review_status: APPROVED
 approved_by: Codex-GPT5
 approved_at: 2026-05-22T14:12+08:00
 submit_allowed: true
-commit: PENDING_FINAL_COMMIT
-push: origin/develop pending final status-sync push
+commit: 973bfc5
+push: origin/develop pending status-sync push
 risks: RuleService, PathwayService and KnowledgePackageService remain orchestration-heavy, but PR-FINAL-18 closes the requested first architecture slice across the five target domains without API/schema churn.
 feature_acceptance_status: GOLD_PENDING_PRODUCT_ACCEPTANCE
 optimization_required: false
