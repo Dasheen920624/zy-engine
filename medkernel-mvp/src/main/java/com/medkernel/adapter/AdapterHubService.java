@@ -20,12 +20,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AdapterHubService {
     private final TerminologyService terminologyService;
     private final EnginePersistenceService persistenceService;
+    private final AdapterExecutionLogService executionLogService;
     private final Map<String, AdapterQueryDefinition> queryDefinitions =
             new ConcurrentHashMap<String, AdapterQueryDefinition>();
 
-    public AdapterHubService(TerminologyService terminologyService, EnginePersistenceService persistenceService) {
+    public AdapterHubService(TerminologyService terminologyService, EnginePersistenceService persistenceService,
+                             AdapterExecutionLogService executionLogService) {
         this.terminologyService = terminologyService;
         this.persistenceService = persistenceService;
+        this.executionLogService = executionLogService;
         seedDefinitions();
     }
 
@@ -831,6 +834,35 @@ public class AdapterHubService {
             org.slf4j.LoggerFactory.getLogger(AdapterHubService.class)
                     .warn("[traceId={}] adapter audit log persistence failed: {}",
                             com.medkernel.common.TraceContext.getTraceId(), ex.getMessage());
+        }
+
+        // 同时记录到适配器执行日志
+        try {
+            com.medkernel.adapter.entity.AdapterCallLogEntity logEntry = new com.medkernel.adapter.entity.AdapterCallLogEntity();
+            logEntry.setTraceId(TraceContext.getTraceId());
+            logEntry.setAdapterCode(canonical(adapterCode));
+            logEntry.setQueryCode(canonical(queryCode));
+            logEntry.setStatus(string(result.get("status"), "UNKNOWN"));
+            logEntry.setElapsedMs(result.get("elapsed_ms") instanceof Number
+                    ? ((Number) result.get("elapsed_ms")).longValue() : 0L);
+            logEntry.setPatientId(string(params.get("patient_id"), null));
+            logEntry.setEncounterId(string(params.get("encounter_id"), null));
+            logEntry.setOperatorId(string(params.get("operator_id"), null));
+            if (params != null) {
+                try {
+                    logEntry.setRequestParams(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(params));
+                } catch (Exception ignore) { /* non-critical */ }
+            }
+            if (result != null) {
+                try {
+                    logEntry.setResponseData(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(result));
+                } catch (Exception ignore) { /* non-critical */ }
+            }
+            executionLogService.recordCallLog(logEntry);
+        } catch (RuntimeException ex) {
+            org.slf4j.LoggerFactory.getLogger(AdapterHubService.class)
+                    .warn("[traceId={}] adapter execution log recording failed: {}",
+                            TraceContext.getTraceId(), ex.getMessage());
         }
     }
 
