@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   Col,
+  Collapse,
   Form,
   Input,
   Row,
@@ -46,13 +47,12 @@ const VERSION_STATUS_COLORS: Record<string, string> = {
 };
 
 /**
- * 图谱查询工作台（PR-V2-05）。
+ * 图谱查询工作台（v1.0 GA 收口）。
  *
  * 功能：
  *  - 疾病候选查询（基于症状/体征）
  *  - 证据查询（指南/文献/专家共识）
- *  - 节点/边查询（知识图谱浏览）
- *  - 版本管理（查看/激活版本）
+ *  - 技术详情折叠展示节点、边和版本，避免客户首屏被图数据库细节干扰
  *
  * 后端端点：
  *  - POST /api/graph/disease-candidates    疾病候选查询
@@ -377,11 +377,11 @@ export default function GraphExplore() {
         <div>
           <Space className={styles.eyebrow}>
             <ClusterOutlined />
-            <span>知识工厂 / 图谱查询</span>
+            <span>高级工具 / 图谱查询</span>
           </Space>
           <Title level={2}>图谱查询工作台</Title>
           <Paragraph type="secondary">
-            查询医学知识图谱，包括疾病候选、证据、节点和边。支持基于症状的疾病推断和证据检索。
+            默认只做一件事：输入症状和检查发现，查看候选疾病及证据来源；节点、边和版本细节放在技术详情中。
           </Paragraph>
         </div>
       </div>
@@ -465,9 +465,9 @@ export default function GraphExplore() {
       </Row>
 
       <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
+        <Col span={24}>
           <Card
-            title="证据列表"
+            title="证据依据"
             className={styles.card}
             extra={
               <Button
@@ -491,90 +491,103 @@ export default function GraphExplore() {
             />
           </Card>
         </Col>
-
-        <Col xs={24} lg={12}>
-          <Card
-            title="版本管理"
-            className={styles.card}
-            extra={
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => versionsQuery.refetch()}
-                loading={versionsQuery.isFetching}
-                size="small"
-              >
-                刷新
-              </Button>
-            }
-          >
-            <Table
-              columns={versionColumns}
-              dataSource={versionsQuery.data ?? []}
-              rowKey="version_code"
-              pagination={{ pageSize: 10 }}
-              size="small"
-              loading={versionsQuery.isLoading}
-              scroll={{ x: 800 }}
-            />
-          </Card>
-        </Col>
       </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <Card
-            title="节点列表"
-            className={styles.card}
-            extra={
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => nodesQuery.refetch()}
-                loading={nodesQuery.isFetching}
-                size="small"
-              >
-                刷新
-              </Button>
-            }
-          >
-            <Table
-              columns={nodeColumns}
-              dataSource={nodesQuery.data ?? []}
-              rowKey="node_code"
-              pagination={{ pageSize: 10 }}
-              size="small"
-              loading={nodesQuery.isLoading}
-              scroll={{ x: 800 }}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} lg={12}>
-          <Card
-            title="边列表"
-            className={styles.card}
-            extra={
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => edgesQuery.refetch()}
-                loading={edgesQuery.isFetching}
-                size="small"
-              >
-                刷新
-              </Button>
-            }
-          >
-            <Table
-              columns={edgeColumns}
-              dataSource={edgesQuery.data ?? []}
-              rowKey="edge_id"
-              pagination={{ pageSize: 10 }}
-              size="small"
-              loading={edgesQuery.isLoading}
-              scroll={{ x: 800 }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <Collapse
+        className={styles.technicalCollapse}
+        items={[
+          {
+            key: "technical-details",
+            label: "技术详情：图谱版本、节点和关系",
+            children: (
+              <div className={styles.technicalStack}>
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} lg={12}>
+                    <Card
+                      title="版本管理"
+                      className={styles.card}
+                      extra={
+                        <Button
+                          icon={<ReloadOutlined />}
+                          onClick={() => versionsQuery.refetch()}
+                          loading={versionsQuery.isFetching}
+                          size="small"
+                        >
+                          刷新
+                        </Button>
+                      }
+                    >
+                      <Table
+                        columns={versionColumns}
+                        dataSource={versionsQuery.data ?? []}
+                        rowKey="version_code"
+                        pagination={{ pageSize: 10 }}
+                        size="small"
+                        loading={versionsQuery.isLoading}
+                        scroll={{ x: 800 }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} lg={12}>
+                    <Card
+                      title="节点列表"
+                      className={styles.card}
+                      extra={
+                        <Button
+                          icon={<ReloadOutlined />}
+                          onClick={() => nodesQuery.refetch()}
+                          loading={nodesQuery.isFetching}
+                          size="small"
+                        >
+                          刷新
+                        </Button>
+                      }
+                    >
+                      <Table
+                        columns={nodeColumns}
+                        dataSource={nodesQuery.data ?? []}
+                        rowKey="node_code"
+                        pagination={{ pageSize: 10 }}
+                        size="small"
+                        loading={nodesQuery.isLoading}
+                        scroll={{ x: 800 }}
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    <Card
+                      title="关系列表"
+                      className={styles.card}
+                      extra={
+                        <Button
+                          icon={<ReloadOutlined />}
+                          onClick={() => edgesQuery.refetch()}
+                          loading={edgesQuery.isFetching}
+                          size="small"
+                        >
+                          刷新
+                        </Button>
+                      }
+                    >
+                      <Table
+                        columns={edgeColumns}
+                        dataSource={edgesQuery.data ?? []}
+                        rowKey="edge_id"
+                        pagination={{ pageSize: 10 }}
+                        size="small"
+                        loading={edgesQuery.isLoading}
+                        scroll={{ x: 800 }}
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }

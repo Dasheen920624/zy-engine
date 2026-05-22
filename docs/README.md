@@ -1,23 +1,25 @@
 # 集团医疗智能中枢 MedKernel — 文档中心
 
-> 版本：V3.0 · 2026-05-21（产品架构最终白皮书发布）  
+> 版本：V4.0 · 2026-05-23（v1.0 GA 产品收口）
 > 这是项目所有文档的**唯一权威导航**。任何 AI、产品、前端、后端、QA、实施工程师从这里开始。
 
 ---
 
-## 0. 🔥 顶层 5 大权威文档（任何角色接手前必看的目录）
+## 0. 顶层权威文档（任何角色接手前必看的目录）
 
 | # | 文档 | 一句话 | 阅读时长 | 受众 |
 |---|---|---|:---:|---|
-| 1 | [`AI_CHARTER.md`](AI_CHARTER.md) | **AI 必读 1 页纸** — 7 红线 + 硬约束 + 提交流程 + KD-001~007 | 5 分钟 | 所有 AI |
-| 2 | [`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md) | **产品架构最终白皮书** — 三产品×四大模块 + Controller 归档 + 27 菜单/路由对照 + ADR-0005~0010 + v1.0 GA 七维度 | 10 分钟 | 架构师 / 高级 AI / 产品 |
-| 3 | [`COMPREHENSIVE_REVIEW.md`](COMPREHENSIVE_REVIEW.md) | **全方位最终评审** — 20 维度全栈评审 + 25 个 P0 + 法律合规清单 + 等保 2.0 三级落地 | 15 分钟 | 产品 / 架构 / CTO / 合规 |
-| 4 | [`DEPLOYMENT_DUAL_MODE.md`](DEPLOYMENT_DUAL_MODE.md) | **内外网双部署规格** — 内网（医院本地+国产化）vs 外网（SaaS）差异化矩阵 + 选型决策树 + 双形态 PR 拆分 | 10 分钟 | 实施工程师 / SRE / 售前 |
-| 5 | [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md) | **AI 团队 SOP** — 角色 / 10 步流程 / 多 AI 冲突仲裁 / DoD / 紧急处置 | 10 分钟（按需查） | 所有 AI |
+| 1 | [`PRODUCT_SIMPLIFICATION_V1_GA.md`](PRODUCT_SIMPLIFICATION_V1_GA.md) | **v1.0 GA 产品收口方案** — 一条主线、四个工作区、全功能极简交互、完整服务能力、中国国情验收 | 8 分钟 | 客户 / 产品 / 售前 / 所有 AI |
+| 2 | [`AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md) | **v1.0 GA 并行领单卡** — 下一版本唯一任务入口，按批次支持最大并行开发 | 10 分钟 | AI 团队 / 架构师 |
+| 3 | [`AI_CHARTER.md`](AI_CHARTER.md) | **AI 必读 1 页纸** — 红线 + 硬约束 + 提交流程 | 5 分钟 | 所有 AI |
+| 4 | [`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md) | **产品架构白皮书** — 三产品×模块边界 + Controller 归档 + v1.0 GA 七维度 | 10 分钟 | 架构师 / 高级 AI / 产品 |
+| 5 | [`COMPREHENSIVE_REVIEW.md`](COMPREHENSIVE_REVIEW.md) | **全方位评审** — 20 维度全栈评审 + 法律合规清单 + 等保 2.0 三级落地 | 15 分钟 | 产品 / 架构 / CTO / 合规 |
+| 6 | [`DEPLOYMENT_DUAL_MODE.md`](DEPLOYMENT_DUAL_MODE.md) | **内外网双部署规格** — 医院本地部署优先，SaaS 受控推进 | 10 分钟 | 实施工程师 / SRE / 售前 |
+| 7 | [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md) | **AI 团队 SOP** — claim / lock / review / DoD / 紧急处置 | 10 分钟（按需查） | 所有 AI |
 
-**v0.3 路径配套**：[`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)（演示体验 + 国情合规 12+7 条）+ [`engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md)（工程债时间表 KD-001~007）+ [`engineering/AUDIT-20260521-V3-基线核查.md`](engineering/AUDIT-20260521-V3-基线核查.md)（基线核查）。
+**旧 v0.3 文档说明**：[`AI_TEAM_PR_BACKLOG_V0.3_FINAL.md`](AI_TEAM_PR_BACKLOG_V0.3_FINAL.md)、[`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)、[`engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md) 均为历史证据，不再作为新任务入口。下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**。
 
-**阅读顺序（首次接手）**：1 → 2 → 3 → 4（部署相关任务）或 5（开发任务）→ 配套
+**阅读顺序（首次接手）**：1 → 2 → 3 → 7 → 按任务补读 4/5/6
 
 ---
 
@@ -86,13 +88,13 @@ docs/
 
 ```
 1. docs/README.md                                （5 分钟，本文 — 文档导航）
-2. docs/engineering/00_总入口与AI接手导航.md      （10 分钟，硬门禁与 DoD）
-3. docs/01_产品事实源.md                          （20 分钟，产品全貌）
-4. docs/engineering/02_任务台账.md                （5 分钟，找到你的任务）
-5. docs/05_AI实施手册.md                         （10 分钟，找对应 PR 卡片）
+2. docs/PRODUCT_SIMPLIFICATION_V1_GA.md           （8 分钟，产品主线和菜单收口）
+3. docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md             （10 分钟，找到你的 GA 任务）
+4. docs/engineering/00_总入口与AI接手导航.md      （10 分钟，硬门禁与 DoD）
+5. docs/engineering/02_任务台账.md                （5 分钟，确认任务状态）
 ```
 
-**总计：50 分钟**，即可获取完整产品和任务信息。
+**总计：约 40 分钟**，即可获取产品主线、任务入口和协作门禁。
 
 按任务类型补充阅读：
 - 业务/剧本相关 → `docs/02_场景剧本图.md`（只读对应场景）

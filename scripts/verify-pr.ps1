@@ -506,9 +506,18 @@ if (Test-Path "medkernel-mvp/scripts/verify-encoding.cmd") {
 Show-Section "6. AI 协作冲突检查"
 
 if (Test-Path "medkernel-mvp/scripts/check-ai-collaboration.ps1") {
-  $aiOutput = & "medkernel-mvp/scripts/check-ai-collaboration.ps1" 2>&1
+  $isSyntheticCiTask = $TaskId -match '^CI-PR-\d+$'
+  if ($isSyntheticCiTask) {
+    $aiOutput = & "medkernel-mvp/scripts/check-ai-collaboration.ps1" -Strict 2>&1
+  } else {
+    $aiOutput = & "medkernel-mvp/scripts/check-ai-collaboration.ps1" -TaskId $TaskId -Strict 2>&1
+  }
   if ($LASTEXITCODE -eq 0) {
-    Show-Pass "AI 协作检查 PASS"
+    if ($isSyntheticCiTask) {
+      Show-Pass "AI 协作检查 PASS（CI 合成任务号仅跑全局门禁，不要求 active claim）"
+    } else {
+      Show-Pass "AI 协作检查 PASS"
+    }
   } else {
     Show-Fail "AI 协作冲突检测 FAIL"
     $aiOutput | Select-Object -Last 5 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }

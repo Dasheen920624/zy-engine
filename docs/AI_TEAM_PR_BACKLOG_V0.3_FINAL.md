@@ -4,6 +4,8 @@
 > 适用：所有领 PR-FINAL-* 任务的 AI（架构师 / 高级 / 中级 / 初级）  
 > 上游：[`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md) + [`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md) + [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md) + [`COMPREHENSIVE_REVIEW.md`](COMPREHENSIVE_REVIEW.md) + [`DEPLOYMENT_DUAL_MODE.md`](DEPLOYMENT_DUAL_MODE.md)
 >
+> **归档说明（2026-05-23）**：`v0.3-final` 已发布并打正式 tag，本文只作 PR-FINAL 历史证据，不再作为新任务入口。下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**；新任务从 [`AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md) 领取，产品/页面收口以 [`PRODUCT_SIMPLIFICATION_V1_GA.md`](PRODUCT_SIMPLIFICATION_V1_GA.md) 为准。
+>
 > **核心原则**（不变量，违反者 PR 自动 FAIL）：
 > 1. 任何 PR 必须 → `develop`，不许直接 → `main`（main 受保护）
 > 2. 单 PR diff ≤ 800 行；超出必须拆

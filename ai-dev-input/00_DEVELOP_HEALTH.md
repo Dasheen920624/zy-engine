@@ -9,15 +9,14 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | 🟢 **GREEN — develop @ `6711e5c` + FIX-DEV-010 主干修复已完成，全量后端/前端门禁通过** |
-| 最后更新 | 2026-05-22 |
-| 最后验证 commit | `8ee84f7` (FIX-DEV-010) — develop 主干健康修复提交，基于 origin/develop `6711e5c` |
-| 演示候选 tag | `v0.2-demo`（指向 main `565e8a7`） |
-| 验证命令 | `mvn -q compile` + `medkernel-mvp/scripts/run-tests.ps1` + `medkernel-mvp/scripts/build.ps1` + `frontend eslint/typecheck/vitest/vite build` + `check-ai-collaboration.ps1` |
-| 结果 | **PASS**：后端 compile/test/build 通过；前端 ESLint 0 error、typecheck/test/build 通过；协作 claim/lock 检查通过 |
-| 详细报告 | [docs/engineering/AUDIT-20260520-增量.md](../docs/engineering/AUDIT-20260520-增量.md) |
-| 历史派单 | [docs/engineering/2026-05-20-破窗行动.md](../docs/engineering/2026-05-20-破窗行动.md) — FIX-DEV-001..009 已全部修复 |
-| 发布 PR | [PR #10](https://github.com/Dasheen920624/medkernel/pull/10) — MERGED via squash 2026-05-21 |
+| 状态 | 🟢 **GREEN — v0.3-final 已发布；v1.0 GA 产品主线与并发门禁已收口** |
+| 最后更新 | 2026-05-23 |
+| 最后验证基线 | 本文件所在 commit — v1.0 GA 收口验证 |
+| 当前发布 tag | `v0.3-final`（指向 main `339616f`，PR #44 squash merge） |
+| 下一版本 | `v1.0 GA` / 目标 tag `v1.0.0`；`v0.3-pilot` 并入 GA 证据包，不再单独开发 |
+| 验证命令 | `git diff --check` + `medkernel-mvp/scripts/check-ai-collaboration.ps1 -Strict` + `mvn -q -f medkernel-mvp/pom.xml test` + `medkernel-mvp/scripts/verify-encoding.cmd` + `cd frontend && npm run lint && npm run typecheck && npm test -- --run --reporter=dot && npm run build` |
+| 结果 | **PASS**：协作门禁为 0 active claim / 0 active lock / 0 pending review；后端 test 通过；前端 lint 0 error、typecheck/test/build 通过（保留历史 lint warning 与 Vite chunk-size warning） |
+| 发布 PR | [PR #44](https://github.com/Dasheen920624/medkernel/pull/44) — v0.3-final release, MERGED via squash 2026-05-23 |
 
 ---
 
@@ -33,9 +32,11 @@
 
 ## 🟢 GREEN 状态下的准入
 
-- ✅ 允许领新功能任务（PR-V2-*、AIK-*、SEC-*、EVAL-* 等），按 02_任务台账 取
-- ✅ 允许 push 到 develop（必须本地 `mvn -q compile` PASS + verify-pr.ps1 自检）
-- ✅ 演示候选已 tag `v0.2-demo` 指向 main `565e8a7`，可作为客户演示基线
+- ✅ 允许领 `GA-*` 新任务，按 `docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md` 与 02_任务台账取
+- ✅ GA 阶段任务必须走 `ai/<TASK-ID>/<slug>` 分支 + claim + lock + pending review；普通任务不直接 push `develop`
+- ✅ 合入 `develop` 前必须本地通过协作门禁、后端门禁、前端门禁；release manager 统一合并共享文件改动
+- ✅ 当前演示基线为 tag `v0.3-final`（main `339616f`）；`v0.2-demo` 保留为历史里程碑
+- ✅ 下一阶段任务从 `docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md` 领取；产品和页面必须遵守 `docs/PRODUCT_SIMPLIFICATION_V1_GA.md` 的全功能极简交互规格
 
 ### 演示前 / 部署前还需人工做的事
 
@@ -56,10 +57,11 @@
 | 编号 | 描述 | 演示建议 |
 |---|---|---|
 | KD-001 | WF-001 待办中心后端全 Mock | 演示只看不点 |
-| KD-002 | MpiController 双副本 | 选一份暴露 |
-| KD-003 | UserSyncController 双副本 | 同上 |
-| KD-004 | HikariCP 未接入 | ~~已修复~~ PR-FINAL-15a/15b 已接入 |
-| KD-005~007 | Jackson SNAKE_CASE / OrgContext / Placeholder | 演示功能不受影响或跳过 |
+| ~~KD-002~~ | ~~MpiController 双副本~~ | ✅ PR-FINAL-02 已删除 patientindex 整包 |
+| ~~KD-003~~ | ~~UserSyncController 双副本~~ | ✅ PR-FINAL-03 已删除双副本 |
+| ~~KD-004~~ | ~~HikariCP 未接入~~ | ✅ PR-FINAL-15a/15b 已全量接入 |
+| ~~KD-005~~ | ~~Jackson SNAKE_CASE~~ | ✅ PR-FINAL-16 已全局启用 |
+| KD-006~007 | OrgContext / Placeholder 残留 | 演示功能不受影响或跳过 |
 
 ### 当前 RED 责任任务清单
 

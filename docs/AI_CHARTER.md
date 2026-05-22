@@ -1,14 +1,24 @@
 # MedKernel · AI 实施宪法（1 页纸）
 
-> 版本：1.0 · 2026-05-21  
+> 版本：2.0 · 2026-05-23（v1.0 GA 收口）
 > 任何 AI 接手任何任务前**必读 5 分钟**。本文是「**最少必要约束**」，违反任何一条 = 任务自动拒绝。详细规范见末尾「权威文档链」。
+
+---
+
+## v1.0 GA 阶段覆盖说明
+
+1. 下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**；`v0.3-pilot` 不再作为独立开发版本，真实医院试点验证并入 GA 准入证据。
+2. 新任务只从 [`AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md) 领取，旧 `PR-V2-*` / `PR-V3-*` / `PR-FINAL-*` 只作历史追溯。
+3. 产品第一原则是 [`PRODUCT_SIMPLIFICATION_V1_GA.md`](PRODUCT_SIMPLIFICATION_V1_GA.md)：**最少入口，完整闭环；客户先看业务主线，专家再进高级能力**。
+4. 客户可见功能必须按 `试点准备 → 临床运行 → 质控改进 → 合规运维` 组织；任何新增入口不得把高级工具重新塞回一级主路径。
+5. 开工前必须通过 `scripts/verify-task-prereq.ps1`；提交前必须通过 `scripts/verify-pr.ps1` 与 `medkernel-mvp/scripts/check-ai-collaboration.ps1 -Strict`。
 
 ---
 
 ## 0. 上手前 60 秒自检（5 个问题答不上来就别动手）
 
 1. **我在哪个分支？** → AI 必须在 `ai/<TASK-ID>/<slug>` 或 `develop`。**不许直接动 main**。
-2. **任务编号是什么？** → 必须在 [`docs/engineering/02_任务台账.md`](engineering/02_任务台账.md) 里能找到。
+2. **任务编号是什么？** → GA 新任务必须来自 [`AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md)，并同步登记到 [`docs/engineering/02_任务台账.md`](engineering/02_任务台账.md)。
 3. **我的能力级别？** → 看 [`AI能力分级匹配清单.md`](engineering/AI能力分级匹配清单.md) — 初级不能领架构/跨模块任务。
 4. **我要改哪些文件？** → 在 [`ai-dev-input/10_task_claims/active/`](../ai-dev-input/10_task_claims/active/) 显式声明 `write_scope`，**别人锁的文件不许碰**。
 5. **DEVELOP_HEALTH 是什么颜色？** → 看 [`ai-dev-input/00_DEVELOP_HEALTH.md`](../ai-dev-input/00_DEVELOP_HEALTH.md) — 🔴 就**只能修编译错误**，不准领新任务。
@@ -29,6 +39,15 @@
 | R6 | **发布 / 回滚 / 审核必须写审计** | 走 `ENGINE_AUDIT_LOG`；审计表不许 DELETE / UPDATE |
 | R7 | **日志不许打密码 / API Key / 患者完整身份** | 用户名可打，身份证 / 手机号必须脱敏（前 3 后 4） |
 
+### 1.1 客户体验红线（v1.0 GA 新增）
+
+| # | 红线 | 怎么落地 |
+|---|---|---|
+| C1 | **不许把技术能力堆成客户第一层菜单** | 一级菜单按 `工作台 / 试点准备 / 临床运行 / 质控改进 / 合规运维 / 高级工具` 固定 |
+| C2 | **不许为了“功能全”牺牲主路径可理解性** | 新功能必须能归入四段主线；归不进去就放高级工具或 v1.1+ |
+| C3 | **登录页不许变成认证方式展厅** | 默认账号密码；统一身份认证按医院配置展示；短信/LDAP/MFA/国密作为后台能力或安全承诺 |
+| C4 | **客户演示不许出现任务编号、技术债、Provider 细节** | 首屏、菜单、卡片只讲业务结果和验收证据 |
+
 ---
 
 ## 2. 代码硬约束（CI 会自动卡）
@@ -43,7 +62,7 @@
 - ✅ **包名小写无连字符**：`com.medkernel.datagovernance`（不是 `data-governance`）
 - ✅ **业务表必带 `tenant_id NOT NULL`**；写操作 `created_by` 从 `SecurityContextHolder` 取
 - ✅ **catch 不许吞**：`catch (Exception e) { return null; }` = FAIL；必须 `throw new ApiException(...)` 或显式记 log + rethrow
-- ⚠️ **`DriverManager.getConnection` 净增 = WARN**（KD-004 历史债 29 处，HikariCP 接入前不许新增）
+- ✅ **禁止新增 `DriverManager.getConnection`**；HikariCP 已全量接入，新增连接必须走注入的 `DataSource`
 - ⚠️ **单文件 > 500 行 = WARN**，> 800 行 = FAIL（除非已在豁免名单）
 
 ### 前端（React 18 + TS strict + Vite 5 + AntD 5）
@@ -80,11 +99,11 @@
 ## 4. 提交流程（每步缺一步都不许 push）
 
 ```
-1. scripts/verify-task-prereq.ps1 -TaskId PR-V2-XX -Level senior   ← 接手前自检
+1. scripts/verify-task-prereq.ps1 -TaskId GA-XXX-00 -Level senior   ← 接手前自检
 2. 在 ai-dev-input/10_task_claims/active/ 创建 claim（声明 write_scope）
 3. 读 docs/engineering/reference-implementations/<对应样板>
 4. 编码（ESLint / TypeScript strict 实时拦）
-5. scripts/verify-pr.ps1 -TaskId PR-V2-XX                          ← 提交前自检（10+ 项 grep + mvn compile + npm lint/test/build）
+5. scripts/verify-pr.ps1 -TaskId GA-XXX-00                          ← 提交前自检（10+ 项 grep + mvn compile + npm lint/test/build）
 6. 全 PASS（FAIL=0）才能 commit + push HEAD:develop
 7. 在 ai-dev-input/11_ai_reviews/pending/ 创建 review
 8. APPROVED 后归档 claim / review
@@ -101,13 +120,13 @@
 
 | 编号 | 描述 | 触碰这块前怎么办 |
 |---|---|---|
-| KD-001 | `WorkflowTodoService` 全 Mock，审批/驳回/转办不落库 | 触碰 `workflow/` → 先看 WF-001 是否还在 active，没接通持久化别演示审批流 |
-| KD-002 | `MpiController` 双副本（patient/ + patientindex/） | 触碰 MPI 前必须查 ADR-0005（如未起草，先起草并跟产品对齐保留哪份） |
-| KD-003 | `UserSyncController` 双副本（security/ + security/usersync/） | 同上，需 ADR 决定 |
-| KD-004 | HikariCP 未接入，**29 个文件**直接 `DriverManager.getConnection`（pom 缺 spring-boot-starter-jdbc） | **禁止新增 DriverManager 调用**；接 HikariCP 是单独的 FIX-DEV-* 任务，需架构级 AI 接 |
-| KD-005 | Jackson 全局未启用 `SNAKE_CASE` | application.yml 已显式注释为技术债（会破 20+ 测试），新增 DTO 用 `@JsonProperty("snake_case")` 显式声明 |
+| KD-001 | `WorkflowTodoService` 仍需确认真实持久化闭环 | 触碰 `workflow/` → 必须以 GA 验收剧本验证审批/驳回/转办刷新后仍一致 |
+| ~~KD-002~~ | ~~`MpiController` 双副本~~ | ✅ PR-FINAL-02 已删除 `patientindex/` 整包，保留 `patient/` |
+| ~~KD-003~~ | ~~`UserSyncController` 双副本~~ | ✅ PR-FINAL-03 已删除旧双副本，保留 `security/usersync/` |
+| ~~KD-004~~ | ~~HikariCP 未接入~~ | ✅ PR-FINAL-15a/15b 已全量接入；新增连接只能走 `DataSource` |
+| ~~KD-005~~ | ~~Jackson 全局未启用 `SNAKE_CASE`~~ | ✅ PR-FINAL-16 已全局启用 |
 | KD-006 | `OrgContext` 类型在前后端仍未完全统一 | 改 `frontend/src/api/types.ts` 必须先看 PR-V2-06 / PR-V2-11 是否在锁 |
-| KD-007 | 6 个前端入口仍为占位（`/adapter/hub` `/dify/workflows` `/mpi/patients` `/tenant/onboarding` `/admin/users` `/admin/audit`） | 后端已就绪，前端接通是后续 PR；演示时说"规划中"或不走这些菜单 |
+| KD-007 | 客户可见 Placeholder / 空白 / 404 必须归零 | GA-UX-01 统一收口；不能完成的入口移到高级工具或隐藏 |
 
 ---
 
@@ -122,6 +141,8 @@
 - **能力分级**：[`docs/engineering/AI能力分级匹配清单.md`](engineering/AI能力分级匹配清单.md)
 - **分支策略**：[`docs/engineering/分支策略与发布管理.md`](engineering/分支策略与发布管理.md)
 - **V3 功能矩阵**（写新 endpoint 前必看）：[`docs/engineering/2026-05-21-功能矩阵-V3.md`](engineering/2026-05-21-功能矩阵-V3.md)
+- **v1.0 GA 产品收口**：[`docs/PRODUCT_SIMPLIFICATION_V1_GA.md`](PRODUCT_SIMPLIFICATION_V1_GA.md)
+- **v1.0 GA 并行领单卡**：[`docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md)
 
 ---
 

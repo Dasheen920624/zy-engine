@@ -44,23 +44,14 @@ export interface MenuSection {
 }
 
 /**
- * 侧边栏菜单结构（v0.3-final）。
+ * 侧边栏菜单结构（v1.0 GA 收口）。
  *
- * 命名收口（PRODUCT_ARCHITECTURE_FINAL.md §1.1，禁止再用旧叫法）：
- *   M1「知识工厂」← 旧「配置治理」
- *   M3「质控驾驶舱」← 旧「运营治理」
- *   M4「用户与身份」← 旧「用户与组织」
- *   M4「平台监控」← 旧「系统」
- *
- * 占位入口隐藏策略（v0.3-final）：所有未实装的页面**不出现在菜单**，避免客户点击翻车。
- * 路由本身保留为 PlaceholderPage 兜底（直接访问 URL 仍能看到 hint），AI 团队按 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md 接力实装后再加回菜单。
- *
- * Dify 退化为可选 Provider（ADR-0013 去 Dify 化）：菜单改为「AI 工作流引擎」，去 Dify 品牌。
- *
- * `pr` 字段保留任务编号溯源；`placeholderHint` 仅用于 URL 兜底场景，菜单层面不再展示。
+ * 产品原则见 docs/PRODUCT_SIMPLIFICATION_V1_GA.md：
+ * 试点准备 → 临床运行 → 质控改进 → 合规运维，高级能力二级展开。
+ * 交互形态固定为左侧 SideMenu；顶部 Header 不承载主菜单。
+ * `pr` 字段保留任务溯源，不展示给客户。
  */
 export const menuSections: MenuSection[] = [
-  // ─── 顶部直放：工作台 ───────────────────────────────────
   {
     key: "top",
     label: null,
@@ -80,11 +71,24 @@ export const menuSections: MenuSection[] = [
     ],
   },
 
-  // ─── M1 知识工厂 ──────────────────────────────────────
   {
-    key: "knowledge-factory",
-    label: "知识工厂",
+    key: "pilot-setup",
+    label: "试点准备",
     items: [
+      {
+        key: "implementation-guide",
+        label: "客户实施向导",
+        icon: <RocketOutlined />,
+        path: "/onboarding/implementation-guide",
+        pr: "FE-014",
+      },
+      {
+        key: "tenant-onboarding",
+        label: "租户开通",
+        icon: <ShopOutlined />,
+        path: "/tenant/onboarding",
+        pr: "PR-FINAL-10",
+      },
       {
         key: "config-packages",
         label: "配置包中心",
@@ -98,11 +102,11 @@ export const menuSections: MenuSection[] = [
         path: "/pathway/templates",
       },
       {
-        key: "patient-pathways",
-        label: "患者路径管理",
-        icon: <UserSwitchOutlined />,
-        path: "/pathway/patients",
-        pr: "PATHWAY-ENGINE-COMPLETE",
+        key: "rule-definitions",
+        label: "规则库",
+        icon: <SafetyCertificateOutlined />,
+        path: "/rule/definitions",
+        pr: "PR-FINAL-11",
       },
       {
         key: "terminology-mapping",
@@ -111,17 +115,38 @@ export const menuSections: MenuSection[] = [
         path: "/terminology/mapping",
       },
       {
-        key: "provenance",
-        label: "来源追溯",
-        icon: <FileSearchOutlined />,
-        path: "/provenance",
+        key: "adapter-hub",
+        label: "适配器中心",
+        icon: <ClusterOutlined />,
+        path: "/adapter/hub",
+        pr: "PR-FINAL-12",
+      },
+    ],
+  },
+
+  {
+    key: "clinical-run",
+    label: "临床运行",
+    items: [
+      {
+        key: "mpi",
+        label: "患者主索引",
+        icon: <IdcardOutlined />,
+        path: "/mpi/patients",
+        pr: "PR-FINAL-07",
       },
       {
-        key: "rule-definitions",
-        label: "规则库",
+        key: "patient-pathways",
+        label: "患者路径",
+        icon: <UserSwitchOutlined />,
+        path: "/pathway/patients",
+        pr: "PATHWAY-ENGINE-COMPLETE",
+      },
+      {
+        key: "cdss-fatigue",
+        label: "临床提醒治理",
         icon: <SafetyCertificateOutlined />,
-        path: "/rule/definitions",
-        pr: "PR-FINAL-11",
+        path: "/cdss/fatigue",
       },
       {
         key: "rule-validate",
@@ -129,87 +154,6 @@ export const menuSections: MenuSection[] = [
         icon: <SafetyCertificateOutlined />,
         path: "/rule/validate",
         pr: "PR-V3-09",
-      },
-      {
-        key: "ai-workflows",
-        label: "AI 工作流引擎",
-        icon: <RobotOutlined />,
-        path: "/ai-workflows",
-        pr: "PR-FINAL-13",
-      },
-      {
-        key: "graph-explore",
-        label: "图谱查询",
-        icon: <ClusterOutlined />,
-        path: "/graph/explore",
-        pr: "PR-V2-05",
-      },
-      {
-        key: "adapter-hub",
-        label: "适配器中心",
-        icon: <ClusterOutlined />,
-        path: "/adapter/hub",
-        pr: "PR-FINAL-12",
-      },
-      // 以下入口待实装（参考 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md），实装后从下方移到上方：
-      //   key: graph-explore      path: /graph/explore      PR-V0.4
-    ],
-  },
-
-  // ─── M3 质控驾驶舱 ────────────────────────────────────
-  {
-    key: "cockpit",
-    label: "质控驾驶舱",
-    items: [
-      {
-        key: "qc-dashboard",
-        label: "院级质控驾驶舱",
-        icon: <LineChartOutlined />,
-        path: "/qc/dashboard",
-      },
-      {
-        key: "qc-alerts",
-        label: "质控预警",
-        icon: <AuditOutlined />,
-        path: "/qc/alerts",
-      },
-      {
-        key: "qc-eval-sets",
-        label: "评估指标库",
-        icon: <LineChartOutlined />,
-        path: "/qc/eval/sets",
-      },
-      {
-        key: "qc-eval-results",
-        label: "评估结果",
-        icon: <LineChartOutlined />,
-        path: "/qc/eval/results",
-      },
-      {
-        key: "cdss-fatigue",
-        label: "CDSS 提醒疲劳",
-        icon: <SafetyCertificateOutlined />,
-        path: "/cdss/fatigue",
-      },
-      {
-        key: "insurance-audit",
-        label: "医保智能审核",
-        icon: <FileSearchOutlined />,
-        path: "/qc/insurance",
-        pr: "PR-V2-12",
-      },
-      {
-        key: "aik-review",
-        label: "AI 知识审核",
-        icon: <ReadOutlined />,
-        path: "/aik/sources",
-      },
-      {
-        key: "aik-review-workbench",
-        label: "知识审核台",
-        icon: <ReadOutlined />,
-        path: "/aik/review",
-        pr: "PR-V2-05",
       },
       {
         key: "workflow-todos",
@@ -226,38 +170,61 @@ export const menuSections: MenuSection[] = [
     ],
   },
 
-  // ─── M4 用户与身份 ────────────────────────────────────
   {
-    key: "identity",
-    label: "用户与身份",
+    key: "quality-improve",
+    label: "质控改进",
     items: [
       {
-        key: "identity-bindings",
-        label: "身份绑定管理",
-        icon: <UserSwitchOutlined />,
-        path: "/security/identity-binding",
+        key: "qc-dashboard",
+        label: "院级质控驾驶舱",
+        icon: <LineChartOutlined />,
+        path: "/qc/dashboard",
       },
       {
-        key: "tenant-onboarding",
-        label: "租户开通向导",
-        icon: <ShopOutlined />,
-        path: "/tenant/onboarding",
-        pr: "PR-FINAL-10",
+        key: "qc-alerts",
+        label: "质控预警",
+        icon: <AuditOutlined />,
+        path: "/qc/alerts",
       },
       {
-        key: "implementation-guide",
-        label: "客户实施向导",
-        icon: <RocketOutlined />,
-        path: "/onboarding/implementation-guide",
-        pr: "FE-014",
+        key: "insurance-audit",
+        label: "医保智能审核",
+        icon: <FileSearchOutlined />,
+        path: "/qc/insurance",
+        pr: "PR-V2-12",
       },
       {
-        key: "mpi",
-        label: "患者主索引",
-        icon: <IdcardOutlined />,
-        path: "/mpi/patients",
-        pr: "PR-FINAL-07",
+        key: "qc-eval-sets",
+        label: "评估指标库",
+        icon: <LineChartOutlined />,
+        path: "/qc/eval/sets",
       },
+      {
+        key: "qc-eval-results",
+        label: "评估结果",
+        icon: <LineChartOutlined />,
+        path: "/qc/eval/results",
+      },
+      {
+        key: "aik-review",
+        label: "AI 知识审核",
+        icon: <ReadOutlined />,
+        path: "/aik/sources",
+      },
+      {
+        key: "aik-review-workbench",
+        label: "知识审核台",
+        icon: <ReadOutlined />,
+        path: "/aik/review",
+        pr: "PR-V2-05",
+      },
+    ],
+  },
+
+  {
+    key: "compliance-ops",
+    label: "合规运维",
+    items: [
       {
         key: "admin-users",
         label: "用户管理",
@@ -265,14 +232,19 @@ export const menuSections: MenuSection[] = [
         path: "/admin/users",
         pr: "PR-FINAL-08",
       },
-    ],
-  },
-
-  // ─── M4 平台监控 ──────────────────────────────────────
-  {
-    key: "platform",
-    label: "平台监控",
-    items: [
+      {
+        key: "identity-bindings",
+        label: "身份绑定",
+        icon: <UserSwitchOutlined />,
+        path: "/security/identity-binding",
+      },
+      {
+        key: "admin-audit",
+        label: "审计日志",
+        icon: <DatabaseOutlined />,
+        path: "/admin/audit",
+        pr: "PR-FINAL-09",
+      },
       {
         key: "security-baseline",
         label: "安全基线",
@@ -291,12 +263,31 @@ export const menuSections: MenuSection[] = [
         icon: <ToolOutlined />,
         path: "/notifications/settings",
       },
+    ],
+  },
+  {
+    key: "advanced-tools",
+    label: "高级工具",
+    items: [
       {
-        key: "admin-audit",
-        label: "审计日志",
-        icon: <DatabaseOutlined />,
-        path: "/admin/audit",
-        pr: "PR-FINAL-09",
+        key: "provenance",
+        label: "来源追溯",
+        icon: <FileSearchOutlined />,
+        path: "/provenance",
+      },
+      {
+        key: "graph-explore",
+        label: "图谱查询",
+        icon: <ClusterOutlined />,
+        path: "/graph/explore",
+        pr: "PR-V2-05",
+      },
+      {
+        key: "ai-workflows",
+        label: "AI 工作流",
+        icon: <RobotOutlined />,
+        path: "/ai-workflows",
+        pr: "PR-FINAL-13",
       },
     ],
   },

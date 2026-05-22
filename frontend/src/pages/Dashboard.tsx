@@ -14,14 +14,16 @@ import {
   NodeIndexOutlined,
   ReadOutlined,
   RobotOutlined,
+  RocketOutlined,
   SafetyCertificateOutlined,
+  ShopOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
 
 const { Title, Paragraph, Text } = Typography;
 
 interface CapabilityCard {
-  group: "知识工厂" | "质控驾驶舱" | "用户与身份" | "系统";
+  group: "试点准备" | "临床运行" | "质控改进" | "合规运维" | "高级工具";
   icon: React.ReactNode;
   title: string;
   description: string;
@@ -30,12 +32,7 @@ interface CapabilityCard {
 }
 
 /**
- * 工作台首页（重构版，反映 2026-05 全功能版本）。
- *
- * - 顶部 4 个核心指标卡（演示用 hardcode，PR-V2-12 后接 /api/quality/summary）
- * - "知识工厂" 8 卡 + "质控驾驶舱" 8 卡 + "用户与身份" 3 卡 + "系统" 5 卡
- * - 每张卡含状态徽标：READY 可用 / BETA 体验 / PENDING 占位
- * - 设计意图：医院内网管理台首屏即可俯瞰平台 4 大治理域的运行情况
+ * 工作台首页按客户试点旅程组织，而不是按内部技术模块堆功能。
  */
 export default function Dashboard() {
   return (
@@ -45,7 +42,7 @@ export default function Dashboard() {
           工作台
         </Title>
         <Paragraph type="secondary" className={styles.pageDescription}>
-          集团医疗智能中枢 MedKernel · 知识工厂 / 质控驾驶舱 / 用户与身份 / 平台监控 四大模块
+          集团医疗智能中枢 MedKernel · 试点准备 → 临床运行 → 质控改进 → 合规运维
         </Paragraph>
       </div>
 
@@ -94,27 +91,33 @@ export default function Dashboard() {
       </Row>
 
       <CapabilitySection
-        title="知识工厂"
-        description="配置包、路径、规则、图谱、字典、适配器、AI 工作流引擎与来源——一切对医院 / 集团运营产生影响的资产都在此版本化"
-        cards={CONFIG_GOVERNANCE_CARDS}
+        title="1. 试点准备"
+        description="先把医院、院区、院内系统、路径、规则和字典准备好，让试点能顺利开始。"
+        cards={PILOT_SETUP_CARDS}
       />
 
       <CapabilitySection
-        title="质控驾驶舱"
-        description="质控大盘、智能评估、CDSS 警报疲劳、AI 知识审核、待办与通知——把 AI 决策可监管化"
-        cards={OPERATIONS_GOVERNANCE_CARDS}
+        title="2. 临床运行"
+        description="把患者入径、节点流转、医嘱提醒、医生确认和待办处理串成闭环。"
+        cards={CLINICAL_RUN_CARDS}
       />
 
       <CapabilitySection
-        title="用户与身份"
-        description="患者主索引、多身份源绑定、外网租户开通——支持院内 + 外网双轨身份治理"
-        cards={TENANT_IDENTITY_CARDS}
+        title="3. 质控改进"
+        description="让医务处和科室能看到问题、派发整改、复盘趋势，并形成可导出的证据。"
+        cards={QUALITY_IMPROVE_CARDS}
       />
 
       <CapabilitySection
-        title="平台监控"
-        description="安全基线、Provider 状态、审计日志、用户/通知设置——平台可观测可维护"
-        cards={SYSTEM_CARDS}
+        title="4. 合规运维"
+        description="把身份、审计、安全、监控和通知配置收口，支撑等保、国密和客户上线。"
+        cards={COMPLIANCE_OPS_CARDS}
+      />
+
+      <CapabilitySection
+        title="高级工具"
+        description="给实施、架构和专家使用的深水区能力，不作为客户第一次演示的主路径。"
+        cards={ADVANCED_TOOL_CARDS}
       />
     </div>
   );
@@ -187,206 +190,249 @@ const STATUS_TAG: Record<CapabilityCard["status"], { color: string; label: strin
   PENDING: { color: "default", label: "占位" },
 };
 
-const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
+const PILOT_SETUP_CARDS: CapabilityCard[] = [
   {
-    group: "知识工厂",
+    group: "试点准备",
+    icon: <RocketOutlined />,
+    title: "客户实施向导",
+    description: "按医院试点顺序检查环境、账号、数据、培训和上线准备。",
+    status: "READY",
+    path: "/onboarding/implementation-guide",
+  },
+  {
+    group: "试点准备",
+    icon: <ShopOutlined />,
+    title: "租户开通",
+    description: "开通医院租户、院区、管理员和试点套餐。",
+    status: "READY",
+    path: "/tenant/onboarding",
+  },
+  {
+    group: "试点准备",
     icon: <ApartmentOutlined />,
     title: "配置包中心",
-    description: "PKG-001..004 / PROV-004：配置包版本化、Review、Diff、发布与回滚",
+    description: "把路径、规则、字典打包成可审核、可发布、可回滚的试点版本。",
     status: "READY",
     path: "/config/packages",
   },
   {
-    group: "知识工厂",
+    group: "试点准备",
     icon: <NodeIndexOutlined />,
     title: "路径配置",
-    description: "PATH-001..008：临床路径模板列表、版本对比、X6 画布编辑器",
+    description: "配置专病路径模板，支撑患者入径和节点流转。",
     status: "READY",
     path: "/pathway/templates",
   },
   {
-    group: "知识工厂",
+    group: "试点准备",
     icon: <SafetyCertificateOutlined />,
-    title: "规则配置",
-    description: "RULE-001..008：规则 DSL、命中证据、来源卡片、dry-run 模拟",
+    title: "规则库",
+    description: "管理医嘱、医保、质控规则，并保留来源证据。",
     status: "BETA",
     path: "/rule/definitions",
   },
   {
-    group: "知识工厂",
-    icon: <ShareAltOutlined />,
-    title: "图谱配置",
-    description: "GRAPH-001..005：Neo4j 投影、Dry-run 同步、版本管理",
-    status: "BETA",
-    path: "/graph/explore",
-  },
-  {
-    group: "知识工厂",
+    group: "试点准备",
     icon: <MedicineBoxOutlined />,
     title: "字典映射",
-    description: "TERM-001/002：本地术语 ↔ ICD/RxNorm/LOINC 映射工作台",
+    description: "把院内诊断、医嘱、检验、药品编码映射到标准口径。",
     status: "READY",
     path: "/terminology/mapping",
   },
   {
-    group: "知识工厂",
+    group: "试点准备",
     icon: <ClusterOutlined />,
     title: "适配器中心",
-    description: "ADAPT-001 / INTEROP-001：HIS/EMR/LIS 适配器、组织绑定、CDS Hooks",
+    description: "接入 HIS、EMR、LIS、PACS 等院内系统。",
     status: "READY",
     path: "/adapter/hub",
   },
-  {
-    group: "知识工厂",
-    icon: <RobotOutlined />,
-    title: "AI 工作流引擎",
-    description: "ADR-0013 LLM Gateway：国产大模型直连为主，Dify 退化为可选 WORKFLOW Provider",
-    status: "READY",
-    path: "/ai-workflows",
-  },
-  {
-    group: "知识工厂",
-    icon: <FileSearchOutlined />,
-    title: "来源追溯",
-    description: "PROV-001..003 / REFIT-003：医学/医保来源、引用、资产绑定、发布门禁",
-    status: "BETA",
-    path: "/provenance",
-  },
 ];
 
-const OPERATIONS_GOVERNANCE_CARDS: CapabilityCard[] = [
+const CLINICAL_RUN_CARDS: CapabilityCard[] = [
   {
-    group: "质控驾驶舱",
-    icon: <LineChartOutlined />,
-    title: "院级质控驾驶舱",
-    description: "PR-V2-12：医院 / 集团多组织下钻的质控指标看板",
+    group: "临床运行",
+    icon: <IdcardOutlined />,
+    title: "患者主索引",
+    description: "合并跨院区患者身份，处理就诊标识冲突。",
     status: "READY",
-    path: "/qc/dashboard",
+    path: "/mpi/patients",
   },
   {
-    group: "质控驾驶舱",
-    icon: <AuditOutlined />,
-    title: "质控预警",
-    description: "PR-V2-11：质控告警工单列表 + 派单",
+    group: "临床运行",
+    icon: <NodeIndexOutlined />,
+    title: "患者路径",
+    description: "患者入径、节点流转、变异登记和执行状态查看。",
     status: "READY",
-    path: "/qc/alerts",
+    path: "/pathway/patients",
   },
   {
-    group: "质控驾驶舱",
-    icon: <LineChartOutlined />,
-    title: "评估指标库",
-    description: "EVAL-001/002：智能评估指标模型与评分引擎",
-    status: "READY",
-    path: "/qc/eval/sets",
-  },
-  {
-    group: "质控驾驶舱",
-    icon: <LineChartOutlined />,
-    title: "评估结果",
-    description: "EVAL-002：评估结果与历史对比报告",
-    status: "READY",
-    path: "/qc/eval/results",
-  },
-  {
-    group: "质控驾驶舱",
+    group: "临床运行",
     icon: <SafetyCertificateOutlined />,
-    title: "CDSS 提醒疲劳",
-    description: "CDSS-001..003：医生覆盖记录与提醒疲劳治理",
+    title: "临床提醒治理",
+    description: "治理医嘱提醒、覆盖记录和提醒疲劳。",
     status: "READY",
     path: "/cdss/fatigue",
   },
   {
-    group: "质控驾驶舱",
-    icon: <ReadOutlined />,
-    title: "AI 知识审核",
-    description: "AIK-001..006：医疗知识订阅、AI 生产任务、模型调用日志、版权治理",
+    group: "临床运行",
+    icon: <SafetyCertificateOutlined />,
+    title: "规则校验",
+    description: "对单患者或单医嘱即时试运行规则，验证提醒是否合理。",
     status: "READY",
-    path: "/aik/sources",
+    path: "/rule/validate",
   },
   {
-    group: "质控驾驶舱",
+    group: "临床运行",
     icon: <AuditOutlined />,
     title: "待办中心",
-    description: "WF-001：审核 / 发布 / 回滚 / 整改 / 合规等统一待办与审批",
+    description: "处理审批、整改、发布、回滚和合规待办。",
     status: "READY",
     path: "/workflow/todos",
   },
   {
-    group: "质控驾驶舱",
+    group: "临床运行",
     icon: <AuditOutlined />,
     title: "通知中心",
-    description: "NOTIFY-001：业务通知、订阅设置、已读未读管理",
+    description: "查看业务通知、整改提醒和处理状态。",
     status: "READY",
     path: "/notifications",
   },
 ];
 
-const TENANT_IDENTITY_CARDS: CapabilityCard[] = [
+const QUALITY_IMPROVE_CARDS: CapabilityCard[] = [
   {
-    group: "用户与身份",
-    icon: <IdcardOutlined />,
-    title: "患者主索引",
-    description: "MPI-001：跨院区患者主索引、就诊标识、合并冲突治理",
+    group: "质控改进",
+    icon: <LineChartOutlined />,
+    title: "院级质控驾驶舱",
+    description: "查看全院、院区、科室的质控表现和趋势。",
     status: "READY",
-    path: "/mpi/patients",
+    path: "/qc/dashboard",
   },
   {
-    group: "用户与身份",
-    icon: <IdcardOutlined />,
-    title: "身份绑定管理",
-    description: "SEC-012：多身份源绑定、合并、解绑、冲突检测",
+    group: "质控改进",
+    icon: <AuditOutlined />,
+    title: "质控预警",
+    description: "发现问题、派发整改、跟踪处理闭环。",
     status: "READY",
-    path: "/security/identity-binding",
+    path: "/qc/alerts",
   },
   {
-    group: "用户与身份",
-    icon: <IdcardOutlined />,
-    title: "租户开通",
-    description: "SEC-011：外网客户租户开通、本地密码 + MFA、服务账号",
+    group: "质控改进",
+    icon: <FileSearchOutlined />,
+    title: "医保智能审核",
+    description: "识别 DRG/DIP 和医保规则风险，辅助审核整改。",
     status: "READY",
-    path: "/tenant/onboarding",
+    path: "/qc/insurance",
+  },
+  {
+    group: "质控改进",
+    icon: <LineChartOutlined />,
+    title: "评估指标库",
+    description: "维护质控指标、评分规则和适用范围。",
+    status: "READY",
+    path: "/qc/eval/sets",
+  },
+  {
+    group: "质控改进",
+    icon: <LineChartOutlined />,
+    title: "评估结果",
+    description: "查看评估结果、趋势变化和报告证据。",
+    status: "READY",
+    path: "/qc/eval/results",
+  },
+  {
+    group: "质控改进",
+    icon: <ReadOutlined />,
+    title: "AI 知识审核",
+    description: "人工审核 AI 生成的医学知识，确保可追溯、可发布。",
+    status: "READY",
+    path: "/aik/sources",
+  },
+  {
+    group: "质控改进",
+    icon: <ReadOutlined />,
+    title: "知识审核台",
+    description: "集中处理候选知识、来源证据和审核意见。",
+    status: "READY",
+    path: "/aik/review",
   },
 ];
 
-const SYSTEM_CARDS: CapabilityCard[] = [
+const COMPLIANCE_OPS_CARDS: CapabilityCard[] = [
   {
-    group: "系统",
-    icon: <SafetyCertificateOutlined />,
-    title: "安全基线",
-    description: "SEC-010：审计防篡改、密钥轮换、安全基线规则",
-    status: "READY",
-    path: "/security/baseline",
-  },
-  {
-    group: "系统",
-    icon: <DesktopOutlined />,
-    title: "Provider 状态",
-    description: "OPS-001：DB / Graph / Dify Provider 实时状态与降级原因",
-    status: "READY",
-    path: "/system/providers",
-  },
-  {
-    group: "系统",
+    group: "合规运维",
     icon: <IdcardOutlined />,
     title: "用户管理",
-    description: "SEC-001 / SEC-006/007：用户、角色、SSO（CAS/OIDC/SAML/LDAP）",
+    description: "管理用户、角色、权限和登录安全状态。",
     status: "READY",
     path: "/admin/users",
   },
   {
-    group: "系统",
+    group: "合规运维",
+    icon: <IdcardOutlined />,
+    title: "身份绑定",
+    description: "绑定 HIS、LDAP、SSO 等外部身份，减少重复账号。",
+    status: "READY",
+    path: "/security/identity-binding",
+  },
+  {
+    group: "合规运维",
     icon: <AuditOutlined />,
     title: "审计日志",
-    description: "AUDIT-001 / SEC-010：ENGINE_AUDIT_LOG 防篡改链、查询、导出",
+    description: "查询关键操作留痕，验证审计链完整性。",
     status: "READY",
     path: "/admin/audit",
   },
   {
-    group: "系统",
+    group: "合规运维",
+    icon: <SafetyCertificateOutlined />,
+    title: "安全基线",
+    description: "跟踪等保、国密、弱口令、审计和整改状态。",
+    status: "READY",
+    path: "/security/baseline",
+  },
+  {
+    group: "合规运维",
+    icon: <DesktopOutlined />,
+    title: "Provider 状态",
+    description: "查看数据库、图谱、模型和外部系统的健康状态。",
+    status: "READY",
+    path: "/system/providers",
+  },
+  {
+    group: "合规运维",
     icon: <DesktopOutlined />,
     title: "通知设置",
-    description: "NOTIFY-001：订阅类型、推送渠道、免打扰窗口设置",
+    description: "配置站内信、短信和免打扰策略。",
     status: "READY",
     path: "/notifications/settings",
+  },
+];
+
+const ADVANCED_TOOL_CARDS: CapabilityCard[] = [
+  {
+    group: "高级工具",
+    icon: <FileSearchOutlined />,
+    title: "来源追溯",
+    description: "管理指南、文献、知识资产和发布证据链。",
+    status: "BETA",
+    path: "/provenance",
+  },
+  {
+    group: "高级工具",
+    icon: <ShareAltOutlined />,
+    title: "图谱查询",
+    description: "给专家和实施人员调试医学知识图谱。",
+    status: "BETA",
+    path: "/graph/explore",
+  },
+  {
+    group: "高级工具",
+    icon: <RobotOutlined />,
+    title: "AI 工作流",
+    description: "管理模型网关、降级链和工作流模板。",
+    status: "READY",
+    path: "/ai-workflows",
   },
 ];

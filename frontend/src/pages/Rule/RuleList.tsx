@@ -154,7 +154,7 @@ export default function RuleList() {
             <SafetyCertificateOutlined /> 规则库
           </Title>
           <p className={styles.pageSubtitle}>
-            按医学知识 / 质控规范 / 安全红线编排规则，所有医学规则必须显示来源（ADR-0004）。
+            从医保审核、医嘱安全、路径质控模板开始配置规则；系统自动校验来源、影响范围和发布风险。
           </p>
         </div>
         <div className={styles.headerActions}>
@@ -173,7 +173,7 @@ export default function RuleList() {
           className={styles.searchInput}
           allowClear
           prefix={<SearchOutlined />}
-          placeholder="按规则编码 / 名称搜索"
+          placeholder="搜索规则"
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           onPressEnter={handleSearchSubmit}
@@ -210,7 +210,7 @@ export default function RuleList() {
               <div className={styles.tableEmpty}>
                 <p>暂无规则</p>
                 <p className={styles.tableEmptyHint}>
-                  你可以新建第一条规则，或从配置包中心导入规则集（PR-V2 已实装）。
+                  你可以新建第一条规则，或从配置包中心导入本院规则集。
                 </p>
               </div>
             ),

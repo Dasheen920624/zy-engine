@@ -1,11 +1,19 @@
 # MedKernel · 产品架构最终白皮书
 
-> 版本：1.0 · 2026-05-21（产品架构师视角，最终归口）  
-> 起草人：架构组（Claude Opus 切换产品+架构角色）  
-> 适用：本文是**全项目落地的最高约束**，任何后续决策与本文冲突时以本文为准（除非新开 ADR 推翻）。  
+> 版本：2.0 · 2026-05-23（v1.0 GA 收口更新）
+> 起草人：架构组（Claude Opus 切换产品+架构角色）
+> 适用：本文定义服务边界、Controller 归档、API 风格和 GA 准入。客户可见菜单、登录和演示路径以 [`PRODUCT_SIMPLIFICATION_V1_GA.md`](PRODUCT_SIMPLIFICATION_V1_GA.md) 为准；新任务入口以 [`AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md) 为准。
 > 阅读对象：产品 / 架构 / 开发 AI / 实施工程师 / 客户售前（按需读对应章节）。
 
 ---
+
+## 0. v1.0 GA 收口更新（2026-05-23）
+
+1. `v0.3-final` 已发布并打正式 tag；本文中 `PR-V3-*`、`v0.3-pilot`、占位实装任务编号只保留历史解释价值，不再作为新任务入口。
+2. 下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**；真实医院 8 周试点验证并入 GA 证据包，不再单独开 `v0.3-pilot` 版本线。
+3. 客户第一层信息架构从“模块/技术能力”收口为 `工作台 → 试点准备 → 临床运行 → 质控改进 → 合规运维 → 高级工具`。
+4. “功能最全”通过分层实现：L1 给客户看主路径，L2 给专业人员用工作台，L3 给实施/架构师用高级工具；不再把图谱、AI 工作流、Provider 等技术项放在客户主路径前排。
+5. 本文 §1.2 的模块/路由表仍用于工程边界核对；若与客户菜单命名冲突，以 `PRODUCT_SIMPLIFICATION_V1_GA.md §3` 的菜单信息架构为准。
 
 ## 0. 这份文档解决什么问题
 
@@ -304,12 +312,12 @@
 
 ## 6. v1.0 GA 完成定义（七维度准入）
 
-**v1.0 GA = General Availability**，意味着「可以签正式合同 + 商业化部署 + SLA 担保」。当前 v0.2-demo → v0.3-pilot → v1.0 GA 需要满足以下 7 个维度的全部硬指标：
+**v1.0 GA = General Availability**，意味着「可以签正式合同 + 商业化部署 + SLA 担保」。当前基线是 `v0.3-final`，下一阶段直接进入 v1.0 GA；GA 发布前必须满足以下 7 个维度的全部硬指标：
 
 | 维度 | 准入硬指标 |
 |---|---|
 | **D1 · 编译与测试** | ✅ mvn compile / mvn test / npm lint / npm test / npm build 全 PASS；覆盖率：后端 ≥ 70% / 前端核心路径 ≥ 60% |
-| **D2 · 功能完整** | ✅ 4 治理模块 ≥ 27 个菜单项 100% 可达完整页面（无 PlaceholderPage 入口）；6 大演示剧本一键 fixture 加载后能完整跑完 |
+| **D2 · 功能完整** | ✅ 客户主线 `试点准备 → 临床运行 → 质控改进 → 合规运维` 100% 可达；客户可见入口无 PlaceholderPage；6 大演示剧本一键 fixture 加载后能完整跑完 |
 | **D3 · 性能与并发** | ✅ HikariCP 接入（KD-004 关闭）；100 并发持续 30 min 无 connection leak；P95 < 300ms（核心 API） |
 | **D4 · 合规与安全** | ✅ 等保 2.0 三级评测过；信通院国密评测过；ICP/公安备案；登录页 12 条国情合规清单 100%；JWT 不允许默认密钥；审计链验签 100% |
 | **D5 · 跨数据库** | ✅ Oracle / 达梦 / KingbaseES / PostgreSQL 4 套 DDL 一致；smoke 在 4 套库各跑一次通过；H2 仅开发本地 |
@@ -321,9 +329,9 @@
 | 维度 | 当前 | 缺口 | 工时 |
 |---|---|---|---|
 | D1 | 🟡 mvn ✅ npm 前端在本机跑不动 | 升 Node + CI 跑通 + 覆盖率达标 | 5 天 |
-| D2 | 🟡 8 占位 + 11 路由 - 菜单不一致 | PR-V3-01..13 + 6 剧本 fixture | 25 天 |
-| D3 | 🔴 DriverManager 29 处 / 无 HikariCP | 接 HikariCP + 拆 6 Service + 压测 | 25 天 |
-| D4 | 🔴 国情合规 12+7 条几乎都没做 | PR-V3-COMPLIANCE + 等保评测 | 30 天（含评测周期） |
+| D2 | 🟡 功能多但客户路径不够清晰 | GA-UX-01 + 产品收口剧本 + 6 剧本 fixture | 25 天 |
+| D3 | 🟡 HikariCP 已接入，仍需 GA 压测证据 | 100 并发 30 min + P95/P99/错误率报告 | 10 天 |
+| D4 | 🟡 代码侧合规基础已补，外部评测证据待齐 | GA-SEC-01/02 + 等保/密评/渗透测试 | 30 天（含评测周期） |
 | D5 | 🟡 Oracle 主 / 4 套 DDL 在 / smoke 部分 | 跨库 smoke 全跑 | 10 天 |
 | D6 | 🟡 已有 5 金本位 + 工程规范 30+ | 用户手册 + OpenAPI 自动化 | 10 天 |
 | D7 | 🟡 部署脚本有 / 监控无 | 监控 + 备份/升级演练 | 15 天 |
@@ -355,10 +363,12 @@
 |---|---|
 | [`docs/01_产品事实源.md`](01_产品事实源.md) | 产品**愿景**定义 — 本文不替代，本文是产品愿景**落地**的最终架构 |
 | [`docs/04_页面规格书.md`](04_页面规格书.md) | 18 个目标页面规格 — 本文 §1.2 表是 27 菜单 ↔ 路由的最终对照，是 04 的工程化补充 |
-| [`docs/05_AI实施手册.md`](05_AI实施手册.md) | 12 个 PR-V2-* 任务 — 已交付 v0.2-demo，本文之后用 PR-V3-* 命名空间继续 |
+| [`docs/PRODUCT_SIMPLIFICATION_V1_GA.md`](PRODUCT_SIMPLIFICATION_V1_GA.md) | v1.0 GA 客户主线、菜单、登录、验收标准 — 客户可见体验优先于本文历史菜单命名 |
+| [`docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md) | v1.0 GA 新任务唯一入口 — 本文不再派发 `PR-V3-*` |
+| [`docs/05_AI实施手册.md`](05_AI实施手册.md) | 12 个 PR-V2-* 任务 — 已交付 v0.2-demo，仅作历史实现证据 |
 | [`docs/AI_CHARTER.md`](AI_CHARTER.md) | AI 必读 1 页纸 — 本文是宪法的**解释**和**具体指引**，宪法不变 |
-| [`docs/v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md) | v0.3 演示版重设计（用户体验 + 国情合规） — 本文与之**横向互补**，本文偏架构，那份偏体验 |
-| [`docs/engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md) | v0.3 工程债时间表（KD-001~007） — 本文 §6 GA 准入引用之 |
+| [`docs/v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md) | v0.3 演示版重设计历史证据 — 新登录/菜单要求以 PRODUCT_SIMPLIFICATION_V1_GA 为准 |
+| [`docs/engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md) | v0.3 工程债历史路线图 — v1.0 GA 阶段只作追溯 |
 | [`docs/engineering/2026-05-21-功能矩阵-V3.md`](engineering/2026-05-21-功能矩阵-V3.md) | 当前能力快照 — 本文 §1.2 是「目标态」，矩阵是「现状」，对照看缺口 |
 | [`docs/engineering/AUDIT-20260521-V3-基线核查.md`](engineering/AUDIT-20260521-V3-基线核查.md) | 本次核查报告 — 本文是核查后的最终白皮书 |
 | [`docs/AI_TEAM_SOP.md`](AI_TEAM_SOP.md) | AI 团队执行 SOP — 本文是 What/Why，那份是 How |
@@ -380,4 +390,4 @@
 ---
 
 **End of product architecture final whitepaper.**
-**核心结论**：v0.2-demo 是「能力完整、演示可用」基线，v0.3-pilot 通过 13 个 PR-V3-* + 2 个 ADR 归并把架构债务收口，v1.0 GA 通过 D1-D7 七维度评测达成「可商业化」标准。**整个项目落地时间表**：v0.3 (8 周) → v1.0 GA (再 4 周) = **12 周到正式商业化**。
+**核心结论**：`v0.3-final` 已完成“代码追上文档”的里程碑；下一阶段不再堆功能，而是按 `PRODUCT_SIMPLIFICATION_V1_GA.md` 把客户主路径、合规证据、测试覆盖、运维 SLA 和并发开发治理收口到 **v1.0 GA / tag `v1.0.0`**。
