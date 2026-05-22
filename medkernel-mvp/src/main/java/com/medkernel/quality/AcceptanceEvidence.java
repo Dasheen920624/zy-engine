@@ -46,4 +46,6 @@ public class AcceptanceEvidence {
     public void setCapturedTime(LocalDateTime capturedTime) { this.capturedTime = capturedTime; }
     public LocalDateTime getCreatedTime() { return createdTime; }
     public void setCreatedTime(LocalDateTime createdTime) { this.createdTime = createdTime; }
+    public String getContent() { return description; }
+    public void setContent(String content) { this.description = content; }
 }

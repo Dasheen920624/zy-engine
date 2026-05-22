@@ -441,7 +441,10 @@ public class ReleaseCheckService {
             if (assetType == null) {
                 return true;
             }
-            List<Map<String, Object>> bindings = bindingService.listBindings(null, assetType, resourceCode, null, null);
+            Map<String, String> filters = new java.util.HashMap<String, String>();
+            filters.put("asset_type", assetType);
+            filters.put("asset_code", resourceCode);
+            List<Map<String, Object>> bindings = bindingService.listBindings(filters);
             boolean hasBindings = bindings != null && !bindings.isEmpty();
             if (!hasBindings) {
                 log.info("来源追溯检查失败: {} {} 无来源绑定", resourceType, resourceCode);
@@ -462,7 +465,10 @@ public class ReleaseCheckService {
             if (assetType == null) {
                 return true;
             }
-            List<Map<String, Object>> bindings = bindingService.listBindings(null, assetType, resourceCode, null, null);
+            Map<String, String> filters = new java.util.HashMap<String, String>();
+            filters.put("asset_type", assetType);
+            filters.put("asset_code", resourceCode);
+            List<Map<String, Object>> bindings = bindingService.listBindings(filters);
             if (bindings == null || bindings.isEmpty()) {
                 return true;
             }
@@ -470,7 +476,7 @@ public class ReleaseCheckService {
                 String documentCode = binding.get("documentCode") != null ? String.valueOf(binding.get("documentCode")) : null;
                 if (documentCode != null) {
                     // 检查来源文档的审查状态
-                    Map<String, Object> docResult = persistenceService.queryOne(
+                    Map<String, Object> docResult = queryOne(
                             "SELECT review_status FROM src_document WHERE document_code = ?",
                             documentCode);
                     if (docResult != null) {
@@ -498,14 +504,17 @@ public class ReleaseCheckService {
             if (assetType == null) {
                 return true;
             }
-            List<Map<String, Object>> bindings = bindingService.listBindings(null, assetType, resourceCode, null, null);
+            Map<String, String> filters = new java.util.HashMap<String, String>();
+            filters.put("asset_type", assetType);
+            filters.put("asset_code", resourceCode);
+            List<Map<String, Object>> bindings = bindingService.listBindings(filters);
             if (bindings == null || bindings.isEmpty()) {
                 return true;
             }
             for (Map<String, Object> binding : bindings) {
                 String documentCode = binding.get("documentCode") != null ? String.valueOf(binding.get("documentCode")) : null;
                 if (documentCode != null) {
-                    Map<String, Object> docResult = persistenceService.queryOne(
+                    Map<String, Object> docResult = queryOne(
                             "SELECT expiry_date FROM src_document WHERE document_code = ?",
                             documentCode);
                     if (docResult != null && docResult.get("expiry_date") != null) {
@@ -530,7 +539,7 @@ public class ReleaseCheckService {
     private boolean checkAuditCompleteness(String resourceType, String resourceCode) {
         try {
             if (!properties.localFileDatabase()) {
-                Map<String, Object> result = persistenceService.queryOne(
+                Map<String, Object> result = queryOne(
                         "SELECT COUNT(*) AS cnt FROM engine_audit_log WHERE module = ? AND business_id LIKE ?",
                         mapAuditModule(resourceType), resourceCode + "%");
                 if (result != null) {
@@ -615,6 +624,29 @@ public class ReleaseCheckService {
                 return "ADAPTER";
             default:
                 return resourceType.toUpperCase();
+        }
+    }
+
+    private Map<String, Object> queryOne(String sql, Object... params) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) {
+                ps.setObject(i + 1, params[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    java.util.LinkedHashMap<String, Object> row = new java.util.LinkedHashMap<String, Object>();
+                    int cols = rs.getMetaData().getColumnCount();
+                    for (int c = 1; c <= cols; c++) {
+                        row.put(rs.getMetaData().getColumnLabel(c), rs.getObject(c));
+                    }
+                    return row;
+                }
+            }
+            return null;
+        } catch (SQLException ex) {
+            log.warn("queryOne failed: {}", ex.getMessage());
+            return null;
         }
     }
 

@@ -5,6 +5,7 @@ import com.medkernel.common.exception.BusinessException;
 import com.medkernel.organization.OrganizationContext;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -26,16 +27,18 @@ import java.util.stream.Collectors;
 @Service
 public class NotificationService {
     private final NotificationRepository notificationRepository;
+    private final DataSource dataSource;
 
     // 内存回退存储（持久化未启用时使用）
     private final Map<String, Map<String, Object>> memoryStore = new ConcurrentHashMap<>();
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository, DataSource dataSource) {
         this.notificationRepository = notificationRepository;
+        this.dataSource = dataSource;
     }
 
     private boolean usePersistence() {
-        return notificationRepository.enabled();
+        return dataSource != null;
     }
 
     /**
