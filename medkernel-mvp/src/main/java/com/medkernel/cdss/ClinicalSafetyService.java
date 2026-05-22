@@ -49,13 +49,13 @@ public class ClinicalSafetyService {
         }
         String sql;
         if (properties.localFileDatabase()) {
-            sql = "INSERT INTO hazard_log " +
+            sql = "INSERT INTO clinical_hazard_log " +
                     "(id, tenant_id, hazard_code, hazard_name, hazard_category, hazard_description, " +
                     "affected_process, likelihood, severity, risk_level, control_measures, " +
                     "residual_risk, status, blocking_strategy, created_by, created_time, updated_time) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
         } else {
-            sql = "INSERT INTO hazard_log " +
+            sql = "INSERT INTO clinical_hazard_log " +
                     "(id, tenant_id, hazard_code, hazard_name, hazard_category, hazard_description, " +
                     "affected_process, likelihood, severity, risk_level, control_measures, " +
                     "residual_risk, status, blocking_strategy, created_by, created_time, updated_time) " +
@@ -97,12 +97,12 @@ public class ClinicalSafetyService {
         }
         String sql;
         if (properties.localFileDatabase()) {
-            sql = "UPDATE hazard_log SET hazard_name=?, hazard_category=?, hazard_description=?, " +
+            sql = "UPDATE clinical_hazard_log SET hazard_name=?, hazard_category=?, hazard_description=?, " +
                     "affected_process=?, likelihood=?, severity=?, risk_level=?, control_measures=?, " +
                     "residual_risk=?, status=?, blocking_strategy=?, updated_by=?, updated_time=CURRENT_TIMESTAMP " +
                     "WHERE id=? AND tenant_id=?";
         } else {
-            sql = "UPDATE hazard_log SET hazard_name=?, hazard_category=?, hazard_description=?, " +
+            sql = "UPDATE clinical_hazard_log SET hazard_name=?, hazard_category=?, hazard_description=?, " +
                     "affected_process=?, likelihood=?, severity=?, risk_level=?, control_measures=?, " +
                     "residual_risk=?, status=?, blocking_strategy=?, updated_by=?, updated_time=SYSTIMESTAMP " +
                     "WHERE id=? AND tenant_id=?";
@@ -147,7 +147,7 @@ public class ClinicalSafetyService {
                         "affected_process, likelihood, severity, risk_level, control_measures, " +
                         "residual_risk, status, accepted_by, accepted_time, acceptance_note, " +
                         "blocking_strategy, created_by, created_time, updated_by, updated_time " +
-                        "FROM hazard_log WHERE tenant_id=?");
+                        "FROM clinical_hazard_log WHERE tenant_id=?");
         List<Object> params = new ArrayList<Object>();
         params.add(tenantId);
         if (hazardCategory != null && !hazardCategory.isEmpty()) {
@@ -197,10 +197,10 @@ public class ClinicalSafetyService {
         }
         String sql;
         if (properties.localFileDatabase()) {
-            sql = "UPDATE hazard_log SET status='ACCEPTED', accepted_by=?, accepted_time=CURRENT_TIMESTAMP, " +
+            sql = "UPDATE clinical_hazard_log SET status='ACCEPTED', accepted_by=?, accepted_time=CURRENT_TIMESTAMP, " +
                     "acceptance_note=?, updated_time=CURRENT_TIMESTAMP WHERE id=?";
         } else {
-            sql = "UPDATE hazard_log SET status='ACCEPTED', accepted_by=?, accepted_time=SYSTIMESTAMP, " +
+            sql = "UPDATE clinical_hazard_log SET status='ACCEPTED', accepted_by=?, accepted_time=SYSTIMESTAMP, " +
                     "acceptance_note=?, updated_time=SYSTIMESTAMP WHERE id=?";
         }
         try (Connection connection = connection();
@@ -230,9 +230,9 @@ public class ClinicalSafetyService {
         }
         String sql;
         if (properties.localFileDatabase()) {
-            sql = "UPDATE hazard_log SET status='CLOSED', updated_time=CURRENT_TIMESTAMP WHERE id=?";
+            sql = "UPDATE clinical_hazard_log SET status='CLOSED', updated_time=CURRENT_TIMESTAMP WHERE id=?";
         } else {
-            sql = "UPDATE hazard_log SET status='CLOSED', updated_time=SYSTIMESTAMP WHERE id=?";
+            sql = "UPDATE clinical_hazard_log SET status='CLOSED', updated_time=SYSTIMESTAMP WHERE id=?";
         }
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -258,12 +258,12 @@ public class ClinicalSafetyService {
         }
         String sql;
         if (properties.localFileDatabase()) {
-            sql = "INSERT INTO safety_case " +
+            sql = "INSERT INTO clinical_safety_case " +
                     "(id, tenant_id, case_code, case_name, case_type, scope, goal, argument, " +
                     "evidence_refs, status, version, created_by, created_time, updated_time) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
         } else {
-            sql = "INSERT INTO safety_case " +
+            sql = "INSERT INTO clinical_safety_case " +
                     "(id, tenant_id, case_code, case_name, case_type, scope, goal, argument, " +
                     "evidence_refs, status, version, created_by, created_time, updated_time) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, SYSTIMESTAMP)";
@@ -301,11 +301,11 @@ public class ClinicalSafetyService {
         }
         String sql;
         if (properties.localFileDatabase()) {
-            sql = "UPDATE safety_case SET case_name=?, case_type=?, scope=?, goal=?, argument=?, " +
+            sql = "UPDATE clinical_safety_case SET case_name=?, case_type=?, scope=?, goal=?, argument=?, " +
                     "evidence_refs=?, status=?, version=?, updated_by=?, updated_time=CURRENT_TIMESTAMP " +
                     "WHERE id=? AND tenant_id=?";
         } else {
-            sql = "UPDATE safety_case SET case_name=?, case_type=?, scope=?, goal=?, argument=?, " +
+            sql = "UPDATE clinical_safety_case SET case_name=?, case_type=?, scope=?, goal=?, argument=?, " +
                     "evidence_refs=?, status=?, version=?, updated_by=?, updated_time=SYSTIMESTAMP " +
                     "WHERE id=? AND tenant_id=?";
         }
@@ -345,7 +345,7 @@ public class ClinicalSafetyService {
                 "SELECT id, tenant_id, case_code, case_name, case_type, scope, goal, argument, " +
                         "evidence_refs, status, reviewed_by, reviewed_time, review_note, " +
                         "version, created_by, created_time, updated_by, updated_time " +
-                        "FROM safety_case WHERE tenant_id=?");
+                        "FROM clinical_safety_case WHERE tenant_id=?");
         List<Object> params = new ArrayList<Object>();
         params.add(tenantId);
         if (caseType != null && !caseType.isEmpty()) {
@@ -392,10 +392,10 @@ public class ClinicalSafetyService {
         }
         String sql;
         if (properties.localFileDatabase()) {
-            sql = "UPDATE safety_case SET status=?, reviewed_by=?, reviewed_time=CURRENT_TIMESTAMP, " +
+            sql = "UPDATE clinical_safety_case SET status=?, reviewed_by=?, reviewed_time=CURRENT_TIMESTAMP, " +
                     "review_note=?, updated_time=CURRENT_TIMESTAMP WHERE id=?";
         } else {
-            sql = "UPDATE safety_case SET status=?, reviewed_by=?, reviewed_time=SYSTIMESTAMP, " +
+            sql = "UPDATE clinical_safety_case SET status=?, reviewed_by=?, reviewed_time=SYSTIMESTAMP, " +
                     "review_note=?, updated_time=SYSTIMESTAMP WHERE id=?";
         }
         try (Connection connection = connection();
@@ -453,7 +453,7 @@ public class ClinicalSafetyService {
         }
 
         // 危险日志统计
-        String hazardSql = "SELECT risk_level, status, COUNT(*) AS cnt FROM hazard_log WHERE tenant_id=? " +
+        String hazardSql = "SELECT risk_level, status, COUNT(*) AS cnt FROM clinical_hazard_log WHERE tenant_id=? " +
                 "GROUP BY risk_level, status";
         Map<String, Integer> riskDist = new LinkedHashMap<String, Integer>();
         riskDist.put("LOW", 0);
@@ -494,7 +494,7 @@ public class ClinicalSafetyService {
         summary.put("status_distribution", statusDist);
 
         // 安全案例统计
-        String caseSql = "SELECT status, COUNT(*) AS cnt FROM safety_case WHERE tenant_id=? GROUP BY status";
+        String caseSql = "SELECT status, COUNT(*) AS cnt FROM clinical_safety_case WHERE tenant_id=? GROUP BY status";
         Map<String, Integer> caseStatusDist = new LinkedHashMap<String, Integer>();
         caseStatusDist.put("DRAFT", 0);
         caseStatusDist.put("UNDER_REVIEW", 0);
@@ -552,7 +552,7 @@ public class ClinicalSafetyService {
                 "affected_process, likelihood, severity, risk_level, control_measures, " +
                 "residual_risk, status, accepted_by, accepted_time, acceptance_note, " +
                 "blocking_strategy, created_by, created_time, updated_by, updated_time " +
-                "FROM hazard_log WHERE id=?";
+                "FROM clinical_hazard_log WHERE id=?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, hazardId);
@@ -571,7 +571,7 @@ public class ClinicalSafetyService {
         String sql = "SELECT id, tenant_id, case_code, case_name, case_type, scope, goal, argument, " +
                 "evidence_refs, status, reviewed_by, reviewed_time, review_note, " +
                 "version, created_by, created_time, updated_by, updated_time " +
-                "FROM safety_case WHERE id=?";
+                "FROM clinical_safety_case WHERE id=?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, caseId);

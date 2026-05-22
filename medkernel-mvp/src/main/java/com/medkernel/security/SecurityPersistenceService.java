@@ -164,17 +164,22 @@ public class SecurityPersistenceService {
      * 写审计日志。
      */
     public void writeAuditLog(Long userId, Long tenantId, String action, String ip, String detail) {
-        String sql = "INSERT INTO sec_auth_audit_log (id, user_id, tenant_id, action, ip_address, detail, created_time) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String eventResult = (action != null && (action.endsWith("FAILED") || action.endsWith("LOCKED")))
+                ? "FAILURE" : "SUCCESS";
+        String sql = "INSERT INTO sec_auth_audit_log (id, user_id, tenant_id, username, event_type, "
+                + "event_result, ip_address, failure_reason, created_time) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, Ids.next());
             ps.setLong(2, userId);
             ps.setLong(3, tenantId);
-            ps.setString(4, action);
-            ps.setString(5, ip);
-            ps.setString(6, detail);
-            ps.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(4, null);
+            ps.setString(5, action);
+            ps.setString(6, eventResult);
+            ps.setString(7, ip);
+            ps.setString(8, detail);
+            ps.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
             ps.executeUpdate();
         } catch (SQLException ex) {
             log.error("write audit log failed for user {} action {}", userId, action, ex);

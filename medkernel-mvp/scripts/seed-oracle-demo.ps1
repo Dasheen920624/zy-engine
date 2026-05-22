@@ -7,6 +7,8 @@ param(
   [string]$GroupCode = "GROUP_DEMO",
   [string]$HospitalCode = "HOSPITAL_DEMO",
   [string]$DepartmentCode = "DEPT_CARDIOLOGY",
+  [string]$AuthUsername = $env:MEDKERNEL_SEED_USERNAME,
+  [string]$AuthPassword = $env:MEDKERNEL_SEED_PASSWORD,
   [string]$SamplesDir = "",
   [switch]$SkipCleanup
 )
@@ -39,6 +41,12 @@ if ([string]::IsNullOrWhiteSpace($Username)) {
 }
 if ([string]::IsNullOrWhiteSpace($Password)) {
   throw "Please set MEDKERNEL_DB_PASSWORD before seeding Oracle demo data."
+}
+if ([string]::IsNullOrWhiteSpace($AuthUsername)) {
+  $AuthUsername = "admin"
+}
+if ([string]::IsNullOrWhiteSpace($AuthPassword)) {
+  $AuthPassword = "demo123"
 }
 
 $sqlplus = (Get-Command sqlplus -ErrorAction Stop).Source
@@ -120,7 +128,18 @@ if (-not $health.success) {
   throw "Health check failed."
 }
 
-$providers = Invoke-RestMethod -Uri "$BaseUrl/system/providers" -Method Get
+$loginBody = @{
+  username = $AuthUsername
+  password = $AuthPassword
+} | ConvertTo-Json -Depth 5
+$loginBytes = [System.Text.Encoding]::UTF8.GetBytes($loginBody)
+$login = Invoke-RestMethod -Uri "$BaseUrl/auth/login" -Method Post -ContentType "application/json; charset=utf-8" -Body $loginBytes
+if (-not $login.success -or [string]::IsNullOrWhiteSpace($login.data.token)) {
+  throw "Seed login failed for user $AuthUsername."
+}
+$headers["Authorization"] = "Bearer $($login.data.token)"
+
+$providers = Invoke-RestMethod -Uri "$BaseUrl/system/providers" -Method Get -Headers $headers
 $database = $providers.data.providers.database
 if (-not $database.ready -or $database.provider -ne "ORACLE" -or -not $database.production_ready) {
   throw "Backend is not running in Oracle production mode. Current database provider=$($database.provider), ready=$($database.ready), production_ready=$($database.production_ready)."

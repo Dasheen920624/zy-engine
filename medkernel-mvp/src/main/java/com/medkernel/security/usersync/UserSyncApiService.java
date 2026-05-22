@@ -372,7 +372,7 @@ public class UserSyncApiService {
      */
     private SecurityUser createPlatformUser(Long tenantId, ExternalUser externalUser) {
         // 生成随机密码哈希
-        String passwordHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+        String passwordHash = "$2a$10$GNycXiBqR1ydr7zFjdVuKec3GoB4Y1x.YUyLK2jvhYsUTBEZlSjkC";
 
         String sql = "INSERT INTO sec_user (id, tenant_id, username, password_hash, display_name, "
                 + "email, phone, status, created_by, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";

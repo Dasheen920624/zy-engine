@@ -59,7 +59,7 @@ public class SecurityFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        String path = httpRequest.getRequestURI();
+        String path = normalizePath(httpRequest);
         // OPTIONS 请求（CORS 预检）和白名单路径跳过认证
         if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod()) || isPublicPath(path)) {
             try {
@@ -106,6 +106,15 @@ public class SecurityFilter implements Filter {
             return header.substring(BEARER_PREFIX.length()).trim();
         }
         return null;
+    }
+
+    private String normalizePath(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isEmpty() && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+        return path.isEmpty() ? "/" : path;
     }
 
     private boolean isPublicPath(String path) {

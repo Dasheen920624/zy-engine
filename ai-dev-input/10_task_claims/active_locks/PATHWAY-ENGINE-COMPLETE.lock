@@ -1,7 +1,0 @@
-task_id: PATHWAY-ENGINE-COMPLETE
-claim_id: PATHWAY-ENGINE-COMPLETE-S01
-owner: claude-opus-4-7@pathway-engine-complete
-branch: claude/pathway-engine-complete
-git_base_commit: 67f271a
-created_at: 2026-05-21T22:50+08:00
-last_heartbeat: 2026-05-21T22:50+08:00
