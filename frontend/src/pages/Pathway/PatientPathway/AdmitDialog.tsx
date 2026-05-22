@@ -3,7 +3,7 @@
  */
 
 import { useState } from "react";
-import { Alert, Button, Form, Input, Modal, Select, Space, Spin, Typography, message } from "antd";
+import { Alert, Button, Form, Input, Modal, Select, Space, Typography, message } from "antd";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   admitPatientPathway,

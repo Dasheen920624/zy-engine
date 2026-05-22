@@ -13,9 +13,6 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Alert, Button, Empty, Result, Select, Spin, Typography } from "antd";
 import { ArrowLeftOutlined, DiffOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import CodeMirror from "@uiw/react-codemirror";
-import { json } from "@codemirror/lang-json";
-import { oneDark } from "@codemirror/theme-one-dark";
 import { diffPathway, getPathway } from "../../api/pathway";
 import type { PathwayDiffResult } from "../../api/pathway";
 import { describeDiffItem, diffTotals, pickDiffSection } from "./helpers/pathwayDiff";
@@ -273,13 +270,9 @@ export default function PathwayDiff() {
                   <Spin />
                 ) : fromConfigQuery.data?.published_config ? (
                   <div className={styles.jsonContainer} aria-label="diff-from-json">
-                    <CodeMirror
-                      value={stringifyJson(fromConfigQuery.data.published_config)}
-                      extensions={[json()]}
-                      theme={oneDark}
-                      editable={false}
-                      basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: false }}
-                    />
+                    <pre className={styles.jsonReadOnly}>
+                      {stringifyJson(fromConfigQuery.data.published_config)}
+                    </pre>
                   </div>
                 ) : (
                   <Empty description="该版本无已发布配置" />
@@ -291,13 +284,9 @@ export default function PathwayDiff() {
                   <Spin />
                 ) : toConfigQuery.data?.published_config ? (
                   <div className={styles.jsonContainer} aria-label="diff-to-json">
-                    <CodeMirror
-                      value={stringifyJson(toConfigQuery.data.published_config)}
-                      extensions={[json()]}
-                      theme={oneDark}
-                      editable={false}
-                      basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: false }}
-                    />
+                    <pre className={styles.jsonReadOnly}>
+                      {stringifyJson(toConfigQuery.data.published_config)}
+                    </pre>
                   </div>
                 ) : (
                   <Empty description="该版本无已发布配置" />

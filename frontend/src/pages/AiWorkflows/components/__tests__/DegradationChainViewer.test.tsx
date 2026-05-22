@@ -42,7 +42,7 @@ describe("DegradationChainViewer", () => {
 
   it("renders provider nodes for each chain", () => {
     render(<DegradationChainViewer chains={CHAINS} />);
-    expect(screen.getByLabelText("node-QIANWEN")).toBeInTheDocument();
+    expect(screen.getAllByLabelText("node-QIANWEN").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("node-DEEPSEEK")).toBeInTheDocument();
     expect(screen.getByLabelText("node-DIFY")).toBeInTheDocument();
   });

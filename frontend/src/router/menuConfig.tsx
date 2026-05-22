@@ -7,6 +7,7 @@ import {
   DesktopOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
+  IdcardOutlined,
   LineChartOutlined,
   MedicineBoxOutlined,
   NodeIndexOutlined,
@@ -206,8 +207,14 @@ export const menuSections: MenuSection[] = [
         path: "/tenant/onboarding",
         pr: "PR-FINAL-10",
       },
+      {
+        key: "mpi",
+        label: "患者主索引",
+        icon: <IdcardOutlined />,
+        path: "/mpi/patients",
+        pr: "PR-FINAL-07",
+      },
       // 以下入口待实装：
-      //   key: mpi                path: /mpi/patients        PR-FINAL-07
       //   key: admin-users        path: /admin/users         PR-FINAL-08
     ],
   },

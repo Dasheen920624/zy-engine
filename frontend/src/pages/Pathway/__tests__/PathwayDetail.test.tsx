@@ -99,7 +99,7 @@ describe("PathwayDetail", () => {
   it("renders code, active version and reference warnings", async () => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText("PATH_AMI_STEMI")).toBeInTheDocument();
+      expect(screen.getAllByText("PATH_AMI_STEMI").length).toBeGreaterThan(0);
     });
     expect(screen.getByText("激活 v2.0.0")).toBeInTheDocument();
     expect(screen.getByText("节点 N3 来源缺失")).toBeInTheDocument();

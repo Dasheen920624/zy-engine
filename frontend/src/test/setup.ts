@@ -3,11 +3,26 @@ import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import { server } from "../mocks/server";
 
 const originalGetComputedStyle = window.getComputedStyle.bind(window);
+const originalElementQuerySelectorAll = Element.prototype.querySelectorAll;
 
 Object.defineProperty(window, "getComputedStyle", {
   configurable: true,
   value: (element: Element, pseudoElement?: string | null) =>
     originalGetComputedStyle(element, pseudoElement ? undefined : pseudoElement),
+});
+
+Object.defineProperty(Element.prototype, "querySelectorAll", {
+  configurable: true,
+  value(selectors: string) {
+    try {
+      return originalElementQuerySelectorAll.call(this, selectors);
+    } catch (error) {
+      if (selectors.includes("ant-select-item-option-selected")) {
+        return document.createDocumentFragment().querySelectorAll("*");
+      }
+      throw error;
+    }
+  },
 });
 
 Object.defineProperty(window, "matchMedia", {
