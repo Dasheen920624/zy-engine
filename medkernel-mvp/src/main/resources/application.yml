@@ -47,9 +47,7 @@ spring:
   application:
     name: medkernel-mvp
   jackson:
-    # 06_后端开发规范 §3 要求全局 SNAKE_CASE，但当前 Service 层 DTO 与契约测试
-    # 大量依赖 camelCase（PatientPathwayInstance、RuleDefinition 等），一次切换会破坏 20+ 测试。
-    # 本轮先仅启用 NON_NULL 与日期 ISO 字符串，full SNAKE_CASE 迁移见 AUDIT §1.4 拆独立任务。
+    property-naming-strategy: SNAKE_CASE
     default-property-inclusion: NON_NULL
     serialization:
       write-dates-as-timestamps: false

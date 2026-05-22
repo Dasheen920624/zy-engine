@@ -23,7 +23,7 @@ const NAME_TYPES = new Set(["NAME", "PATIENT_NAME", "姓名"]);
 const ETHNICITY_TYPES = new Set(["ETHNICITY", "NATION", "民族"]);
 
 export interface MpiPatientRecord {
-  platformPatientId: string;
+  platform_patient_id: string;
   displayName: string;
   idCardNo?: string;
   phone?: string;
@@ -34,10 +34,10 @@ export interface MpiPatientRecord {
   verifiedCount: number;
   visitCount: number;
   conflictCount: number;
-  sourceSystems: string[];
+  source_systems: string[];
   identities: PatientIdentity[];
   visits: VisitIdentity[];
-  updatedTime?: string;
+  updated_time?: string;
 }
 
 export function maskIdCard(value?: string, reveal = false): string {
@@ -53,11 +53,11 @@ export function maskPhone(value?: string, reveal = false): string {
 }
 
 export function maskExternalId(identity: PatientIdentity, reveal = false): string {
-  if (ID_CARD_TYPES.has(identity.identityType)) return maskIdCard(identity.externalId, reveal);
-  if (PHONE_TYPES.has(identity.identityType)) return maskPhone(identity.externalId, reveal);
-  if (!identity.externalId) return "未登记";
-  if (reveal || identity.externalId.length <= 8) return identity.externalId;
-  return `${identity.externalId.slice(0, 4)}****${identity.externalId.slice(-4)}`;
+  if (ID_CARD_TYPES.has(identity.identity_type)) return maskIdCard(identity.external_id, reveal);
+  if (PHONE_TYPES.has(identity.identity_type)) return maskPhone(identity.external_id, reveal);
+  if (!identity.external_id) return "未登记";
+  if (reveal || identity.external_id.length <= 8) return identity.external_id;
+  return `${identity.external_id.slice(0, 4)}****${identity.external_id.slice(-4)}`;
 }
 
 export function patientIdentityTypeLabel(type: string): string {
@@ -127,7 +127,7 @@ export function parseIdList(value?: string): number[] {
 }
 
 function findExternalId(identities: PatientIdentity[], types: Set<string>): string | undefined {
-  return identities.find((identity) => types.has(identity.identityType))?.externalId;
+  return identities.find((identity) => types.has(identity.identity_type))?.external_id;
 }
 
 function deriveStatus(identities: PatientIdentity[]): PatientIdentityStatus {
@@ -137,14 +137,14 @@ function deriveStatus(identities: PatientIdentity[]): PatientIdentityStatus {
 }
 
 export function buildPatientRecord(input: {
-  platformPatientId: string;
+  platform_patient_id: string;
   identities: PatientIdentity[];
   visits?: VisitIdentity[];
   conflicts?: IdentityConflict[];
 }): MpiPatientRecord {
   const identities = input.identities;
   const visits = input.visits ?? [];
-  const sourceSystems = Array.from(new Set(identities.map((identity) => identity.sourceSystem))).filter(Boolean);
+  const source_systems = Array.from(new Set(identities.map((identity) => identity.source_system))).filter(Boolean);
   const confidenceValues = identities
     .map((identity) => identity.confidence)
     .filter((confidence): confidence is number => typeof confidence === "number");
@@ -156,26 +156,26 @@ export function buildPatientRecord(input: {
     identities.filter((identity) => identity.status === "CONFLICT").length;
   const name = findExternalId(identities, NAME_TYPES);
   const ethnicity = findExternalId(identities, ETHNICITY_TYPES) as Ethnicity | undefined;
-  const newestTime = [...identities.map((identity) => identity.updatedTime), ...visits.map((visit) => visit.updatedTime)]
+  const newestTime = [...identities.map((identity) => identity.updated_time), ...visits.map((visit) => visit.updated_time)]
     .filter((value): value is string => Boolean(value))
     .sort()
     .at(-1);
 
   return {
-    platformPatientId: input.platformPatientId,
-    displayName: name || `患者 ${input.platformPatientId.slice(-4) || input.platformPatientId}`,
+    platform_patient_id: input.platform_patient_id,
+    displayName: name || `患者 ${input.platform_patient_id.slice(-4) || input.platform_patient_id}`,
     idCardNo: findExternalId(identities, ID_CARD_TYPES),
     phone: findExternalId(identities, PHONE_TYPES),
     ethnicity,
     status: deriveStatus(identities),
     confidence: averageConfidence,
     identityCount: identities.length,
-    verifiedCount: identities.filter((identity) => identity.manuallyVerified).length,
+    verifiedCount: identities.filter((identity) => identity.manually_verified).length,
     visitCount: visits.length,
     conflictCount,
-    sourceSystems,
+    source_systems,
     identities,
     visits,
-    updatedTime: newestTime,
+    updated_time: newestTime,
   };
 }

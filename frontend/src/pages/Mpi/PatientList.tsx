@@ -11,8 +11,8 @@ const { Text } = Typography;
 
 export interface PatientSearchPayload {
   keyword: string;
-  identityType: string;
-  sourceSystem: string;
+  identity_type: string;
+  source_system: string;
 }
 
 export interface PatientListProps {
@@ -21,7 +21,7 @@ export interface PatientListProps {
   loading?: boolean;
   showSensitive?: boolean;
   onSearch: (payload: PatientSearchPayload) => void;
-  onSelectPatient: (platformPatientId: string) => void;
+  onSelectPatient: (platform_patient_id: string) => void;
 }
 
 const SEARCH_TYPES = [
@@ -50,8 +50,8 @@ export default function PatientList({
   onSelectPatient,
 }: PatientListProps) {
   const [keyword, setKeyword] = useState("");
-  const [identityType, setIdentityType] = useState("PLATFORM_PATIENT_ID");
-  const [sourceSystem, setSourceSystem] = useState("HIS");
+  const [identity_type, setIdentityType] = useState("PLATFORM_PATIENT_ID");
+  const [source_system, setSourceSystem] = useState("HIS");
   const [status, setStatus] = useState<PatientIdentityStatus | "">("");
   const [ethnicity, setEthnicity] = useState<Ethnicity | "">("");
 
@@ -68,8 +68,8 @@ export default function PatientList({
   const submitSearch = () => {
     onSearch({
       keyword: keyword.trim(),
-      identityType,
-      sourceSystem: sourceSystem.trim() || "HIS",
+      identity_type,
+      source_system: source_system.trim() || "HIS",
     });
   };
 
@@ -85,9 +85,9 @@ export default function PatientList({
       <div className={styles.patientList}>
         {filteredPatients.map((patient) => (
           <PatientCard
-            key={patient.platformPatientId}
+            key={patient.platform_patient_id}
             patient={patient}
-            selected={patient.platformPatientId === selectedPatientId}
+            selected={patient.platform_patient_id === selectedPatientId}
             showSensitive={showSensitive}
             onSelect={onSelectPatient}
           />
@@ -120,7 +120,7 @@ export default function PatientList({
       <div className={styles.searchBar} role="search">
         <Select
           className={styles.searchType}
-          value={identityType}
+          value={identity_type}
           options={SEARCH_TYPES}
           onChange={setIdentityType}
           aria-label="搜索标识类型"
@@ -134,10 +134,10 @@ export default function PatientList({
           placeholder="输入患者 ID、证件号或外部号"
           aria-label="患者搜索关键字"
         />
-        {identityType !== "PLATFORM_PATIENT_ID" && (
+        {identity_type !== "PLATFORM_PATIENT_ID" && (
           <Input
             className={styles.sourceInput}
-            value={sourceSystem}
+            value={source_system}
             onChange={(event) => setSourceSystem(event.target.value)}
             placeholder="来源系统"
             aria-label="来源系统"

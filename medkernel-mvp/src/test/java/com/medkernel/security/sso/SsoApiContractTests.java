@@ -103,20 +103,20 @@ class SsoApiContractTests {
     @Test
     void saveConfigCreatesNewConfig() throws Exception {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("configCode", "OIDC-TEST");
-        body.put("configName", "OIDC 测试配置");
-        body.put("protocolType", "OIDC");
+        body.put("config_code", "OIDC-TEST");
+        body.put("config_name", "OIDC 测试配置");
+        body.put("protocol_type", "OIDC");
         body.put("status", "DISABLED");
         body.put("priority", 10);
-        body.put("oidcIssuer", "https://accounts.example.com");
-        body.put("oidcClientId", "test-client-id");
-        body.put("oidcClientSecret", "test-client-secret");
-        body.put("oidcRedirectUri", "https://app.example.com/callback");
-        body.put("oidcScope", "openid profile email");
-        body.put("oidcResponseType", "code");
-        body.put("autoCreateUser", false);
-        body.put("autoUpdateUser", false);
-        body.put("sessionTimeoutMinutes", 480);
+        body.put("oidc_issuer", "https://accounts.example.com");
+        body.put("oidc_client_id", "test-client-id");
+        body.put("oidc_client_secret", "test-client-secret");
+        body.put("oidc_redirect_uri", "https://app.example.com/callback");
+        body.put("oidc_scope", "openid profile email");
+        body.put("oidc_response_type", "code");
+        body.put("auto_create_user", false);
+        body.put("auto_update_user", false);
+        body.put("session_timeout_minutes", 480);
 
         Map<String, Object> result = invokePost("/api/sso/configs", body);
         assertEquals(Boolean.TRUE, result.get("success"), "success should be true");
@@ -128,14 +128,14 @@ class SsoApiContractTests {
     void deleteConfigWithValidIdReturnsSuccess() throws Exception {
         // First create a config to delete
         Map<String, Object> createBody = new LinkedHashMap<>();
-        createBody.put("configCode", "DELETE-TEST");
-        createBody.put("configName", "待删除配置");
-        createBody.put("protocolType", "CAS");
+        createBody.put("config_code", "DELETE-TEST");
+        createBody.put("config_name", "待删除配置");
+        createBody.put("protocol_type", "CAS");
         createBody.put("status", "DISABLED");
         createBody.put("priority", 99);
-        createBody.put("autoCreateUser", false);
-        createBody.put("autoUpdateUser", false);
-        createBody.put("sessionTimeoutMinutes", 480);
+        createBody.put("auto_create_user", false);
+        createBody.put("auto_update_user", false);
+        createBody.put("session_timeout_minutes", 480);
         invokePost("/api/sso/configs", createBody);
 
         // Get the created config

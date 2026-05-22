@@ -89,10 +89,10 @@ class UserSyncApiContractTests {
     @Test
     void createSourceReturnsSuccess() throws Exception {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("sourceCode", "LIS");
-        body.put("sourceName", "检验信息系统");
-        body.put("sourceType", "LIS");
-        body.put("syncMode", "MANUAL");
+        body.put("source_code", "LIS");
+        body.put("source_name", "检验信息系统");
+        body.put("source_type", "LIS");
+        body.put("sync_mode", "MANUAL");
         body.put("status", "ACTIVE");
         body.put("description", "LIS 用户同步源");
 
@@ -111,7 +111,7 @@ class UserSyncApiContractTests {
     @Test
     void updateSourceReturnsSuccess() throws Exception {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("sourceName", "医院信息系统（已更新）");
+        body.put("source_name", "医院信息系统（已更新）");
         body.put("description", "HIS 用户同步源（已更新）");
 
         Map<String, Object> result = invokePost("/api/user-sync/sources/4001", body);
@@ -137,7 +137,7 @@ class UserSyncApiContractTests {
     @Test
     void triggerSyncReturnsTask() throws Exception {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("taskType", "MANUAL");
+        body.put("task_type", "MANUAL");
 
         List<Map<String, Object>> users = Arrays.asList(
                 createUser("EXT001", "user001", "用户001", "user001@example.com", "13800000001", "内科", "医生"),
@@ -158,7 +158,7 @@ class UserSyncApiContractTests {
     @Test
     void triggerSyncWithEmptyUsersReturnsTask() throws Exception {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("taskType", "MANUAL");
+        body.put("task_type", "MANUAL");
         body.put("users", Collections.emptyList());
 
         Map<String, Object> result = invokePost("/api/user-sync/sources/4001/sync", body);
@@ -183,7 +183,7 @@ class UserSyncApiContractTests {
     void listTaskLogsReturnsEmptyList() throws Exception {
         // First create a task
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("taskType", "MANUAL");
+        body.put("task_type", "MANUAL");
         body.put("users", Collections.emptyList());
 
         Map<String, Object> syncResult = invokePost("/api/user-sync/sources/4001/sync", body);
@@ -203,9 +203,9 @@ class UserSyncApiContractTests {
     private Map<String, Object> createUser(String externalId, String username, String displayName,
                                            String email, String phone, String department, String position) {
         Map<String, Object> user = new LinkedHashMap<>();
-        user.put("externalId", externalId);
+        user.put("external_id", externalId);
         user.put("username", username);
-        user.put("displayName", displayName);
+        user.put("display_name", displayName);
         user.put("email", email);
         user.put("phone", phone);
         user.put("department", department);

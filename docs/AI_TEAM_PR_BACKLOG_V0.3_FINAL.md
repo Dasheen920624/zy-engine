@@ -40,7 +40,7 @@
 | **PR-FINAL-14** | 砍菜单 + Dashboard PENDING 卡更新 | 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 | 初级 | 0.5 天 |
 | **PR-FINAL-15a** | HikariCP 框架接入 + 5 核心 PersistenceService 改造 | 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-15b** | 剩余 24 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | ✅ DONE | 架构师 | 2 天 |
-| **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | 🟡 TODO | 架构师 | 5 天 |
+| **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 | 架构师 | 5 天 |
 | **PR-FINAL-17** | 拆 EnginePersistenceService（2175 行）| 3 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | 🟡 TODO | 架构师 | 14 天 |
 | **PR-FINAL-19** | 抽取剩余 ~430 处 inline → CSS Modules | 3 | 🟡 TODO | 高级 | 5 天 |

@@ -32,17 +32,17 @@ interface LoadedPatientPayload {
 }
 
 async function loadPatientByPlatformId(
-  tenantId: string,
-  platformPatientId: string,
+  tenant_id: string,
+  platform_patient_id: string,
   conflicts: IdentityConflict[],
 ): Promise<LoadedPatientPayload> {
   const [identities, visits] = await Promise.all([
-    listPatientIdentities(tenantId, platformPatientId),
-    listPatientVisitIdentities(tenantId, platformPatientId),
+    listPatientIdentities(tenant_id, platform_patient_id),
+    listPatientVisitIdentities(tenant_id, platform_patient_id),
   ]);
   return {
     record: buildPatientRecord({
-      platformPatientId,
+      platform_patient_id,
       identities,
       visits,
       conflicts,
@@ -54,43 +54,43 @@ async function loadPatientByPlatformId(
 
 export function MpiPatientsPage() {
   const queryClient = useQueryClient();
-  const tenantId = getOrgContext().tenant_id || "TENANT_DEMO";
+  const tenant_id = getOrgContext().tenant_id || "TENANT_DEMO";
   const [patients, setPatients] = useState<MpiPatientRecord[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>();
   const [showSensitive, setShowSensitive] = useState(false);
 
   const conflictsQuery = useQuery({
-    queryKey: ["mpi", "conflicts", tenantId],
-    queryFn: () => getPendingConflicts(tenantId),
+    queryKey: ["mpi", "conflicts", tenant_id],
+    queryFn: () => getPendingConflicts(tenant_id),
   });
 
   const identitiesQuery = useQuery({
-    queryKey: ["mpi", "patient-identities", tenantId, selectedPatientId],
-    queryFn: () => listPatientIdentities(tenantId, selectedPatientId || ""),
+    queryKey: ["mpi", "patient-identities", tenant_id, selectedPatientId],
+    queryFn: () => listPatientIdentities(tenant_id, selectedPatientId || ""),
     enabled: Boolean(selectedPatientId),
   });
 
   const visitsQuery = useQuery({
-    queryKey: ["mpi", "patient-visits", tenantId, selectedPatientId],
-    queryFn: () => listPatientVisitIdentities(tenantId, selectedPatientId || ""),
+    queryKey: ["mpi", "patient-visits", tenant_id, selectedPatientId],
+    queryFn: () => listPatientVisitIdentities(tenant_id, selectedPatientId || ""),
     enabled: Boolean(selectedPatientId),
   });
 
   const selectedPatient = useMemo(
-    () => patients.find((patient) => patient.platformPatientId === selectedPatientId),
+    () => patients.find((patient) => patient.platform_patient_id === selectedPatientId),
     [patients, selectedPatientId],
   );
 
   useEffect(() => {
     if (!selectedPatientId || !identitiesQuery.data || !visitsQuery.data) return;
     const nextRecord = buildPatientRecord({
-      platformPatientId: selectedPatientId,
+      platform_patient_id: selectedPatientId,
       identities: identitiesQuery.data,
       visits: visitsQuery.data,
       conflicts: conflictsQuery.data ?? [],
     });
     setPatients((prev) => {
-      const withoutCurrent = prev.filter((patient) => patient.platformPatientId !== selectedPatientId);
+      const withoutCurrent = prev.filter((patient) => patient.platform_patient_id !== selectedPatientId);
       return [nextRecord, ...withoutCurrent];
     });
   }, [conflictsQuery.data, identitiesQuery.data, selectedPatientId, visitsQuery.data]);
@@ -100,23 +100,23 @@ export function MpiPatientsPage() {
       if (!payload.keyword) {
         throw new Error("请输入患者 ID、证件号或外部号");
       }
-      if (payload.identityType === "PLATFORM_PATIENT_ID") {
-        return loadPatientByPlatformId(tenantId, payload.keyword, conflictsQuery.data ?? []);
+      if (payload.identity_type === "PLATFORM_PATIENT_ID") {
+        return loadPatientByPlatformId(tenant_id, payload.keyword, conflictsQuery.data ?? []);
       }
       const identity = await findPatientByExternalId({
-        tenantId,
-        identityType: payload.identityType,
-        sourceSystem: payload.sourceSystem,
-        externalId: payload.keyword,
+        tenant_id,
+        identity_type: payload.identity_type,
+        source_system: payload.source_system,
+        external_id: payload.keyword,
       });
-      return loadPatientByPlatformId(tenantId, identity.platformPatientId, conflictsQuery.data ?? []);
+      return loadPatientByPlatformId(tenant_id, identity.platform_patient_id, conflictsQuery.data ?? []);
     },
     onSuccess: ({ record }) => {
       setPatients((prev) => {
-        const withoutCurrent = prev.filter((patient) => patient.platformPatientId !== record.platformPatientId);
+        const withoutCurrent = prev.filter((patient) => patient.platform_patient_id !== record.platform_patient_id);
         return [record, ...withoutCurrent];
       });
-      setSelectedPatientId(record.platformPatientId);
+      setSelectedPatientId(record.platform_patient_id);
       message.success("患者主索引已加载");
     },
     onError: (error) => {
@@ -128,7 +128,7 @@ export function MpiPatientsPage() {
     mutationFn: (identityId: number) => verifyPatientIdentity(identityId, "platform-admin"),
     onSuccess: () => {
       message.success("标识已人工核验");
-      queryClient.invalidateQueries({ queryKey: ["mpi", "patient-identities", tenantId, selectedPatientId] });
+      queryClient.invalidateQueries({ queryKey: ["mpi", "patient-identities", tenant_id, selectedPatientId] });
     },
     onError: (error) => {
       message.error(error instanceof Error ? error.message : "核验失败");
@@ -136,10 +136,10 @@ export function MpiPatientsPage() {
   });
 
   const detectMutation = useMutation({
-    mutationFn: () => detectConflicts(tenantId),
+    mutationFn: () => detectConflicts(tenant_id),
     onSuccess: () => {
       message.success("冲突检测完成");
-      queryClient.invalidateQueries({ queryKey: ["mpi", "conflicts", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["mpi", "conflicts", tenant_id] });
     },
     onError: (error) => {
       message.error(error instanceof Error ? error.message : "冲突检测失败");
@@ -148,25 +148,25 @@ export function MpiPatientsPage() {
 
   const resolveMutation = useMutation({
     mutationFn: async (payload: ResolveConflictPayload) => {
-      if (payload.resolutionType === "MERGE" && payload.targetPatientIdentityId) {
-        const sourceIds = payload.sourcePatientIdentityIds.filter(
-          (identityId) => identityId !== payload.targetPatientIdentityId,
+      if (payload.resolution_type === "MERGE" && payload.target_patient_identity_id) {
+        const source_ids = payload.source_patient_identity_ids.filter(
+          (identityId) => identityId !== payload.target_patient_identity_id,
         );
         await Promise.all(
-          sourceIds.map((sourceId) =>
+          source_ids.map((source_id) =>
             mergePatientIdentities({
-              sourceId,
-              targetId: payload.targetPatientIdentityId as number,
-              mergedBy: "platform-admin",
+              source_id,
+              target_id: payload.target_patient_identity_id as number,
+              merged_by: "platform-admin",
             }),
           ),
         );
       }
       await resolveConflict(payload.conflictId, {
-        resolutionType: payload.resolutionType,
-        resolutionNotes: payload.resolutionNotes,
-        resolvedBy: "platform-admin",
-        targetPatientIdentityId: payload.targetPatientIdentityId,
+        resolution_type: payload.resolution_type,
+        resolution_notes: payload.resolution_notes,
+        resolved_by: "platform-admin",
+        target_patient_identity_id: payload.target_patient_identity_id,
       });
     },
     onSuccess: () => {

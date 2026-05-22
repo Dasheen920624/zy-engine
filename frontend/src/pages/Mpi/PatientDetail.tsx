@@ -39,20 +39,20 @@ export default function PatientDetail({
   const identityColumns: ColumnsType<PatientIdentity> = [
     {
       title: "标识类型",
-      dataIndex: "identityType",
-      key: "identityType",
+      dataIndex: "identity_type",
+      key: "identity_type",
       render: (type: string) => patientIdentityTypeLabel(type),
     },
     {
       title: "外部 ID",
-      dataIndex: "externalId",
-      key: "externalId",
+      dataIndex: "external_id",
+      key: "external_id",
       render: (_: string, record) => <span className={styles.mono}>{maskExternalId(record, showSensitive)}</span>,
     },
     {
       title: "来源系统",
-      dataIndex: "sourceSystem",
-      key: "sourceSystem",
+      dataIndex: "source_system",
+      key: "source_system",
     },
     {
       title: "状态",
@@ -70,7 +70,7 @@ export default function PatientDetail({
       title: "核验",
       key: "verify",
       render: (_, record) =>
-        record.manuallyVerified ? (
+        record.manually_verified ? (
           <Tag icon={<CheckCircleOutlined />} color="success">
             已核验
           </Tag>
@@ -85,34 +85,34 @@ export default function PatientDetail({
   const visitColumns: ColumnsType<VisitIdentity> = [
     {
       title: "平台就诊 ID",
-      dataIndex: "platformVisitId",
-      key: "platformVisitId",
+      dataIndex: "platform_visit_id",
+      key: "platform_visit_id",
       render: (value: string) => <span className={styles.mono}>{value}</span>,
     },
     {
       title: "就诊类型",
-      dataIndex: "visitType",
-      key: "visitType",
+      dataIndex: "visit_type",
+      key: "visit_type",
     },
     {
       title: "外部标识",
       key: "external",
       render: (_, record) => (
         <span>
-          {visitIdentityTypeLabel(record.identityType)} · <span className={styles.mono}>{maskExternalId(record as unknown as PatientIdentity, showSensitive)}</span>
+          {visitIdentityTypeLabel(record.identity_type)} · <span className={styles.mono}>{maskExternalId(record as unknown as PatientIdentity, showSensitive)}</span>
         </span>
       ),
     },
     {
       title: "日期",
-      dataIndex: "visitDate",
-      key: "visitDate",
+      dataIndex: "visit_date",
+      key: "visit_date",
       render: (value?: string) => value || "—",
     },
     {
       title: "科室",
-      dataIndex: "departmentCode",
-      key: "departmentCode",
+      dataIndex: "department_code",
+      key: "department_code",
       render: (value?: string) => value || "—",
     },
   ];
@@ -130,7 +130,7 @@ export default function PatientDetail({
       <div className={styles.detailHeader}>
         <div>
           <Title level={4}>{patient.displayName}</Title>
-          <Text className={styles.mono}>{patient.platformPatientId}</Text>
+          <Text className={styles.mono}>{patient.platform_patient_id}</Text>
         </div>
         <Space>
           <EyeOutlined />
@@ -161,7 +161,7 @@ export default function PatientDetail({
           { key: "ethnicity", label: "民族", children: patient.ethnicity || "未登记" },
           { key: "status", label: "主索引状态", children: <Tag color={statusColor(patient.status)}>{statusLabel(patient.status)}</Tag> },
           { key: "confidence", label: "平均置信度", children: `${patient.confidence}%` },
-          { key: "updated", label: "最近更新", children: formatTime(patient.updatedTime) },
+          { key: "updated", label: "最近更新", children: formatTime(patient.updated_time) },
         ]}
       />
 

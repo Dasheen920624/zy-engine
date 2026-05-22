@@ -15,10 +15,10 @@ const { Paragraph, Text, Title } = Typography;
 
 export interface ResolveConflictPayload {
   conflictId: number;
-  resolutionType: ConflictResolutionType;
-  resolutionNotes?: string;
-  targetPatientIdentityId?: number;
-  sourcePatientIdentityIds: number[];
+  resolution_type: ConflictResolutionType;
+  resolution_notes?: string;
+  target_patient_identity_id?: number;
+  source_patient_identity_ids: number[];
 }
 
 export interface MergeWorkbenchProps {
@@ -46,8 +46,8 @@ export default function MergeWorkbench({
   onResolve,
 }: MergeWorkbenchProps) {
   const [selectedConflictId, setSelectedConflictId] = useState<number | undefined>(conflicts[0]?.id);
-  const [resolutionType, setResolutionType] = useState<ConflictResolutionType>("MERGE");
-  const [targetPatientIdentityId, setTargetPatientIdentityId] = useState<number | undefined>();
+  const [resolution_type, setResolutionType] = useState<ConflictResolutionType>("MERGE");
+  const [target_patient_identity_id, setTargetPatientIdentityId] = useState<number | undefined>();
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
@@ -65,22 +65,22 @@ export default function MergeWorkbench({
     [conflicts, selectedConflictId],
   );
 
-  const conflictIdentityIds = parseIdList(selectedConflict?.patientIdentityIds);
+  const conflictIdentityIds = parseIdList(selectedConflict?.patient_identity_ids);
   const identityOptions = identities
     .filter((identity) => !conflictIdentityIds.length || conflictIdentityIds.includes(identity.id))
     .map((identity) => ({
       value: identity.id,
-      label: `${patientIdentityTypeLabel(identity.identityType)} · ${identity.sourceSystem} · #${identity.id}`,
+      label: `${patientIdentityTypeLabel(identity.identity_type)} · ${identity.source_system} · #${identity.id}`,
     }));
 
   const submitResolution = () => {
     if (!selectedConflict) return;
     onResolve({
       conflictId: selectedConflict.id,
-      resolutionType,
-      resolutionNotes: notes.trim() || undefined,
-      targetPatientIdentityId,
-      sourcePatientIdentityIds: conflictIdentityIds,
+      resolution_type,
+      resolution_notes: notes.trim() || undefined,
+      target_patient_identity_id,
+      source_patient_identity_ids: conflictIdentityIds,
     });
   };
 
@@ -120,7 +120,7 @@ export default function MergeWorkbench({
                         <Tag color={statusColor(conflict.status)}>{statusLabel(conflict.status)}</Tag>
                       </Space>
                     }
-                    description={conflict.conflictDescription || conflict.conflictType}
+                    description={conflict.conflict_description || conflict.conflict_type}
                   />
                 </List.Item>
               )}
@@ -134,13 +134,13 @@ export default function MergeWorkbench({
           {selectedConflict ? (
             <>
               <Paragraph className={styles.conflictDescription}>
-                {selectedConflict.conflictDescription || selectedConflict.conflictType}
+                {selectedConflict.conflict_description || selectedConflict.conflict_type}
               </Paragraph>
               <div className={styles.resolveForm}>
                 <label>
                   <span>处理方式</span>
                   <Select
-                    value={resolutionType}
+                    value={resolution_type}
                     options={RESOLUTION_OPTIONS}
                     onChange={setResolutionType}
                     aria-label="处理方式"
@@ -150,7 +150,7 @@ export default function MergeWorkbench({
                   <span>目标标识</span>
                   <Select
                     allowClear
-                    value={targetPatientIdentityId}
+                    value={target_patient_identity_id}
                     options={identityOptions}
                     placeholder="选择目标标识"
                     onChange={setTargetPatientIdentityId}
@@ -171,7 +171,7 @@ export default function MergeWorkbench({
                   type="primary"
                   icon={<MergeCellsOutlined />}
                   loading={resolving}
-                  disabled={resolutionType === "MERGE" && !targetPatientIdentityId}
+                  disabled={resolution_type === "MERGE" && !target_patient_identity_id}
                   onClick={submitResolution}
                 >
                   确认处理

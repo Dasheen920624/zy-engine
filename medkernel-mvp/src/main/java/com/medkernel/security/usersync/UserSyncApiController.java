@@ -137,7 +137,7 @@ public class UserSyncApiController {
                                                       @RequestBody Map<String, Object> request,
                                                       HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        String taskType = (String) request.getOrDefault("taskType", "MANUAL");
+        String taskType = (String) request.getOrDefault("task_type", "MANUAL");
 
         // 获取外部用户数据（模拟）
         List<UserSyncApiService.ExternalUser> externalUsers = getExternalUsers(request);
@@ -173,9 +173,9 @@ public class UserSyncApiController {
 
         return usersData.stream()
                 .map(userData -> new UserSyncApiService.ExternalUser(
-                        (String) userData.get("externalId"),
+                        (String) userData.get("external_id"),
                         (String) userData.get("username"),
-                        (String) userData.get("displayName"),
+                        (String) userData.get("display_name"),
                         (String) userData.get("email"),
                         (String) userData.get("phone"),
                         (String) userData.get("department"),
