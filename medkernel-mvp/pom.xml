@@ -108,6 +108,19 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.7.0</version>
         </dependency>
+        <!-- PR-FINAL-25: Flyway DB migration（数据库版本管理）。
+             - Flyway 8.5.13 是最后一个支持 Spring Boot 2.7 / JDK 1.8 的版本（9+ 要 JDK 11）。
+             - flyway-core 包含 PostgreSQL / MySQL / H2 / Oracle 等内建 vendor 支持。
+             - KingbaseES（PostgreSQL 兼容）由 PostgreSQL adapter 处理：jdbc:postgresql 协议直接走。
+             - DM（达梦）：8.x 后兼容 Oracle，由 Oracle adapter 处理；老版本由 flyway-database-oracle 兜底。
+             - 配置：medkernel.flyway.enabled=true 时启用，会在 PersistenceService.@PostConstruct
+               loadSchemaStatements() 之前执行 migration（Spring Boot 默认顺序 Flyway → @PostConstruct）。
+             - 入口类：com.medkernel.persistence.flyway.MedKernelFlywayConfig。 -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>8.5.13</version>
+        </dependency>
         <!-- PR-FINAL-22: 国密 SM2 / SM3 / SM4（BouncyCastle）—— 合规上线必经。
              - jdk15on = "JDK 1.5 (and later)"；1.70 是 jdk15on 命名系列最后一版（2021 年 LTS）。
              - 选 1.70 而非 1.78 的原因：BC 1.78 的 JCE Provider 签名证书是 2022 后签发，
