@@ -123,11 +123,25 @@ export const menuSections: MenuSection[] = [
         pr: "PR-FINAL-11",
       },
       {
+        key: "rule-validate",
+        label: "规则校验",
+        icon: <SafetyCertificateOutlined />,
+        path: "/rule/validate",
+        pr: "PR-V3-09",
+      },
+      {
         key: "ai-workflows",
         label: "AI 工作流引擎",
         icon: <RobotOutlined />,
         path: "/ai-workflows",
         pr: "PR-FINAL-13",
+      },
+      {
+        key: "graph-explore",
+        label: "图谱查询",
+        icon: <ClusterOutlined />,
+        path: "/graph/explore",
+        pr: "PR-V2-05",
       },
       {
         key: "adapter-hub",
@@ -177,10 +191,24 @@ export const menuSections: MenuSection[] = [
         path: "/cdss/fatigue",
       },
       {
+        key: "insurance-audit",
+        label: "医保智能审核",
+        icon: <FileSearchOutlined />,
+        path: "/qc/insurance",
+        pr: "PR-V2-12",
+      },
+      {
         key: "aik-review",
         label: "AI 知识审核",
         icon: <ReadOutlined />,
         path: "/aik/sources",
+      },
+      {
+        key: "aik-review-workbench",
+        label: "知识审核台",
+        icon: <ReadOutlined />,
+        path: "/aik/review",
+        pr: "PR-V2-05",
       },
       {
         key: "workflow-todos",

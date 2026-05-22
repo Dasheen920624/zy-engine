@@ -1,0 +1,111 @@
+/* MedKernel · 规则校验工作台 CSS Modules（PR-V3-09）
+ *
+ * 规约：所有颜色 / 字号 / 间距 / 圆角 / 阴影 / 字体必须走 tokens（var(--mk-*)），
+ * 严禁 hex / px / rem 字面量。详见 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md §6。
+ */
+
+/* ─── 共享页框 ─── */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-5);
+  padding: var(--mk-space-6);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mk-space-4);
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+  color: var(--mk-text-secondary);
+  font-size: var(--mk-text-sm);
+  margin-bottom: var(--mk-space-2);
+}
+
+/* ─── 卡片容器 ─── */
+.card {
+  background: var(--mk-bg-panel);
+  border-radius: var(--mk-radius-md);
+  box-shadow: var(--mk-shadow-sm);
+}
+
+/* ─── JSON 输入框 ─── */
+.jsonInput {
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-relaxed);
+  min-height: 200px;
+  resize: vertical;
+}
+
+/* ─── 加载状态 ─── */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mk-space-3);
+  padding: var(--mk-space-9) 0;
+}
+
+/* ─── 空状态 ─── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mk-space-3);
+  padding: var(--mk-space-9) 0;
+}
+
+.emptyIcon {
+  font-size: var(--mk-space-9);
+  color: var(--mk-text-tertiary);
+}
+
+/* ─── 结果区域 ─── */
+.resultSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-4);
+}
+
+.resultAlert {
+  margin-bottom: var(--mk-space-3);
+}
+
+/* ─── 命中表格 ─── */
+.hitTable {
+  margin-top: var(--mk-space-3);
+}
+
+/* ─── 评估摘要 ─── */
+.summaryCard {
+  margin-top: var(--mk-space-4);
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-md);
+}
+
+.summarySpace {
+  width: 100%;
+}
+
+/* ─── 响应式布局 ─── */
+@media (max-width: 1100px) {
+  .page {
+    padding: var(--mk-space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: var(--mk-space-3);
+  }
+}
