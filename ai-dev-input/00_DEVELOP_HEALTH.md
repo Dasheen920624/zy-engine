@@ -9,12 +9,12 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | 🟢 **GREEN — CI 双 check 全过，已合并 main 并 tag v0.2-demo** |
+| 状态 | 🔴 **RED — develop @ `de19acc` 编译失败，冻结新任务，仅允许 FIX-DEV-010 主干编译修复** |
 | 最后更新 | 2026-05-22 |
-| 最后验证 commit | `bf77832` (develop) — 安全加固 + 代码质量修复 |
+| 最后验证 commit | `de19acc` (develop) — 编译失败，IdentityBinding 重命名后拆分仓储仍引用旧类名 |
 | 演示候选 tag | `v0.2-demo`（指向 main `565e8a7`） |
 | 验证命令 | `cd medkernel-mvp && mvn -q compile && mvn test` + CI guard-rules + backend-build-test |
-| 结果 | **261 文件编译 PASS、248 测试 0 失败 0 错误**；CI 双 check 全 SUCCESS |
+| 结果 | **mvn -q compile FAIL**：`IdentityProviderRepository` / `SecurityUserRowMapper` 仍引用已重命名的 `IdentityBinding` |
 | 详细报告 | [docs/engineering/AUDIT-20260520-增量.md](../docs/engineering/AUDIT-20260520-增量.md) |
 | 历史派单 | [docs/engineering/2026-05-20-破窗行动.md](../docs/engineering/2026-05-20-破窗行动.md) — FIX-DEV-001..009 已全部修复 |
 | 发布 PR | [PR #10](https://github.com/Dasheen920624/medkernel/pull/10) — MERGED via squash 2026-05-21 |
@@ -60,6 +60,12 @@
 | KD-003 | UserSyncController 双副本 | 同上 |
 | KD-004 | HikariCP 未接入 | ~~已修复~~ PR-FINAL-15a/15b 已接入 |
 | KD-005~007 | Jackson SNAKE_CASE / OrgContext / Placeholder | 演示功能不受影响或跳过 |
+
+### 当前 RED 责任任务清单
+
+| Fix Task | 责任任务 | 状态 | 解决方式 |
+|---|---|---|---|
+| FIX-DEV-010 | PR-FINAL-18 × SEC-008 集成 | IN_PROGRESS | 将拆分后的 identity provider 仓储和 mapper 对齐 `SsoIdentityBinding`；规范化阻塞协作哨兵的 active claim / lock 元数据；验证 `mvn -q compile`、协作检查和 verify-pr |
 
 ### 已解决的历史 RED 阻塞（FIX-DEV-001..009，归档）
 
