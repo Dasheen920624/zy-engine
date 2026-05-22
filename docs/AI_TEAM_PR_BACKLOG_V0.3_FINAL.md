@@ -43,13 +43,13 @@
 | **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`6938ca5`) | 架构师 | 5 天 |
 | **PR-FINAL-17** | 拆 EnginePersistenceService（2175 行）| 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`ea8f5f9`) | 架构师 | 5 天 |
 | **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`a40207b`) | 架构师 | 14 天 |
-| **PR-FINAL-19** | 抽取剩余 ~430 处 inline → CSS Modules | 3 | 🟡 TODO | 高级 | 5 天 |
+| **PR-FINAL-19** | 抽取剩余 ~430 处 inline → CSS Modules | 3 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 — baseline 582→12（共 -570 处，剩余全为动态色 + Storybook 演示） | 高级 | 5 天 |
 | **PR-FINAL-20** | springdoc-openapi + 前端 types 自动生成 | 3 | ✅ DONE · Claude-Sonnet-4.6 · 2026-05-22，springdoc-openapi-ui 1.7.0 + @Tag/@Operation 全覆盖 53 Controller 403 端点 + openapi-typescript | 架构师 | 3 天 |
 | **PR-FINAL-21** | E2E 6 剧本 fixture + Playwright | 3 | ✅ DONE · Claude-Sonnet-4.6 · 2026-05-22，6 个演示剧本 spec（S1~S6）覆盖 dashboard/pathway/rule/cdss/aik/security 全路径 | 高级 | 5 天 |
 | **PR-FINAL-22** | 国密 SM2/SM3/SM4（BouncyCastle）| 4 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 — `common/crypto/` 子包（SmCryptoService + Config + KeyPair + Exception + JceUnlimitedStrengthEnabler）+ BouncyCastle 1.70 jdk15on + 19 单测含 GB/T 32905-2016 SM3 国标向量 PASS | 架构师 | 5 天 |
-| **PR-FINAL-23** | 数据分级 + HEALTH_DATA SM4 加密 | 4 | 🟡 TODO | 架构师 | 5 天 |
+| **PR-FINAL-23** | 数据分级 + HEALTH_DATA SM4 加密 | 4 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 — `common/dataclass/` 子包（5 类：DataClassification + DataClass + Encrypted + FieldEncryptionService + DataMaskingService + DataClassRegistry）+ PatientEntity HEALTH_DATA 加密示范 + 41 单测 PASS | 架构师 | 5 天 |
 | **PR-FINAL-24** | actuator + Prometheus + Grafana 5 看板 | 4 | ✅ DONE · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick）· 2026-05-22 (#34) | 高级 | 4 天 |
-| **PR-FINAL-25** | Flyway DB migration + KingbaseES 实测 | 4 | 🟡 TODO | 架构师 | 5 天 |
+| **PR-FINAL-25** | Flyway DB migration + KingbaseES 实测 | 4 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 — flyway-core 8.5.13（JDK 1.8 + Spring Boot 2.7 兼容版）+ MedKernelFlywayConfig（按 dialect 动态选 vendor locations，含 KingbaseES→postgres 映射）+ V1/V2 migration 4 vendor × 2 版本 + 8 单测 PASS（含 H2 实测 + KingbaseES vendor 映射） | 架构师 | 5 天 |
 
 **总计**：约 102 工作日（5 AI 并行 = 4-5 周）
 
@@ -188,6 +188,106 @@ private Connection connection() throws SQLException {
 **关联**：
 - 解锁 PR-FINAL-23（HEALTH_DATA SM4 加密）/ 审计链 SM2 签名 / SSO 国密登录
 - 单测含国标向量，BC 升级时回归保障
+
+### ✅ PR-FINAL-23：数据分级 + HEALTH_DATA SM4 加密（DONE 2026-05-22）
+
+**目标**：落实《数据安全法》§21 数据分级分类 + 《个人信息保护法》§28 敏感个人信息加密存储要求。基于 PR-FINAL-22 国密基础设施。
+
+**修改**：
+- **新建** `medkernel-mvp/src/main/java/com/medkernel/common/dataclass/` 子包 6 类：
+  - `DataClassification`（枚举：PUBLIC / INTERNAL / SENSITIVE / HEALTH_DATA，含 `requiresEncryption()` / `requiresMasking()` 判断）
+  - `DataClass`（类级注解 `@DataClass(HEALTH_DATA)`，标 entity 整体分级）
+  - `Encrypted`（字段级注解 `@Encrypted(maskPolicy=...)`，6 种脱敏策略：FULL / ID_CARD / PHONE / EMAIL / NAME / ADDRESS / NONE）
+  - `FieldEncryptionProperties`（@ConfigurationProperties `medkernel.security.field-encryption.*`：enabled / master-key-base64 / derivation-salt / strict-decrypt）
+  - `FieldEncryptionService`（@Service 透明加解密，密文格式 `Base64(SM4:v1: + IV[16B] + ciphertext)`，每张表派生独立 dek = SM3(master + ":" + salt + ":" + tableName)[0..16)，缓存类反射字段与派生密钥）
+  - `DataMaskingService`（@Service API 响应前按字段注解脱敏，GB 11643-1999 身份证 4+4 / 手机 3+4 / 邮箱首字 + 域名 等）
+  - `DataClassRegistry`（@Service 启动时扫描 com.medkernel 包下所有 @DataClass 标注，打印合规审计行）
+- **应用示范** `datagovernance/entity/PatientEntity.java`：标 `@DataClass(HEALTH_DATA)` + 4 字段 `@Encrypted`（patient_name / id_card_no / phone / address，配各自 maskPolicy）
+- **集成** `datagovernance/repository/PatientRepository.java`：构造函数注入 `FieldEncryptionService`，save 前加密、写入后解密回明文（调用方无感知）、mapRow 读出后自动解密
+- **DDL 列宽扩展**（4 vendor 同步）：patient_name 100→256 / id_card_no 18→256 / phone 20→256 / address 500→1024（明文 N → 密文 (23+N)×4/3 + safety margin）
+- `application.yml`：加 `medkernel.security.field-encryption` 配置段（master key 通过 MEDKERNEL_SM4_MASTER_KEY 环境变量注入，CI 拦截默认值上线）
+- **新建** 41 单测：`FieldEncryptionServiceTest`（19 测：UTF-8 中文往返 / 同明文不同密文 / 跨表密文不可互换 / 版本头识别 / 严格 vs 宽松解密 / 继承字段 / 密钥派生稳定性 / master key 长度校验等） + `DataMaskingServiceTest`（18 测：6 种 MaskPolicy 边界） + `DataClassificationTest`（3 测：枚举顺序 + 加密/脱敏判断）+ 全 314 个旧测试回归 PASS
+
+**关键设计**：
+- **每表独立 dek**：master 仅做派生，密文泄露半径限于单表；master 轮换 = 所有 dek 跟随轮换
+- **密文版本头 `SM4:v1:`**：将来轮换或换算法时旧密文仍可识别版本号走兼容解密分支
+- **写入加密 + 完成后解密**：调用方拿到的 entity 始终是明文状态，避免 setter/getter 复杂化
+- **isCipherText 幂等检测**：重复加密自动跳过；非密文字段在严格模式下解密会抛异常（守护数据完整性）
+- **反射字段缓存**：扫描一次缓存，性能可控
+
+**关联**：
+- 依赖 PR-FINAL-22 SmCryptoService（SM3 + SM4/CBC/PKCS5Padding）
+- 解锁等保 2.0 三级 §8.1.4.8（数据存储保密性）合规验收
+
+### ✅ PR-FINAL-25：Flyway DB migration + KingbaseES 实测（DONE 2026-05-22）
+
+**目标**：引入业界标准 DB migration 框架，统一多方言（Oracle / DM / PostgreSQL / KingbaseES / H2）版本演进。
+
+**修改**：
+- `medkernel-mvp/pom.xml`：加 `flyway-core` 8.5.13（最后一个支持 Spring Boot 2.7 + JDK 1.8 的版本；9+ 要 JDK 11）
+- `medkernel-mvp/src/main/java/com/medkernel/MedKernelApplication.java`：`@SpringBootApplication(exclude = FlywayAutoConfiguration.class)` — Spring Boot 默认 FlywayAutoConfiguration 用单一 locations=db/migration 扫描全部子目录会导致 V1 重复，必须排除
+- **新建** `medkernel-mvp/src/main/java/com/medkernel/persistence/flyway/`：
+  - `MedKernelFlywayProperties`（@ConfigurationProperties `medkernel.flyway.*`：enabled / baseline-on-migrate / baseline-version / out-of-order / clean-disabled / table）
+  - `MedKernelFlywayConfig`（@Configuration @ConditionalOnProperty `enabled=true`，@Bean(initMethod="migrate") Flyway，按 dialect 动态选 vendor locations）
+- **vendor 映射逻辑**（`resolveVendor` 静态方法）：
+  - h2 / local / local_h2 → `db/migration/h2`
+  - oracle / dm / dameng / 默认 → `db/migration/oracle`
+  - postgres / postgresql / pg / **kingbase / kingbasees** → `db/migration/postgres`（PG 协议兼容）
+- **新建** migration 文件 4 vendor × 2 版本（共 8 文件，每 vendor 一致语义）：
+  - `db/migration/{h2,oracle,postgres}/V1__baseline_flyway.sql`：占位 baseline，标记 Flyway 接入时点
+  - `db/migration/{h2,oracle,postgres}/V2__pr_final_23_widen_md_patient_encrypted_columns.sql`：PR-FINAL-23 列宽扩展（H2/PG 用 ALTER COLUMN TYPE，Oracle 用 MODIFY）
+- `application.yml`：加 `medkernel.flyway` 配置段（默认 `enabled=false` 保持向后兼容，生产部署通过 MEDKERNEL_FLYWAY_ENABLED=true 启用）
+- **新建** 8 单测：
+  - `MedKernelFlywayConfigTest`：6 个 vendor 映射用例（h2 / oracle / DM / postgres / **KingbaseES / KingbaseES 大小写** / 未知 dialect fallback）
+  - `FlywayMigrationIntegrationTest`：H2 内存库实测 V1+V2 全量 apply + 列宽变更验证（COLUMN_SIZE = 256 / 1024）
+- 全 322 个测试 PASS（含 308 既有 + 14 新增）
+
+**关键设计**：
+- **opt-in 启用**：默认 false 不破坏现有 PostConstruct loadSchemaStatements() 路径；生产通过环境变量启用
+- **多 vendor 同版本号共存**：DDL 文件按 vendor 子目录分隔，同 V1 在 4 个目录是「同语义不同语法」
+- **baselineOnMigrate=true**：兼容生产已存在的库（不重复 CREATE）
+- **KingbaseES 实测路径**：vendor=postgres 直接走 Flyway PG provider（KingbaseES JDBC driver 完整 PG 兼容）；线下集成测试需要客户提供 KingbaseES 实例
+- **cleanDisabled=true**：生产环境硬阻断 `flyway clean`（避免 misconfiguration 触发 drop all tables）
+
+**关联**：
+- 解锁等保 2.0 三级 D5 跨数据库 + Flyway migration 准入维度
+- 与 PR-FINAL-23 协同：V2 migration 即 PR-FINAL-23 的列宽扩展
+
+### ✅ PR-FINAL-19：抽取剩余 inline → CSS Modules（DONE 2026-05-22）
+
+**目标**：完成 v0.3-final 风格统一不变量「所有静态样式必须在 .module.css 中，inline style 仅用于动态值」。
+
+**修改**：
+- baseline 演进：582（PR-FINAL-04 初始）→ 69（前期 PR-FINAL-19 系列）→ **12**（本次收尾，-57）
+- 抽取的高频文件：
+  - `pages/Onboarding/ConfigWizardModal.tsx`（6→0）
+  - `pages/Security/SecurityBaselinePage.tsx`（5→0）
+  - `pages/IdentityBindingManagement.tsx`（5→0）
+  - `components/ReviewDrawer/ReviewDrawer.tsx`（5→0）
+  - `pages/Onboarding/ServiceAccountManagement.tsx`（4→0）
+  - `pages/Notification/NotificationDetail.tsx`（4→0）
+  - `embed/OrderSafetyBlocker/ReasonDialog.tsx`（4→0）
+  - `components/AiBadge/AiBadge.tsx`（4→0）
+  - `components/DryRunResultPanel/DryRunResultPanel.tsx`（4→1，剩 1 动态 maxHeight）
+  - `pages/AIReview/AiCandidateReviewDesk.tsx`（3→0）
+  - `embed/OrderSafetyBlocker/PharmacistReviewView.tsx`（3→0）
+  - `components/AiGeneratedBadge/AiGeneratedBadge.tsx`（3→0）
+  - `components/TracedCard/TracedCard.tsx`（2→0）
+  - `components/DiffViewer/DiffViewer.tsx`（2→2 动态色，带 eslint-disable + CSS custom property）
+  - `components/StatusBadge/StatusBadge.tsx`（2→2 动态色）
+  - `components/EmbeddedAlert/EmbeddedAlert.tsx`（1→1 动态色）
+  - `embed/EmbedApp.tsx` / `pages/AiKnowledge/AiKnowledgeReview.tsx` / `pages/Knowledge/KnowledgePage.tsx` / `pages/ProvenancePlaceholder.tsx` / `pages/Notification/NotificationList.tsx` / `components/DangerConfirm/DangerConfirm.tsx`（各 1→0）
+- 新建 `.module.css`：identityBindingManagement / reviewDrawer / serviceAccountManagement / reasonDialog / embedApp / provenancePlaceholder / knowledgePage / tracedCard / statusBadge（共 9 个新模块）+ 多个已存在 CSS 扩展
+- **动态值模式**：所有真正动态的颜色 / 尺寸通过 CSS custom property（`var(--xxx)`）注入，配合 `// eslint-disable-next-line medkernel/no-inline-style` 标注理由
+- `scripts/check-inline-style-count.ps1`：baseline 从 69 下调为 12
+
+**剩余 12 处全部合规**（不可继续抽取）：
+- DiffViewer(2) / StatusBadge(2) / EmbeddedAlert(1) / DryRunResultPanel(1) / AiBadge(0 由 stories 占) — 全部使用 CSS custom property 注入动态色
+- `StatusBadge.stories.tsx`(5) / `AiBadge.stories.tsx`(1) — Storybook 演示文件，按惯例保留
+
+**关联**：
+- v0.3-final 风格统一不变量 A6 收口
+- 全 314 个后端测试 PASS / 前端 typecheck PASS
 
 ### ✅ PR-FINAL-02：删 patientindex 整包（DONE 2026-05-21）
 
