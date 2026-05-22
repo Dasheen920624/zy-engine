@@ -44,5 +44,28 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["e2e/**", "node_modules/**", "dist/**"],
     css: false,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov", "html"],
+      reportsDirectory: "./coverage",
+      // v1.0 GA 目标：行覆盖率 60%，分支 50%，函数 50%
+      thresholds: {
+        lines: 60,
+        branches: 50,
+        functions: 50,
+      },
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.d.ts",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
+        "src/test/**",
+        "src/api/generated-types.ts",
+        "src/main.tsx",
+        "src/vite-env.d.ts",
+        "src/**/*.module.css",
+        "src/**/*.stories.{ts,tsx}",
+      ],
+    },
   },
 });
