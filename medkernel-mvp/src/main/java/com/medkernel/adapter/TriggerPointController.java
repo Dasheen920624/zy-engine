@@ -1,6 +1,9 @@
 package com.medkernel.adapter;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.dto.TriggerMatchRequest;
+import com.medkernel.dto.TriggerExecuteRequest;
+import com.medkernel.dto.TriggerRegisterRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,9 +44,11 @@ public class TriggerPointController {
      */
     @Operation(summary = "Register trigger")
     @PostMapping
-    public ApiResult<CdssTriggerPointEntity> registerTrigger(@RequestBody CdssTriggerPointEntity trigger,
-                                                         HttpServletRequest httpRequest) {
+    public ApiResult<CdssTriggerPointEntity> registerTrigger(
+            @Valid @RequestBody TriggerRegisterRequest request,
+            HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        CdssTriggerPointEntity trigger = toEntity(request);
         trigger.setTenantId(resolveTenantId(orgCtx));
         return ApiResult.success(triggerPointService.registerTrigger(trigger));
     }
@@ -52,9 +59,10 @@ public class TriggerPointController {
     @Operation(summary = "Update trigger")
     @PostMapping("/{triggerId}")
     public ApiResult<String> updateTrigger(@PathVariable Long triggerId,
-                                             @RequestBody CdssTriggerPointEntity trigger,
+                                             @Valid @RequestBody TriggerRegisterRequest request,
                                              HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        CdssTriggerPointEntity trigger = toEntity(request);
         trigger.setId(triggerId);
         trigger.setUpdatedBy("system");
         triggerPointService.updateTrigger(trigger);
@@ -81,10 +89,11 @@ public class TriggerPointController {
     @Operation(summary = "Match triggers")
     @PostMapping("/match")
     public ApiResult<List<Map<String, Object>>> matchTriggers(
-            @RequestBody Map<String, Object> body,
+            @Valid @RequestBody TriggerMatchRequest request,
             HttpServletRequest httpRequest) {
+        Map<String, Object> body = toMatchBody(request);
         OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, body);
-        String businessScenario = String.valueOf(body.get("businessScenario"));
+        String businessScenario = request.getBusinessScenario();
         return ApiResult.success(triggerPointService.matchTriggers(
                 resolveTenantId(orgCtx), businessScenario, body));
     }
@@ -96,11 +105,41 @@ public class TriggerPointController {
     @PostMapping("/{triggerCode}/execute")
     public ApiResult<Map<String, Object>> executeTrigger(
             @PathVariable String triggerCode,
-            @RequestBody Map<String, Object> eventData,
+            @Valid @RequestBody TriggerExecuteRequest request,
             HttpServletRequest httpRequest) {
+        Map<String, Object> eventData = request.getEventData() != null
+                ? request.getEventData() : new LinkedHashMap<String, Object>();
         OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, eventData);
         return ApiResult.success(triggerPointService.executeTrigger(
                 resolveTenantId(orgCtx), triggerCode, eventData));
+    }
+
+    private CdssTriggerPointEntity toEntity(TriggerRegisterRequest request) {
+        CdssTriggerPointEntity entity = new CdssTriggerPointEntity();
+        entity.setTriggerCode(request.getTriggerCode());
+        entity.setTriggerName(request.getTriggerName());
+        entity.setTriggerType(request.getTriggerType());
+        entity.setBusinessScenario(request.getBusinessScenario());
+        entity.setAccessStrategy(request.getAccessStrategy());
+        entity.setAdapterCode(request.getAdapterCode());
+        entity.setEndpointUrl(request.getEndpointUrl());
+        entity.setRuleCodes(request.getRuleCodes());
+        entity.setPathwayCodes(request.getPathwayCodes());
+        entity.setPriority(request.getPriority());
+        entity.setRiskLevel(request.getRiskLevel());
+        entity.setTimeoutMs(request.getTimeoutMs());
+        entity.setEnabled(request.getEnabled());
+        entity.setDescription(request.getDescription());
+        return entity;
+    }
+
+    private Map<String, Object> toMatchBody(TriggerMatchRequest request) {
+        Map<String, Object> body = new LinkedHashMap<String, Object>();
+        body.put("businessScenario", request.getBusinessScenario());
+        if (request.getContext() != null) {
+            body.putAll(request.getContext());
+        }
+        return body;
     }
 
     private Long resolveTenantId(OrganizationContext orgCtx) {

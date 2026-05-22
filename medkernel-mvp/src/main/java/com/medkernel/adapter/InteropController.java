@@ -1,6 +1,9 @@
 package com.medkernel.adapter;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.dto.InteropQueryRequest;
+import com.medkernel.dto.CdsHooksQueryRequest;
+import com.medkernel.dto.SmartAppQueryRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,10 +42,11 @@ public class InteropController {
      */
     @Operation(summary = "Query")
     @PostMapping("/query")
-    public ApiResult<Map<String, Object>> query(@RequestBody Map<String, Object> request,
+    public ApiResult<Map<String, Object>> query(@Valid @RequestBody InteropQueryRequest request,
                                                  HttpServletRequest httpRequest) {
-        OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, request);
-        return ApiResult.success(interopAdapterService.query(request, orgCtx.getTenantId(), orgCtx.getHospitalCode()));
+        Map<String, Object> body = toInteropMap(request);
+        OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, body);
+        return ApiResult.success(interopAdapterService.query(body, orgCtx.getTenantId(), orgCtx.getHospitalCode()));
     }
 
     /**
@@ -48,10 +54,11 @@ public class InteropController {
      */
     @Operation(summary = "Query cds hooks")
     @PostMapping("/cds-hooks")
-    public ApiResult<Map<String, Object>> queryCdsHooks(@RequestBody Map<String, Object> request,
+    public ApiResult<Map<String, Object>> queryCdsHooks(@Valid @RequestBody CdsHooksQueryRequest request,
                                                          HttpServletRequest httpRequest) {
-        OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, request);
-        return ApiResult.success(interopAdapterService.queryCdsHooks(request, orgCtx.getTenantId(), orgCtx.getHospitalCode()));
+        Map<String, Object> body = toCdsHooksMap(request);
+        OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, body);
+        return ApiResult.success(interopAdapterService.queryCdsHooks(body, orgCtx.getTenantId(), orgCtx.getHospitalCode()));
     }
 
     /**
@@ -59,10 +66,11 @@ public class InteropController {
      */
     @Operation(summary = "Query smart app")
     @PostMapping("/smart-apps")
-    public ApiResult<Map<String, Object>> querySmartApp(@RequestBody Map<String, Object> request,
+    public ApiResult<Map<String, Object>> querySmartApp(@Valid @RequestBody SmartAppQueryRequest request,
                                                          HttpServletRequest httpRequest) {
-        OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, request);
-        return ApiResult.success(interopAdapterService.querySmartApp(request, orgCtx.getTenantId(), orgCtx.getHospitalCode()));
+        Map<String, Object> body = toSmartAppMap(request);
+        OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, body);
+        return ApiResult.success(interopAdapterService.querySmartApp(body, orgCtx.getTenantId(), orgCtx.getHospitalCode()));
     }
 
     /**
@@ -93,5 +101,51 @@ public class InteropController {
     public ApiResult<List<Map<String, Object>>> listSmartApps(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         return ApiResult.success(interopAdapterService.listSmartApps(orgCtx.getTenantId(), orgCtx.getHospitalCode()));
+    }
+
+    private Map<String, Object> toInteropMap(InteropQueryRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("adapter_code", request.getAdapter_code());
+        map.put("query_code", request.getQuery_code());
+        if (request.getParams() != null) {
+            map.put("params", request.getParams());
+        }
+        return map;
+    }
+
+    private Map<String, Object> toCdsHooksMap(CdsHooksQueryRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("hook_id", request.getHook_id());
+        if (request.getHook_type() != null) {
+            map.put("hook_type", request.getHook_type());
+        }
+        if (request.getPatient_id() != null) {
+            map.put("patient_id", request.getPatient_id());
+        }
+        if (request.getEncounter_id() != null) {
+            map.put("encounter_id", request.getEncounter_id());
+        }
+        if (request.getContext() != null) {
+            map.putAll(request.getContext());
+        }
+        return map;
+    }
+
+    private Map<String, Object> toSmartAppMap(SmartAppQueryRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("launch_id", request.getLaunch_id());
+        if (request.getClient_id() != null) {
+            map.put("client_id", request.getClient_id());
+        }
+        if (request.getPatient_id() != null) {
+            map.put("patient_id", request.getPatient_id());
+        }
+        if (request.getEncounter_id() != null) {
+            map.put("encounter_id", request.getEncounter_id());
+        }
+        if (request.getContext() != null) {
+            map.putAll(request.getContext());
+        }
+        return map;
     }
 }

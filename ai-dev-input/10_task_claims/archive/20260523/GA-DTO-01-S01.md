@@ -7,7 +7,7 @@ slice: S01
 title: Adapter Controller DTO 化
 owner: TraeAI-5
 role: senior
-status: DONE
+status: ACTIVE
 branch: develop
 target_base_branch: develop
 git_base_commit: 47b0ae7

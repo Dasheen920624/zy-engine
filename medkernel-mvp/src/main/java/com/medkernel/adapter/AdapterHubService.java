@@ -1,6 +1,7 @@
 package com.medkernel.adapter;
 
 import com.medkernel.common.TraceContext;
+import com.medkernel.dto.AdapterDefinitionImportRequest;
 import com.medkernel.persistence.EnginePersistenceService;
 import com.medkernel.terminology.TerminologyService;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class AdapterHubService {
         return result;
     }
 
-    public List<Map<String, Object>> importDefinitions(Object request, String tenantId, String hospitalCode) {
+    public List<Map<String, Object>> importDefinitions(AdapterDefinitionImportRequest request, String tenantId, String hospitalCode) {
         List<Map<String, Object>> entries = normalizeDefinitions(request);
         if (entries.isEmpty()) {
             throw new IllegalArgumentException("adapter definitions list is empty");
@@ -834,29 +835,24 @@ public class AdapterHubService {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> normalizeDefinitions(Object request) {
+    private List<Map<String, Object>> normalizeDefinitions(AdapterDefinitionImportRequest request) {
         List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        if (request instanceof List) {
-            for (Object item : (List<?>) request) {
-                if (item instanceof Map) {
-                    list.add((Map<String, Object>) item);
-                }
-            }
+        if (request.getDefinitions() == null) {
             return list;
         }
-        if (request instanceof Map) {
-            Map<String, Object> map = (Map<String, Object>) request;
-            Object nested = map.get("definitions");
-            if (nested instanceof List) {
-                return normalizeDefinitions(nested);
-            }
-            Object alternative = map.get("queries");
-            if (alternative instanceof List) {
-                return normalizeDefinitions(alternative);
-            }
-            if (map.containsKey("adapter_code") || map.containsKey("query_code")) {
-                list.add(map);
-            }
+        for (AdapterDefinitionImportRequest.AdapterDefinitionItem item : request.getDefinitions()) {
+            Map<String, Object> entry = new LinkedHashMap<String, Object>();
+            if (item.getAdapter_code() != null) entry.put("adapter_code", item.getAdapter_code());
+            if (item.getAdapter_name() != null) entry.put("adapter_name", item.getAdapter_name());
+            if (item.getAdapter_type() != null) entry.put("adapter_type", item.getAdapter_type());
+            if (item.getSource_system() != null) entry.put("source_system", item.getSource_system());
+            if (item.getQuery_code() != null) entry.put("query_code", item.getQuery_code());
+            if (item.getQuery_name() != null) entry.put("query_name", item.getQuery_name());
+            if (item.getDescription() != null) entry.put("description", item.getDescription());
+            if (item.getSchema() != null) entry.put("schema", item.getSchema());
+            if (item.getSample_rows() != null) entry.put("sample_rows", item.getSample_rows());
+            if (item.getSource() != null) entry.put("source", item.getSource());
+            list.add(entry);
         }
         return list;
     }
