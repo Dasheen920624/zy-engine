@@ -1,5 +1,8 @@
 package com.medkernel.adapter;
 
+import com.medkernel.adapter.dto.CdssTriggerPointResponse;
+import com.medkernel.adapter.dto.TriggerExecuteResponse;
+import com.medkernel.adapter.dto.TriggerMatchResponse;
 import com.medkernel.common.ApiResult;
 import com.medkernel.dto.TriggerMatchRequest;
 import com.medkernel.dto.TriggerExecuteRequest;
@@ -21,6 +24,7 @@ import javax.validation.Valid;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * CDSS 触发点 API：触发点注册、匹配和执行。
@@ -44,13 +48,14 @@ public class TriggerPointController {
      */
     @Operation(summary = "Register trigger")
     @PostMapping
-    public ApiResult<CdssTriggerPointEntity> registerTrigger(
+    public ApiResult<CdssTriggerPointResponse> registerTrigger(
             @Valid @RequestBody TriggerRegisterRequest request,
             HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         CdssTriggerPointEntity trigger = toEntity(request);
         trigger.setTenantId(resolveTenantId(orgCtx));
-        return ApiResult.success(triggerPointService.registerTrigger(trigger));
+        return ApiResult.success(CdssTriggerPointResponse.fromEntity(
+                triggerPointService.registerTrigger(trigger)));
     }
 
     /**
@@ -74,13 +79,16 @@ public class TriggerPointController {
      */
     @Operation(summary = "List triggers")
     @GetMapping
-    public ApiResult<List<CdssTriggerPointEntity>> listTriggers(
+    public ApiResult<List<CdssTriggerPointResponse>> listTriggers(
             @RequestParam(required = false) String businessScenario,
             @RequestParam(required = false) String accessStrategy,
             HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        return ApiResult.success(triggerPointService.listTriggers(
-                resolveTenantId(orgCtx), businessScenario, accessStrategy));
+        List<CdssTriggerPointEntity> triggers = triggerPointService.listTriggers(
+                resolveTenantId(orgCtx), businessScenario, accessStrategy);
+        return ApiResult.success(triggers.stream()
+                .map(CdssTriggerPointResponse::fromEntity)
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -88,14 +96,17 @@ public class TriggerPointController {
      */
     @Operation(summary = "Match triggers")
     @PostMapping("/match")
-    public ApiResult<List<Map<String, Object>>> matchTriggers(
+    public ApiResult<List<TriggerMatchResponse>> matchTriggers(
             @Valid @RequestBody TriggerMatchRequest request,
             HttpServletRequest httpRequest) {
         Map<String, Object> body = toMatchBody(request);
         OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, body);
         String businessScenario = request.getBusinessScenario();
-        return ApiResult.success(triggerPointService.matchTriggers(
-                resolveTenantId(orgCtx), businessScenario, body));
+        List<Map<String, Object>> result = triggerPointService.matchTriggers(
+                resolveTenantId(orgCtx), businessScenario, body);
+        return ApiResult.success(result.stream()
+                .map(TriggerMatchResponse::fromMap)
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -103,15 +114,15 @@ public class TriggerPointController {
      */
     @Operation(summary = "Execute trigger")
     @PostMapping("/{triggerCode}/execute")
-    public ApiResult<Map<String, Object>> executeTrigger(
+    public ApiResult<TriggerExecuteResponse> executeTrigger(
             @PathVariable String triggerCode,
             @Valid @RequestBody TriggerExecuteRequest request,
             HttpServletRequest httpRequest) {
         Map<String, Object> eventData = request.getEventData() != null
                 ? request.getEventData() : new LinkedHashMap<String, Object>();
         OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, eventData);
-        return ApiResult.success(triggerPointService.executeTrigger(
-                resolveTenantId(orgCtx), triggerCode, eventData));
+        return ApiResult.success(TriggerExecuteResponse.fromMap(
+                triggerPointService.executeTrigger(resolveTenantId(orgCtx), triggerCode, eventData)));
     }
 
     private CdssTriggerPointEntity toEntity(TriggerRegisterRequest request) {

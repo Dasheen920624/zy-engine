@@ -1,5 +1,8 @@
 package com.medkernel.adapter;
 
+import com.medkernel.adapter.dto.AdapterCallLogCleanupResponse;
+import com.medkernel.adapter.dto.AdapterCallLogResponse;
+import com.medkernel.adapter.dto.AdapterCallLogSummaryResponse;
 import com.medkernel.adapter.entity.AdapterCallLogEntity;
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
@@ -19,6 +22,7 @@ import javax.validation.Valid;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 适配器执行日志控制器
@@ -43,7 +47,7 @@ public class AdapterExecutionLogController {
      */
     @Operation(summary = "List adapter execution logs")
     @GetMapping
-    public ApiResult<List<AdapterCallLogEntity>> listCallLogs(@Valid AdapterCallLogQueryRequest queryRequest,
+    public ApiResult<List<AdapterCallLogResponse>> listCallLogs(@Valid AdapterCallLogQueryRequest queryRequest,
                                                               HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
         if (queryRequest.getAdapterCode() != null) {
@@ -65,7 +69,10 @@ public class AdapterExecutionLogController {
             filters.put("limit", String.valueOf(queryRequest.getLimit()));
         }
         organizationContextService.applyExplicitFilters(filters, httpRequest);
-        return ApiResult.success(executionLogService.listCallLogs(filters));
+        List<AdapterCallLogEntity> logs = executionLogService.listCallLogs(filters);
+        return ApiResult.success(logs.stream()
+                .map(AdapterCallLogResponse::fromEntity)
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -73,14 +80,14 @@ public class AdapterExecutionLogController {
      */
     @Operation(summary = "Get adapter execution log by traceId")
     @GetMapping("/{traceId}")
-    public ApiResult<AdapterCallLogEntity> getCallLog(@PathVariable String traceId,
+    public ApiResult<AdapterCallLogResponse> getCallLog(@PathVariable String traceId,
                                                       HttpServletRequest httpRequest) {
         organizationContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
         AdapterCallLogEntity log = executionLogService.getCallLog(traceId);
         if (log == null) {
             return ApiResult.failure(ErrorCode.RESOURCE_NOT_FOUND, "适配器执行日志不存在: " + traceId);
         }
-        return ApiResult.success(log);
+        return ApiResult.success(AdapterCallLogResponse.fromEntity(log));
     }
 
     /**
@@ -88,7 +95,7 @@ public class AdapterExecutionLogController {
      */
     @Operation(summary = "Summarize adapter execution logs")
     @GetMapping("/summary")
-    public ApiResult<Map<String, Object>> summarizeCallLogs(@Valid AdapterCallLogQueryRequest queryRequest,
+    public ApiResult<AdapterCallLogSummaryResponse> summarizeCallLogs(@Valid AdapterCallLogQueryRequest queryRequest,
                                                             HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
         if (queryRequest.getAdapterCode() != null) {
@@ -107,7 +114,8 @@ public class AdapterExecutionLogController {
             filters.put("patientId", queryRequest.getPatientId());
         }
         organizationContextService.applyExplicitFilters(filters, httpRequest);
-        return ApiResult.success(executionLogService.summarizeCallLogs(filters));
+        return ApiResult.success(AdapterCallLogSummaryResponse.fromMap(
+                executionLogService.summarizeCallLogs(filters)));
     }
 
     /**
@@ -115,13 +123,10 @@ public class AdapterExecutionLogController {
      */
     @Operation(summary = "Cleanup old adapter execution logs")
     @PostMapping("/cleanup")
-    public ApiResult<Map<String, Object>> cleanupOldLogs(@Valid @RequestBody AdapterCallLogCleanupRequest cleanupRequest,
+    public ApiResult<AdapterCallLogCleanupResponse> cleanupOldLogs(@Valid @RequestBody AdapterCallLogCleanupRequest cleanupRequest,
                                                           HttpServletRequest httpRequest) {
         organizationContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
         int removed = executionLogService.cleanupOldLogs(cleanupRequest.getMaxAgeHours());
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("removed_count", removed);
-        result.put("max_age_hours", cleanupRequest.getMaxAgeHours());
-        return ApiResult.success(result);
+        return ApiResult.success(AdapterCallLogCleanupResponse.of(removed, cleanupRequest.getMaxAgeHours()));
     }
 }
