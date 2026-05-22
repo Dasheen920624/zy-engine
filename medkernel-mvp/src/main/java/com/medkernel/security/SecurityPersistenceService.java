@@ -231,4 +231,32 @@ public class SecurityPersistenceService extends SecurityRepositorySupport {
         }
         return statements;
     }
+
+    /**
+     * 删除指定时间之前的认证审计日志（等保合规 - 保留期管理）。
+     */
+    public int deleteAuthAuditLogsBefore(java.time.LocalDateTime cutoff) {
+        String sql = "DELETE FROM sec_auth_audit_log WHERE created_time < '" + cutoff.toString() + "'";
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            return stmt.executeUpdate(sql);
+        } catch (SQLException e) {
+            log.error("[audit-retention] failed to delete auth audit logs before {}", cutoff, e);
+            return 0;
+        }
+    }
+
+    /**
+     * 删除指定时间之前的 SSO 审计日志（等保合规 - 保留期管理）。
+     */
+    public int deleteSsoAuditLogsBefore(java.time.LocalDateTime cutoff) {
+        String sql = "DELETE FROM sec_sso_audit_log WHERE created_time < '" + cutoff.toString() + "'";
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            return stmt.executeUpdate(sql);
+        } catch (SQLException e) {
+            log.error("[audit-retention] failed to delete SSO audit logs before {}", cutoff, e);
+            return 0;
+        }
+    }
 }

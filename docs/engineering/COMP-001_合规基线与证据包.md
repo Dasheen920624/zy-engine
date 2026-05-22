@@ -2,11 +2,11 @@
 
 > 任务编号：COMP-001
 > 状态：DONE
-> 负责人：CodeBuddy
+> 负责人：CodeBuddy, TraeAI-GLM5
 > 创建时间：2026-05-20
-> 完成时间：2026-05-20 00:40
+> 完成时间：2026-05-23
 > 依赖：DOC-008 ✅ DONE
-> commit: eb34855
+> commit: eb34855 (v1), 21ab270+ (v2 GA-SEC-01)
 
 ---
 
