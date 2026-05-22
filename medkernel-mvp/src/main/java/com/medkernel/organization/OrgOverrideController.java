@@ -8,11 +8,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Org Override")
 @RestController
 @RequestMapping("/api/organizations/override")
 public class OrgOverrideController {
@@ -25,6 +28,7 @@ public class OrgOverrideController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Import entries")
     @PostMapping("/entries")
     public ApiResult<List<Map<String, Object>>> importEntries(@RequestBody Object request,
                                                               HttpServletRequest httpRequest) {
@@ -32,6 +36,7 @@ public class OrgOverrideController {
         return ApiResult.success(orgOverrideService.importEntries(request));
     }
 
+    @Operation(summary = "List entries")
     @GetMapping("/entries")
     public ApiResult<List<Map<String, Object>>> listEntries(
             @RequestParam(required = false) String tenantId,
@@ -52,6 +57,7 @@ public class OrgOverrideController {
         return ApiResult.success(orgOverrideService.listEntries(filters));
     }
 
+    @Operation(summary = "Compute override")
     @PostMapping("/compute")
     public ApiResult<Map<String, Object>> computeOverride(
             @RequestBody(required = false) Map<String, Object> request,
@@ -66,6 +72,7 @@ public class OrgOverrideController {
         return ApiResult.success(orgOverrideService.computeOverride(context, assetType));
     }
 
+    @Operation(summary = "Resolve override")
     @GetMapping("/resolve")
     public ApiResult<Map<String, Object>> resolveOverride(
             @RequestParam String overrideKey,
@@ -75,6 +82,7 @@ public class OrgOverrideController {
         return ApiResult.success(orgOverrideService.resolveOverride(context, assetType, overrideKey));
     }
 
+    @Operation(summary = "Entry count")
     @GetMapping("/count")
     public ApiResult<Map<String, Object>> entryCount(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();

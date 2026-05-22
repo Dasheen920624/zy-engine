@@ -11,11 +11,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Config Package")
 @RestController
 @RequestMapping("/api/config-packages")
 public class ConfigPackageController {
@@ -28,6 +31,7 @@ public class ConfigPackageController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Import packages")
     @PostMapping
     public ApiResult<List<Map<String, Object>>> importPackages(@RequestBody Object request,
                                                                HttpServletRequest httpRequest) {
@@ -35,6 +39,7 @@ public class ConfigPackageController {
         return ApiResult.success(configPackageService.importPackages(request));
     }
 
+    @Operation(summary = "Import packages alias")
     @PostMapping("/import")
     public ApiResult<List<Map<String, Object>>> importPackagesAlias(@RequestBody Object request,
                                                                      HttpServletRequest httpRequest) {
@@ -42,6 +47,7 @@ public class ConfigPackageController {
         return ApiResult.success(configPackageService.importPackages(request));
     }
 
+    @Operation(summary = "List packages")
     @GetMapping
     public ApiResult<List<Map<String, Object>>> listPackages(@RequestParam(required = false) String assetType,
                                                             @RequestParam(required = false) String status,
@@ -64,6 +70,7 @@ public class ConfigPackageController {
         return ApiResult.success(configPackageService.listPackages(filters));
     }
 
+    @Operation(summary = "Get latest package")
     @GetMapping("/{packageCode}")
     public ApiResult<Map<String, Object>> getLatestPackage(@PathVariable String packageCode,
                                                            @RequestParam(required = false) String packageVersion,
@@ -73,6 +80,7 @@ public class ConfigPackageController {
                 orgContext.getTenantId()));
     }
 
+    @Operation(summary = "Get package")
     @GetMapping("/{packageCode}/{packageVersion}")
     public ApiResult<Map<String, Object>> getPackage(@PathVariable String packageCode,
                                                      @PathVariable String packageVersion,
@@ -82,6 +90,7 @@ public class ConfigPackageController {
                 orgContext.getTenantId()));
     }
 
+    @Operation(summary = "Review package read only")
     @GetMapping("/{packageCode}/{packageVersion}/review")
     public ApiResult<Map<String, Object>> reviewPackageReadOnly(@PathVariable String packageCode,
                                                                 @PathVariable String packageVersion,
@@ -91,6 +100,7 @@ public class ConfigPackageController {
                 orgContext.getTenantId(), null));
     }
 
+    @Operation(summary = "Review package")
     @PostMapping("/{packageCode}/{packageVersion}/review")
     public ApiResult<Map<String, Object>> reviewPackage(@PathVariable String packageCode,
                                                         @PathVariable String packageVersion,
@@ -101,6 +111,7 @@ public class ConfigPackageController {
                 orgContext.getTenantId(), request));
     }
 
+    @Operation(summary = "Publish package")
     @PostMapping("/{packageCode}/{packageVersion}/publish")
     public ApiResult<Map<String, Object>> publishPackage(@PathVariable String packageCode,
                                                          @PathVariable String packageVersion,
@@ -111,6 +122,7 @@ public class ConfigPackageController {
                 orgContext.getTenantId(), request));
     }
 
+    @Operation(summary = "Export package")
     @PostMapping("/{packageCode}/{packageVersion}/export")
     public ApiResult<Map<String, Object>> exportPackage(@PathVariable String packageCode,
                                                         @PathVariable String packageVersion,

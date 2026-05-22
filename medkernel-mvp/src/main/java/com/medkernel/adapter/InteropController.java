@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ import java.util.Map;
  * 互联互通标准适配器REST接口
  * 暴露HL7 v2、FHIR、CDA、IHE、CDS Hooks、SMART on FHIR、DICOM等标准的查询接口
  */
+@Tag(name = "Interop")
 @RestController
 @RequestMapping("/api/interop")
 public class InteropController {
@@ -32,6 +35,7 @@ public class InteropController {
     /**
      * 查询互联互通适配器（HL7/FHIR/CDA/DICOM/IHE/REST）
      */
+    @Operation(summary = "Query")
     @PostMapping("/query")
     public ApiResult<Map<String, Object>> query(@RequestBody Map<String, Object> request,
                                                  HttpServletRequest httpRequest) {
@@ -42,6 +46,7 @@ public class InteropController {
     /**
      * 查询CDS Hooks服务
      */
+    @Operation(summary = "Query cds hooks")
     @PostMapping("/cds-hooks")
     public ApiResult<Map<String, Object>> queryCdsHooks(@RequestBody Map<String, Object> request,
                                                          HttpServletRequest httpRequest) {
@@ -52,6 +57,7 @@ public class InteropController {
     /**
      * 查询SMART on FHIR应用
      */
+    @Operation(summary = "Query smart app")
     @PostMapping("/smart-apps")
     public ApiResult<Map<String, Object>> querySmartApp(@RequestBody Map<String, Object> request,
                                                          HttpServletRequest httpRequest) {
@@ -62,6 +68,7 @@ public class InteropController {
     /**
      * 列出所有互联互通适配器定义
      */
+    @Operation(summary = "List interop adapters")
     @GetMapping("/adapters")
     public ApiResult<List<Map<String, Object>>> listInteropAdapters(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -71,6 +78,7 @@ public class InteropController {
     /**
      * 列出所有CDS Hooks服务定义
      */
+    @Operation(summary = "List cds hooks services")
     @GetMapping("/cds-hooks")
     public ApiResult<List<Map<String, Object>>> listCdsHooksServices(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -80,6 +88,7 @@ public class InteropController {
     /**
      * 列出所有SMART on FHIR应用定义
      */
+    @Operation(summary = "List smart apps")
     @GetMapping("/smart-apps")
     public ApiResult<List<Map<String, Object>>> listSmartApps(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);

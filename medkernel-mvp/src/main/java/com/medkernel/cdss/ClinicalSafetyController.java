@@ -6,6 +6,8 @@ import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Map;
  *   <li>风险摘要 — GET /api/clinical-safety/risk-summary</li>
  * </ul>
  */
+@Tag(name = "Clinical Safety")
 @RestController
 @RequestMapping("/api/clinical-safety")
 public class ClinicalSafetyController {
@@ -39,6 +42,7 @@ public class ClinicalSafetyController {
     /**
      * 创建危险日志。
      */
+    @Operation(summary = "Create hazard")
     @PostMapping("/hazards")
     public ApiResult<HazardLog> createHazard(
             @RequestBody Map<String, Object> request,
@@ -80,6 +84,7 @@ public class ClinicalSafetyController {
     /**
      * 更新危险日志。
      */
+    @Operation(summary = "Update hazard")
     @PutMapping("/hazards/{hazardId}")
     public ApiResult<HazardLog> updateHazard(
             @PathVariable Long hazardId,
@@ -118,6 +123,7 @@ public class ClinicalSafetyController {
     /**
      * 查询危险日志。
      */
+    @Operation(summary = "List hazards")
     @GetMapping("/hazards")
     public ApiResult<List<HazardLog>> listHazards(
             @RequestParam(required = false) String hazardCategory,
@@ -133,6 +139,7 @@ public class ClinicalSafetyController {
     /**
      * 院方风险接受。
      */
+    @Operation(summary = "Accept hazard")
     @PostMapping("/hazards/{hazardId}/accept")
     public ApiResult<HazardLog> acceptHazard(
             @PathVariable Long hazardId,
@@ -155,6 +162,7 @@ public class ClinicalSafetyController {
     /**
      * 关闭危险日志。
      */
+    @Operation(summary = "Close hazard")
     @PostMapping("/hazards/{hazardId}/close")
     public ApiResult<HazardLog> closeHazard(@PathVariable Long hazardId) {
         try {
@@ -168,6 +176,7 @@ public class ClinicalSafetyController {
     /**
      * 创建安全案例。
      */
+    @Operation(summary = "Create safety case")
     @PostMapping("/safety-cases")
     public ApiResult<SafetyCase> createSafetyCase(
             @RequestBody Map<String, Object> request,
@@ -197,6 +206,7 @@ public class ClinicalSafetyController {
     /**
      * 更新安全案例。
      */
+    @Operation(summary = "Update safety case")
     @PutMapping("/safety-cases/{caseId}")
     public ApiResult<SafetyCase> updateSafetyCase(
             @PathVariable Long caseId,
@@ -228,6 +238,7 @@ public class ClinicalSafetyController {
     /**
      * 查询安全案例。
      */
+    @Operation(summary = "List safety cases")
     @GetMapping("/safety-cases")
     public ApiResult<List<SafetyCase>> listSafetyCases(
             @RequestParam(required = false) String caseType,
@@ -242,6 +253,7 @@ public class ClinicalSafetyController {
     /**
      * 审核安全案例。
      */
+    @Operation(summary = "Review safety case")
     @PostMapping("/safety-cases/{caseId}/review")
     public ApiResult<SafetyCase> reviewSafetyCase(
             @PathVariable Long caseId,
@@ -268,6 +280,7 @@ public class ClinicalSafetyController {
     /**
      * 风险摘要统计。
      */
+    @Operation(summary = "Get risk summary")
     @GetMapping("/risk-summary")
     public ApiResult<Map<String, Object>> getRiskSummary(HttpServletRequest httpRequest) {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);

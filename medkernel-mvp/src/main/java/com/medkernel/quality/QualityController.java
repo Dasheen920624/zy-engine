@@ -10,10 +10,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Tag(name = "Quality")
 @RestController
 @RequestMapping("/api/quality")
 public class QualityController {
@@ -26,6 +29,7 @@ public class QualityController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Metrics")
     @GetMapping("/metrics")
     public ApiResult<Map<String, Object>> metrics(@RequestParam(required = false) String pathwayCode,
                                                   @RequestParam(required = false) String status,
@@ -49,6 +53,7 @@ public class QualityController {
         return ApiResult.success(qualityService.metrics(filters));
     }
 
+    @Operation(summary = "List alerts")
     @GetMapping("/alerts")
     public ApiResult<Map<String, Object>> listAlerts(
             @RequestParam(required = false) String dept,
@@ -69,6 +74,7 @@ public class QualityController {
         return ApiResult.success(qualityService.listAlerts(filters));
     }
 
+    @Operation(summary = "Alert summary")
     @GetMapping("/alerts/summary")
     public ApiResult<Map<String, Object>> alertSummary(HttpServletRequest request) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
@@ -76,6 +82,7 @@ public class QualityController {
         return ApiResult.success(qualityService.alertSummary(filters));
     }
 
+    @Operation(summary = "Assign problem")
     @PostMapping("/problems/{id}/assign")
     public ApiResult<Map<String, Object>> assignProblem(
             @PathVariable String id,

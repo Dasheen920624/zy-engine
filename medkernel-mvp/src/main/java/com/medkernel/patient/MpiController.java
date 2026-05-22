@@ -3,6 +3,8 @@ package com.medkernel.patient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,7 @@ import java.util.HashMap;
 /**
  * MPI模块REST控制器：提供患者标识管理、就诊标识管理、冲突处理等API接口。
  */
+@Tag(name = "Mpi")
 @RestController
 @RequestMapping("/api/v1/mpi")
 public class MpiController {
@@ -28,6 +31,7 @@ public class MpiController {
     /**
      * 注册患者标识。
      */
+    @Operation(summary = "Register patient identity")
     @PostMapping("/patient-identities")
     public ResponseEntity<PatientIdentity> registerPatientIdentity(@RequestBody Map<String, String> request) {
         String tenantId = text(request, "tenant_id");
@@ -48,6 +52,7 @@ public class MpiController {
     /**
      * 批量注册患者标识。
      */
+    @Operation(summary = "Batch register patient identities")
     @PostMapping("/patient-identities/batch")
     public ResponseEntity<Map<String, Object>> batchRegisterPatientIdentities(@RequestBody Map<String, Object> request) {
         String tenantId = text(request, "tenant_id");
@@ -71,6 +76,7 @@ public class MpiController {
     /**
      * 查找患者的所有标识。
      */
+    @Operation(summary = "Find patient identities")
     @GetMapping("/patient-identities/{tenantId}/{platformPatientId}")
     public ResponseEntity<List<PatientIdentity>> findPatientIdentities(@PathVariable String tenantId, 
                                                                        @PathVariable String platformPatientId) {
@@ -81,6 +87,7 @@ public class MpiController {
     /**
      * 通过外部标识查找患者。
      */
+    @Operation(summary = "Find patient by external id")
     @GetMapping("/patient-identities/external")
     public ResponseEntity<PatientIdentity> findPatientByExternalId(@RequestParam("tenant_id") String tenantId,
                                                                    @RequestParam("identity_type") String identityType,
@@ -96,6 +103,7 @@ public class MpiController {
     /**
      * 验证患者标识。
      */
+    @Operation(summary = "Verify patient identity")
     @PostMapping("/patient-identities/{identityId}/verify")
     public ResponseEntity<Void> verifyPatientIdentity(@PathVariable Long identityId, 
                                                       @RequestBody Map<String, String> request) {
@@ -111,6 +119,7 @@ public class MpiController {
     /**
      * 合并患者标识。
      */
+    @Operation(summary = "Merge patient identities")
     @PostMapping("/patient-identities/merge")
     public ResponseEntity<Void> mergePatientIdentities(@RequestBody Map<String, Object> request) {
         Long sourceId = longValue(request, "source_id");
@@ -132,6 +141,7 @@ public class MpiController {
     /**
      * 注册就诊标识。
      */
+    @Operation(summary = "Register visit identity")
     @PostMapping("/visit-identities")
     public ResponseEntity<VisitIdentity> registerVisitIdentity(@RequestBody Map<String, String> request) {
         String tenantId = text(request, "tenant_id");
@@ -160,6 +170,7 @@ public class MpiController {
     /**
      * 查找就诊的所有标识。
      */
+    @Operation(summary = "Find visit identities")
     @GetMapping("/visit-identities/{tenantId}/{platformVisitId}")
     public ResponseEntity<List<VisitIdentity>> findVisitIdentities(@PathVariable String tenantId, 
                                                                    @PathVariable String platformVisitId) {
@@ -170,6 +181,7 @@ public class MpiController {
     /**
      * 查找患者的所有就诊标识。
      */
+    @Operation(summary = "Find patient visit identities")
     @GetMapping("/visit-identities/patient/{tenantId}/{platformPatientId}")
     public ResponseEntity<List<VisitIdentity>> findPatientVisitIdentities(@PathVariable String tenantId, 
                                                                           @PathVariable String platformPatientId) {
@@ -180,6 +192,7 @@ public class MpiController {
     /**
      * 通过外部标识查找就诊。
      */
+    @Operation(summary = "Find visit by external id")
     @GetMapping("/visit-identities/external")
     public ResponseEntity<VisitIdentity> findVisitByExternalId(@RequestParam("tenant_id") String tenantId,
                                                                @RequestParam("identity_type") String identityType,
@@ -199,6 +212,7 @@ public class MpiController {
     /**
      * 检测冲突。
      */
+    @Operation(summary = "Detect conflicts")
     @PostMapping("/conflicts/detect/{tenantId}")
     public ResponseEntity<List<IdentityConflict>> detectConflicts(@PathVariable String tenantId) {
         List<IdentityConflict> conflicts = mpiService.detectConflicts(tenantId);
@@ -208,6 +222,7 @@ public class MpiController {
     /**
      * 获取待处理冲突。
      */
+    @Operation(summary = "Get pending conflicts")
     @GetMapping("/conflicts/pending/{tenantId}")
     public ResponseEntity<List<IdentityConflict>> getPendingConflicts(@PathVariable String tenantId) {
         List<IdentityConflict> conflicts = mpiService.getPendingConflicts(tenantId);
@@ -217,6 +232,7 @@ public class MpiController {
     /**
      * 解决冲突。
      */
+    @Operation(summary = "Resolve conflict")
     @PostMapping("/conflicts/{conflictId}/resolve")
     public ResponseEntity<Void> resolveConflict(@PathVariable Long conflictId, 
                                                 @RequestBody Map<String, Object> request) {
@@ -240,6 +256,7 @@ public class MpiController {
     /**
      * 从外部系统同步患者标识。
      */
+    @Operation(summary = "Sync patient identities")
     @PostMapping("/sync/patients")
     public ResponseEntity<Map<String, Object>> syncPatientIdentities(@RequestBody Map<String, String> request) {
         String tenantId = text(request, "tenant_id");
@@ -262,6 +279,7 @@ public class MpiController {
     /**
      * 从外部系统同步就诊标识。
      */
+    @Operation(summary = "Sync visit identities")
     @PostMapping("/sync/visits")
     public ResponseEntity<Map<String, Object>> syncVisitIdentities(@RequestBody Map<String, String> request) {
         String tenantId = text(request, "tenant_id");

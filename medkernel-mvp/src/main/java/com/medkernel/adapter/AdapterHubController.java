@@ -10,10 +10,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Adapter Hub")
 @RestController
 @RequestMapping("/api/adapters")
 public class AdapterHubController {
@@ -26,6 +29,7 @@ public class AdapterHubController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Query")
     @PostMapping("/query")
     public ApiResult<Map<String, Object>> query(@RequestBody Map<String, Object> request,
                                                  HttpServletRequest httpRequest) {
@@ -33,6 +37,7 @@ public class AdapterHubController {
         return ApiResult.success(adapterHubService.query(request, orgCtx.getTenantId(), orgCtx.getHospitalCode()));
     }
 
+    @Operation(summary = "Import definitions")
     @PostMapping("/definitions")
     public ApiResult<List<Map<String, Object>>> importDefinitions(@RequestBody Object request,
                                                                    HttpServletRequest httpRequest) {
@@ -40,12 +45,14 @@ public class AdapterHubController {
         return ApiResult.success(adapterHubService.importDefinitions(request, orgCtx.getTenantId(), orgCtx.getHospitalCode()));
     }
 
+    @Operation(summary = "List definitions")
     @GetMapping("/definitions")
     public ApiResult<List<Map<String, Object>>> listDefinitions(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         return ApiResult.success(adapterHubService.listDefinitions(orgCtx.getTenantId(), orgCtx.getHospitalCode()));
     }
 
+    @Operation(summary = "Get definition")
     @GetMapping("/definitions/{adapterCode}/{queryCode}")
     public ApiResult<Map<String, Object>> getDefinition(@PathVariable String adapterCode,
                                                         @PathVariable String queryCode,

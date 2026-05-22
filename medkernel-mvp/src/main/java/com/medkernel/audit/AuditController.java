@@ -8,11 +8,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Audit")
 @RestController
 @RequestMapping("/api/audit-logs")
 public class AuditController {
@@ -25,6 +28,7 @@ public class AuditController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "List")
     @GetMapping
     public ApiResult<List<Map<String, Object>>> list(@RequestParam(required = false) String traceId,
                                                      @RequestParam(required = false) String engineType,
@@ -42,6 +46,7 @@ public class AuditController {
         return ApiResult.success(persistenceService.listAuditLogs(filters));
     }
 
+    @Operation(summary = "Summary")
     @GetMapping("/summary")
     public ApiResult<Map<String, Object>> summary(@RequestParam(required = false) String traceId,
                                                   @RequestParam(required = false) String engineType,

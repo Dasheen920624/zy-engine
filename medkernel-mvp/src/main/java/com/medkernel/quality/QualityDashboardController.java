@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
@@ -15,6 +17,7 @@ import java.util.Map;
  * 院级质控驾驶舱 API
  * 提供 4 KPI 聚合、科室排名、钻取数据
  */
+@Tag(name = "Quality Dashboard")
 @RestController
 @RequestMapping("/api/quality/dashboard")
 public class QualityDashboardController {
@@ -31,6 +34,7 @@ public class QualityDashboardController {
      * 获取驾驶舱 4 KPI 聚合数据
      * 包含：路径执行、规则命中、质控问题、医保风险
      */
+    @Operation(summary = "Get dashboard")
     @GetMapping
     public ApiResult<Map<String, Object>> getDashboard(
             @RequestParam(required = false, defaultValue = "month") String period,
@@ -43,6 +47,7 @@ public class QualityDashboardController {
     /**
      * 获取科室排名列表
      */
+    @Operation(summary = "Get department ranking")
     @GetMapping("/departments")
     public ApiResult<Map<String, Object>> getDepartmentRanking(
             @RequestParam(required = false, defaultValue = "month") String period,
@@ -54,6 +59,7 @@ public class QualityDashboardController {
     /**
      * 科室钻取详情
      */
+    @Operation(summary = "Get department detail")
     @GetMapping("/department/{deptCode}")
     public ApiResult<Map<String, Object>> getDepartmentDetail(
             @PathVariable String deptCode,
@@ -66,6 +72,7 @@ public class QualityDashboardController {
     /**
      * 趋势数据（最近 N 天）
      */
+    @Operation(summary = "Get trend")
     @GetMapping("/trend")
     public ApiResult<Map<String, Object>> getTrend(
             @RequestParam(required = false, defaultValue = "30") int days,

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.Map;
  * 评估报告、复核和整改闭环 API。
  * 提供报告生成/导出、人工复核、整改任务管理、再评估和归档操作。
  */
+@Tag(name = "Eval Report")
 @RestController
 @RequestMapping("/api/quality/eval/report")
 public class EvalReportController {
@@ -38,6 +41,7 @@ public class EvalReportController {
     /**
      * 基于评估结果生成报告。
      */
+    @Operation(summary = "Generate report")
     @PostMapping("/generate")
     public ApiResult<Map<String, Object>> generateReport(
             @RequestBody Map<String, Object> request,
@@ -58,6 +62,7 @@ public class EvalReportController {
     /**
      * 导出评估报告（含完整指标得分和事实详情）。
      */
+    @Operation(summary = "Export report")
     @GetMapping("/{reportId}/export")
     public ApiResult<Map<String, Object>> exportReport(
             @PathVariable String reportId,
@@ -74,6 +79,7 @@ public class EvalReportController {
     /**
      * 获取评估报告详情。
      */
+    @Operation(summary = "Get report")
     @GetMapping("/{reportId}")
     public ApiResult<Map<String, Object>> getReport(
             @PathVariable String reportId,
@@ -89,6 +95,7 @@ public class EvalReportController {
     /**
      * 列出评估报告。
      */
+    @Operation(summary = "List reports")
     @GetMapping("/list")
     public ApiResult<List<Map<String, Object>>> listReports(
             @RequestParam(required = false) String status,
@@ -106,6 +113,7 @@ public class EvalReportController {
     /**
      * 归档评估报告。
      */
+    @Operation(summary = "Archive report")
     @PostMapping("/{reportId}/archive")
     public ApiResult<Map<String, Object>> archiveReport(
             @PathVariable String reportId,
@@ -125,6 +133,7 @@ public class EvalReportController {
     /**
      * 提交复核意见。
      */
+    @Operation(summary = "Submit review")
     @PostMapping("/{reportId}/review")
     public ApiResult<Map<String, Object>> submitReview(
             @PathVariable String reportId,
@@ -142,6 +151,7 @@ public class EvalReportController {
     /**
      * 列出报告的复核记录。
      */
+    @Operation(summary = "List reviews")
     @GetMapping("/{reportId}/reviews")
     public ApiResult<List<Map<String, Object>>> listReviews(
             @PathVariable String reportId,
@@ -160,6 +170,7 @@ public class EvalReportController {
     /**
      * 创建整改任务。
      */
+    @Operation(summary = "Create rectification")
     @PostMapping("/{reportId}/rectification")
     public ApiResult<Map<String, Object>> createRectification(
             @PathVariable String reportId,
@@ -177,6 +188,7 @@ public class EvalReportController {
     /**
      * 自动生成整改任务（基于异常和缺失事实）。
      */
+    @Operation(summary = "Auto create rectifications")
     @PostMapping("/{reportId}/rectification/auto")
     public ApiResult<List<Map<String, Object>>> autoCreateRectifications(
             @PathVariable String reportId,
@@ -198,6 +210,7 @@ public class EvalReportController {
     /**
      * 更新整改任务状态。
      */
+    @Operation(summary = "Update rectification status")
     @PostMapping("/rectification/{rectId}/status")
     public ApiResult<Map<String, Object>> updateRectificationStatus(
             @PathVariable String rectId,
@@ -215,6 +228,7 @@ public class EvalReportController {
     /**
      * 列出整改任务。
      */
+    @Operation(summary = "List rectifications")
     @GetMapping("/rectification/list")
     public ApiResult<List<Map<String, Object>>> listRectifications(
             @RequestParam(required = false) String report_id,
@@ -234,6 +248,7 @@ public class EvalReportController {
     /**
      * 基于原评估结果执行再评估。
      */
+    @Operation(summary = "Re evaluate")
     @PostMapping("/re-evaluate")
     public ApiResult<Map<String, Object>> reEvaluate(
             @RequestBody Map<String, Object> request,

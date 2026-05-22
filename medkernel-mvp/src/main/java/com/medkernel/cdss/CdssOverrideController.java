@@ -6,6 +6,8 @@ import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import java.util.Map;
  *   <li>疲劳配置更新 — PUT /api/cdss/fatigue-configs/{configId}</li>
  * </ul>
  */
+@Tag(name = "Cdss Override")
 @RestController
 @RequestMapping("/api/cdss")
 public class CdssOverrideController {
@@ -42,6 +45,7 @@ public class CdssOverrideController {
     /**
      * 记录覆盖。
      */
+    @Operation(summary = "Record override")
     @PostMapping("/overrides")
     public ApiResult<CdssOverrideLog> recordOverride(
             @RequestBody Map<String, Object> request,
@@ -79,6 +83,7 @@ public class CdssOverrideController {
     /**
      * 查询覆盖日志。
      */
+    @Operation(summary = "List overrides")
     @GetMapping("/overrides")
     public ApiResult<List<CdssOverrideLog>> listOverrides(
             @RequestParam(required = false) String patientId,
@@ -94,6 +99,7 @@ public class CdssOverrideController {
     /**
      * 覆盖统计。
      */
+    @Operation(summary = "Get override statistics")
     @GetMapping("/overrides/statistics")
     public ApiResult<Map<String, Object>> getOverrideStatistics(
             @RequestParam(required = false) String operatorId,
@@ -109,6 +115,7 @@ public class CdssOverrideController {
     /**
      * 疲劳检查。
      */
+    @Operation(summary = "Check fatigue")
     @GetMapping("/overrides/fatigue-check")
     public ApiResult<Map<String, Object>> checkFatigue(
             @RequestParam String operatorId,
@@ -123,6 +130,7 @@ public class CdssOverrideController {
     /**
      * 保存疲劳配置。
      */
+    @Operation(summary = "Save fatigue config")
     @PostMapping("/fatigue-configs")
     public ApiResult<CdssFatigueConfig> saveFatigueConfig(
             @RequestBody Map<String, Object> request,
@@ -154,6 +162,7 @@ public class CdssOverrideController {
     /**
      * 查询疲劳配置。
      */
+    @Operation(summary = "List fatigue configs")
     @GetMapping("/fatigue-configs")
     public ApiResult<List<CdssFatigueConfig>> listFatigueConfigs(HttpServletRequest httpRequest) {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
@@ -165,6 +174,7 @@ public class CdssOverrideController {
     /**
      * 更新疲劳配置。
      */
+    @Operation(summary = "Update fatigue config")
     @PutMapping("/fatigue-configs/{configId}")
     public ApiResult<CdssFatigueConfig> updateFatigueConfig(
             @PathVariable Long configId,

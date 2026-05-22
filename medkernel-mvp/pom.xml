@@ -99,6 +99,15 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- PR-FINAL-20: springdoc-openapi-ui 1.7.0（Spring Boot 2.7 最高兼容版）。
+             - Swagger UI 访问路径：/medkernel/api-docs（仅 management 内网端口 18081 暴露）。
+             - 生产部署时须在 Nginx/网关层屏蔽 /api-docs 对公网的访问。
+             注意：springdoc 2.x 需要 Spring Boot 3+，本工程固定 1.7.0。 -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.7.0</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.Map;
  * 统一待办和审批工作流Controller
  * 提供待办任务的创建、查询、审批、驳回、转办、取消、加签等接口
  */
+@Tag(name = "Workflow")
 @RestController
 @RequestMapping("/api/workflow")
 public class WorkflowController {
@@ -35,6 +38,7 @@ public class WorkflowController {
     /**
      * 查询待办任务列表
      */
+    @Operation(summary = "List todos")
     @GetMapping("/todos")
     public ApiResult<List<Map<String, Object>>> listTodos(
             @RequestParam(required = false) String status,
@@ -54,6 +58,7 @@ public class WorkflowController {
     /**
      * 获取待办任务详情
      */
+    @Operation(summary = "Get todo detail")
     @GetMapping("/todos/{taskCode}")
     public ApiResult<Map<String, Object>> getTodoDetail(@PathVariable String taskCode,
                                                         HttpServletRequest httpRequest) {
@@ -66,6 +71,7 @@ public class WorkflowController {
     /**
      * 获取待办统计
      */
+    @Operation(summary = "Get todo summary")
     @GetMapping("/todos/summary")
     public ApiResult<Map<String, Object>> getTodoSummary(
             @RequestParam(required = false) String assignedTo,
@@ -79,6 +85,7 @@ public class WorkflowController {
     /**
      * 创建待办任务
      */
+    @Operation(summary = "Create todo")
     @PostMapping("/todos")
     public ApiResult<Map<String, Object>> createTodo(@RequestBody Map<String, Object> body,
                                                      HttpServletRequest request) {
@@ -92,6 +99,7 @@ public class WorkflowController {
     /**
      * 审批通过
      */
+    @Operation(summary = "Approve task")
     @PostMapping("/todos/{taskCode}/approve")
     public ApiResult<Map<String, Object>> approveTask(@PathVariable String taskCode,
                                                       @RequestBody Map<String, Object> body,
@@ -103,6 +111,7 @@ public class WorkflowController {
     /**
      * 驳回
      */
+    @Operation(summary = "Reject task")
     @PostMapping("/todos/{taskCode}/reject")
     public ApiResult<Map<String, Object>> rejectTask(@PathVariable String taskCode,
                                                      @RequestBody Map<String, Object> body,
@@ -114,6 +123,7 @@ public class WorkflowController {
     /**
      * 转办
      */
+    @Operation(summary = "Delegate task")
     @PostMapping("/todos/{taskCode}/delegate")
     public ApiResult<Map<String, Object>> delegateTask(@PathVariable String taskCode,
                                                        @RequestBody Map<String, Object> body,
@@ -125,6 +135,7 @@ public class WorkflowController {
     /**
      * 取消
      */
+    @Operation(summary = "Cancel task")
     @PostMapping("/todos/{taskCode}/cancel")
     public ApiResult<Map<String, Object>> cancelTask(@PathVariable String taskCode,
                                                      @RequestBody Map<String, Object> body,
@@ -136,6 +147,7 @@ public class WorkflowController {
     /**
      * 加签（增加审批人）
      */
+    @Operation(summary = "Add sign task")
     @PostMapping("/todos/{taskCode}/add-sign")
     public ApiResult<Map<String, Object>> addSignTask(@PathVariable String taskCode,
                                                       @RequestBody Map<String, Object> body,

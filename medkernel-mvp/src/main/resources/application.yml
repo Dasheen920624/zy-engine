@@ -170,3 +170,18 @@ medkernel:
     database: ${MEDKERNEL_GRAPH_DATABASE:neo4j}
     timeout-ms: ${MEDKERNEL_GRAPH_TIMEOUT_MS:3000}
     default-version: ${MEDKERNEL_GRAPH_DEFAULT_VERSION:AMI_GRAPH_2026_01}
+
+# PR-FINAL-20: springdoc-openapi Swagger UI 配置。
+# 安全约束：/api-docs UI 仅在 management port（18081，仅 127.0.0.1 监听）可访问，
+# 业务端口 18080 通过 Nginx 屏蔽该路径，生产部署不暴露给公网。
+springdoc:
+  swagger-ui:
+    path: /api-docs
+    operationsSorter: alpha
+    tagsSorter: alpha
+    displayRequestDuration: true
+    filter: true
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.medkernel
+  paths-to-match: /api/**
