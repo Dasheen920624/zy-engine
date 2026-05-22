@@ -1,0 +1,169 @@
+/* PR-FINAL-19: PackageDetail inline style 抽取（45 处 → CSS Modules） */
+
+.iconDanger {
+  color: var(--mk-danger);
+}
+
+.iconWarning {
+  color: var(--mk-warning);
+}
+
+.iconSuccess {
+  color: var(--mk-success);
+}
+
+.textSuccess {
+  color: var(--mk-success);
+}
+
+.textDanger {
+  color: var(--mk-danger);
+}
+
+.checkListEmpty {
+  padding: 8px 0;
+}
+
+.issueList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.issueRow {
+  padding: 8px 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+
+.issueRowDivider {
+  border-bottom: var(--mk-border-width) solid var(--mk-border-divider);
+}
+
+.issueIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.smallText {
+  font-size: 12px;
+}
+
+.smallTextBlock {
+  font-size: 12px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.smallTextBlockTight {
+  font-size: 12px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.mono {
+  font-family: var(--mk-font-mono);
+}
+
+.monoSmall {
+  font-family: var(--mk-font-mono);
+  font-size: 12px;
+}
+
+.monoTiny {
+  font-family: var(--mk-font-mono);
+  font-size: 11px;
+}
+
+.diffPre {
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--mk-font-mono);
+  max-height: 300px;
+  overflow: auto;
+  margin: 0;
+}
+
+.diffPreMuted {
+  composes: diffPre;
+  background: var(--mk-bg-muted);
+}
+
+.diffPreInverse {
+  composes: diffPre;
+  background: var(--mk-bg-inverse);
+}
+
+.diffLine {
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--mk-text-tertiary);
+}
+
+.sectionTitle {
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.sectionTitleSmall {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.descriptionsBlock {
+  margin-bottom: 16px;
+}
+
+.divider {
+  margin: 12px 0;
+}
+
+.dividerWide {
+  margin: 16px 0 12px;
+}
+
+.marginTop12 {
+  margin-top: 12px;
+}
+
+.marginBottom12 {
+  margin-bottom: 12px;
+}
+
+.iconMargin {
+  margin-right: 8px;
+}
+
+.publishStatusBox {
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.publishStatusReady {
+  background: var(--mk-success-soft);
+  border-color: var(--mk-success-border);
+}
+
+.publishStatusBlocked {
+  background: var(--mk-danger-soft);
+  border-color: var(--mk-danger-border);
+}
+
+.dangerBanner {
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--mk-danger-soft);
+  border-radius: 4px;
+  border: 1px solid var(--mk-danger-border);
+}
