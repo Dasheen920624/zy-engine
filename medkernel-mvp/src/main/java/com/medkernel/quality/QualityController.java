@@ -2,6 +2,7 @@ package com.medkernel.quality;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.quality.dto.AssignProblemRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -86,9 +88,18 @@ public class QualityController {
     @PostMapping("/problems/{id}/assign")
     public ApiResult<Map<String, Object>> assignProblem(
             @PathVariable String id,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid AssignProblemRequest request,
             HttpServletRequest httpRequest) {
-        organizationContextService.resolveWithBody(httpRequest, request);
-        return ApiResult.success(qualityService.assignProblem(id, request));
+        Map<String, Object> body = toMap(request);
+        organizationContextService.resolveWithBody(httpRequest, body);
+        return ApiResult.success(qualityService.assignProblem(id, body));
+    }
+
+    private Map<String, Object> toMap(AssignProblemRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("assignee", request.getAssignee());
+        map.put("priority", request.getPriority());
+        map.put("note", request.getNote());
+        return map;
     }
 }

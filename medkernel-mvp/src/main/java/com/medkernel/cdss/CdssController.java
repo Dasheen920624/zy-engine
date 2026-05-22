@@ -4,11 +4,15 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.cdss.dto.CdssEvaluateRequest;
+import com.medkernel.cdss.dto.ResolveAlertRequest;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,17 +49,15 @@ public class CdssController {
     @Operation(summary = "Evaluate")
     @PostMapping("/evaluate")
     public ApiResult<List<CdssAlert>> evaluate(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid CdssEvaluateRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("trigger_point", request.getTriggerPoint());
+        bodyMap.put("patient_context", request.getPatientContext());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
-        String triggerPoint = (String) request.get("trigger_point");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> patientContext = (Map<String, Object>) request.get("patient_context");
-
-        if (triggerPoint == null || triggerPoint.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "trigger_point is required");
-        }
+        String triggerPoint = request.getTriggerPoint();
+        Map<String, Object> patientContext = request.getPatientContext();
 
         List<CdssAlert> alerts = cdssService.evaluate(triggerPoint, patientContext,
                 orgContext.getTenantId());
@@ -69,18 +71,19 @@ public class CdssController {
     @PostMapping("/alerts/{alertId}/resolve")
     public ApiResult<CdssAlert> resolveAlert(
             @PathVariable String alertId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid ResolveAlertRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("override_type", request.getOverrideType());
+        bodyMap.put("override_reason", request.getOverrideReason());
+        bodyMap.put("operator_name", request.getOperatorName());
+        bodyMap.put("supervisor_name", request.getSupervisorName());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
-        String overrideType = (String) request.get("override_type");
-        String overrideReason = (String) request.get("override_reason");
-        String operatorName = (String) request.get("operator_name");
-        String supervisorName = (String) request.get("supervisor_name");
-
-        if (overrideType == null || overrideType.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "override_type is required");
-        }
+        String overrideType = request.getOverrideType();
+        String overrideReason = request.getOverrideReason();
+        String operatorName = request.getOperatorName();
+        String supervisorName = request.getSupervisorName();
 
         try {
             CdssAlert alert = cdssService.resolveAlert(alertId, overrideType, overrideReason,

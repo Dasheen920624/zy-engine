@@ -4,11 +4,19 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.cdss.dto.CreateHazardRequest;
+import com.medkernel.cdss.dto.UpdateHazardRequest;
+import com.medkernel.cdss.dto.AcceptHazardRequest;
+import com.medkernel.cdss.dto.CreateSafetyCaseRequest;
+import com.medkernel.cdss.dto.UpdateSafetyCaseRequest;
+import com.medkernel.cdss.dto.ReviewSafetyCaseRequest;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,27 +53,35 @@ public class ClinicalSafetyController {
     @Operation(summary = "Create hazard")
     @PostMapping("/hazards")
     public ApiResult<HazardLog> createHazard(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid CreateHazardRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("hazard_code", request.getHazardCode());
+        bodyMap.put("hazard_name", request.getHazardName());
+        bodyMap.put("hazard_category", request.getHazardCategory());
+        bodyMap.put("hazard_description", request.getHazardDescription());
+        bodyMap.put("affected_process", request.getAffectedProcess());
+        bodyMap.put("likelihood", request.getLikelihood());
+        bodyMap.put("severity", request.getSeverity());
+        bodyMap.put("control_measures", request.getControlMeasures());
+        bodyMap.put("residual_risk", request.getResidualRisk());
+        bodyMap.put("blocking_strategy", request.getBlockingStrategy());
+        bodyMap.put("created_by", request.getCreatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         HazardLog hazard = new HazardLog();
         hazard.setTenantId(parseLong(orgContext.getTenantId()));
-        hazard.setHazardCode(string(request.get("hazard_code")));
-        hazard.setHazardName(string(request.get("hazard_name")));
-        hazard.setHazardCategory(string(request.get("hazard_category")));
-        hazard.setHazardDescription(string(request.get("hazard_description")));
-        hazard.setAffectedProcess(string(request.get("affected_process")));
-        hazard.setLikelihood(string(request.get("likelihood")));
-        hazard.setSeverity(string(request.get("severity")));
-        hazard.setControlMeasures(string(request.get("control_measures")));
-        hazard.setResidualRisk(string(request.get("residual_risk")));
-        hazard.setBlockingStrategy(string(request.get("blocking_strategy")));
-        hazard.setCreatedBy(string(request.get("created_by")));
-
-        if (hazard.getHazardCode() == null || hazard.getHazardCode().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "hazard_code is required");
-        }
+        hazard.setHazardCode(request.getHazardCode());
+        hazard.setHazardName(request.getHazardName());
+        hazard.setHazardCategory(request.getHazardCategory());
+        hazard.setHazardDescription(request.getHazardDescription());
+        hazard.setAffectedProcess(request.getAffectedProcess());
+        hazard.setLikelihood(request.getLikelihood());
+        hazard.setSeverity(request.getSeverity());
+        hazard.setControlMeasures(request.getControlMeasures());
+        hazard.setResidualRisk(request.getResidualRisk());
+        hazard.setBlockingStrategy(request.getBlockingStrategy());
+        hazard.setCreatedBy(request.getCreatedBy());
 
         // 自动计算风险等级
         if (hazard.getLikelihood() != null && hazard.getSeverity() != null) {
@@ -88,24 +104,36 @@ public class ClinicalSafetyController {
     @PutMapping("/hazards/{hazardId}")
     public ApiResult<HazardLog> updateHazard(
             @PathVariable Long hazardId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid UpdateHazardRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("hazard_name", request.getHazardName());
+        bodyMap.put("hazard_category", request.getHazardCategory());
+        bodyMap.put("hazard_description", request.getHazardDescription());
+        bodyMap.put("affected_process", request.getAffectedProcess());
+        bodyMap.put("likelihood", request.getLikelihood());
+        bodyMap.put("severity", request.getSeverity());
+        bodyMap.put("control_measures", request.getControlMeasures());
+        bodyMap.put("residual_risk", request.getResidualRisk());
+        bodyMap.put("status", request.getStatus());
+        bodyMap.put("blocking_strategy", request.getBlockingStrategy());
+        bodyMap.put("updated_by", request.getUpdatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         HazardLog hazard = new HazardLog();
         hazard.setId(hazardId);
         hazard.setTenantId(parseLong(orgContext.getTenantId()));
-        hazard.setHazardName(string(request.get("hazard_name")));
-        hazard.setHazardCategory(string(request.get("hazard_category")));
-        hazard.setHazardDescription(string(request.get("hazard_description")));
-        hazard.setAffectedProcess(string(request.get("affected_process")));
-        hazard.setLikelihood(string(request.get("likelihood")));
-        hazard.setSeverity(string(request.get("severity")));
-        hazard.setControlMeasures(string(request.get("control_measures")));
-        hazard.setResidualRisk(string(request.get("residual_risk")));
-        hazard.setStatus(string(request.get("status")));
-        hazard.setBlockingStrategy(string(request.get("blocking_strategy")));
-        hazard.setUpdatedBy(string(request.get("updated_by")));
+        hazard.setHazardName(request.getHazardName());
+        hazard.setHazardCategory(request.getHazardCategory());
+        hazard.setHazardDescription(request.getHazardDescription());
+        hazard.setAffectedProcess(request.getAffectedProcess());
+        hazard.setLikelihood(request.getLikelihood());
+        hazard.setSeverity(request.getSeverity());
+        hazard.setControlMeasures(request.getControlMeasures());
+        hazard.setResidualRisk(request.getResidualRisk());
+        hazard.setStatus(request.getStatus());
+        hazard.setBlockingStrategy(request.getBlockingStrategy());
+        hazard.setUpdatedBy(request.getUpdatedBy());
 
         // 自动计算风险等级
         if (hazard.getLikelihood() != null && hazard.getSeverity() != null) {
@@ -143,13 +171,9 @@ public class ClinicalSafetyController {
     @PostMapping("/hazards/{hazardId}/accept")
     public ApiResult<HazardLog> acceptHazard(
             @PathVariable Long hazardId,
-            @RequestBody Map<String, Object> request) {
-        String acceptedBy = string(request.get("accepted_by"));
-        String acceptanceNote = string(request.get("acceptance_note"));
-
-        if (acceptedBy == null || acceptedBy.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "accepted_by is required");
-        }
+            @RequestBody @Valid AcceptHazardRequest request) {
+        String acceptedBy = request.getAcceptedBy();
+        String acceptanceNote = request.getAcceptanceNote();
 
         try {
             HazardLog accepted = clinicalSafetyService.acceptHazard(hazardId, acceptedBy, acceptanceNote);
@@ -179,25 +203,31 @@ public class ClinicalSafetyController {
     @Operation(summary = "Create safety case")
     @PostMapping("/safety-cases")
     public ApiResult<SafetyCase> createSafetyCase(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid CreateSafetyCaseRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("case_code", request.getCaseCode());
+        bodyMap.put("case_name", request.getCaseName());
+        bodyMap.put("case_type", request.getCaseType());
+        bodyMap.put("scope", request.getScope());
+        bodyMap.put("goal", request.getGoal());
+        bodyMap.put("argument", request.getArgument());
+        bodyMap.put("evidence_refs", request.getEvidenceRefs());
+        bodyMap.put("version", request.getVersion());
+        bodyMap.put("created_by", request.getCreatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         SafetyCase safetyCase = new SafetyCase();
         safetyCase.setTenantId(parseLong(orgContext.getTenantId()));
-        safetyCase.setCaseCode(string(request.get("case_code")));
-        safetyCase.setCaseName(string(request.get("case_name")));
-        safetyCase.setCaseType(string(request.get("case_type")));
-        safetyCase.setScope(string(request.get("scope")));
-        safetyCase.setGoal(string(request.get("goal")));
-        safetyCase.setArgument(string(request.get("argument")));
-        safetyCase.setEvidenceRefs(string(request.get("evidence_refs")));
-        safetyCase.setVersion(string(request.get("version")));
-        safetyCase.setCreatedBy(string(request.get("created_by")));
-
-        if (safetyCase.getCaseCode() == null || safetyCase.getCaseCode().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "case_code is required");
-        }
+        safetyCase.setCaseCode(request.getCaseCode());
+        safetyCase.setCaseName(request.getCaseName());
+        safetyCase.setCaseType(request.getCaseType());
+        safetyCase.setScope(request.getScope());
+        safetyCase.setGoal(request.getGoal());
+        safetyCase.setArgument(request.getArgument());
+        safetyCase.setEvidenceRefs(request.getEvidenceRefs());
+        safetyCase.setVersion(request.getVersion());
+        safetyCase.setCreatedBy(request.getCreatedBy());
 
         SafetyCase saved = clinicalSafetyService.createSafetyCase(safetyCase);
         return ApiResult.success(saved);
@@ -210,22 +240,32 @@ public class ClinicalSafetyController {
     @PutMapping("/safety-cases/{caseId}")
     public ApiResult<SafetyCase> updateSafetyCase(
             @PathVariable Long caseId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid UpdateSafetyCaseRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("case_name", request.getCaseName());
+        bodyMap.put("case_type", request.getCaseType());
+        bodyMap.put("scope", request.getScope());
+        bodyMap.put("goal", request.getGoal());
+        bodyMap.put("argument", request.getArgument());
+        bodyMap.put("evidence_refs", request.getEvidenceRefs());
+        bodyMap.put("status", request.getStatus());
+        bodyMap.put("version", request.getVersion());
+        bodyMap.put("updated_by", request.getUpdatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         SafetyCase safetyCase = new SafetyCase();
         safetyCase.setId(caseId);
         safetyCase.setTenantId(parseLong(orgContext.getTenantId()));
-        safetyCase.setCaseName(string(request.get("case_name")));
-        safetyCase.setCaseType(string(request.get("case_type")));
-        safetyCase.setScope(string(request.get("scope")));
-        safetyCase.setGoal(string(request.get("goal")));
-        safetyCase.setArgument(string(request.get("argument")));
-        safetyCase.setEvidenceRefs(string(request.get("evidence_refs")));
-        safetyCase.setStatus(string(request.get("status")));
-        safetyCase.setVersion(string(request.get("version")));
-        safetyCase.setUpdatedBy(string(request.get("updated_by")));
+        safetyCase.setCaseName(request.getCaseName());
+        safetyCase.setCaseType(request.getCaseType());
+        safetyCase.setScope(request.getScope());
+        safetyCase.setGoal(request.getGoal());
+        safetyCase.setArgument(request.getArgument());
+        safetyCase.setEvidenceRefs(request.getEvidenceRefs());
+        safetyCase.setStatus(request.getStatus());
+        safetyCase.setVersion(request.getVersion());
+        safetyCase.setUpdatedBy(request.getUpdatedBy());
 
         try {
             SafetyCase updated = clinicalSafetyService.updateSafetyCase(safetyCase);
@@ -257,17 +297,10 @@ public class ClinicalSafetyController {
     @PostMapping("/safety-cases/{caseId}/review")
     public ApiResult<SafetyCase> reviewSafetyCase(
             @PathVariable Long caseId,
-            @RequestBody Map<String, Object> request) {
-        String reviewStatus = string(request.get("review_status"));
-        String reviewedBy = string(request.get("reviewed_by"));
-        String reviewNote = string(request.get("review_note"));
-
-        if (reviewStatus == null || reviewStatus.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "review_status is required");
-        }
-        if (reviewedBy == null || reviewedBy.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "reviewed_by is required");
-        }
+            @RequestBody @Valid ReviewSafetyCaseRequest request) {
+        String reviewStatus = request.getReviewStatus();
+        String reviewedBy = request.getReviewedBy();
+        String reviewNote = request.getReviewNote();
 
         try {
             SafetyCase reviewed = clinicalSafetyService.reviewSafetyCase(caseId, reviewStatus, reviewedBy, reviewNote);
@@ -290,10 +323,6 @@ public class ClinicalSafetyController {
     }
 
     // ─── 内部方法 ────────────────────────────────────────────────────
-
-    private String string(Object value) {
-        return value == null ? null : String.valueOf(value);
-    }
 
     private Long parseLong(String value) {
         if (value == null || value.isEmpty()) {

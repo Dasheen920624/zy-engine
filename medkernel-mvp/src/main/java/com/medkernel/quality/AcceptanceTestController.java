@@ -3,6 +3,11 @@ package com.medkernel.quality;
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.quality.dto.CreateTestCaseRequest;
+import com.medkernel.quality.dto.UpdateTestCaseRequest;
+import com.medkernel.quality.dto.RecordTestResultRequest;
+import com.medkernel.quality.dto.ReviewResultRequest;
+import com.medkernel.quality.dto.AttachEvidenceRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +46,11 @@ public class AcceptanceTestController {
     @Operation(summary = "Create test case")
     @PostMapping("/test-cases")
     public ApiResult<AcceptanceTestCase> createTestCase(
-            @RequestBody AcceptanceTestCase testCase,
+            @RequestBody @Valid CreateTestCaseRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
         try {
+            AcceptanceTestCase testCase = toEntity(request);
             AcceptanceTestCase created = acceptanceTestService.createTestCase(testCase);
             return ApiResult.success(created);
         } catch (IllegalStateException ex) {
@@ -55,9 +62,10 @@ public class AcceptanceTestController {
     @PutMapping("/test-cases/{testCaseId}")
     public ApiResult<AcceptanceTestCase> updateTestCase(
             @PathVariable("testCaseId") Long testCaseId,
-            @RequestBody AcceptanceTestCase testCase,
+            @RequestBody @Valid UpdateTestCaseRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
+        AcceptanceTestCase testCase = toEntity(request);
         testCase.setId(testCaseId);
         try {
             AcceptanceTestCase updated = acceptanceTestService.updateTestCase(testCase);
@@ -96,10 +104,11 @@ public class AcceptanceTestController {
     @Operation(summary = "Record test result")
     @PostMapping("/results")
     public ApiResult<AcceptanceTestResult> recordResult(
-            @RequestBody AcceptanceTestResult result,
+            @RequestBody @Valid RecordTestResultRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
         try {
+            AcceptanceTestResult result = toEntity(request);
             AcceptanceTestResult recorded = acceptanceTestService.recordResult(result);
             return ApiResult.success(recorded);
         } catch (IllegalStateException ex) {
@@ -131,17 +140,15 @@ public class AcceptanceTestController {
     @PostMapping("/results/{resultId}/review")
     public ApiResult<AcceptanceTestResult> reviewResult(
             @PathVariable("resultId") Long resultId,
-            @RequestBody Map<String, String> reviewRequest,
+            @RequestBody @Valid ReviewResultRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
-        String reviewedBy = reviewRequest.get("reviewed_by");
-        String reviewNote = reviewRequest.get("review_note");
-        String status = reviewRequest.get("status");
+        String status = request.getStatus();
         if (status == null || status.trim().isEmpty()) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "status is required");
         }
         try {
-            AcceptanceTestResult reviewed = acceptanceTestService.reviewResult(resultId, reviewedBy, reviewNote, status);
+            AcceptanceTestResult reviewed = acceptanceTestService.reviewResult(resultId, request.getReviewedBy(), request.getReviewNote(), status);
             return ApiResult.success(reviewed);
         } catch (IllegalStateException ex) {
             return ApiResult.failure(ErrorCode.DB_ERROR, ex.getMessage());
@@ -157,10 +164,11 @@ public class AcceptanceTestController {
     @Operation(summary = "Attach evidence")
     @PostMapping("/evidence")
     public ApiResult<AcceptanceEvidence> attachEvidence(
-            @RequestBody AcceptanceEvidence evidence,
+            @RequestBody @Valid AttachEvidenceRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
         try {
+            AcceptanceEvidence evidence = toEntity(request);
             AcceptanceEvidence attached = acceptanceTestService.attachEvidence(evidence);
             return ApiResult.success(attached);
         } catch (IllegalStateException ex) {
@@ -240,5 +248,48 @@ public class AcceptanceTestController {
             }
         }
         return 0L;
+    }
+
+    private AcceptanceTestCase toEntity(CreateTestCaseRequest request) {
+        AcceptanceTestCase testCase = new AcceptanceTestCase();
+        testCase.setCaseCode(request.getCaseCode());
+        testCase.setCaseName(request.getCaseName());
+        testCase.setCategory(request.getCategory());
+        testCase.setFeatureCode(request.getFeatureCode());
+        testCase.setDescription(request.getDescription());
+        testCase.setSteps(request.getSteps());
+        testCase.setExpectedResult(request.getExpectedResult());
+        return testCase;
+    }
+
+    private AcceptanceTestCase toEntity(UpdateTestCaseRequest request) {
+        AcceptanceTestCase testCase = new AcceptanceTestCase();
+        testCase.setCaseName(request.getCaseName());
+        testCase.setCategory(request.getCategory());
+        testCase.setDescription(request.getDescription());
+        testCase.setSteps(request.getSteps());
+        testCase.setExpectedResult(request.getExpectedResult());
+        testCase.setStatus(request.getStatus());
+        return testCase;
+    }
+
+    private AcceptanceTestResult toEntity(RecordTestResultRequest request) {
+        AcceptanceTestResult result = new AcceptanceTestResult();
+        result.setCaseCode(request.getCaseCode());
+        result.setVerdict(request.getVerdict());
+        result.setActualResult(request.getActualResult());
+        result.setEvidenceRefs(request.getEvidenceRefs());
+        result.setExecutedBy(request.getTestedBy());
+        return result;
+    }
+
+    private AcceptanceEvidence toEntity(AttachEvidenceRequest request) {
+        AcceptanceEvidence evidence = new AcceptanceEvidence();
+        evidence.setResultCode(request.getResultCode());
+        evidence.setEvidenceType(request.getEvidenceType());
+        evidence.setFilePath(request.getFilePath());
+        evidence.setContent(request.getContent());
+        evidence.setDescription(request.getDescription());
+        return evidence;
     }
 }

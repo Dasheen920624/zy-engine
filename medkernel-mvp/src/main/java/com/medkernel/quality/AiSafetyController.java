@@ -3,6 +3,11 @@ package com.medkernel.quality;
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.quality.dto.CreateScenarioRequest;
+import com.medkernel.quality.dto.UpdateScenarioRequest;
+import com.medkernel.quality.dto.ExecuteRedTeamTestRequest;
+import com.medkernel.quality.dto.RecordDetectionRequest;
+import com.medkernel.quality.dto.ReviewDetectionRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +46,11 @@ public class AiSafetyController {
     @Operation(summary = "Create scenario")
     @PostMapping("/red-team/scenarios")
     public ApiResult<RedTeamScenario> createScenario(
-            @RequestBody RedTeamScenario scenario,
+            @RequestBody @Valid CreateScenarioRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
         try {
+            RedTeamScenario scenario = toEntity(request);
             RedTeamScenario created = aiSafetyService.createScenario(scenario);
             return ApiResult.success(created);
         } catch (IllegalStateException ex) {
@@ -55,9 +62,10 @@ public class AiSafetyController {
     @PutMapping("/red-team/scenarios/{scenarioId}")
     public ApiResult<RedTeamScenario> updateScenario(
             @PathVariable("scenarioId") Long scenarioId,
-            @RequestBody RedTeamScenario scenario,
+            @RequestBody @Valid UpdateScenarioRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
+        RedTeamScenario scenario = toEntity(request);
         scenario.setId(scenarioId);
         try {
             RedTeamScenario updated = aiSafetyService.updateScenario(scenario);
@@ -95,21 +103,11 @@ public class AiSafetyController {
     @Operation(summary = "Execute red team test")
     @PostMapping("/red-team/execute")
     public ApiResult<RedTeamResult> executeRedTeamTest(
-            @RequestBody Map<String, Object> executeRequest,
+            @RequestBody @Valid ExecuteRedTeamTestRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
-        Long scenarioId = longOrNull(executeRequest.get("scenario_id"));
-        String modelCode = executeRequest.get("model_code") != null
-                ? String.valueOf(executeRequest.get("model_code")) : null;
-        String modelVersion = executeRequest.get("model_version") != null
-                ? String.valueOf(executeRequest.get("model_version")) : null;
-        String executedBy = executeRequest.get("executed_by") != null
-                ? String.valueOf(executeRequest.get("executed_by")) : null;
-        if (scenarioId == null) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "scenario_id is required");
-        }
         try {
-            RedTeamResult result = aiSafetyService.executeRedTeamTest(scenarioId, modelCode, modelVersion, executedBy);
+            RedTeamResult result = aiSafetyService.executeRedTeamTest(request.getScenarioId(), request.getModelCode(), request.getModelVersion(), request.getExecutedBy());
             return ApiResult.success(result);
         } catch (IllegalStateException ex) {
             return ApiResult.failure(ErrorCode.DB_ERROR, ex.getMessage());
@@ -162,10 +160,11 @@ public class AiSafetyController {
     @Operation(summary = "Record detection")
     @PostMapping("/hallucination/detections")
     public ApiResult<HallucinationDetection> recordDetection(
-            @RequestBody HallucinationDetection detection,
+            @RequestBody @Valid RecordDetectionRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
         try {
+            HallucinationDetection detection = toEntity(request);
             HallucinationDetection recorded = aiSafetyService.recordDetection(detection);
             return ApiResult.success(recorded);
         } catch (IllegalStateException ex) {
@@ -196,17 +195,15 @@ public class AiSafetyController {
     @PostMapping("/hallucination/detections/{detectionId}/review")
     public ApiResult<HallucinationDetection> reviewDetection(
             @PathVariable("detectionId") Long detectionId,
-            @RequestBody Map<String, String> reviewRequest,
+            @RequestBody @Valid ReviewDetectionRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
-        String reviewer = reviewRequest.get("reviewer");
-        String reviewNote = reviewRequest.get("review_note");
-        String status = reviewRequest.get("status");
+        String status = request.getStatus();
         if (status == null || status.trim().isEmpty()) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "status is required");
         }
         try {
-            HallucinationDetection reviewed = aiSafetyService.reviewDetection(detectionId, reviewer, reviewNote, status);
+            HallucinationDetection reviewed = aiSafetyService.reviewDetection(detectionId, request.getReviewer(), request.getReviewNote(), status);
             return ApiResult.success(reviewed);
         } catch (IllegalStateException ex) {
             return ApiResult.failure(ErrorCode.DB_ERROR, ex.getMessage());
@@ -248,17 +245,46 @@ public class AiSafetyController {
         return 0L;
     }
 
-    private Long longOrNull(Object value) {
-        if (value == null) {
-            return null;
+    private RedTeamScenario toEntity(CreateScenarioRequest request) {
+        RedTeamScenario scenario = new RedTeamScenario();
+        scenario.setScenarioCode(request.getScenarioCode());
+        scenario.setScenarioName(request.getScenarioName());
+        scenario.setCategory(request.getCategory());
+        scenario.setDescription(request.getDescription());
+        scenario.setAttackPrompt(request.getInputTemplate());
+        scenario.setExpectedBehavior(request.getExpectedBehavior());
+        scenario.setSeverity(request.getRiskLevel());
+        scenario.setEnabled(request.getEnabled());
+        return scenario;
+    }
+
+    private RedTeamScenario toEntity(UpdateScenarioRequest request) {
+        RedTeamScenario scenario = new RedTeamScenario();
+        scenario.setScenarioName(request.getScenarioName());
+        scenario.setCategory(request.getCategory());
+        scenario.setDescription(request.getDescription());
+        scenario.setAttackPrompt(request.getInputTemplate());
+        scenario.setExpectedBehavior(request.getExpectedBehavior());
+        scenario.setSeverity(request.getRiskLevel());
+        scenario.setEnabled(request.getEnabled());
+        return scenario;
+    }
+
+    private HallucinationDetection toEntity(RecordDetectionRequest request) {
+        HallucinationDetection detection = new HallucinationDetection();
+        detection.setDetectionCode(request.getDetectionCode());
+        detection.setModelCode(request.getModelCode());
+        detection.setInputContent(request.getInputContent());
+        detection.setOutputContent(request.getOutputContent());
+        detection.setDetectionType(request.getDetectionType());
+        detection.setVerdict(request.getVerdict());
+        if (request.getConfidence() != null) {
+            try {
+                detection.setConfidenceScore(Double.parseDouble(request.getConfidence()));
+            } catch (NumberFormatException ignored) {
+            }
         }
-        if (value instanceof Number) {
-            return ((Number) value).longValue();
-        }
-        try {
-            return Long.parseLong(String.valueOf(value).trim());
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        detection.setEvidence(request.getEvidence());
+        return detection;
     }
 }

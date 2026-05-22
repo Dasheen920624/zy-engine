@@ -4,11 +4,18 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.cdss.dto.DefineRedLineRequest;
+import com.medkernel.cdss.dto.UpdateRedLineRequest;
+import com.medkernel.cdss.dto.ScanRedLinesRequest;
+import com.medkernel.cdss.dto.ResolveScanResultRequest;
+import com.medkernel.cdss.dto.OverrideScanResultRequest;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,29 +52,33 @@ public class SafetyRedLineController {
     @Operation(summary = "Define red line")
     @PostMapping
     public ApiResult<SafetyRedLine> defineRedLine(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid DefineRedLineRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("red_line_code", request.getRedLineCode());
+        bodyMap.put("red_line_name", request.getRedLineName());
+        bodyMap.put("category", request.getCategory());
+        bodyMap.put("description", request.getDescription());
+        bodyMap.put("condition_expression", request.getConditionExpression());
+        bodyMap.put("blocking_action", request.getBlockingAction());
+        bodyMap.put("severity", request.getSeverity());
+        bodyMap.put("applicable_scenarios", request.getApplicableScenarios());
+        bodyMap.put("enabled", request.getEnabled());
+        bodyMap.put("created_by", request.getCreatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         SafetyRedLine redLine = new SafetyRedLine();
         redLine.setTenantId(parseLong(orgContext.getTenantId()));
-        redLine.setRedLineCode(string(request.get("red_line_code")));
-        redLine.setRedLineName(string(request.get("red_line_name")));
-        redLine.setCategory(string(request.get("category")));
-        redLine.setDescription(string(request.get("description")));
-        redLine.setConditionExpression(string(request.get("condition_expression")));
-        redLine.setBlockingAction(string(request.get("blocking_action")));
-        redLine.setSeverity(string(request.get("severity")));
-        redLine.setApplicableScenarios(string(request.get("applicable_scenarios")));
-        redLine.setEnabled(string(request.get("enabled")));
-        redLine.setCreatedBy(string(request.get("created_by")));
-
-        if (redLine.getRedLineCode() == null || redLine.getRedLineCode().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "red_line_code is required");
-        }
-        if (redLine.getRedLineName() == null || redLine.getRedLineName().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "red_line_name is required");
-        }
+        redLine.setRedLineCode(request.getRedLineCode());
+        redLine.setRedLineName(request.getRedLineName());
+        redLine.setCategory(request.getCategory());
+        redLine.setDescription(request.getDescription());
+        redLine.setConditionExpression(request.getConditionExpression());
+        redLine.setBlockingAction(request.getBlockingAction());
+        redLine.setSeverity(request.getSeverity());
+        redLine.setApplicableScenarios(request.getApplicableScenarios());
+        redLine.setEnabled(request.getEnabled());
+        redLine.setCreatedBy(request.getCreatedBy());
 
         SafetyRedLine saved = safetyRedLineService.defineRedLine(redLine);
         return ApiResult.success(saved);
@@ -80,22 +91,32 @@ public class SafetyRedLineController {
     @PutMapping("/{redLineId}")
     public ApiResult<SafetyRedLine> updateRedLine(
             @PathVariable Long redLineId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid UpdateRedLineRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("red_line_name", request.getRedLineName());
+        bodyMap.put("category", request.getCategory());
+        bodyMap.put("description", request.getDescription());
+        bodyMap.put("condition_expression", request.getConditionExpression());
+        bodyMap.put("blocking_action", request.getBlockingAction());
+        bodyMap.put("severity", request.getSeverity());
+        bodyMap.put("applicable_scenarios", request.getApplicableScenarios());
+        bodyMap.put("enabled", request.getEnabled());
+        bodyMap.put("updated_by", request.getUpdatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         SafetyRedLine redLine = new SafetyRedLine();
         redLine.setId(redLineId);
         redLine.setTenantId(parseLong(orgContext.getTenantId()));
-        redLine.setRedLineName(string(request.get("red_line_name")));
-        redLine.setCategory(string(request.get("category")));
-        redLine.setDescription(string(request.get("description")));
-        redLine.setConditionExpression(string(request.get("condition_expression")));
-        redLine.setBlockingAction(string(request.get("blocking_action")));
-        redLine.setSeverity(string(request.get("severity")));
-        redLine.setApplicableScenarios(string(request.get("applicable_scenarios")));
-        redLine.setEnabled(string(request.get("enabled")));
-        redLine.setUpdatedBy(string(request.get("updated_by")));
+        redLine.setRedLineName(request.getRedLineName());
+        redLine.setCategory(request.getCategory());
+        redLine.setDescription(request.getDescription());
+        redLine.setConditionExpression(request.getConditionExpression());
+        redLine.setBlockingAction(request.getBlockingAction());
+        redLine.setSeverity(request.getSeverity());
+        redLine.setApplicableScenarios(request.getApplicableScenarios());
+        redLine.setEnabled(request.getEnabled());
+        redLine.setUpdatedBy(request.getUpdatedBy());
 
         try {
             SafetyRedLine updated = safetyRedLineService.updateRedLine(redLine);
@@ -126,13 +147,17 @@ public class SafetyRedLineController {
     @Operation(summary = "Scan red lines")
     @PostMapping("/scan")
     public ApiResult<List<RedLineScanResult>> scanRedLines(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid ScanRedLinesRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("patient_id", request.getPatientId());
+        bodyMap.put("encounter_id", request.getEncounterId());
+        bodyMap.put("scan_type", request.getScanType());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
         Long tenantId = parseLong(orgContext.getTenantId());
-        String patientId = string(request.get("patient_id"));
-        String encounterId = string(request.get("encounter_id"));
-        String scanType = string(request.get("scan_type"));
+        String patientId = request.getPatientId();
+        String encounterId = request.getEncounterId();
+        String scanType = request.getScanType();
 
         List<RedLineScanResult> results = safetyRedLineService.scanRedLines(tenantId, patientId, encounterId, scanType);
         return ApiResult.success(results);
@@ -161,13 +186,9 @@ public class SafetyRedLineController {
     @PostMapping("/scan-results/{resultId}/resolve")
     public ApiResult<RedLineScanResult> resolveScanResult(
             @PathVariable Long resultId,
-            @RequestBody Map<String, Object> request) {
-        String resolvedBy = string(request.get("resolved_by"));
-        String resolutionNote = string(request.get("resolution_note"));
-
-        if (resolvedBy == null || resolvedBy.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "resolved_by is required");
-        }
+            @RequestBody @Valid ResolveScanResultRequest request) {
+        String resolvedBy = request.getResolvedBy();
+        String resolutionNote = request.getResolutionNote();
 
         try {
             RedLineScanResult resolved = safetyRedLineService.resolveScanResult(resultId, resolvedBy, resolutionNote);
@@ -184,16 +205,9 @@ public class SafetyRedLineController {
     @PostMapping("/scan-results/{resultId}/override")
     public ApiResult<RedLineScanResult> overrideScanResult(
             @PathVariable Long resultId,
-            @RequestBody Map<String, Object> request) {
-        String overriddenBy = string(request.get("overridden_by"));
-        String overrideReason = string(request.get("override_reason"));
-
-        if (overriddenBy == null || overriddenBy.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "overridden_by is required");
-        }
-        if (overrideReason == null || overrideReason.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "override_reason is required");
-        }
+            @RequestBody @Valid OverrideScanResultRequest request) {
+        String overriddenBy = request.getOverriddenBy();
+        String overrideReason = request.getOverrideReason();
 
         try {
             RedLineScanResult overridden = safetyRedLineService.overrideScanResult(resultId, overriddenBy, overrideReason);
@@ -216,10 +230,6 @@ public class SafetyRedLineController {
     }
 
     // ─── 内部方法 ────────────────────────────────────────────────────
-
-    private String string(Object value) {
-        return value == null ? null : String.valueOf(value);
-    }
 
     private Long parseLong(String value) {
         if (value == null || value.isEmpty()) {

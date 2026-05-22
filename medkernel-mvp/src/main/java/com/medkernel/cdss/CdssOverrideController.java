@@ -4,13 +4,17 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.cdss.dto.RecordOverrideRequest;
+import com.medkernel.cdss.dto.SaveFatigueConfigRequest;
+import com.medkernel.cdss.dto.UpdateFatigueConfigRequest;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,33 +52,45 @@ public class CdssOverrideController {
     @Operation(summary = "Record override")
     @PostMapping("/overrides")
     public ApiResult<CdssOverrideLog> recordOverride(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid RecordOverrideRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("alert_id", request.getAlertId());
+        bodyMap.put("trigger_code", request.getTriggerCode());
+        bodyMap.put("rule_code", request.getRuleCode());
+        bodyMap.put("risk_level", request.getRiskLevel());
+        bodyMap.put("alert_level", request.getAlertLevel());
+        bodyMap.put("override_type", request.getOverrideType());
+        bodyMap.put("override_reason", request.getOverrideReason());
+        bodyMap.put("override_category", request.getOverrideCategory());
+        bodyMap.put("supervisor_name", request.getSupervisorName());
+        bodyMap.put("confirmed_by", request.getConfirmedBy());
+        bodyMap.put("patient_id", request.getPatientId());
+        bodyMap.put("encounter_id", request.getEncounterId());
+        bodyMap.put("operator_id", request.getOperatorId());
+        bodyMap.put("is_audit_red_line", request.getIsAuditRedLine());
+        bodyMap.put("fatigue_suppressed", request.getFatigueSuppressed());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         CdssOverrideLog log = new CdssOverrideLog();
         log.setTenantId(parseLong(orgContext.getTenantId()));
-        log.setAlertId(string(request.get("alert_id")));
-        log.setTriggerCode(string(request.get("trigger_code")));
-        log.setRuleCode(string(request.get("rule_code")));
-        log.setRiskLevel(string(request.get("risk_level")));
-        log.setAlertLevel(string(request.get("alert_level")));
-        log.setOverrideType(string(request.get("override_type")));
-        log.setOverrideReason(string(request.get("override_reason")));
-        log.setOverrideCategory(string(request.get("override_category")));
-        log.setSupervisorName(string(request.get("supervisor_name")));
-        log.setConfirmedBy(string(request.get("confirmed_by")));
-        log.setPatientId(string(request.get("patient_id")));
-        log.setEncounterId(string(request.get("encounter_id")));
-        log.setOperatorId(string(request.get("operator_id")));
+        log.setAlertId(request.getAlertId());
+        log.setTriggerCode(request.getTriggerCode());
+        log.setRuleCode(request.getRuleCode());
+        log.setRiskLevel(request.getRiskLevel());
+        log.setAlertLevel(request.getAlertLevel());
+        log.setOverrideType(request.getOverrideType());
+        log.setOverrideReason(request.getOverrideReason());
+        log.setOverrideCategory(request.getOverrideCategory());
+        log.setSupervisorName(request.getSupervisorName());
+        log.setConfirmedBy(request.getConfirmedBy());
+        log.setPatientId(request.getPatientId());
+        log.setEncounterId(request.getEncounterId());
+        log.setOperatorId(request.getOperatorId());
         log.setDepartmentCode(orgContext.getDepartmentCode());
-        log.setIsAuditRedLine(string(request.get("is_audit_red_line")));
-        log.setFatigueSuppressed(string(request.get("fatigue_suppressed")));
+        log.setIsAuditRedLine(request.getIsAuditRedLine());
+        log.setFatigueSuppressed(request.getFatigueSuppressed());
         log.setOverrideTime(LocalDateTime.now());
-
-        if (log.getOverrideType() == null || log.getOverrideType().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "override_type is required");
-        }
 
         CdssOverrideLog saved = overrideService.recordOverride(log);
         return ApiResult.success(saved);
@@ -133,27 +149,35 @@ public class CdssOverrideController {
     @Operation(summary = "Save fatigue config")
     @PostMapping("/fatigue-configs")
     public ApiResult<CdssFatigueConfig> saveFatigueConfig(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid SaveFatigueConfigRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("config_code", request.getConfigCode());
+        bodyMap.put("config_name", request.getConfigName());
+        bodyMap.put("rule_code", request.getRuleCode());
+        bodyMap.put("department_code", request.getDepartmentCode());
+        bodyMap.put("time_window_hours", request.getTimeWindowHours());
+        bodyMap.put("override_threshold", request.getOverrideThreshold());
+        bodyMap.put("suppress_action", request.getSuppressAction());
+        bodyMap.put("suppress_level", request.getSuppressLevel());
+        bodyMap.put("enabled", request.getEnabled());
+        bodyMap.put("description", request.getDescription());
+        bodyMap.put("created_by", request.getCreatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         CdssFatigueConfig config = new CdssFatigueConfig();
         config.setTenantId(parseLong(orgContext.getTenantId()));
-        config.setConfigCode(string(request.get("config_code")));
-        config.setConfigName(string(request.get("config_name")));
-        config.setRuleCode(string(request.get("rule_code")));
-        config.setDepartmentCode(string(request.get("department_code")));
-        config.setTimeWindowHours(parseInt(request.get("time_window_hours"), 24));
-        config.setOverrideThreshold(parseInt(request.get("override_threshold"), 5));
-        config.setSuppressAction(string(request.get("suppress_action")));
-        config.setSuppressLevel(string(request.get("suppress_level")));
-        config.setEnabled(string(request.get("enabled")));
-        config.setDescription(string(request.get("description")));
-        config.setCreatedBy(string(request.get("created_by")));
-
-        if (config.getConfigCode() == null || config.getConfigCode().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "config_code is required");
-        }
+        config.setConfigCode(request.getConfigCode());
+        config.setConfigName(request.getConfigName());
+        config.setRuleCode(request.getRuleCode());
+        config.setDepartmentCode(request.getDepartmentCode());
+        config.setTimeWindowHours(request.getTimeWindowHours() != null ? request.getTimeWindowHours() : 24);
+        config.setOverrideThreshold(request.getOverrideThreshold() != null ? request.getOverrideThreshold() : 5);
+        config.setSuppressAction(request.getSuppressAction());
+        config.setSuppressLevel(request.getSuppressLevel());
+        config.setEnabled(request.getEnabled());
+        config.setDescription(request.getDescription());
+        config.setCreatedBy(request.getCreatedBy());
 
         CdssFatigueConfig saved = overrideService.saveFatigueConfig(config);
         return ApiResult.success(saved);
@@ -178,24 +202,36 @@ public class CdssOverrideController {
     @PutMapping("/fatigue-configs/{configId}")
     public ApiResult<CdssFatigueConfig> updateFatigueConfig(
             @PathVariable Long configId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid UpdateFatigueConfigRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("config_code", request.getConfigCode());
+        bodyMap.put("config_name", request.getConfigName());
+        bodyMap.put("rule_code", request.getRuleCode());
+        bodyMap.put("department_code", request.getDepartmentCode());
+        bodyMap.put("time_window_hours", request.getTimeWindowHours());
+        bodyMap.put("override_threshold", request.getOverrideThreshold());
+        bodyMap.put("suppress_action", request.getSuppressAction());
+        bodyMap.put("suppress_level", request.getSuppressLevel());
+        bodyMap.put("enabled", request.getEnabled());
+        bodyMap.put("description", request.getDescription());
+        bodyMap.put("updated_by", request.getUpdatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
 
         CdssFatigueConfig config = new CdssFatigueConfig();
         config.setId(configId);
         config.setTenantId(parseLong(orgContext.getTenantId()));
-        config.setConfigCode(string(request.get("config_code")));
-        config.setConfigName(string(request.get("config_name")));
-        config.setRuleCode(string(request.get("rule_code")));
-        config.setDepartmentCode(string(request.get("department_code")));
-        config.setTimeWindowHours(parseInt(request.get("time_window_hours"), 24));
-        config.setOverrideThreshold(parseInt(request.get("override_threshold"), 5));
-        config.setSuppressAction(string(request.get("suppress_action")));
-        config.setSuppressLevel(string(request.get("suppress_level")));
-        config.setEnabled(string(request.get("enabled")));
-        config.setDescription(string(request.get("description")));
-        config.setUpdatedBy(string(request.get("updated_by")));
+        config.setConfigCode(request.getConfigCode());
+        config.setConfigName(request.getConfigName());
+        config.setRuleCode(request.getRuleCode());
+        config.setDepartmentCode(request.getDepartmentCode());
+        config.setTimeWindowHours(request.getTimeWindowHours() != null ? request.getTimeWindowHours() : 24);
+        config.setOverrideThreshold(request.getOverrideThreshold() != null ? request.getOverrideThreshold() : 5);
+        config.setSuppressAction(request.getSuppressAction());
+        config.setSuppressLevel(request.getSuppressLevel());
+        config.setEnabled(request.getEnabled());
+        config.setDescription(request.getDescription());
+        config.setUpdatedBy(request.getUpdatedBy());
 
         try {
             CdssFatigueConfig updated = overrideService.updateFatigueConfig(config);
@@ -207,10 +243,6 @@ public class CdssOverrideController {
 
     // ─── 内部方法 ────────────────────────────────────────────────────
 
-    private String string(Object value) {
-        return value == null ? null : String.valueOf(value);
-    }
-
     private Long parseLong(String value) {
         if (value == null || value.isEmpty()) {
             return null;
@@ -219,17 +251,6 @@ public class CdssOverrideController {
             return Long.parseLong(value.trim());
         } catch (NumberFormatException e) {
             return null;
-        }
-    }
-
-    private int parseInt(Object value, int defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        }
-        try {
-            return Integer.parseInt(String.valueOf(value).trim());
-        } catch (NumberFormatException e) {
-            return defaultValue;
         }
     }
 }

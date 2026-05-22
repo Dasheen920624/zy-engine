@@ -4,6 +4,11 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.quality.dto.GenerateReportRequest;
+import com.medkernel.quality.dto.SubmitReviewRequest;
+import com.medkernel.quality.dto.CreateRectificationRequest;
+import com.medkernel.quality.dto.UpdateRectificationStatusRequest;
+import com.medkernel.quality.dto.ReEvaluateRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,15 +51,12 @@ public class EvalReportController {
     @Operation(summary = "Generate report")
     @PostMapping("/generate")
     public ApiResult<Map<String, Object>> generateReport(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid GenerateReportRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
-        String evalId = (String) request.get("eval_id");
-        if (evalId == null) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "eval_id is required");
-        }
+        Map<String, Object> body = toMap(request);
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, body);
         try {
-            EvalReportService.EvalReport report = evalReportService.generateReport(evalId, orgContext);
+            EvalReportService.EvalReport report = evalReportService.generateReport(request.getEvalId(), orgContext);
             return ApiResult.success(report.toView());
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
@@ -117,7 +121,7 @@ public class EvalReportController {
     @PostMapping("/{reportId}/archive")
     public ApiResult<Map<String, Object>> archiveReport(
             @PathVariable String reportId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid Map<String, Object> request,
             HttpServletRequest httpRequest) {
         OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
         try {
@@ -137,11 +141,12 @@ public class EvalReportController {
     @PostMapping("/{reportId}/review")
     public ApiResult<Map<String, Object>> submitReview(
             @PathVariable String reportId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid SubmitReviewRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> body = toMap(request);
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, body);
         try {
-            EvalReportService.EvalReview review = evalReportService.submitReview(reportId, request, orgContext);
+            EvalReportService.EvalReview review = evalReportService.submitReview(reportId, body, orgContext);
             return ApiResult.success(review.toView());
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
@@ -174,11 +179,12 @@ public class EvalReportController {
     @PostMapping("/{reportId}/rectification")
     public ApiResult<Map<String, Object>> createRectification(
             @PathVariable String reportId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid CreateRectificationRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> body = toMap(request);
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, body);
         try {
-            EvalReportService.EvalRectification rect = evalReportService.createRectification(reportId, request, orgContext);
+            EvalReportService.EvalRectification rect = evalReportService.createRectification(reportId, body, orgContext);
             return ApiResult.success(rect.toView());
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
@@ -192,7 +198,7 @@ public class EvalReportController {
     @PostMapping("/{reportId}/rectification/auto")
     public ApiResult<List<Map<String, Object>>> autoCreateRectifications(
             @PathVariable String reportId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid Map<String, Object> request,
             HttpServletRequest httpRequest) {
         OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
         try {
@@ -214,11 +220,12 @@ public class EvalReportController {
     @PostMapping("/rectification/{rectId}/status")
     public ApiResult<Map<String, Object>> updateRectificationStatus(
             @PathVariable String rectId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid UpdateRectificationStatusRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> body = toMap(request);
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, body);
         try {
-            EvalReportService.EvalRectification rect = evalReportService.updateRectificationStatus(rectId, request, orgContext);
+            EvalReportService.EvalRectification rect = evalReportService.updateRectificationStatus(rectId, body, orgContext);
             return ApiResult.success(rect.toView());
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
@@ -251,20 +258,56 @@ public class EvalReportController {
     @Operation(summary = "Re evaluate")
     @PostMapping("/re-evaluate")
     public ApiResult<Map<String, Object>> reEvaluate(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid ReEvaluateRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
-        String evalId = (String) request.get("eval_id");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> inputData = (Map<String, Object>) request.get("input_data");
-        if (evalId == null || inputData == null) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "eval_id and input_data are required");
-        }
+        Map<String, Object> body = toMap(request);
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, body);
         try {
-            EvalResult result = evalReportService.reEvaluate(evalId, inputData, orgContext);
+            EvalResult result = evalReportService.reEvaluate(request.getEvalId(), request.getInputData(), orgContext);
             return ApiResult.success(result.toView());
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
         }
+    }
+
+    // ==================== DTO → Map 转换 ====================
+
+    private Map<String, Object> toMap(GenerateReportRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("eval_id", request.getEvalId());
+        return map;
+    }
+
+    private Map<String, Object> toMap(SubmitReviewRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("review_status", request.getReviewStatus());
+        map.put("reviewed_by", request.getReviewedBy());
+        map.put("review_note", request.getReviewNote());
+        return map;
+    }
+
+    private Map<String, Object> toMap(CreateRectificationRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("rectification_type", request.getRectificationType());
+        map.put("description", request.getDescription());
+        map.put("assignee", request.getAssignee());
+        map.put("due_date", request.getDueDate());
+        map.put("related_indicator_codes", request.getRelatedIndicatorCodes());
+        return map;
+    }
+
+    private Map<String, Object> toMap(UpdateRectificationStatusRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("status", request.getStatus());
+        map.put("updated_by", request.getUpdatedBy());
+        map.put("note", request.getNote());
+        return map;
+    }
+
+    private Map<String, Object> toMap(ReEvaluateRequest request) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        map.put("eval_id", request.getEvalId());
+        map.put("input_data", request.getInputData());
+        return map;
     }
 }

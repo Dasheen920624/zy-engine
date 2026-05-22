@@ -4,6 +4,8 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.cdss.dto.CreateFatigueConfigRequest;
+import com.medkernel.cdss.dto.UpdateFatigueConfigRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,11 +44,21 @@ public class AlertFatigueController {
     @Operation(summary = "Create config")
     @PostMapping("/configs")
     public ApiResult<Map<String, Object>> createConfig(
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid CreateFatigueConfigRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("config_code", request.getConfigCode());
+        bodyMap.put("config_name", request.getConfigName());
+        bodyMap.put("rule_code", request.getRuleCode());
+        bodyMap.put("time_window_hours", request.getTimeWindowHours());
+        bodyMap.put("override_threshold", request.getOverrideThreshold());
+        bodyMap.put("suppress_action", request.getSuppressAction());
+        bodyMap.put("suppress_level", request.getSuppressLevel());
+        bodyMap.put("enabled", request.getEnabled());
+        bodyMap.put("description", request.getDescription());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
         try {
-            AlertFatigueConfig config = alertFatigueService.createConfig(request, orgContext);
+            AlertFatigueConfig config = alertFatigueService.createConfig(bodyMap, orgContext);
             return ApiResult.success(config.toView());
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
@@ -67,11 +81,23 @@ public class AlertFatigueController {
     @PutMapping("/configs/{configId}")
     public ApiResult<Map<String, Object>> updateConfig(
             @PathVariable String configId,
-            @RequestBody Map<String, Object> request,
+            @RequestBody @Valid UpdateFatigueConfigRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> bodyMap = new LinkedHashMap<>();
+        bodyMap.put("config_code", request.getConfigCode());
+        bodyMap.put("config_name", request.getConfigName());
+        bodyMap.put("rule_code", request.getRuleCode());
+        bodyMap.put("department_code", request.getDepartmentCode());
+        bodyMap.put("time_window_hours", request.getTimeWindowHours());
+        bodyMap.put("override_threshold", request.getOverrideThreshold());
+        bodyMap.put("suppress_action", request.getSuppressAction());
+        bodyMap.put("suppress_level", request.getSuppressLevel());
+        bodyMap.put("enabled", request.getEnabled());
+        bodyMap.put("description", request.getDescription());
+        bodyMap.put("updated_by", request.getUpdatedBy());
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, bodyMap);
         try {
-            AlertFatigueConfig config = alertFatigueService.updateConfig(configId, request, orgContext);
+            AlertFatigueConfig config = alertFatigueService.updateConfig(configId, bodyMap, orgContext);
             return ApiResult.success(config.toView());
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
