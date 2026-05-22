@@ -10,7 +10,7 @@
 .mainContainer {
   min-height: 100%;
   padding: 24px;
-  background: var(--mk-bg-soft, #f5f5f5);
+  background: var(--mk-bg-soft);
 }
 
 .section {
@@ -25,7 +25,7 @@
 
 /* 头部 */
 .brandLabel {
-  color: var(--mk-brand-primary, #1677ff);
+  color: var(--mk-brand-primary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -35,7 +35,7 @@
 }
 
 .mainDescription {
-  color: var(--mk-text-secondary, #666);
+  color: var(--mk-text-secondary);
   max-width: 720px;
   margin: 0;
 }
@@ -59,7 +59,7 @@
   justify-content: space-between;
   gap: 12px;
   padding-top: 16px;
-  border-top: 1px solid var(--mk-border, #f0f0f0);
+  border-top: 1px solid var(--mk-border);
   margin-top: 16px;
 }
 
@@ -100,12 +100,12 @@
 /* 图标 */
 .iconSuccess {
   font-size: 20px;
-  color: var(--mk-success, #52c41a);
+  color: var(--mk-success);
 }
 
 .iconMuted {
   font-size: 20px;
-  color: var(--mk-text-secondary, #999);
+  color: var(--mk-text-secondary);
 }
 
 /* 文本 */
@@ -132,7 +132,7 @@
 }
 
 .permCard {
-  border-color: var(--mk-brand-primary, #1677ff);
+  border-color: var(--mk-brand-primary);
 }
 
 /* 列表 */

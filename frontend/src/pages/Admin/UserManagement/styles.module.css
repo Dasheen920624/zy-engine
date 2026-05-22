@@ -122,12 +122,12 @@
 
 /* 登录失败次数警示（等保 2.0 三级：显示连续失败次数）*/
 .attemptsWarn {
-  color: var(--mk-warning, #faad14);
+  color: var(--mk-warning);
   font-weight: 600;
 }
 
 .attemptsDanger {
-  color: var(--mk-danger, #ff4d4f);
+  color: var(--mk-danger);
   font-weight: 600;
 }
 
@@ -181,7 +181,7 @@
 
 .roleErrorText {
   font-size: 12px;
-  color: var(--mk-danger, #ff4d4f);
+  color: var(--mk-danger);
 }
 
 /* ─── CSV 导入 Dialog ─────────────────────────────────────────────────── */
@@ -224,7 +224,7 @@
   max-height: 160px;
   overflow: auto;
   font-size: 12px;
-  color: var(--mk-danger, #ff4d4f);
+  color: var(--mk-danger);
 }
 
 .importErrorItem {

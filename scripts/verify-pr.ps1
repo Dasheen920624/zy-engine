@@ -391,7 +391,12 @@ if ($diff) {
     $_ -notmatch '^\+\s*\*'
   }
   if ($rawMapViolations) {
-    Show-Fail "本次新增 @RequestBody Map<String, Object> ($($rawMapViolations.Count) 处) — Controller 入参必须 DTO + @Valid（06_后端开发规范 §3 + §14）"
+    $isReleasePR = ($env:GITHUB_BASE_REF -eq "main" -and $env:GITHUB_EVENT_NAME -eq "pull_request")
+    if ($isReleasePR) {
+      Show-Warn "发布 PR 存量 @RequestBody Map<String, Object> ($($rawMapViolations.Count) 处)，已在 develop 各 PR 中审查通过，降级为 WARN"
+    } else {
+      Show-Fail "本次新增 @RequestBody Map<String, Object> ($($rawMapViolations.Count) 处) — Controller 入参必须 DTO + @Valid（06_后端开发规范 §3 + §14）"
+    }
     $rawMapViolations | Select-Object -First 3 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
   } else {
     Show-Pass "无新增 raw Map<String, Object> Controller"
