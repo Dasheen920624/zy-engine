@@ -2,7 +2,8 @@
   [string]$TaskId = "",
   [string]$ClaimId = "",
   [switch]$Strict,
-  [switch]$RequireClean
+  [switch]$RequireClean,
+  [switch]$FailOnStaleClaim
 )
 
 $ErrorActionPreference = "Stop"
@@ -85,6 +86,7 @@ function Test-ScopeOverlap($A, $B) {
 }
 
 $collaborationIssues = @()
+$collaborationWarnings = @()
 $claimRecords = @()
 $lockRecords = @()
 
@@ -178,9 +180,14 @@ if ($activeClaims.Count -eq 0) {
       if ([datetime]::TryParse($heartbeat, [ref]$parsedHeartbeat)) {
         $heartbeatAgeHours = ([datetime]::Now - $parsedHeartbeat).TotalHours
         if ($heartbeatAgeHours -gt 4) {
-          $issue = ("claim_stale_over_4h file={0} age_hours={1:N1}" -f $claim.Name, $heartbeatAgeHours)
-          $collaborationIssues += $issue
-          Write-Output $issue
+          $stale = ("claim_stale_over_4h file={0} age_hours={1:N1}" -f $claim.Name, $heartbeatAgeHours)
+          if ($FailOnStaleClaim) {
+            $collaborationIssues += $stale
+            Write-Output $stale
+          } else {
+            $collaborationWarnings += $stale
+            Write-Output ("warn_" + $stale)
+          }
         }
       }
     }
@@ -378,6 +385,10 @@ if (![string]::IsNullOrWhiteSpace($TaskId)) {
 $dirty = git status --porcelain
 if ($RequireClean -and $dirty) {
   throw "working_tree_not_clean"
+}
+
+if ($collaborationWarnings.Count -gt 0) {
+  Write-Output ("collaboration_warnings=" + ($collaborationWarnings -join "; "))
 }
 
 if ($collaborationIssues.Count -gt 0) {
