@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 安全模块持久化服务：使用 raw JDBC 操作 SEC 表。
@@ -965,6 +966,251 @@ public class SecurityPersistenceService {
         } catch (SQLException ex) {
             log.error("insert user org scopes failed for user {}", userId, ex);
         }
+    }
+
+    // ==================== 管理员用户查询（PR-FINAL-08a）====================
+
+    /**
+     * 分页查询用户列表（支持关键字 / 状态 / 角色筛选）。
+     *
+     * <p>page 从 1 开始；role 为角色编码 role_code。
+     */
+    public List<SecurityUser> listUsers(Long tenantId, String keyword, String status, String role,
+                                        int page, int size) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT u.id, u.tenant_id, u.username, u.password_hash, u.display_name, "
+                        + "u.email, u.phone, u.avatar_url, u.status, u.last_login_time, "
+                        + "u.last_login_ip, u.login_attempts, u.locked_until, u.user_type, u.employee_id "
+                        + "FROM sec_user u");
+        if (role != null && !role.isEmpty()) {
+            sql.append(" JOIN sec_user_role ur ON ur.user_id = u.id "
+                    + "JOIN sec_role r ON r.id = ur.role_id AND r.role_code = ?");
+        }
+        sql.append(" WHERE u.tenant_id = ?");
+        if (status != null && !status.isEmpty()) sql.append(" AND u.status = ?");
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (u.username LIKE ? OR u.display_name LIKE ? OR u.email LIKE ?)");
+        }
+        sql.append(" ORDER BY u.id DESC LIMIT ? OFFSET ?");
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            int idx = 1;
+            if (role != null && !role.isEmpty()) ps.setString(idx++, role);
+            ps.setLong(idx++, tenantId);
+            if (status != null && !status.isEmpty()) ps.setString(idx++, status);
+            if (keyword != null && !keyword.isEmpty()) {
+                String like = "%" + keyword + "%";
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+            }
+            ps.setInt(idx++, size);
+            ps.setInt(idx, Math.max(0, page - 1) * size);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<SecurityUser> users = new ArrayList<SecurityUser>();
+                while (rs.next()) {
+                    SecurityUser u = mapUser(rs);
+                    u.setRoles(findUserRoles(u.getId()));
+                    users.add(u);
+                }
+                return users;
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("list users failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 统计符合条件的用户总数。
+     */
+    public long countUsers(Long tenantId, String keyword, String status, String role) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM sec_user u");
+        if (role != null && !role.isEmpty()) {
+            sql.append(" JOIN sec_user_role ur ON ur.user_id = u.id "
+                    + "JOIN sec_role r ON r.id = ur.role_id AND r.role_code = ?");
+        }
+        sql.append(" WHERE u.tenant_id = ?");
+        if (status != null && !status.isEmpty()) sql.append(" AND u.status = ?");
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (u.username LIKE ? OR u.display_name LIKE ? OR u.email LIKE ?)");
+        }
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            int idx = 1;
+            if (role != null && !role.isEmpty()) ps.setString(idx++, role);
+            ps.setLong(idx++, tenantId);
+            if (status != null && !status.isEmpty()) ps.setString(idx++, status);
+            if (keyword != null && !keyword.isEmpty()) {
+                String like = "%" + keyword + "%";
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+                ps.setString(idx++, like);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : 0;
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("count users failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 更新用户状态（ACTIVE / DISABLED）。
+     */
+    public void updateUserStatus(Long userId, String status, String operatorUsername) {
+        String sql = "UPDATE sec_user SET status = ?, updated_by = ?, updated_time = ? WHERE id = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setString(2, operatorUsername);
+            ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setLong(4, userId);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("update user status failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 解锁用户（清空锁定时间 + 重置登录失败次数）。
+     */
+    public void unlockUser(Long userId, String operatorUsername) {
+        String sql = "UPDATE sec_user SET locked_until = NULL, login_attempts = 0, "
+                + "updated_by = ?, updated_time = ? WHERE id = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, operatorUsername);
+            ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setLong(3, userId);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("unlock user failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 替换用户角色（先删后插）。roleCodes 为空时清空所有角色。
+     */
+    public void replaceUserRoles(Long userId, Long tenantId, List<String> roleCodes, String operatorUsername) {
+        try (Connection connection = connection()) {
+            try (PreparedStatement del = connection.prepareStatement(
+                    "DELETE FROM sec_user_role WHERE user_id = ?")) {
+                del.setLong(1, userId);
+                del.executeUpdate();
+            }
+            if (roleCodes != null && !roleCodes.isEmpty()) {
+                String insertSql = "INSERT INTO sec_user_role (id, tenant_id, user_id, role_id, "
+                        + "created_by, created_time) "
+                        + "SELECT ?, ?, ?, r.id, ?, ? FROM sec_role r "
+                        + "WHERE r.tenant_id = ? AND r.role_code = ?";
+                try (PreparedStatement ins = connection.prepareStatement(insertSql)) {
+                    for (String roleCode : roleCodes) {
+                        ins.setLong(1, Ids.next());
+                        ins.setLong(2, tenantId);
+                        ins.setLong(3, userId);
+                        ins.setString(4, operatorUsername);
+                        ins.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+                        ins.setLong(6, tenantId);
+                        ins.setString(7, roleCode);
+                        ins.addBatch();
+                    }
+                    ins.executeBatch();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("replace user roles failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 重置用户密码（直接写入新哈希，同时清除锁定状态）。
+     */
+    public void resetPassword(Long userId, String newPasswordHash, String operatorUsername) {
+        String sql = "UPDATE sec_user SET password_hash = ?, login_attempts = 0, "
+                + "locked_until = NULL, updated_by = ?, updated_time = ? WHERE id = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, newPasswordHash);
+            ps.setString(2, operatorUsername);
+            ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setLong(4, userId);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("reset password failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 查询租户下所有激活角色（用于前端角色分配下拉）。
+     */
+    public List<Map<String, String>> listRoles(Long tenantId) {
+        String sql = "SELECT role_code, role_name, role_type FROM sec_role "
+                + "WHERE tenant_id = ? AND status = 'ACTIVE' ORDER BY role_type, role_code";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, tenantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Map<String, String>> roles = new ArrayList<Map<String, String>>();
+                while (rs.next()) {
+                    java.util.LinkedHashMap<String, String> role =
+                            new java.util.LinkedHashMap<String, String>();
+                    role.put("role_code", rs.getString("role_code"));
+                    role.put("role_name", rs.getString("role_name"));
+                    role.put("role_type", rs.getString("role_type"));
+                    roles.add(role);
+                }
+                return roles;
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("list roles failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 检查用户名在租户内是否已存在。
+     */
+    public boolean usernameExists(Long tenantId, String username) {
+        String sql = "SELECT COUNT(*) FROM sec_user WHERE tenant_id = ? AND username = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, tenantId);
+            ps.setString(2, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getLong(1) > 0;
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("check username exists failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * 创建用户并指定密码哈希（管理员批量导入 / 手动创建专用）。
+     */
+    public Long createUserWithPassword(Long tenantId, String username, String displayName,
+                                        String email, String phone, String userType,
+                                        String employeeId, String passwordHash, String createdBy) {
+        Long userId = Ids.next();
+        String sql = "INSERT INTO sec_user (id, tenant_id, username, password_hash, display_name, "
+                + "email, phone, status, user_type, employee_id, created_by, created_time) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, ?, ?)";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.setLong(2, tenantId);
+            ps.setString(3, username);
+            ps.setString(4, passwordHash);
+            ps.setString(5, displayName);
+            ps.setString(6, email);
+            ps.setString(7, phone);
+            ps.setString(8, userType != null ? userType : "STAFF");
+            ps.setString(9, employeeId);
+            ps.setString(10, createdBy);
+            ps.setTimestamp(11, Timestamp.valueOf(LocalDateTime.now()));
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new IllegalStateException("createUserWithPassword failed: " + ex.getMessage(), ex);
+        }
+        return userId;
     }
 
 }

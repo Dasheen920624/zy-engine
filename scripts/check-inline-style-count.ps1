@@ -25,7 +25,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # v0.3-final baseline（2026-05-21 PR-FINAL-04 抽取后）
-$script:Baseline = 545
+$script:Baseline = 537
 
 # 根路径推断（脚本在 scripts/ 下，仓库根在上一级）
 $repoRoot = Split-Path -Parent $PSScriptRoot

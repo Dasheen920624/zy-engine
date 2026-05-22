@@ -222,8 +222,13 @@ export const menuSections: MenuSection[] = [
         path: "/mpi/patients",
         pr: "PR-FINAL-07",
       },
-      // 以下入口待实装：
-      //   key: admin-users        path: /admin/users         PR-FINAL-08
+      {
+        key: "admin-users",
+        label: "用户管理",
+        icon: <UserSwitchOutlined />,
+        path: "/admin/users",
+        pr: "PR-FINAL-08",
+      },
     ],
   },
 

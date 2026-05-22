@@ -34,6 +34,7 @@ import { AiWorkflowsPage } from "../pages/AiWorkflows";
 import TenantOnboarding from "../pages/Tenant/Onboarding";
 import { MpiPatientsPage } from "../pages/Mpi";
 import { AuditLogList } from "../pages/Admin/AuditLog";
+import { UserManagementPage } from "../pages/Admin/UserManagement";
 import { AdapterHubPage } from "../pages/Adapter";
 
 export const routes: RouteObject[] = [
@@ -82,7 +83,7 @@ export const routes: RouteObject[] = [
           { path: "notifications", element: <NotificationList recipientId="current-user" /> },
           { path: "notifications/:notificationCode", element: <NotificationDetail /> },
           { path: "notifications/settings", element: <NotificationSettings /> },
-          { path: "admin/users", element: <PlaceholderPage title="用户管理" pr="PR-V2-04" /> },
+          { path: "admin/users", element: <UserManagementPage /> },
           { path: "admin/audit", element: <AuditLogList /> },
           { path: "mpi/patients", element: <MpiPatientsPage /> },
           { path: "adapter/hub", element: <AdapterHubPage /> },

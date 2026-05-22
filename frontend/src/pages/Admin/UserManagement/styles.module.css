@@ -1,0 +1,232 @@
+/*
+ * /admin/users 用户管理页样式（PR-FINAL-08）。
+ * 100% var(--mk-*) token，零硬编码颜色。与 AuditLog 页风格保持一致。
+ */
+
+.pageHeader {
+  margin-bottom: 16px;
+}
+
+.pageTitle {
+  margin-bottom: 4px !important;
+  color: var(--mk-text-primary);
+}
+
+.pageHint {
+  font-size: 12px;
+  color: var(--mk-text-tertiary);
+}
+
+/* ─── 工具栏 ─────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: 8px;
+}
+
+.toolbarItem {
+  min-width: 160px;
+  flex: 1 1 160px;
+}
+
+.toolbarItem :global(.ant-select) {
+  width: 100%;
+}
+
+.toolbarItemLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--mk-text-secondary);
+  margin-bottom: 4px;
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+/* ─── 列表区 ─────────────────────────────────────────────────────────── */
+
+.listSection {
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.listToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.listToolbarHint {
+  font-size: 12px;
+  color: var(--mk-text-tertiary);
+}
+
+/* 锁定行高亮 */
+.lockedRow {
+  background: rgba(255, 77, 79, 0.06);
+}
+
+.lockedRow:hover td {
+  background: rgba(255, 77, 79, 0.12) !important;
+}
+
+/* ─── 详情 Drawer ─────────────────────────────────────────────────────── */
+
+.detailSection {
+  margin-bottom: 20px;
+}
+
+.detailSectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mk-text-primary);
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--mk-border);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 12px;
+  font-size: 13px;
+}
+
+.detailLabel {
+  color: var(--mk-text-secondary);
+}
+
+.detailValue {
+  color: var(--mk-text-primary);
+  word-break: break-all;
+}
+
+.detailMissing {
+  color: var(--mk-text-tertiary);
+  font-style: italic;
+}
+
+/* 登录失败次数警示（等保 2.0 三级：显示连续失败次数）*/
+.attemptsWarn {
+  color: var(--mk-warning, #faad14);
+  font-weight: 600;
+}
+
+.attemptsDanger {
+  color: var(--mk-danger, #ff4d4f);
+  font-weight: 600;
+}
+
+/* ─── 角色分配 Dialog ──────────────────────────────────────────────────── */
+
+.roleGroup {
+  margin-bottom: 12px;
+}
+
+.roleGroupTitle {
+  font-size: 12px;
+  color: var(--mk-text-secondary);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* ─── 通用辅助 ────────────────────────────────────────────────────────── */
+
+.roleTag {
+  margin-bottom: 4px;
+}
+
+.roleTagSmall {
+  margin-bottom: 2px;
+}
+
+.emptyText {
+  font-size: 13px;
+  color: var(--mk-text-secondary);
+}
+
+.bindingRow {
+  margin-bottom: 8px;
+}
+
+.neverLoginText {
+  color: var(--mk-text-tertiary);
+}
+
+.usernameLinkBtn {
+  padding: 0;
+}
+
+/* ─── 角色 Dialog ─────────────────────────────────────────────────────── */
+
+.roleCodeLabel {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--mk-text-tertiary);
+}
+
+.roleErrorText {
+  font-size: 12px;
+  color: var(--mk-danger, #ff4d4f);
+}
+
+/* ─── CSV 导入 Dialog ─────────────────────────────────────────────────── */
+
+.uploadHint {
+  margin-top: 8px;
+}
+
+.uploadHintLine1 {
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.uploadHintLine2 {
+  margin-bottom: 0;
+  font-size: 12px;
+}
+
+.importAlert {
+  margin-top: 12px;
+}
+
+.importResultBox {
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.importResultTitle {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--mk-text-primary);
+  margin-bottom: 6px;
+}
+
+.importErrorList {
+  max-height: 160px;
+  overflow: auto;
+  font-size: 12px;
+  color: var(--mk-danger, #ff4d4f);
+}
+
+.importErrorItem {
+  padding: 2px 0;
+}
