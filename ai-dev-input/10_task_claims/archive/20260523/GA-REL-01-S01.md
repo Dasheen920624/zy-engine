@@ -7,7 +7,7 @@ slice: S01
 title: 发布与分支保护证据
 owner: TraeAI-1
 role: senior
-status: DONE
+status: ACTIVE
 branch: ai/GA-REL-01/release-protection
 target_base_branch: develop
 git_base_commit: dd4a94fb5cb49cccd6597da742669b55b585888a
