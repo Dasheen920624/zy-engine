@@ -30,15 +30,8 @@ function levelIcon(level: DangerLevel) {
   }
 }
 
-function levelColor(level: DangerLevel): string {
-  switch (level) {
-    case 'low':
-      return 'var(--mk-warning)';
-    case 'medium':
-    case 'high':
-      return 'var(--mk-danger)';
-  }
-}
+// levelColor() 已废弃 → 颜色映射改由 DangerConfirm.module.css 中
+// `.levelLow / .levelMedium / .levelHigh` token class 接管（PR-V3-INLINE-STYLE）
 
 function confirmButtonLabel(level: DangerLevel, title: string): string {
   // 按钮文字必须明示后果

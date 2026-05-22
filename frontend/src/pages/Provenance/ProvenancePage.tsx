@@ -4,12 +4,9 @@ import {
   Card,
   Col,
   Descriptions,
-  Input,
   Modal,
   Row,
-  Select,
   Space,
-  Spin,
   Table,
   Tag,
   Typography,
@@ -22,7 +19,6 @@ import {
   FileSearchOutlined,
   LinkOutlined,
   ReloadOutlined,
-  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -40,40 +36,12 @@ import { getOrgContext } from "../../store/orgContext";
 import styles from "./ProvenancePage.module.css";
 
 const { Title, Paragraph, Text } = Typography;
-const { Option } = Select;
-
-const SOURCE_TYPE_OPTIONS = [
-  { label: "临床指南", value: "CLINICAL_GUIDELINE" },
-  { label: "专家共识", value: "EXPERT_CONSENSUS" },
-  { label: "药品说明书", value: "DRUG_LABEL" },
-  { label: "临床路径", value: "CLINICAL_PATHWAY" },
-  { label: "医学文献", value: "MEDICAL_LITERATURE" },
-];
-
-const REVIEW_STATUS_OPTIONS = [
-  { label: "待审核", value: "PENDING" },
-  { label: "已通过", value: "APPROVED" },
-  { label: "已拒绝", value: "REJECTED" },
-];
 
 const REVIEW_STATUS_COLORS: Record<string, string> = {
   PENDING: "orange",
   APPROVED: "green",
   REJECTED: "red",
 };
-
-const CITATION_TYPE_OPTIONS = [
-  { label: "推荐意见", value: "RECOMMENDATION" },
-  { label: "证据摘要", value: "EVIDENCE_SUMMARY" },
-  { label: "操作流程", value: "PROCEDURE" },
-  { label: "注意事项", value: "PRECAUTION" },
-];
-
-const BINDING_TYPE_OPTIONS = [
-  { label: "规则引用", value: "RULE_CITATION" },
-  { label: "路径引用", value: "PATHWAY_CITATION" },
-  { label: "知识引用", value: "KNOWLEDGE_CITATION" },
-];
 
 /**
  * 来源追溯（FE-008）。
@@ -129,7 +97,7 @@ export default function ProvenancePage() {
       const document = await getSourceDocument(documentCode);
       setSelectedDocument(document);
       setDocumentDetailVisible(true);
-    } catch (error) {
+    } catch {
       message.error("获取文档详情失败");
     }
   };
@@ -139,7 +107,7 @@ export default function ProvenancePage() {
       const citation = await getCitation(citationId);
       setSelectedCitation(citation);
       setCitationDetailVisible(true);
-    } catch (error) {
+    } catch {
       message.error("获取引用详情失败");
     }
   };
@@ -149,7 +117,7 @@ export default function ProvenancePage() {
       const binding = await getBinding(bindingId);
       setSelectedBinding(binding);
       setBindingDetailVisible(true);
-    } catch (error) {
+    } catch {
       message.error("获取绑定详情失败");
     }
   };

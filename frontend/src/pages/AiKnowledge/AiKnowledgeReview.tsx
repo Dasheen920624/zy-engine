@@ -7,7 +7,6 @@ import {
   Input,
   Modal,
   Row,
-  Select,
   Space,
   Spin,
   Table,
@@ -20,7 +19,6 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   EditOutlined,
-  ExperimentOutlined,
   HistoryOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
@@ -34,36 +32,12 @@ import {
   getReviewSummary,
   getReviewHistory,
   type AiCandidateReview,
-  type ReviewSummary,
 } from "../../api/aiCandidateReview";
 import { getOrgContext } from "../../store/orgContext";
 import styles from "./AiKnowledgeReview.module.css";
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
-const { Option } = Select;
-
-const CANDIDATE_TYPE_OPTIONS = [
-  { label: "疾病", value: "DISEASE" },
-  { label: "症状", value: "SYMPTOM" },
-  { label: "检查", value: "EXAM" },
-  { label: "检验", value: "LAB" },
-  { label: "药物", value: "DRUG" },
-  { label: "手术", value: "PROCEDURE" },
-];
-
-const REVIEW_STATUS_OPTIONS = [
-  { label: "待审核", value: "PENDING" },
-  { label: "已通过", value: "APPROVED" },
-  { label: "已拒绝", value: "REJECTED" },
-  { label: "已修改", value: "MODIFIED" },
-];
-
-const PRIORITY_OPTIONS = [
-  { label: "高", value: "HIGH" },
-  { label: "中", value: "MEDIUM" },
-  { label: "低", value: "LOW" },
-];
 
 const REVIEW_STATUS_COLORS: Record<string, string> = {
   PENDING: "orange",
@@ -182,7 +156,7 @@ export default function AiKnowledgeReview() {
       const candidate = await getCandidate(candidateId);
       setSelectedCandidate(candidate);
       setDetailModalVisible(true);
-    } catch (error) {
+    } catch {
       message.error("获取候选详情失败");
     }
   };

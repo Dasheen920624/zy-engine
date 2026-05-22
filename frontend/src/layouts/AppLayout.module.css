@@ -1,0 +1,90 @@
+/* PR-FINAL-26 Admin Layout：fixed header + fixed sider + scrollable content
+ *
+ * 设计要点：
+ * - Header 固定 56px 高度，z-index 100，全宽。
+ * - Sider 固定 220px 宽（折叠时 64px），top: 56px 留出 header 高度。
+ * - Content 区独立滚动，margin-left 跟随 sider 折叠状态动画。
+ * - < 768px Sider 退化为 drawer（transform: translateX），Content 全宽。
+ */
+
+.shell {
+  position: relative;
+  min-height: 100vh;
+  background: var(--mk-bg-soft);
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--mk-bg-panel);
+  border-bottom: 1px solid var(--mk-border-divider);
+  box-shadow: var(--mk-shadow-sm);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+}
+
+.sider {
+  position: fixed;
+  top: 56px;
+  bottom: 0;
+  left: 0;
+  width: 220px;
+  background: var(--mk-bg-panel);
+  border-right: 1px solid var(--mk-border-divider);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 90;
+  transition: width 200ms ease, transform 200ms ease;
+}
+
+.siderCollapsed {
+  width: 64px;
+}
+
+.content {
+  margin-top: 56px;
+  margin-left: 220px;
+  padding: var(--mk-space-6);
+  min-height: calc(100vh - 56px);
+  transition: margin-left 200ms ease;
+  background: var(--mk-bg-soft);
+}
+
+.contentCollapsed {
+  margin-left: 64px;
+}
+
+/* 移动端：sidebar 转 drawer，content 全宽 */
+@media (max-width: 767px) {
+  .sider {
+    transform: translateX(-100%);
+    width: 220px;
+    box-shadow: var(--mk-shadow-lg);
+  }
+
+  .siderMobileOpen {
+    transform: translateX(0);
+  }
+
+  .content,
+  .contentCollapsed {
+    margin-left: 0;
+  }
+
+  .mobileMask {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--mk-bg-overlay);
+    z-index: 85;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+}
