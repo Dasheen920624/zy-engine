@@ -147,9 +147,9 @@ submit_allowed:
 ## Completion
 
 ```text
-commit: 8bf884a
-push: 891c251 (develop)
-tests: 314 PASS
-review: RV-GA-QA-01-S01-R01 APPROVED
-risks: 覆盖率基线 0.35，需后续迭代提升到 0.70
+commit:
+push:
+tests:
+review:
+risks:
 ```
