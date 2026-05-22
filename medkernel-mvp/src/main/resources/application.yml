@@ -91,8 +91,16 @@ medkernel:
     field-encryption:
       enabled: ${MEDKERNEL_FIELD_ENC_ENABLED:true}
       master-key-base64: ${MEDKERNEL_SM4_MASTER_KEY:bWVka2VybmVsLWRldmtleQ==}
+      # GA-SEC-02: 密钥轮换 — 配置旧 master key 后自动双密钥并行解密
+      previous-master-key-base64: ${MEDKERNEL_SM4_PREVIOUS_MASTER_KEY:}
       derivation-salt: ${MEDKERNEL_FIELD_ENC_SALT:medkernel-dataclass-v1}
       strict-decrypt: ${MEDKERNEL_FIELD_ENC_STRICT:true}
+      # GA-SEC-02: 兼容模式 — 同时支持国密和 RSA/AES，便于平滑迁移
+      compatibility-mode: ${MEDKERNEL_CRYPTO_COMPAT_MODE:false}
+      # GA-SEC-02: HSM 硬件安全模块 — 生产环境密钥保护
+      hsm-enabled: ${MEDKERNEL_HSM_ENABLED:false}
+      hsm-provider: ${MEDKERNEL_HSM_PROVIDER:SoftHSM}
+      hsm-key-label: ${MEDKERNEL_HSM_KEY_LABEL:medkernel-sm4-master}
 
   # PR-FINAL-25: Flyway DB migration（默认 false 保持向后兼容；生产部署强制开启）。
   # enabled=true 时：启动 → Flyway migration → PersistenceService.@PostConstruct schema 兜底

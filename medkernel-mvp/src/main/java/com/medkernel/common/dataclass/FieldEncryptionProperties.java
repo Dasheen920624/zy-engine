@@ -62,6 +62,53 @@ public class FieldEncryptionProperties {
      */
     private boolean strictDecrypt = true;
 
+    /**
+     * 旧 SM4 master key（Base64 编码，16 字节明文）。
+     *
+     * <p>密钥轮换时配置此项。配置后：
+     * <ul>
+     *   <li>新加密使用当前 master key，密文版本头为 "SM4:v2:"</li>
+     *   <li>解密时自动尝试旧 key（v1 密文）和当前 key（v2 密文）</li>
+     *   <li>读取到的 v1 密文会在 encryptEntity 时自动 re-encrypt 为 v2</li>
+     * </ul>
+     *
+     * <p>轮换完成后（所有 v1 密文已迁移为 v2），清除此配置即可。
+     */
+    private String previousMasterKeyBase64;
+
+    /**
+     * 兼容模式：同时支持国密和 RSA/AES。
+     *
+     * <p>当 {@code true} 时，系统同时支持国密（SM2/SM3/SM4）和 RSA/AES 两种加密套件，
+     * 便于从国际算法平滑迁移到国密算法。
+     * <ul>
+     *   <li>新数据使用国密算法加密</li>
+     *   <li>旧数据（RSA/AES 加密）仍可正常解密</li>
+     *   <li>读取时自动 re-encrypt 为国密</li>
+     * </ul>
+     *
+     * <p>当 {@code false}（默认）时，仅使用国密算法。
+     */
+    private boolean compatibilityMode = false;
+
+    /**
+     * HSM（硬件安全模块）配置。
+     *
+     * <p>当 {@code true} 时，密钥操作委托给 HSM，不在内存中存储明文密钥。
+     * <p>生产环境强烈建议启用。
+     */
+    private boolean hsmEnabled = false;
+
+    /**
+     * HSM 提供者类型（如 "SoftHSM", "ThalesLuna", "SansecSJJ1012"）。
+     */
+    private String hsmProvider = "SoftHSM";
+
+    /**
+     * HSM 密钥标签（HSM 中存储的密钥名称）。
+     */
+    private String hsmKeyLabel = "medkernel-sm4-master";
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -92,5 +139,45 @@ public class FieldEncryptionProperties {
 
     public void setStrictDecrypt(boolean strictDecrypt) {
         this.strictDecrypt = strictDecrypt;
+    }
+
+    public String getPreviousMasterKeyBase64() {
+        return previousMasterKeyBase64;
+    }
+
+    public void setPreviousMasterKeyBase64(String previousMasterKeyBase64) {
+        this.previousMasterKeyBase64 = previousMasterKeyBase64;
+    }
+
+    public boolean isCompatibilityMode() {
+        return compatibilityMode;
+    }
+
+    public void setCompatibilityMode(boolean compatibilityMode) {
+        this.compatibilityMode = compatibilityMode;
+    }
+
+    public boolean isHsmEnabled() {
+        return hsmEnabled;
+    }
+
+    public void setHsmEnabled(boolean hsmEnabled) {
+        this.hsmEnabled = hsmEnabled;
+    }
+
+    public String getHsmProvider() {
+        return hsmProvider;
+    }
+
+    public void setHsmProvider(String hsmProvider) {
+        this.hsmProvider = hsmProvider;
+    }
+
+    public String getHsmKeyLabel() {
+        return hsmKeyLabel;
+    }
+
+    public void setHsmKeyLabel(String hsmKeyLabel) {
+        this.hsmKeyLabel = hsmKeyLabel;
     }
 }
