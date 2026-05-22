@@ -1,0 +1,34 @@
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.page {
+  padding: var(--mk-spacing-lg);
+}
+
+.emptyContainer {
+  text-align: center;
+}
+
+.contentSection {
+  margin-top: var(--mk-spacing-md);
+}
+
+.notificationTitle {
+  margin: 0;
+}
+
+.contentCard {
+  background-color: var(--mk-bg-elevated);
+}
+
+.notificationParagraph {
+  white-space: pre-wrap;
+}
+
+.linkButton {
+  padding: 0;
+}

@@ -10,6 +10,7 @@ import StageTree from "./StageTree";
 import NodePropertyPanel from "./NodePropertyPanel";
 import UnsavedChangesGuard from "./UnsavedChangesGuard";
 import { getPathway, savePathwayDraft, validatePathway, submitPathwayReview } from "../../../api/pathway";
+import styles from "./PathwayEditor.module.css";
 
 // Mock pathway data for development
 const MOCK_PATHWAY: PathwayDef = {
@@ -197,7 +198,7 @@ const PathwayEditor: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: 48, textAlign: "center" }}>
+      <div className={styles.loadingState}>
         <Spin size="large" />
       </div>
     );
@@ -220,7 +221,7 @@ const PathwayEditor: React.FC = () => {
   const selectedNode = pathway.nodes.find((n) => n.id === selectedNodeId);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <div className={styles.editorPage}>
       <PathwayEditorHeader
         pathway={pathway}
         saving={saving}
@@ -228,17 +229,10 @@ const PathwayEditor: React.FC = () => {
         onSubmit={handleSubmit}
         onDiff={handleDiff}
       />
-      <div style={{ flex: 1, overflow: "hidden" }}>
+      <div className={styles.editorBody}>
         <Allotment defaultSizes={[240, 600, 360]}>
           <Allotment.Pane minSize={180} maxSize={320}>
-            <div
-              style={{
-                height: "100%",
-                borderRight: "1px solid var(--mk-border)",
-                background: "var(--mk-bg-elevated)",
-                overflow: "auto",
-              }}
-            >
+            <div className={`${styles.sidePane} ${styles.leftPane}`}>
               <StageTree
                 pathway={pathway}
                 selectedNodeId={selectedNodeId}
@@ -255,14 +249,7 @@ const PathwayEditor: React.FC = () => {
             />
           </Allotment.Pane>
           <Allotment.Pane minSize={280} maxSize={480}>
-            <div
-              style={{
-                height: "100%",
-                borderLeft: "1px solid var(--mk-border)",
-                background: "var(--mk-bg-elevated)",
-                overflow: "auto",
-              }}
-            >
+            <div className={`${styles.sidePane} ${styles.rightPane}`}>
               <NodePropertyPanel
                 node={selectedNode}
                 onChange={handleNodePropertyChange}

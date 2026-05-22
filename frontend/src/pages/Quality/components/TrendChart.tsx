@@ -1,5 +1,6 @@
 import { Typography } from "antd";
 import type { TrendDay } from "../../../api/types";
+import styles from "./trendChart.module.css";
 
 const { Text } = Typography;
 
@@ -9,7 +10,7 @@ const { Text } = Typography;
  */
 export default function TrendChart({ data }: { data: TrendDay[] }) {
   if (!data || data.length === 0) {
-    return <div style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>暂无数据</div>;
+    return <div className={styles.emptyState}>暂无数据</div>;
   }
 
   // 计算 SVG 坐标
@@ -123,18 +124,18 @@ export default function TrendChart({ data }: { data: TrendDay[] }) {
       </svg>
 
       {/* 图例 */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 8 }}>
+      <div className={styles.legend}>
         <span>
-          <span style={{ display: "inline-block", width: 16, height: 2, background: "var(--mk-success)", marginRight: 4, verticalAlign: "middle" }} />
-          <Text style={{ fontSize: 12 }}>路径完成率</Text>
+          <span className={`${styles.legendLine} ${styles.legendLineSuccess}`} />
+          <Text className={styles.legendText}>路径完成率</Text>
         </span>
         <span>
-          <span style={{ display: "inline-block", width: 16, height: 2, background: "var(--mk-warning)", marginRight: 4, verticalAlign: "middle" }} />
-          <Text style={{ fontSize: 12 }}>规则命中率</Text>
+          <span className={`${styles.legendLine} ${styles.legendLineWarning}`} />
+          <Text className={styles.legendText}>规则命中率</Text>
         </span>
         <span>
-          <span style={{ display: "inline-block", width: 16, height: 2, background: "var(--mk-primary)", marginRight: 4, verticalAlign: "middle" }} />
-          <Text style={{ fontSize: 12 }}>质控整改率</Text>
+          <span className={`${styles.legendLine} ${styles.legendLinePrimary}`} />
+          <Text className={styles.legendText}>质控整改率</Text>
         </span>
       </div>
     </div>

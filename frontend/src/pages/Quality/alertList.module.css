@@ -1,0 +1,38 @@
+/* PR-V3-INLINE-STYLE: AlertList inline style 迁移 */
+
+.page {
+  padding: 24px;
+}
+
+.pageTitle {
+  margin-bottom: var(--mk-space-6);
+}
+
+.severityDotCritical {
+  color: var(--mk-danger);
+}
+
+.severityDotWarning {
+  color: var(--mk-warning);
+}
+
+.severityDotInfo {
+  color: var(--mk-primary);
+}
+
+.filterBar {
+  margin-bottom: var(--mk-space-4);
+}
+
+.deptInput {
+  width: 120px;
+}
+
+.selectNarrow {
+  width: 100px;
+}
+
+.summaryBar {
+  margin-bottom: var(--mk-space-4);
+  width: 100%;
+}

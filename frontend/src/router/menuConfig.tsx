@@ -15,6 +15,7 @@ import {
   NodeIndexOutlined,
   ReadOutlined,
   RobotOutlined,
+  RocketOutlined,
   SafetyCertificateOutlined,
   ShopOutlined,
   ToolOutlined,
@@ -242,6 +243,13 @@ export const menuSections: MenuSection[] = [
         icon: <ShopOutlined />,
         path: "/tenant/onboarding",
         pr: "PR-FINAL-10",
+      },
+      {
+        key: "implementation-guide",
+        label: "客户实施向导",
+        icon: <RocketOutlined />,
+        path: "/onboarding/implementation-guide",
+        pr: "FE-014",
       },
       {
         key: "mpi",

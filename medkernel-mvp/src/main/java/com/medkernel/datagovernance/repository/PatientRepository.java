@@ -1,5 +1,6 @@
 package com.medkernel.datagovernance.repository;
 
+import com.medkernel.common.dataclass.FieldEncryptionService;
 import com.medkernel.datagovernance.entity.PatientEntity;
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
@@ -19,7 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 患者主数据数据库访问层
+ * 患者主数据数据库访问层。
+ *
+ * <p>PR-FINAL-23：透明 SM4 加密。{@link FieldEncryptionService} 在 save 前加密
+ * 标 {@code @Encrypted} 的字段，read 后解密。Service 层无感知。
  */
 @Repository
 public class PatientRepository {
@@ -27,14 +31,21 @@ public class PatientRepository {
 
     private final EnginePersistenceProperties properties;
     private final DataSource dataSource;
+    private final FieldEncryptionService fieldEncryption;
 
-    public PatientRepository(EnginePersistenceProperties properties, DataSource dataSource) {
+    public PatientRepository(EnginePersistenceProperties properties,
+                             DataSource dataSource,
+                             FieldEncryptionService fieldEncryption) {
         this.properties = properties;
         this.dataSource = dataSource;
+        this.fieldEncryption = fieldEncryption;
     }
 
     /**
-     * 保存患者主数据（新增或更新）
+     * 保存患者主数据（新增或更新）。
+     *
+     * <p>写入前加密 {@code @Encrypted} 字段，写入完成后解密回明文，
+     * 调用方拿到的 entity 始终是明文状态。
      */
     public void save(PatientEntity entity) {
         if (!properties.isEnabled() || !properties.hasRequiredCredentials()) {
@@ -45,6 +56,7 @@ public class PatientRepository {
             entity.setId(Ids.next());
         }
 
+        fieldEncryption.encryptEntity(entity);
         try (Connection connection = connection()) {
             Long existingId = findIdByUniqueKey(connection, entity.getTenantId(), entity.getPatientId());
             if (existingId != null) {
@@ -55,6 +67,8 @@ public class PatientRepository {
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("save patient failed: " + ex.getMessage(), ex);
+        } finally {
+            fieldEncryption.decryptEntity(entity);
         }
     }
 
@@ -180,6 +194,8 @@ public class PatientRepository {
         entity.setCreatedTime(createdTime != null ? createdTime.toLocalDateTime() : null);
         Timestamp updatedTime = rs.getTimestamp("updated_time");
         entity.setUpdatedTime(updatedTime != null ? updatedTime.toLocalDateTime() : null);
+        // PR-FINAL-23：从数据库读出的 @Encrypted 字段为密文，统一解密回明文。
+        fieldEncryption.decryptEntity(entity);
         return entity;
     }
 

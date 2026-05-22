@@ -6,7 +6,6 @@ import {
   Form,
   Input,
   Row,
-  Select,
   Space,
   Spin,
   Table,
@@ -16,10 +15,8 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
-  BranchesOutlined,
   ClusterOutlined,
   ExperimentOutlined,
-  NodeIndexOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
@@ -41,32 +38,6 @@ import { getOrgContext } from "../../store/orgContext";
 import styles from "./GraphExplore.module.css";
 
 const { Title, Paragraph, Text } = Typography;
-const { TextArea } = Input;
-const { Option } = Select;
-
-const NODE_TYPE_OPTIONS = [
-  { label: "疾病", value: "DISEASE" },
-  { label: "症状", value: "SYMPTOM" },
-  { label: "检查", value: "EXAM" },
-  { label: "检验", value: "LAB" },
-  { label: "药物", value: "DRUG" },
-  { label: "手术", value: "PROCEDURE" },
-];
-
-const EDGE_TYPE_OPTIONS = [
-  { label: "诊断依据", value: "DIAGNOSIS_BASIS" },
-  { label: "治疗方案", value: "TREATMENT" },
-  { label: "禁忌症", value: "CONTRAINDICATION" },
-  { label: "并发症", value: "COMPLICATION" },
-  { label: "鉴别诊断", value: "DIFFERENTIAL" },
-];
-
-const EVIDENCE_TYPE_OPTIONS = [
-  { label: "指南", value: "GUIDELINE" },
-  { label: "文献", value: "LITERATURE" },
-  { label: "专家共识", value: "EXPERT_CONSENSUS" },
-  { label: "临床路径", value: "CLINICAL_PATHWAY" },
-];
 
 const VERSION_STATUS_COLORS: Record<string, string> = {
   DRAFT: "default",

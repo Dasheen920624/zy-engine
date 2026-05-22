@@ -58,7 +58,7 @@ public class IdentityProviderRepository extends SecurityRepositorySupport {
             }
             return providers;
         }
-        public IdentityBinding findIdentityBinding(Long tenantId, Long providerId, String externalSubject) {
+        public SsoIdentityBinding findIdentityBinding(Long tenantId, Long providerId, String externalSubject) {
             String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
                     + "external_display_name, binding_status, last_verified_time, "
                     + "created_by, created_time, updated_by, updated_time "
@@ -78,12 +78,12 @@ public class IdentityProviderRepository extends SecurityRepositorySupport {
             }
             return null;
         }
-        public List<IdentityBinding> findIdentityBindingsByUser(Long tenantId, Long userId) {
+        public List<SsoIdentityBinding> findIdentityBindingsByUser(Long tenantId, Long userId) {
             String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
                     + "external_display_name, binding_status, last_verified_time, "
                     + "created_by, created_time, updated_by, updated_time "
                     + "FROM sec_identity_binding WHERE tenant_id = ? AND user_id = ?";
-            List<IdentityBinding> bindings = new ArrayList<IdentityBinding>();
+            List<SsoIdentityBinding> bindings = new ArrayList<SsoIdentityBinding>();
             try (Connection connection = connection();
                  PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setLong(1, tenantId);
@@ -259,7 +259,7 @@ public class IdentityProviderRepository extends SecurityRepositorySupport {
                 throw new IllegalStateException("delete identity provider failed: " + ex.getMessage(), ex);
             }
         }
-        public IdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
+        public SsoIdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
             String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
                     + "external_display_name, binding_status, last_verified_time, "
                     + "created_by, created_time, updated_by, updated_time "
@@ -279,12 +279,12 @@ public class IdentityProviderRepository extends SecurityRepositorySupport {
             }
             return null;
         }
-        public List<IdentityBinding> findBindingsByUserId(Long userId) {
+        public List<SsoIdentityBinding> findBindingsByUserId(Long userId) {
             String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
                     + "external_display_name, binding_status, last_verified_time, "
                     + "created_by, created_time, updated_by, updated_time "
                     + "FROM sec_identity_binding WHERE user_id = ?";
-            List<IdentityBinding> bindings = new ArrayList<>();
+            List<SsoIdentityBinding> bindings = new ArrayList<>();
             try (Connection connection = connection();
                  PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setLong(1, userId);
@@ -298,7 +298,7 @@ public class IdentityProviderRepository extends SecurityRepositorySupport {
             }
             return bindings;
         }
-        public void saveIdentityBinding(IdentityBinding binding) {
+        public void saveIdentityBinding(SsoIdentityBinding binding) {
             String updateSql = "UPDATE sec_identity_binding SET user_id = ?, "
                     + "external_org_code = ?, external_display_name = ?, binding_status = ?, "
                     + "last_verified_time = ?, updated_by = ?, updated_time = ? "

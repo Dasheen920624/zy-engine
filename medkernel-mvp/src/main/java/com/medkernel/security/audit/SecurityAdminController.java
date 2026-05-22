@@ -4,6 +4,8 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContextService;
 import com.medkernel.security.SecurityContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +27,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/security/admin")
 public class SecurityAdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityAdminController.class);
 
     private final AuditChainService auditChainService;
     private final KeyManagementService keyManagementService;
@@ -172,7 +176,8 @@ public class SecurityAdminController {
             result.put("decrypted", decrypted);
             return ApiResult.success(result);
         } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "解密失败: " + e.getMessage());
+            log.error("Decryption failed", e);
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "操作失败，请稍后重试");
         }
     }
 

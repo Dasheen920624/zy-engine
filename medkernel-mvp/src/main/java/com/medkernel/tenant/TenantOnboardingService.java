@@ -5,10 +5,15 @@ import com.medkernel.common.exception.BusinessException;
 import com.medkernel.security.SecurityTenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class TenantOnboardingService {
     private static final Logger log = LoggerFactory.getLogger(TenantOnboardingService.class);
+    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final Map<String, Map<String, Object>> applicationStore = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> invitationStore = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> serviceAccountStore = new ConcurrentHashMap<>();
@@ -234,8 +240,7 @@ public class TenantOnboardingService {
      * 哈希密钥
      */
     private String hashSecret(String secret) {
-        // 实际项目中应该使用 BCrypt 或其他安全的哈希算法
-        return "hashed-" + secret;
+        return passwordEncoder.encode(secret);
     }
 
     /**

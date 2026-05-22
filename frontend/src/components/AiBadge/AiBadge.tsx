@@ -1,13 +1,14 @@
 import { RobotOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tag, Tooltip, Typography } from 'antd';
 import type { AiBadgeProps } from './AiBadge.types';
+import styles from './aiBadge.module.css';
 
 const { Text } = Typography;
 
-function getConfidenceColor(confidence: number): string {
-  if (confidence >= 80) return 'var(--mk-ai-confidence-high)';
-  if (confidence >= 60) return 'var(--mk-ai-confidence-mid)';
-  return 'var(--mk-ai-confidence-low)';
+function getConfidenceClass(confidence: number): string {
+  if (confidence >= 80) return styles.confidenceHigh;
+  if (confidence >= 60) return styles.confidenceMid;
+  return styles.confidenceLow;
 }
 
 export default function AiBadge({
@@ -20,52 +21,42 @@ export default function AiBadge({
   onReject,
   variant = 'badge',
 }: AiBadgeProps) {
-  const confidenceColor = getConfidenceColor(confidence);
+  const confidenceClass = getConfidenceClass(confidence);
 
   if (variant === 'card') {
     return (
       <Card
         size="small"
-        style={{ borderColor: 'var(--mk-border)' }}
+        className={styles.card}
         styles={{
           body: { padding: 'var(--mk-space-4)' },
         }}
       >
-        <Space direction="vertical" size="small" style={{ width: '100%' }}>
+        <Space direction="vertical" size="small" className={styles.fullWidth}>
           <Space>
-            <RobotOutlined style={{ color: 'var(--mk-ai-primary)', fontSize: 16 }} />
-            <Text strong style={{ color: 'var(--mk-ai-primary)' }}>
+            <RobotOutlined className={styles.aiIcon} />
+            <Text strong className={styles.aiText}>
               AI 候选
             </Text>
-            <Tag
-              style={{
-                backgroundColor: 'var(--mk-ai-soft)',
-                color: 'var(--mk-ai-primary)',
-                border: 'none',
-                margin: 0,
-              }}
-            >
+            <Tag className={styles.modelTag}>
               {model}
             </Tag>
           </Space>
 
           <Space size="small">
-            <Text type="secondary" style={{ fontSize: 'var(--mk-text-xs)' }}>
+            <Text type="secondary" className={styles.metaText}>
               置信度:
             </Text>
-            <Text
-              strong
-              style={{ color: confidenceColor, fontSize: 'var(--mk-text-sm)' }}
-            >
+            <Text strong className={`${styles.confidenceText} ${confidenceClass}`}>
               {confidence}%
             </Text>
           </Space>
 
-          <Text type="secondary" style={{ fontSize: 'var(--mk-text-xs)' }}>
+          <Text type="secondary" className={styles.metaText}>
             生成时间: {generatedAt}
           </Text>
 
-          <Space size="small" style={{ marginTop: 'var(--mk-space-1)' }}>
+          <Space size="small" className={styles.actionRow}>
             <Button
               size="small"
               type="primary"
@@ -93,17 +84,10 @@ export default function AiBadge({
     >
       <Tag
         icon={<RobotOutlined />}
-        style={{
-          backgroundColor: 'var(--mk-ai-soft)',
-          color: 'var(--mk-ai-primary)',
-          border: 'none',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 4,
-        }}
+        className={styles.badgeTag}
       >
         AI 候选
-        <span style={{ color: confidenceColor, fontWeight: 600 }}>
+        <span className={`${styles.confidenceStrong} ${confidenceClass}`}>
           {confidence}%
         </span>
       </Tag>

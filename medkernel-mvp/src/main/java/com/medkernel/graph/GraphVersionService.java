@@ -28,6 +28,12 @@ public class GraphVersionService {
 
         public List<Map<String, Object>> importGraphVersions(Object request,
                                                            Map<String, Map<String, Object>> graphVersions) {
+            return importGraphVersions(request, graphVersions, "default");
+        }
+
+        public List<Map<String, Object>> importGraphVersions(Object request,
+                                                           Map<String, Map<String, Object>> graphVersions,
+                                                           String tenantId) {
             List<Map<String, Object>> entries = normalize(request, "versions", "graph_version");
             if (entries.isEmpty()) {
                 throw new IllegalArgumentException("graph versions list is empty");
@@ -47,14 +53,25 @@ public class GraphVersionService {
 
             List<Map<String, Object>> imported = new ArrayList<Map<String, Object>>();
             for (Map<String, Object> entry : staged) {
-                graphVersions.put((String) entry.get("graph_version"), entry);
+                entry.put("tenant_id", tenantId);
+                graphVersions.put(versionKey(tenantId, (String) entry.get("graph_version")), entry);
                 imported.add(entry);
             }
             return imported;
         }
 
         public List<Map<String, Object>> listGraphVersions(Map<String, Map<String, Object>> graphVersions) {
-            List<Map<String, Object>> list = new ArrayList<Map<String, Object>>(graphVersions.values());
+            return listGraphVersions(graphVersions, "default");
+        }
+
+        public List<Map<String, Object>> listGraphVersions(Map<String, Map<String, Object>> graphVersions,
+                                                           String tenantId) {
+            List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+            for (Map<String, Object> entry : graphVersions.values()) {
+                if (matchesTenant(entry, tenantId)) {
+                    list.add(entry);
+                }
+            }
             Collections.sort(list, new Comparator<Map<String, Object>>() {
                 @Override
                 public int compare(Map<String, Object> left, Map<String, Object> right) {
@@ -66,7 +83,19 @@ public class GraphVersionService {
 
         public Map<String, Object> getGraphVersion(String graphVersion,
                                                  Map<String, Map<String, Object>> graphVersions) {
-            Map<String, Object> entry = graphVersions.get(graphVersion);
+            return getGraphVersion(graphVersion, graphVersions, "default");
+        }
+
+        public Map<String, Object> getGraphVersion(String graphVersion,
+                                                 Map<String, Map<String, Object>> graphVersions,
+                                                 String tenantId) {
+            // 先尝试租户键
+            Map<String, Object> entry = graphVersions.get(versionKey(tenantId, graphVersion));
+            if (entry != null) {
+                return entry;
+            }
+            // 回退到旧格式键
+            entry = graphVersions.get(graphVersion);
             if (entry == null) {
                 throw new IllegalArgumentException("graph version not found: " + graphVersion);
             }
@@ -76,9 +105,20 @@ public class GraphVersionService {
         public Map<String, Object> activateGraphVersion(String graphVersion, Map<String, Object> request,
                                                       Map<String, Map<String, Object>> graphVersions,
                                                       java.util.concurrent.locks.ReentrantLock graphVersionLock) {
+            return activateGraphVersion(graphVersion, request, graphVersions, graphVersionLock, "default");
+        }
+
+        public Map<String, Object> activateGraphVersion(String graphVersion, Map<String, Object> request,
+                                                      Map<String, Map<String, Object>> graphVersions,
+                                                      java.util.concurrent.locks.ReentrantLock graphVersionLock,
+                                                      String tenantId) {
             graphVersionLock.lock();
             try {
-                Map<String, Object> entry = graphVersions.get(graphVersion);
+                // 先尝试租户键，回退旧格式键
+                Map<String, Object> entry = graphVersions.get(versionKey(tenantId, graphVersion));
+                if (entry == null) {
+                    entry = graphVersions.get(graphVersion);
+                }
                 if (entry == null) {
                     throw new IllegalArgumentException("graph version not found: " + graphVersion);
                 }
@@ -123,11 +163,22 @@ public class GraphVersionService {
         public Map<String, Object> rollbackVersion(String graphVersion, Map<String, Object> request,
                                                  Map<String, Map<String, Object>> graphVersions,
                                                  java.util.concurrent.locks.ReentrantLock graphVersionLock) {
+            return rollbackVersion(graphVersion, request, graphVersions, graphVersionLock, "default");
+        }
+
+        public Map<String, Object> rollbackVersion(String graphVersion, Map<String, Object> request,
+                                                 Map<String, Map<String, Object>> graphVersions,
+                                                 java.util.concurrent.locks.ReentrantLock graphVersionLock,
+                                                 String tenantId) {
             // 与 activateGraphVersion 共享 graphVersionLock：回滚也是 read-modify-write 序列，
             // 必须互斥防止并发回滚导致多版本同时 ACTIVE。
             graphVersionLock.lock();
             try {
-                Map<String, Object> target = graphVersions.get(graphVersion);
+                // 先尝试租户键，回退旧格式键
+                Map<String, Object> target = graphVersions.get(versionKey(tenantId, graphVersion));
+                if (target == null) {
+                    target = graphVersions.get(graphVersion);
+                }
                 if (target == null) {
                     throw new IllegalArgumentException("graph version not found: " + graphVersion);
                 }
@@ -237,5 +288,17 @@ public class GraphVersionService {
             }
             String text = String.valueOf(value);
             return text.trim().isEmpty() ? defaultValue : text;
+        }
+
+        private String versionKey(String tenantId, String graphVersion) {
+            return tenantId + "::" + string(graphVersion, "");
+        }
+
+        private boolean matchesTenant(Map<String, Object> entry, String tenantId) {
+            String entryTenant = string(entry.get("tenant_id"), null);
+            if (entryTenant == null) {
+                return true; // 旧数据视为所有租户可见
+            }
+            return tenantId.equals(entryTenant);
         }
 }

@@ -1,6 +1,7 @@
 import { ToolOutlined } from "@ant-design/icons";
 import { Button, Result } from "antd";
 import { useNavigate } from "react-router-dom";
+import styles from "./placeholderPage.module.css";
 
 interface PlaceholderPageProps {
   title: string;
@@ -16,13 +17,13 @@ export default function PlaceholderPage({ title, pr }: PlaceholderPageProps) {
 
   return (
     <Result
-      icon={<ToolOutlined style={{ color: "var(--mk-primary)" }} />}
+      icon={<ToolOutlined className={styles.icon} />}
       title={title}
       subTitle={
         <span>
           该页面待实现
           {pr && (
-            <span style={{ color: "var(--mk-text-secondary)", marginLeft: 8 }}>
+            <span className={styles.prText}>
               ({pr})
             </span>
           )}
@@ -33,9 +34,7 @@ export default function PlaceholderPage({ title, pr }: PlaceholderPageProps) {
           返回工作台
         </Button>
       }
-      style={{
-        marginTop: 120,
-      }}
+      className={styles.result}
     />
   );
 }

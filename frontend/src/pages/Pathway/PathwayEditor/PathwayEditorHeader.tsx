@@ -4,6 +4,7 @@ import { ArrowLeftOutlined, SaveOutlined, SendOutlined, DiffOutlined } from "@an
 import { useNavigate } from "react-router-dom";
 import type { PathwayDef } from "../../../components/PathwayCanvas/types";
 import { SourceInfo } from "../../../components";
+import styles from "./PathwayEditor.module.css";
 
 const { Text } = Typography;
 
@@ -33,16 +34,7 @@ const PathwayEditorHeader: React.FC<PathwayEditorHeaderProps> = ({
   const statusCfg = statusMap[pathway.status] ?? statusMap.DRAFT;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "8px 16px",
-        borderBottom: "1px solid var(--mk-border)",
-        background: "var(--mk-bg-elevated)",
-      }}
-    >
+    <div className={styles.header}>
       <Space>
         <Button
           icon={<ArrowLeftOutlined />}
@@ -51,7 +43,7 @@ const PathwayEditorHeader: React.FC<PathwayEditorHeaderProps> = ({
         >
           返回
         </Button>
-        <Text strong style={{ fontSize: 16 }}>
+        <Text strong className={styles.headerTitle}>
           {pathway.name}
         </Text>
         <SourceInfo
@@ -63,7 +55,7 @@ const PathwayEditorHeader: React.FC<PathwayEditorHeaderProps> = ({
         <Text type="secondary">· 版本 {pathway.version}</Text>
         <Tag color={statusCfg.color}>{statusCfg.label}</Tag>
         {saving && (
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" className={styles.autoSavingText}>
             💾 自动保存中...
           </Text>
         )}

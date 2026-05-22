@@ -80,26 +80,20 @@ describe('AiBadge', () => {
     render(<AiBadge {...baseProps} confidence={92} variant="badge" />);
 
     const confidenceEl = screen.getByText('92%');
-    expect(confidenceEl).toHaveStyle({
-      color: 'var(--mk-ai-confidence-high)',
-    });
+    expect(confidenceEl.className).toMatch(/confidenceHigh/);
   });
 
   it('applies mid confidence color for confidence 60-79', () => {
     render(<AiBadge {...baseProps} confidence={68} variant="badge" />);
 
     const confidenceEl = screen.getByText('68%');
-    expect(confidenceEl).toHaveStyle({
-      color: 'var(--mk-ai-confidence-mid)',
-    });
+    expect(confidenceEl.className).toMatch(/confidenceMid/);
   });
 
   it('applies low confidence color for confidence < 60', () => {
     render(<AiBadge {...baseProps} confidence={42} variant="badge" />);
 
     const confidenceEl = screen.getByText('42%');
-    expect(confidenceEl).toHaveStyle({
-      color: 'var(--mk-ai-confidence-low)',
-    });
+    expect(confidenceEl.className).toMatch(/confidenceLow/);
   });
 });

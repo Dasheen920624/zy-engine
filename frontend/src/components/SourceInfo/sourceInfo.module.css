@@ -1,0 +1,103 @@
+/* PR-V3-INLINE-STYLE: SourceInfo inline style 迁移 */
+
+/* 文档标签 */
+.docLabel {
+  cursor: default;
+  color: var(--mk-text-primary);
+  text-decoration: none;
+}
+
+.docLabelClickable {
+  cursor: pointer;
+  color: var(--mk-brand-primary);
+  text-decoration: underline;
+}
+
+.docIcon {
+  margin-right: 4px;
+}
+
+/* 元数据标签 */
+.metaTag {
+  font-size: var(--mk-text-xs);
+}
+
+/* inline 容器 */
+.inlineContainer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  padding: 0;
+  border-radius: var(--mk-radius-sm);
+}
+
+.inlineContainerMissing {
+  background: var(--mk-danger-soft);
+  padding: 2px 8px;
+}
+
+/* compact 容器 */
+.compactContainer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--mk-text-sm);
+  background: transparent;
+  padding: 0;
+  border-radius: var(--mk-radius-sm);
+}
+
+.compactContainerMissing {
+  background: var(--mk-danger-soft);
+  padding: 1px 6px;
+}
+
+.compactName {
+  font-size: var(--mk-text-sm);
+}
+
+/* card 容器 */
+.cardNormal {
+  background: var(--mk-bg-panel);
+  border-color: var(--mk-border);
+}
+
+.cardMissing {
+  background: var(--mk-danger-soft);
+  border-color: var(--mk-danger-border);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.cardMeta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--mk-text-secondary);
+  font-size: var(--mk-text-xs);
+}
+
+.citationBlock {
+  margin-top: 8px;
+  margin-bottom: 0;
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-secondary);
+  border-left: 3px solid var(--mk-brand-primary);
+  padding-left: 8px;
+}
+
+.viewOriginal {
+  margin-top: 8px;
+}
+
+.viewOriginalLink {
+  color: var(--mk-brand-primary);
+  cursor: pointer;
+  font-size: var(--mk-text-sm);
+}

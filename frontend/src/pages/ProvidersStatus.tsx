@@ -3,6 +3,7 @@ import { Alert, Badge, Button, Card, Empty, Skeleton, Space, Table, Tag } from "
 import { ReloadOutlined } from "@ant-design/icons";
 import { fetchSystemProviders } from "../api/system";
 import type { ApiError, ProviderStatus, SystemProviders } from "../api/types";
+import styles from "./providersStatus.module.css";
 
 export default function ProvidersStatusPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<
@@ -23,7 +24,7 @@ export default function ProvidersStatusPage() {
         </div>
       </div>
 
-      <Space style={{ marginBottom: 16 }}>
+      <Space className={styles.actions}>
         <Button
           icon={<ReloadOutlined spin={isFetching} />}
           onClick={() => refetch()}
@@ -51,11 +52,11 @@ export default function ProvidersStatusPage() {
             <>
               <div>{error?.message}</div>
               {error?.traceId && (
-                <div className="text-muted" style={{ marginTop: 4 }}>
+                <div className={`text-muted ${styles.traceId}`}>
                   trace_id: <code className="text-mono">{error.traceId}</code>
                 </div>
               )}
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.retryArea}>
                 <Button size="small" onClick={() => refetch()}>
                   重试
                 </Button>

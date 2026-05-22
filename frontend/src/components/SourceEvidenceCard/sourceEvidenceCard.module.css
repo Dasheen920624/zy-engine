@@ -1,0 +1,79 @@
+/* PR-V3-INLINE-STYLE: SourceEvidenceCard inline style 迁移 */
+
+.citationContainer {
+  margin-top: 8px;
+}
+
+.citationLabel {
+  font-size: 12px;
+}
+
+.citationExcerpt {
+  margin: 4px 0 0;
+  padding: 8px;
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-sm);
+  font-size: 13px;
+}
+
+/* Compact variant */
+.compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-sm);
+  border: 1px solid var(--mk-border);
+}
+
+.compactMissing {
+  background: var(--mk-warning-soft);
+  border-color: var(--mk-warning);
+}
+
+/* Card variant */
+.card {
+  padding: 16px;
+  background: var(--mk-bg-panel);
+  border-radius: var(--mk-radius-md);
+  border: 1px solid var(--mk-border);
+  box-shadow: var(--mk-shadow-sm);
+}
+
+.cardMissing {
+  background: var(--mk-warning-soft);
+  border-color: var(--mk-warning);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.cardReviewInfo {
+  margin-top: 8px;
+}
+
+/* Inline variant */
+.inline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-sm);
+  border: 1px solid var(--mk-border);
+}
+
+.inlineMissing {
+  background: var(--mk-warning-soft);
+  border-color: var(--mk-warning);
+}
+
+.inlineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

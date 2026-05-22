@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Typography, Spin, Empty } from "antd";
 import type { DiffViewerProps, DiffLine } from "./DiffViewer.types";
+import styles from "./diffViewer.module.css";
 
 const { Text } = Typography;
 
@@ -62,37 +63,16 @@ const generateDiff = (oldText: string, newText: string): DiffLine[] => {
   return result;
 };
 
-const lineStyle = {
-  padding: "2px 8px",
-  fontFamily: "var(--mk-font-mono)",
-  fontSize: 13,
-  lineHeight: "20px",
-  whiteSpace: "pre-wrap" as const,
-  wordBreak: "break-all" as const,
+const LINE_CONTAINER_CLASS: Record<string, string> = {
+  add: styles.lineAdd,
+  remove: styles.lineRemove,
+  normal: styles.lineNormal,
 };
 
-const lineNumberStyle = {
-  display: "inline-block",
-  width: 40,
-  textAlign: "right" as const,
-  paddingRight: 8,
-  color: "var(--mk-text-tertiary)",
-  userSelect: "none" as const,
-};
-
-const LINE_BG_COLOR: Record<string, string> = {
-  add: "var(--mk-success-soft)",
-  remove: "var(--mk-danger-soft)",
-};
-
-const LINE_BORDER_COLOR: Record<string, string> = {
-  add: "var(--mk-success)",
-  remove: "var(--mk-danger)",
-};
-
-const LINE_TEXT_COLOR: Record<string, string> = {
-  add: "var(--mk-success)",
-  remove: "var(--mk-danger)",
+const LINE_PREFIX_CLASS: Record<string, string> = {
+  add: styles.linePrefixAdd,
+  remove: styles.linePrefixRemove,
+  normal: styles.linePrefixNormal,
 };
 
 const LINE_PREFIX: Record<string, string> = {
@@ -114,7 +94,7 @@ export default function DiffViewer({
   
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: 24 }}>
+      <div className={styles.loadingContainer}>
         <Spin tip="加载差异中..." />
       </div>
     );
@@ -125,37 +105,30 @@ export default function DiffViewer({
   }
   
   const renderLine = (line: DiffLine, index: number) => {
-    const bgColor = LINE_BG_COLOR[line.type] || "transparent";
-    const borderColor = LINE_BORDER_COLOR[line.type] || "transparent";
-    
     return (
       <div
         key={index}
-        style={{
-          ...lineStyle,
-          backgroundColor: bgColor,
-          borderLeft: `3px solid ${borderColor}`,
-        }}
+        className={`${styles.line} ${LINE_CONTAINER_CLASS[line.type] || styles.lineNormal}`}
       >
         {showLineNumbers && (
           <>
             {mode === "split" ? (
-              <span style={lineNumberStyle}>
+              <span className={styles.lineNumber}>
                 {line.oldLineNumber || ""}
               </span>
             ) : (
               <>
-                <span style={lineNumberStyle}>
+                <span className={styles.lineNumber}>
                   {line.oldLineNumber || ""}
                 </span>
-                <span style={lineNumberStyle}>
+                <span className={styles.lineNumber}>
                   {line.newLineNumber || ""}
                 </span>
               </>
             )}
           </>
         )}
-        <span style={{ color: LINE_TEXT_COLOR[line.type] || "var(--mk-text-primary)" }}>
+        <span className={`${styles.linePrefix} ${LINE_PREFIX_CLASS[line.type] || styles.linePrefixNormal}`}>
           {LINE_PREFIX[line.type] || " "}
         </span>
         <span>{line.content}</span>
@@ -164,7 +137,7 @@ export default function DiffViewer({
   };
   
   const renderUnified = () => (
-    <div style={{ border: "1px solid var(--mk-border)", borderRadius: "var(--mk-radius-md)", overflow: "hidden" }}>
+    <div className={styles.unifiedContainer}>
       {diffLines.map((line, index) => renderLine(line, index))}
     </div>
   );
@@ -174,15 +147,15 @@ export default function DiffViewer({
     const newLines = diffLines.filter(line => line.type !== "remove");
     
     return (
-      <div style={{ display: "flex", gap: 16 }}>
-        <div style={{ flex: 1, border: "1px solid var(--mk-border)", borderRadius: "var(--mk-radius-md)", overflow: "hidden" }}>
-          <div style={{ padding: "8px 12px", background: "var(--mk-bg-soft)", borderBottom: "1px solid var(--mk-border)" }}>
+      <div className={styles.splitContainer}>
+        <div className={styles.splitPanel}>
+          <div className={styles.panelHeader}>
             <Text strong>{oldTitle}</Text>
           </div>
           {oldLines.map((line, index) => renderLine(line, index))}
         </div>
-        <div style={{ flex: 1, border: "1px solid var(--mk-border)", borderRadius: "var(--mk-radius-md)", overflow: "hidden" }}>
-          <div style={{ padding: "8px 12px", background: "var(--mk-bg-soft)", borderBottom: "1px solid var(--mk-border)" }}>
+        <div className={styles.splitPanel}>
+          <div className={styles.panelHeader}>
             <Text strong>{newTitle}</Text>
           </div>
           {newLines.map((line, index) => renderLine(line, index))}
@@ -194,7 +167,7 @@ export default function DiffViewer({
   return (
     <div>
       {title && (
-        <div style={{ marginBottom: 12 }}>
+        <div className={styles.titleContainer}>
           <Text strong>{title}</Text>
         </div>
       )}

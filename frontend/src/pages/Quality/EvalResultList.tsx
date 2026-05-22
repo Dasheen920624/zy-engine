@@ -28,6 +28,7 @@ import {
   type IndicatorScore,
   type EvalFact,
 } from "../../api/eval";
+import styles from "./evalResultList.module.css";
 
 const RISK_LEVEL_CONFIG: Record<string, { color: string; label: string }> = {
   CRITICAL: { color: "red", label: "危急" },
@@ -121,7 +122,7 @@ const EvalResultList: React.FC = () => {
       render: (_: unknown, record: EvalResultData) => (
         <Space>
           <span>{record.score_percentage}%</span>
-          <span style={{ color: "var(--mk-text-secondary)", fontSize: 12 }}>
+          <span className={styles.scoreDetail}>
             ({record.total_score}/{record.max_possible_score})
           </span>
         </Space>
@@ -192,9 +193,9 @@ const EvalResultList: React.FC = () => {
       width: 60,
       render: (_: unknown, record: IndicatorScore) =>
         record.threshold_met ? (
-          <CheckCircleOutlined style={{ color: "var(--mk-success)" }} />
+          <CheckCircleOutlined className={styles.iconSuccess} />
         ) : (
-          <CloseCircleOutlined style={{ color: "var(--mk-danger)" }} />
+          <CloseCircleOutlined className={styles.iconDanger} />
         ),
     },
     {
@@ -211,7 +212,7 @@ const EvalResultList: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Card
         title="评估结果"
         extra={
@@ -282,7 +283,7 @@ const EvalResultList: React.FC = () => {
       >
         {selectedResult && (
           <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Row gutter={16} className={styles.detailStatsRow}>
               <Col span={6}>
                 <Statistic title="得分百分比" value={selectedResult.score_percentage} suffix="%" />
               </Col>
@@ -303,7 +304,7 @@ const EvalResultList: React.FC = () => {
               </Col>
             </Row>
 
-            <Card type="inner" title="各指标得分" size="small" style={{ marginBottom: 12 }}>
+            <Card type="inner" title="各指标得分" size="small" className={styles.innerCardSpacing}>
               <Table
                 rowKey="indicator_code"
                 columns={scoreColumns}
@@ -314,9 +315,9 @@ const EvalResultList: React.FC = () => {
             </Card>
 
             {selectedResult.abnormal_facts?.length > 0 && (
-              <Card type="inner" title="异常事实" size="small" style={{ marginBottom: 12 }}>
+              <Card type="inner" title="异常事实" size="small" className={styles.innerCardSpacing}>
                 {selectedResult.abnormal_facts.map((f: EvalFact, i: number) => (
-                  <div key={i} style={{ marginBottom: 4 }}>
+                  <div key={i} className={styles.factItem}>
                     <Tag color="orange"><WarningOutlined /> {f.severity}</Tag>
                     <span>{f.indicator_name}: {f.description}</span>
                   </div>
@@ -327,7 +328,7 @@ const EvalResultList: React.FC = () => {
             {selectedResult.missing_facts?.length > 0 && (
               <Card type="inner" title="缺失事实" size="small">
                 {selectedResult.missing_facts.map((f: EvalFact, i: number) => (
-                  <div key={i} style={{ marginBottom: 4 }}>
+                  <div key={i} className={styles.factItem}>
                     <Tag color="red"><CloseCircleOutlined /> {f.severity}</Tag>
                     <span>{f.indicator_name}: {f.description}</span>
                   </div>

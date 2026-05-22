@@ -1,0 +1,57 @@
+/* Quality Dashboard inline style 迁移 */
+
+.page {
+  padding: 24px;
+}
+
+.pageHeader {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.periodSelect {
+  width: 120px;
+}
+
+.kpiRow {
+  margin-bottom: 24px;
+}
+
+.kpiContent {
+  margin-top: 8px;
+}
+
+.iconSuccess {
+  color: var(--mk-success);
+}
+
+.iconWarning {
+  color: var(--mk-warning);
+}
+
+.iconDanger {
+  color: var(--mk-danger);
+}
+
+.iconPrimary {
+  color: var(--mk-primary);
+}
+
+.changeArrow {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.starRating {
+  color: var(--mk-warning);
+}
+
+.chartCard {
+  margin-bottom: 24px;
+}

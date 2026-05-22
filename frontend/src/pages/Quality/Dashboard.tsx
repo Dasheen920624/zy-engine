@@ -38,6 +38,7 @@ import {
 } from "../../api/quality";
 import { SourceInfo } from "../../components";
 import { useNavigate } from "react-router-dom";
+import styles from "./Dashboard.module.css";
 
 const { Text, Title } = Typography;
 
@@ -194,7 +195,7 @@ export default function QualityDashboard() {
       key: "stars",
       width: 120,
       render: (_, record) => (
-        <span style={{ color: "var(--mk-warning)" }}>
+        <span className={styles.starRating}>
           {"★".repeat(record.stars)}
           {"☆".repeat(5 - record.stars)}
         </span>
@@ -221,7 +222,7 @@ export default function QualityDashboard() {
     if (value === 0) return null;
     const isPositive = value > 0;
     return (
-      <Text type={isPositive ? "success" : "danger"} style={{ fontSize: 12, marginLeft: 4 }}>
+      <Text type={isPositive ? "success" : "danger"} className={styles.changeArrow}>
         {isPositive ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
         {Math.abs(value).toFixed(1)}%
       </Text>
@@ -231,12 +232,12 @@ export default function QualityDashboard() {
   const displayKpis = kpis || MOCK_KPIS;
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Spin spinning={loading}>
         {/* 页面标题 */}
-        <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className={styles.pageHeader}>
           <div>
-            <Title level={4} style={{ margin: 0 }}>院级质控驾驶舱</Title>
+            <Title level={4} className={styles.pageTitle}>院级质控驾驶舱</Title>
             <SourceInfo source={{ documentName: "质控看板", documentId: "quality-dashboard" }} />
             <Text type="secondary">
               时间：{PERIOD_LABEL[period] || "今日"} · 组织：全院
@@ -246,7 +247,7 @@ export default function QualityDashboard() {
             <Select
               value={period}
               onChange={setPeriod}
-              style={{ width: 120 }}
+              className={styles.periodSelect}
               options={[
                 { value: "today", label: "今日" },
                 { value: "week", label: "本周" },
@@ -263,12 +264,12 @@ export default function QualityDashboard() {
         </div>
 
         {/* 4 KPI 卡片 */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Row gutter={16} className={styles.kpiRow}>
           <Col span={6}>
             <Card
               title={
                 <Space>
-                  <HeartOutlined style={{ color: "var(--mk-success)" }} />
+                  <HeartOutlined className={styles.iconSuccess} />
                   <span>路径执行</span>
                 </Space>
               }
@@ -281,7 +282,7 @@ export default function QualityDashboard() {
                   <ChangeArrow value={displayKpis.pathway.enrolledChange} />
                 }
               />
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.kpiContent}>
                 <Text type="secondary">
                   完成 {displayKpis.pathway.completed} · 变异率{" "}
                   {displayKpis.pathway.variationRate}%
@@ -294,7 +295,7 @@ export default function QualityDashboard() {
             <Card
               title={
                 <Space>
-                  <AlertOutlined style={{ color: "var(--mk-warning)" }} />
+                  <AlertOutlined className={styles.iconWarning} />
                   <span>规则命中</span>
                 </Space>
               }
@@ -307,7 +308,7 @@ export default function QualityDashboard() {
                   <ChangeArrow value={displayKpis.rule.blockChange} />
                 }
               />
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.kpiContent}>
                 <Text type="secondary">
                   软提醒 {displayKpis.rule.softReminder.toLocaleString()} · 命中率{" "}
                   {displayKpis.rule.hitRate}%
@@ -320,7 +321,7 @@ export default function QualityDashboard() {
             <Card
               title={
                 <Space>
-                  <BugOutlined style={{ color: "var(--mk-danger)" }} />
+                  <BugOutlined className={styles.iconDanger} />
                   <span>质控问题</span>
                 </Space>
               }
@@ -333,7 +334,7 @@ export default function QualityDashboard() {
                   <ChangeArrow value={displayKpis.qc.totalChange} />
                 }
               />
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.kpiContent}>
                 <Text type="secondary">
                   已闭环 {displayKpis.qc.closedIssues} · 整改率{" "}
                   {displayKpis.qc.rectificationRate}%
@@ -346,7 +347,7 @@ export default function QualityDashboard() {
             <Card
               title={
                 <Space>
-                  <MedicineBoxOutlined style={{ color: "var(--mk-primary)" }} />
+                  <MedicineBoxOutlined className={styles.iconPrimary} />
                   <span>医保风险</span>
                 </Space>
               }
@@ -361,7 +362,7 @@ export default function QualityDashboard() {
                   <ChangeArrow value={displayKpis.insurance.refundChange} />
                 }
               />
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.kpiContent}>
                 <Tag
                   color={RISK_LEVEL_TAG[displayKpis.insurance.riskLevel]?.color || "success"}
                 >
@@ -380,7 +381,7 @@ export default function QualityDashboard() {
               <span>路径完成率趋势（最近 30 天）</span>
             </Space>
           }
-          style={{ marginBottom: 24 }}
+          className={styles.chartCard}
         >
           <TrendChart data={trend} />
         </Card>

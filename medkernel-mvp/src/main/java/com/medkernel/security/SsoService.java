@@ -97,7 +97,7 @@ public class SsoService {
         String externalDisplayName = String.valueOf(ssoUser.getOrDefault("displayName", ""));
 
         // 查找身份绑定
-        IdentityBinding binding = findBinding(tenantId, providerId, externalSubject);
+        SsoIdentityBinding binding = findBinding(tenantId, providerId, externalSubject);
 
         SecurityUser user;
         if (binding != null) {
@@ -264,7 +264,7 @@ public class SsoService {
         return providers;
     }
 
-    private IdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
+    private SsoIdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
         String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, "
                 + "external_org_code, external_display_name, binding_status, "
                 + "last_verified_time, created_by, created_time, updated_by, updated_time "
@@ -277,7 +277,7 @@ public class SsoService {
             ps.setString(3, externalSubject);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    IdentityBinding binding = new IdentityBinding();
+                    SsoIdentityBinding binding = new SsoIdentityBinding();
                     binding.setId(rs.getLong("id"));
                     binding.setTenantId(rs.getLong("tenant_id"));
                     binding.setUserId(rs.getLong("user_id"));

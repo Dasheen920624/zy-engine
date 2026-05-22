@@ -9,6 +9,7 @@ import {
   type IdentityBinding,
   type BindingConflict,
 } from '../api/identityBinding';
+import styles from './identityBindingManagement.module.css';
 
 const IdentityBindingManagement: React.FC = () => {
   const [userId, setUserId] = useState<string>('');
@@ -124,14 +125,14 @@ const IdentityBindingManagement: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <h2>身份绑定管理</h2>
 
       {conflicts.length > 0 && (
         <Alert
           type="warning"
           showIcon
-          style={{ marginBottom: 16 }}
+          className={styles.conflictAlert}
           message={`发现 ${conflicts.length} 个身份绑定冲突（同一外部身份绑定到多个用户）`}
           description={
             <Table
@@ -149,13 +150,13 @@ const IdentityBindingManagement: React.FC = () => {
         />
       )}
 
-      <Card title="用户绑定查询" style={{ marginBottom: 16 }}>
+      <Card title="用户绑定查询" className={styles.queryCard}>
         <Space>
           <Input
             placeholder="输入用户 ID"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
-            style={{ width: 200 }}
+            className={styles.userInput}
             onPressEnter={loadBindings}
           />
           <Button type="primary" onClick={loadBindings} loading={loading}>查询</Button>
@@ -164,7 +165,7 @@ const IdentityBindingManagement: React.FC = () => {
         </Space>
 
         <Table
-          style={{ marginTop: 16 }}
+          className={styles.resultTable}
           columns={bindingColumns}
           dataSource={bindings}
           rowKey="id"

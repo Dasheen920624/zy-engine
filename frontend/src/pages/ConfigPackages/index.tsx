@@ -3,6 +3,7 @@ import { Typography } from "antd";
 import type { AssetType, ConfigPackageSummary, PackageStatus, ScopeLevel } from "@/api/types";
 import PackageList from "./PackageList";
 import PackageDetail from "./PackageDetail";
+import styles from "./ConfigPackages.module.css";
 
 const { Text } = Typography;
 
@@ -31,27 +32,20 @@ export default function ConfigPackages() {
   return (
     <div>
       {/* 页面头部 */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 16,
-        }}
-      >
+      <div className={styles.pageHeader}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>
+          <h1 className={styles.pageTitle}>
             配置包中心
           </h1>
-          <Text type="secondary" style={{ fontSize: 13 }}>
+          <Text type="secondary" className={styles.pageSubtitle}>
             路径 / 规则 / 图谱 / Dify / 字典 / 适配器 统一包生命周期 · DRAFT → REVIEWED → PUBLISHED → SYNCED → ACTIVE → RETIRED
           </Text>
         </div>
       </div>
 
       {/* 左右分栏布局 */}
-      <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-        <div style={{ width: "45%", minWidth: 0 }}>
+      <div className={styles.splitLayout}>
+        <div className={styles.listPane}>
           <PackageList
             filters={filters}
             onFilterChange={handleFilterChange}
@@ -60,7 +54,7 @@ export default function ConfigPackages() {
             onSelectPkg={handleSelectPkg}
           />
         </div>
-        <div style={{ width: "55%", minWidth: 0 }}>
+        <div className={styles.detailPane}>
           <PackageDetail
             selectedPkg={selectedPkg}
           />

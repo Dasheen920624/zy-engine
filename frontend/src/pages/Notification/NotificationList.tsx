@@ -4,6 +4,7 @@ import { BellOutlined, CheckOutlined, FilterOutlined, ReloadOutlined } from '@an
 import { notificationApi } from '../../api/notification';
 import type { Notification, NotificationSummary } from '../../api/notification';
 import { useNavigate } from 'react-router-dom';
+import styles from './notificationList.module.css';
 
 const { Text } = Typography;
 
@@ -138,14 +139,14 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
   );
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className={styles.page}>
       <Card
         title={
           <Space>
             <BellOutlined />
             <span>通知中心</span>
             {summary && summary.unread > 0 && (
-              <Badge count={summary.unread} style={{ backgroundColor: 'var(--mk-danger)' }} />
+              <Badge count={summary.unread} className={styles.unreadCountBadge} />
             )}
           </Space>
         }
@@ -174,28 +175,28 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
       >
         {/* 统计卡片 */}
         {summary && (
-          <div style={{ marginBottom: 16, display: 'flex', gap: 16 }}>
-            <Card size="small" style={{ flex: 1 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 'bold' }}>{summary.total}</div>
+          <div className={styles.statsContainer}>
+            <Card size="small" className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statNumber}>{summary.total}</div>
                 <div>全部通知</div>
               </div>
             </Card>
-            <Card size="small" style={{ flex: 1 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--mk-danger)' }}>{summary.unread}</div>
+            <Card size="small" className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statNumberDanger}>{summary.unread}</div>
                 <div>未读</div>
               </div>
             </Card>
-            <Card size="small" style={{ flex: 1 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--mk-success)' }}>{summary.read}</div>
+            <Card size="small" className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statNumberSuccess}>{summary.read}</div>
                 <div>已读</div>
               </div>
             </Card>
-            <Card size="small" style={{ flex: 1 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--mk-text-secondary)' }}>{summary.archived}</div>
+            <Card size="small" className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statNumberSecondary}>{summary.archived}</div>
                 <div>已归档</div>
               </div>
             </Card>
@@ -212,14 +213,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
               renderItem={(notification) => (
                 <List.Item
                   key={notification.notificationCode}
-                  style={{
-                    backgroundColor: notification.status === 'UNREAD' ? 'var(--mk-success-soft)' : 'transparent',
-                    padding: '12px 16px',
-                    marginBottom: 8,
-                    borderRadius: 8,
-                    border: '1px solid var(--mk-border)',
-                    cursor: 'pointer'
-                  }}
+                  className={notification.status === 'UNREAD' ? styles.notificationItemUnread : styles.notificationItem}
                   onClick={() => handleNotificationClick(notification)}
                   actions={[
                     notification.status === 'UNREAD' && (
@@ -261,7 +255,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
                     }
                     description={
                       <div>
-                        <div style={{ marginBottom: 8 }}>{notification.content}</div>
+                        <div className={styles.notificationContent}>{notification.content}</div>
                         <Space>
                           <Text type="secondary">
                             {notification.senderName || '系统'}

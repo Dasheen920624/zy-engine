@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
  * CDSS 触发点实体：定义院内业务触发点和接入策略。
  * 对应表 cdss_trigger_point。
  */
-public class CdssTriggerPoint {
+public class CdssTriggerPointEntity {
     private Long id;
     private Long tenantId;
     private String triggerCode;

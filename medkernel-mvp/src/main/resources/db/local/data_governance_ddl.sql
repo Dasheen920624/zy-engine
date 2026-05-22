@@ -8,16 +8,19 @@
 -- ============================================================================
 
 -- 患者主数据表
+-- PR-FINAL-23: HEALTH_DATA 字段 SM4 加密 — patient_name / id_card_no / phone / address 存密文
+-- 列宽估算：(版本头 7B + IV 16B + 明文 + PKCS5 padding) → Base64 后约 (23 + 明文) × 4/3
+-- 明文 100B → 密文 ~196B；明文 500B → ~712B。统一开 256 / 1024 留足裕量。
 CREATE TABLE IF NOT EXISTS md_patient (
   id BIGINT PRIMARY KEY,
   tenant_id VARCHAR(64) NOT NULL,
   patient_id VARCHAR(64) NOT NULL,
-  patient_name VARCHAR(100) NOT NULL,
+  patient_name VARCHAR(256) NOT NULL,
   gender VARCHAR(10),
   birth_date DATE,
-  id_card_no VARCHAR(18),
-  phone VARCHAR(20),
-  address VARCHAR(500),
+  id_card_no VARCHAR(256),
+  phone VARCHAR(256),
+  address VARCHAR(1024),
   status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_time TIMESTAMP,

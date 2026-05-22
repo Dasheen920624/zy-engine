@@ -2,6 +2,7 @@ import React from "react";
 import { Descriptions, Input, InputNumber, Switch, Select, Tag, Typography, Empty } from "antd";
 import type { PathwayNode } from "../../../components/PathwayCanvas/types";
 import { StatusBadge } from "../../../components";
+import styles from "./PathwayEditor.module.css";
 
 const { Text } = Typography;
 
@@ -25,7 +26,7 @@ const graphQueryOptions = [
 const NodePropertyPanel: React.FC<NodePropertyPanelProps> = ({ node, onChange, readOnly }) => {
   if (!node) {
     return (
-      <div style={{ padding: 24, textAlign: "center" }}>
+      <div className={styles.emptyState}>
         <Empty description="请在画布中选择节点" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     );
@@ -47,7 +48,7 @@ const NodePropertyPanel: React.FC<NodePropertyPanelProps> = ({ node, onChange, r
   };
 
   return (
-    <div style={{ padding: 16, height: "100%", overflow: "auto" }}>
+    <div className={styles.nodePanel}>
       <Descriptions column={1} size="small" bordered>
         <Descriptions.Item label="类型">
           <Tag>{typeLabels[node.type] ?? node.type}</Tag>
@@ -72,7 +73,7 @@ const NodePropertyPanel: React.FC<NodePropertyPanelProps> = ({ node, onChange, r
                 min={1}
                 size="small"
                 disabled={readOnly}
-                style={{ width: "100%" }}
+                className={styles.fullWidth}
               />
             </Descriptions.Item>
             <Descriptions.Item label="绑定规则">
@@ -83,7 +84,7 @@ const NodePropertyPanel: React.FC<NodePropertyPanelProps> = ({ node, onChange, r
                 options={ruleOptions}
                 size="small"
                 disabled={readOnly}
-                style={{ width: "100%" }}
+                className={styles.fullWidth}
               />
             </Descriptions.Item>
             <Descriptions.Item label="绑定图谱查询">
@@ -94,7 +95,7 @@ const NodePropertyPanel: React.FC<NodePropertyPanelProps> = ({ node, onChange, r
                 options={graphQueryOptions}
                 size="small"
                 disabled={readOnly}
-                style={{ width: "100%" }}
+                className={styles.fullWidth}
               />
             </Descriptions.Item>
             <Descriptions.Item label="绑定 Dify">

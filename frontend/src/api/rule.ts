@@ -6,6 +6,10 @@ import type {
   Severity,
 } from "./types";
 
+// Re-export 后端契约类型，方便 pages 层 import "../../api/rule" 时拿到完整类型集
+// （types.ts 是架构师专属 shared file，pages 不应直接 import）。
+export type { EvaluateRequest, EvaluateResponse, HitItem } from "./types";
+
 /**
  * 规则模块前端契约（PR-FINAL-11）。
  *
@@ -102,6 +106,10 @@ export interface RuleExecLogQuery {
   result_status?: "SUCCESS" | "ERROR";
   hit?: "true" | "false";
   limit?: number;
+  /** 租户隔离：可选 tenant_id 过滤（不传则后端按 Header 自动解析） */
+  tenant_id?: string;
+  /** 场景过滤（PATHWAY_ENTRY / INSURANCE_QC / EMR_QC / ORDER_SAFETY / AMI_RECOMMEND） */
+  scenario_code?: string;
 }
 
 export interface RuleExecLogSummary {

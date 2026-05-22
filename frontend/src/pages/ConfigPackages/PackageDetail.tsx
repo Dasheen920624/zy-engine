@@ -42,7 +42,7 @@ import type {
 } from "@/api/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SourceInfo } from "@/components/SourceInfo";
-import styles from "./packageDetail.module.css";
+import styles from "./PackageDetail.module.css";
 
 const { Text } = Typography;
 
@@ -90,29 +90,14 @@ function changeTypeLabel(ct?: string): string {
   }
 }
 
-function diffLineColor(type: "add" | "del" | "neutral"): string {
-  switch (type) {
-    case "add":
-      return "var(--mk-code-add)";
-    case "del":
-      return "var(--mk-code-del)";
-    case "neutral":
-    default:
-      return "var(--mk-code-text)";
-  }
+function diffLineClass(type: "add" | "del" | "neutral"): string {
+  if (type === "add") return styles.diffLineAdd;
+  if (type === "del") return styles.diffLineDel;
+  return styles.diffLineNeutral;
 }
 
-function diffLineBackground(type: "add" | "del" | "neutral"): string {
-  switch (type) {
-    case "add":
-      return "var(--mk-code-add-bg)";
-    case "del":
-      return "var(--mk-code-del-bg)";
-    case "neutral":
-    default:
-      return "transparent";
-  }
-}
+// diffLineColor() / diffLineBackground() 已废弃 → 改由 PackageDetail.module.css 中
+// `.diffLineAdd / .diffLineDel / .diffLineNeutral` token class 接管（PR-V3-INLINE-STYLE）
 
 function issueIcon(severity: string) {
   switch (severity) {
@@ -129,7 +114,7 @@ function issueIcon(severity: string) {
 function ReviewCheckList({ issues }: { issues: ReviewIssue[] }) {
   if (!issues || issues.length === 0) {
     return (
-      <div className={styles.checkListEmpty}>
+      <div className={styles.reviewPass}>
         <Space>
           <CheckCircleOutlined className={styles.iconSuccess} />
           <Text className={styles.textSuccess}>全部检查通过</Text>
@@ -139,21 +124,17 @@ function ReviewCheckList({ issues }: { issues: ReviewIssue[] }) {
   }
 
   return (
-    <ul className={styles.issueList}>
+    <ul className={styles.reviewList}>
       {issues.map((issue, i) => (
         <li
           key={i}
-          className={
-            i < issues.length - 1
-              ? `${styles.issueRow} ${styles.issueRowDivider}`
-              : styles.issueRow
-          }
+          className={styles.reviewItem}
         >
-          <span className={styles.issueIcon}>{issueIcon(issue.severity)}</span>
+          <span className={styles.reviewItemIcon}>{issueIcon(issue.severity)}</span>
           <div>
             <strong>{issue.field}</strong>
             <br />
-            <Text type="secondary" className={styles.smallText}>
+            <Text type="secondary" className={styles.reviewMessage}>
               {issue.message}
             </Text>
           </div>
@@ -180,7 +161,7 @@ function ManifestTable({ manifest }: { manifest?: Record<string, unknown> }) {
   }
 
   const cols: ColumnsType<(typeof items)[0]> = [
-    { title: "资产编码", dataIndex: "asset_code", key: "code", render: (v: string) => <code className={styles.monoSmall}>{v}</code> },
+    { title: "资产编码", dataIndex: "asset_code", key: "code", render: (v: string) => <code className={styles.codeFontSmall}>{v}</code> },
     { title: "类型", dataIndex: "asset_type", key: "type", width: 80 },
     { title: "版本", dataIndex: "version", key: "version", width: 60 },
     {
@@ -221,23 +202,18 @@ function DiffView({ diff }: { diff?: Record<string, unknown> }) {
 
   if (lines.length === 0) {
     return (
-      <pre className={styles.diffPreMuted}>
+      <pre className={styles.diffView}>
         {JSON.stringify(diff, null, 2)}
       </pre>
     );
   }
 
   return (
-    <pre className={styles.diffPreInverse}>
+    <pre className={styles.diffViewDark}>
       {lines.map((line, i) => (
         <div
           key={i}
-          className={styles.diffLine}
-          // eslint-disable-next-line medkernel/no-inline-style -- 行级颜色/背景由 diff 类型动态决定
-          style={{
-            color: diffLineColor(line.type),
-            background: diffLineBackground(line.type),
-          }}
+          className={`${styles.diffLine} ${diffLineClass(line.type)}`}
         >
           {line.text}
         </div>
@@ -415,7 +391,7 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
         }
       >
         {detailLoading || reviewLoading ? (
-          <div className={styles.loading}>
+          <div className={styles.loadingContainer}>
             加载中...
           </div>
         ) : (
@@ -426,26 +402,25 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
               <Descriptions
                 column={1}
                 size="small"
-                // eslint-disable-next-line medkernel/no-inline-style -- AntD Descriptions labelStyle 仅接受对象，无 className 入口
                 labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
-                className={styles.descriptionsBlock}
+                className={styles.marginBottomSmall}
               >
                 <Descriptions.Item label="包编码">
-                  <code className={styles.mono}>{selectedPkg.package_code}</code>
+                  <code className={styles.codeFont}>{selectedPkg.package_code}</code>
                 </Descriptions.Item>
                 <Descriptions.Item label="版本">
-                  <code className={styles.mono}>{selectedPkg.package_version}</code>
+                  <code className={styles.codeFont}>{selectedPkg.package_version}</code>
                 </Descriptions.Item>
                 <Descriptions.Item label="资产类型">
                   <Tag color="blue">{selectedPkg.asset_type}</Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="组织范围">{selectedPkg.scope_reference || `${selectedPkg.scope_level} · ${selectedPkg.scope_code}`}</Descriptions.Item>
                 <Descriptions.Item label="基础版本">
-                  <code className={styles.mono}>{selectedPkg.base_version || "—"}</code>
+                  <code className={styles.codeFont}>{selectedPkg.base_version || "—"}</code>
                 </Descriptions.Item>
                 <Descriptions.Item label="内容哈希">
                   <Tooltip title={selectedPkg.content_hash}>
-                    <code className={styles.monoTiny}>{shortHash(selectedPkg.content_hash)}</code>
+                    <code className={styles.codeFontSmall}>{shortHash(selectedPkg.content_hash)}</code>
                   </Tooltip>
                 </Descriptions.Item>
                 <Descriptions.Item label="创建人">{selectedPkg.created_by || "—"} · {formatTime(selectedPkg.created_time)}</Descriptions.Item>
@@ -459,7 +434,7 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
                 </Descriptions.Item>
               </Descriptions>
 
-              <Divider className={styles.divider} />
+              <Divider className={styles.dividerCompact} />
 
               <h4 className={styles.sectionTitle}>资产清单</h4>
               <ManifestTable manifest={pkgDetail?.manifest} />
@@ -472,8 +447,8 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
 
               {/* 来源完整性 — 使用 SourceInfo compact */}
               {pkgReview?.source_review && pkgReview.source_review.enabled && (
-                <div className={styles.marginTop12}>
-                  <Text type="secondary" className={styles.smallTextBlock}>
+                <div className={styles.sourceReview}>
+                  <Text type="secondary" className={styles.sourceReviewLabel}>
                     来源审核：
                   </Text>
                   {pkgReview.source_review.missing_count === 0 &&
@@ -498,12 +473,11 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
 
               {/* 校验摘要 */}
               {pkgReview?.summary && (
-                <div className={styles.marginTop12}>
-                  <h4 className={styles.sectionTitleSmall}>校验摘要</h4>
+                <div className={styles.reviewSummary}>
+                  <h4 className={styles.sectionTitle}>校验摘要</h4>
                   <Descriptions
                     column={1}
                     size="small"
-                    // eslint-disable-next-line medkernel/no-inline-style -- AntD Descriptions labelStyle 仅接受对象
                     labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
                   >
                     <Descriptions.Item label="资产数量">{pkgReview.summary.asset_count}</Descriptions.Item>
@@ -516,10 +490,8 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
 
               {/* ready_to_publish 状态 */}
               <div
-                className={`${styles.publishStatusBox} ${
-                  pkgReview?.ready_to_publish
-                    ? styles.publishStatusReady
-                    : styles.publishStatusBlocked
+                className={`${styles.publishStatus} ${
+                  pkgReview?.ready_to_publish ? styles.publishStatusReady : styles.publishStatusNotReady
                 }`}
               >
                 <Space>
@@ -530,9 +502,7 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
                   )}
                   <Text
                     strong
-                    className={
-                      pkgReview?.ready_to_publish ? styles.textSuccess : styles.textDanger
-                    }
+                    className={pkgReview?.ready_to_publish ? styles.textSuccess : styles.textDanger}
                   >
                     {pkgReview?.ready_to_publish ? "可发布" : "不可发布"}
                   </Text>
@@ -543,9 +513,9 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
             {/* diff 全宽 */}
             {pkgDetail?.diff && Object.keys(pkgDetail.diff).length > 0 && (
               <Col span={24}>
-                <Divider className={styles.dividerWide} />
+                <Divider className={styles.dividerNormal} />
                 <h4 className={styles.sectionTitle}>
-                  <DiffOutlined className={styles.iconMargin} />
+                  <DiffOutlined className={styles.marginRightSmall} />
                   版本差异（基础 {selectedPkg.base_version || "—"} → 目标 {selectedPkg.package_version}）
                 </h4>
                 <DiffView diff={pkgDetail.diff} />
@@ -558,7 +528,7 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
       {/* 发布确认弹窗 — 要求输入包名确认 + 必填原因 */}
       <Modal
         title={
-          <span className={styles.textDanger}>
+          <span className={styles.publishModalTitle}>
             发布配置包: {selectedPkg?.package_code}@{selectedPkg?.package_version}
           </span>
         }
@@ -589,15 +559,15 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
           </Space>
         }
       >
-        <div className={styles.dangerBanner}>
+        <div className={styles.publishWarning}>
           <Text className={styles.textDanger}>
-            <ExclamationCircleOutlined className={styles.iconMargin} />
+            <ExclamationCircleOutlined className={styles.marginRightSmall} />
             此操作不可撤销！发布后将写入 ENGINE_AUDIT_LOG（PKG/PUBLISH）。
           </Text>
         </div>
 
-        <div className={styles.marginBottom12}>
-          <Text type="secondary" className={styles.smallTextBlockTight}>
+        <div className={styles.publishFormSection}>
+          <Text type="secondary" className={styles.publishFormLabel}>
             请输入包编码确认 <span className={styles.textDanger}>*</span>
           </Text>
           <Input
@@ -607,12 +577,12 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
             status={confirmPackageName && confirmPackageName !== selectedPkg?.package_code ? "error" : undefined}
           />
           {confirmPackageName && confirmPackageName !== selectedPkg?.package_code && (
-            <Text type="danger" className={styles.smallText}>包编码不匹配</Text>
+            <Text type="danger" className={styles.publishFormError}>包编码不匹配</Text>
           )}
         </div>
 
         <div>
-          <Text type="secondary" className={styles.smallTextBlockTight}>
+          <Text type="secondary" className={styles.publishFormLabel}>
             发布原因 <span className={styles.textDanger}>*</span>
           </Text>
           <Input.TextArea

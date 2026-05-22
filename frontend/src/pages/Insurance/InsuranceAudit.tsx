@@ -21,7 +21,6 @@ import {
   FileSearchOutlined,
   PlayCircleOutlined,
   ReloadOutlined,
-  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -82,16 +81,17 @@ export default function InsuranceAudit() {
       scenario_code: string;
       patient_context: string;
     }) => {
-      let patient_context: Record<string, unknown>;
+      let parsed: Record<string, unknown>;
       try {
-        patient_context = JSON.parse(values.patient_context);
+        parsed = JSON.parse(values.patient_context);
       } catch {
         throw new Error("患者上下文 JSON 格式错误");
       }
 
+      // 用户从 JSON 编辑器输入，runtime 校验后转入契约结构（业务侧需保证模板对齐）。
       const request: EvaluateRequest = {
-        scenario_code: values.scenario_code,
-        patient_context,
+        scenario_code: values.scenario_code as EvaluateRequest["scenario_code"],
+        patient_context: parsed as EvaluateRequest["patient_context"],
         tenant_id,
       };
 
@@ -358,25 +358,25 @@ export default function InsuranceAudit() {
                   />
                 )}
 
-                {auditResult.summary && (
+                {auditResult.result_id && (
                   <Card size="small" title="审核摘要" className={styles.summaryCard}>
                     <Space direction="vertical" className={styles.summarySpace}>
                       <Text>
                         <Text strong>审核ID：</Text>
-                        {auditResult.eval_id}
+                        {auditResult.result_id}
                       </Text>
                       <Text>
                         <Text strong>耗时：</Text>
-                        {auditResult.duration_ms} ms
+                        {auditResult.elapsed_ms} ms
                       </Text>
                       <Text>
                         <Text strong>规则总数：</Text>
-                        {auditResult.summary.total_rules}
+                        {auditResult.evaluated_count}
                       </Text>
                       <Text>
                         <Text strong>命中率：</Text>
-                        {auditResult.summary.hit_rate
-                          ? `${(auditResult.summary.hit_rate * 100).toFixed(1)}%`
+                        {auditResult.evaluated_count
+                          ? `${((auditResult.hit_count / auditResult.evaluated_count) * 100).toFixed(1)}%`
                           : "-"}
                       </Text>
                     </Space>

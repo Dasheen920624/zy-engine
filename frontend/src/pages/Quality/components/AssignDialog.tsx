@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal, Form, Input, DatePicker, Select, message } from "antd";
 import { assignProblem } from "../../../api/quality";
 import type { QualityAlert, AssignRequest } from "../../../api/types";
+import styles from "./assignDialog.module.css";
 
 interface AssignDialogProps {
   visible: boolean;
@@ -57,7 +58,7 @@ const AssignDialog: React.FC<AssignDialogProps> = ({ visible, alert, onClose, on
       cancelText="取消"
       width={480}
     >
-      <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+      <Form form={form} layout="vertical" className={styles.form}>
         <Form.Item name="assignee" label="指派给" rules={[{ required: true, message: "请输入指派人" }]}>
           <Input placeholder="医生姓名或工号" />
         </Form.Item>
@@ -65,7 +66,7 @@ const AssignDialog: React.FC<AssignDialogProps> = ({ visible, alert, onClose, on
           <Select options={roleOptions} placeholder="选择角色" />
         </Form.Item>
         <Form.Item name="deadline" label="整改截止时间">
-          <DatePicker showTime style={{ width: "100%" }} />
+          <DatePicker showTime className={styles.fullWidth} />
         </Form.Item>
         <Form.Item name="note" label="备注">
           <Input.TextArea rows={3} placeholder="派单说明" />

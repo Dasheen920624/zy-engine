@@ -1,0 +1,34 @@
+/* PR-V3-INLINE-STYLE: OrgContextSelector inline style 迁移 */
+
+.icon {
+  margin-right: 6px;
+  color: var(--mk-text-secondary);
+}
+
+.inlineContainer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-space-3);
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-primary);
+}
+
+.hospitalCode {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-space-1);
+  color: var(--mk-brand-primary);
+  font-weight: var(--mk-weight-medium);
+}
+
+.departmentIcon {
+  margin-left: var(--mk-space-2);
+}
+
+.inlineCascader {
+  width: 200px;
+}
+
+.dropdownCascader {
+  min-width: 240px;
+}

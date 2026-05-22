@@ -1,0 +1,29 @@
+.page {
+  padding: var(--mk-spacing-lg);
+}
+
+.monoCode {
+  font-size: 11px;
+}
+
+.marginTop {
+  margin-top: var(--mk-spacing-sm);
+}
+
+.emptyHint {
+  text-align: center;
+  padding: var(--mk-spacing-lg);
+  color: var(--mk-text-secondary);
+}
+
+.sectionCard {
+  margin-bottom: 16px;
+}
+
+.baselineDescriptions {
+  margin-top: 16px;
+}
+
+.findingTable {
+  margin-top: 12px;
+}

@@ -85,6 +85,28 @@ medkernel:
     jwt-secret: ${MEDKERNEL_JWT_SECRET:}
     lock-threshold: ${MEDKERNEL_LOCK_THRESHOLD:5}
     lock-duration-minutes: ${MEDKERNEL_LOCK_DURATION:30}
+    # PR-FINAL-23: 数据分级 + HEALTH_DATA 字段 SM4 加密
+    # master key 16 字节 Base64；生产部署必须通过 MEDKERNEL_SM4_MASTER_KEY 环境变量覆盖
+    # 默认值仅用于本地 H2 开发，CI 应阻止该值上线。
+    field-encryption:
+      enabled: ${MEDKERNEL_FIELD_ENC_ENABLED:true}
+      master-key-base64: ${MEDKERNEL_SM4_MASTER_KEY:bWVka2VybmVsLWRldmtleQ==}
+      derivation-salt: ${MEDKERNEL_FIELD_ENC_SALT:medkernel-dataclass-v1}
+      strict-decrypt: ${MEDKERNEL_FIELD_ENC_STRICT:true}
+
+  # PR-FINAL-25: Flyway DB migration（默认 false 保持向后兼容；生产部署强制开启）。
+  # enabled=true 时：启动 → Flyway migration → PersistenceService.@PostConstruct schema 兜底
+  # locations 按 medkernel.database.dialect 自动选取：
+  #   h2 → db/migration/{common,h2}
+  #   oracle/dm → db/migration/{common,oracle}
+  #   postgres/kingbase → db/migration/{common,postgres}
+  flyway:
+    enabled: ${MEDKERNEL_FLYWAY_ENABLED:false}
+    baseline-on-migrate: ${MEDKERNEL_FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: ${MEDKERNEL_FLYWAY_BASELINE_VERSION:0}
+    out-of-order: ${MEDKERNEL_FLYWAY_OUT_OF_ORDER:false}
+    clean-disabled: ${MEDKERNEL_FLYWAY_CLEAN_DISABLED:true}
+    table: ${MEDKERNEL_FLYWAY_TABLE:flyway_schema_history}
   dify:
     # ADR-0013：去 Dify 化策略。默认禁用，仅 WORKFLOW 调用类型走 Dify。
     enabled: ${MEDKERNEL_DIFY_ENABLED:false}

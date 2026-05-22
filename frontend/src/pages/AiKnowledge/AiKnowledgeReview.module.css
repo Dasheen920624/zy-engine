@@ -86,6 +86,10 @@
   gap: var(--mk-space-2);
 }
 
+.reviewNoteInput {
+  width: 200px;
+}
+
 /* ─── 响应式布局 ─── */
 @media (max-width: 1100px) {
   .page {

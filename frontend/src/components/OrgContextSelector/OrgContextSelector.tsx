@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { OrgContext, OrgContextSelectorProps } from './OrgContextSelector.types';
 import type { OrgContext as StoreOrgContext } from '../../api/types';
 import { setOrgContext } from '../../store/orgContext';
+import styles from "./orgContextSelector.module.css";
 
 const SESSION_KEY = 'mk-org-context';
 
@@ -57,7 +58,7 @@ function buildCascaderOptions(
       value: groupKey,
       label: (
         <span>
-          <BankOutlined style={{ marginRight: 6, color: 'var(--mk-text-secondary)' }} />
+          <BankOutlined className={styles.icon} />
           {groupLabel}
         </span>
       ),
@@ -69,7 +70,7 @@ function buildCascaderOptions(
         value: hospitalCode,
         label: (
           <span>
-            <HomeOutlined style={{ marginRight: 6, color: 'var(--mk-text-secondary)' }} />
+            <HomeOutlined className={styles.icon} />
             {hospitalCode}
           </span>
         ),
@@ -110,7 +111,7 @@ function buildCascaderOptions(
                 value: ss.departmentCode ?? '__no_dept__',
                 label: (
                   <span>
-                    <TeamOutlined style={{ marginRight: 6, color: 'var(--mk-text-secondary)' }} />
+                    <TeamOutlined className={styles.icon} />
                     {ss.departmentCode ?? '默认科室'}
                   </span>
                 ),
@@ -205,29 +206,13 @@ export function OrgContextSelector({
 
   if (variant === 'inline') {
     return (
-      <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 'var(--mk-space-3)',
-          fontSize: 'var(--mk-text-sm)',
-          color: 'var(--mk-text-primary)',
-        }}
-      >
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 'var(--mk-space-1)',
-            color: 'var(--mk-brand-primary)',
-            fontWeight: 'var(--mk-weight-medium)',
-          }}
-        >
+      <div className={styles.inlineContainer}>
+        <span className={styles.hospitalCode}>
           <HomeOutlined />
           {current?.hospitalCode}
           {level === 'department' && current?.departmentCode && (
             <>
-              <TeamOutlined style={{ marginLeft: 'var(--mk-space-2)' }} />
+              <TeamOutlined className={styles.departmentIcon} />
               {current.departmentCode}
             </>
           )}
@@ -238,7 +223,7 @@ export function OrgContextSelector({
           onChange={handleChange}
           changeOnSelect
           placeholder="切换组织"
-          style={{ width: 200 }}
+          className={styles.inlineCascader}
           popupClassName="org-context-cascader-popup"
         />
       </div>
@@ -252,7 +237,7 @@ export function OrgContextSelector({
       onChange={handleChange}
       changeOnSelect
       placeholder="选择组织上下文"
-      style={{ minWidth: 240 }}
+      className={styles.dropdownCascader}
       popupClassName="org-context-cascader-popup"
     />
   );

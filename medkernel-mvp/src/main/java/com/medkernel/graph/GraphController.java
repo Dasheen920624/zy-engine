@@ -1,6 +1,7 @@
 package com.medkernel.graph;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,24 +37,24 @@ public class GraphController {
     @PostMapping("/disease-candidates")
     public ApiResult<List<GraphCandidate>> diseaseCandidates(@RequestBody Map<String, Object> request,
                                                               HttpServletRequest httpRequest) {
-        organizationContextService.resolveWithBody(httpRequest, request);
-        return ApiResult.success(graphService.diseaseCandidates(request));
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        return ApiResult.success(graphService.diseaseCandidates(request, orgContext));
     }
 
     @Operation(summary = "Evidence")
     @PostMapping("/evidence")
     public ApiResult<List<Map<String, Object>>> evidence(@RequestBody Map<String, Object> request,
                                                           HttpServletRequest httpRequest) {
-        organizationContextService.resolveWithBody(httpRequest, request);
-        return ApiResult.success(graphService.evidence(request));
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        return ApiResult.success(graphService.evidence(request, orgContext));
     }
 
     @Operation(summary = "Import versions")
     @PostMapping("/versions")
     public ApiResult<List<Map<String, Object>>> importVersions(@RequestBody Object request,
                                                                 HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
-        return ApiResult.success(graphService.importGraphVersions(request));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.importGraphVersions(request, orgContext));
     }
 
     @Operation(summary = "List versions")
@@ -61,7 +62,8 @@ public class GraphController {
     public ApiResult<List<Map<String, Object>>> listVersions(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
         organizationContextService.applyExplicitFilters(filters, httpRequest);
-        return ApiResult.success(graphService.listGraphVersions());
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.listGraphVersions(filters, orgContext));
     }
 
     @Operation(summary = "Get version")
@@ -70,7 +72,8 @@ public class GraphController {
                                                       HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
         organizationContextService.applyExplicitFilters(filters, httpRequest);
-        return ApiResult.success(graphService.getGraphVersion(graphVersion));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.getGraphVersion(graphVersion, orgContext));
     }
 
     @Operation(summary = "Activate version")
@@ -78,8 +81,8 @@ public class GraphController {
     public ApiResult<Map<String, Object>> activateVersion(@PathVariable String graphVersion,
                                                           @RequestBody(required = false) Map<String, Object> request,
                                                           HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
-        return ApiResult.success(graphService.activateGraphVersion(graphVersion, request));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.activateGraphVersion(graphVersion, request, orgContext));
     }
 
     @Operation(summary = "Rollback version")
@@ -87,16 +90,16 @@ public class GraphController {
     public ApiResult<Map<String, Object>> rollbackVersion(@PathVariable String graphVersion,
                                                           @RequestBody(required = false) Map<String, Object> request,
                                                           HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
-        return ApiResult.success(graphService.rollbackVersion(graphVersion, request));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.rollbackVersion(graphVersion, request, orgContext));
     }
 
     @Operation(summary = "Import evidences")
     @PostMapping("/evidences")
     public ApiResult<List<Map<String, Object>>> importEvidences(@RequestBody Object request,
                                                                  HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
-        return ApiResult.success(graphService.importGraphEvidences(request));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.importGraphEvidences(request, orgContext));
     }
 
     @Operation(summary = "List evidences")
@@ -114,7 +117,8 @@ public class GraphController {
         filters.put("evidenceType", evidenceType);
         filters.put("limit", limit);
         organizationContextService.applyExplicitFilters(filters, httpRequest);
-        return ApiResult.success(graphService.listGraphEvidences(filters));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.listGraphEvidences(filters, orgContext));
     }
 
     @Operation(summary = "Get evidence")
@@ -123,15 +127,16 @@ public class GraphController {
                                                        HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
         organizationContextService.applyExplicitFilters(filters, httpRequest);
-        return ApiResult.success(graphService.getGraphEvidence(evidenceId));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.getGraphEvidence(evidenceId, orgContext));
     }
 
     @Operation(summary = "Import nodes")
     @PostMapping("/nodes")
     public ApiResult<List<Map<String, Object>>> importNodes(@RequestBody Object request,
                                                               HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
-        return ApiResult.success(graphService.importGraphNodes(request));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.importGraphNodes(request, orgContext));
     }
 
     @Operation(summary = "List nodes")
@@ -145,15 +150,16 @@ public class GraphController {
         filters.put("type", type);
         filters.put("limit", limit);
         organizationContextService.applyExplicitFilters(filters, httpRequest);
-        return ApiResult.success(graphService.listGraphNodes(filters));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.listGraphNodes(filters, orgContext));
     }
 
     @Operation(summary = "Import edges")
     @PostMapping("/edges")
     public ApiResult<List<Map<String, Object>>> importEdges(@RequestBody Object request,
                                                               HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
-        return ApiResult.success(graphService.importGraphEdges(request));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.importGraphEdges(request, orgContext));
     }
 
     @Operation(summary = "List edges")
@@ -171,7 +177,8 @@ public class GraphController {
         filters.put("relationType", relationType);
         filters.put("limit", limit);
         organizationContextService.applyExplicitFilters(filters, httpRequest);
-        return ApiResult.success(graphService.listGraphEdges(filters));
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        return ApiResult.success(graphService.listGraphEdges(filters, orgContext));
     }
 
     // =========================================================================

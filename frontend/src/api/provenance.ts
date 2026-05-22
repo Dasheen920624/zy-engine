@@ -1,4 +1,4 @@
-import { get, post } from "./client";
+import { get } from "./client";
 
 /**
  * 来源追溯模块前端契约（FE-008）。

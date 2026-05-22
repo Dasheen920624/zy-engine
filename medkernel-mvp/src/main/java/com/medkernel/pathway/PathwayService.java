@@ -301,9 +301,19 @@ public class PathwayService {
         String search = filterValue(filters, "search");
         String statusFilter = filterValue(filters, "status");
         String deptFilter = filterValue(filters, "dept");
+        String tenantId = filterValue(filters, "tenantId");
 
         List<Map<String, Object>> filtered = new ArrayList<Map<String, Object>>();
         for (Map<String, Object> item : all) {
+            // 租户过滤：检查 pathway config 中的 tenant_id
+            if (tenantId != null) {
+                String pathwayCode = string(item.get("pathway_code"), null);
+                Map<String, Object> config = pathwayCode == null ? null : pathwayDrafts.get(pathwayCode);
+                String configTenantId = config == null ? null : string(config.get("tenant_id"), null);
+                if (configTenantId != null && !tenantId.equals(configTenantId)) {
+                    continue;
+                }
+            }
             if (statusFilter != null && !statusFilter.equalsIgnoreCase(string(item.get("status"), null))) {
                 continue;
             }

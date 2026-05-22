@@ -7,6 +7,7 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import type { AiGeneratedBadgeProps } from "./AiGeneratedBadge.types";
+import styles from "./aiGeneratedBadge.module.css";
 
 const { Text } = Typography;
 
@@ -23,6 +24,12 @@ const getConfidenceColor = (confidence: number) => {
   return "var(--mk-ai-confidence-low)";
 };
 
+const getConfidenceClass = (confidence: number) => {
+  if (confidence >= 80) return styles.confidenceHigh;
+  if (confidence >= 60) return styles.confidenceMid;
+  return styles.confidenceLow;
+};
+
 export default function AiGeneratedBadge({
   confidence,
   model = "",
@@ -36,47 +43,27 @@ export default function AiGeneratedBadge({
   const reviewConfig = reviewStatus ? reviewStatusConfig[reviewStatus] : undefined;
   const confidenceValue = confidence ?? 0;
   const confidenceColor = getConfidenceColor(confidenceValue);
+  const confidenceClass = getConfidenceClass(confidenceValue);
 
   const renderBadge = () => (
     <Tooltip title={`模型: ${model}\n生成时间: ${generatedAt}\n置信度: ${confidenceValue}%`}>
       <Tag
         color="purple"
         icon={<RobotOutlined />}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-          padding: "2px 8px",
-          borderRadius: "var(--mk-radius-full)",
-        }}
+        className={styles.badgeTag}
       >
         <span>AI 候选</span>
-        <span
-          style={{
-            display: "inline-block",
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            backgroundColor: confidenceColor,
-          }}
-        />
+        <span className={`${styles.confidenceDot} ${confidenceClass}`} />
       </Tag>
     </Tooltip>
   );
 
   const renderCard = () => (
-    <div
-      style={{
-        padding: "16px",
-        background: "var(--mk-ai-soft)",
-        borderRadius: "var(--mk-radius-md)",
-        border: "1px solid var(--mk-ai-primary)",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className={styles.cardContainer}>
+      <div className={styles.cardHeader}>
         <Space>
-          <RobotOutlined style={{ color: "var(--mk-ai-primary)" }} />
-          <Text strong style={{ color: "var(--mk-ai-primary)" }}>
+          <RobotOutlined className={styles.aiIcon} />
+          <Text strong className={styles.aiText}>
             AI 候选
           </Text>
         </Space>
@@ -87,8 +74,8 @@ export default function AiGeneratedBadge({
         )}
       </div>
 
-      <div style={{ marginTop: 12 }}>
-        <Space direction="vertical" size="small" style={{ width: "100%" }}>
+      <div className={styles.cardContent}>
+        <Space direction="vertical" size="small" className={styles.fullWidth}>
           <div>
             <Text type="secondary">模型</Text>
             <div>{model}</div>
@@ -99,14 +86,14 @@ export default function AiGeneratedBadge({
           </div>
           <div>
             <Text type="secondary">置信度</Text>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className={styles.confidenceRow}>
               <Progress
                 percent={confidenceValue}
                 size="small"
                 strokeColor={confidenceColor}
-                style={{ flex: 1 }}
+                className={styles.confidenceProgress}
               />
-              <Text style={{ color: confidenceColor, fontWeight: 600 }}>
+              <Text className={`${styles.confidenceText} ${confidenceClass}`}>
                 {confidenceValue}%
               </Text>
             </div>
@@ -115,7 +102,7 @@ export default function AiGeneratedBadge({
       </div>
 
       {reviewStatus === "pending" && (
-        <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+        <div className={styles.cardActions}>
           {onAccept && (
             <Button type="primary" size="small" onClick={onAccept}>
               采纳

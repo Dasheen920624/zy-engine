@@ -45,6 +45,7 @@ import {
   delegateTask,
 } from "../api/workflow";
 import { OrgContextSelector } from "../components";
+import styles from "./workflowTodos.module.css";
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -424,12 +425,12 @@ export default function WorkflowTodos() {
           showIcon
           closable
           onClose={() => setError(null)}
-          style={{ marginBottom: 16 }}
+          className={styles.alertSpacing}
         />
       )}
 
       {/* 统计卡片 */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
+      <Row gutter={16} className={styles.statsRow}>
         <Col span={6}>
           <Card>
             <Statistic
@@ -473,13 +474,13 @@ export default function WorkflowTodos() {
       </Row>
 
       {/* 筛选栏 */}
-      <Card style={{ marginBottom: 16 }}>
+      <Card className={styles.filterCard}>
         <Space>
           <OrgContextSelector />
           <Select
             placeholder="状态筛选"
             allowClear
-            style={{ width: 120 }}
+            className={styles.filterSelect}
             value={filterStatus || undefined}
             onChange={(v) => setFilterStatus(v || "")}
             options={Object.entries(STATUS_MAP).map(([k, v]) => ({
@@ -490,7 +491,7 @@ export default function WorkflowTodos() {
           <Select
             placeholder="业务类型"
             allowClear
-            style={{ width: 120 }}
+            className={styles.filterSelect}
             value={filterBusinessType || undefined}
             onChange={(v) => setFilterBusinessType(v || "")}
             options={Object.entries(BUSINESS_TYPE_MAP).map(([k, v]) => ({
@@ -558,8 +559,8 @@ export default function WorkflowTodos() {
       >
         {selectedTodo && (
           <div>
-            <Card size="small" style={{ marginBottom: 16 }}>
-              <Space direction="vertical" style={{ width: "100%" }}>
+            <Card size="small" className={styles.detailCard}>
+              <Space direction="vertical" className={styles.fullWidth}>
                 <div>
                   <Tag color={BUSINESS_TYPE_MAP[selectedTodo.businessType].color}>
                     {BUSINESS_TYPE_MAP[selectedTodo.businessType].label}
@@ -572,7 +573,7 @@ export default function WorkflowTodos() {
                     text={STATUS_MAP[selectedTodo.status].label}
                   />
                 </div>
-                <Text strong style={{ fontSize: 16 }}>
+                <Text strong className={styles.detailTitle}>
                   {selectedTodo.title}
                 </Text>
                 <Paragraph type="secondary">{selectedTodo.description}</Paragraph>

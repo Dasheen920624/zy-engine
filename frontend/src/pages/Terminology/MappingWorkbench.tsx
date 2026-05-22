@@ -42,6 +42,7 @@ import {
   rejectAiCandidate,
 } from "../../api/terminology";
 import { SourceInfo, AiGeneratedBadge, OrgContextSelector } from "../../components";
+import styles from "./mappingWorkbench.module.css";
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -417,7 +418,7 @@ export default function MappingWorkbench() {
             <AiGeneratedBadge confidence={record.confidence} />
             <Text strong>{record.proposedStandardCode}</Text>
           </Space>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" className={styles.smallText}>
             {record.proposedStandardName}
           </Text>
         </Space>
@@ -450,7 +451,7 @@ export default function MappingWorkbench() {
   const displaySummary = summary || DEFAULT_SUMMARY;
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Card
         title={
           <Space>
@@ -474,12 +475,12 @@ export default function MappingWorkbench() {
             type="warning"
             showIcon
             closable
-            style={{ marginBottom: 16 }}
+            className={styles.alertSpacing}
           />
         )}
 
         {/* 统计卡片 */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Row gutter={16} className={styles.statsRow}>
           <Col span={6}>
             <Card size="small">
               <Statistic
@@ -523,12 +524,12 @@ export default function MappingWorkbench() {
         </Row>
 
         {/* 筛选条件 */}
-        <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Row gutter={16} className={styles.filterRow}>
           <Col span={6}>
             <Select
               placeholder="概念类型"
               allowClear
-              style={{ width: "100%" }}
+              className={styles.fullWidth}
               value={filterConceptType}
               onChange={setFilterConceptType}
               options={Object.entries(CONCEPT_TYPE_MAP).map(([value, { label }]) => ({
@@ -540,7 +541,7 @@ export default function MappingWorkbench() {
           <Col span={6}>
             <Select
               placeholder="标准字典"
-              style={{ width: "100%" }}
+              className={styles.fullWidth}
               value={filterStandardDict}
               onChange={setFilterStandardDict}
               options={STANDARD_DICT_OPTIONS}
@@ -566,7 +567,7 @@ export default function MappingWorkbench() {
               key: "unmapped",
               label: (
                 <span>
-                  未映射 <Badge count={displaySummary.totalUnmapped} style={{ marginLeft: 8 }} />
+                  未映射 <Badge count={displaySummary.totalUnmapped} className={styles.badgeSpacing} />
                 </span>
               ),
               children: (
@@ -584,7 +585,7 @@ export default function MappingWorkbench() {
               key: "mapped",
               label: (
                 <span>
-                  已映射 <Badge count={displaySummary.totalMapped} style={{ marginLeft: 8 }} />
+                  已映射 <Badge count={displaySummary.totalMapped} className={styles.badgeSpacing} />
                 </span>
               ),
               children: (
@@ -605,7 +606,7 @@ export default function MappingWorkbench() {
                   冲突{" "}
                   <Badge
                     count={displaySummary.totalConflict}
-                    style={{ marginLeft: 8 }}
+                    className={styles.badgeSpacing}
                     color="red"
                   />
                 </span>
@@ -628,7 +629,7 @@ export default function MappingWorkbench() {
                   AI候选{" "}
                   <Badge
                     count={displaySummary.totalAiCandidate}
-                    style={{ marginLeft: 8 }}
+                    className={styles.badgeSpacing}
                     color="blue"
                   />
                 </span>
@@ -636,7 +637,7 @@ export default function MappingWorkbench() {
               children: (
                 <>
                   {selectedRowKeys.length > 0 && (
-                    <div style={{ marginBottom: 16 }}>
+                    <div className={styles.selectionBar}>
                       <Space>
                         <Text>已选择 {selectedRowKeys.length} 项</Text>
                         <DangerConfirm

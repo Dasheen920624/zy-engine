@@ -54,8 +54,8 @@ final class SecurityUserRowMapper {
             if (updated != null) { provider.setUpdatedTime(updated.toLocalDateTime()); }
             return provider;
         }
-        static IdentityBinding mapIdentityBinding(ResultSet rs) throws SQLException {
-            IdentityBinding binding = new IdentityBinding();
+        static SsoIdentityBinding mapIdentityBinding(ResultSet rs) throws SQLException {
+            SsoIdentityBinding binding = new SsoIdentityBinding();
             binding.setId(rs.getLong("id"));
             binding.setTenantId(rs.getLong("tenant_id"));
             binding.setUserId(rs.getLong("user_id"));

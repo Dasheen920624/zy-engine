@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { Tree, Typography } from "antd";
 import type { PathwayDef } from "../../../components/PathwayCanvas/types";
 import { SourceInfo } from "../../../components";
+import styles from "./PathwayEditor.module.css";
 
 const { Text } = Typography;
 
@@ -19,7 +20,7 @@ const StageTree: React.FC<StageTreeProps> = ({ pathway, selectedNodeId, onSelect
     {
       key: "root",
       title: (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <span className={styles.treeRootTitle}>
           <Text strong>{pathway.name}</Text>
           <SourceInfo
             source={{ documentName: pathway.name, documentId: pathway.code }}
@@ -53,7 +54,7 @@ const StageTree: React.FC<StageTreeProps> = ({ pathway, selectedNodeId, onSelect
   );
 
   return (
-    <div style={{ padding: 8, height: "100%", overflow: "auto" }}>
+    <div className={styles.treePanel}>
       <Tree
         treeData={treeData}
         selectedKeys={selectedNodeId ? [selectedNodeId] : []}

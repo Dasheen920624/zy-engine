@@ -96,10 +96,10 @@ public class SecurityPersistenceService extends SecurityRepositorySupport {
     public List<IdentityProvider> findAllIdentityProviders(Long tenantId) {
         return identityProviderRepository.findAllIdentityProviders(tenantId);
     }
-    public IdentityBinding findIdentityBinding(Long tenantId, Long providerId, String externalSubject) {
+    public SsoIdentityBinding findIdentityBinding(Long tenantId, Long providerId, String externalSubject) {
         return identityProviderRepository.findIdentityBinding(tenantId, providerId, externalSubject);
     }
-    public List<IdentityBinding> findIdentityBindingsByUser(Long tenantId, Long userId) {
+    public List<SsoIdentityBinding> findIdentityBindingsByUser(Long tenantId, Long userId) {
         return identityProviderRepository.findIdentityBindingsByUser(tenantId, userId);
     }
     public Long createUser(Long tenantId, String username, String displayName, String email, String phone,
@@ -140,13 +140,13 @@ public class SecurityPersistenceService extends SecurityRepositorySupport {
     public void deleteIdentityProvider(Long providerId) {
         identityProviderRepository.deleteIdentityProvider(providerId);
     }
-    public IdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
+    public SsoIdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
         return identityProviderRepository.findBinding(tenantId, providerId, externalSubject);
     }
-    public List<IdentityBinding> findBindingsByUserId(Long userId) {
+    public List<SsoIdentityBinding> findBindingsByUserId(Long userId) {
         return identityProviderRepository.findBindingsByUserId(userId);
     }
-    public void saveIdentityBinding(IdentityBinding binding) {
+    public void saveIdentityBinding(SsoIdentityBinding binding) {
         identityProviderRepository.saveIdentityBinding(binding);
     }
     public void updateBindingSyncTime(Long bindingId) {

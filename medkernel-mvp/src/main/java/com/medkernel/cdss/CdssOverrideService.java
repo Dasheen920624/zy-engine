@@ -1,6 +1,5 @@
 package com.medkernel.cdss;
 
-import com.medkernel.common.TraceContext;
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
 import org.springframework.stereotype.Service;
