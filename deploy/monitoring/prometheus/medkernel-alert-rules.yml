@@ -91,3 +91,125 @@ groups:
         annotations:
           summary: MedKernel HikariCP pool usage is above 80%
           description: The database connection pool is approaching saturation.
+
+  # ── 系统资源告警 ──────────────────────────────────────────
+  - name: medkernel-system-resources
+    interval: 30s
+    rules:
+      - alert: MedKernelDiskSpaceWarning
+        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel disk usage is above 85%
+          description: "Root filesystem usage is {{ $value | humanizePercentage }}. Consider cleanup or expansion."
+
+      - alert: MedKernelDiskSpaceCritical
+        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel disk usage is above 95%
+          description: "Root filesystem usage is {{ $value | humanizePercentage }}. Immediate action required."
+
+      - alert: MedKernelCpuLoadHigh
+        expr: process_cpu_usage{application="medkernel-mvp"} > 0.80
+        for: 10m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel JVM CPU usage is above 80%
+          description: JVM process CPU usage has been above 80% for 10 minutes.
+
+      - alert: MedKernelFileDescriptorHigh
+        expr: process_files_open_files{application="medkernel-mvp"} / process_files_max_files{application="medkernel-mvp"} > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel file descriptor usage is above 80%
+          description: Open file descriptors are approaching the limit. Check for resource leaks.
+
+  # ── 业务指标告警 ──────────────────────────────────────────
+  - name: medkernel-business
+    interval: 30s
+    rules:
+      - alert: MedKernelModelGatewayDown
+        expr: medkernel_provider_configured{provider="model_gateway"} == 1 and on(provider) medkernel_provider_ready{provider="model_gateway"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel AI model gateway is down
+          description: The AI model gateway provider is configured but not ready. AI features are unavailable.
+
+      - alert: MedKernelDatabaseProviderDown
+        expr: medkernel_provider_configured{provider="database"} == 1 and on(provider) medkernel_provider_ready{provider="database"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel database provider is down
+          description: The database provider is configured but not ready. Core data operations are unavailable.
+
+      - alert: MedKernelGraphProviderDegraded
+        expr: medkernel_provider_configured{provider="graph"} == 1 and on(provider) medkernel_provider_ready{provider="graph"} == 0
+        for: 10m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel graph provider is degraded
+          description: The graph/knowledge base provider is not ready. Graph features are using fallback mode.
+
+      - alert: MedKernelHighErrorRate5xx
+        expr: sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status=~"5.."}[10m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[10m])), 0.001) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: MedKernel sustained 5xx error rate above 1%
+          description: The 10-minute average 5xx error rate is above 1%, indicating a persistent issue.
+
+  # ── SLO 违规告警 ──────────────────────────────────────────
+  - name: medkernel-slo
+    interval: 60s
+    rules:
+      - alert: MedKernelSLOAvailabilityBreach
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status!~"5.."}[30m]))
+            / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[30m])), 0.001)
+          ) < 0.995
+        for: 5m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+          slo: "true"
+        annotations:
+          summary: MedKernel SLO availability below 99.5%
+          description: "30-minute availability is {{ $value | humanizePercentage }}, below the 99.5% SLO target."
+
+      - alert: MedKernelSLOLatencyBreach
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket{application="medkernel-mvp"}[30m]))
+            by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+          slo: "true"
+        annotations:
+          summary: MedKernel SLO P95 latency above 500ms
+          description: "30-minute P95 latency is {{ $value }}s, above the 500ms SLO target."

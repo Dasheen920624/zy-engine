@@ -8,6 +8,12 @@ global:
 rule_files:
   - medkernel-alert-rules.yml
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
 scrape_configs:
   - job_name: medkernel-backend
     scrape_interval: 15s
@@ -16,7 +22,8 @@ scrape_configs:
     scheme: http
     static_configs:
       - targets:
-          - 127.0.0.1:18081
+          # Docker 部署时使用 host.docker.internal 访问宿主机
+          - host.docker.internal:18081
         labels:
           service: medkernel-mvp
           role: backend

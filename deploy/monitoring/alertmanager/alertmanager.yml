@@ -1,0 +1,84 @@
+# MedKernel Alertmanager Configuration
+# v1.0 GA — 生产就绪告警路由与通知
+
+global:
+  resolve_timeout: 5m
+  # 邮件通知全局配置（按实际环境覆盖）
+  smtp_smarthost: "localhost:587"
+  smtp_from: "alertmanager@medkernel.local"
+  smtp_require_tls: true
+
+# 告警路由树
+route:
+  receiver: "default-receiver"
+  group_by: ["alertname", "service", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    # critical 级别：立即通知，5 分钟重复
+    - match:
+        severity: critical
+      receiver: "critical-receiver"
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 5m
+
+    # warning 级别：默认路由
+    - match:
+        severity: warning
+      receiver: "warning-receiver"
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 30m
+
+    # Provider 相关告警：合并通知
+    - match_re:
+        alertname: MedKernelProvider.*
+      receiver: "provider-receiver"
+      group_by: ["provider"]
+      group_wait: 1m
+      group_interval: 5m
+
+# 抑制规则：critical 触发时抑制同服务 warning
+inhibit_rules:
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ["service", "alertname"]
+
+# 接收者定义
+receivers:
+  - name: "default-receiver"
+    webhook_configs:
+      - url: "http://localhost:5001/alerts"
+        send_resolved: true
+
+  - name: "critical-receiver"
+    # 邮件通知（需配置 SMTP）
+    email_configs:
+      - to: "oncall-medkernel@hospital.local"
+        headers:
+          Subject: "[CRITICAL] MedKernel {{ .GroupLabels.alertname }}"
+        send_resolved: true
+    # Webhook 通知（可对接钉钉/企业微信/飞书）
+    webhook_configs:
+      - url: "http://localhost:5001/alerts/critical"
+        send_resolved: true
+
+  - name: "warning-receiver"
+    email_configs:
+      - to: "ops-medkernel@hospital.local"
+        headers:
+          Subject: "[WARNING] MedKernel {{ .GroupLabels.alertname }}"
+        send_resolved: true
+    webhook_configs:
+      - url: "http://localhost:5001/alerts/warning"
+        send_resolved: true
+
+  - name: "provider-receiver"
+    webhook_configs:
+      - url: "http://localhost:5001/alerts/provider"
+        send_resolved: true
