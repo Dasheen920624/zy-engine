@@ -1,0 +1,7 @@
+task_id: GA-UX-01
+claim_id: GA-UX-01-S01
+owner: TraeAI-GLM5
+branch: develop
+git_base_commit: aeeab95
+created_at: 2026-05-23T21:30+08:00
+last_heartbeat: 2026-05-23T21:30+08:00
