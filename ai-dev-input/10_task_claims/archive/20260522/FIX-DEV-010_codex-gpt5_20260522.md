@@ -74,7 +74,7 @@ git_status_checked_before_edit: DONE
 last_heartbeat_pushed: DONE
 review_status_synced: DONE
 task_ledger_done_synced: N/A_HEALTH_SENTINEL_TASK
-commit_hash_recorded: pending_final_commit
+commit_hash_recorded: 8ee84f7
 post_push_git_status_clean: pending
 task_lock_removed_on_archive: DONE
 ```
@@ -123,8 +123,8 @@ submit_allowed: true
 ## Completion
 
 ```text
-commit: pending_final_commit
-push: pending
+commit: 8ee84f7
+push: pending status-sync push
 tests: backend compile/test/build PASS; frontend lint/typecheck/test/build PASS; verify-pr 17 PASS / 0 FAIL / 2 WARN
 review: RV-FIX-DEV-010-S01-R01 APPROVED, open_findings=0
 feature_acceptance: N/A_HEALTH_REPAIR

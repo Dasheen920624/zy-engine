@@ -11,7 +11,7 @@
 |---|---|
 | 状态 | 🟢 **GREEN — develop @ `6711e5c` + FIX-DEV-010 主干修复已完成，全量后端/前端门禁通过** |
 | 最后更新 | 2026-05-22 |
-| 最后验证 commit | `6711e5c` (origin/develop) + FIX-DEV-010 final patch（最终提交后以归档 claim 记录为准） |
+| 最后验证 commit | `8ee84f7` (FIX-DEV-010) — develop 主干健康修复提交，基于 origin/develop `6711e5c` |
 | 演示候选 tag | `v0.2-demo`（指向 main `565e8a7`） |
 | 验证命令 | `mvn -q compile` + `medkernel-mvp/scripts/run-tests.ps1` + `medkernel-mvp/scripts/build.ps1` + `frontend eslint/typecheck/vitest/vite build` + `check-ai-collaboration.ps1` |
 | 结果 | **PASS**：后端 compile/test/build 通过；前端 ESLint 0 error、typecheck/test/build 通过；协作 claim/lock 检查通过 |

@@ -109,8 +109,8 @@ review_status: APPROVED
 approved_by: Codex-GPT5
 approved_at: 2026-05-22T19:55+08:00
 submit_allowed: true
-commit: pending_final_commit
-push: pending
+commit: 8ee84f7
+push: pending status-sync push
 risks: Existing frontend lint warnings and test stderr warnings remain historical/non-blocking; no new blocking errors.
 feature_acceptance_status: N/A_HEALTH_REPAIR
 optimization_required: false
