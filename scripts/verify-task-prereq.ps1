@@ -7,6 +7,7 @@
 #   -TaskId       任务编号（必填，如 PR-V2-01）
 #   -Level        AI 能力等级（junior / middle / senior）
 #   -SkipGitPull  跳过 git pull（仅离线开发用）
+#   -SuggestCount 锁冲突时推荐的可切换任务数量（默认 3）
 #
 # 检查项：
 #   1. git 工作树干净
@@ -28,7 +29,11 @@ param(
   [string]$Level = "senior",
 
   [Parameter(Mandatory = $false)]
-  [switch]$SkipGitPull
+  [switch]$SkipGitPull,
+
+  [Parameter(Mandatory = $false)]
+  [ValidateRange(1, 10)]
+  [int]$SuggestCount = 3
 )
 
 # 锚定到项目根（脚本所在目录的父目录），让后续所有相对路径检查不受调用方 cwd 影响
@@ -58,6 +63,136 @@ function Show-Warn($msg) {
 function Show-Section($title) {
   Write-Host ""
   Write-Host "=== $title ===" -ForegroundColor Cyan
+}
+
+function Get-LevelWeight([string]$LevelName) {
+  if ([string]::IsNullOrWhiteSpace($LevelName)) {
+    return 3
+  }
+  switch ($LevelName.Trim().ToLower()) {
+    "junior" { return 1 }
+    "middle" { return 2 }
+    "senior" { return 3 }
+    "初级" { return 1 }
+    "中级" { return 2 }
+    "高级" { return 3 }
+    default { return 3 }
+  }
+}
+
+function Get-ActiveTaskIdSet([string]$ActiveDirPath) {
+  $set = @{}
+  if (-not (Test-Path $ActiveDirPath)) {
+    return $set
+  }
+  $claims = Get-ChildItem -Path $ActiveDirPath -Filter "*.md" -File -ErrorAction SilentlyContinue
+  foreach ($claim in $claims) {
+    $raw = Get-Content -Path $claim.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+    $taskMatch = [regex]::Match($raw, "(?m)^task_id:\s*([A-Za-z0-9\-]+)\s*$")
+    if ($taskMatch.Success) {
+      $taskKey = $taskMatch.Groups[1].Value.Trim().ToUpperInvariant()
+      if (-not [string]::IsNullOrWhiteSpace($taskKey)) {
+        $set[$taskKey] = $true
+      }
+    }
+  }
+  return $set
+}
+
+function Get-LedgerTaskSuggestions([string]$CurrentTaskId, [string]$CurrentLevel, [int]$Limit) {
+  $ledgerPath = "docs/engineering/02_任务台账.md"
+  $lockDirPath = "ai-dev-input/10_task_claims/active_locks"
+  $activeDirPath = "ai-dev-input/10_task_claims/active"
+  $activeTaskSet = Get-ActiveTaskIdSet $activeDirPath
+
+  $result = New-Object System.Collections.Generic.List[object]
+  if (-not (Test-Path $ledgerPath)) {
+    return $result
+  }
+
+  $myLevel = Get-LevelWeight $CurrentLevel
+  $seen = @{}
+  $lines = Get-Content -Path $ledgerPath -Encoding UTF8
+
+  foreach ($line in $lines) {
+    if ($null -eq $line) {
+      continue
+    }
+    if ($line -notmatch '^\|\s*[A-Z][A-Z0-9\-]+\s*\|') {
+      continue
+    }
+
+    $cells = $line.Split('|')
+    if ($cells.Count -lt 6) {
+      continue
+    }
+
+    $taskId = $cells[1].Trim()
+    $taskName = $cells[2].Trim()
+    $status = $cells[3].Trim().ToUpper()
+    $minLevel = $cells[4].Trim()
+    $batch = $cells[5].Trim()
+
+    if ($status -ne "TODO") {
+      continue
+    }
+    if ([string]::IsNullOrWhiteSpace($taskId) -or $taskId -eq $CurrentTaskId) {
+      continue
+    }
+    $taskKey = $taskId.ToUpperInvariant()
+    if ($seen.ContainsKey($taskKey)) {
+      continue
+    }
+    $seen[$taskKey] = $true
+
+    $requiredLevel = Get-LevelWeight $minLevel
+    if ($myLevel -lt $requiredLevel) {
+      continue
+    }
+
+    if ($activeTaskSet.ContainsKey($taskKey)) {
+      continue
+    }
+
+    $lockPath = Join-Path $lockDirPath "$taskId.lock"
+    if (Test-Path -LiteralPath $lockPath) {
+      continue
+    }
+
+    $result.Add([pscustomobject]@{
+      TaskId = $taskId
+      TaskName = $taskName
+      Batch = $batch
+      MinLevel = $minLevel
+    }) | Out-Null
+
+    if ($result.Count -ge $Limit) {
+      break
+    }
+  }
+
+  return $result
+}
+
+function Show-TaskSwitchSuggestions([string]$CurrentTaskId, [string]$CurrentLevel, [int]$Limit, [string]$Reason) {
+  try {
+    $suggestions = Get-LedgerTaskSuggestions -CurrentTaskId $CurrentTaskId -CurrentLevel $CurrentLevel -Limit $Limit
+    if ($null -eq $suggestions -or $suggestions.Count -eq 0) {
+      Show-Warn "当前任务受阻（$Reason），但未找到可自动切换候选任务；请在台账 §2 手动挑选未锁定 TODO 任务。"
+      return
+    }
+
+    Write-Host "  当前任务受阻原因：$Reason" -ForegroundColor Gray
+    Write-Host "  建议切换以下任务（TODO + 未锁定 + 等级匹配）：" -ForegroundColor White
+    foreach ($task in $suggestions) {
+      Write-Host "    - $($task.TaskId) | $($task.TaskName) | $($task.Batch)" -ForegroundColor Gray
+    }
+
+    $ids = ($suggestions | ForEach-Object { $_.TaskId }) -join ","
+    Write-Host "  fallback_task_candidates=$ids" -ForegroundColor DarkGray
+  } catch {
+    Show-Warn "切换任务建议生成失败：$($_.Exception.Message)"
+  }
 }
 
 function Test-GitRef([string]$Ref) {
@@ -103,7 +238,64 @@ function Get-TaskAliases([string]$TaskId) {
   } elseif ($TaskId -match '^PR-(\d{2})$') {
     $aliases.Add("PR-V2-$($matches[1])")
   }
+  # GA-* 任务编号无别名，但需确保正则匹配支持 GA- 前缀
   return $aliases | Select-Object -Unique
+}
+
+# GA-* 任务编号模式判断
+function Test-GaTaskId([string]$TaskId) {
+  return $TaskId -match '^GA-[A-Z]+-\d{2}$'
+}
+
+# 从 GA backlog 或台账提取 GA 任务的依赖
+function Get-GaTaskDependencies([string]$TaskId) {
+  $deps = New-Object System.Collections.Generic.List[string]
+
+  # 优先从 GA backlog 提取依赖
+  $gaBacklog = "docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md"
+  if (Test-Path $gaBacklog) {
+    $gaContent = Get-Content $gaBacklog -Raw -Encoding UTF8
+    # 匹配任务行：| GA-XXX-NN | ... | ... | ... | 依赖 | ... |
+    $taskPattern = [regex]::Escape($TaskId)
+    $gaLines = $gaContent -split "`n" | Where-Object { $_ -match "^\|\s*$taskPattern\s*\|" }
+    foreach ($line in $gaLines) {
+      # 提取依赖列（第5列，索引4）
+      $cols = $line -split '\|' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+      if ($cols.Count -ge 5) {
+        $depCol = $cols[4].Trim()
+        $depMatches = [regex]::Matches($depCol, '(?:GA-[A-Z]+-\d{2}|[A-Z]+-\d{3}|PR-V2-\d{2}|PR-FINAL-\d{2})')
+        foreach ($m in $depMatches) {
+          if (-not $deps.Contains($m.Value)) {
+            [void]$deps.Add($m.Value)
+          }
+        }
+      }
+    }
+  }
+
+  # 回退到台账查找
+  if ($deps.Count -eq 0) {
+    $ledger = "docs/engineering/02_任务台账.md"
+    if (Test-Path $ledger) {
+      $ledgerContent = Get-Content $ledger -Raw -Encoding UTF8
+      $taskPattern = [regex]::Escape($TaskId)
+      $ledgerLines = $ledgerContent -split "`n" | Where-Object { $_ -match "^\|\s*$taskPattern\s*\|" }
+      foreach ($line in $ledgerLines) {
+        $cols = $line -split '\|' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        if ($cols.Count -ge 6) {
+          $depCol = $cols[5].Trim()
+          $depMatches = [regex]::Matches($depCol, '(?:GA-[A-Z]+-\d{2}|[A-Z]+-\d{3}|PR-V2-\d{2}|PR-FINAL-\d{2})')
+          foreach ($m in $depMatches) {
+            if (-not $deps.Contains($m.Value)) {
+              [void]$deps.Add($m.Value)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return $deps.ToArray()
 }
 
 function Get-PlaybookTaskSection([string]$Content, [string]$TaskId) {
@@ -256,7 +448,26 @@ if ($myLevel -ge $reqLevel) {
 # ============================================================
 Show-Section "5. 依赖任务全部 DONE"
 
-if (Test-Path $playbook) {
+$isGaTask = Test-GaTaskId $TaskId
+
+if ($isGaTask) {
+  # GA-* 任务：从 GA backlog 或台账提取依赖
+  $gaDeps = Get-GaTaskDependencies $TaskId
+  if ($gaDeps.Count -eq 0) {
+    Show-Pass "GA 任务 $TaskId 无依赖"
+  } else {
+    $ledgerContent = Get-Content $ledger -Raw -Encoding UTF8
+    foreach ($dep in $gaDeps) {
+      $depEscaped = [regex]::Escape($dep)
+      $depLine = $ledgerContent -split "`n" | Where-Object { $_ -match "^\|\s*$depEscaped\s*\|" } | Select-Object -First 1
+      if ($depLine -and $depLine -match "\|\s*DONE\s*\|") {
+        Show-Pass "依赖 $dep = DONE"
+      } else {
+        Show-Fail "依赖 $dep 未完成（台账非 DONE 状态），先做依赖任务"
+      }
+    }
+  }
+} elseif (Test-Path $playbook) {
   $pb = Get-Content $playbook -Raw -Encoding UTF8
   $section = Get-PlaybookTaskSection $pb $TaskId
   if ($section) {
@@ -321,6 +532,8 @@ Show-Section "7. active claim / task lock 冲突检查"
 $activeDir = "ai-dev-input/10_task_claims/active"
 $lockDir = "ai-dev-input/10_task_claims/active_locks"
 $expectedLock = Join-Path $lockDir "$TaskId.lock"
+$hasTaskOwnershipConflict = $false
+$hasGlobalCollabConflict = $false
 if (Test-Path $activeDir) {
   $existingClaims = Get-ChildItem -Path $activeDir -Filter "*.md" -ErrorAction SilentlyContinue
   $conflicts = $existingClaims | Where-Object {
@@ -329,6 +542,7 @@ if (Test-Path $activeDir) {
   }
   if ($conflicts) {
     Show-Fail "已有 active claim 锁定 $TaskId："
+    $hasTaskOwnershipConflict = $true
     foreach ($c in $conflicts) {
       Write-Host "    - $($c.Name)" -ForegroundColor Gray
     }
@@ -342,6 +556,7 @@ if (Test-Path $activeDir) {
 
 if (Test-Path $expectedLock) {
   Show-Fail "已有 task lock 锁定 $TaskId：$expectedLock"
+  $hasTaskOwnershipConflict = $true
   Write-Host "    task lock 是 Git 层面的同任务唯一锁；必须等待原 claim 完成、归档或按接管规则处理" -ForegroundColor Gray
 } else {
   if (-not (Test-Path $lockDir)) {
@@ -353,11 +568,21 @@ if (Test-Path $expectedLock) {
 
 $collabScript = "medkernel-mvp/scripts/check-ai-collaboration.ps1"
 if (Test-Path $collabScript) {
-  $collabOutput = & $collabScript -Strict -RequireClean 2>&1
-  if ($LASTEXITCODE -eq 0) {
+  $collabOutput = @()
+  $collabExitCode = 0
+  try {
+    $collabOutput = & $collabScript -Strict -RequireClean 2>&1
+    $collabExitCode = $LASTEXITCODE
+  } catch {
+    $collabExitCode = 1
+    $collabOutput = @($_.Exception.Message)
+  }
+
+  if ($collabExitCode -eq 0) {
     Show-Pass "全局并发状态一致：无 orphan lock / 重复任务 / write_scope 重叠"
   } else {
     Show-Fail "全局并发状态不一致，请先清理 claim/lock/review 后再领任务"
+    $hasGlobalCollabConflict = $true
     $collabOutput | Select-Object -Last 8 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
   }
 } else {
@@ -374,6 +599,17 @@ Write-Host "结果: PASS=$PASS_COUNT  FAIL=$FAIL_COUNT  WARN=$WARN_COUNT" -Foreg
 if ($FAIL_COUNT -gt 0) {
   Write-Host ""
   Write-Host "[X] 不允许创建 active claim，请先修复 FAIL 项" -ForegroundColor Red
+  if ($hasTaskOwnershipConflict -or $hasGlobalCollabConflict) {
+    Show-Section "7.1 锁阻断后的切换建议"
+    $reasons = New-Object System.Collections.Generic.List[string]
+    if ($hasTaskOwnershipConflict) {
+      [void]$reasons.Add("task_lock_or_active_claim_conflict")
+    }
+    if ($hasGlobalCollabConflict) {
+      [void]$reasons.Add("global_collaboration_gate")
+    }
+    Show-TaskSwitchSuggestions -CurrentTaskId $TaskId -CurrentLevel $Level -Limit $SuggestCount -Reason ($reasons -join ",")
+  }
   exit 1
 } else {
   Write-Host ""

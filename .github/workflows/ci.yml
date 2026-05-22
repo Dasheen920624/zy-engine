@@ -99,3 +99,35 @@ jobs:
           }
           Write-Host "Resolved TaskId = $taskId"
           .\scripts\verify-pr.ps1 -TaskId $taskId -SkipFrontend -SkipBackend
+
+  # GA-GOV-01: 并发机制硬门禁 — orphan lock、重复 task、write_scope 重叠均自动阻断
+  ai-collaboration-guard:
+    name: ai-collaboration-guard
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check AI collaboration integrity
+        shell: pwsh
+        run: |
+          Write-Host "=== AI Collaboration Guard (GA-GOV-01) ===" -ForegroundColor Cyan
+          Write-Host ""
+
+          $script = ".\medkernel-mvp\scripts\check-ai-collaboration.ps1"
+          if (-not (Test-Path $script)) {
+            throw "check-ai-collaboration.ps1 not found at $script"
+          }
+
+          # 严格模式：orphan lock / 重复 task / write_scope 重叠均阻断
+          & $script -Strict 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Host "[BLOCKED] AI 协作门禁未通过 — 存在 orphan lock、重复 task 或 write_scope 重叠" -ForegroundColor Red
+            Write-Host "请先清理 ai-dev-input/10_task_claims/ 下的冲突项后再提交" -ForegroundColor Red
+            exit 1
+          }
+
+          Write-Host ""
+          Write-Host "[PASS] AI 协作门禁通过 — 无 orphan lock、无重复 task、无 write_scope 重叠" -ForegroundColor Green
