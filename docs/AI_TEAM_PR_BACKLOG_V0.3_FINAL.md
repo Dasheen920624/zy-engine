@@ -50,8 +50,9 @@
 | **PR-FINAL-23** | 数据分级 + HEALTH_DATA SM4 加密 | 4 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-24** | actuator + Prometheus + Grafana 5 看板 | 4 | ✅ DONE · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick）· 2026-05-22 (#34) | 高级 | 4 天 |
 | **PR-FINAL-25** | Flyway DB migration + KingbaseES 实测 | 4 | 🟢 Phase 1 DONE · Claude-Opus-4.7 · 2026-05-22 — 零 baseline 接管：62 V*.sql（h2 30 + 4 方言 × 8）+ 删 init-schema + UNISTR 清理 + 修 PG src_dify_template Oracle 类型 bug + ADR-0014 + 显式 `MedKernelFlywayConfig`（项目自定义 DataSource 跳过 Spring Boot autoconfig 的对策）+ `EnginePersistenceService @DependsOn("flyway")`（14+ 个 @PostConstruct rebuildFromPersistence 排序）+ H2 V4↔V5 交换（security_sso 必须先于 security_audit_chain）；D7 H2 烟雾测试 `UserSyncApiContractTests#listSourcesReturnsSeededData` 通过。**D8 follow-up**：跨方言 V 编号统一（oracle/dm/postgres/kingbase 当前各 8 个，编号方案与 H2 不一致 → 以 H2 为基准翻译 22 个缺位 migration，详见 ADR-0014 §2.5）。Phase 2（备注语义校验 + KingbaseES 真机 + H2 全量测试回归）待后续 PR | 架构师 | 5 天 |
+| **PR-FINAL-26** | Admin Layout 布局重构：左侧菜单固定 + 收缩 / 顶部导航固定 / 内容区独立滚动 | 2 | 🟡 TODO — 现状：长页面滚动时整个布局一起滚（菜单 + 面包屑跟着走，操作不便）。目标：1) 左侧 sidebar `position: fixed`，支持折叠（图标态 / 展开态）+ 状态持久化到 localStorage；2) 顶部 header（品牌 + 面包屑 + 用户名）`position: fixed`，z-index 高于内容；3) 中间内容区 `overflow-y: auto`，独立滚动条；4) 响应式（< 768px 菜单变 drawer）；5) ESLint `no-inline-style` 守门 + CSS Modules 实现，跟 PR-FINAL-19 路线一致。范围：MainLayout / Sidebar / Header / 整页 CSS Module + 全站验证 | 高级 | 3 天 |
 
-**总计**：约 102 工作日（5 AI 并行 = 4-5 周）
+**总计**：约 105 工作日（5 AI 并行 = 4-5 周）
 
 ---
 
