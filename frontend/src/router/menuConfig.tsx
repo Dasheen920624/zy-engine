@@ -31,8 +31,6 @@ export interface MenuItem {
   roles?: string[];
   disabled?: boolean;
   pr?: string;
-  /** 占位说明：用于占位页 placeholder hint */
-  placeholderHint?: string;
 }
 
 export interface MenuSection {

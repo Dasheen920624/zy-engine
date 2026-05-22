@@ -27,7 +27,7 @@ interface CapabilityCard {
   icon: React.ReactNode;
   title: string;
   description: string;
-  status: "READY" | "BETA" | "PENDING";
+  status: "READY" | "BETA";
   path?: string;
 }
 
@@ -177,7 +177,7 @@ function CardItem({ card }: { card: CapabilityCard }) {
     </Card>
   );
 
-  if (card.path && card.status !== "PENDING") {
+  if (card.path) {
     return <Link to={card.path}>{body}</Link>;
   }
 
@@ -187,7 +187,6 @@ function CardItem({ card }: { card: CapabilityCard }) {
 const STATUS_TAG: Record<CapabilityCard["status"], { color: string; label: string }> = {
   READY: { color: "success", label: "已上线" },
   BETA: { color: "processing", label: "体验中" },
-  PENDING: { color: "default", label: "占位" },
 };
 
 const PILOT_SETUP_CARDS: CapabilityCard[] = [
@@ -228,7 +227,7 @@ const PILOT_SETUP_CARDS: CapabilityCard[] = [
     icon: <SafetyCertificateOutlined />,
     title: "规则库",
     description: "管理医嘱、医保、质控规则，并保留来源证据。",
-    status: "BETA",
+    status: "READY",
     path: "/rule/definitions",
   },
   {
@@ -416,7 +415,7 @@ const ADVANCED_TOOL_CARDS: CapabilityCard[] = [
     icon: <FileSearchOutlined />,
     title: "来源追溯",
     description: "管理指南、文献、知识资产和发布证据链。",
-    status: "BETA",
+    status: "READY",
     path: "/provenance",
   },
   {
@@ -424,7 +423,7 @@ const ADVANCED_TOOL_CARDS: CapabilityCard[] = [
     icon: <ShareAltOutlined />,
     title: "图谱查询",
     description: "给专家和实施人员调试医学知识图谱。",
-    status: "BETA",
+    status: "READY",
     path: "/graph/explore",
   },
   {

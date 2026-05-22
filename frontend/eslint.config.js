@@ -12,6 +12,7 @@ import noHardcodedColor from "./eslint-rules/no-hardcoded-color.js";
 import requireSourceInfo from "./eslint-rules/require-source-info-for-medical.js";
 import forbidDeprecatedNaming from "./eslint-rules/forbid-deprecated-naming.js";
 import noInlineStyle from "./eslint-rules/no-inline-style.js";
+import noPlaceholderPage from "./eslint-rules/no-placeholder-page.js";
 
 export default tseslint.config(
   {
@@ -38,6 +39,7 @@ export default tseslint.config(
           "require-source-info-for-medical": requireSourceInfo,
           "forbid-deprecated-naming": forbidDeprecatedNaming,
           "no-inline-style": noInlineStyle,
+          "no-placeholder-page": noPlaceholderPage,
         },
       },
     },
@@ -117,6 +119,7 @@ export default tseslint.config(
       // v0.3-final：存量 582 处 inline style 渐进式抽取，先 warn 不阻断 CI；
       // CI 跑数量监控（scripts/check-inline-style-count.ps1）实现"只减不增"。
       "medkernel/no-inline-style": "warn",
+      "medkernel/no-placeholder-page": "error",
     },
   },
   {
