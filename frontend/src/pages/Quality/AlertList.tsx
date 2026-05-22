@@ -25,15 +25,6 @@ const statusOptions = [
   { value: "RESOLVED", label: "已解决" },
 ];
 
-const severityColor = (s: AlertSeverity) => {
-  switch (s) {
-    case "CRITICAL": return "red";
-    case "WARNING": return "orange";
-    case "INFO": return "blue";
-    default: return "default";
-  }
-};
-
 const severityDots = (s: AlertSeverity) => {
   switch (s) {
     case "CRITICAL": return "●●●";
@@ -43,10 +34,10 @@ const severityDots = (s: AlertSeverity) => {
   }
 };
 
-const SEVERITY_DOT_COLOR: Record<string, string> = {
-  red: "var(--mk-danger)",
-  orange: "var(--mk-warning)",
-  blue: "var(--mk-primary)",
+const SEVERITY_DOT_CLASS: Record<string, string> = {
+  CRITICAL: styles.severityDotCritical,
+  WARNING: styles.severityDotWarning,
+  INFO: styles.severityDotInfo,
 };
 
 const STATUS_BADGE_MAP: Record<string, StatusKey> = {
@@ -98,7 +89,7 @@ const AlertList: React.FC = () => {
       key: "severity",
       width: 80,
       render: (s: AlertSeverity) => (
-        <span style={{ color: SEVERITY_DOT_COLOR[severityColor(s)] || "var(--mk-primary)" }}>
+        <span className={SEVERITY_DOT_CLASS[s] ?? styles.severityDotInfo}>
           {severityDots(s)}
         </span>
       ),
@@ -157,11 +148,11 @@ const AlertList: React.FC = () => {
 
   return (
     <div className={styles.page}>
-      <Title level={3} style={{ marginBottom: 24 }}>质控预警</Title>
+      <Title level={3} className={styles.pageTitle}>质控预警</Title>
 
       <SourceInfo source={{ documentName: "质控预警", documentId: "quality-alerts" }} />
 
-      <Space style={{ marginBottom: 16 }} size="middle">
+      <Space className={styles.filterBar} size="middle">
         <OrgContextSelector />
         <span>实时模式</span>
         <Switch checked={realtimeMode} onChange={setRealtimeMode} />
@@ -169,23 +160,23 @@ const AlertList: React.FC = () => {
           placeholder="科室"
           value={dept || ""}
           onChange={(e) => updateFilter("dept", e.target.value || undefined)}
-          style={{ width: 120 }}
+          className={styles.deptInput}
         />
         <Select
           value={severity || ""}
           onChange={(v) => updateFilter("severity", v || undefined)}
           options={severityOptions}
-          style={{ width: 100 }}
+          className={styles.selectNarrow}
         />
         <Select
           value={status || ""}
           onChange={(v) => updateFilter("status", v || undefined)}
           options={statusOptions}
-          style={{ width: 100 }}
+          className={styles.selectNarrow}
         />
       </Space>
 
-      <Space style={{ marginBottom: 16, width: "100%" }} size="large">
+      <Space className={styles.summaryBar} size="large">
         <Card size="small"><Statistic title="危急" value={summary?.critical || 0} valueStyle={{ color: "var(--mk-danger)" }} /></Card>
         <Card size="small"><Statistic title="警告" value={summary?.warning || 0} valueStyle={{ color: "var(--mk-warning)" }} /></Card>
         <Card size="small"><Statistic title="提醒" value={summary?.info || 0} valueStyle={{ color: "var(--mk-primary)" }} /></Card>

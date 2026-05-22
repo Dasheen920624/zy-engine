@@ -20,3 +20,11 @@
 .factItem {
   margin-bottom: 4px;
 }
+
+.detailStatsRow {
+  margin-bottom: var(--mk-space-4);
+}
+
+.innerCardSpacing {
+  margin-bottom: var(--mk-space-3);
+}

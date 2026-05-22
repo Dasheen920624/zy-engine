@@ -34,3 +34,27 @@
 .generateHint {
   margin-bottom: 8px;
 }
+
+.filterSelect {
+  width: 150px;
+}
+
+.sectionCardSpacing {
+  margin-top: var(--mk-space-4);
+}
+
+.detailStatsRow {
+  margin-bottom: var(--mk-space-4);
+}
+
+.detailDescriptions {
+  margin-bottom: var(--mk-space-4);
+}
+
+.detailSectionCard {
+  margin-bottom: var(--mk-space-4);
+}
+
+.fullWidth {
+  width: 100%;
+}

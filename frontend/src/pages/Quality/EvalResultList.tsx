@@ -283,7 +283,7 @@ const EvalResultList: React.FC = () => {
       >
         {selectedResult && (
           <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Row gutter={16} className={styles.detailStatsRow}>
               <Col span={6}>
                 <Statistic title="得分百分比" value={selectedResult.score_percentage} suffix="%" />
               </Col>
@@ -304,7 +304,7 @@ const EvalResultList: React.FC = () => {
               </Col>
             </Row>
 
-            <Card type="inner" title="各指标得分" size="small" style={{ marginBottom: 12 }}>
+            <Card type="inner" title="各指标得分" size="small" className={styles.innerCardSpacing}>
               <Table
                 rowKey="indicator_code"
                 columns={scoreColumns}
@@ -315,7 +315,7 @@ const EvalResultList: React.FC = () => {
             </Card>
 
             {selectedResult.abnormal_facts?.length > 0 && (
-              <Card type="inner" title="异常事实" size="small" style={{ marginBottom: 12 }}>
+              <Card type="inner" title="异常事实" size="small" className={styles.innerCardSpacing}>
                 {selectedResult.abnormal_facts.map((f: EvalFact, i: number) => (
                   <div key={i} className={styles.factItem}>
                     <Tag color="orange"><WarningOutlined /> {f.severity}</Tag>

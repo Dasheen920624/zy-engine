@@ -441,7 +441,7 @@ const EvalReportPage: React.FC = () => {
             <Select
               placeholder="按状态筛选"
               allowClear
-              style={{ width: 150 }}
+              className={styles.filterSelect}
               value={statusFilter}
               onChange={(v) => setStatusFilter(v)}
             >
@@ -467,7 +467,7 @@ const EvalReportPage: React.FC = () => {
       </Card>
 
       {/* 整改任务 */}
-      <Card title="整改任务" style={{ marginTop: 16 }}>
+      <Card title="整改任务" className={styles.sectionCardSpacing}>
         <Table
           rowKey="rect_id"
           columns={rectColumns}
@@ -499,7 +499,7 @@ const EvalReportPage: React.FC = () => {
       >
         {currentReport && (
           <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Row gutter={16} className={styles.detailStatsRow}>
               <Col span={6}>
                 <Statistic
                   title="得分"
@@ -521,7 +521,7 @@ const EvalReportPage: React.FC = () => {
               </Col>
             </Row>
 
-            <Descriptions column={2} size="small" bordered style={{ marginBottom: 16 }}>
+            <Descriptions column={2} size="small" bordered className={styles.detailDescriptions}>
               <Descriptions.Item label="报告编号">{currentReport.report_id}</Descriptions.Item>
               <Descriptions.Item label="评估编号">{currentReport.eval_id}</Descriptions.Item>
               <Descriptions.Item label="评估对象">{currentReport.subject_name || currentReport.subject_id}</Descriptions.Item>
@@ -533,7 +533,7 @@ const EvalReportPage: React.FC = () => {
             </Descriptions>
 
             {currentReport.recommendations && currentReport.recommendations.length > 0 && (
-              <Card size="small" title="整改建议" style={{ marginBottom: 16 }}>
+              <Card size="small" title="整改建议" className={styles.detailSectionCard}>
                 <ul className={styles.recommendationList}>
                   {currentReport.recommendations.map((r, i) => (
                     <li key={i}>{r}</li>
@@ -543,7 +543,7 @@ const EvalReportPage: React.FC = () => {
             )}
 
             {currentReport.indicator_scores && currentReport.indicator_scores.length > 0 && (
-              <Card size="small" title="指标得分" style={{ marginBottom: 16 }}>
+              <Card size="small" title="指标得分" className={styles.detailSectionCard}>
                 <Table
                   size="small"
                   pagination={false}
@@ -652,7 +652,7 @@ const EvalReportPage: React.FC = () => {
             </Select>
           </Form.Item>
           <Form.Item name="due_date" label="截止日期">
-            <DatePicker style={{ width: "100%" }} />
+            <DatePicker className={styles.fullWidth} />
           </Form.Item>
         </Form>
       </Modal>
@@ -666,7 +666,7 @@ const EvalReportPage: React.FC = () => {
       >
         <div className={styles.generateHint}>选择评估结果：</div>
         <Select
-          style={{ width: "100%" }}
+          className={styles.fullWidth}
           placeholder="请选择评估结果"
           value={selectedEvalId || undefined}
           onChange={setSelectedEvalId}

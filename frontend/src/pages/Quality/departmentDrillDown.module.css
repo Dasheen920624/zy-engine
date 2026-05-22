@@ -2,9 +2,17 @@
   padding: var(--mk-spacing-lg);
 }
 
+.breadcrumb {
+  margin-bottom: var(--mk-space-4);
+}
+
 .changeArrow {
   font-size: 12px;
   margin-left: 4px;
+}
+
+.pageTitle {
+  margin: 0;
 }
 
 .pageHeader {
@@ -14,8 +22,20 @@
   align-items: center;
 }
 
+.periodSelect {
+  width: 120px;
+}
+
+.kpiRow {
+  margin-bottom: var(--mk-space-6);
+}
+
 .kpiDetail {
   margin-top: var(--mk-spacing-xs);
+}
+
+.variationCard {
+  margin-bottom: var(--mk-space-6);
 }
 
 .iconSuccess {

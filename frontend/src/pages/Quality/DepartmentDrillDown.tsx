@@ -184,7 +184,7 @@ export default function DepartmentDrillDown() {
       <Spin spinning={loading}>
         {/* 面包屑导航 */}
         <Breadcrumb
-          style={{ marginBottom: 16 }}
+          className={styles.breadcrumb}
           items={[
             {
               title: (
@@ -203,7 +203,7 @@ export default function DepartmentDrillDown() {
         {/* 页面标题 */}
         <div className={styles.pageHeader}>
           <div>
-            <Title level={4} style={{ margin: 0 }}>
+            <Title level={4} className={styles.pageTitle}>
               {displayDetail.departmentCode} 质控钻取
             </Title>
             <SourceInfo source={{ documentName: "科室下钻", documentId: "quality-department" }} />
@@ -215,7 +215,7 @@ export default function DepartmentDrillDown() {
             <Select
               value={period}
               onChange={setPeriod}
-              style={{ width: 120 }}
+              className={styles.periodSelect}
               options={[
                 { value: "today", label: "今日" },
                 { value: "week", label: "本周" },
@@ -229,7 +229,7 @@ export default function DepartmentDrillDown() {
         </div>
 
         {/* 科室 4 KPI 卡片 */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Row gutter={16} className={styles.kpiRow}>
           <Col span={6}>
             <Card
               title={
@@ -327,7 +327,7 @@ export default function DepartmentDrillDown() {
               <span>变异 TOP10</span>
             </Space>
           }
-          style={{ marginBottom: 24 }}
+          className={styles.variationCard}
         >
           <Table
             columns={variationColumns}
