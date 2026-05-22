@@ -1,6 +1,8 @@
 package com.medkernel.knowledge;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.knowledge.dto.BatchReviewRequest;
+import com.medkernel.knowledge.dto.ReviewCandidateRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +44,7 @@ public class AiCandidateReviewController {
     @PostMapping
     public ApiResult<AiCandidateReview> submitCandidate(@RequestBody AiCandidateReview candidate,
                                                           HttpServletRequest httpRequest) {
-        OrganizationContext orgCtx = resolveWithBody(httpRequest, candidate);
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         candidate.setTenantId(resolveTenantId(orgCtx));
         return ApiResult.success(reviewService.submitCandidate(candidate));
     }
@@ -78,12 +81,12 @@ public class AiCandidateReviewController {
     @Operation(summary = "Review candidate")
     @PostMapping("/{candidateId}/review")
     public ApiResult<String> reviewCandidate(@PathVariable Long candidateId,
-                                               @RequestBody Map<String, String> body,
+                                               @Valid @RequestBody ReviewCandidateRequest request,
                                                HttpServletRequest httpRequest) {
-        String reviewStatus = body.get("reviewStatus");
-        String reviewedBy = body.get("reviewedBy") != null ? body.get("reviewedBy") : "system";
-        String reviewNote = body.get("reviewNote");
-        String modifiedContent = body.get("modifiedContent");
+        String reviewStatus = request.getReviewStatus();
+        String reviewedBy = request.getReviewedBy() != null ? request.getReviewedBy() : "system";
+        String reviewNote = request.getReviewNote();
+        String modifiedContent = request.getModifiedContent();
         reviewService.reviewCandidate(candidateId, reviewStatus, reviewedBy, reviewNote, modifiedContent);
         return ApiResult.success("审核成功");
     }
@@ -93,19 +96,12 @@ public class AiCandidateReviewController {
      */
     @Operation(summary = "Batch review")
     @PostMapping("/batch-review")
-    public ApiResult<String> batchReview(@RequestBody Map<String, Object> body,
+    public ApiResult<String> batchReview(@Valid @RequestBody BatchReviewRequest request,
                                            HttpServletRequest httpRequest) {
-        @SuppressWarnings("unchecked")
-        List<Number> idNumbers = (List<Number>) body.get("candidateIds");
-        List<Long> candidateIds = new java.util.ArrayList<Long>();
-        if (idNumbers != null) {
-            for (Number n : idNumbers) {
-                candidateIds.add(n.longValue());
-            }
-        }
-        String reviewStatus = (String) body.get("reviewStatus");
-        String reviewedBy = body.get("reviewedBy") != null ? (String) body.get("reviewedBy") : "system";
-        String reviewNote = (String) body.get("reviewNote");
+        List<Long> candidateIds = request.getCandidateIds();
+        String reviewStatus = request.getReviewStatus();
+        String reviewedBy = request.getReviewedBy() != null ? request.getReviewedBy() : "system";
+        String reviewNote = request.getReviewNote();
         reviewService.batchReview(candidateIds, reviewStatus, reviewedBy, reviewNote);
         return ApiResult.success("批量审核成功");
     }
@@ -134,15 +130,6 @@ public class AiCandidateReviewController {
     }
 
     // ---- 辅助方法 ----
-
-    private OrganizationContext resolveWithBody(HttpServletRequest httpRequest, Object body) {
-        if (body instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = (Map<String, Object>) body;
-            return organizationContextService.resolveWithBody(httpRequest, map);
-        }
-        return organizationContextService.resolve(httpRequest);
-    }
 
     private Long resolveTenantId(OrganizationContext orgCtx) {
         try {

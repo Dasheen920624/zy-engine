@@ -6,6 +6,9 @@ import com.medkernel.llm.AiModelRegistry;
 import com.medkernel.llm.ModelEvalTask;
 import com.medkernel.llm.PromptTemplate;
 import com.medkernel.organization.OrganizationContextService;
+import com.medkernel.quality.dto.ReviewModelRequest;
+import com.medkernel.quality.dto.ReviewPromptTemplateRequest;
+import com.medkernel.quality.dto.UpdateEvalTaskStatusRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,15 +106,12 @@ public class AiGovernanceController {
     @PostMapping("/models/{modelId}/review")
     public ApiResult<Map<String, Object>> reviewModel(
             @PathVariable("modelId") Long modelId,
-            @RequestBody Map<String, String> reviewRequest,
+            @Valid @RequestBody ReviewModelRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
-        String reviewStatus = reviewRequest.get("review_status");
-        String reviewedBy = reviewRequest.get("reviewed_by");
-        String reviewNote = reviewRequest.get("review_note");
-        if (reviewStatus == null || reviewStatus.trim().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "review_status is required");
-        }
+        String reviewStatus = request.getReviewStatus();
+        String reviewedBy = request.getReviewedBy();
+        String reviewNote = request.getReviewNote();
         try {
             governanceService.reviewModel(modelId, reviewStatus, reviewedBy, reviewNote);
             Map<String, Object> result = new LinkedHashMap<String, Object>();
@@ -206,15 +207,12 @@ public class AiGovernanceController {
     @PostMapping("/prompt-templates/{templateId}/review")
     public ApiResult<Map<String, Object>> reviewPromptTemplate(
             @PathVariable("templateId") Long templateId,
-            @RequestBody Map<String, String> reviewRequest,
+            @Valid @RequestBody ReviewPromptTemplateRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
-        String reviewStatus = reviewRequest.get("review_status");
-        String reviewedBy = reviewRequest.get("reviewed_by");
-        String reviewNote = reviewRequest.get("review_note");
-        if (reviewStatus == null || reviewStatus.trim().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "review_status is required");
-        }
+        String reviewStatus = request.getReviewStatus();
+        String reviewedBy = request.getReviewedBy();
+        String reviewNote = request.getReviewNote();
         try {
             governanceService.reviewPromptTemplate(templateId, reviewStatus, reviewedBy, reviewNote);
             Map<String, Object> result = new LinkedHashMap<String, Object>();
@@ -293,18 +291,14 @@ public class AiGovernanceController {
     @PostMapping("/eval-tasks/{taskId}/status")
     public ApiResult<Map<String, Object>> updateEvalTaskStatus(
             @PathVariable("taskId") Long taskId,
-            @RequestBody Map<String, Object> statusRequest,
+            @Valid @RequestBody UpdateEvalTaskStatusRequest request,
             HttpServletRequest httpRequest) {
         orgContextService.applyExplicitFilters(new LinkedHashMap<String, String>(), httpRequest);
-        String status = (String) statusRequest.get("status");
-        if (status == null || status.trim().isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "status is required");
-        }
-        Double accuracyScore = doubleOrNull(statusRequest.get("accuracy_score"));
-        Double latencyMs = doubleOrNull(statusRequest.get("latency_ms"));
-        Double passRate = doubleOrNull(statusRequest.get("pass_rate"));
-        String resultSummary = statusRequest.get("result_summary") != null
-                ? String.valueOf(statusRequest.get("result_summary")) : null;
+        String status = request.getStatus();
+        Double accuracyScore = request.getAccuracyScore();
+        Double latencyMs = request.getLatencyMs();
+        Double passRate = request.getPassRate();
+        String resultSummary = request.getResultSummary();
         try {
             governanceService.updateEvalTaskStatus(taskId, status, accuracyScore, latencyMs, passRate, resultSummary);
             Map<String, Object> result = new LinkedHashMap<String, Object>();
@@ -340,20 +334,6 @@ public class AiGovernanceController {
             return ApiResult.success(summary);
         } catch (IllegalStateException ex) {
             return ApiResult.failure(ErrorCode.DB_ERROR, ex.getMessage());
-        }
-    }
-
-    private Double doubleOrNull(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
-        }
-        try {
-            return Double.parseDouble(String.valueOf(value).trim());
-        } catch (NumberFormatException ex) {
-            return null;
         }
     }
 }

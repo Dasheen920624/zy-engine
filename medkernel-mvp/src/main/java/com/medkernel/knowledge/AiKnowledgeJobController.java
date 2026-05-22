@@ -1,6 +1,8 @@
 package com.medkernel.knowledge;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.knowledge.dto.ReviewJobRequest;
+import com.medkernel.knowledge.dto.UpdateJobStatusRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +44,7 @@ public class AiKnowledgeJobController {
     @PostMapping
     public ApiResult<AiKnowledgeJob> createJob(@RequestBody AiKnowledgeJob job,
                                                  HttpServletRequest httpRequest) {
-        OrganizationContext orgCtx = resolveWithBody(httpRequest, job);
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         job.setTenantId(resolveTenantId(orgCtx));
         return ApiResult.success(jobService.createJob(job));
     }
@@ -77,11 +80,11 @@ public class AiKnowledgeJobController {
     @Operation(summary = "Update job status")
     @PostMapping("/{jobId}/status")
     public ApiResult<String> updateJobStatus(@PathVariable Long jobId,
-                                               @RequestBody Map<String, String> body,
+                                               @Valid @RequestBody UpdateJobStatusRequest request,
                                                HttpServletRequest httpRequest) {
-        String status = body.get("status");
-        String errorCode = body.get("errorCode");
-        String errorMessage = body.get("errorMessage");
+        String status = request.getStatus();
+        String errorCode = request.getErrorCode();
+        String errorMessage = request.getErrorMessage();
         jobService.updateJobStatus(jobId, status, errorCode, errorMessage);
         return ApiResult.success("状态更新成功");
     }
@@ -92,12 +95,12 @@ public class AiKnowledgeJobController {
     @Operation(summary = "Review job")
     @PostMapping("/{jobId}/review")
     public ApiResult<String> reviewJob(@PathVariable Long jobId,
-                                         @RequestBody Map<String, String> body,
+                                         @Valid @RequestBody ReviewJobRequest request,
                                          HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        String reviewStatus = body.get("reviewStatus");
-        String reviewedBy = body.get("reviewedBy") != null ? body.get("reviewedBy") : "system";
-        String reviewComment = body.get("reviewComment");
+        String reviewStatus = request.getReviewStatus();
+        String reviewedBy = request.getReviewedBy() != null ? request.getReviewedBy() : "system";
+        String reviewComment = request.getReviewComment();
         jobService.reviewJob(jobId, reviewStatus, reviewedBy, reviewComment);
         return ApiResult.success("审核成功");
     }
@@ -109,7 +112,7 @@ public class AiKnowledgeJobController {
     @PostMapping("/model-calls")
     public ApiResult<AiModelCallLog> logModelCall(@RequestBody AiModelCallLog callLog,
                                                     HttpServletRequest httpRequest) {
-        OrganizationContext orgCtx = resolveWithBody(httpRequest, callLog);
+        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         callLog.setTenantId(resolveTenantId(orgCtx));
         return ApiResult.success(jobService.logModelCall(callLog));
     }
@@ -137,15 +140,6 @@ public class AiKnowledgeJobController {
     public ApiResult<Map<String, Object>> summarizeModelCalls(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         return ApiResult.success(jobService.summarizeModelCalls(resolveTenantId(orgCtx)));
-    }
-
-    private OrganizationContext resolveWithBody(HttpServletRequest httpRequest, Object body) {
-        if (body instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = (Map<String, Object>) body;
-            return organizationContextService.resolveWithBody(httpRequest, map);
-        }
-        return organizationContextService.resolve(httpRequest);
     }
 
     private Long resolveTenantId(OrganizationContext orgCtx) {

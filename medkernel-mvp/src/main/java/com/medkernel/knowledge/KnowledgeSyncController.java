@@ -2,6 +2,8 @@ package com.medkernel.knowledge;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
+import com.medkernel.knowledge.dto.ReviewSyncRequest;
+import com.medkernel.knowledge.dto.TriggerSyncRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -51,30 +54,18 @@ public class KnowledgeSyncController {
 
     /**
      * 手动触发同步。
-     *
-     * <p>请求体：
-     * <pre>
-     * {
-     *   "source_code": "KS-0001",
-     *   "subscription_id": "SUB-0001",  // 可选
-     *   "sync_mode": "FULL"             // FULL / INCREMENTAL / DRY_RUN
-     * }
-     * </pre>
      */
     @Operation(summary = "Trigger sync")
     @PostMapping
-    public ApiResult<KnowledgeSyncLog> triggerSync(@RequestBody Map<String, Object> body,
+    public ApiResult<KnowledgeSyncLog> triggerSync(@Valid @RequestBody TriggerSyncRequest request,
                                                     HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         Long tenantId = resolveTenantId(orgCtx);
 
-        String sourceCode = (String) body.get("source_code");
-        String subscriptionId = (String) body.get("subscription_id");
-        String syncMode = (String) body.get("sync_mode");
+        String sourceCode = request.getSourceCode();
+        String subscriptionId = request.getSubscriptionId();
+        String syncMode = request.getSyncMode();
 
-        if (sourceCode == null || sourceCode.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "来源编码不能为空");
-        }
         if (syncMode == null || syncMode.isEmpty()) {
             syncMode = KnowledgeSyncLog.SYNC_MODE_FULL;
         }
@@ -119,11 +110,6 @@ public class KnowledgeSyncController {
 
     /**
      * 查询同步列表。
-     *
-     * @param sourceCode   来源编码过滤（可选）
-     * @param status       状态过滤（可选）
-     * @param reviewStatus 审核状态过滤（可选）
-     * @param limit        返回条数上限（默认50）
      */
     @Operation(summary = "List sync logs")
     @GetMapping
@@ -142,7 +128,6 @@ public class KnowledgeSyncController {
 
     /**
      * 差异预览。
-     * 对 PENDING 或 DIFF_READY 状态的同步执行差异分析。
      */
     @Operation(summary = "Preview diff")
     @PostMapping("/{logId}/preview")
@@ -159,27 +144,14 @@ public class KnowledgeSyncController {
 
     /**
      * 审核差异。
-     *
-     * <p>请求体：
-     * <pre>
-     * {
-     *   "reviewStatus": "APPROVED",   // APPROVED / REJECTED
-     *   "reviewedBy": "张医生",
-     *   "reviewComment": "内容准确，可通过"
-     * }
-     * </pre>
      */
     @Operation(summary = "Review sync")
     @PostMapping("/{logId}/review")
     public ApiResult<String> reviewSync(@PathVariable Long logId,
-                                         @RequestBody Map<String, String> body) {
-        String reviewStatus = body.get("reviewStatus");
-        String reviewedBy = body.get("reviewedBy") != null ? body.get("reviewedBy") : "system";
-        String reviewComment = body.get("reviewComment");
-
-        if (reviewStatus == null || reviewStatus.isEmpty()) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, "审核状态不能为空");
-        }
+                                         @Valid @RequestBody ReviewSyncRequest request) {
+        String reviewStatus = request.getReviewStatus();
+        String reviewedBy = request.getReviewedBy() != null ? request.getReviewedBy() : "system";
+        String reviewComment = request.getReviewComment();
 
         try {
             syncService.reviewSync(logId, reviewStatus, reviewedBy, reviewComment);
@@ -230,7 +202,6 @@ public class KnowledgeSyncController {
     @PostMapping("/{logId}/cancel")
     public ApiResult<String> cancelSync(@PathVariable Long logId,
                                          HttpServletRequest httpRequest) {
-        OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         String cancelledBy = com.medkernel.common.TraceContext.getUsername() != null ? com.medkernel.common.TraceContext.getUsername() : "system";
 
         try {

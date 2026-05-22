@@ -2,6 +2,9 @@ package com.medkernel.knowledge;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
+import com.medkernel.knowledge.dto.ExportPackageRequest;
+import com.medkernel.knowledge.dto.ImportPackageRequest;
+import com.medkernel.knowledge.dto.SyncPackageRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.slf4j.Logger;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,9 +44,10 @@ public class KnowledgePackageController {
     @Operation(summary = "Export package")
     @PostMapping("/export")
     public ApiResult<Map<String, Object>> exportPackage(
-            @RequestBody Map<String, Object> request,
+            @Valid @RequestBody ExportPackageRequest request,
             HttpServletRequest httpRequest) {
-        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        Map<String, Object> requestMap = toRequestMap(request);
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, requestMap);
         try {
             KnowledgePackage pkg = toKnowledgePackage(request, orgContext);
             KnowledgePackage exported = knowledgePackageService.exportPackage(pkg);
@@ -59,11 +64,11 @@ public class KnowledgePackageController {
     @PostMapping("/{packageId}/import")
     public ApiResult<Map<String, Object>> importPackage(
             @PathVariable Long packageId,
-            @RequestBody(required = false) Map<String, Object> request,
+            @RequestBody(required = false) ImportPackageRequest request,
             HttpServletRequest httpRequest) {
         String conflictStrategy = "SKIP";
-        if (request != null && request.containsKey("conflict_strategy")) {
-            conflictStrategy = (String) request.get("conflict_strategy");
+        if (request != null && request.getConflictStrategy() != null) {
+            conflictStrategy = request.getConflictStrategy();
         }
         try {
             Map<String, Object> result = knowledgePackageService.importPackage(packageId, conflictStrategy);
@@ -129,11 +134,11 @@ public class KnowledgePackageController {
     @PostMapping("/{packageId}/sync")
     public ApiResult<Map<String, Object>> syncPackage(
             @PathVariable Long packageId,
-            @RequestBody(required = false) Map<String, Object> request,
+            @RequestBody(required = false) SyncPackageRequest request,
             HttpServletRequest httpRequest) {
         String syncMode = "MANUAL";
-        if (request != null && request.containsKey("sync_mode")) {
-            syncMode = (String) request.get("sync_mode");
+        if (request != null && request.getSyncMode() != null) {
+            syncMode = request.getSyncMode();
         }
         try {
             Map<String, Object> result = knowledgePackageService.syncPackage(packageId, syncMode);
@@ -161,21 +166,39 @@ public class KnowledgePackageController {
 
     // ==================== 内部方法 ====================
 
-    private KnowledgePackage toKnowledgePackage(Map<String, Object> request, OrganizationContext orgContext) {
+    private Map<String, Object> toRequestMap(ExportPackageRequest req) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        if (req.getPackageCode() != null) map.put("package_code", req.getPackageCode());
+        if (req.getPackageName() != null) map.put("package_name", req.getPackageName());
+        if (req.getPackageVersion() != null) map.put("package_version", req.getPackageVersion());
+        if (req.getDescription() != null) map.put("description", req.getDescription());
+        if (req.getExportType() != null) map.put("export_type", req.getExportType());
+        if (req.getSourceTenantId() != null) map.put("source_tenant_id", req.getSourceTenantId());
+        if (req.getSourceTenantName() != null) map.put("source_tenant_name", req.getSourceTenantName());
+        if (req.getTargetTenantId() != null) map.put("target_tenant_id", req.getTargetTenantId());
+        if (req.getTargetTenantName() != null) map.put("target_tenant_name", req.getTargetTenantName());
+        if (req.getConflictStrategy() != null) map.put("conflict_strategy", req.getConflictStrategy());
+        if (req.getSyncMode() != null) map.put("sync_mode", req.getSyncMode());
+        if (req.getCreatedBy() != null) map.put("created_by", req.getCreatedBy());
+        if (req.getTenantId() != null) map.put("tenant_id", req.getTenantId());
+        return map;
+    }
+
+    private KnowledgePackage toKnowledgePackage(ExportPackageRequest req, OrganizationContext orgContext) {
         KnowledgePackage pkg = new KnowledgePackage();
-        pkg.setPackageCode(string(request.get("package_code"), null));
-        pkg.setPackageName(string(request.get("package_name"), null));
-        pkg.setPackageVersion(string(request.get("package_version"), null));
-        pkg.setDescription(string(request.get("description"), null));
-        pkg.setExportType(string(request.get("export_type"), "FULL"));
-        pkg.setSourceTenantId(string(request.get("source_tenant_id"),
-                orgContext != null ? orgContext.getTenantId() : null));
-        pkg.setSourceTenantName(string(request.get("source_tenant_name"), null));
-        pkg.setTargetTenantId(string(request.get("target_tenant_id"), null));
-        pkg.setTargetTenantName(string(request.get("target_tenant_name"), null));
-        pkg.setConflictStrategy(string(request.get("conflict_strategy"), "SKIP"));
-        pkg.setSyncMode(string(request.get("sync_mode"), "MANUAL"));
-        pkg.setCreatedBy(string(request.get("created_by"), null));
+        pkg.setPackageCode(req.getPackageCode());
+        pkg.setPackageName(req.getPackageName());
+        pkg.setPackageVersion(req.getPackageVersion());
+        pkg.setDescription(req.getDescription());
+        pkg.setExportType(req.getExportType() != null ? req.getExportType() : "FULL");
+        pkg.setSourceTenantId(req.getSourceTenantId() != null ? req.getSourceTenantId()
+                : orgContext != null ? orgContext.getTenantId() : null);
+        pkg.setSourceTenantName(req.getSourceTenantName());
+        pkg.setTargetTenantId(req.getTargetTenantId());
+        pkg.setTargetTenantName(req.getTargetTenantName());
+        pkg.setConflictStrategy(req.getConflictStrategy() != null ? req.getConflictStrategy() : "SKIP");
+        pkg.setSyncMode(req.getSyncMode() != null ? req.getSyncMode() : "MANUAL");
+        pkg.setCreatedBy(req.getCreatedBy());
 
         if (orgContext != null && orgContext.getTenantId() != null) {
             try {
@@ -224,16 +247,7 @@ public class KnowledgePackageController {
 
     private Map<String, Object> toDetailView(KnowledgePackage pkg) {
         Map<String, Object> view = toView(pkg);
-        // 详情视图不包含完整 contentJson（可能很大），仅包含摘要信息
         view.put("content_json_length", pkg.getContentJson() == null ? 0 : pkg.getContentJson().length());
         return view;
-    }
-
-    private String string(Object value, String defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        }
-        String text = String.valueOf(value);
-        return text.trim().isEmpty() ? defaultValue : text;
     }
 }

@@ -1,6 +1,8 @@
 package com.medkernel.knowledge;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.knowledge.dto.QualityCheckRequest;
+import com.medkernel.knowledge.dto.ResolveFindingRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -40,12 +43,12 @@ public class AssetQualityController {
     @Operation(summary = "Run quality check")
     @PostMapping("/check")
     public ApiResult<List<QualityFinding>> runQualityCheck(
-            @RequestBody(required = false) Map<String, String> body,
+            @RequestBody(required = false) QualityCheckRequest request,
             HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         Long tenantId = resolveTenantId(orgCtx);
-        String assetType = body != null ? body.get("assetType") : null;
-        String assetCode = body != null ? body.get("assetCode") : null;
+        String assetType = request != null ? request.getAssetType() : null;
+        String assetCode = request != null ? request.getAssetCode() : null;
         return ApiResult.success(qualityService.runQualityCheck(tenantId, assetType, assetCode));
     }
 
@@ -82,10 +85,10 @@ public class AssetQualityController {
     @Operation(summary = "Resolve finding")
     @PostMapping("/findings/{findingId}/resolve")
     public ApiResult<String> resolveFinding(@PathVariable Long findingId,
-                                              @RequestBody Map<String, String> body,
+                                              @Valid @RequestBody ResolveFindingRequest request,
                                               HttpServletRequest httpRequest) {
-        String resolvedBy = body.get("resolvedBy") != null ? body.get("resolvedBy") : "system";
-        String resolutionNote = body.get("resolutionNote");
+        String resolvedBy = request.getResolvedBy() != null ? request.getResolvedBy() : "system";
+        String resolutionNote = request.getResolutionNote();
         qualityService.resolveFinding(findingId, resolvedBy, resolutionNote);
         return ApiResult.success("质检发现已解决");
     }
