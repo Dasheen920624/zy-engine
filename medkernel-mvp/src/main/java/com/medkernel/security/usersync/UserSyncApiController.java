@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
  * 用户同步REST接口
  * 支持 HIS/EMR/OA/统一身份平台用户同步管理
  */
+@Tag(name = "User Sync Api")
 @RestController
 @RequestMapping("/api/user-sync")
 public class UserSyncApiController {
@@ -41,6 +44,7 @@ public class UserSyncApiController {
     /**
      * 列出所有同步源
      */
+    @Operation(summary = "List sources")
     @GetMapping("/sources")
     public ApiResult<List<Map<String, Object>>> listSources(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -54,6 +58,7 @@ public class UserSyncApiController {
     /**
      * 获取同步源详情
      */
+    @Operation(summary = "Get source")
     @GetMapping("/sources/{sourceId}")
     public ApiResult<Map<String, Object>> getSource(@PathVariable Long sourceId,
                                                     HttpServletRequest httpRequest) {
@@ -68,6 +73,7 @@ public class UserSyncApiController {
     /**
      * 创建同步源
      */
+    @Operation(summary = "Create source")
     @PostMapping("/sources")
     public ApiResult<Map<String, Object>> createSource(@RequestBody SyncSource source,
                                                        HttpServletRequest httpRequest) {
@@ -79,6 +85,7 @@ public class UserSyncApiController {
     /**
      * 更新同步源
      */
+    @Operation(summary = "Update source")
     @PostMapping("/sources/{sourceId}")
     public ApiResult<Map<String, Object>> updateSource(@PathVariable Long sourceId,
                                                        @RequestBody SyncSource source,
@@ -105,6 +112,7 @@ public class UserSyncApiController {
     /**
      * 列出所有同步任务
      */
+    @Operation(summary = "List tasks")
     @GetMapping("/tasks")
     public ApiResult<List<Map<String, Object>>> listTasks(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -118,6 +126,7 @@ public class UserSyncApiController {
     /**
      * 获取同步任务详情
      */
+    @Operation(summary = "Get task")
     @GetMapping("/tasks/{taskId}")
     public ApiResult<Map<String, Object>> getTask(@PathVariable Long taskId,
                                                   HttpServletRequest httpRequest) {
@@ -132,12 +141,13 @@ public class UserSyncApiController {
     /**
      * 手动触发同步任务
      */
+    @Operation(summary = "Trigger sync")
     @PostMapping("/sources/{sourceId}/sync")
     public ApiResult<Map<String, Object>> triggerSync(@PathVariable Long sourceId,
                                                       @RequestBody Map<String, Object> request,
                                                       HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        String taskType = (String) request.getOrDefault("taskType", "MANUAL");
+        String taskType = (String) request.getOrDefault("task_type", "MANUAL");
 
         // 获取外部用户数据（模拟）
         List<UserSyncApiService.ExternalUser> externalUsers = getExternalUsers(request);
@@ -150,6 +160,7 @@ public class UserSyncApiController {
     /**
      * 获取同步任务日志
      */
+    @Operation(summary = "List task logs")
     @GetMapping("/tasks/{taskId}/logs")
     public ApiResult<List<Map<String, Object>>> listTaskLogs(@PathVariable Long taskId,
                                                              HttpServletRequest httpRequest) {
@@ -173,9 +184,9 @@ public class UserSyncApiController {
 
         return usersData.stream()
                 .map(userData -> new UserSyncApiService.ExternalUser(
-                        (String) userData.get("externalId"),
+                        (String) userData.get("external_id"),
                         (String) userData.get("username"),
-                        (String) userData.get("displayName"),
+                        (String) userData.get("display_name"),
                         (String) userData.get("email"),
                         (String) userData.get("phone"),
                         (String) userData.get("department"),

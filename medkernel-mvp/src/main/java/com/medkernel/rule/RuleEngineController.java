@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Map;
  *
  * 组织维度统一通过 OrganizationContextService 解析：Header/Query 提供默认，Body 字段优先覆盖。
  */
+@Tag(name = "Rule Engine")
 @RestController
 @RequestMapping("/api/rule-engine")
 public class RuleEngineController {
@@ -34,6 +37,7 @@ public class RuleEngineController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Evaluate")
     @PostMapping("/evaluate")
     public ApiResult<Map<String, Object>> evaluate(@RequestBody Map<String, Object> request,
                                                    HttpServletRequest httpRequest) {
@@ -41,6 +45,7 @@ public class RuleEngineController {
         return ApiResult.success(ruleService.evaluateForScenario(request, orgContext));
     }
 
+    @Operation(summary = "Batch evaluate")
     @PostMapping("/batch-evaluate")
     public ApiResult<Map<String, Object>> batchEvaluate(@RequestBody Map<String, Object> request,
                                                         HttpServletRequest httpRequest) {
@@ -48,6 +53,7 @@ public class RuleEngineController {
         return ApiResult.success(ruleService.batchEvaluateForScenario(request, orgContext));
     }
 
+    @Operation(summary = "List results")
     @GetMapping("/results")
     public ApiResult<List<Map<String, Object>>> listResults(@RequestParam(required = false) String scenarioCode,
                                                             @RequestParam(required = false) String packageCode,
@@ -87,6 +93,7 @@ public class RuleEngineController {
         return ApiResult.success(ruleService.listEvaluations(filters));
     }
 
+    @Operation(summary = "Get result")
     @GetMapping("/results/{resultId}")
     public ApiResult<Map<String, Object>> getResult(@PathVariable String resultId,
                                                     HttpServletRequest httpRequest) {

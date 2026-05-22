@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
  * 外部身份绑定实体：院内工号/SSO subject 与平台用户关联。
  * 对应表 sec_identity_binding。
  */
-public class IdentityBinding {
+public class SsoIdentityBinding {
     private Long id;
     private Long tenantId;
     private Long userId;

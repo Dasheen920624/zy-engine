@@ -39,6 +39,7 @@ import type {
   EvalRectificationData,
   EvalResultData,
 } from "../../api/eval";
+import styles from "./evalReportPage.module.css";
 
 const { TextArea } = Input;
 
@@ -294,10 +295,8 @@ const EvalReportPage: React.FC = () => {
       key: "score_percentage",
       width: 100,
       render: (v: number) => {
-        let color = "green";
-        if (v < 60) color = "red";
-        else if (v < 80) color = "orange";
-        return <span style={{ color }}>{v}%</span>;
+        const colorClass = v < 60 ? styles.scoreRed : v < 80 ? styles.scoreOrange : styles.scoreGreen;
+        return <span className={colorClass}>{v}%</span>;
       },
     },
     {
@@ -433,7 +432,7 @@ const EvalReportPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       {/* 报告列表 */}
       <Card
         title="评估报告"
@@ -442,7 +441,7 @@ const EvalReportPage: React.FC = () => {
             <Select
               placeholder="按状态筛选"
               allowClear
-              style={{ width: 150 }}
+              className={styles.filterSelect}
               value={statusFilter}
               onChange={(v) => setStatusFilter(v)}
             >
@@ -468,7 +467,7 @@ const EvalReportPage: React.FC = () => {
       </Card>
 
       {/* 整改任务 */}
-      <Card title="整改任务" style={{ marginTop: 16 }}>
+      <Card title="整改任务" className={styles.sectionCardSpacing}>
         <Table
           rowKey="rect_id"
           columns={rectColumns}
@@ -500,7 +499,7 @@ const EvalReportPage: React.FC = () => {
       >
         {currentReport && (
           <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Row gutter={16} className={styles.detailStatsRow}>
               <Col span={6}>
                 <Statistic
                   title="得分"
@@ -522,7 +521,7 @@ const EvalReportPage: React.FC = () => {
               </Col>
             </Row>
 
-            <Descriptions column={2} size="small" bordered style={{ marginBottom: 16 }}>
+            <Descriptions column={2} size="small" bordered className={styles.detailDescriptions}>
               <Descriptions.Item label="报告编号">{currentReport.report_id}</Descriptions.Item>
               <Descriptions.Item label="评估编号">{currentReport.eval_id}</Descriptions.Item>
               <Descriptions.Item label="评估对象">{currentReport.subject_name || currentReport.subject_id}</Descriptions.Item>
@@ -534,8 +533,8 @@ const EvalReportPage: React.FC = () => {
             </Descriptions>
 
             {currentReport.recommendations && currentReport.recommendations.length > 0 && (
-              <Card size="small" title="整改建议" style={{ marginBottom: 16 }}>
-                <ul style={{ margin: 0, paddingLeft: 20 }}>
+              <Card size="small" title="整改建议" className={styles.detailSectionCard}>
+                <ul className={styles.recommendationList}>
                   {currentReport.recommendations.map((r, i) => (
                     <li key={i}>{r}</li>
                   ))}
@@ -544,7 +543,7 @@ const EvalReportPage: React.FC = () => {
             )}
 
             {currentReport.indicator_scores && currentReport.indicator_scores.length > 0 && (
-              <Card size="small" title="指标得分" style={{ marginBottom: 16 }}>
+              <Card size="small" title="指标得分" className={styles.detailSectionCard}>
                 <Table
                   size="small"
                   pagination={false}
@@ -588,8 +587,8 @@ const EvalReportPage: React.FC = () => {
                           <strong>{r.reviewer_name}</strong>
                           {" - "}
                           <Tag color={reviewColor}>{reviewLabel}</Tag>
-                          {r.review_comment && <div style={{ marginTop: 4, color: "var(--mk-text-secondary)" }}>{r.review_comment}</div>}
-                          <div style={{ fontSize: 12, color: "var(--mk-text-tertiary)" }}>{r.reviewed_at?.substring(0, 19)}</div>
+                          {r.review_comment && <div className={styles.reviewComment}>{r.review_comment}</div>}
+                          <div className={styles.reviewTime}>{r.reviewed_at?.substring(0, 19)}</div>
                         </div>
                       ),
                     };
@@ -653,7 +652,7 @@ const EvalReportPage: React.FC = () => {
             </Select>
           </Form.Item>
           <Form.Item name="due_date" label="截止日期">
-            <DatePicker style={{ width: "100%" }} />
+            <DatePicker className={styles.fullWidth} />
           </Form.Item>
         </Form>
       </Modal>
@@ -665,9 +664,9 @@ const EvalReportPage: React.FC = () => {
         onCancel={() => setGenerateModalVisible(false)}
         onOk={handleGenerate}
       >
-        <div style={{ marginBottom: 8 }}>选择评估结果：</div>
+        <div className={styles.generateHint}>选择评估结果：</div>
         <Select
-          style={{ width: "100%" }}
+          className={styles.fullWidth}
           placeholder="请选择评估结果"
           value={selectedEvalId || undefined}
           onChange={setSelectedEvalId}

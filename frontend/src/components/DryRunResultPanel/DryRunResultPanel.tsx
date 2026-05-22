@@ -8,6 +8,7 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import type { DryRunResultPanelProps, DryRunResult } from "./DryRunResultPanel.types";
+import styles from "./dryRunResultPanel.module.css";
 
 const { Text, Paragraph } = Typography;
 
@@ -33,14 +34,9 @@ export default function DryRunResultPanel({
     const config = statusConfig[result.status];
     
     return (
-      <List.Item
-        style={{
-          padding: "12px 16px",
-          borderBottom: "1px solid var(--mk-border-divider)",
-        }}
-      >
-        <div style={{ width: "100%" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <List.Item className={styles.listItem}>
+        <div className={styles.itemContent}>
+          <div className={styles.itemHeader}>
             <Space>
               <Tag color={config.color} icon={config.icon}>
                 {config.text}
@@ -50,12 +46,12 @@ export default function DryRunResultPanel({
             
             <Space size="small">
               {showDuration && result.duration && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className={styles.smallText}>
                   {result.duration}ms
                 </Text>
               )}
               {showTimestamp && result.timestamp && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className={styles.smallText}>
                   {result.timestamp}
                 </Text>
               )}
@@ -63,26 +59,15 @@ export default function DryRunResultPanel({
           </div>
           
           <Paragraph
-            style={{ margin: "8px 0 0", color: "var(--mk-text-secondary)" }}
+            className={styles.messageParagraph}
             ellipsis={{ rows: 2, expandable: true, symbol: "展开" }}
           >
             {result.message}
           </Paragraph>
           
           {result.details && (
-            <div
-              style={{
-                marginTop: 8,
-                padding: "8px",
-                background: "var(--mk-bg-soft)",
-                borderRadius: "var(--mk-radius-sm)",
-                fontSize: 12,
-                fontFamily: "var(--mk-font-mono)",
-                maxHeight: 100,
-                overflow: "auto",
-              }}
-            >
-              <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+            <div className={styles.detailsBlock}>
+              <pre className={styles.detailsPre}>
                 {JSON.stringify(result.details, null, 2)}
               </pre>
             </div>
@@ -124,19 +109,19 @@ export default function DryRunResultPanel({
           )}
         </Space>
       }
-      style={{ width: "100%" }}
+      className={styles.panelCard}
       bodyStyle={{ padding: 0 }}
     >
       {loading && (
-        <div style={{ textAlign: "center", padding: 24 }}>
+        <div className={styles.loadingContainer}>
           <Spin tip="正在运行测试..." />
         </div>
       )}
       {!loading && results.length === 0 && (
-        <Empty description={emptyText} style={{ padding: 24 }} />
+        <Empty description={emptyText} className={styles.emptyState} />
       )}
       {!loading && results.length > 0 && (
-        <div style={{ maxHeight, overflow: "auto" }}>
+        <div className={styles.scrollableResults} style={{ maxHeight }}>
           <List
             dataSource={results}
             renderItem={renderResultItem}

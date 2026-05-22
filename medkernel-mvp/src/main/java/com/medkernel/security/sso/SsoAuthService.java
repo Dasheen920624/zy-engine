@@ -1,6 +1,6 @@
 package com.medkernel.security.sso;
 
-import com.medkernel.security.IdentityBinding;
+import com.medkernel.security.SsoIdentityBinding;
 import com.medkernel.security.JwtTokenProvider;
 import com.medkernel.security.SecurityPersistenceService;
 import org.slf4j.Logger;
@@ -103,7 +103,7 @@ public class SsoAuthService {
 
         // 查找绑定关系
         Long providerId = toLong(providerConfig.get("provider_id"));
-        IdentityBinding binding = persistenceService.findIdentityBinding(toLong(tenantId), providerId, externalSubject);
+        SsoIdentityBinding binding = persistenceService.findIdentityBinding(toLong(tenantId), providerId, externalSubject);
 
         Long platformUserId;
         if (binding != null) {

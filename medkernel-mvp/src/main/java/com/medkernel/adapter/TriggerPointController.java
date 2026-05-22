@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import java.util.Map;
 /**
  * CDSS 触发点 API：触发点注册、匹配和执行。
  */
+@Tag(name = "Trigger Point")
 @RestController
 @RequestMapping("/api/cdss/triggers")
 public class TriggerPointController {
@@ -34,8 +37,9 @@ public class TriggerPointController {
     /**
      * 注册触发点。
      */
+    @Operation(summary = "Register trigger")
     @PostMapping
-    public ApiResult<CdssTriggerPoint> registerTrigger(@RequestBody CdssTriggerPoint trigger,
+    public ApiResult<CdssTriggerPointEntity> registerTrigger(@RequestBody CdssTriggerPointEntity trigger,
                                                          HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         trigger.setTenantId(resolveTenantId(orgCtx));
@@ -45,9 +49,10 @@ public class TriggerPointController {
     /**
      * 更新触发点。
      */
+    @Operation(summary = "Update trigger")
     @PostMapping("/{triggerId}")
     public ApiResult<String> updateTrigger(@PathVariable Long triggerId,
-                                             @RequestBody CdssTriggerPoint trigger,
+                                             @RequestBody CdssTriggerPointEntity trigger,
                                              HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         trigger.setId(triggerId);
@@ -59,8 +64,9 @@ public class TriggerPointController {
     /**
      * 查询触发点列表。
      */
+    @Operation(summary = "List triggers")
     @GetMapping
-    public ApiResult<List<CdssTriggerPoint>> listTriggers(
+    public ApiResult<List<CdssTriggerPointEntity>> listTriggers(
             @RequestParam(required = false) String businessScenario,
             @RequestParam(required = false) String accessStrategy,
             HttpServletRequest httpRequest) {
@@ -72,6 +78,7 @@ public class TriggerPointController {
     /**
      * 匹配触发点：根据业务场景匹配适用的触发点。
      */
+    @Operation(summary = "Match triggers")
     @PostMapping("/match")
     public ApiResult<List<Map<String, Object>>> matchTriggers(
             @RequestBody Map<String, Object> body,
@@ -85,6 +92,7 @@ public class TriggerPointController {
     /**
      * 执行触发点。
      */
+    @Operation(summary = "Execute trigger")
     @PostMapping("/{triggerCode}/execute")
     public ApiResult<Map<String, Object>> executeTrigger(
             @PathVariable String triggerCode,

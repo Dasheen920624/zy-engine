@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
@@ -17,6 +19,7 @@ import java.util.Map;
  * SSO 认证 API。
  * 提供 SSO 登录发起、回调处理、LDAP 直接认证、会话注销。
  */
+@Tag(name = "Sso Auth")
 @RestController
 @RequestMapping("/api/auth/sso")
 public class SsoAuthController {
@@ -33,6 +36,7 @@ public class SsoAuthController {
      * 发起 SSO 登录：返回外部 SSO 系统的登录跳转 URL。
      * GET /api/auth/sso/login?provider=cas
      */
+    @Operation(summary = "Initiate login")
     @GetMapping("/login")
     public ApiResult<Map<String, Object>> initiateLogin(
             @RequestParam String provider,
@@ -52,6 +56,7 @@ public class SsoAuthController {
      * SSO 回调端点：接收外部 SSO 系统的回调。
      * GET /api/auth/sso/callback?provider=cas&ticket=xxx&state=xxx
      */
+    @Operation(summary = "Callback")
     @GetMapping("/callback")
     public ApiResult<Map<String, Object>> callback(
             @RequestParam String provider,
@@ -84,6 +89,7 @@ public class SsoAuthController {
      * LDAP 直接认证（非浏览器跳转）。
      * POST /api/auth/sso/ldap
      */
+    @Operation(summary = "Ldap login")
     @PostMapping("/ldap")
     public ApiResult<Map<String, Object>> ldapLogin(
             @RequestBody Map<String, Object> request,
@@ -109,6 +115,7 @@ public class SsoAuthController {
      * 注销 SSO 会话。
      * POST /api/auth/sso/logout
      */
+    @Operation(summary = "Logout")
     @PostMapping("/logout")
     public ApiResult<Boolean> logout(@RequestBody Map<String, Object> request) {
         String sessionId = (String) request.get("session_id");
@@ -123,6 +130,7 @@ public class SsoAuthController {
      * 列出可用的 SSO 身份源。
      * GET /api/auth/sso/providers
      */
+    @Operation(summary = "List providers")
     @GetMapping("/providers")
     public ApiResult<Map<String, Object>> listProviders(HttpServletRequest httpRequest) {
         String tenantId = resolveTenantId(httpRequest);

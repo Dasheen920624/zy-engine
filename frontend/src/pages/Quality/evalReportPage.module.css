@@ -1,0 +1,60 @@
+/* PR-V3-INLINE-STYLE: EvalReportPage inline style 迁移 */
+
+.page {
+  padding: 24px;
+}
+
+.scoreGreen {
+  color: var(--mk-success);
+}
+
+.scoreOrange {
+  color: var(--mk-warning);
+}
+
+.scoreRed {
+  color: var(--mk-danger);
+}
+
+.recommendationList {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.reviewComment {
+  margin-top: 4px;
+  color: var(--mk-text-secondary);
+}
+
+.reviewTime {
+  font-size: 12px;
+  color: var(--mk-text-tertiary);
+}
+
+.generateHint {
+  margin-bottom: 8px;
+}
+
+.filterSelect {
+  width: 150px;
+}
+
+.sectionCardSpacing {
+  margin-top: var(--mk-space-4);
+}
+
+.detailStatsRow {
+  margin-bottom: var(--mk-space-4);
+}
+
+.detailDescriptions {
+  margin-bottom: var(--mk-space-4);
+}
+
+.detailSectionCard {
+  margin-bottom: var(--mk-space-4);
+}
+
+.fullWidth {
+  width: 100%;
+}

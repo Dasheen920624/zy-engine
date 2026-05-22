@@ -42,6 +42,7 @@ import type {
 } from "@/api/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SourceInfo } from "@/components/SourceInfo";
+import styles from "./PackageDetail.module.css";
 
 const { Text } = Typography;
 
@@ -89,38 +90,23 @@ function changeTypeLabel(ct?: string): string {
   }
 }
 
-function diffLineColor(type: "add" | "del" | "neutral"): string {
-  switch (type) {
-    case "add":
-      return "var(--mk-code-add)";
-    case "del":
-      return "var(--mk-code-del)";
-    case "neutral":
-    default:
-      return "var(--mk-code-text)";
-  }
+function diffLineClass(type: "add" | "del" | "neutral"): string {
+  if (type === "add") return styles.diffLineAdd;
+  if (type === "del") return styles.diffLineDel;
+  return styles.diffLineNeutral;
 }
 
-function diffLineBackground(type: "add" | "del" | "neutral"): string {
-  switch (type) {
-    case "add":
-      return "var(--mk-code-add-bg)";
-    case "del":
-      return "var(--mk-code-del-bg)";
-    case "neutral":
-    default:
-      return "transparent";
-  }
-}
+// diffLineColor() / diffLineBackground() 已废弃 → 改由 PackageDetail.module.css 中
+// `.diffLineAdd / .diffLineDel / .diffLineNeutral` token class 接管（PR-V3-INLINE-STYLE）
 
 function issueIcon(severity: string) {
   switch (severity) {
     case "ERROR":
-      return <ExclamationCircleOutlined style={{ color: "var(--mk-danger)" }} />;
+      return <ExclamationCircleOutlined className={styles.iconDanger} />;
     case "WARNING":
-      return <WarningOutlined style={{ color: "var(--mk-warning)" }} />;
+      return <WarningOutlined className={styles.iconWarning} />;
     default:
-      return <CheckCircleOutlined style={{ color: "var(--mk-success)" }} />;
+      return <CheckCircleOutlined className={styles.iconSuccess} />;
   }
 }
 
@@ -128,35 +114,27 @@ function issueIcon(severity: string) {
 function ReviewCheckList({ issues }: { issues: ReviewIssue[] }) {
   if (!issues || issues.length === 0) {
     return (
-      <div style={{ padding: "8px 0" }}>
+      <div className={styles.reviewPass}>
         <Space>
-          <CheckCircleOutlined style={{ color: "var(--mk-success)" }} />
-          <Text style={{ color: "var(--mk-success)" }}>全部检查通过</Text>
+          <CheckCircleOutlined className={styles.iconSuccess} />
+          <Text className={styles.textSuccess}>全部检查通过</Text>
         </Space>
       </div>
     );
   }
 
   return (
-    <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+    <ul className={styles.reviewList}>
       {issues.map((issue, i) => (
         <li
           key={i}
-          style={{
-            padding: "8px 0",
-            borderBottom:
-              i < issues.length - 1 ? "var(--mk-border-width) solid var(--mk-border-divider)" : "none",
-            display: "flex",
-            gap: 8,
-            alignItems: "flex-start",
-            fontSize: 13,
-          }}
+          className={styles.reviewItem}
         >
-          <span style={{ flexShrink: 0, marginTop: 2 }}>{issueIcon(issue.severity)}</span>
+          <span className={styles.reviewItemIcon}>{issueIcon(issue.severity)}</span>
           <div>
             <strong>{issue.field}</strong>
             <br />
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" className={styles.reviewMessage}>
               {issue.message}
             </Text>
           </div>
@@ -183,7 +161,7 @@ function ManifestTable({ manifest }: { manifest?: Record<string, unknown> }) {
   }
 
   const cols: ColumnsType<(typeof items)[0]> = [
-    { title: "资产编码", dataIndex: "asset_code", key: "code", render: (v: string) => <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 12 }}>{v}</code> },
+    { title: "资产编码", dataIndex: "asset_code", key: "code", render: (v: string) => <code className={styles.codeFontSmall}>{v}</code> },
     { title: "类型", dataIndex: "asset_type", key: "type", width: 80 },
     { title: "版本", dataIndex: "version", key: "version", width: 60 },
     {
@@ -224,45 +202,18 @@ function DiffView({ diff }: { diff?: Record<string, unknown> }) {
 
   if (lines.length === 0) {
     return (
-      <pre
-        style={{
-          background: "var(--mk-bg-muted)",
-          padding: 12,
-          borderRadius: 4,
-          fontSize: 12,
-          fontFamily: "var(--mk-font-mono)",
-          maxHeight: 300,
-          overflow: "auto",
-          margin: 0,
-        }}
-      >
+      <pre className={styles.diffView}>
         {JSON.stringify(diff, null, 2)}
       </pre>
     );
   }
 
   return (
-    <pre
-      style={{
-        background: "var(--mk-bg-inverse)",
-        padding: 12,
-        borderRadius: 4,
-        fontSize: 12,
-        fontFamily: "var(--mk-font-mono)",
-        maxHeight: 300,
-        overflow: "auto",
-        margin: 0,
-      }}
-    >
+    <pre className={styles.diffViewDark}>
       {lines.map((line, i) => (
         <div
           key={i}
-          style={{
-            color: diffLineColor(line.type),
-            background: diffLineBackground(line.type),
-            padding: "1px 4px",
-            borderRadius: 2,
-          }}
+          className={`${styles.diffLine} ${diffLineClass(line.type)}`}
         >
           {line.text}
         </div>
@@ -440,36 +391,36 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
         }
       >
         {detailLoading || reviewLoading ? (
-          <div style={{ textAlign: "center", padding: 40, color: "var(--mk-text-tertiary)" }}>
+          <div className={styles.loadingContainer}>
             加载中...
           </div>
         ) : (
           <Row gutter={16}>
             {/* 左栏：基础信息 + manifest */}
             <Col xs={24} lg={12}>
-              <h4 style={{ marginBottom: 12, fontWeight: 500 }}>基础信息</h4>
+              <h4 className={styles.sectionTitle}>基础信息</h4>
               <Descriptions
                 column={1}
                 size="small"
                 labelStyle={{ color: "var(--mk-text-tertiary)", width: 140 }}
-                style={{ marginBottom: 16 }}
+                className={styles.marginBottomSmall}
               >
                 <Descriptions.Item label="包编码">
-                  <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.package_code}</code>
+                  <code className={styles.codeFont}>{selectedPkg.package_code}</code>
                 </Descriptions.Item>
                 <Descriptions.Item label="版本">
-                  <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.package_version}</code>
+                  <code className={styles.codeFont}>{selectedPkg.package_version}</code>
                 </Descriptions.Item>
                 <Descriptions.Item label="资产类型">
                   <Tag color="blue">{selectedPkg.asset_type}</Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="组织范围">{selectedPkg.scope_reference || `${selectedPkg.scope_level} · ${selectedPkg.scope_code}`}</Descriptions.Item>
                 <Descriptions.Item label="基础版本">
-                  <code style={{ fontFamily: "var(--mk-font-mono)" }}>{selectedPkg.base_version || "—"}</code>
+                  <code className={styles.codeFont}>{selectedPkg.base_version || "—"}</code>
                 </Descriptions.Item>
                 <Descriptions.Item label="内容哈希">
                   <Tooltip title={selectedPkg.content_hash}>
-                    <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 11 }}>{shortHash(selectedPkg.content_hash)}</code>
+                    <code className={styles.codeFontSmall}>{shortHash(selectedPkg.content_hash)}</code>
                   </Tooltip>
                 </Descriptions.Item>
                 <Descriptions.Item label="创建人">{selectedPkg.created_by || "—"} · {formatTime(selectedPkg.created_time)}</Descriptions.Item>
@@ -483,21 +434,21 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
                 </Descriptions.Item>
               </Descriptions>
 
-              <Divider style={{ margin: "12px 0" }} />
+              <Divider className={styles.dividerCompact} />
 
-              <h4 style={{ marginBottom: 12, fontWeight: 500 }}>资产清单</h4>
+              <h4 className={styles.sectionTitle}>资产清单</h4>
               <ManifestTable manifest={pkgDetail?.manifest} />
             </Col>
 
             {/* 右栏：校验检查 */}
             <Col xs={24} lg={12}>
-              <h4 style={{ marginBottom: 12, fontWeight: 500 }}>校验检查</h4>
+              <h4 className={styles.sectionTitle}>校验检查</h4>
               <ReviewCheckList issues={pkgReview?.issues || []} />
 
               {/* 来源完整性 — 使用 SourceInfo compact */}
               {pkgReview?.source_review && pkgReview.source_review.enabled && (
-                <div style={{ marginTop: 12 }}>
-                  <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 8 }}>
+                <div className={styles.sourceReview}>
+                  <Text type="secondary" className={styles.sourceReviewLabel}>
                     来源审核：
                   </Text>
                   {pkgReview.source_review.missing_count === 0 &&
@@ -522,8 +473,8 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
 
               {/* 校验摘要 */}
               {pkgReview?.summary && (
-                <div style={{ marginTop: 12 }}>
-                  <h4 style={{ marginBottom: 8, fontWeight: 500 }}>校验摘要</h4>
+                <div className={styles.reviewSummary}>
+                  <h4 className={styles.sectionTitle}>校验摘要</h4>
                   <Descriptions
                     column={1}
                     size="small"
@@ -539,33 +490,19 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
 
               {/* ready_to_publish 状态 */}
               <div
-                style={{
-                  marginTop: 16,
-                  padding: "8px 12px",
-                  background: pkgReview?.ready_to_publish
-                    ? "var(--mk-success-soft)"
-                    : "var(--mk-danger-soft)",
-                  borderRadius: 4,
-                  border: `1px solid ${
-                    pkgReview?.ready_to_publish
-                      ? "var(--mk-success-border)"
-                      : "var(--mk-danger-border)"
-                  }`,
-                }}
+                className={`${styles.publishStatus} ${
+                  pkgReview?.ready_to_publish ? styles.publishStatusReady : styles.publishStatusNotReady
+                }`}
               >
                 <Space>
                   {pkgReview?.ready_to_publish ? (
-                    <CheckCircleOutlined style={{ color: "var(--mk-success)" }} />
+                    <CheckCircleOutlined className={styles.iconSuccess} />
                   ) : (
-                    <ExclamationCircleOutlined style={{ color: "var(--mk-danger)" }} />
+                    <ExclamationCircleOutlined className={styles.iconDanger} />
                   )}
                   <Text
                     strong
-                    style={{
-                      color: pkgReview?.ready_to_publish
-                        ? "var(--mk-success)"
-                        : "var(--mk-danger)",
-                    }}
+                    className={pkgReview?.ready_to_publish ? styles.textSuccess : styles.textDanger}
                   >
                     {pkgReview?.ready_to_publish ? "可发布" : "不可发布"}
                   </Text>
@@ -576,9 +513,9 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
             {/* diff 全宽 */}
             {pkgDetail?.diff && Object.keys(pkgDetail.diff).length > 0 && (
               <Col span={24}>
-                <Divider style={{ margin: "16px 0 12px" }} />
-                <h4 style={{ marginBottom: 12, fontWeight: 500 }}>
-                  <DiffOutlined style={{ marginRight: 8 }} />
+                <Divider className={styles.dividerNormal} />
+                <h4 className={styles.sectionTitle}>
+                  <DiffOutlined className={styles.marginRightSmall} />
                   版本差异（基础 {selectedPkg.base_version || "—"} → 目标 {selectedPkg.package_version}）
                 </h4>
                 <DiffView diff={pkgDetail.diff} />
@@ -591,7 +528,7 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
       {/* 发布确认弹窗 — 要求输入包名确认 + 必填原因 */}
       <Modal
         title={
-          <span style={{ color: "var(--mk-danger)" }}>
+          <span className={styles.publishModalTitle}>
             发布配置包: {selectedPkg?.package_code}@{selectedPkg?.package_version}
           </span>
         }
@@ -622,22 +559,16 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
           </Space>
         }
       >
-        <div style={{
-          marginBottom: 16,
-          padding: "8px 12px",
-          background: "var(--mk-danger-soft)",
-          borderRadius: 4,
-          border: "1px solid var(--mk-danger-border)",
-        }}>
-          <Text style={{ color: "var(--mk-danger)" }}>
-            <ExclamationCircleOutlined style={{ marginRight: 8 }} />
+        <div className={styles.publishWarning}>
+          <Text className={styles.textDanger}>
+            <ExclamationCircleOutlined className={styles.marginRightSmall} />
             此操作不可撤销！发布后将写入 ENGINE_AUDIT_LOG（PKG/PUBLISH）。
           </Text>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
-            请输入包编码确认 <span style={{ color: "var(--mk-danger)" }}>*</span>
+        <div className={styles.publishFormSection}>
+          <Text type="secondary" className={styles.publishFormLabel}>
+            请输入包编码确认 <span className={styles.textDanger}>*</span>
           </Text>
           <Input
             placeholder={`请输入 "${selectedPkg?.package_code}" 以确认`}
@@ -646,13 +577,13 @@ export default function PackageDetail({ selectedPkg }: PackageDetailProps) {
             status={confirmPackageName && confirmPackageName !== selectedPkg?.package_code ? "error" : undefined}
           />
           {confirmPackageName && confirmPackageName !== selectedPkg?.package_code && (
-            <Text type="danger" style={{ fontSize: 12 }}>包编码不匹配</Text>
+            <Text type="danger" className={styles.publishFormError}>包编码不匹配</Text>
           )}
         </div>
 
         <div>
-          <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
-            发布原因 <span style={{ color: "var(--mk-danger)" }}>*</span>
+          <Text type="secondary" className={styles.publishFormLabel}>
+            发布原因 <span className={styles.textDanger}>*</span>
           </Text>
           <Input.TextArea
             placeholder="必填 · 例：医学审核已通过，建议本周二上线"

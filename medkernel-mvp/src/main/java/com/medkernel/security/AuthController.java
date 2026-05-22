@@ -8,12 +8,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
  * 认证控制器：POST /api/auth/login, GET /api/auth/me, POST /api/auth/logout。
  */
+@Tag(name = "Auth")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -24,6 +27,7 @@ public class AuthController {
         this.authService = authService;
     }
 
+    @Operation(summary = "Login")
     @PostMapping("/login")
     public ApiResult<Map<String, Object>> login(@RequestBody Map<String, String> body,
                                                 HttpServletRequest request) {
@@ -38,18 +42,21 @@ public class AuthController {
         return ApiResult.success(data);
     }
 
+    @Operation(summary = "Me")
     @GetMapping("/me")
     public ApiResult<Map<String, Object>> me() {
         Map<String, Object> data = authService.getCurrentUser();
         return ApiResult.success(data);
     }
 
+    @Operation(summary = "Logout")
     @PostMapping("/logout")
     public ApiResult<Void> logout(HttpServletRequest request) {
         authService.logout(request);
         return ApiResult.success(null);
     }
 
+    @Operation(summary = "Health")
     @GetMapping("/health")
     public ApiResult<Map<String, String>> health() {
         java.util.LinkedHashMap<String, String> data = new java.util.LinkedHashMap<String, String>();

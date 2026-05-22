@@ -7,9 +7,12 @@ import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
+@Tag(name = "Config Package Import")
 @RestController
 @RequestMapping("/api/config-packages/import")
 public class ConfigPackageImportController {
@@ -23,6 +26,7 @@ public class ConfigPackageImportController {
     }
 
     // Step 1: 上传配置包文件
+    @Operation(summary = "Upload")
     @PostMapping("/upload")
     public ApiResult<Map<String, Object>> upload(@RequestParam("file") MultipartFile file,
                                                   HttpServletRequest httpRequest) {
@@ -32,6 +36,7 @@ public class ConfigPackageImportController {
     }
 
     // Step 2: 校验包完整性
+    @Operation(summary = "Validate")
     @PostMapping("/validate")
     public ApiResult<Map<String, Object>> validate(@RequestBody Map<String, Object> request,
                                                     HttpServletRequest httpRequest) {
@@ -41,6 +46,7 @@ public class ConfigPackageImportController {
     }
 
     // Step 3: 来源审核检查
+    @Operation(summary = "Source check")
     @PostMapping("/source-check")
     public ApiResult<Map<String, Object>> sourceCheck(@RequestBody Map<String, Object> request,
                                                        HttpServletRequest httpRequest) {
@@ -54,6 +60,7 @@ public class ConfigPackageImportController {
     }
 
     // Step 4: 影响评估
+    @Operation(summary = "Impact")
     @PostMapping("/impact")
     public ApiResult<Map<String, Object>> impact(@RequestBody Map<String, Object> request,
                                                   HttpServletRequest httpRequest) {
@@ -63,6 +70,7 @@ public class ConfigPackageImportController {
     }
 
     // Step 5: 确认发布
+    @Operation(summary = "Confirm")
     @PostMapping("/confirm")
     public ApiResult<Map<String, Object>> confirm(@RequestBody Map<String, Object> request,
                                                    HttpServletRequest httpRequest) {

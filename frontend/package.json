@@ -15,6 +15,7 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "gen:types": "openapi-typescript http://localhost:18080/medkernel/v3/api-docs -o src/api/generated-types.ts",
     "verify": "npm run lint && npm run format:check && npm run typecheck && npm test",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
@@ -62,7 +63,8 @@
     "typescript": "5.6.3",
     "typescript-eslint": "8.8.1",
     "vite": "5.4.8",
-    "vitest": "2.1.2"
+    "vitest": "2.1.2",
+    "openapi-typescript": "7.4.4"
   },
   "engines": {
     "node": ">=18.18.0"

@@ -1,5 +1,4 @@
 package com.medkernel.rule;
-
 import com.medkernel.common.TraceContext;
 import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.dto.RuleResult;
@@ -7,7 +6,6 @@ import com.medkernel.organization.OrganizationContext;
 import com.medkernel.persistence.EnginePersistenceService;
 import com.medkernel.util.ClinicalFactUtils;
 import org.springframework.stereotype.Service;
-
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,23 +23,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicLong;
-
 @Service
 public class RuleService {
-    private static final int EXEC_LOG_RING_CAPACITY = 500;
     private static final int EVALUATION_RING_CAPACITY = 500;
     private static final String DEFAULT_TENANT_ID = "default";
     private static final String DEFAULT_HOSPITAL_CODE = "ZYHOSPITAL";
     private static final String DEFAULT_SCOPE_LEVEL = "HOSPITAL";
-
     // 第三方规则引擎对外开放的标准场景码，与产品化方案/前端规则校验工作台保持一致。
     private static final Set<String> SUPPORTED_RULE_ENGINE_SCENARIOS = new LinkedHashSet<String>(Arrays.asList(
             "PATHWAY_ENTRY", "EMR_QC", "INSURANCE_QC", "ORDER_SAFETY",
             "DRUG_INDICATION", "EXAM_RATIONALITY"));
-
     // 历史规则只声明 rule_type 时的默认场景路由，避免老规则需要立刻补 scenario_codes 才能被第三方调用。
     private static final Map<String, Set<String>> DEFAULT_RULE_TYPE_SCENARIOS = defaultRuleTypeScenarios();
-
     // 暴露给列表/详情接口的摘要字段，列表返回不包含 results/warnings 详情，避免大 payload。
     private static final List<String> EVALUATION_SUMMARY_FIELDS = Arrays.asList(
             "result_id", "batch_id", "case_id", "scenario_code",
@@ -51,28 +44,25 @@ public class RuleService {
             "group_code", "hospital_code", "campus_code", "site_code", "department_code",
             "scope_level", "scope_code", "org_source",
             "patient_id", "encounter_id", "created_time");
-
     private final EnginePersistenceService persistenceService;
     private final RuleEvalResultRepository ruleEvalResultRepository;
+    private final RuleExecutionLogService ruleExecutionLogService;
     private final RuleDslEvaluator dslEvaluator = new RuleDslEvaluator();
     private final Map<String, RuleDefinition> ruleStore = new ConcurrentHashMap<String, RuleDefinition>();
-    private final Deque<RuleExecLogEntry> execLogs = new ConcurrentLinkedDeque<RuleExecLogEntry>();
-    private final AtomicLong execLogSequence = new AtomicLong();
     // 第三方规则引擎评估结果环形缓冲；后续可接 Oracle/达梦持久化，但单批先保证 DB-only 也能回查。
     private final Deque<Map<String, Object>> evaluationStore = new ConcurrentLinkedDeque<Map<String, Object>>();
     private final AtomicLong evaluationSequence = new AtomicLong();
     private final AtomicLong batchSequence = new AtomicLong();
-
     public RuleService(EnginePersistenceService persistenceService,
-                       RuleEvalResultRepository ruleEvalResultRepository) {
+                       RuleEvalResultRepository ruleEvalResultRepository,
+                       RuleExecutionLogService ruleExecutionLogService) {
         this.persistenceService = persistenceService;
         this.ruleEvalResultRepository = ruleEvalResultRepository;
+        this.ruleExecutionLogService = ruleExecutionLogService;
     }
-
     public List<RuleDefinition> importRules(Object request) {
         return importRules(request, null);
     }
-
     public List<RuleDefinition> importRules(Object request, OrganizationContext orgContext) {
         List<Map<String, Object>> rules = normalizeRules(request);
         List<RuleDefinition> imported = new ArrayList<RuleDefinition>();
@@ -85,11 +75,9 @@ public class RuleService {
         }
         return imported;
     }
-
     public RuleDefinition publish(String ruleCode, Map<String, Object> request) {
         return publish(ruleCode, request, null);
     }
-
     public RuleDefinition publish(String ruleCode, Map<String, Object> request, OrganizationContext orgContext) {
         String versionNo = string(request.get("version_no"), "1.0.0");
         RuleDefinition definition = findRule(ruleCode, versionNo, orgContext);
@@ -110,11 +98,9 @@ public class RuleService {
                 packageReviewForAudit(definition.getPackageCode(), definition.getPackageVersion(), 1, definition));
         return definition;
     }
-
     public Map<String, Object> reviewPackage(String packageCode, String packageVersion) {
         return reviewPackage(packageCode, packageVersion, null);
     }
-
     public Map<String, Object> reviewPackage(String packageCode, String packageVersion, OrganizationContext orgContext) {
         List<RuleDefinition> rules = rulesInPackage(packageCode, packageVersion, orgContext);
         if (rules.isEmpty()) {
@@ -122,11 +108,9 @@ public class RuleService {
         }
         return buildPackageReview(packageCode, packageVersion, rules);
     }
-
     public Map<String, Object> publishPackage(String packageCode, Map<String, Object> request) {
         return publishPackage(packageCode, request, null);
     }
-
     public Map<String, Object> publishPackage(String packageCode, Map<String, Object> request,
                                               OrganizationContext orgContext) {
         String packageVersion = string(request == null ? null : request.get("package_version"), null);
@@ -135,7 +119,6 @@ public class RuleService {
         if (rules.isEmpty()) {
             throw new IllegalArgumentException("rule package not found: " + packageCode);
         }
-
         Map<String, Object> review = buildPackageReview(packageCode, packageVersion, rules);
         if (!Boolean.TRUE.equals(review.get("ready_to_publish"))) {
             if (hasReferenceBlockingIssue(review)) {
@@ -143,7 +126,6 @@ public class RuleService {
             }
             throw new IllegalArgumentException("rule package is not ready to publish: " + review.get("issues"));
         }
-
         int published = 0;
         for (RuleDefinition definition : rules) {
             markPublished(definition, approvedBy);
@@ -156,11 +138,9 @@ public class RuleService {
         auditRuleChange("PUBLISH_PACKAGE", "RULE_PACKAGE", packageCode, approvedBy, result);
         return result;
     }
-
     public List<RuleDefinition> listRules() {
         return listRules(null);
     }
-
     public List<RuleDefinition> listRules(Map<String, String> filters) {
         List<RuleDefinition> list = new ArrayList<RuleDefinition>(ruleStore.values());
         list = filterRulesByOrg(list, filters);
@@ -176,11 +156,9 @@ public class RuleService {
         });
         return list;
     }
-
     private List<RuleDefinition> rulesInPackage(String packageCode, String packageVersion) {
         return rulesInPackage(packageCode, packageVersion, null);
     }
-
     private List<RuleDefinition> rulesInPackage(String packageCode, String packageVersion,
                                                 OrganizationContext orgContext) {
         String code = string(packageCode, null);
@@ -211,13 +189,11 @@ public class RuleService {
         });
         return rules;
     }
-
     private Map<String, Object> buildPackageReview(String packageCode, String packageVersion, List<RuleDefinition> rules) {
         Map<String, Integer> byType = new LinkedHashMap<String, Integer>();
         Map<String, Integer> byStatus = new LinkedHashMap<String, Integer>();
         List<Map<String, Object>> issues = new ArrayList<Map<String, Object>>();
         List<Map<String, Object>> ruleSummaries = new ArrayList<Map<String, Object>>();
-
         int enabledRules = 0;
         int draftRules = 0;
         int publishedRules = 0;
@@ -246,7 +222,6 @@ public class RuleService {
             collectReferenceIssues(definition, issues);
             ruleSummaries.add(ruleSummary(definition));
         }
-
         Map<String, Object> review = new LinkedHashMap<String, Object>();
         review.put("package_code", packageCode);
         review.put("package_version", resolvedPackageVersion);
@@ -265,7 +240,6 @@ public class RuleService {
         review.put("rules", ruleSummaries);
         return review;
     }
-
     private Map<String, Object> ruleSummary(RuleDefinition definition) {
         Map<String, Object> summary = new LinkedHashMap<String, Object>();
         summary.put("rule_code", definition.getRuleCode());
@@ -285,11 +259,9 @@ public class RuleService {
         summary.put("reference_binding_type", definition.getReferenceBindingType());
         return summary;
     }
-
     private void collectDslIssues(RuleDefinition definition, List<Map<String, Object>> issues) {
         collectDslIssues(definition.getRuleCode(), definition.getRuleJson().get("condition"), "condition", issues);
     }
-
     private void collectReferenceIssues(RuleDefinition definition, List<Map<String, Object>> issues) {
         if (definition.getReferenceDocumentCode() == null || definition.getReferenceDocumentCode().trim().isEmpty()) {
             Map<String, Object> issue = new LinkedHashMap<String, Object>();
@@ -300,7 +272,6 @@ public class RuleService {
             issues.add(issue);
         }
     }
-
     @SuppressWarnings("unchecked")
     private boolean hasReferenceBlockingIssue(Map<String, Object> review) {
         Object value = review == null ? null : review.get("issues");
@@ -318,7 +289,6 @@ public class RuleService {
         }
         return false;
     }
-
     @SuppressWarnings("unchecked")
     private void collectDslIssues(String ruleCode, Object node, String path, List<Map<String, Object>> issues) {
         if (!(node instanceof Map)) {
@@ -341,7 +311,6 @@ public class RuleService {
             }
             return;
         }
-
         String fact = string(condition.get("fact"), null);
         String operator = string(condition.get("operator"), null);
         if (fact == null) {
@@ -370,7 +339,6 @@ public class RuleService {
             }
         }
     }
-
     private Map<String, Object> issue(String ruleCode, String field, String message) {
         Map<String, Object> issue = new LinkedHashMap<String, Object>();
         issue.put("rule_code", ruleCode);
@@ -379,7 +347,6 @@ public class RuleService {
         issue.put("message", message);
         return issue;
     }
-
     private boolean supportedOperator(String operator) {
         return "exists".equals(operator)
                 || "equals".equals(operator)
@@ -387,15 +354,12 @@ public class RuleService {
                 || "contains".equals(operator)
                 || "within_minutes_from".equals(operator);
     }
-
     public RuleDefinition getRule(String ruleCode, String versionNo) {
         return getRule(ruleCode, versionNo, null);
     }
-
     public RuleDefinition getRule(String ruleCode, String versionNo, OrganizationContext orgContext) {
         return findRule(ruleCode, versionNo, orgContext);
     }
-
     private RuleDefinition findRule(String ruleCode, String versionNo, OrganizationContext orgContext) {
         if (versionNo != null && !versionNo.trim().isEmpty()) {
             RuleDefinition exact = ruleStore.get(key(orgContext, ruleCode, versionNo));
@@ -419,11 +383,9 @@ public class RuleService {
         }
         return latest;
     }
-
     public List<RuleResult> evaluate(Map<String, Object> request) {
         return evaluate(request, null);
     }
-
     public List<RuleResult> evaluate(Map<String, Object> request, OrganizationContext orgContext) {
         Map<String, Object> patientContext = getPatientContext(request);
         List<RuleDefinition> published = publishedRules(orgContext);
@@ -431,14 +393,12 @@ public class RuleService {
             // 未导入规则时保留内置AMI规则，保证旧演示和健康验证不被配置化改造打断。
             return evaluateBuiltInRules(patientContext, orgContext);
         }
-
         List<RuleResult> results = new ArrayList<RuleResult>();
         for (RuleDefinition definition : published) {
             results.add(executeDefinition(definition, patientContext));
         }
         return results;
     }
-
     /**
      * RULE-001 第三方规则引擎 API：通过 scenario_code + rule_package_code 路由到已发布规则，
      * 输出标准化结果信封并写入审计。第二批补齐：分配 result_id 并落入评估环形缓冲供回查。
@@ -446,20 +406,16 @@ public class RuleService {
     public Map<String, Object> evaluateForScenario(Map<String, Object> request) {
         return evaluateForScenario(request, null);
     }
-
     public Map<String, Object> evaluateForScenario(Map<String, Object> request, OrganizationContext orgContext) {
         ScenarioInvocation invocation = parseInvocation(request, orgContext);
         Map<String, Object> patientContext = requirePatientContext(request.get("patient_context"));
         ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation, patientContext);
-
         Map<String, Object> evaluation = recordEvaluation("SINGLE", null, null,
                 invocation, patientContext, outcome);
-
         auditEvaluation("EVALUATE_SCENARIO", invocation, patientContext, outcome,
                 Collections.singletonList(String.valueOf(evaluation.get("result_id"))), null);
         return evaluation;
     }
-
     /**
      * RULE-001 第二批：批量同步评估。items 内每个 patient_context 共享同一个 scenario_code/package 过滤条件，
      * 每条独立写入 evaluation ring 并返回单独的 result_id，便于 UI 工作台批量复演与抽样回查。
@@ -467,14 +423,12 @@ public class RuleService {
     public Map<String, Object> batchEvaluateForScenario(Map<String, Object> request) {
         return batchEvaluateForScenario(request, null);
     }
-
     public Map<String, Object> batchEvaluateForScenario(Map<String, Object> request, OrganizationContext orgContext) {
         ScenarioInvocation invocation = parseInvocation(request, orgContext);
         Object itemsRaw = request == null ? null : request.get("items");
         if (!(itemsRaw instanceof Collection) || ((Collection<?>) itemsRaw).isEmpty()) {
             throw new IllegalArgumentException("items must be a non-empty array");
         }
-
         String batchId = "rebatch-" + batchSequence.incrementAndGet();
         String createdTime = nowText();
         long batchStarted = System.currentTimeMillis();
@@ -483,7 +437,6 @@ public class RuleService {
         int totalEvaluated = 0;
         int totalHits = 0;
         int index = 0;
-
         for (Object item : (Collection<?>) itemsRaw) {
             if (!(item instanceof Map)) {
                 throw new IllegalArgumentException("items[" + index + "] must be an object with patient_context");
@@ -497,7 +450,6 @@ public class RuleService {
                 throw new IllegalArgumentException("items[" + index + "]: " + ex.getMessage());
             }
             String caseId = string(itemMap.get("case_id"), null);
-
             ScenarioPipelineOutcome outcome = runScenarioPipeline(invocation, patientContext);
             Map<String, Object> evaluation = recordEvaluation("BATCH", batchId, caseId,
                     invocation, patientContext, outcome);
@@ -507,9 +459,7 @@ public class RuleService {
             totalHits += outcome.hitCount;
             index++;
         }
-
         long elapsed = System.currentTimeMillis() - batchStarted;
-
         Map<String, Object> response = new LinkedHashMap<String, Object>();
         response.put("trace_id", TraceContext.getTraceId());
         response.put("batch_id", batchId);
@@ -522,12 +472,10 @@ public class RuleService {
         response.put("elapsed_ms", elapsed);
         response.put("created_time", createdTime);
         response.put("evaluations", evaluations);
-
         auditEvaluation("BATCH_EVALUATE_SCENARIO", invocation, null,
                 aggregatePipelineOutcome(totalEvaluated, totalHits, elapsed), resultIds, batchId);
         return response;
     }
-
     public Map<String, Object> getEvaluation(String resultId) {
         if (resultId == null || resultId.trim().isEmpty()) {
             throw new IllegalArgumentException("resultId is required");
@@ -539,7 +487,6 @@ public class RuleService {
         }
         throw new IllegalArgumentException("rule engine evaluation not found: " + resultId);
     }
-
     public List<Map<String, Object>> listEvaluations(Map<String, String> filters) {
         String scenarioCode = upper(filterValue(filters, "scenarioCode"));
         String packageCode = filterValue(filters, "packageCode");
@@ -563,7 +510,6 @@ public class RuleService {
         if (offset < 0) {
             offset = 0;
         }
-
         List<Map<String, Object>> matched = new ArrayList<Map<String, Object>>();
         int skipped = 0;
         java.util.Iterator<Map<String, Object>> iterator = evaluationStore.descendingIterator();
@@ -619,7 +565,6 @@ public class RuleService {
         }
         return matched;
     }
-
     private ScenarioInvocation parseInvocation(Map<String, Object> request, OrganizationContext orgContext) {
         if (request == null) {
             throw new IllegalArgumentException("request body is required");
@@ -658,7 +603,6 @@ public class RuleService {
         }
         return invocation;
     }
-
     @SuppressWarnings("unchecked")
     private Map<String, Object> requirePatientContext(Object raw) {
         // 第三方接入要求显式声明 patient_context，以避免把 scenario_code 这种控制参数误当作上下文事实。
@@ -671,12 +615,10 @@ public class RuleService {
         }
         return context;
     }
-
     private ScenarioPipelineOutcome runScenarioPipeline(ScenarioInvocation invocation,
                                                        Map<String, Object> patientContext) {
         long started = System.currentTimeMillis();
         List<RuleDefinition> candidates = scenarioCandidates(invocation);
-
         List<Map<String, Object>> resultEntries = new ArrayList<Map<String, Object>>();
         List<Map<String, Object>> warnings = new ArrayList<Map<String, Object>>();
         int hitCount = 0;
@@ -695,7 +637,6 @@ public class RuleService {
             warning.put("message", "未找到匹配的已发布规则，请确认 scenario_code/rule_package_code 配置。");
             warnings.add(warning);
         }
-
         ScenarioPipelineOutcome outcome = new ScenarioPipelineOutcome();
         outcome.candidatesCount = candidates.size();
         outcome.hitCount = hitCount;
@@ -704,7 +645,6 @@ public class RuleService {
         outcome.warnings = warnings;
         return outcome;
     }
-
     private Map<String, Object> recordEvaluation(String source, String batchId, String caseId,
                                                  ScenarioInvocation invocation, Map<String, Object> patientContext,
                                                  ScenarioPipelineOutcome outcome) {
@@ -736,19 +676,16 @@ public class RuleService {
         evaluation.put("created_time", nowText());
         evaluation.put("results", outcome.resultEntries);
         evaluation.put("warnings", outcome.warnings);
-
         // 落入评估环形缓冲；存储的是详情副本，list/get 接口都基于它再分发。
         evaluationStore.addLast(new LinkedHashMap<String, Object>(evaluation));
         while (evaluationStore.size() > EVALUATION_RING_CAPACITY) {
             evaluationStore.pollFirst();
         }
-
         // RULE-008：把每条规则结果落库以支持跨实例查询。
         // 持久化失败不影响主返回；环形缓冲仍可在内存中查询，开发库/生产库下能补充长周期回查。
         persistEvaluationResults(resultId, invocation, patientContext, outcome);
         return evaluation;
     }
-
     private void persistEvaluationResults(String resultId, ScenarioInvocation invocation,
                                           Map<String, Object> patientContext,
                                           ScenarioPipelineOutcome outcome) {
@@ -800,7 +737,6 @@ public class RuleService {
             }
         }
     }
-
     private Map<String, Object> evaluationSummary(Map<String, Object> evaluation) {
         Map<String, Object> summary = new LinkedHashMap<String, Object>();
         for (String field : EVALUATION_SUMMARY_FIELDS) {
@@ -808,7 +744,6 @@ public class RuleService {
         }
         return summary;
     }
-
     private void auditEvaluation(String actionType, ScenarioInvocation invocation,
                                  Map<String, Object> patientContext, ScenarioPipelineOutcome outcome,
                                  List<String> resultIds, String batchId) {
@@ -840,7 +775,6 @@ public class RuleService {
             // 第三方调用主流程不能因审计落库失败中断，审计降级在内存环形日志中可继续观测。
         }
     }
-
     private ScenarioPipelineOutcome aggregatePipelineOutcome(int evaluatedCount, int hitCount, long elapsedMs) {
         ScenarioPipelineOutcome aggregate = new ScenarioPipelineOutcome();
         aggregate.candidatesCount = evaluatedCount;
@@ -850,7 +784,6 @@ public class RuleService {
         aggregate.warnings = Collections.emptyList();
         return aggregate;
     }
-
     private static class ScenarioInvocation {
         String scenarioCode;
         String packageCode;
@@ -867,7 +800,6 @@ public class RuleService {
         String scopeCode;
         String orgSource;
     }
-
     private static class ScenarioPipelineOutcome {
         int candidatesCount;
         int hitCount;
@@ -875,7 +807,6 @@ public class RuleService {
         List<Map<String, Object>> resultEntries = Collections.emptyList();
         List<Map<String, Object>> warnings = Collections.emptyList();
     }
-
     private List<RuleDefinition> scenarioCandidates(ScenarioInvocation invocation) {
         List<RuleDefinition> allCandidates = new ArrayList<RuleDefinition>();
         List<RuleDefinition> exactCandidates = new ArrayList<RuleDefinition>();
@@ -909,7 +840,6 @@ public class RuleService {
         }
         return hasOrgInvocation(invocation) ? Collections.<RuleDefinition>emptyList() : allCandidates;
     }
-
     private Set<String> scenariosOf(RuleDefinition definition) {
         Set<String> set = new LinkedHashSet<String>();
         Object declaredList = definition.getRuleJson().get("scenario_codes");
@@ -933,7 +863,6 @@ public class RuleService {
         }
         return set;
     }
-
     private Map<String, Object> executeForScenario(RuleDefinition definition, String scenarioCode,
                                                     Map<String, Object> patientContext) {
         long start = System.currentTimeMillis();
@@ -952,7 +881,6 @@ public class RuleService {
         entry.put("reference_document_code", definition.getReferenceDocumentCode());
         entry.put("reference_citation_id", definition.getReferenceCitationId());
         entry.put("reference_binding_type", definition.getReferenceBindingType());
-
         RuleResult result = new RuleResult();
         result.setRuleCode(definition.getRuleCode());
         try {
@@ -967,7 +895,6 @@ public class RuleService {
                     elapsed, "SUCCESS", null, null, orgFields(definition));
             recordExecLog(result, definition.getVersionNo(), patientContext, elapsed,
                     "SUCCESS", null, null, definition, null);
-
             entry.put("hit", result.isHit());
             entry.put("severity", result.getSeverity());
             entry.put("message", result.getMessage());
@@ -986,7 +913,6 @@ public class RuleService {
                     elapsed, "ERROR", "RULE_EXEC_ERROR", ex.getMessage(), orgFields(definition));
             recordExecLog(result, definition.getVersionNo(), patientContext, elapsed, "ERROR",
                     "RULE_EXEC_ERROR", ex.getMessage(), definition, null);
-
             entry.put("hit", false);
             entry.put("severity", "ERROR");
             entry.put("message", result.getMessage());
@@ -1000,12 +926,10 @@ public class RuleService {
             return entry;
         }
     }
-
     @SuppressWarnings("unchecked")
     public RuleResult simulate(Map<String, Object> request) {
         return simulate(request, null);
     }
-
     @SuppressWarnings("unchecked")
     public RuleResult simulate(Map<String, Object> request, OrganizationContext orgContext) {
         Map<String, Object> patientContext = getPatientContext(request);
@@ -1015,7 +939,6 @@ public class RuleService {
             applyOrganization(definition, orgContext);
             return executeDefinition(definition, patientContext);
         }
-
         String ruleCode = string(request.get("rule_code"), null);
         String versionNo = string(request.get("version_no"), null);
         RuleDefinition definition = ruleCode == null ? firstPublishedRule(orgContext) : getRule(ruleCode, versionNo, orgContext);
@@ -1028,141 +951,18 @@ public class RuleService {
                 "SUCCESS", null, null, null, orgContext);
         return result;
     }
-
     public List<RuleExecLogEntry> listExecLogs(Map<String, String> filters) {
-        String ruleCode = filterValue(filters, "ruleCode");
-        String traceId = filterValue(filters, "traceId");
-        String patientId = filterValue(filters, "patientId");
-        String encounterId = filterValue(filters, "encounterId");
-        String resultStatus = filterValue(filters, "resultStatus");
-        String tenantId = filterValue(filters, "tenantId");
-        String groupCode = filterValue(filters, "groupCode");
-        String hospitalCode = filterValue(filters, "hospitalCode");
-        String campusCode = filterValue(filters, "campusCode");
-        String siteCode = filterValue(filters, "siteCode");
-        String departmentCode = filterValue(filters, "departmentCode");
-        String scopeLevel = upper(filterValue(filters, "scopeLevel"));
-        String scopeCode = filterValue(filters, "scopeCode");
-        Boolean hit = filterBoolean(filters, "hit");
-        int limit = filterInt(filters, "limit", 100);
-        if (limit <= 0 || limit > EXEC_LOG_RING_CAPACITY) {
-            limit = EXEC_LOG_RING_CAPACITY;
-        }
-
-        List<RuleExecLogEntry> matched = new ArrayList<RuleExecLogEntry>();
-        // ConcurrentLinkedDeque 的 descendingIterator 返回最新写入的元素，便于按时间倒序返回执行日志。
-        java.util.Iterator<RuleExecLogEntry> iterator = execLogs.descendingIterator();
-        while (iterator.hasNext() && matched.size() < limit) {
-            RuleExecLogEntry entry = iterator.next();
-            if (ruleCode != null && !ruleCode.equalsIgnoreCase(entry.getRuleCode())) {
-                continue;
-            }
-            if (traceId != null && !traceId.equals(entry.getTraceId())) {
-                continue;
-            }
-            if (patientId != null && !patientId.equals(entry.getPatientId())) {
-                continue;
-            }
-            if (encounterId != null && !encounterId.equals(entry.getEncounterId())) {
-                continue;
-            }
-            if (resultStatus != null && !resultStatus.equalsIgnoreCase(entry.getResultStatus())) {
-                continue;
-            }
-            if (hit != null && hit.booleanValue() != entry.isHit()) {
-                continue;
-            }
-            if (!matchesLogOrg(entry, tenantId, groupCode, hospitalCode, campusCode,
-                    siteCode, departmentCode, scopeLevel, scopeCode)) {
-                continue;
-            }
-            matched.add(entry);
-        }
-        return matched;
+        return ruleExecutionLogService.listExecLogs(filters);
     }
-
     public Map<String, Object> summarizeExecLogs(Map<String, String> filters) {
-        Map<String, String> effective = new LinkedHashMap<String, String>();
-        if (filters != null) {
-            effective.putAll(filters);
-        }
-        effective.put("limit", String.valueOf(Integer.MAX_VALUE));
-        List<RuleExecLogEntry> entries = listExecLogs(effective);
-
-        int total = entries.size();
-        int totalHits = 0;
-        long totalElapsed = 0;
-        int errorCount = 0;
-        Map<String, RuleAggregate> byRule = new LinkedHashMap<String, RuleAggregate>();
-        Map<String, Integer> bySeverity = new LinkedHashMap<String, Integer>();
-        Map<String, Integer> byResultStatus = new LinkedHashMap<String, Integer>();
-
-        for (RuleExecLogEntry entry : entries) {
-            if (entry.isHit()) {
-                totalHits++;
-            }
-            totalElapsed += entry.getElapsedMs();
-            if ("ERROR".equalsIgnoreCase(entry.getResultStatus())) {
-                errorCount++;
-            }
-            increment(bySeverity, entry.getSeverity());
-            increment(byResultStatus, entry.getResultStatus());
-
-            String ruleCode = entry.getRuleCode();
-            if (ruleCode == null) {
-                continue;
-            }
-            RuleAggregate agg = byRule.get(ruleCode);
-            if (agg == null) {
-                agg = new RuleAggregate(ruleCode);
-                byRule.put(ruleCode, agg);
-            }
-            agg.total++;
-            if (entry.isHit()) {
-                agg.hits++;
-            }
-            if ("ERROR".equalsIgnoreCase(entry.getResultStatus())) {
-                agg.errors++;
-            }
-            agg.totalElapsed += entry.getElapsedMs();
-        }
-
-        Map<String, Object> summary = new LinkedHashMap<String, Object>();
-        summary.put("total", total);
-        summary.put("total_hits", totalHits);
-        summary.put("hit_rate", total == 0 ? 0.0 : Math.round(totalHits * 10000.0 / total) / 100.0);
-        summary.put("error_count", errorCount);
-        summary.put("average_elapsed_ms", total == 0 ? 0.0 : Math.round(totalElapsed * 100.0 / total) / 100.0);
-        summary.put("by_rule", aggregatesToList(byRule));
-        summary.put("by_severity", bucketsToList(bySeverity, "severity"));
-        summary.put("by_result_status", bucketsToList(byResultStatus, "result_status"));
-        summary.put("by_hospital_code", aggregateExecLogs(entries, "hospital_code"));
-        summary.put("by_scope", aggregateExecLogs(entries, "scope"));
-        return summary;
+        return ruleExecutionLogService.summarizeExecLogs(filters);
     }
-
     private void increment(Map<String, Integer> counts, String key) {
         if (key == null) {
             return;
         }
         Integer value = counts.get(key);
         counts.put(key, value == null ? 1 : value + 1);
-    }
-
-    private List<Map<String, Object>> aggregatesToList(Map<String, RuleAggregate> aggregates) {
-        List<RuleAggregate> list = new ArrayList<RuleAggregate>(aggregates.values());
-        Collections.sort(list, new Comparator<RuleAggregate>() {
-            @Override
-            public int compare(RuleAggregate left, RuleAggregate right) {
-                int byTotal = Integer.compare(right.total, left.total);
-                return byTotal != 0 ? byTotal : left.ruleCode.compareTo(right.ruleCode);
-            }
-        });
-        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-        for (RuleAggregate agg : list) {
-            result.add(agg.toView());
-        }
-        return result;
     }
 
     private List<Map<String, Object>> bucketsToList(Map<String, Integer> counts, String key) {
@@ -1184,41 +984,9 @@ public class RuleService {
         return result;
     }
 
-    private static class RuleAggregate {
-        private final String ruleCode;
-        private int total;
-        private int hits;
-        private int errors;
-        private long totalElapsed;
-
-        RuleAggregate(String ruleCode) {
-            this.ruleCode = ruleCode;
-        }
-
-        Map<String, Object> toView() {
-            Map<String, Object> view = new LinkedHashMap<String, Object>();
-            view.put("rule_code", ruleCode);
-            view.put("total", total);
-            view.put("hits", hits);
-            view.put("errors", errors);
-            view.put("hit_rate", total == 0 ? 0.0 : Math.round(hits * 10000.0 / total) / 100.0);
-            view.put("average_elapsed_ms", total == 0 ? 0.0 : Math.round(totalElapsed * 100.0 / total) / 100.0);
-            return view;
-        }
-    }
-
     public RuleExecLogEntry getExecLog(String logId) {
-        if (logId == null) {
-            throw new IllegalArgumentException("logId is required");
-        }
-        for (RuleExecLogEntry entry : execLogs) {
-            if (logId.equals(entry.getLogId())) {
-                return entry;
-            }
-        }
-        throw new IllegalArgumentException("rule exec log not found: " + logId);
+        return ruleExecutionLogService.getExecLog(logId);
     }
-
     private List<RuleResult> evaluateBuiltInRules(Map<String, Object> patientContext, OrganizationContext orgContext) {
         List<RuleResult> results = new ArrayList<RuleResult>();
         long stemiStart = System.currentTimeMillis();
@@ -1226,7 +994,6 @@ public class RuleService {
         recordExecLog(stemi, "BUILT_IN", patientContext, System.currentTimeMillis() - stemiStart,
                 "SUCCESS", null, null, null, orgContext);
         results.add(stemi);
-
         long ecgStart = System.currentTimeMillis();
         RuleResult ecg = evaluateEcgTimely(patientContext);
         recordExecLog(ecg, "BUILT_IN", patientContext, System.currentTimeMillis() - ecgStart,
@@ -1234,7 +1001,6 @@ public class RuleService {
         results.add(ecg);
         return results;
     }
-
     private RuleResult executeDefinition(RuleDefinition definition, Map<String, Object> patientContext) {
         long start = System.currentTimeMillis();
         RuleResult result = new RuleResult();
@@ -1271,36 +1037,12 @@ public class RuleService {
             throw ex;
         }
     }
-
     private void recordExecLog(RuleResult result, String ruleVersion, Map<String, Object> patientContext,
                                long elapsedMs, String resultStatus, String errorCode, String errorMessage,
                                RuleDefinition definition, OrganizationContext orgContext) {
-        RuleExecLogEntry entry = new RuleExecLogEntry();
-        entry.setLogId("rxl-" + execLogSequence.incrementAndGet());
-        entry.setTraceId(TraceContext.getTraceId());
-        entry.setRuleCode(result.getRuleCode());
-        entry.setRuleVersion(ruleVersion);
-        entry.setPatientId(ClinicalFactUtils.patientId(patientContext));
-        entry.setEncounterId(ClinicalFactUtils.encounterId(patientContext));
-        entry.setHit(result.isHit());
-        entry.setSeverity(result.getSeverity());
-        entry.setMessage(result.getMessage());
-        entry.setElapsedMs(elapsedMs);
-        entry.setResultStatus(resultStatus);
-        entry.setErrorCode(errorCode);
-        entry.setErrorMessage(errorMessage);
-        entry.setActions(new ArrayList<String>(result.getActions()));
-        entry.setEvidence(new ArrayList<Map<String, Object>>(result.getEvidence()));
-        entry.setCreatedTime(nowText());
-        applyOrganization(entry, definition, orgContext);
-
-        // 内存环形缓冲优先保留最近 EXEC_LOG_RING_CAPACITY 条记录，长期归档仍依赖 RE_RULE_EXEC_LOG。
-        execLogs.addLast(entry);
-        while (execLogs.size() > EXEC_LOG_RING_CAPACITY) {
-            execLogs.pollFirst();
-        }
+        ruleExecutionLogService.recordExecLog(result, ruleVersion, patientContext, elapsedMs,
+                resultStatus, errorCode, errorMessage, definition, orgContext);
     }
-
     private void markPublished(RuleDefinition definition, String approvedBy) {
         definition.setStatus("PUBLISHED");
         definition.setPublishedBy(approvedBy);
@@ -1309,7 +1051,6 @@ public class RuleService {
         definition.getRuleJson().put("published_by", approvedBy);
         definition.getRuleJson().put("published_time", definition.getPublishedTime());
     }
-
     private Map<String, Object> packageReviewForAudit(String packageCode, String packageVersion, int ruleCount,
                                                       RuleDefinition definition) {
         Map<String, Object> detail = new LinkedHashMap<String, Object>();
@@ -1319,7 +1060,6 @@ public class RuleService {
         putOrgFields(detail, definition);
         return detail;
     }
-
     private void putOrgFields(Map<String, Object> target, RuleDefinition definition) {
         if (definition == null) {
             return;
@@ -1334,13 +1074,11 @@ public class RuleService {
         target.put("scope_code", definition.getScopeCode());
         target.put("org_source", definition.getOrgSource());
     }
-
     private Map<String, Object> orgFields(RuleDefinition definition) {
         Map<String, Object> fields = new LinkedHashMap<String, Object>();
         putOrgFields(fields, definition);
         return fields;
     }
-
     private void auditRuleChange(String actionType, String targetType, String targetCode,
                                  String operatorId, Map<String, Object> detail) {
         try {
@@ -1350,7 +1088,6 @@ public class RuleService {
             // 规则发布主流程不因审计落库失败而中断。
         }
     }
-
     private RuleResult evaluateStemiCandidate(Map<String, Object> context) {
         boolean hit = ClinicalFactUtils.hasChestPain(context) && ClinicalFactUtils.hasStElevation(context);
         RuleResult result = new RuleResult();
@@ -1367,7 +1104,6 @@ public class RuleService {
         }
         return result;
     }
-
     private RuleResult evaluateEcgTimely(Map<String, Object> context) {
         RuleResult result = new RuleResult();
         result.setRuleCode("R_AMI_ECG_TIMELY");
@@ -1377,7 +1113,6 @@ public class RuleService {
         result.setActions(new ArrayList<String>());
         return result;
     }
-
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> normalizeRules(Object request) {
         List<Map<String, Object>> rules = new ArrayList<Map<String, Object>>();
@@ -1417,7 +1152,6 @@ public class RuleService {
         }
         return rules;
     }
-
     private RuleDefinition toDefinition(Map<String, Object> rule, String defaultStatus) {
         String ruleCode = string(rule.get("rule_code"), null);
         if (ruleCode == null) {
@@ -1441,7 +1175,6 @@ public class RuleService {
         definition.setReferenceBindingType(string(rule.get("reference_binding_type"), null));
         return definition;
     }
-
     private List<RuleDefinition> publishedRules() {
         List<RuleDefinition> list = new ArrayList<RuleDefinition>();
         for (RuleDefinition definition : ruleStore.values()) {
@@ -1452,7 +1185,6 @@ public class RuleService {
         sortRulesByPriority(list);
         return list;
     }
-
     private List<RuleDefinition> publishedRules(OrganizationContext orgContext) {
         List<RuleDefinition> list = new ArrayList<RuleDefinition>();
         for (RuleDefinition definition : ruleStore.values()) {
@@ -1472,7 +1204,6 @@ public class RuleService {
         sortRulesByPriority(list);
         return list;
     }
-
     private void sortRulesByPriority(List<RuleDefinition> list) {
         Collections.sort(list, new Comparator<RuleDefinition>() {
             @Override
@@ -1483,16 +1214,13 @@ public class RuleService {
             }
         });
     }
-
     private RuleDefinition firstPublishedRule() {
         return firstPublishedRule(null);
     }
-
     private RuleDefinition firstPublishedRule(OrganizationContext orgContext) {
         List<RuleDefinition> published = publishedRules(orgContext);
         return published.isEmpty() ? null : published.get(0);
     }
-
     @SuppressWarnings("unchecked")
     private Map<String, Object> getPatientContext(Map<String, Object> request) {
         Object value = request.get("patient_context");
@@ -1501,7 +1229,6 @@ public class RuleService {
         }
         return request;
     }
-
     private String message(RuleDefinition definition, RuleDslEvaluator.EvaluationOutcome outcome) {
         if (outcome.isHit()) {
             return string(definition.getRuleJson().get("message_template"), definition.getRuleName() + "命中。");
@@ -1511,7 +1238,6 @@ public class RuleService {
         }
         return "规则未命中：" + definition.getRuleName();
     }
-
     @SuppressWarnings("unchecked")
     private List<String> actions(RuleDefinition definition) {
         List<String> list = new ArrayList<String>();
@@ -1530,7 +1256,6 @@ public class RuleService {
         }
         return list;
     }
-
     private String severity(RuleDefinition definition) {
         String severity = definition.getSeverity();
         if (severity != null) {
@@ -1545,14 +1270,12 @@ public class RuleService {
         }
         return "INFO";
     }
-
     private Map<String, Object> evidence(String type, String text) {
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("type", type);
         map.put("text", text);
         return map;
     }
-
     private List<RuleDefinition> filterRulesByOrg(List<RuleDefinition> rules, Map<String, String> filters) {
         if (filters == null || filters.isEmpty()) {
             return rules;
@@ -1574,7 +1297,6 @@ public class RuleService {
         }
         return matched;
     }
-
     private void applyOrganization(RuleDefinition definition, OrganizationContext orgContext) {
         if (orgContext != null) {
             definition.setTenantId(orgContext.getTenantId());
@@ -1622,7 +1344,6 @@ public class RuleService {
         }
         syncOrgToRuleJson(definition);
     }
-
     private void applyEffectiveScope(RuleDefinition definition) {
         if (present(definition.getDepartmentCode())) {
             definition.setScopeLevel("DEPARTMENT");
@@ -1652,7 +1373,6 @@ public class RuleService {
         definition.setScopeLevel("PLATFORM");
         definition.setScopeCode("DEFAULT");
     }
-
     private void syncOrgToRuleJson(RuleDefinition definition) {
         definition.getRuleJson().put("tenant_id", definition.getTenantId());
         definition.getRuleJson().put("group_code", definition.getGroupCode());
@@ -1668,39 +1388,6 @@ public class RuleService {
         definition.getRuleJson().put("reference_binding_type", definition.getReferenceBindingType());
     }
 
-    private void applyOrganization(RuleExecLogEntry entry, RuleDefinition definition,
-                                   OrganizationContext orgContext) {
-        if (definition != null) {
-            entry.setTenantId(definition.getTenantId());
-            entry.setGroupCode(definition.getGroupCode());
-            entry.setHospitalCode(definition.getHospitalCode());
-            entry.setCampusCode(definition.getCampusCode());
-            entry.setSiteCode(definition.getSiteCode());
-            entry.setDepartmentCode(definition.getDepartmentCode());
-            entry.setScopeLevel(definition.getScopeLevel());
-            entry.setScopeCode(definition.getScopeCode());
-            entry.setOrgSource(definition.getOrgSource());
-            return;
-        }
-        if (orgContext != null) {
-            entry.setTenantId(orgContext.getTenantId());
-            entry.setGroupCode(orgContext.getGroupCode());
-            entry.setHospitalCode(orgContext.getHospitalCode());
-            entry.setCampusCode(orgContext.getCampusCode());
-            entry.setSiteCode(orgContext.getSiteCode());
-            entry.setDepartmentCode(orgContext.getDepartmentCode());
-            entry.setScopeLevel(orgContext.getEffectiveScopeLevel());
-            entry.setScopeCode(orgContext.getEffectiveScopeCode());
-            entry.setOrgSource(orgContext.getSource());
-            return;
-        }
-        entry.setTenantId(DEFAULT_TENANT_ID);
-        entry.setHospitalCode(DEFAULT_HOSPITAL_CODE);
-        entry.setScopeLevel(DEFAULT_SCOPE_LEVEL);
-        entry.setScopeCode(DEFAULT_HOSPITAL_CODE);
-        entry.setOrgSource("DEFAULT");
-    }
-
     private boolean matchesDefinitionContext(RuleDefinition definition, OrganizationContext orgContext) {
         if (orgContext == null) {
             return isLegacyDefault(definition);
@@ -1709,13 +1396,11 @@ public class RuleService {
                 && matches(orgContext.getEffectiveScopeLevel(), definition.getScopeLevel(), true)
                 && matches(orgContext.getEffectiveScopeCode(), definition.getScopeCode(), false);
     }
-
     private boolean matchesInvocationScope(RuleDefinition definition, ScenarioInvocation invocation) {
         return matches(invocation.tenantId, definition.getTenantId(), false)
                 && matches(invocation.scopeLevel, definition.getScopeLevel(), true)
                 && matches(invocation.scopeCode, definition.getScopeCode(), false);
     }
-
     private boolean matchesRuleOrg(RuleDefinition definition, String tenantId, String groupCode,
                                    String hospitalCode, String campusCode, String siteCode,
                                    String departmentCode, String scopeLevel, String scopeCode) {
@@ -1729,19 +1414,6 @@ public class RuleService {
                 && matches(scopeCode, definition.getScopeCode(), false);
     }
 
-    private boolean matchesLogOrg(RuleExecLogEntry entry, String tenantId, String groupCode,
-                                  String hospitalCode, String campusCode, String siteCode,
-                                  String departmentCode, String scopeLevel, String scopeCode) {
-        return matches(tenantId, entry.getTenantId(), false)
-                && matches(groupCode, entry.getGroupCode(), false)
-                && matches(hospitalCode, entry.getHospitalCode(), false)
-                && matches(campusCode, entry.getCampusCode(), false)
-                && matches(siteCode, entry.getSiteCode(), false)
-                && matches(departmentCode, entry.getDepartmentCode(), false)
-                && matches(scopeLevel, entry.getScopeLevel(), true)
-                && matches(scopeCode, entry.getScopeCode(), false);
-    }
-
     private boolean matches(String expected, String actual, boolean ignoreCase) {
         if (expected == null) {
             return true;
@@ -1751,25 +1423,21 @@ public class RuleService {
         }
         return ignoreCase ? expected.equalsIgnoreCase(actual) : expected.equals(actual);
     }
-
     private boolean isLegacyDefault(RuleDefinition definition) {
         return DEFAULT_TENANT_ID.equals(definition.getTenantId())
                 && DEFAULT_SCOPE_LEVEL.equalsIgnoreCase(string(definition.getScopeLevel(), null))
                 && DEFAULT_HOSPITAL_CODE.equals(definition.getScopeCode());
     }
-
     private boolean hasOrgInvocation(ScenarioInvocation invocation) {
         return invocation != null && (present(invocation.tenantId)
                 || present(invocation.scopeLevel) || present(invocation.scopeCode));
     }
-
     private String key(RuleDefinition definition) {
         return string(definition.getTenantId(), DEFAULT_TENANT_ID) + "::"
                 + string(definition.getScopeLevel(), DEFAULT_SCOPE_LEVEL) + "::"
                 + string(definition.getScopeCode(), DEFAULT_HOSPITAL_CODE) + "::"
                 + definition.getRuleCode() + "::" + definition.getVersionNo();
     }
-
     private String key(OrganizationContext orgContext, String ruleCode, String versionNo) {
         if (orgContext == null) {
             return legacyKey(ruleCode, versionNo);
@@ -1779,33 +1447,9 @@ public class RuleService {
                 + string(orgContext.getEffectiveScopeCode(), DEFAULT_HOSPITAL_CODE) + "::"
                 + ruleCode + "::" + versionNo;
     }
-
     private String legacyKey(String ruleCode, String versionNo) {
         return DEFAULT_TENANT_ID + "::" + DEFAULT_SCOPE_LEVEL + "::"
                 + DEFAULT_HOSPITAL_CODE + "::" + ruleCode + "::" + versionNo;
-    }
-
-    private List<Map<String, Object>> aggregateExecLogs(List<RuleExecLogEntry> entries, String dimension) {
-        Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
-        for (RuleExecLogEntry entry : entries) {
-            String key = execLogDimension(entry, dimension);
-            if (key == null) {
-                continue;
-            }
-            Integer value = counts.get(key);
-            counts.put(key, value == null ? 1 : value + 1);
-        }
-        return bucketsToList(counts, dimension);
-    }
-
-    private String execLogDimension(RuleExecLogEntry entry, String dimension) {
-        if ("hospital_code".equals(dimension)) {
-            return entry.getHospitalCode();
-        }
-        if ("scope".equals(dimension)) {
-            return string(entry.getScopeLevel(), "UNKNOWN") + ":" + string(entry.getScopeCode(), "UNKNOWN");
-        }
-        return null;
     }
 
     private String ruleJsonString(RuleDefinition definition, String snakeKey, String camelKey, String defaultValue) {
@@ -1815,7 +1459,6 @@ public class RuleService {
         }
         return value == null ? defaultValue : value;
     }
-
     private boolean hasRuleJsonOrg(RuleDefinition definition) {
         return ruleJsonString(definition, "tenant_id", "tenantId", null) != null
                 || ruleJsonString(definition, "group_code", "groupCode", null) != null
@@ -1825,11 +1468,9 @@ public class RuleService {
                 || ruleJsonString(definition, "department_code", "departmentCode", null) != null
                 || ruleJsonString(definition, "org_code", "orgCode", null) != null;
     }
-
     private boolean present(String value) {
         return value != null && !value.trim().isEmpty();
     }
-
     private String string(Object value, String defaultValue) {
         if (value == null) {
             return defaultValue;
@@ -1837,7 +1478,6 @@ public class RuleService {
         String text = String.valueOf(value);
         return text.trim().isEmpty() ? defaultValue : text;
     }
-
     private Boolean booleanValue(Object value, boolean defaultValue) {
         if (value instanceof Boolean) {
             return (Boolean) value;
@@ -1847,7 +1487,6 @@ public class RuleService {
         }
         return Boolean.parseBoolean(String.valueOf(value));
     }
-
     private Integer integer(Object value, int defaultValue) {
         if (value instanceof Number) {
             return ((Number) value).intValue();
@@ -1858,7 +1497,6 @@ public class RuleService {
             return defaultValue;
         }
     }
-
     private String filterValue(Map<String, String> filters, String key) {
         if (filters == null) {
             return null;
@@ -1866,7 +1504,6 @@ public class RuleService {
         String value = filters.get(key);
         return value == null || value.trim().isEmpty() ? null : value.trim();
     }
-
     private Boolean filterBoolean(Map<String, String> filters, String key) {
         String value = filterValue(filters, key);
         if (value == null) {
@@ -1874,7 +1511,6 @@ public class RuleService {
         }
         return Boolean.valueOf(value);
     }
-
     private int filterInt(Map<String, String> filters, String key, int defaultValue) {
         String value = filterValue(filters, key);
         if (value == null) {
@@ -1886,15 +1522,12 @@ public class RuleService {
             return defaultValue;
         }
     }
-
     private String nowText() {
         return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
     }
-
     private String upper(String value) {
         return value == null ? null : value.trim().toUpperCase();
     }
-
     private List<String> stringList(Object value) {
         List<String> list = new ArrayList<String>();
         if (value instanceof Collection) {
@@ -1907,7 +1540,6 @@ public class RuleService {
         }
         return list;
     }
-
     private static Map<String, Set<String>> defaultRuleTypeScenarios() {
         Map<String, Set<String>> map = new LinkedHashMap<String, Set<String>>();
         map.put("PATHWAY_ENTRY", new LinkedHashSet<String>(Arrays.asList("PATHWAY_ENTRY")));

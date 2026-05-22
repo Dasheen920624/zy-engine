@@ -36,6 +36,7 @@ import type {
   AiCandidateReview,
   ReviewSummary,
 } from "../../api/aiCandidateReview";
+import styles from "./aiCandidateReviewDesk.module.css";
 
 const { Text, Title } = Typography;
 
@@ -335,19 +336,12 @@ export default function AiCandidateReviewDesk() {
   const displaySummary = summary || MOCK_SUMMARY;
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Spin spinning={loading}>
         {/* 页面标题 */}
-        <div
-          style={{
-            marginBottom: 24,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        <div className={styles.headerRow}>
           <div>
-            <Title level={4} style={{ margin: 0 }}>
+            <Title level={4} className={styles.titleZeroMargin}>
               AI 候选配置审核台
             </Title>
             <Text type="secondary">
@@ -365,12 +359,13 @@ export default function AiCandidateReviewDesk() {
         </div>
 
         {/* 审核统计卡片 */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Row gutter={16} className={styles.statsRow}>
           <Col span={6}>
             <Card size="small">
               <Statistic
                 title="待审核"
                 value={displaySummary.pending}
+                // eslint-disable-next-line medkernel/no-inline-style -- AntD Statistic valueStyle 仅接受对象
                 valueStyle={{ color: "var(--mk-primary)" }}
                 prefix={<EditOutlined />}
               />
@@ -381,6 +376,7 @@ export default function AiCandidateReviewDesk() {
               <Statistic
                 title="已通过"
                 value={displaySummary.approved}
+                // eslint-disable-next-line medkernel/no-inline-style -- AntD Statistic valueStyle 仅接受对象
                 valueStyle={{ color: "var(--mk-success)" }}
                 prefix={<CheckCircleOutlined />}
               />
@@ -391,6 +387,7 @@ export default function AiCandidateReviewDesk() {
               <Statistic
                 title="已驳回"
                 value={displaySummary.rejected}
+                // eslint-disable-next-line medkernel/no-inline-style -- AntD Statistic valueStyle 仅接受对象
                 valueStyle={{ color: "var(--mk-danger)" }}
                 prefix={<CloseCircleOutlined />}
               />
@@ -401,6 +398,7 @@ export default function AiCandidateReviewDesk() {
               <Statistic
                 title="已修改"
                 value={displaySummary.modified}
+                // eslint-disable-next-line medkernel/no-inline-style -- AntD Statistic valueStyle 仅接受对象
                 valueStyle={{ color: "var(--mk-warning)" }}
                 prefix={<EditOutlined />}
               />
@@ -411,21 +409,15 @@ export default function AiCandidateReviewDesk() {
         {/* 筛选栏 + 批量操作 */}
         <Card
           size="small"
-          style={{ marginBottom: 16 }}
+          className={styles.filterCard}
           bodyStyle={{ padding: "12px 16px" }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <div className={styles.filterRow}>
             <Space>
               <Select
                 placeholder="候选类型"
                 allowClear
-                style={{ width: 130 }}
+                className={styles.selectMedium}
                 value={filterType}
                 onChange={setFilterType}
                 options={Object.entries(CANDIDATE_TYPE_LABEL).map(
@@ -435,7 +427,7 @@ export default function AiCandidateReviewDesk() {
               <Select
                 placeholder="审核状态"
                 allowClear
-                style={{ width: 130 }}
+                className={styles.selectMedium}
                 value={filterStatus}
                 onChange={setFilterStatus}
                 options={Object.entries(REVIEW_STATUS_TAG).map(
@@ -445,7 +437,7 @@ export default function AiCandidateReviewDesk() {
               <Select
                 placeholder="优先级"
                 allowClear
-                style={{ width: 110 }}
+                className={styles.selectSmall}
                 value={filterPriority}
                 onChange={setFilterPriority}
                 options={Object.entries(PRIORITY_TAG).map(
@@ -560,13 +552,13 @@ export default function AiCandidateReviewDesk() {
             <Row gutter={16}>
               <Col span={12}>
                 <Text type="secondary">候选编码</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   {reviewingRecord.candidateCode}
                 </div>
               </Col>
               <Col span={12}>
                 <Text type="secondary">候选名称</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   {reviewingRecord.candidateName}
                 </div>
               </Col>
@@ -574,20 +566,20 @@ export default function AiCandidateReviewDesk() {
             <Row gutter={16}>
               <Col span={8}>
                 <Text type="secondary">类型</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   {CANDIDATE_TYPE_LABEL[reviewingRecord.candidateType] ||
                     reviewingRecord.candidateType}
                 </div>
               </Col>
               <Col span={8}>
                 <Text type="secondary">来源</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   {reviewingRecord.sourceName}
                 </div>
               </Col>
               <Col span={8}>
                 <Text type="secondary">模型</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   {reviewingRecord.modelProvider} / {reviewingRecord.modelName}
                 </div>
               </Col>
@@ -595,7 +587,7 @@ export default function AiCandidateReviewDesk() {
             <Row gutter={16}>
               <Col span={8}>
                 <Text type="secondary">置信度</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   <Text
                     type={confidenceTextType(reviewingRecord.confidence)}
                   >
@@ -605,7 +597,7 @@ export default function AiCandidateReviewDesk() {
               </Col>
               <Col span={8}>
                 <Text type="secondary">优先级</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   <Tag
                     color={PRIORITY_TAG[reviewingRecord.priority]?.color || ""}
                   >
@@ -616,7 +608,7 @@ export default function AiCandidateReviewDesk() {
               </Col>
               <Col span={8}>
                 <Text type="secondary">状态</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   <Tag
                     color={
                       REVIEW_STATUS_TAG[reviewingRecord.reviewStatus]?.color || ""
@@ -664,16 +656,16 @@ export default function AiCandidateReviewDesk() {
 
             {reviewingRecord.reviewStatus !== "PENDING" && (
               <>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   <Text type="secondary">审核人</Text>
                   <div>{reviewingRecord.reviewedBy || "-"}</div>
                 </div>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.formField}>
                   <Text type="secondary">审核备注</Text>
                   <div>{reviewingRecord.reviewNote || "-"}</div>
                 </div>
                 {reviewingRecord.modifiedContent && (
-                  <div style={{ marginBottom: 12 }}>
+                  <div className={styles.formField}>
                     <Text type="secondary">修改后内容</Text>
                     <div
                       style={{

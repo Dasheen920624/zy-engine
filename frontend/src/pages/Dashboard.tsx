@@ -233,7 +233,7 @@ const CONFIG_GOVERNANCE_CARDS: CapabilityCard[] = [
     icon: <ClusterOutlined />,
     title: "适配器中心",
     description: "ADAPT-001 / INTEROP-001：HIS/EMR/LIS 适配器、组织绑定、CDS Hooks",
-    status: "PENDING",
+    status: "READY",
     path: "/adapter/hub",
   },
   {
@@ -327,7 +327,7 @@ const TENANT_IDENTITY_CARDS: CapabilityCard[] = [
     icon: <IdcardOutlined />,
     title: "患者主索引",
     description: "MPI-001：跨院区患者主索引、就诊标识、合并冲突治理",
-    status: "PENDING",
+    status: "READY",
     path: "/mpi/patients",
   },
   {
@@ -370,7 +370,7 @@ const SYSTEM_CARDS: CapabilityCard[] = [
     icon: <IdcardOutlined />,
     title: "用户管理",
     description: "SEC-001 / SEC-006/007：用户、角色、SSO（CAS/OIDC/SAML/LDAP）",
-    status: "PENDING",
+    status: "READY",
     path: "/admin/users",
   },
   {
@@ -378,7 +378,7 @@ const SYSTEM_CARDS: CapabilityCard[] = [
     icon: <AuditOutlined />,
     title: "审计日志",
     description: "AUDIT-001 / SEC-010：ENGINE_AUDIT_LOG 防篡改链、查询、导出",
-    status: "PENDING",
+    status: "READY",
     path: "/admin/audit",
   },
   {

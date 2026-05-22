@@ -1,0 +1,31 @@
+.page {
+  padding: var(--mk-spacing-lg);
+}
+
+.smallText {
+  font-size: 12px;
+}
+
+.alertSpacing {
+  margin-bottom: var(--mk-space-4);
+}
+
+.statsRow {
+  margin-bottom: var(--mk-space-6);
+}
+
+.filterRow {
+  margin-bottom: var(--mk-space-4);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.badgeSpacing {
+  margin-left: var(--mk-space-2);
+}
+
+.selectionBar {
+  margin-bottom: var(--mk-spacing-md);
+}

@@ -6,6 +6,7 @@ import { ClinicalEventClient, executeAlertAction } from '../api/clinicalEvent';
 import type { EmbedAlert, EmbedConfig } from '../api/clinicalEvent';
 import { OrderSafetyBlocker } from './OrderSafetyBlocker';
 import type { OrderSafetyDecision } from './OrderSafetyBlocker';
+import styles from './embedApp.module.css';
 
 interface EmbedAppProps {
   config: EmbedConfig;
@@ -135,19 +136,7 @@ export default function EmbedApp({ config, patientId, encounterId }: EmbedAppPro
         },
       }}
     >
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          padding: '4px 8px',
-        }}
-      >
+      <div className={styles.alertStack}>
         {alerts.map((alert) => (
           <EmbeddedAlert
             key={alert.alert_id}

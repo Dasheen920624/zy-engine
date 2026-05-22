@@ -6,6 +6,8 @@ import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Map;
  *   <li>扫描统计 — GET /api/cdss/red-lines/scan-summary</li>
  * </ul>
  */
+@Tag(name = "Safety Red Line")
 @RestController
 @RequestMapping("/api/cdss/red-lines")
 public class SafetyRedLineController {
@@ -39,6 +42,7 @@ public class SafetyRedLineController {
     /**
      * 定义红线。
      */
+    @Operation(summary = "Define red line")
     @PostMapping
     public ApiResult<SafetyRedLine> defineRedLine(
             @RequestBody Map<String, Object> request,
@@ -72,6 +76,7 @@ public class SafetyRedLineController {
     /**
      * 更新红线。
      */
+    @Operation(summary = "Update red line")
     @PutMapping("/{redLineId}")
     public ApiResult<SafetyRedLine> updateRedLine(
             @PathVariable Long redLineId,
@@ -103,6 +108,7 @@ public class SafetyRedLineController {
     /**
      * 查询红线列表。
      */
+    @Operation(summary = "List red lines")
     @GetMapping
     public ApiResult<List<SafetyRedLine>> listRedLines(
             @RequestParam(required = false) String category,
@@ -117,6 +123,7 @@ public class SafetyRedLineController {
     /**
      * 执行红线扫描。
      */
+    @Operation(summary = "Scan red lines")
     @PostMapping("/scan")
     public ApiResult<List<RedLineScanResult>> scanRedLines(
             @RequestBody Map<String, Object> request,
@@ -134,6 +141,7 @@ public class SafetyRedLineController {
     /**
      * 查询扫描结果。
      */
+    @Operation(summary = "List scan results")
     @GetMapping("/scan-results")
     public ApiResult<List<RedLineScanResult>> listScanResults(
             @RequestParam(required = false) String patientId,
@@ -149,6 +157,7 @@ public class SafetyRedLineController {
     /**
      * 解决扫描结果。
      */
+    @Operation(summary = "Resolve scan result")
     @PostMapping("/scan-results/{resultId}/resolve")
     public ApiResult<RedLineScanResult> resolveScanResult(
             @PathVariable Long resultId,
@@ -171,6 +180,7 @@ public class SafetyRedLineController {
     /**
      * 覆盖扫描结果。
      */
+    @Operation(summary = "Override scan result")
     @PostMapping("/scan-results/{resultId}/override")
     public ApiResult<RedLineScanResult> overrideScanResult(
             @PathVariable Long resultId,
@@ -196,6 +206,7 @@ public class SafetyRedLineController {
     /**
      * 扫描统计。
      */
+    @Operation(summary = "Get scan summary")
     @GetMapping("/scan-summary")
     public ApiResult<Map<String, Object>> getScanSummary(HttpServletRequest httpRequest) {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);

@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import java.util.Map;
 /**
  * AI 知识生产任务 API：任务管理和模型调用记录。
  */
+@Tag(name = "Ai Knowledge Job")
 @RestController
 @RequestMapping("/api/knowledge/jobs")
 public class AiKnowledgeJobController {
@@ -34,6 +37,7 @@ public class AiKnowledgeJobController {
     /**
      * 创建知识生产任务。
      */
+    @Operation(summary = "Create job")
     @PostMapping
     public ApiResult<AiKnowledgeJob> createJob(@RequestBody AiKnowledgeJob job,
                                                  HttpServletRequest httpRequest) {
@@ -45,6 +49,7 @@ public class AiKnowledgeJobController {
     /**
      * 查询任务列表。
      */
+    @Operation(summary = "List jobs")
     @GetMapping
     public ApiResult<List<AiKnowledgeJob>> listJobs(
             @RequestParam(required = false) String jobType,
@@ -59,6 +64,7 @@ public class AiKnowledgeJobController {
     /**
      * 查询单个任务。
      */
+    @Operation(summary = "Get job")
     @GetMapping("/{jobId}")
     public ApiResult<AiKnowledgeJob> getJob(@PathVariable Long jobId,
                                               HttpServletRequest httpRequest) {
@@ -68,6 +74,7 @@ public class AiKnowledgeJobController {
     /**
      * 更新任务状态。
      */
+    @Operation(summary = "Update job status")
     @PostMapping("/{jobId}/status")
     public ApiResult<String> updateJobStatus(@PathVariable Long jobId,
                                                @RequestBody Map<String, String> body,
@@ -82,6 +89,7 @@ public class AiKnowledgeJobController {
     /**
      * 审核任务。
      */
+    @Operation(summary = "Review job")
     @PostMapping("/{jobId}/review")
     public ApiResult<String> reviewJob(@PathVariable Long jobId,
                                          @RequestBody Map<String, String> body,
@@ -97,6 +105,7 @@ public class AiKnowledgeJobController {
     /**
      * 记录模型调用日志。
      */
+    @Operation(summary = "Log model call")
     @PostMapping("/model-calls")
     public ApiResult<AiModelCallLog> logModelCall(@RequestBody AiModelCallLog callLog,
                                                     HttpServletRequest httpRequest) {
@@ -108,6 +117,7 @@ public class AiKnowledgeJobController {
     /**
      * 查询模型调用日志。
      */
+    @Operation(summary = "List model call logs")
     @GetMapping("/model-calls")
     public ApiResult<List<AiModelCallLog>> listModelCallLogs(
             @RequestParam(required = false) Long jobId,
@@ -122,6 +132,7 @@ public class AiKnowledgeJobController {
     /**
      * 模型调用统计汇总。
      */
+    @Operation(summary = "Summarize model calls")
     @GetMapping("/model-calls/summary")
     public ApiResult<Map<String, Object>> summarizeModelCalls(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);

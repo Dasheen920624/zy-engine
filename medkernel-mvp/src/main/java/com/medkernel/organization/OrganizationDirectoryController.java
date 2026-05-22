@@ -9,11 +9,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Organization Directory")
 @RestController
 @RequestMapping("/api/organizations")
 public class OrganizationDirectoryController {
@@ -26,6 +29,7 @@ public class OrganizationDirectoryController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Import units")
     @PostMapping
     public ApiResult<Map<String, Object>> importUnits(@RequestBody Object request,
                                                        HttpServletRequest httpRequest) {
@@ -33,6 +37,7 @@ public class OrganizationDirectoryController {
         return ApiResult.success(organizationDirectoryService.importUnits(request));
     }
 
+    @Operation(summary = "List units")
     @GetMapping
     public ApiResult<List<Map<String, Object>>> listUnits(@RequestParam(required = false) String level,
                                                          @RequestParam(required = false) String parentLevel,
@@ -52,6 +57,7 @@ public class OrganizationDirectoryController {
         return ApiResult.success(organizationDirectoryService.listUnits(filters));
     }
 
+    @Operation(summary = "Tree")
     @GetMapping("/tree")
     public ApiResult<Map<String, Object>> tree(@RequestParam(required = false) String rootLevel,
                                                @RequestParam(required = false) String root_level,
@@ -65,6 +71,7 @@ public class OrganizationDirectoryController {
         return ApiResult.success(organizationDirectoryService.tree(filters));
     }
 
+    @Operation(summary = "Get unit")
     @GetMapping("/{level}/{code}")
     public ApiResult<Map<String, Object>> getUnit(@PathVariable String level,
                                                   @PathVariable String code,

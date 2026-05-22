@@ -61,7 +61,8 @@ describe('SourceInfo', () => {
       variant: 'inline',
     });
     const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.style.background).toBe('var(--mk-danger-soft)');
+    // PR-V3-INLINE-STYLE 抽取后用 CSS Module（inlineContainerMissing），class 名保留语义片段
+    expect(wrapper.className).toMatch(/Missing|missing/);
   });
 
   it('does not show danger background for reviewed status', () => {
@@ -70,7 +71,7 @@ describe('SourceInfo', () => {
       variant: 'inline',
     });
     const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.style.background).not.toBe('var(--mk-danger-soft)');
+    expect(wrapper.className).not.toMatch(/Missing|missing/);
   });
 
   it('calls onClickDocument when clicking document name in card variant', () => {

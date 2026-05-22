@@ -47,9 +47,7 @@ spring:
   application:
     name: medkernel-mvp
   jackson:
-    # 06_后端开发规范 §3 要求全局 SNAKE_CASE，但当前 Service 层 DTO 与契约测试
-    # 大量依赖 camelCase（PatientPathwayInstance、RuleDefinition 等），一次切换会破坏 20+ 测试。
-    # 本轮先仅启用 NON_NULL 与日期 ISO 字符串，full SNAKE_CASE 迁移见 AUDIT §1.4 拆独立任务。
+    property-naming-strategy: SNAKE_CASE
     default-property-inclusion: NON_NULL
     serialization:
       write-dates-as-timestamps: false
@@ -87,6 +85,28 @@ medkernel:
     jwt-secret: ${MEDKERNEL_JWT_SECRET:}
     lock-threshold: ${MEDKERNEL_LOCK_THRESHOLD:5}
     lock-duration-minutes: ${MEDKERNEL_LOCK_DURATION:30}
+    # PR-FINAL-23: 数据分级 + HEALTH_DATA 字段 SM4 加密
+    # master key 16 字节 Base64；生产部署必须通过 MEDKERNEL_SM4_MASTER_KEY 环境变量覆盖
+    # 默认值仅用于本地 H2 开发，CI 应阻止该值上线。
+    field-encryption:
+      enabled: ${MEDKERNEL_FIELD_ENC_ENABLED:true}
+      master-key-base64: ${MEDKERNEL_SM4_MASTER_KEY:bWVka2VybmVsLWRldmtleQ==}
+      derivation-salt: ${MEDKERNEL_FIELD_ENC_SALT:medkernel-dataclass-v1}
+      strict-decrypt: ${MEDKERNEL_FIELD_ENC_STRICT:true}
+
+  # PR-FINAL-25: Flyway DB migration（默认 false 保持向后兼容；生产部署强制开启）。
+  # enabled=true 时：启动 → Flyway migration → PersistenceService.@PostConstruct schema 兜底
+  # locations 按 medkernel.database.dialect 自动选取：
+  #   h2 → db/migration/{common,h2}
+  #   oracle/dm → db/migration/{common,oracle}
+  #   postgres/kingbase → db/migration/{common,postgres}
+  flyway:
+    enabled: ${MEDKERNEL_FLYWAY_ENABLED:false}
+    baseline-on-migrate: ${MEDKERNEL_FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: ${MEDKERNEL_FLYWAY_BASELINE_VERSION:0}
+    out-of-order: ${MEDKERNEL_FLYWAY_OUT_OF_ORDER:false}
+    clean-disabled: ${MEDKERNEL_FLYWAY_CLEAN_DISABLED:true}
+    table: ${MEDKERNEL_FLYWAY_TABLE:flyway_schema_history}
   dify:
     # ADR-0013：去 Dify 化策略。默认禁用，仅 WORKFLOW 调用类型走 Dify。
     enabled: ${MEDKERNEL_DIFY_ENABLED:false}
@@ -172,3 +192,18 @@ medkernel:
     database: ${MEDKERNEL_GRAPH_DATABASE:neo4j}
     timeout-ms: ${MEDKERNEL_GRAPH_TIMEOUT_MS:3000}
     default-version: ${MEDKERNEL_GRAPH_DEFAULT_VERSION:AMI_GRAPH_2026_01}
+
+# PR-FINAL-20: springdoc-openapi Swagger UI 配置。
+# 安全约束：/api-docs UI 仅在 management port（18081，仅 127.0.0.1 监听）可访问，
+# 业务端口 18080 通过 Nginx 屏蔽该路径，生产部署不暴露给公网。
+springdoc:
+  swagger-ui:
+    path: /api-docs
+    operationsSorter: alpha
+    tagsSorter: alpha
+    displayRequestDuration: true
+    filter: true
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.medkernel
+  paths-to-match: /api/**

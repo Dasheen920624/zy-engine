@@ -26,6 +26,7 @@ import {
 } from "@ant-design/icons";
 import { get, post } from "../api/client";
 import type { ApiError, EvaluateResponse, HitItem, RuleEngineResultSummary } from "../api/types";
+import styles from "./demoValidation.module.css";
 
 const { Paragraph, Text } = Typography;
 
@@ -251,7 +252,7 @@ export default function DemoValidationPlaceholder() {
         <div className="subtitle">客户验收剧本 · 规则执行 · 来源证据 · traceId</div>
       </div>
 
-      <Space direction="vertical" size={16} style={{ width: "100%" }}>
+      <Space direction="vertical" size={16} className={styles.mainContent}>
         <Card>
           <Row gutter={[16, 16]} align="middle">
             <Col flex="auto">
@@ -302,7 +303,7 @@ export default function DemoValidationPlaceholder() {
                 size="small"
                 current={currentStep}
                 items={activeScenario.checkpoints.map((title) => ({ title }))}
-                style={{ marginTop: 20 }}
+                className={styles.steps}
               />
             </Card>
           </Col>
@@ -319,7 +320,7 @@ export default function DemoValidationPlaceholder() {
                   <Statistic title="高风险" value={blockingRows.length} />
                 </Col>
               </Row>
-              <Paragraph style={{ marginTop: 12, marginBottom: 0 }}>
+              <Paragraph className={styles.traceInfo}>
                 <Text type="secondary">traceId：</Text>
                 <Text code>{runMutation.data?.trace_id || "待执行"}</Text>
               </Paragraph>

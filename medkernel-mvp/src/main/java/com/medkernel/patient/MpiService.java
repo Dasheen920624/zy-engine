@@ -63,9 +63,9 @@ public class MpiService {
                                              List<Map<String, String>> identities) {
         int count = 0;
         for (Map<String, String> idInfo : identities) {
-            String identityType = idInfo.get("identityType");
-            String externalId = idInfo.get("externalId");
-            String sourceSystem = idInfo.get("sourceSystem");
+            String identityType = idInfo.get("identity_type");
+            String externalId = idInfo.get("external_id");
+            String sourceSystem = idInfo.get("source_system");
 
             if (identityType != null && externalId != null && sourceSystem != null) {
                 registerPatientIdentity(tenantId, platformPatientId, identityType, externalId, sourceSystem);

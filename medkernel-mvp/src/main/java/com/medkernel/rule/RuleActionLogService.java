@@ -2,6 +2,8 @@ package com.medkernel.rule;
 
 import com.medkernel.common.TraceContext;
 import com.medkernel.organization.OrganizationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -19,6 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Service
 public class RuleActionLogService {
+    private static final Logger log = LoggerFactory.getLogger(RuleActionLogService.class);
+
     private static final int LOG_RING_CAPACITY = 1000;
     
     private final Deque<RuleActionLog> actionLogs = new ConcurrentLinkedDeque<>();
@@ -121,7 +125,8 @@ public class RuleActionLogService {
         if (filters.containsKey("limit")) {
             try {
                 limit = Integer.parseInt(filters.get("limit"));
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException e) {
+                log.warn("Failed to parse limit filter: {}", e.getMessage());
             }
         }
         

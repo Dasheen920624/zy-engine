@@ -666,7 +666,7 @@ public class ConfigPackageService {
             configPackageRepository.save(entity);
         } catch (RuntimeException ex) {
             // Log error but don't fail the operation
-            System.err.println("Failed to save config package to database: " + ex.getMessage());
+            log.warn("Failed to save config package to database: {}", ex.getMessage());
         }
     }
 
@@ -689,7 +689,7 @@ public class ConfigPackageService {
             }
         } catch (RuntimeException ex) {
             // Log error but don't fail the operation
-            System.err.println("Failed to update config package in database: " + ex.getMessage());
+            log.warn("Failed to update config package in database: {}", ex.getMessage());
         }
     }
 
@@ -706,7 +706,7 @@ public class ConfigPackageService {
             }
         } catch (RuntimeException ex) {
             // Log error but don't fail the operation
-            System.err.println("Failed to load JSON fields from database: " + ex.getMessage());
+            log.warn("Failed to load JSON fields from database: {}", ex.getMessage());
         }
     }
 

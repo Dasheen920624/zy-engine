@@ -1,6 +1,8 @@
 package com.medkernel.provenance;
 
 import com.medkernel.persistence.EnginePersistenceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -19,6 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class SourceAssetBindingService {
+    private static final Logger log = LoggerFactory.getLogger(SourceAssetBindingService.class);
+
     private static final String DEFAULT_TENANT_ID = "default";
     private static final List<String> SUPPORTED_ASSET_TYPES = Arrays.asList(
             "RULE", "PATHWAY", "CONFIG_PACKAGE", "ADAPTER", "GRAPH", "QC_METRIC");
@@ -311,7 +315,8 @@ public class SourceAssetBindingService {
         try {
             persistenceService.saveAuditLog("PROVENANCE", actionType, "SRC_ASSET_BINDING",
                     null, null, null, operatorId, detail);
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException e) {
+            log.warn("RuntimeException in source asset binding audit: {}", e.getMessage());
         }
     }
 

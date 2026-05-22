@@ -1,0 +1,106 @@
+/* MedKernel · 来源追溯 CSS Modules（FE-008）
+ *
+ * 规约：所有颜色 / 字号 / 间距 / 圆角 / 阴影 / 字体必须走 tokens（var(--mk-*)），
+ * 严禁 hex / px / rem 字面量。详见 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md §6。
+ */
+
+/* ─── 共享页框 ─── */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-5);
+  padding: var(--mk-space-6);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mk-space-4);
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+  color: var(--mk-text-secondary);
+  font-size: var(--mk-text-sm);
+  margin-bottom: var(--mk-space-2);
+}
+
+/* ─── 卡片容器 ─── */
+.card {
+  background: var(--mk-bg-panel);
+  border-radius: var(--mk-radius-md);
+  box-shadow: var(--mk-shadow-sm);
+}
+
+/* ─── 代码文本 ─── */
+.codeText {
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-xs);
+}
+
+/* ─── 统计容器 ─── */
+.statsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mk-space-4);
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-3);
+  padding: var(--mk-space-3);
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-md);
+}
+
+.statIcon {
+  font-size: var(--mk-space-6);
+  color: var(--mk-brand-primary);
+}
+
+.statNumber {
+  display: block;
+  font-size: var(--mk-text-xl);
+  font-weight: var(--mk-weight-bold);
+  color: var(--mk-text-primary);
+  line-height: 1;
+}
+
+.statLabel {
+  display: block;
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-secondary);
+  margin-top: var(--mk-space-1);
+}
+
+/* ─── 内容块 ─── */
+.contentBlock {
+  background: var(--mk-bg-soft);
+  border-radius: var(--mk-radius-md);
+  padding: var(--mk-space-3);
+  font-family: var(--mk-font-mono);
+  font-size: var(--mk-text-sm);
+  line-height: var(--mk-leading-relaxed);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow: auto;
+}
+
+/* ─── 响应式布局 ─── */
+@media (max-width: 1100px) {
+  .page {
+    padding: var(--mk-space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: var(--mk-space-3);
+  }
+}

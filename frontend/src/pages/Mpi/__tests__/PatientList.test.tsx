@@ -68,8 +68,8 @@ describe("PatientList", () => {
 
     expect(onSearch).toHaveBeenCalledWith({
       keyword: "P-202605220001",
-      identityType: "PLATFORM_PATIENT_ID",
-      sourceSystem: "HIS",
+      identity_type: "PLATFORM_PATIENT_ID",
+      source_system: "HIS",
     });
   });
 });

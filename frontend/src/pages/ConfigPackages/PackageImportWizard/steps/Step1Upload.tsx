@@ -4,6 +4,7 @@ import { InboxOutlined } from "@ant-design/icons";
 import { importPackageUpload } from "@/api/configPackage";
 import type { ImportUploadResult } from "@/api/types";
 import type { WizardContext } from "../types";
+import styles from "./steps.module.css";
 
 const { Text } = Typography;
 const { Dragger } = Upload;
@@ -43,7 +44,7 @@ export default function Step1Upload({ context, onUploadSuccess }: Step1UploadPro
           type="error"
           showIcon
           closable
-          style={{ marginBottom: 16 }}
+          className={styles.alertSpacing}
           message="上传失败"
           description={error}
           onClose={() => setError(null)}
@@ -72,9 +73,9 @@ export default function Step1Upload({ context, onUploadSuccess }: Step1UploadPro
         disabled={uploading}
       >
         <p className="ant-upload-drag-icon">
-          <InboxOutlined style={{ color: "var(--mk-brand-primary)", fontSize: 48 }} />
+          <InboxOutlined className={styles.uploadIcon} />
         </p>
-        <p className="ant-upload-text" style={{ fontSize: 16 }}>
+        <p className={`ant-upload-text ${styles.uploadText}`}>
           点击或拖拽文件到此区域上传
         </p>
         <p className="ant-upload-hint">

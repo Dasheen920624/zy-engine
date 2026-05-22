@@ -38,13 +38,13 @@ public class IdentityBindingService {
     /**
      * 查询用户的所有身份绑定。
      */
-    public List<IdentityBinding> listBindingsByUser(Long tenantId, Long userId) {
+    public List<SsoIdentityBinding> listBindingsByUser(Long tenantId, Long userId) {
         String sql = "SELECT id, tenant_id, platform_user_id AS user_id, source_id AS provider_id, "
                 + "external_id AS external_subject, external_username AS external_org_code, "
                 + "external_display_name, binding_status, "
                 + "last_sync_time AS last_verified_time, created_by, created_time, updated_by, updated_time "
                 + "FROM sec_identity_binding WHERE tenant_id = ? AND platform_user_id = ? ORDER BY created_time";
-        List<IdentityBinding> bindings = new ArrayList<>();
+        List<SsoIdentityBinding> bindings = new ArrayList<>();
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, tenantId);
@@ -64,11 +64,11 @@ public class IdentityBindingService {
      * 绑定外部身份到平台用户。
      * 如果同一 provider + external_subject 已绑定到其他用户，则阻断。
      */
-    public IdentityBinding bindIdentity(Long tenantId, Long userId, Long providerId,
+    public SsoIdentityBinding bindIdentity(Long tenantId, Long userId, Long providerId,
                                          String externalSubject, String externalDisplayName,
                                          String operator) {
         // 检查重复绑定
-        IdentityBinding existing = findActiveBinding(tenantId, providerId, externalSubject);
+        SsoIdentityBinding existing = findActiveBinding(tenantId, providerId, externalSubject);
         if (existing != null) {
             if (existing.getUserId().equals(userId)) {
                 throw new IllegalStateException("该外部身份已绑定到当前用户");
@@ -77,8 +77,8 @@ public class IdentityBindingService {
         }
 
         // 检查同一用户是否已绑定同一身份源
-        List<IdentityBinding> userBindings = listBindingsByUser(tenantId, userId);
-        for (IdentityBinding b : userBindings) {
+        List<SsoIdentityBinding> userBindings = listBindingsByUser(tenantId, userId);
+        for (SsoIdentityBinding b : userBindings) {
             if (b.getProviderId().equals(providerId) && b.getExternalSubject().equals(externalSubject)) {
                 throw new IllegalStateException("当前用户已绑定该外部身份");
             }
@@ -105,7 +105,7 @@ public class IdentityBindingService {
             throw new IllegalStateException("创建身份绑定失败: " + ex.getMessage(), ex);
         }
 
-        IdentityBinding binding = new IdentityBinding();
+        SsoIdentityBinding binding = new SsoIdentityBinding();
         binding.setId(bindingId);
         binding.setTenantId(tenantId);
         binding.setUserId(userId);
@@ -123,7 +123,7 @@ public class IdentityBindingService {
      * 解绑：标记 binding_status=DETACHED，保留历史审计。
      */
     public void unbindIdentity(Long bindingId, String operator) {
-        IdentityBinding binding = getBindingById(bindingId);
+        SsoIdentityBinding binding = getBindingById(bindingId);
         if (binding == null) {
             throw new IllegalArgumentException("绑定不存在: " + bindingId);
         }
@@ -158,15 +158,15 @@ public class IdentityBindingService {
         int conflictCount = 0;
 
         // 获取源用户的所有活跃绑定
-        List<IdentityBinding> sourceBindings = listBindingsByUser(tenantId, sourceUserId);
-        List<IdentityBinding> targetBindings = listBindingsByUser(tenantId, targetUserId);
+        List<SsoIdentityBinding> sourceBindings = listBindingsByUser(tenantId, sourceUserId);
+        List<SsoIdentityBinding> targetBindings = listBindingsByUser(tenantId, targetUserId);
 
-        for (IdentityBinding sourceBinding : sourceBindings) {
+        for (SsoIdentityBinding sourceBinding : sourceBindings) {
             if (!"ACTIVE".equals(sourceBinding.getBindingStatus())) continue;
 
             // 检查目标用户是否已有相同 provider + subject 的绑定
             boolean conflict = false;
-            for (IdentityBinding targetBinding : targetBindings) {
+            for (SsoIdentityBinding targetBinding : targetBindings) {
                 if (targetBinding.getProviderId().equals(sourceBinding.getProviderId())
                         && targetBinding.getExternalSubject().equals(sourceBinding.getExternalSubject())) {
                     conflict = true;
@@ -242,7 +242,7 @@ public class IdentityBindingService {
         return conflicts;
     }
 
-    public IdentityBinding getBindingById(Long bindingId) {
+    public SsoIdentityBinding getBindingById(Long bindingId) {
         String sql = "SELECT id, tenant_id, platform_user_id AS user_id, source_id AS provider_id, "
                 + "external_id AS external_subject, external_username AS external_org_code, "
                 + "external_display_name, binding_status, last_sync_time AS last_verified_time, "
@@ -327,7 +327,7 @@ public class IdentityBindingService {
 
     // ---- 内部方法 ----
 
-    private IdentityBinding findActiveBinding(Long tenantId, Long providerId, String externalSubject) {
+    private SsoIdentityBinding findActiveBinding(Long tenantId, Long providerId, String externalSubject) {
         String sql = "SELECT id, tenant_id, platform_user_id AS user_id, source_id AS provider_id, "
                 + "external_id AS external_subject, external_username AS external_org_code, "
                 + "external_display_name, binding_status, last_sync_time AS last_verified_time, "
@@ -371,7 +371,7 @@ public class IdentityBindingService {
         }
     }
 
-    private void recordUnbind(IdentityBinding binding, String operator) {
+    private void recordUnbind(SsoIdentityBinding binding, String operator) {
         String sql = "INSERT INTO sec_user_unbind (id, tenant_id, binding_id, user_id, unbind_reason, "
                 + "unbind_status, previous_status, new_status, unbound_by, unbound_at, created_by, created_time) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -395,8 +395,8 @@ public class IdentityBindingService {
         }
     }
 
-    private IdentityBinding mapBinding(ResultSet rs) throws SQLException {
-        IdentityBinding binding = new IdentityBinding();
+    private SsoIdentityBinding mapBinding(ResultSet rs) throws SQLException {
+        SsoIdentityBinding binding = new SsoIdentityBinding();
         binding.setId(rs.getLong("id"));
         binding.setTenantId(rs.getLong("tenant_id"));
         binding.setUserId(rs.getLong("user_id"));

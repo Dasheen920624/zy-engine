@@ -10,10 +10,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Health")
 @RestController
 @RequestMapping("/api")
 public class HealthController {
@@ -35,6 +38,7 @@ public class HealthController {
         this.modelGatewayService = modelGatewayService;
     }
 
+    @Operation(summary = "Health")
     @GetMapping("/health")
     public ApiResult<Map<String, Object>> health() {
         Map<String, Object> data = new LinkedHashMap<String, Object>();
@@ -44,6 +48,7 @@ public class HealthController {
         return ApiResult.success(data);
     }
 
+    @Operation(summary = "Providers")
     @GetMapping("/system/providers")
     public ApiResult<Map<String, Object>> providers() {
         boolean databaseReady = persistenceService.enabled();

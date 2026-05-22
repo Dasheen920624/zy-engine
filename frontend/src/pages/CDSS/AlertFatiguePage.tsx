@@ -23,6 +23,7 @@ import {
   type AlertFatigueConfigData,
   type OverrideAnalysis,
 } from "../../api/cdss";
+import styles from "./alertFatiguePage.module.css";
 
 const TRIGGER_OPTIONS = [
   { value: "ORDER_PLACED", label: "医嘱下达" },
@@ -194,12 +195,12 @@ const AlertFatiguePage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       {/* 覆盖模式分析 */}
-      <Card title="覆盖模式分析" style={{ marginBottom: 16 }}>
+      <Card title="覆盖模式分析" className={styles.cardSpacing}>
         {analysis && (
           <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Row gutter={16} className={styles.rowSpacing}>
               <Col span={4}>
                 <Statistic title="总告警" value={analysis.total_alerts} />
               </Col>
@@ -237,7 +238,7 @@ const AlertFatiguePage: React.FC = () => {
               </Card>
             )}
 
-            <Row gutter={16} style={{ marginTop: 12 }}>
+            <Row gutter={16} className={styles.rowTopSpacing}>
               <Col span={8}>
                 <Descriptions column={1} size="small" bordered title="按规则">
                   {Object.entries(analysis.override_by_rule).map(([k, v]) => (
@@ -312,28 +313,28 @@ const AlertFatiguePage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Card type="inner" title="去重策略" size="small" style={{ marginBottom: 12 }}>
+          <Card type="inner" title="去重策略" size="small" className={styles.innerCardSpacing}>
             <Form.Item name="deduplication_enabled" label="启用去重" valuePropName="checked">
               <Switch />
             </Form.Item>
             <Form.Item name="deduplication_window_minutes" label="去重窗口（分钟）">
-              <InputNumber min={1} max={1440} style={{ width: "100%" }} />
+              <InputNumber min={1} max={1440} className={styles.fullWidth} />
             </Form.Item>
           </Card>
-          <Card type="inner" title="抑制策略" size="small" style={{ marginBottom: 12 }}>
+          <Card type="inner" title="抑制策略" size="small" className={styles.innerCardSpacing}>
             <Form.Item name="suppression_enabled" label="启用抑制" valuePropName="checked">
               <Switch />
             </Form.Item>
             <Form.Item name="suppression_max_alerts_per_hour" label="每小时最大告警数">
-              <InputNumber min={1} max={1000} style={{ width: "100%" }} />
+              <InputNumber min={1} max={1000} className={styles.fullWidth} />
             </Form.Item>
           </Card>
-          <Card type="inner" title="静默期策略" size="small" style={{ marginBottom: 12 }}>
+          <Card type="inner" title="静默期策略" size="small" className={styles.innerCardSpacing}>
             <Form.Item name="quiet_period_enabled" label="启用静默期" valuePropName="checked">
               <Switch />
             </Form.Item>
             <Form.Item name="quiet_period_minutes" label="静默期（分钟）">
-              <InputNumber min={1} max={1440} style={{ width: "100%" }} />
+              <InputNumber min={1} max={1440} className={styles.fullWidth} />
             </Form.Item>
           </Card>
           <Card type="inner" title="智能过滤" size="small">
@@ -341,7 +342,7 @@ const AlertFatiguePage: React.FC = () => {
               <Switch />
             </Form.Item>
             <Form.Item name="override_rate_threshold" label="覆盖率阈值">
-              <InputNumber min={0} max={1} step={0.1} style={{ width: "100%" }} />
+              <InputNumber min={0} max={1} step={0.1} className={styles.fullWidth} />
             </Form.Item>
           </Card>
         </Form>

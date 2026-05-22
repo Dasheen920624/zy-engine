@@ -9,6 +9,7 @@ import com.medkernel.security.SecurityPersistenceService;
 import com.medkernel.security.SecurityUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
@@ -29,6 +30,8 @@ import java.util.UUID;
 public class SsoConfigService {
 
     private static final Logger log = LoggerFactory.getLogger(SsoConfigService.class);
+    private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
+    private static final String ENCRYPTED_MASK = "***";
 
     private final EnginePersistenceProperties properties;
     private final SecurityPersistenceService securityPersistenceService;
@@ -104,6 +107,24 @@ public class SsoConfigService {
      * 保存 SSO 配置。
      */
     public void saveSsoConfig(SsoConfig config) {
+        // 写入数据库前对敏感字段进行 BCrypt 加密
+        // encryptIfNeeded 返回 null 表示前端回传了掩码（未修改），需从数据库保留原值
+        String oidcClientSecret = encryptIfNeeded(config.getOidcClientSecret());
+        String ldapBindPassword = encryptIfNeeded(config.getLdapBindPassword());
+
+        // 如果敏感字段为掩码回传（null），从数据库读取原始值保留
+        if (oidcClientSecret == null || ldapBindPassword == null) {
+            SsoConfig existing = getSsoConfigByCode(config.getTenantId(), config.getConfigCode());
+            if (existing != null) {
+                if (oidcClientSecret == null) {
+                    oidcClientSecret = existing.getOidcClientSecret();
+                }
+                if (ldapBindPassword == null) {
+                    ldapBindPassword = existing.getLdapBindPassword();
+                }
+            }
+        }
+
         String updateSql = "UPDATE sec_sso_config SET config_name = ?, protocol_type = ?, status = ?, priority = ?, "
                 + "cas_server_url = ?, cas_service_url = ?, cas_callback_url = ?, "
                 + "oidc_issuer = ?, oidc_client_id = ?, oidc_client_secret = ?, oidc_redirect_uri = ?, oidc_scope = ?, oidc_response_type = ?, oidc_jwks_uri = ?, "
@@ -133,7 +154,7 @@ public class SsoConfigService {
                 ps.setString(7, config.getCasCallbackUrl());
                 ps.setString(8, config.getOidcIssuer());
                 ps.setString(9, config.getOidcClientId());
-                ps.setString(10, config.getOidcClientSecret());
+                ps.setString(10, oidcClientSecret);
                 ps.setString(11, config.getOidcRedirectUri());
                 ps.setString(12, config.getOidcScope());
                 ps.setString(13, config.getOidcResponseType());
@@ -146,7 +167,7 @@ public class SsoConfigService {
                 ps.setString(20, config.getLdapUrl());
                 ps.setString(21, config.getLdapBaseDn());
                 ps.setString(22, config.getLdapBindDn());
-                ps.setString(23, config.getLdapBindPassword());
+                ps.setString(23, ldapBindPassword);
                 ps.setString(24, config.getLdapUserSearchBase());
                 ps.setString(25, config.getLdapUserSearchFilter());
                 ps.setString(26, config.getLdapGroupSearchBase());
@@ -182,7 +203,7 @@ public class SsoConfigService {
                 ps.setString(10, config.getCasCallbackUrl());
                 ps.setString(11, config.getOidcIssuer());
                 ps.setString(12, config.getOidcClientId());
-                ps.setString(13, config.getOidcClientSecret());
+                ps.setString(13, oidcClientSecret);
                 ps.setString(14, config.getOidcRedirectUri());
                 ps.setString(15, config.getOidcScope());
                 ps.setString(16, config.getOidcResponseType());
@@ -195,7 +216,7 @@ public class SsoConfigService {
                 ps.setString(23, config.getLdapUrl());
                 ps.setString(24, config.getLdapBaseDn());
                 ps.setString(25, config.getLdapBindDn());
-                ps.setString(26, config.getLdapBindPassword());
+                ps.setString(26, ldapBindPassword);
                 ps.setString(27, config.getLdapUserSearchBase());
                 ps.setString(28, config.getLdapUserSearchFilter());
                 ps.setString(29, config.getLdapGroupSearchBase());
@@ -360,6 +381,31 @@ public class SsoConfigService {
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("find active sso config failed: " + ex.getMessage(), ex);
+        }
+        return null;
+    }
+
+    private SsoConfig getSsoConfigByCode(Long tenantId, String configCode) {
+        String sql = "SELECT id, tenant_id, config_code, config_name, protocol_type, status, priority, "
+                + "cas_server_url, cas_service_url, cas_callback_url, "
+                + "oidc_issuer, oidc_client_id, oidc_client_secret, oidc_redirect_uri, oidc_scope, oidc_response_type, oidc_jwks_uri, "
+                + "saml_entity_id, saml_sso_url, saml_slo_url, saml_certificate, saml_metadata_url, "
+                + "ldap_url, ldap_base_dn, ldap_bind_dn, ldap_bind_password, ldap_user_search_base, ldap_user_search_filter, "
+                + "ldap_group_search_base, ldap_group_search_filter, ldap_use_ssl, ldap_use_starttls, "
+                + "attribute_mapping, role_mapping, auto_create_user, auto_update_user, session_timeout_minutes, "
+                + "created_by, created_time, updated_by, updated_time "
+                + "FROM sec_sso_config WHERE tenant_id = ? AND config_code = ?";
+        try (Connection connection = connection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, tenantId);
+            ps.setString(2, configCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapSsoConfigRaw(rs);
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("find sso config by code failed: " + ex.getMessage(), ex);
         }
         return null;
     }
@@ -545,6 +591,15 @@ public class SsoConfigService {
     }
 
     private SsoConfig mapSsoConfig(ResultSet rs) throws SQLException {
+        return mapSsoConfigInternal(rs, true);
+    }
+
+    /** 内部读取，不掩码，用于 saveSsoConfig 保留原始加密值 */
+    private SsoConfig mapSsoConfigRaw(ResultSet rs) throws SQLException {
+        return mapSsoConfigInternal(rs, false);
+    }
+
+    private SsoConfig mapSsoConfigInternal(ResultSet rs, boolean maskSensitive) throws SQLException {
         SsoConfig config = new SsoConfig();
         config.setId(rs.getLong("id"));
         config.setTenantId(rs.getLong("tenant_id"));
@@ -562,7 +617,7 @@ public class SsoConfigService {
         // OIDC
         config.setOidcIssuer(rs.getString("oidc_issuer"));
         config.setOidcClientId(rs.getString("oidc_client_id"));
-        config.setOidcClientSecret(rs.getString("oidc_client_secret"));
+        config.setOidcClientSecret(maskSensitive ? maskIfEncrypted(rs.getString("oidc_client_secret")) : rs.getString("oidc_client_secret"));
         config.setOidcRedirectUri(rs.getString("oidc_redirect_uri"));
         config.setOidcScope(rs.getString("oidc_scope"));
         config.setOidcResponseType(rs.getString("oidc_response_type"));
@@ -579,7 +634,7 @@ public class SsoConfigService {
         config.setLdapUrl(rs.getString("ldap_url"));
         config.setLdapBaseDn(rs.getString("ldap_base_dn"));
         config.setLdapBindDn(rs.getString("ldap_bind_dn"));
-        config.setLdapBindPassword(rs.getString("ldap_bind_password"));
+        config.setLdapBindPassword(maskSensitive ? maskIfEncrypted(rs.getString("ldap_bind_password")) : rs.getString("ldap_bind_password"));
         config.setLdapUserSearchBase(rs.getString("ldap_user_search_base"));
         config.setLdapUserSearchFilter(rs.getString("ldap_user_search_filter"));
         config.setLdapGroupSearchBase(rs.getString("ldap_group_search_base"));
@@ -680,6 +735,34 @@ public class SsoConfigService {
             log.setCreatedTime(createdTime.toLocalDateTime());
         }
         return log;
+    }
+
+    /**
+     * 对明文密码进行 BCrypt 加密。如果已经是 BCrypt 格式（以 $2a$ 开头）则跳过，
+     * 避免重复加密。如果值是掩码（前端未修改字段回传），则返回 null 表示跳过更新。
+     */
+    private static String encryptIfNeeded(String rawPassword) {
+        if (rawPassword == null || rawPassword.isEmpty()) {
+            return rawPassword;
+        }
+        if (ENCRYPTED_MASK.equals(rawPassword)) {
+            return null;
+        }
+        if (rawPassword.startsWith("$2a$")) {
+            return rawPassword;
+        }
+        return PASSWORD_ENCODER.encode(rawPassword);
+    }
+
+    /**
+     * 将已加密的敏感字段替换为掩码，防止明文泄露到前端。
+     * BCrypt 是单向哈希，无法解密。实际使用密码时需从原始请求中获取（MVP 阶段限制）。
+     */
+    private static String maskIfEncrypted(String value) {
+        if (value != null && value.startsWith("$2a$")) {
+            return ENCRYPTED_MASK;
+        }
+        return value;
     }
 
     private Connection connection() throws SQLException {

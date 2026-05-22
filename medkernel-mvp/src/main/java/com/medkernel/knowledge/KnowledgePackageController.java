@@ -4,6 +4,8 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,15 +14,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Knowledge Package")
 @RestController
 @RequestMapping("/api/knowledge/packages")
 public class KnowledgePackageController {
+    private static final Logger log = LoggerFactory.getLogger(KnowledgePackageController.class);
+
     private final KnowledgePackageService knowledgePackageService;
     private final OrganizationContextService organizationContextService;
 
@@ -30,6 +37,7 @@ public class KnowledgePackageController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Export package")
     @PostMapping("/export")
     public ApiResult<Map<String, Object>> exportPackage(
             @RequestBody Map<String, Object> request,
@@ -42,10 +50,12 @@ public class KnowledgePackageController {
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
         } catch (IllegalStateException e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
+            log.error("Knowledge package export failed", e);
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "操作失败，请稍后重试");
         }
     }
 
+    @Operation(summary = "Import package")
     @PostMapping("/{packageId}/import")
     public ApiResult<Map<String, Object>> importPackage(
             @PathVariable Long packageId,
@@ -61,10 +71,12 @@ public class KnowledgePackageController {
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
         } catch (IllegalStateException e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
+            log.error("Knowledge package import failed", e);
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "操作失败，请稍后重试");
         }
     }
 
+    @Operation(summary = "Preview import")
     @PostMapping("/{packageId}/preview")
     public ApiResult<Map<String, Object>> previewImport(
             @PathVariable Long packageId,
@@ -77,6 +89,7 @@ public class KnowledgePackageController {
         }
     }
 
+    @Operation(summary = "List packages")
     @GetMapping
     public ApiResult<List<Map<String, Object>>> listPackages(
             @RequestParam(required = false) Long tenant_id,
@@ -99,6 +112,7 @@ public class KnowledgePackageController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Get package")
     @GetMapping("/{packageId}")
     public ApiResult<Map<String, Object>> getPackage(
             @PathVariable Long packageId,
@@ -111,6 +125,7 @@ public class KnowledgePackageController {
         }
     }
 
+    @Operation(summary = "Sync package")
     @PostMapping("/{packageId}/sync")
     public ApiResult<Map<String, Object>> syncPackage(
             @PathVariable Long packageId,
@@ -126,10 +141,12 @@ public class KnowledgePackageController {
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
         } catch (IllegalStateException e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, e.getMessage());
+            log.error("Knowledge package sync failed", e);
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "操作失败，请稍后重试");
         }
     }
 
+    @Operation(summary = "Get sync status")
     @GetMapping("/{packageId}/sync-status")
     public ApiResult<Map<String, Object>> getSyncStatus(
             @PathVariable Long packageId,

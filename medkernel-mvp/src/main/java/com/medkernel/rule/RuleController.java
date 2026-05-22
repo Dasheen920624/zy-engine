@@ -12,11 +12,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Rule")
 @RestController
 @RequestMapping("/api/rules")
 public class RuleController {
@@ -29,12 +32,14 @@ public class RuleController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Import rules")
     @PostMapping
     public ApiResult<List<RuleDefinition>> importRules(@RequestBody Object request,
                                                        HttpServletRequest httpRequest) {
         return ApiResult.success(ruleService.importRules(request, resolveWithBody(httpRequest, request)));
     }
 
+    @Operation(summary = "List rules")
     @GetMapping
     public ApiResult<List<RuleDefinition>> listRules(HttpServletRequest request) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
@@ -42,6 +47,7 @@ public class RuleController {
         return ApiResult.success(ruleService.listRules(filters));
     }
 
+    @Operation(summary = "Get rule")
     @GetMapping("/{ruleCode}")
     public ApiResult<RuleDefinition> getRule(@PathVariable String ruleCode,
                                              @RequestParam(required = false) String versionNo,
@@ -49,6 +55,7 @@ public class RuleController {
         return ApiResult.success(ruleService.getRule(ruleCode, versionNo, organizationContextService.resolve(request)));
     }
 
+    @Operation(summary = "Publish")
     @PostMapping("/{ruleCode}/publish")
     public ApiResult<RuleDefinition> publish(@PathVariable String ruleCode,
                                              @RequestBody Map<String, Object> request,
@@ -57,6 +64,7 @@ public class RuleController {
                 organizationContextService.resolveWithBody(httpRequest, request)));
     }
 
+    @Operation(summary = "Review package")
     @GetMapping("/packages/{packageCode}/review")
     public ApiResult<Map<String, Object>> reviewPackage(@PathVariable String packageCode,
                                                         @RequestParam(required = false) String packageVersion,
@@ -65,6 +73,7 @@ public class RuleController {
                 organizationContextService.resolve(request)));
     }
 
+    @Operation(summary = "Publish package")
     @PostMapping("/packages/{packageCode}/publish")
     public ApiResult<Map<String, Object>> publishPackage(@PathVariable String packageCode,
                                                          @RequestBody(required = false) Map<String, Object> request,
@@ -74,6 +83,7 @@ public class RuleController {
                         request == null ? new LinkedHashMap<String, Object>() : request)));
     }
 
+    @Operation(summary = "Evaluate")
     @PostMapping("/evaluate")
     public ApiResult<List<RuleResult>> evaluate(@RequestBody Map<String, Object> request,
                                                 HttpServletRequest httpRequest) {
@@ -81,6 +91,7 @@ public class RuleController {
                 organizationContextService.resolveWithBody(httpRequest, request)));
     }
 
+    @Operation(summary = "Simulate")
     @PostMapping("/simulate")
     public ApiResult<RuleResult> simulate(@RequestBody Map<String, Object> request,
                                           HttpServletRequest httpRequest) {
@@ -88,6 +99,7 @@ public class RuleController {
                 organizationContextService.resolveWithBody(httpRequest, request)));
     }
 
+    @Operation(summary = "List exec logs")
     @GetMapping("/exec-logs")
     public ApiResult<List<RuleExecLogEntry>> listExecLogs(@RequestParam(required = false) String ruleCode,
                                                           @RequestParam(required = false) String traceId,
@@ -109,6 +121,7 @@ public class RuleController {
         return ApiResult.success(ruleService.listExecLogs(filters));
     }
 
+    @Operation(summary = "Exec log summary")
     @GetMapping("/exec-logs/summary")
     public ApiResult<Map<String, Object>> execLogSummary(@RequestParam(required = false) String ruleCode,
                                                          @RequestParam(required = false) String traceId,
@@ -128,6 +141,7 @@ public class RuleController {
         return ApiResult.success(ruleService.summarizeExecLogs(filters));
     }
 
+    @Operation(summary = "Get exec log")
     @GetMapping("/exec-logs/{logId}")
     public ApiResult<RuleExecLogEntry> getExecLog(@PathVariable String logId,
                                                   HttpServletRequest httpRequest) {

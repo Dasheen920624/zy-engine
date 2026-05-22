@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -19,6 +21,7 @@ import java.util.Map;
 /**
  * SSO 配置控制器：管理 SSO 配置、回调会话和审计查询。
  */
+@Tag(name = "Sso Config")
 @RestController
 @RequestMapping("/api/sso")
 public class SsoConfigController {
@@ -34,6 +37,7 @@ public class SsoConfigController {
     /**
      * 获取 SSO 配置列表。
      */
+    @Operation(summary = "List configs")
     @GetMapping("/configs")
     public ApiResult<List<Map<String, Object>>> listConfigs(HttpServletRequest request) {
         Long tenantId = resolveNumericTenantId(request);
@@ -48,6 +52,7 @@ public class SsoConfigController {
     /**
      * 根据 ID 获取 SSO 配置。
      */
+    @Operation(summary = "Get config")
     @GetMapping("/configs/detail")
     public ApiResult<Map<String, Object>> getConfig(@RequestParam("id") Long configId) {
         SsoConfig config = ssoConfigService.getSsoConfig(configId);
@@ -60,6 +65,7 @@ public class SsoConfigController {
     /**
      * 保存 SSO 配置（创建或更新）。
      */
+    @Operation(summary = "Save config")
     @PostMapping("/configs")
     public ApiResult<Void> saveConfig(@RequestBody SsoConfig config, HttpServletRequest request) {
         Long tenantId = resolveNumericTenantId(request);
@@ -71,6 +77,7 @@ public class SsoConfigController {
     /**
      * 删除 SSO 配置。
      */
+    @Operation(summary = "Delete config")
     @PostMapping("/configs/delete")
     public ApiResult<Void> deleteConfig(@RequestBody Map<String, Long> body) {
         Long configId = body.get("id");
@@ -84,6 +91,7 @@ public class SsoConfigController {
     /**
      * 处理 CAS 回调。
      */
+    @Operation(summary = "Handle cas callback")
     @PostMapping("/cas/callback")
     public ApiResult<Map<String, Object>> handleCasCallback(@RequestBody Map<String, String> body,
                                                             HttpServletRequest request) {
@@ -103,6 +111,7 @@ public class SsoConfigController {
     /**
      * 处理 OIDC 回调。
      */
+    @Operation(summary = "Handle oidc callback")
     @PostMapping("/oidc/callback")
     public ApiResult<Map<String, Object>> handleOidcCallback(@RequestBody Map<String, String> body,
                                                               HttpServletRequest request) {
@@ -122,6 +131,7 @@ public class SsoConfigController {
     /**
      * 处理 SAML 回调。
      */
+    @Operation(summary = "Handle saml callback")
     @PostMapping("/saml/callback")
     public ApiResult<Map<String, Object>> handleSamlCallback(@RequestBody Map<String, String> body,
                                                               HttpServletRequest request) {
@@ -141,6 +151,7 @@ public class SsoConfigController {
     /**
      * 处理 LDAP-AD 登录。
      */
+    @Operation(summary = "Handle ldap login")
     @PostMapping("/ldap/login")
     public ApiResult<Map<String, Object>> handleLdapLogin(@RequestBody Map<String, String> body,
                                                            HttpServletRequest request) {
@@ -163,6 +174,7 @@ public class SsoConfigController {
     /**
      * SSO 登出。
      */
+    @Operation(summary = "Logout")
     @PostMapping("/logout")
     public ApiResult<Void> logout(@RequestBody Map<String, String> body, HttpServletRequest request) {
         Long tenantId = resolveNumericTenantId(request);
@@ -179,6 +191,7 @@ public class SsoConfigController {
     /**
      * 获取当前用户的 SSO 会话列表。
      */
+    @Operation(summary = "List sessions")
     @GetMapping("/sessions")
     public ApiResult<List<Map<String, Object>>> listSessions(HttpServletRequest request) {
         Long tenantId = resolveNumericTenantId(request);
@@ -194,6 +207,7 @@ public class SsoConfigController {
     /**
      * 获取 SSO 审计日志。
      */
+    @Operation(summary = "List audit logs")
     @GetMapping("/audit-logs")
     public ApiResult<List<Map<String, Object>>> listAuditLogs(@RequestParam(value = "limit", defaultValue = "100") int limit,
                                                                HttpServletRequest request) {
@@ -209,6 +223,7 @@ public class SsoConfigController {
     /**
      * 健康检查。
      */
+    @Operation(summary = "Health")
     @GetMapping("/health")
     public ApiResult<Map<String, String>> health() {
         java.util.LinkedHashMap<String, String> data = new java.util.LinkedHashMap<>();

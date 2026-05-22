@@ -15,11 +15,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Ai Governance")
 @RestController
 @RequestMapping("/api/ai-governance")
 public class AiGovernanceController {
@@ -37,6 +40,7 @@ public class AiGovernanceController {
     // 模型注册
     // =========================================================================
 
+    @Operation(summary = "Register model")
     @PostMapping("/models")
     public ApiResult<AiModelRegistry> registerModel(
             @RequestBody AiModelRegistry model,
@@ -50,6 +54,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "Update model")
     @PutMapping("/models/{modelId}")
     public ApiResult<AiModelRegistry> updateModel(
             @PathVariable("modelId") Long modelId,
@@ -65,6 +70,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "List models")
     @GetMapping("/models")
     public ApiResult<List<AiModelRegistry>> listModels(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -92,6 +98,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "Review model")
     @PostMapping("/models/{modelId}/review")
     public ApiResult<Map<String, Object>> reviewModel(
             @PathVariable("modelId") Long modelId,
@@ -115,6 +122,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "Online model")
     @PostMapping("/models/{modelId}/online")
     public ApiResult<Map<String, Object>> onlineModel(
             @PathVariable("modelId") Long modelId,
@@ -131,6 +139,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "Offline model")
     @PostMapping("/models/{modelId}/offline")
     public ApiResult<Map<String, Object>> offlineModel(
             @PathVariable("modelId") Long modelId,
@@ -151,6 +160,7 @@ public class AiGovernanceController {
     // 提示词模板
     // =========================================================================
 
+    @Operation(summary = "Save prompt template")
     @PostMapping("/prompt-templates")
     public ApiResult<PromptTemplate> savePromptTemplate(
             @RequestBody PromptTemplate template,
@@ -164,6 +174,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "List prompt templates")
     @GetMapping("/prompt-templates")
     public ApiResult<List<PromptTemplate>> listPromptTemplates(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -191,6 +202,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "Review prompt template")
     @PostMapping("/prompt-templates/{templateId}/review")
     public ApiResult<Map<String, Object>> reviewPromptTemplate(
             @PathVariable("templateId") Long templateId,
@@ -214,6 +226,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "Publish prompt template")
     @PostMapping("/prompt-templates/{templateId}/publish")
     public ApiResult<Map<String, Object>> publishPromptTemplate(
             @PathVariable("templateId") Long templateId,
@@ -234,6 +247,7 @@ public class AiGovernanceController {
     // 评测任务
     // =========================================================================
 
+    @Operation(summary = "Create eval task")
     @PostMapping("/eval-tasks")
     public ApiResult<ModelEvalTask> createEvalTask(
             @RequestBody ModelEvalTask task,
@@ -247,6 +261,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "List eval tasks")
     @GetMapping("/eval-tasks")
     public ApiResult<List<ModelEvalTask>> listEvalTasks(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -274,6 +289,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "Update eval task status")
     @PostMapping("/eval-tasks/{taskId}/status")
     public ApiResult<Map<String, Object>> updateEvalTaskStatus(
             @PathVariable("taskId") Long taskId,
@@ -300,6 +316,7 @@ public class AiGovernanceController {
         }
     }
 
+    @Operation(summary = "Get eval summary")
     @GetMapping("/eval-tasks/summary")
     public ApiResult<Map<String, Object>> getEvalSummary(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,

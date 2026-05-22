@@ -1,0 +1,14 @@
+/* PR-V3-INLINE-STYLE: PlaceholderPage inline style 迁移 */
+
+.icon {
+  color: var(--mk-primary);
+}
+
+.prText {
+  color: var(--mk-text-secondary);
+  margin-left: 8px;
+}
+
+.result {
+  margin-top: 120px;
+}

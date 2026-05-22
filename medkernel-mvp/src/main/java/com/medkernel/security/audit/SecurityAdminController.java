@@ -4,6 +4,8 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContextService;
 import com.medkernel.security.SecurityContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,9 +23,12 @@ import java.util.Map;
 /**
  * 安全管理控制器：审计链校验、密钥管理、安全基线检查。
  */
+@Tag(name = "Security Admin")
 @RestController
 @RequestMapping("/api/security/admin")
 public class SecurityAdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityAdminController.class);
 
     private final AuditChainService auditChainService;
     private final KeyManagementService keyManagementService;
@@ -40,6 +47,7 @@ public class SecurityAdminController {
     /**
      * 校验指定审计表的链完整性。
      */
+    @Operation(summary = "Verify audit chain")
     @PostMapping("/audit-chain/verify")
     public ApiResult<Map<String, Object>> verifyAuditChain(@RequestBody Map<String, String> body) {
         String tableName = body.get("table_name");
@@ -69,6 +77,7 @@ public class SecurityAdminController {
     /**
      * 获取所有审计表的校验状态。
      */
+    @Operation(summary = "Get audit chain status")
     @GetMapping("/audit-chain/status")
     public ApiResult<Map<String, Object>> getAuditChainStatus() {
         Map<String, Object> status = new LinkedHashMap<>();
@@ -88,6 +97,7 @@ public class SecurityAdminController {
     /**
      * 获取当前活跃密钥信息（不包含密钥材料）。
      */
+    @Operation(summary = "Get active key")
     @GetMapping("/keys/active")
     public ApiResult<Map<String, Object>> getActiveKey() {
         EncryptionKey key = keyManagementService.getActiveKey();
@@ -101,6 +111,7 @@ public class SecurityAdminController {
     /**
      * 列出所有密钥（不包含密钥材料）。
      */
+    @Operation(summary = "List keys")
     @GetMapping("/keys")
     public ApiResult<List<Map<String, Object>>> listKeys() {
         List<EncryptionKey> keys = keyManagementService.listKeys();
@@ -114,6 +125,7 @@ public class SecurityAdminController {
     /**
      * 执行密钥轮换。
      */
+    @Operation(summary = "Rotate key")
     @PostMapping("/keys/rotate")
     public ApiResult<Map<String, Object>> rotateKey(@RequestBody Map<String, String> body,
                                                      HttpServletRequest request) {
@@ -129,6 +141,7 @@ public class SecurityAdminController {
     /**
      * 加密测试接口。
      */
+    @Operation(summary = "Encrypt")
     @PostMapping("/encrypt")
     public ApiResult<Map<String, String>> encrypt(@RequestBody Map<String, String> body) {
         String plaintext = body.get("plaintext");
@@ -147,6 +160,7 @@ public class SecurityAdminController {
     /**
      * 解密测试接口。
      */
+    @Operation(summary = "Decrypt")
     @PostMapping("/decrypt")
     public ApiResult<Map<String, String>> decrypt(@RequestBody Map<String, String> body) {
         String encrypted = body.get("encrypted");
@@ -162,7 +176,8 @@ public class SecurityAdminController {
             result.put("decrypted", decrypted);
             return ApiResult.success(result);
         } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "解密失败: " + e.getMessage());
+            log.error("Decryption failed", e);
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "操作失败，请稍后重试");
         }
     }
 
@@ -171,6 +186,7 @@ public class SecurityAdminController {
     /**
      * 获取安全基线状态。
      */
+    @Operation(summary = "Get security baseline")
     @GetMapping("/baseline")
     public ApiResult<Map<String, Object>> getSecurityBaseline() {
         Map<String, Object> baseline = new LinkedHashMap<>();

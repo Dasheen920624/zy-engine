@@ -17,7 +17,11 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 审计链服务：实现审计记录的 hash 计算和链式校验。
@@ -36,6 +40,8 @@ public class AuditChainService {
     private static final Logger log = LoggerFactory.getLogger(AuditChainService.class);
     private static final String HASH_ALGORITHM = "SHA-256";
     private static final String INITIAL_CHAIN_HASH = "0000000000000000000000000000000000000000000000000000000000000000";
+    private static final Set<String> ALLOWED_TABLES = Collections.unmodifiableSet(
+            new HashSet<String>(Arrays.asList("engine_audit_log", "sec_auth_audit_log", "sec_sso_audit_log")));
 
     private final EnginePersistenceProperties properties;
     private final DataSource dataSource;
@@ -119,7 +125,7 @@ public class AuditChainService {
         } catch (Exception e) {
             log.error("Failed to verify audit chain for table {}", tableName, e);
             checkpoint.setChainStatus("ERROR");
-            checkpoint.setDetails("{\"error\": \"" + e.getMessage() + "\"}");
+            checkpoint.setDetails("{\"error\": \"Audit chain verification failed\"}");
         }
 
         return checkpoint;
@@ -152,6 +158,12 @@ public class AuditChainService {
 
     // 私有方法
 
+    private void validateTableName(String tableName) {
+        if (!ALLOWED_TABLES.contains(tableName)) {
+            throw new IllegalArgumentException("Unsupported audit table: " + tableName);
+        }
+    }
+
     private String sha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
@@ -171,6 +183,7 @@ public class AuditChainService {
     }
 
     private String getPreviousChainHash(String tableName) {
+        validateTableName(tableName);
         String sql = "SELECT chain_hash FROM " + tableName + " ORDER BY id DESC";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql);
@@ -186,6 +199,7 @@ public class AuditChainService {
     }
 
     private void updateHash(String tableName, Long recordId, String recordHash, String chainHash) {
+        validateTableName(tableName);
         String sql = "UPDATE " + tableName + " SET record_hash = ?, chain_hash = ? WHERE id = ?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {

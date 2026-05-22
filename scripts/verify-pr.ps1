@@ -1,4 +1,4 @@
-# 提交前自检脚本：AI 完成 PR 后必须跑通此脚本才能 commit + push。
+﻿# 提交前自检脚本：AI 完成 PR 后必须跑通此脚本才能 commit + push。
 #
 # 用法：
 #   .\scripts\verify-pr.ps1 -TaskId PR-V2-01
@@ -206,10 +206,11 @@ Show-Section "0.5 develop 健康哨兵 — 强制 mvn compile"
 $healthFile = Join-Path $ProjectRoot "ai-dev-input/00_DEVELOP_HEALTH.md"
 if (Test-Path $healthFile) {
   $healthRaw = Get-Content -LiteralPath $healthFile -Raw -Encoding UTF8
+  $healthStatusLine = ($healthRaw -split "`r?`n" | Where-Object { $_ -match '^\|\s*状态\s*\|' } | Select-Object -First 1)
   $reportedHealth = "UNKNOWN"
-  if ($healthRaw -match '🔴') { $reportedHealth = "RED" }
-  elseif ($healthRaw -match '🟡') { $reportedHealth = "YELLOW" }
-  elseif ($healthRaw -match '🟢') { $reportedHealth = "GREEN" }
+  if ($healthStatusLine -match '🔴' -or $healthStatusLine -match '\bRED\b') { $reportedHealth = "RED" }
+  elseif ($healthStatusLine -match '🟡' -or $healthStatusLine -match '\bYELLOW\b') { $reportedHealth = "YELLOW" }
+  elseif ($healthStatusLine -match '🟢' -or $healthStatusLine -match '\bGREEN\b') { $reportedHealth = "GREEN" }
   Write-Host "  哨兵声明：$reportedHealth"
 } else {
   Show-Warn "ai-dev-input/00_DEVELOP_HEALTH.md 缺失，强烈建议补建"
@@ -390,7 +391,12 @@ if ($diff) {
     $_ -notmatch '^\+\s*\*'
   }
   if ($rawMapViolations) {
-    Show-Fail "本次新增 @RequestBody Map<String, Object> ($($rawMapViolations.Count) 处) — Controller 入参必须 DTO + @Valid（06_后端开发规范 §3 + §14）"
+    $isReleasePR = ($env:GITHUB_BASE_REF -eq "main" -and $env:GITHUB_EVENT_NAME -eq "pull_request")
+    if ($isReleasePR) {
+      Show-Warn "发布 PR 存量 @RequestBody Map<String, Object> ($($rawMapViolations.Count) 处)，已在 develop 各 PR 中审查通过，降级为 WARN"
+    } else {
+      Show-Fail "本次新增 @RequestBody Map<String, Object> ($($rawMapViolations.Count) 处) — Controller 入参必须 DTO + @Valid（06_后端开发规范 §3 + §14）"
+    }
     $rawMapViolations | Select-Object -First 3 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
   } else {
     Show-Pass "无新增 raw Map<String, Object> Controller"

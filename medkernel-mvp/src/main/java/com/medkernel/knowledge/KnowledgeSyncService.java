@@ -1,6 +1,5 @@
 package com.medkernel.knowledge;
 
-import com.medkernel.common.TraceContext;
 import com.medkernel.ops.entity.OpsSyncTask;
 import com.medkernel.ops.service.OpsSyncTaskService;
 import com.medkernel.persistence.EnginePersistenceProperties;

@@ -8,7 +8,7 @@ export interface PatientCardProps {
   patient: MpiPatientRecord;
   selected?: boolean;
   showSensitive?: boolean;
-  onSelect?: (platformPatientId: string) => void;
+  onSelect?: (platform_patient_id: string) => void;
 }
 
 export default function PatientCard({
@@ -25,7 +25,7 @@ export default function PatientCard({
             <UserOutlined />
             <span>{patient.displayName}</span>
           </div>
-          <div className={styles.patientId}>{patient.platformPatientId}</div>
+          <div className={styles.patientId}>{patient.platform_patient_id}</div>
         </div>
         <Tag color={statusColor(patient.status)}>{statusLabel(patient.status)}</Tag>
       </div>
@@ -49,7 +49,7 @@ export default function PatientCard({
         </div>
         <div>
           <dt>来源</dt>
-          <dd>{patient.sourceSystems.join(" / ") || "未同步"}</dd>
+          <dd>{patient.source_systems.join(" / ") || "未同步"}</dd>
         </div>
       </dl>
 
@@ -69,7 +69,7 @@ export default function PatientCard({
       <Button
         type={selected ? "primary" : "default"}
         block
-        onClick={() => onSelect?.(patient.platformPatientId)}
+        onClick={() => onSelect?.(patient.platform_patient_id)}
       >
         {selected ? "正在查看" : "查看主索引"}
       </Button>

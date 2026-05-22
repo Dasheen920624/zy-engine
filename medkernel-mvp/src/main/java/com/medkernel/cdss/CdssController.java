@@ -6,6 +6,8 @@ import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import java.util.Map;
  *   <li>告警详情 — GET /api/cdss/alerts/{alertId}</li>
  * </ul>
  */
+@Tag(name = "Cdss")
 @RestController
 @RequestMapping("/api/cdss")
 public class CdssController {
@@ -39,6 +42,7 @@ public class CdssController {
      *
      * @param request 包含 trigger_point 和 patient_context
      */
+    @Operation(summary = "Evaluate")
     @PostMapping("/evaluate")
     public ApiResult<List<CdssAlert>> evaluate(
             @RequestBody Map<String, Object> request,
@@ -61,6 +65,7 @@ public class CdssController {
     /**
      * 医生确认/覆盖告警。
      */
+    @Operation(summary = "Resolve alert")
     @PostMapping("/alerts/{alertId}/resolve")
     public ApiResult<CdssAlert> resolveAlert(
             @PathVariable String alertId,
@@ -89,6 +94,7 @@ public class CdssController {
     /**
      * 获取活动告警列表。
      */
+    @Operation(summary = "List alerts")
     @GetMapping("/alerts")
     public ApiResult<List<CdssAlert>> listAlerts(
             @RequestParam(required = false) String patientId) {
@@ -99,6 +105,7 @@ public class CdssController {
     /**
      * 获取告警详情。
      */
+    @Operation(summary = "Get alert")
     @GetMapping("/alerts/{alertId}")
     public ApiResult<CdssAlert> getAlert(@PathVariable String alertId) {
         CdssAlert alert = cdssService.getAlert(alertId);

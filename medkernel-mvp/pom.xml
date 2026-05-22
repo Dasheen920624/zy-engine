@@ -99,6 +99,47 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- PR-FINAL-20: springdoc-openapi-ui 1.7.0（Spring Boot 2.7 最高兼容版）。
+             - Swagger UI 访问路径：/medkernel/api-docs（仅 management 内网端口 18081 暴露）。
+             - 生产部署时须在 Nginx/网关层屏蔽 /api-docs 对公网的访问。
+             注意：springdoc 2.x 需要 Spring Boot 3+，本工程固定 1.7.0。 -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.7.0</version>
+        </dependency>
+        <!-- PR-FINAL-25: Flyway DB migration（数据库版本管理）。
+             - Flyway 8.5.13 是最后一个支持 Spring Boot 2.7 / JDK 1.8 的版本（9+ 要 JDK 11）。
+             - flyway-core 包含 PostgreSQL / MySQL / H2 / Oracle 等内建 vendor 支持。
+             - KingbaseES（PostgreSQL 兼容）由 PostgreSQL adapter 处理：jdbc:postgresql 协议直接走。
+             - DM（达梦）：8.x 后兼容 Oracle，由 Oracle adapter 处理；老版本由 flyway-database-oracle 兜底。
+             - 配置：medkernel.flyway.enabled=true 时启用，会在 PersistenceService.@PostConstruct
+               loadSchemaStatements() 之前执行 migration（Spring Boot 默认顺序 Flyway → @PostConstruct）。
+             - 入口类：com.medkernel.persistence.flyway.MedKernelFlywayConfig。 -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>8.5.13</version>
+        </dependency>
+        <!-- PR-FINAL-22: 国密 SM2 / SM3 / SM4（BouncyCastle）—— 合规上线必经。
+             - jdk15on = "JDK 1.5 (and later)"；1.70 是 jdk15on 命名系列最后一版（2021 年 LTS）。
+             - 选 1.70 而非 1.78 的原因：BC 1.78 的 JCE Provider 签名证书是 2022 后签发，
+               与早期 Java 8 build（如 8u51）的 JCE 信任根不匹配，会抛
+               "JCE cannot authenticate the provider BC"。1.70 仍被所有 Java 8 build 验证通过。
+             - 算法实现等价：GB/T 32918-2017 SM2 + GB/T 32905-2016 SM3 + GB/T 32907-2016 SM4 完整。
+             - bcprov 是 provider 核心；bcpkix 提供 X.509 / PKCS#10 等证书工具（PR-FINAL-23 数据加密会用）。
+             - 入口类：com.medkernel.common.crypto.SmCryptoService（@Service）。
+             - 升级路径：v1.0 GA 评测期若评审要求最新 LTS，可同步将 JDK 升至 8u300+ 后切回 1.78。 -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.70</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.70</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

@@ -8,91 +8,91 @@ export type ConflictResolutionType = "MERGE" | "SPLIT" | "KEEP_BOTH" | "MANUAL_L
 
 export interface PatientIdentity {
   id: number;
-  tenantId: string;
-  platformPatientId: string;
-  identityType: string;
-  externalId: string;
-  idHash?: string;
-  sourceSystem: string;
+  tenant_id: string;
+  platform_patient_id: string;
+  identity_type: string;
+  external_id: string;
+  id_hash?: string;
+  source_system: string;
   status: PatientIdentityStatus;
   confidence?: number;
-  manuallyVerified?: boolean;
-  verifiedBy?: string;
-  verifiedTime?: string;
-  mergedToId?: number;
+  manually_verified?: boolean;
+  verified_by?: string;
+  verified_time?: string;
+  merged_to_id?: number;
   remarks?: string;
-  createdTime?: string;
-  updatedTime?: string;
+  created_time?: string;
+  updated_time?: string;
 }
 
 export interface VisitIdentity {
   id: number;
-  tenantId: string;
-  platformVisitId: string;
-  platformPatientId: string;
-  visitType: string;
-  identityType: string;
-  externalId: string;
-  idHash?: string;
-  sourceSystem: string;
-  visitDate?: string;
-  departmentCode?: string;
+  tenant_id: string;
+  platform_visit_id: string;
+  platform_patient_id: string;
+  visit_type: string;
+  identity_type: string;
+  external_id: string;
+  id_hash?: string;
+  source_system: string;
+  visit_date?: string;
+  department_code?: string;
   status: VisitIdentityStatus;
   remarks?: string;
-  createdTime?: string;
-  updatedTime?: string;
+  created_time?: string;
+  updated_time?: string;
 }
 
 export interface IdentityConflict {
   id: number;
-  tenantId: string;
-  conflictType: string;
+  tenant_id: string;
+  conflict_type: string;
   severity: ConflictSeverity;
-  patientIdentityIds?: string;
-  visitIdentityIds?: string;
-  conflictDescription?: string;
+  patient_identity_ids?: string;
+  visit_identity_ids?: string;
+  conflict_description?: string;
   status: ConflictStatus;
-  resolutionType?: ConflictResolutionType;
-  resolutionNotes?: string;
-  resolvedBy?: string;
-  resolvedTime?: string;
-  targetPatientIdentityId?: number;
-  createdTime?: string;
-  updatedTime?: string;
+  resolution_type?: ConflictResolutionType;
+  resolution_notes?: string;
+  resolved_by?: string;
+  resolved_time?: string;
+  target_patient_identity_id?: number;
+  created_time?: string;
+  updated_time?: string;
 }
 
 export interface RegisterPatientIdentityRequest {
-  tenantId: string;
-  platformPatientId: string;
-  identityType: string;
-  externalId: string;
-  sourceSystem: string;
+  tenant_id: string;
+  platform_patient_id: string;
+  identity_type: string;
+  external_id: string;
+  source_system: string;
 }
 
 export interface RegisterVisitIdentityRequest {
-  tenantId: string;
-  platformVisitId: string;
-  platformPatientId: string;
-  visitType: string;
-  identityType: string;
-  externalId: string;
-  sourceSystem: string;
-  visitDate?: string;
-  departmentCode?: string;
+  tenant_id: string;
+  platform_visit_id: string;
+  platform_patient_id: string;
+  visit_type: string;
+  identity_type: string;
+  external_id: string;
+  source_system: string;
+  visit_date?: string;
+  department_code?: string;
 }
 
 export interface ResolveConflictRequest {
-  resolutionType: ConflictResolutionType;
-  resolutionNotes?: string;
-  resolvedBy: string;
-  targetPatientIdentityId?: number;
+  resolution_type: ConflictResolutionType;
+  resolution_notes?: string;
+  resolved_by: string;
+  target_patient_identity_id?: number;
 }
 
 export interface FindPatientByExternalIdRequest {
-  tenantId: string;
-  identityType: string;
-  sourceSystem: string;
-  externalId: string;
+  tenant_id: string;
+  identity_type: string;
+  source_system: string;
+  external_id: string;
 }
 
 export const PATIENT_IDENTITY_TYPE_LABELS: Record<string, string> = {
@@ -215,22 +215,22 @@ export async function registerPatientIdentity(
 }
 
 export async function batchRegisterPatientIdentities(request: {
-  tenantId: string;
-  platformPatientId: string;
-  identities: Array<Pick<RegisterPatientIdentityRequest, "identityType" | "externalId" | "sourceSystem">>;
-}): Promise<{ registeredCount: number; platformPatientId: string }> {
-  return rawPost<{ registeredCount: number; platformPatientId: string }>(
+  tenant_id: string;
+  platform_patient_id: string;
+  identities: Array<Pick<RegisterPatientIdentityRequest, "identity_type" | "external_id" | "source_system">>;
+}): Promise<{ registered_count: number; platform_patient_id: string }> {
+  return rawPost<{ registered_count: number; platform_patient_id: string }>(
     "/v1/mpi/patient-identities/batch",
     request,
   );
 }
 
 export async function listPatientIdentities(
-  tenantId: string,
-  platformPatientId: string,
+  tenant_id: string,
+  platform_patient_id: string,
 ): Promise<PatientIdentity[]> {
   return rawGet<PatientIdentity[]>(
-    `/v1/mpi/patient-identities/${encodeURIComponent(tenantId)}/${encodeURIComponent(platformPatientId)}`,
+    `/v1/mpi/patient-identities/${encodeURIComponent(tenant_id)}/${encodeURIComponent(platform_patient_id)}`,
   );
 }
 
@@ -239,24 +239,24 @@ export async function findPatientByExternalId(
 ): Promise<PatientIdentity> {
   return rawGet<PatientIdentity>(
     `/v1/mpi/patient-identities/external${qs({
-      tenantId: request.tenantId,
-      identityType: request.identityType,
-      sourceSystem: request.sourceSystem,
-      externalId: request.externalId,
+      tenant_id: request.tenant_id,
+      identity_type: request.identity_type,
+      source_system: request.source_system,
+      external_id: request.external_id,
     })}`,
   );
 }
 
-export async function verifyPatientIdentity(identityId: number, verifiedBy: string): Promise<void> {
+export async function verifyPatientIdentity(identityId: number, verified_by: string): Promise<void> {
   await rawPost<void>(`/v1/mpi/patient-identities/${encodeURIComponent(identityId)}/verify`, {
-    verifiedBy,
+    verified_by,
   });
 }
 
 export async function mergePatientIdentities(request: {
-  sourceId: number;
-  targetId: number;
-  mergedBy: string;
+  source_id: number;
+  target_id: number;
+  merged_by: string;
 }): Promise<void> {
   await rawPost<void>("/v1/mpi/patient-identities/merge", request);
 }
@@ -268,29 +268,29 @@ export async function registerVisitIdentity(
 }
 
 export async function listVisitIdentities(
-  tenantId: string,
-  platformVisitId: string,
+  tenant_id: string,
+  platform_visit_id: string,
 ): Promise<VisitIdentity[]> {
   return rawGet<VisitIdentity[]>(
-    `/v1/mpi/visit-identities/${encodeURIComponent(tenantId)}/${encodeURIComponent(platformVisitId)}`,
+    `/v1/mpi/visit-identities/${encodeURIComponent(tenant_id)}/${encodeURIComponent(platform_visit_id)}`,
   );
 }
 
 export async function listPatientVisitIdentities(
-  tenantId: string,
-  platformPatientId: string,
+  tenant_id: string,
+  platform_patient_id: string,
 ): Promise<VisitIdentity[]> {
   return rawGet<VisitIdentity[]>(
-    `/v1/mpi/visit-identities/patient/${encodeURIComponent(tenantId)}/${encodeURIComponent(platformPatientId)}`,
+    `/v1/mpi/visit-identities/patient/${encodeURIComponent(tenant_id)}/${encodeURIComponent(platform_patient_id)}`,
   );
 }
 
-export async function detectConflicts(tenantId: string): Promise<IdentityConflict[]> {
-  return rawPost<IdentityConflict[]>(`/v1/mpi/conflicts/detect/${encodeURIComponent(tenantId)}`);
+export async function detectConflicts(tenant_id: string): Promise<IdentityConflict[]> {
+  return rawPost<IdentityConflict[]>(`/v1/mpi/conflicts/detect/${encodeURIComponent(tenant_id)}`);
 }
 
-export async function getPendingConflicts(tenantId: string): Promise<IdentityConflict[]> {
-  return rawGet<IdentityConflict[]>(`/v1/mpi/conflicts/pending/${encodeURIComponent(tenantId)}`);
+export async function getPendingConflicts(tenant_id: string): Promise<IdentityConflict[]> {
+  return rawGet<IdentityConflict[]>(`/v1/mpi/conflicts/pending/${encodeURIComponent(tenant_id)}`);
 }
 
 export async function resolveConflict(

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, Form, Input, Checkbox, Button, Typography, Space } from 'antd';
 import type { ReasonDialogProps } from './OrderSafetyBlocker.types';
+import styles from './reasonDialog.module.css';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -50,7 +51,7 @@ export default function ReasonDialog({
       maskClosable={false}
       destroyOnClose
     >
-      <div style={{ marginBottom: 16 }}>
+      <div className={styles.description}>
         <Text type="secondary">
           请说明您评估了哪些因素后决定坚持使用该医嘱：
         </Text>
@@ -81,8 +82,8 @@ export default function ReasonDialog({
           />
         </Form.Item>
 
-        <div style={{ marginBottom: 8 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+        <div className={styles.counterHint}>
+          <Text type="secondary" className={styles.counterText}>
             当前字数：{reasonLength}/20（最少需要20个字）
           </Text>
         </div>
@@ -112,7 +113,7 @@ export default function ReasonDialog({
         </Form.Item>
 
         <Form.Item>
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+          <Space className={styles.actions}>
             <Button onClick={handleCancel}>取消</Button>
             <Button
               type="primary"

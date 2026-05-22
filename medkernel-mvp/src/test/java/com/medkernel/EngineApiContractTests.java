@@ -559,19 +559,19 @@ class EngineApiContractTests {
         simulateBody.put("patient_context", samplePatientContext());
         Map<String, Object> simulate = invokePost("/api/rules/simulate", simulateBody);
         Map<String, Object> simulateData = asMap(simulate.get("data"));
-        assertEquals("R_TEST_STEMI", simulateData.get("ruleCode"));
+        assertEquals("R_TEST_STEMI", simulateData.get("rule_code"));
         assertEquals(Boolean.TRUE, simulateData.get("hit"));
 
         Map<String, Object> logs = invokeGet("/api/rules/exec-logs?ruleCode=R_TEST_STEMI&hit=true&limit=10");
         List<Map<String, Object>> entries = asListOfMap(logs.get("data"));
         assertFalse(entries.isEmpty(), "exec-logs should contain at least one entry");
         Map<String, Object> firstEntry = entries.get(0);
-        assertEquals("R_TEST_STEMI", firstEntry.get("ruleCode"));
+        assertEquals("R_TEST_STEMI", firstEntry.get("rule_code"));
         assertEquals(Boolean.TRUE, firstEntry.get("hit"));
-        assertNotNull(firstEntry.get("logId"));
+        assertNotNull(firstEntry.get("log_id"));
 
-        Map<String, Object> detail = invokeGet("/api/rules/exec-logs/" + firstEntry.get("logId"));
-        assertEquals(firstEntry.get("logId"), asMap(detail.get("data")).get("logId"));
+        Map<String, Object> detail = invokeGet("/api/rules/exec-logs/" + firstEntry.get("log_id"));
+        assertEquals(firstEntry.get("log_id"), asMap(detail.get("data")).get("log_id"));
     }
 
     @Test
@@ -589,7 +589,7 @@ class EngineApiContractTests {
         Map<String, Object> imported = invokePost("/api/rules", packageBody);
         List<Map<String, Object>> importedRules = asListOfMap(imported.get("data"));
         assertEquals(2, importedRules.size());
-        assertEquals("PKG_AMI_JUNIT", importedRules.get(0).get("packageCode"));
+        assertEquals("PKG_AMI_JUNIT", importedRules.get(0).get("package_code"));
 
         Map<String, Object> reviewResp = invokeGet("/api/rules/packages/PKG_AMI_JUNIT/review?packageVersion=2026.05");
         Map<String, Object> review = asMap(reviewResp.get("data"));
@@ -609,8 +609,8 @@ class EngineApiContractTests {
         Map<String, Object> getResp = invokeGet("/api/rules/R_PKG_STEMI_HIT?versionNo=1.0.0");
         Map<String, Object> stored = asMap(getResp.get("data"));
         assertEquals("PUBLISHED", stored.get("status"));
-        assertEquals("PKG_AMI_JUNIT", stored.get("packageCode"));
-        assertEquals("JUNIT_PACKAGE_APPROVER", stored.get("publishedBy"));
+        assertEquals("PKG_AMI_JUNIT", stored.get("package_code"));
+        assertEquals("JUNIT_PACKAGE_APPROVER", stored.get("published_by"));
 
         Map<String, Object> simulateBody = new LinkedHashMap<String, Object>();
         simulateBody.put("rule_code", "R_PKG_STEMI_HIT");
@@ -631,8 +631,8 @@ class EngineApiContractTests {
         alphaPackage.put("department_code", "DEPT_ALPHA");
         Map<String, Object> alphaImport = invokePost("/api/rules", alphaPackage);
         Map<String, Object> alphaImported = asListOfMap(alphaImport.get("data")).get(0);
-        assertEquals("HOSPITAL_ALPHA", alphaImported.get("hospitalCode"));
-        assertEquals("DEPARTMENT", alphaImported.get("scopeLevel"));
+        assertEquals("HOSPITAL_ALPHA", alphaImported.get("hospital_code"));
+        assertEquals("DEPARTMENT", alphaImported.get("scope_level"));
 
         Map<String, Object> betaRule = ruleDefinition("R_RULE_ORG_SCOPE", "Beta医院入径规则");
         betaRule.put("message_template", "Beta医院规则命中。");
@@ -661,13 +661,13 @@ class EngineApiContractTests {
         Map<String, Object> alphaRulesResp = invokeGet("/api/rules?tenantId=TENANT_RULE_ORG&hospitalCode=HOSPITAL_ALPHA");
         List<Map<String, Object>> alphaRules = asListOfMap(alphaRulesResp.get("data"));
         assertEquals(1, alphaRules.size());
-        assertEquals("Alpha医院入径规则", alphaRules.get(0).get("ruleName"));
+        assertEquals("Alpha医院入径规则", alphaRules.get(0).get("rule_name"));
 
         Map<String, Object> betaGetResp = invokeGet("/api/rules/R_RULE_ORG_SCOPE?tenantId=TENANT_RULE_ORG"
                 + "&hospitalCode=HOSPITAL_BETA&departmentCode=DEPT_BETA");
         Map<String, Object> betaStored = asMap(betaGetResp.get("data"));
-        assertEquals("Beta医院入径规则", betaStored.get("ruleName"));
-        assertEquals("DEPT_BETA", betaStored.get("scopeCode"));
+        assertEquals("Beta医院入径规则", betaStored.get("rule_name"));
+        assertEquals("DEPT_BETA", betaStored.get("scope_code"));
 
         Map<String, Object> alphaSim = new LinkedHashMap<String, Object>();
         alphaSim.put("tenant_id", "TENANT_RULE_ORG");
@@ -691,8 +691,8 @@ class EngineApiContractTests {
                 + "&tenantId=TENANT_RULE_ORG&hospitalCode=HOSPITAL_ALPHA&scopeLevel=DEPARTMENT&scopeCode=DEPT_ALPHA");
         List<Map<String, Object>> alphaLogs = asListOfMap(alphaLogsResp.get("data"));
         assertEquals(1, alphaLogs.size());
-        assertEquals("HOSPITAL_ALPHA", alphaLogs.get(0).get("hospitalCode"));
-        assertEquals("DEPT_ALPHA", alphaLogs.get(0).get("scopeCode"));
+        assertEquals("HOSPITAL_ALPHA", alphaLogs.get(0).get("hospital_code"));
+        assertEquals("DEPT_ALPHA", alphaLogs.get(0).get("scope_code"));
 
         Map<String, Object> alphaSummaryResp = invokeGet("/api/rules/exec-logs/summary?ruleCode=R_RULE_ORG_SCOPE"
                 + "&tenantId=TENANT_RULE_ORG&hospitalCode=HOSPITAL_ALPHA");
@@ -1153,15 +1153,15 @@ class EngineApiContractTests {
         Map<String, Object> admitted = invokePost("/api/patient-pathways/admit", admitBody);
         Map<String, Object> admittedData = asMap(admitted.get("data"));
         assertEquals("ACTIVE", admittedData.get("status"));
-        assertEquals("NODE_IDENTIFY", admittedData.get("currentNodeCode"));
-        String instanceId = (String) admittedData.get("instanceId");
+        assertEquals("NODE_IDENTIFY", admittedData.get("current_node_code"));
+        String instanceId = (String) admittedData.get("instance_id");
         assertNotNull(instanceId);
 
         Map<String, Object> completeNodeBody = new LinkedHashMap<String, Object>();
         completeNodeBody.put("operator_id", "JUNIT_DOC");
         Map<String, Object> completed = invokePost("/api/patient-pathways/" + instanceId + "/nodes/NODE_IDENTIFY/complete",
                 completeNodeBody);
-        assertEquals("NODE_TREATMENT", asMap(completed.get("data")).get("currentNodeCode"));
+        assertEquals("NODE_TREATMENT", asMap(completed.get("data")).get("current_node_code"));
     }
 
     @Test
@@ -1351,7 +1351,7 @@ class EngineApiContractTests {
         admitBody.put("pathway_code", "AMI_ROLLBACK_TEST");
         admitBody.put("doctor_id", "ROLLBACK_DOC");
         Map<String, Object> admitted = invokePost("/api/patient-pathways/admit", admitBody);
-        assertEquals("1.0.0", asMap(admitted.get("data")).get("versionNo"));
+        assertEquals("1.0.0", asMap(admitted.get("data")).get("version_no"));
     }
 
     @Test
@@ -1368,7 +1368,7 @@ class EngineApiContractTests {
         admit1.put("version_no", "1.0.0");
         admit1.put("doctor_id", "NODE_DOC");
         Map<String, Object> admitted1 = invokePost("/api/patient-pathways/admit", admit1);
-        String instance1 = (String) asMap(admitted1.get("data")).get("instanceId");
+        String instance1 = (String) asMap(admitted1.get("data")).get("instance_id");
 
         Map<String, Object> completeTask = new LinkedHashMap<String, Object>();
         completeTask.put("operator_id", "NODE_DOC");
@@ -1385,7 +1385,7 @@ class EngineApiContractTests {
         admit2.put("version_no", "1.0.0");
         admit2.put("doctor_id", "NODE_DOC");
         Map<String, Object> admitted2 = invokePost("/api/patient-pathways/admit", admit2);
-        String instance2 = (String) asMap(admitted2.get("data")).get("instanceId");
+        String instance2 = (String) asMap(admitted2.get("data")).get("instance_id");
         Map<String, Object> skipBody = new LinkedHashMap<String, Object>();
         skipBody.put("operator_id", "NODE_DOC");
         skipBody.put("variation_type", "PATIENT_REASON");
@@ -1444,7 +1444,7 @@ class EngineApiContractTests {
         admit1.put("version_no", "1.0.0");
         admit1.put("doctor_id", "STAY_DOC");
         Map<String, Object> admitted1 = invokePost("/api/patient-pathways/admit", admit1);
-        String instance1 = (String) asMap(admitted1.get("data")).get("instanceId");
+        String instance1 = (String) asMap(admitted1.get("data")).get("instance_id");
 
         Map<String, Object> completeNode = new LinkedHashMap<String, Object>();
         completeNode.put("operator_id", "STAY_DOC");
@@ -1498,7 +1498,7 @@ class EngineApiContractTests {
         admit2.put("version_no", "1.0.0");
         admit2.put("doctor_id", "INST_DOC");
         Map<String, Object> second = invokePost("/api/patient-pathways/admit", admit2);
-        String secondInstanceId = (String) asMap(second.get("data")).get("instanceId");
+        String secondInstanceId = (String) asMap(second.get("data")).get("instance_id");
 
         Map<String, Object> skipBody = new LinkedHashMap<String, Object>();
         skipBody.put("operator_id", "INST_DOC");
@@ -1510,7 +1510,7 @@ class EngineApiContractTests {
         List<Map<String, Object>> instances = asListOfMap(listResp.get("data"));
         assertEquals(2, instances.size());
         for (Map<String, Object> instance : instances) {
-            assertEquals("AMI_INST_TEST", instance.get("pathwayCode"));
+            assertEquals("AMI_INST_TEST", instance.get("pathway_code"));
             assertEquals("ACTIVE", instance.get("status"));
         }
 
@@ -1549,12 +1549,12 @@ class EngineApiContractTests {
         alphaAdmit.put("doctor_id", "ORG_DOC");
         Map<String, Object> alphaResp = invokePost("/api/patient-pathways/admit", alphaAdmit);
         Map<String, Object> alpha = asMap(alphaResp.get("data"));
-        assertEquals("TENANT_PATH_ORG", alpha.get("tenantId"));
-        assertEquals("HOSPITAL_ALPHA", alpha.get("hospitalCode"));
-        assertEquals("DEPARTMENT", alpha.get("scopeLevel"));
-        assertEquals("DEPT_ALPHA", alpha.get("scopeCode"));
-        assertEquals("BODY", alpha.get("orgSource"));
-        String alphaInstanceId = (String) alpha.get("instanceId");
+        assertEquals("TENANT_PATH_ORG", alpha.get("tenant_id"));
+        assertEquals("HOSPITAL_ALPHA", alpha.get("hospital_code"));
+        assertEquals("DEPARTMENT", alpha.get("scope_level"));
+        assertEquals("DEPT_ALPHA", alpha.get("scope_code"));
+        assertEquals("BODY", alpha.get("org_source"));
+        String alphaInstanceId = (String) alpha.get("instance_id");
 
         Map<String, Object> betaAdmit = new LinkedHashMap<String, Object>();
         betaAdmit.put("tenant_id", "TENANT_PATH_ORG");
@@ -1578,18 +1578,18 @@ class EngineApiContractTests {
         Map<String, Object> alphaListResp = invokeGet("/api/pathway-instances?pathwayCode=AMI_ORG_TEST&hospitalCode=HOSPITAL_ALPHA");
         List<Map<String, Object>> alphaInstances = asListOfMap(alphaListResp.get("data"));
         assertEquals(1, alphaInstances.size());
-        assertEquals("HOSPITAL_ALPHA", alphaInstances.get(0).get("hospitalCode"));
+        assertEquals("HOSPITAL_ALPHA", alphaInstances.get(0).get("hospital_code"));
 
         Map<String, Object> betaListResp = invokeGet("/api/pathway-instances?pathwayCode=AMI_ORG_TEST&hospitalCode=HOSPITAL_BETA");
         List<Map<String, Object>> betaInstances = asListOfMap(betaListResp.get("data"));
         assertEquals(1, betaInstances.size());
-        assertEquals("HOSPITAL_BETA", betaInstances.get(0).get("hospitalCode"));
+        assertEquals("HOSPITAL_BETA", betaInstances.get(0).get("hospital_code"));
 
         Map<String, Object> variationResp = invokeGet("/api/pathway-variations?pathwayCode=AMI_ORG_TEST"
                 + "&scopeLevel=DEPARTMENT&scopeCode=DEPT_ALPHA");
         List<Map<String, Object>> variations = asListOfMap(variationResp.get("data"));
         assertEquals(1, variations.size());
-        assertEquals("DEPT_ALPHA", variations.get(0).get("scopeCode"));
+        assertEquals("DEPT_ALPHA", variations.get(0).get("scope_code"));
 
         Map<String, Object> metricsResp = invokeGet("/api/quality/metrics?pathwayCode=AMI_ORG_TEST&hospitalCode=HOSPITAL_ALPHA");
         Map<String, Object> metrics = asMap(metricsResp.get("data"));
@@ -1617,7 +1617,7 @@ class EngineApiContractTests {
         admitBody.put("version_no", "1.0.0");
         admitBody.put("doctor_id", "VAR_DOC");
         Map<String, Object> admitted = invokePost("/api/patient-pathways/admit", admitBody);
-        String instanceId = (String) asMap(admitted.get("data")).get("instanceId");
+        String instanceId = (String) asMap(admitted.get("data")).get("instance_id");
 
         Map<String, Object> skipBody = new LinkedHashMap<String, Object>();
         skipBody.put("operator_id", "VAR_DOC");
@@ -1636,14 +1636,14 @@ class EngineApiContractTests {
         List<Map<String, Object>> records = asListOfMap(listResp.get("data"));
         assertEquals(2, records.size(), "expected 2 variations for AMI_VAR_TEST");
         for (Map<String, Object> record : records) {
-            assertEquals("AMI_VAR_TEST", record.get("pathwayCode"));
-            assertEquals(instanceId, record.get("instanceId"));
+            assertEquals("AMI_VAR_TEST", record.get("pathway_code"));
+            assertEquals(instanceId, record.get("instance_id"));
         }
 
         Map<String, Object> filteredResp = invokeGet("/api/pathway-variations?pathwayCode=AMI_VAR_TEST&variationType=RESOURCE_LIMIT");
         List<Map<String, Object>> filtered = asListOfMap(filteredResp.get("data"));
         assertEquals(1, filtered.size());
-        assertEquals("RESOURCE_LIMIT", filtered.get(0).get("variationType"));
+        assertEquals("RESOURCE_LIMIT", filtered.get(0).get("variation_type"));
 
         Map<String, Object> summaryResp = invokeGet("/api/pathway-variations/summary?pathwayCode=AMI_VAR_TEST");
         Map<String, Object> summary = asMap(summaryResp.get("data"));
@@ -1674,7 +1674,7 @@ class EngineApiContractTests {
         admitBody.put("version_no", "1.0.0");
         admitBody.put("doctor_id", "QC_DOC");
         Map<String, Object> admitted = invokePost("/api/patient-pathways/admit", admitBody);
-        String instanceId = (String) asMap(admitted.get("data")).get("instanceId");
+        String instanceId = (String) asMap(admitted.get("data")).get("instance_id");
 
         Map<String, Object> skipBody = new LinkedHashMap<String, Object>();
         skipBody.put("operator_id", "QC_DOC");
@@ -1728,7 +1728,7 @@ class EngineApiContractTests {
         assertFalse(templates.isEmpty());
 
         Map<String, Object> getResp = invokeGet("/api/dify/workflows/WF_JUNIT_EXPLAIN");
-        assertEquals("WF_JUNIT_EXPLAIN", asMap(getResp.get("data")).get("workflowCode"));
+        assertEquals("WF_JUNIT_EXPLAIN", asMap(getResp.get("data")).get("workflow_code"));
 
         // 模板要求 patient_id 与 target_code，缺失任一应返回 VALIDATION_ERROR
         Map<String, Object> missingRun = new LinkedHashMap<String, Object>();
@@ -1815,8 +1815,8 @@ class EngineApiContractTests {
 
         Map<String, Object> getResp = invokeGet("/api/dify/workflows/WF_JUNIT_MAPPING");
         Map<String, Object> storedTemplate = asMap(getResp.get("data"));
-        assertEquals(2, ((Number) storedTemplate.get("retryCount")).intValue());
-        Map<String, Object> storedMappings = asMap(storedTemplate.get("inputMappings"));
+        assertEquals(2, ((Number) storedTemplate.get("retry_count")).intValue());
+        Map<String, Object> storedMappings = asMap(storedTemplate.get("input_mappings"));
         assertEquals("patient_context.patient.patient_id", storedMappings.get("patient_id"));
 
         Map<String, Object> runBody = new LinkedHashMap<String, Object>();
@@ -1905,11 +1905,11 @@ class EngineApiContractTests {
         List<Map<String, Object>> candidates = asListOfMap(candidateResp.get("data"));
         assertEquals(1, candidates.size());
         Map<String, Object> first = candidates.get(0);
-        assertEquals("HEART_FAILURE", first.get("diseaseCode"));
-        assertEquals("REGISTERED_FALLBACK", first.get("graphSource"));
+        assertEquals("HEART_FAILURE", first.get("disease_code"));
+        assertEquals("REGISTERED_FALLBACK", first.get("graph_source"));
         // 评分 = 0.8 + 0.9 = 1.7，乘 100 = 170
-        assertEquals(170.0, ((Number) first.get("rawGraphScore")).doubleValue());
-        List<Map<String, Object>> relations = asListOfMap(first.get("matchedRelations"));
+        assertEquals(170.0, ((Number) first.get("raw_graph_score")).doubleValue());
+        List<Map<String, Object>> relations = asListOfMap(first.get("matched_relations"));
         assertEquals(2, relations.size());
     }
 
@@ -1984,7 +1984,7 @@ class EngineApiContractTests {
         // 关掉 Neo4j 时图谱接口应给出可解释降级，不应抛异常或返回失败。
         List<Map<String, Object>> candidates = asListOfMap(response.get("data"));
         assertFalse(candidates.isEmpty(), "fallback candidates should not be empty for AMI sample input");
-        assertEquals("AMI_STEMI", candidates.get(0).get("diseaseCode"));
+        assertEquals("AMI_STEMI", candidates.get(0).get("disease_code"));
     }
 
     private Map<String, Object> ruleDefinition(String ruleCode, String ruleName) {
@@ -2711,19 +2711,19 @@ class EngineApiContractTests {
         Map<String, Object> listResp = invokeGet("/api/rules");
         List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
         assertFalse(rules.isEmpty());
-        // listRules 返回 List<RuleDefinition>，Jackson 默认 camelCase；按 ruleCode 显式查找
+        // listRules 返回 List<RuleDefinition>，Jackson 全局 SNAKE_CASE；按 ruleCode 显式查找
         Map<String, Object> found = null;
         for (Map<String, Object> r : rules) {
-            if ("R_REF_TEST_001".equals(r.get("ruleCode"))) {
+            if ("R_REF_TEST_001".equals(r.get("rule_code"))) {
                 found = r;
                 break;
             }
         }
         assertNotNull(found);
-        assertEquals("R_REF_TEST_001", found.get("ruleCode"));
-        assertEquals("SRC_GUIDELINE_AMI_2025", found.get("referenceDocumentCode"));
-        assertEquals("CIT_REF_TEST", found.get("referenceCitationId"));
-        assertEquals("EVIDENCE", found.get("referenceBindingType"));
+        assertEquals("R_REF_TEST_001", found.get("rule_code"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", found.get("reference_document_code"));
+        assertEquals("CIT_REF_TEST", found.get("reference_citation_id"));
+        assertEquals("EVIDENCE", found.get("reference_binding_type"));
     }
 
     @Test
@@ -2895,14 +2895,14 @@ class EngineApiContractTests {
         List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
         Map<String, Object> found = null;
         for (Map<String, Object> r : rules) {
-            if ("R_CAMPUS_SCOPE_001".equals(r.get("ruleCode"))) {
+            if ("R_CAMPUS_SCOPE_001".equals(r.get("rule_code"))) {
                 found = r;
                 break;
             }
         }
         assertNotNull(found);
-        assertEquals("CAMPUS", found.get("scopeLevel"));
-        assertEquals("CAMPUS_EAST", found.get("scopeCode"));
+        assertEquals("CAMPUS", found.get("scope_level"));
+        assertEquals("CAMPUS_EAST", found.get("scope_code"));
     }
 
     @Test
@@ -2927,14 +2927,14 @@ class EngineApiContractTests {
         List<Map<String, Object>> rules = asListOfMap(listResp.get("data"));
         Map<String, Object> found = null;
         for (Map<String, Object> r : rules) {
-            if ("R_SITE_SCOPE_001".equals(r.get("ruleCode"))) {
+            if ("R_SITE_SCOPE_001".equals(r.get("rule_code"))) {
                 found = r;
                 break;
             }
         }
         assertNotNull(found);
-        assertEquals("SITE", found.get("scopeLevel"));
-        assertEquals("SITE_EMERGENCY", found.get("scopeCode"));
+        assertEquals("SITE", found.get("scope_level"));
+        assertEquals("SITE_EMERGENCY", found.get("scope_code"));
     }
 
     @Test
@@ -3435,10 +3435,10 @@ class EngineApiContractTests {
 
         Map<String, Object> getResp = invokeGet("/api/dify/workflows/WF_REF_TEST?workflowVersion=1.0.0");
         Map<String, Object> data = asMap(getResp.get("data"));
-        // DifyWorkflowTemplate Bean，Jackson 默认 camelCase
-        assertEquals("WF_REF_TEST", data.get("workflowCode"));
-        assertEquals("SRC_GUIDELINE_AMI_2025", data.get("referenceDocumentCode"));
-        assertEquals("EVIDENCE", data.get("referenceBindingType"));
+        // DifyWorkflowTemplate Bean，Jackson 全局 SNAKE_CASE
+        assertEquals("WF_REF_TEST", data.get("workflow_code"));
+        assertEquals("SRC_GUIDELINE_AMI_2025", data.get("reference_document_code"));
+        assertEquals("EVIDENCE", data.get("reference_binding_type"));
     }
 
     @Test
@@ -3464,12 +3464,12 @@ class EngineApiContractTests {
         boolean foundRef1 = false;
         boolean foundRef2 = false;
         for (Map<String, Object> t : templates) {
-            if ("WF_LIST_REF_1".equals(t.get("workflowCode"))) {
-                assertEquals("SRC_GUIDELINE_AMI_2025", t.get("referenceDocumentCode"));
+            if ("WF_LIST_REF_1".equals(t.get("workflow_code"))) {
+                assertEquals("SRC_GUIDELINE_AMI_2025", t.get("reference_document_code"));
                 foundRef1 = true;
             }
-            if ("WF_LIST_REF_2".equals(t.get("workflowCode"))) {
-                assertEquals("SRC_CONSENSUS_STEMI_2024", t.get("referenceDocumentCode"));
+            if ("WF_LIST_REF_2".equals(t.get("workflow_code"))) {
+                assertEquals("SRC_CONSENSUS_STEMI_2024", t.get("reference_document_code"));
                 foundRef2 = true;
             }
         }

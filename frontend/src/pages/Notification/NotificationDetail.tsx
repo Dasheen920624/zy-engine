@@ -4,6 +4,7 @@ import { ArrowLeftOutlined, CheckOutlined, DeleteOutlined, ExportOutlined } from
 import { notificationApi } from '../../api/notification';
 import type { Notification } from '../../api/notification';
 import { useNavigate, useParams } from 'react-router-dom';
+import styles from './notificationDetail.module.css';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -107,7 +108,7 @@ const NotificationDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div className={styles.loadingContainer}>
         <Spin size="large" />
       </div>
     );
@@ -115,9 +116,9 @@ const NotificationDetail: React.FC = () => {
 
   if (!notification) {
     return (
-      <div style={{ padding: 24 }}>
+      <div className={styles.page}>
         <Card>
-          <div style={{ textAlign: 'center' }}>
+          <div className={styles.emptyContainer}>
             <Title level={4}>通知不存在</Title>
             <Button onClick={() => navigate('/notifications')}>返回通知列表</Button>
           </div>
@@ -127,7 +128,7 @@ const NotificationDetail: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Card
         title={
           <Space>
@@ -164,7 +165,7 @@ const NotificationDetail: React.FC = () => {
       >
         <Descriptions column={2} bordered>
           <Descriptions.Item label="标题" span={2}>
-            <Title level={4} style={{ margin: 0 }}>{notification.title}</Title>
+            <Title level={4} className={styles.notificationTitle}>{notification.title}</Title>
           </Descriptions.Item>
           <Descriptions.Item label="类型">
             {getTypeTag(notification.notificationType)}
@@ -208,17 +209,17 @@ const NotificationDetail: React.FC = () => {
 
         <Divider />
 
-        <div style={{ marginTop: 16 }}>
+        <div className={styles.contentSection}>
           <Title level={5}>通知内容</Title>
-          <Card style={{ backgroundColor: 'var(--mk-bg-elevated)' }}>
-            <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
+          <Card className={styles.contentCard}>
+            <Paragraph className={styles.notificationParagraph}>
               {notification.content}
             </Paragraph>
           </Card>
         </div>
 
         {notification.businessUrl && (
-          <div style={{ marginTop: 16 }}>
+          <div className={styles.contentSection}>
             <Title level={5}>相关业务</Title>
             <Card>
               <Space>
@@ -226,7 +227,7 @@ const NotificationDetail: React.FC = () => {
                 <Button 
                   type="link" 
                   onClick={handleGoToBusiness}
-                  style={{ padding: 0 }}
+                  className={styles.linkButton}
                 >
                   {notification.businessUrl}
                 </Button>

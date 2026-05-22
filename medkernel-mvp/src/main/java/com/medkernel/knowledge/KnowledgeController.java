@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -22,6 +24,7 @@ import java.util.Map;
 /**
  * 医疗知识需求订阅和来源注册 API。
  */
+@Tag(name = "Knowledge")
 @RestController
 @RequestMapping("/api/knowledge")
 public class KnowledgeController {
@@ -36,6 +39,7 @@ public class KnowledgeController {
 
     // ==================== 来源注册 API ====================
 
+    @Operation(summary = "Register source")
     @PostMapping("/sources")
     public ApiResult<Map<String, Object>> registerSource(
             @RequestBody Map<String, Object> request,
@@ -49,6 +53,7 @@ public class KnowledgeController {
         }
     }
 
+    @Operation(summary = "Update source")
     @PutMapping("/sources/{sourceCode}")
     public ApiResult<Map<String, Object>> updateSource(
             @PathVariable String sourceCode,
@@ -63,6 +68,7 @@ public class KnowledgeController {
         }
     }
 
+    @Operation(summary = "Review source")
     @PostMapping("/sources/{sourceCode}/review")
     public ApiResult<Map<String, Object>> reviewSource(
             @PathVariable String sourceCode,
@@ -82,6 +88,7 @@ public class KnowledgeController {
         }
     }
 
+    @Operation(summary = "List sources")
     @GetMapping("/sources")
     public ApiResult<List<Map<String, Object>>> listSources(
             @RequestParam(required = false) String source_type,
@@ -101,6 +108,7 @@ public class KnowledgeController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Get source")
     @GetMapping("/sources/{sourceCode}")
     public ApiResult<Map<String, Object>> getSource(
             @PathVariable String sourceCode,
@@ -115,6 +123,7 @@ public class KnowledgeController {
 
     // ==================== 知识订阅 API ====================
 
+    @Operation(summary = "Create subscription")
     @PostMapping("/subscriptions")
     public ApiResult<Map<String, Object>> createSubscription(
             @RequestBody Map<String, Object> request,
@@ -128,6 +137,7 @@ public class KnowledgeController {
         }
     }
 
+    @Operation(summary = "Update subscription")
     @PutMapping("/subscriptions/{subscriptionId}")
     public ApiResult<Map<String, Object>> updateSubscription(
             @PathVariable String subscriptionId,
@@ -142,6 +152,7 @@ public class KnowledgeController {
         }
     }
 
+    @Operation(summary = "Pause subscription")
     @PostMapping("/subscriptions/{subscriptionId}/pause")
     public ApiResult<Map<String, Object>> pauseSubscription(
             @PathVariable String subscriptionId,
@@ -156,6 +167,7 @@ public class KnowledgeController {
         }
     }
 
+    @Operation(summary = "Cancel subscription")
     @PostMapping("/subscriptions/{subscriptionId}/cancel")
     public ApiResult<Map<String, Object>> cancelSubscription(
             @PathVariable String subscriptionId,
@@ -170,6 +182,7 @@ public class KnowledgeController {
         }
     }
 
+    @Operation(summary = "List subscriptions")
     @GetMapping("/subscriptions")
     public ApiResult<List<Map<String, Object>>> listSubscriptions(
             @RequestParam(required = false) String topic_type,
@@ -189,6 +202,7 @@ public class KnowledgeController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Get subscription")
     @GetMapping("/subscriptions/{subscriptionId}")
     public ApiResult<Map<String, Object>> getSubscription(
             @PathVariable String subscriptionId,

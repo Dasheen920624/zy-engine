@@ -1,0 +1,26 @@
+/* PR-V3-INLINE-STYLE: WorkflowTodos inline style 迁移 */
+
+.detailTitle {
+  font-size: 16px;
+}
+
+.alertSpacing {
+  margin-bottom: var(--mk-space-4);
+}
+
+.statsRow {
+  margin-bottom: var(--mk-space-6);
+}
+
+.filterCard,
+.detailCard {
+  margin-bottom: var(--mk-space-4);
+}
+
+.filterSelect {
+  width: 120px;
+}
+
+.fullWidth {
+  width: 100%;
+}

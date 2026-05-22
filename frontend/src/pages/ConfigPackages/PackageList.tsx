@@ -31,6 +31,7 @@ import type {
 import { StatusBadge } from "@/components/StatusBadge";
 import { OrgContextSelector } from "../../components";
 import type { FilterState } from "./index";
+import styles from "./PackageList.module.css";
 
 const { Text } = Typography;
 
@@ -134,7 +135,7 @@ export default function PackageList({
       dataIndex: "package_code",
       key: "code",
       render: (v: string) => (
-        <Text strong style={{ fontFamily: "var(--mk-font-mono)", fontSize: 13 }}>{v}</Text>
+        <Text strong className={styles.monoText}>{v}</Text>
       ),
     },
     {
@@ -143,7 +144,7 @@ export default function PackageList({
       key: "version",
       width: 100,
       render: (v: string) => (
-        <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 12 }}>{v}</code>
+        <code className={styles.monoCode}>{v}</code>
       ),
     },
     {
@@ -151,7 +152,7 @@ export default function PackageList({
       dataIndex: "asset_type",
       key: "type",
       width: 70,
-      render: (v: string) => <span style={{ fontSize: 12 }}>{v}</span>,
+      render: (v: string) => <span className={styles.textSmall}>{v}</span>,
     },
     {
       title: "环境",
@@ -160,12 +161,7 @@ export default function PackageList({
       render: (_: unknown, r: ConfigPackageSummary) => {
         const isProd = r.status === "ACTIVE" || r.status === "PUBLISHED" || r.status === "SYNCED";
         return (
-          <span
-            style={{
-              fontSize: 12,
-              color: isProd ? "var(--mk-danger)" : "var(--mk-text-secondary)",
-            }}
-          >
+          <span className={`${styles.environmentText} ${isProd ? styles.environmentProd : styles.environmentTest}`}>
             {isProd ? "生产" : "测试"}
           </span>
         );
@@ -184,7 +180,7 @@ export default function PackageList({
       key: "time",
       width: 130,
       render: (_: string, r) => (
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" className={styles.textSmall}>
           {formatTime(r.reviewed_time || r.published_time || r.created_time)}
         </Text>
       ),
@@ -217,65 +213,58 @@ export default function PackageList({
   return (
     <div>
       {/* 筛选工具栏 */}
-      <Card size="small" style={{ marginBottom: 12 }}>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 12,
-            alignItems: "flex-end",
-          }}
-        >
-          <div style={{ minWidth: 120 }}>
-            <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+      <Card size="small" className={styles.filterCard}>
+        <div className={styles.filterBar}>
+          <div className={styles.filterField}>
+            <Text type="secondary" className={styles.filterLabel}>
               资产类型
             </Text>
             <Select
               allowClear
               placeholder="全部"
-              style={{ width: "100%" }}
+              className={styles.filterSelect}
               size="small"
               value={filters.assetType}
               onChange={(v) => onFilterChange({ assetType: v })}
               options={ASSET_TYPE_OPTIONS}
             />
           </div>
-          <div style={{ minWidth: 120 }}>
-            <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+          <div className={styles.filterField}>
+            <Text type="secondary" className={styles.filterLabel}>
               状态
             </Text>
             <Select
               allowClear
               placeholder="全部"
-              style={{ width: "100%" }}
+              className={styles.filterSelect}
               size="small"
               value={filters.status}
               onChange={(v) => onFilterChange({ status: v })}
               options={STATUS_OPTIONS}
             />
           </div>
-          <div style={{ minWidth: 120 }}>
-            <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+          <div className={styles.filterField}>
+            <Text type="secondary" className={styles.filterLabel}>
               组织范围
             </Text>
             <Select
               allowClear
               placeholder="全部"
-              style={{ width: "100%" }}
+              className={styles.filterSelect}
               size="small"
               value={filters.scopeLevel}
               onChange={(v) => onFilterChange({ scopeLevel: v })}
               options={SCOPE_OPTIONS}
             />
           </div>
-          <div style={{ minWidth: 160, flex: 1 }}>
-            <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+          <div className={styles.filterFieldWide}>
+            <Text type="secondary" className={styles.filterLabel}>
               关键词
             </Text>
             <Input
               size="small"
               placeholder="包编码 / 名称"
-              prefix={<SearchOutlined style={{ color: "var(--mk-text-tertiary)" }} />}
+              prefix={<SearchOutlined className={styles.iconMuted} />}
               value={filters.keyword}
               onChange={(e) => onFilterChange({ keyword: e.target.value })}
               allowClear
@@ -310,7 +299,7 @@ export default function PackageList({
           type="error"
           showIcon
           closable
-          style={{ marginBottom: 12 }}
+          className={styles.marginBottom12}
           message={`加载失败: ${listError.code}`}
           description={listError.message}
         />
@@ -334,15 +323,13 @@ export default function PackageList({
           pagination={false}
           onRow={(r) => ({
             onClick: () => onSelectPkg(r),
-            style: {
-              cursor: "pointer",
-              background:
-                selectedPkg?.package_code === r.package_code &&
-                selectedPkg?.package_version === r.package_version
-                  ? "var(--mk-brand-primary-soft)"
-                  : undefined,
-            },
           })}
+          rowClassName={(r) =>
+            selectedPkg?.package_code === r.package_code &&
+            selectedPkg?.package_version === r.package_version
+              ? `${styles.packageRow} ${styles.packageRowSelected}`
+              : styles.packageRow
+          }
         />
       </Card>
     </div>

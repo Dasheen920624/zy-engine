@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -24,6 +26,7 @@ import java.util.Map;
  * 智能评估指标模型 API。
  * 提供指标集和指标的 CRUD、发布、废弃等操作。
  */
+@Tag(name = "Eval")
 @RestController
 @RequestMapping("/api/quality/eval")
 public class EvalController {
@@ -41,6 +44,7 @@ public class EvalController {
 
     // ==================== 指标集 API ====================
 
+    @Operation(summary = "Create set")
     @PostMapping("/sets")
     public ApiResult<Map<String, Object>> createSet(
             @RequestBody Map<String, Object> request,
@@ -54,6 +58,7 @@ public class EvalController {
         }
     }
 
+    @Operation(summary = "Update set")
     @PutMapping("/sets/{setCode}")
     public ApiResult<Map<String, Object>> updateSet(
             @PathVariable String setCode,
@@ -68,6 +73,7 @@ public class EvalController {
         }
     }
 
+    @Operation(summary = "Publish set")
     @PostMapping("/sets/{setCode}/publish")
     public ApiResult<Map<String, Object>> publishSet(
             @PathVariable String setCode,
@@ -82,6 +88,7 @@ public class EvalController {
         }
     }
 
+    @Operation(summary = "Deprecate set")
     @PostMapping("/sets/{setCode}/deprecate")
     public ApiResult<Map<String, Object>> deprecateSet(
             @PathVariable String setCode,
@@ -96,6 +103,7 @@ public class EvalController {
         }
     }
 
+    @Operation(summary = "List sets")
     @GetMapping("/sets")
     public ApiResult<List<Map<String, Object>>> listSets(
             @RequestParam(required = false) String subject_type,
@@ -113,6 +121,7 @@ public class EvalController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Get set")
     @GetMapping("/sets/{setCode}")
     public ApiResult<Map<String, Object>> getSet(
             @PathVariable String setCode,
@@ -127,6 +136,7 @@ public class EvalController {
 
     // ==================== 指标 API ====================
 
+    @Operation(summary = "Create indicator")
     @PostMapping("/sets/{setCode}/indicators")
     public ApiResult<Map<String, Object>> createIndicator(
             @PathVariable String setCode,
@@ -141,6 +151,7 @@ public class EvalController {
         }
     }
 
+    @Operation(summary = "Update indicator")
     @PutMapping("/indicators/{indicatorCode}")
     public ApiResult<Map<String, Object>> updateIndicator(
             @PathVariable String indicatorCode,
@@ -155,6 +166,7 @@ public class EvalController {
         }
     }
 
+    @Operation(summary = "Delete indicator")
     @DeleteMapping("/indicators/{indicatorCode}")
     public ApiResult<Map<String, Object>> deleteIndicator(
             @PathVariable String indicatorCode,
@@ -168,6 +180,7 @@ public class EvalController {
         }
     }
 
+    @Operation(summary = "List indicators")
     @GetMapping("/sets/{setCode}/indicators")
     public ApiResult<List<Map<String, Object>>> listIndicators(
             @PathVariable String setCode,
@@ -180,6 +193,7 @@ public class EvalController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Get indicator")
     @GetMapping("/indicators/{indicatorCode}")
     public ApiResult<Map<String, Object>> getIndicator(
             @PathVariable String indicatorCode,
@@ -194,6 +208,7 @@ public class EvalController {
 
     // ==================== 评分引擎 API ====================
 
+    @Operation(summary = "Evaluate")
     @PostMapping("/evaluate")
     public ApiResult<Map<String, Object>> evaluate(
             @RequestBody Map<String, Object> request,
@@ -216,6 +231,7 @@ public class EvalController {
         }
     }
 
+    @Operation(summary = "List results")
     @GetMapping("/results")
     public ApiResult<List<Map<String, Object>>> listResults(
             @RequestParam(required = false) String set_code,
@@ -230,6 +246,7 @@ public class EvalController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Get result")
     @GetMapping("/results/{evalId}")
     public ApiResult<Map<String, Object>> getResult(
             @PathVariable String evalId,

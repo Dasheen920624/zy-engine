@@ -113,13 +113,13 @@ class MpiServiceTest {
                 .thenReturn(samplePatientIdentity);
 
         Map<String, String> id1 = new HashMap<>();
-        id1.put("identityType", "HIS_PATIENT_ID");
-        id1.put("externalId", "HIS001");
-        id1.put("sourceSystem", "HIS");
+        id1.put("identity_type", "HIS_PATIENT_ID");
+        id1.put("external_id", "HIS001");
+        id1.put("source_system", "HIS");
         Map<String, String> id2 = new HashMap<>();
-        id2.put("identityType", "EMR_PATIENT_ID");
-        id2.put("externalId", "EMR001");
-        id2.put("sourceSystem", "EMR");
+        id2.put("identity_type", "EMR_PATIENT_ID");
+        id2.put("external_id", "EMR001");
+        id2.put("source_system", "EMR");
         List<Map<String, String>> identities = Arrays.asList(id1, id2);
 
         int count = mpiService.batchRegisterPatientIdentities("T001", "P001", identities);

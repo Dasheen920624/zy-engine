@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { StatusBadge } from './StatusBadge';
 import type { StatusKey } from './StatusBadge.types';
+import styles from './statusBadge.stories.module.css';
 
 const meta: Meta<typeof StatusBadge> = {
   title: 'Components/StatusBadge',
@@ -63,7 +64,7 @@ const ALL_STATUSES: StatusKey[] = [
 
 export const AllStatuses: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div className={styles.columnStack}>
       {ALL_STATUSES.map((s) => (
         <StatusBadge key={s} status={s} />
       ))}
@@ -73,10 +74,10 @@ export const AllStatuses: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className={styles.columnStackWide}>
       <div>
         <strong>sm:</strong>
-        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+        <div className={styles.rowWrap}>
           {ALL_STATUSES.map((s) => (
             <StatusBadge key={s} status={s} size="sm" />
           ))}
@@ -84,7 +85,7 @@ export const Sizes: Story = {
       </div>
       <div>
         <strong>md:</strong>
-        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+        <div className={styles.rowWrap}>
           {ALL_STATUSES.map((s) => (
             <StatusBadge key={s} status={s} size="md" />
           ))}
@@ -96,7 +97,7 @@ export const Sizes: Story = {
 
 export const DotOnly: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+    <div className={styles.dotRow}>
       {ALL_STATUSES.map((s) => (
         <StatusBadge key={s} status={s} dotOnly title={s} />
       ))}

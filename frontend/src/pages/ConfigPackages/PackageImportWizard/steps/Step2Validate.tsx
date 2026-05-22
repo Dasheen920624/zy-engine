@@ -4,6 +4,7 @@ import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { importPackageValidate } from "@/api/configPackage";
 import type { ImportValidateResult } from "@/api/types";
 import type { WizardContext } from "../types";
+import styles from "./steps.module.css";
 
 const { Text } = Typography;
 
@@ -58,9 +59,9 @@ export default function Step2Validate({ context, onValidateComplete }: Step2Vali
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: 40 }}>
+      <div className={styles.loadingContainer}>
         <Spin size="large" />
-        <div style={{ marginTop: 12, color: "var(--mk-text-tertiary)" }}>正在校验配置包...</div>
+        <div className={styles.loadingHint}>正在校验配置包...</div>
       </div>
     );
   }
@@ -110,7 +111,7 @@ export default function Step2Validate({ context, onValidateComplete }: Step2Vali
         showIcon
         icon={valid ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
         message={valid ? "校验通过" : "校验未通过"}
-        style={{ marginBottom: 16 }}
+        className={styles.alertSpacing}
       />
 
       {/* Manifest 信息 */}
@@ -119,26 +120,26 @@ export default function Step2Validate({ context, onValidateComplete }: Step2Vali
         column={2}
         size="small"
         labelStyle={{ color: "var(--mk-text-tertiary)" }}
-        style={{ marginBottom: 16 }}
+        className={styles.descriptionsSpacing}
       >
         <Descriptions.Item label="包编码">
-          <code style={{ fontFamily: "var(--mk-font-mono)" }}>{manifest.package_code}</code>
+          <code className={styles.monoCode}>{manifest.package_code}</code>
         </Descriptions.Item>
         <Descriptions.Item label="版本">
-          <code style={{ fontFamily: "var(--mk-font-mono)" }}>{manifest.package_version}</code>
+          <code className={styles.monoCode}>{manifest.package_version}</code>
         </Descriptions.Item>
         <Descriptions.Item label="资产类型">{manifest.asset_type}</Descriptions.Item>
         <Descriptions.Item label="范围">{manifest.scope_level} · {manifest.scope_code}</Descriptions.Item>
         {manifest.base_version && (
           <Descriptions.Item label="基础版本">
-            <code style={{ fontFamily: "var(--mk-font-mono)" }}>{manifest.base_version}</code>
+            <code className={styles.monoCode}>{manifest.base_version}</code>
           </Descriptions.Item>
         )}
         <Descriptions.Item label="资产数量">{manifest.items.length}</Descriptions.Item>
       </Descriptions>
 
       {/* 校验结果 */}
-      <h4 style={{ marginBottom: 8, fontWeight: 500 }}>校验结果</h4>
+      <h4 className={styles.sectionHeading}>校验结果</h4>
       <Table
         dataSource={validation_results}
         columns={columns}

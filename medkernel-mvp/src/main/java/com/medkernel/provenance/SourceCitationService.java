@@ -1,6 +1,8 @@
 package com.medkernel.provenance;
 
 import com.medkernel.persistence.EnginePersistenceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -20,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class SourceCitationService {
+    private static final Logger log = LoggerFactory.getLogger(SourceCitationService.class);
+
     private static final String DEFAULT_TENANT_ID = "default";
     private static final List<String> SUPPORTED_CITATION_TYPES = Arrays.asList(
             "PAGE", "SECTION", "CLAUSE", "TABLE", "FIGURE", "APPENDIX");
@@ -294,7 +298,8 @@ public class SourceCitationService {
         try {
             persistenceService.saveAuditLog("PROVENANCE", actionType, "SRC_CITATION",
                     null, null, null, operatorId, detail);
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException e) {
+            log.warn("RuntimeException in source citation audit: {}", e.getMessage());
         }
     }
 

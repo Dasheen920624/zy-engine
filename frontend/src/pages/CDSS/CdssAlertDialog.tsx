@@ -3,6 +3,7 @@ import { Modal, Input, Form, Button, Space, Typography, Alert } from "antd";
 import { ExclamationCircleOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import type { CdssAlert } from "../../api/cdss";
 import { resolveCdssAlert } from "../../api/cdss";
+import styles from "./cdssAlertDialog.module.css";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -14,12 +15,12 @@ interface CdssAlertDialogProps {
   onResolved: () => void;
 }
 
-const RISK_LEVEL_CONFIG: Record<string, { color: string; label: string }> = {
-  INFO: { color: "var(--mk-primary)", label: "信息提示" },
-  LOW: { color: "var(--mk-success)", label: "低风险" },
-  MEDIUM: { color: "var(--mk-warning)", label: "中风险" },
-  HIGH: { color: "var(--mk-danger)", label: "高风险" },
-  CRITICAL: { color: "var(--mk-danger)", label: "危急阻断" },
+const RISK_LEVEL_CONFIG: Record<string, { iconClassName: string; label: string }> = {
+  INFO: { iconClassName: styles.riskInfo, label: "信息提示" },
+  LOW: { iconClassName: styles.riskLow, label: "低风险" },
+  MEDIUM: { iconClassName: styles.riskMedium, label: "中风险" },
+  HIGH: { iconClassName: styles.riskHigh, label: "高风险" },
+  CRITICAL: { iconClassName: styles.riskCritical, label: "危急阻断" },
 };
 
 const CdssAlertDialog: React.FC<CdssAlertDialogProps> = ({ alert, visible, onClose, onResolved }) => {
@@ -54,9 +55,9 @@ const CdssAlertDialog: React.FC<CdssAlertDialogProps> = ({ alert, visible, onClo
     <Modal
       title={
         <Space>
-          <ExclamationCircleOutlined style={{ color: riskConfig.color, fontSize: 20 }} />
+          <ExclamationCircleOutlined className={`${styles.riskIcon} ${riskConfig.iconClassName}`} />
           <span>{alert.title}</span>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" className={styles.riskLabel}>
             [{riskConfig.label}]
           </Text>
         </Space>
@@ -66,24 +67,24 @@ const CdssAlertDialog: React.FC<CdssAlertDialogProps> = ({ alert, visible, onClo
       footer={null}
       width={560}
     >
-      <div style={{ marginBottom: 16 }}>
+      <div className={styles.contentBlock}>
         {alert.isBlocking && (
           <Alert
             type="error"
             message="此告警为阻断级别，操作已被阻止"
             description="如需继续操作，必须提供覆盖原因并获得上级确认"
             showIcon
-            style={{ marginBottom: 12 }}
+            className={styles.alertSpacing}
           />
         )}
 
         <Text>{alert.message}</Text>
 
         {alert.evidence.length > 0 && (
-          <div style={{ marginTop: 12 }}>
+          <div className={styles.evidenceBlock}>
             <Text strong>来源证据：</Text>
             {alert.evidence.map((ev: Record<string, unknown>, i: number) => (
-              <div key={i} style={{ padding: "4px 0", paddingLeft: 8 }}>
+              <div key={i} className={styles.evidenceItem}>
                 <Text type="secondary">{String(ev.excerpt ?? ev.description ?? JSON.stringify(ev))}</Text>
               </div>
             ))}
@@ -91,7 +92,7 @@ const CdssAlertDialog: React.FC<CdssAlertDialogProps> = ({ alert, visible, onClo
         )}
 
         {alert.source.documentCode && (
-          <div style={{ marginTop: 8 }}>
+          <div className={styles.sourceBlock}>
             <Text type="secondary">
               参考文档：{alert.source.documentCode}
               {alert.source.citationId && ` / 引用：${alert.source.citationId}`}
@@ -100,7 +101,7 @@ const CdssAlertDialog: React.FC<CdssAlertDialogProps> = ({ alert, visible, onClo
         )}
 
         {alert.ruleCode && (
-          <div style={{ marginTop: 4 }}>
+          <div className={styles.ruleBlock}>
             <Text type="secondary">
               触发规则：{alert.ruleCode} {alert.ruleVersion && `(v${alert.ruleVersion})`}
             </Text>

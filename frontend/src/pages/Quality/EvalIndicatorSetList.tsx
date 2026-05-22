@@ -39,6 +39,7 @@ import {
   type EvalIndicatorSet,
   type EvalIndicator,
 } from "../../api/eval";
+import styles from "./evalIndicatorSetList.module.css";
 
 const { Text } = Typography;
 
@@ -414,7 +415,7 @@ const EvalIndicatorSetList: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Card
         title="评估指标集"
         extra={
@@ -513,7 +514,7 @@ const EvalIndicatorSetList: React.FC = () => {
         ) : null}
       >
         {selectedSet && (
-          <div style={{ marginBottom: 16 }}>
+          <div className={styles.detailMeta}>
             <Row gutter={16}>
               <Col span={8}><Text type="secondary">编码：</Text>{selectedSet.set_code}</Col>
               <Col span={8}><Text type="secondary">版本：</Text>{selectedSet.version}</Col>
@@ -564,12 +565,12 @@ const EvalIndicatorSetList: React.FC = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="weight" label="权重" initialValue={1}>
-                <InputNumber min={0} step={0.1} style={{ width: "100%" }} />
+                <InputNumber min={0} step={0.1} className={styles.fullWidth} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="max_value" label="满分" initialValue={100}>
-                <InputNumber min={0} style={{ width: "100%" }} />
+                <InputNumber min={0} className={styles.fullWidth} />
               </Form.Item>
             </Col>
           </Row>

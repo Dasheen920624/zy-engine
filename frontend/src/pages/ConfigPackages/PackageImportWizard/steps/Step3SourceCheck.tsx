@@ -5,6 +5,7 @@ import { importPackageSourceCheck } from "@/api/configPackage";
 import type { ImportSourceCheckResult } from "@/api/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { WizardContext } from "../types";
+import styles from "./steps.module.css";
 
 const { Text } = Typography;
 
@@ -53,9 +54,9 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: 40 }}>
+      <div className={styles.loadingContainer}>
         <Spin size="large" />
-        <div style={{ marginTop: 12, color: "var(--mk-text-tertiary)" }}>正在检查来源审核状态...</div>
+        <div className={styles.loadingHint}>正在检查来源审核状态...</div>
       </div>
     );
   }
@@ -88,7 +89,7 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
           icon={<CloseCircleOutlined />}
           message="存在来源缺失，无法继续下一步"
           description={`缺失来源 ${source_review.missing_count} 条，过期来源 ${source_review.expired_count} 条，未审核 ${source_review.unreviewed_count} 条。请先补充来源信息后再继续。`}
-          style={{ marginBottom: 16 }}
+          className={styles.alertSpacing}
         />
       ) : (
         <Alert
@@ -97,7 +98,7 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
           icon={<CheckCircleOutlined />}
           message="来源审核通过"
           description="所有资产来源均已审核，可以继续下一步。"
-          style={{ marginBottom: 16 }}
+          className={styles.alertSpacing}
         />
       )}
 
@@ -107,7 +108,7 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
         column={2}
         size="small"
         labelStyle={{ color: "var(--mk-text-tertiary)" }}
-        style={{ marginBottom: 16 }}
+        className={styles.descriptionsSpacing}
       >
         <Descriptions.Item label="来源审核">
           <StatusBadge
@@ -123,17 +124,17 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
           />
         </Descriptions.Item>
         <Descriptions.Item label="缺失来源数">
-          <Text style={{ color: source_review.missing_count > 0 ? "var(--mk-danger)" : "var(--mk-success)" }}>
+          <Text className={source_review.missing_count > 0 ? styles.textDanger : styles.textSuccess}>
             {source_review.missing_count}
           </Text>
         </Descriptions.Item>
         <Descriptions.Item label="过期来源数">
-          <Text style={{ color: source_review.expired_count > 0 ? "var(--mk-warning)" : "var(--mk-success)" }}>
+          <Text className={source_review.expired_count > 0 ? styles.textWarning : styles.textSuccess}>
             {source_review.expired_count}
           </Text>
         </Descriptions.Item>
         <Descriptions.Item label="未审核数">
-          <Text style={{ color: source_review.unreviewed_count > 0 ? "var(--mk-warning)" : "var(--mk-success)" }}>
+          <Text className={source_review.unreviewed_count > 0 ? styles.textWarning : styles.textSuccess}>
             {source_review.unreviewed_count}
           </Text>
         </Descriptions.Item>
@@ -149,18 +150,12 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
       {/* 资产来源明细 */}
       {source_review.details.length > 0 && (
         <div>
-          <h4 style={{ marginBottom: 8, fontWeight: 500 }}>资产来源明细</h4>
-          <div style={{ maxHeight: 300, overflow: "auto" }}>
+          <h4 className={styles.sectionHeading}>资产来源明细</h4>
+          <div className={styles.scrollableListTall}>
             {source_review.details.map((detail, i) => (
               <div
                 key={i}
-                style={{
-                  padding: "8px 12px",
-                  borderBottom: i < source_review.details.length - 1 ? "1px solid var(--mk-border-divider)" : "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
+                className={i < source_review.details.length - 1 ? styles.listItemDivider : styles.listItem}
               >
                 <StatusBadge
                   status={getSourceBadgeStatus(detail.status)}
@@ -168,13 +163,13 @@ export default function Step3SourceCheck({ context, onSourceCheckComplete }: Ste
                   showIcon
                   showText={false}
                 />
-                <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 12 }}>{detail.asset_code}</code>
-                <Text type="secondary" style={{ fontSize: 12 }}>{detail.asset_type}</Text>
+                <code className={styles.monoCode}>{detail.asset_code}</code>
+                <Text type="secondary" className={styles.smallText}>{detail.asset_type}</Text>
                 {detail.document_name && (
-                  <Text style={{ fontSize: 12 }}>{detail.document_name}</Text>
+                  <Text className={styles.smallText}>{detail.document_name}</Text>
                 )}
                 {detail.reviewer && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>审核人：{detail.reviewer}</Text>
+                  <Text type="secondary" className={styles.smallText}>审核人：{detail.reviewer}</Text>
                 )}
               </div>
             ))}

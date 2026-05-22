@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
+@Tag(name = "Pathway Draft")
 @RestController
 @RequestMapping("/api/pathways")
 public class PathwayDraftController {
@@ -28,6 +31,7 @@ public class PathwayDraftController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Save draft")
     @PutMapping("/{pathwayCode}/draft")
     public ApiResult<Map<String, Object>> saveDraft(
             @PathVariable String pathwayCode,
@@ -38,6 +42,7 @@ public class PathwayDraftController {
         return ApiResult.success(result);
     }
 
+    @Operation(summary = "Validate")
     @PostMapping("/{pathwayCode}/validate")
     public ApiResult<Map<String, Object>> validate(
             @PathVariable String pathwayCode,
@@ -46,6 +51,7 @@ public class PathwayDraftController {
         return ApiResult.success(result);
     }
 
+    @Operation(summary = "Submit review")
     @PostMapping("/{pathwayCode}/submit-review")
     public ApiResult<Map<String, Object>> submitReview(
             @PathVariable String pathwayCode,

@@ -1,0 +1,147 @@
+/* PR-FINAL-26 TopNav：水平布局 + 折叠按钮 + 面包屑
+ *
+ * Header 容器（高度 / position / z-index）由 AppLayout.module.css 提供，本文件只管内部内容。
+ */
+
+.nav {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  width: 100%;
+  padding: 0 var(--mk-space-6);
+  gap: var(--mk-space-5);
+}
+
+.collapseTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--mk-radius-md);
+  cursor: pointer;
+  color: var(--mk-text-secondary);
+  transition: background 0.2s ease, color 0.2s ease;
+  border: 0;
+  background: transparent;
+  font-size: var(--mk-text-md);
+}
+
+.collapseTrigger:hover {
+  background: var(--mk-bg-muted);
+  color: var(--mk-text-primary);
+}
+
+.collapseTrigger:focus-visible {
+  outline: 2px solid var(--mk-brand-primary);
+  outline-offset: 2px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  min-width: 180px;
+  line-height: 1.25;
+}
+
+.brand:focus-visible {
+  outline: 2px solid var(--mk-brand-primary);
+  outline-offset: 2px;
+  border-radius: var(--mk-radius-sm);
+}
+
+.brandTitle {
+  font-size: var(--mk-text-lg);
+  font-weight: var(--mk-weight-semibold);
+  color: var(--mk-text-primary);
+}
+
+.brandSubtitle {
+  font-size: var(--mk-text-xs);
+  color: var(--mk-text-tertiary);
+  letter-spacing: 0.04em;
+}
+
+.breadcrumb {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+  font-size: var(--mk-text-sm);
+  color: var(--mk-text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.breadcrumb a {
+  color: var(--mk-text-secondary);
+}
+
+.breadcrumb a:hover {
+  color: var(--mk-brand-primary);
+}
+
+.breadcrumbSep {
+  color: var(--mk-text-tertiary);
+}
+
+.breadcrumbSection {
+  color: var(--mk-text-secondary);
+}
+
+.breadcrumbCurrent {
+  color: var(--mk-text-primary);
+  font-weight: var(--mk-weight-medium);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-3);
+  flex-shrink: 0;
+}
+
+.tagReset {
+  margin: 0;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+  padding: var(--mk-space-1) var(--mk-space-2);
+  border-radius: var(--mk-radius-md);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.user:hover {
+  background: var(--mk-bg-muted);
+}
+
+.userName {
+  color: var(--mk-text-primary);
+  font-size: var(--mk-text-sm);
+}
+
+/* 移动端：隐藏副标题 + 面包屑，腾出空间给折叠按钮 + brand + actions */
+@media (max-width: 767px) {
+  .nav {
+    padding: 0 var(--mk-space-4);
+    gap: var(--mk-space-3);
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brandSubtitle {
+    display: none;
+  }
+
+  .breadcrumb {
+    display: none;
+  }
+}

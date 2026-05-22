@@ -15,6 +15,7 @@ import {
   NodeIndexOutlined,
   ReadOutlined,
   RobotOutlined,
+  RocketOutlined,
   SafetyCertificateOutlined,
   ShopOutlined,
   ToolOutlined,
@@ -123,11 +124,25 @@ export const menuSections: MenuSection[] = [
         pr: "PR-FINAL-11",
       },
       {
+        key: "rule-validate",
+        label: "规则校验",
+        icon: <SafetyCertificateOutlined />,
+        path: "/rule/validate",
+        pr: "PR-V3-09",
+      },
+      {
         key: "ai-workflows",
         label: "AI 工作流引擎",
         icon: <RobotOutlined />,
         path: "/ai-workflows",
         pr: "PR-FINAL-13",
+      },
+      {
+        key: "graph-explore",
+        label: "图谱查询",
+        icon: <ClusterOutlined />,
+        path: "/graph/explore",
+        pr: "PR-V2-05",
       },
       {
         key: "adapter-hub",
@@ -177,10 +192,24 @@ export const menuSections: MenuSection[] = [
         path: "/cdss/fatigue",
       },
       {
+        key: "insurance-audit",
+        label: "医保智能审核",
+        icon: <FileSearchOutlined />,
+        path: "/qc/insurance",
+        pr: "PR-V2-12",
+      },
+      {
         key: "aik-review",
         label: "AI 知识审核",
         icon: <ReadOutlined />,
         path: "/aik/sources",
+      },
+      {
+        key: "aik-review-workbench",
+        label: "知识审核台",
+        icon: <ReadOutlined />,
+        path: "/aik/review",
+        pr: "PR-V2-05",
       },
       {
         key: "workflow-todos",
@@ -216,14 +245,26 @@ export const menuSections: MenuSection[] = [
         pr: "PR-FINAL-10",
       },
       {
+        key: "implementation-guide",
+        label: "客户实施向导",
+        icon: <RocketOutlined />,
+        path: "/onboarding/implementation-guide",
+        pr: "FE-014",
+      },
+      {
         key: "mpi",
         label: "患者主索引",
         icon: <IdcardOutlined />,
         path: "/mpi/patients",
         pr: "PR-FINAL-07",
       },
-      // 以下入口待实装：
-      //   key: admin-users        path: /admin/users         PR-FINAL-08
+      {
+        key: "admin-users",
+        label: "用户管理",
+        icon: <UserSwitchOutlined />,
+        path: "/admin/users",
+        pr: "PR-FINAL-08",
+      },
     ],
   },
 
