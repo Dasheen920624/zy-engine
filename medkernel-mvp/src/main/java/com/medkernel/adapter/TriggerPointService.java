@@ -44,7 +44,7 @@ public class TriggerPointService {
     /**
      * 注册触发点。
      */
-    public CdssTriggerPoint registerTrigger(CdssTriggerPoint trigger) {
+    public CdssTriggerPointEntity registerTrigger(CdssTriggerPointEntity trigger) {
         trigger.setId(Ids.next());
         trigger.setCreatedTime(LocalDateTime.now());
         if (trigger.getEnabled() == null) trigger.setEnabled("TRUE");
@@ -86,7 +86,7 @@ public class TriggerPointService {
     /**
      * 更新触发点。
      */
-    public void updateTrigger(CdssTriggerPoint trigger) {
+    public void updateTrigger(CdssTriggerPointEntity trigger) {
         String sql = "UPDATE cdss_trigger_point SET trigger_name = ?, trigger_type = ?, "
                 + "business_scenario = ?, access_strategy = ?, adapter_code = ?, endpoint_url = ?, "
                 + "rule_codes = ?, pathway_codes = ?, priority = ?, risk_level = ?, "
@@ -119,7 +119,7 @@ public class TriggerPointService {
     /**
      * 查询触发点列表。
      */
-    public List<CdssTriggerPoint> listTriggers(Long tenantId, String businessScenario, String accessStrategy) {
+    public List<CdssTriggerPointEntity> listTriggers(Long tenantId, String businessScenario, String accessStrategy) {
         StringBuilder sql = new StringBuilder("SELECT * FROM cdss_trigger_point WHERE tenant_id = ?");
         List<String> params = new ArrayList<>();
         params.add(String.valueOf(tenantId));
@@ -133,7 +133,7 @@ public class TriggerPointService {
         }
         sql.append(" ORDER BY priority");
 
-        List<CdssTriggerPoint> triggers = new ArrayList<>();
+        List<CdssTriggerPointEntity> triggers = new ArrayList<>();
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
@@ -154,10 +154,10 @@ public class TriggerPointService {
      * 匹配触发点：根据业务场景和事件数据匹配适用的触发点。
      */
     public List<Map<String, Object>> matchTriggers(Long tenantId, String businessScenario, Map<String, Object> eventData) {
-        List<CdssTriggerPoint> triggers = listTriggers(tenantId, businessScenario, null);
+        List<CdssTriggerPointEntity> triggers = listTriggers(tenantId, businessScenario, null);
         List<Map<String, Object>> matched = new ArrayList<>();
 
-        for (CdssTriggerPoint trigger : triggers) {
+        for (CdssTriggerPointEntity trigger : triggers) {
             if (!"TRUE".equals(trigger.getEnabled())) continue;
 
             Map<String, Object> matchResult = new LinkedHashMap<String, Object>();
@@ -196,7 +196,7 @@ public class TriggerPointService {
      * 执行触发点：通过适配器调用外部系统。
      */
     public Map<String, Object> executeTrigger(Long tenantId, String triggerCode, Map<String, Object> eventData) {
-        CdssTriggerPoint trigger = findByCode(tenantId, triggerCode);
+        CdssTriggerPointEntity trigger = findByCode(tenantId, triggerCode);
         if (trigger == null) {
             throw new IllegalArgumentException("触发点不存在: " + triggerCode);
         }
@@ -234,7 +234,7 @@ public class TriggerPointService {
         return result;
     }
 
-    private CdssTriggerPoint findByCode(Long tenantId, String triggerCode) {
+    private CdssTriggerPointEntity findByCode(Long tenantId, String triggerCode) {
         String sql = "SELECT * FROM cdss_trigger_point WHERE tenant_id = ? AND trigger_code = ?";
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -249,8 +249,8 @@ public class TriggerPointService {
         return null;
     }
 
-    private CdssTriggerPoint mapTrigger(ResultSet rs) throws SQLException {
-        CdssTriggerPoint trigger = new CdssTriggerPoint();
+    private CdssTriggerPointEntity mapTrigger(ResultSet rs) throws SQLException {
+        CdssTriggerPointEntity trigger = new CdssTriggerPointEntity();
         trigger.setId(rs.getLong("id"));
         trigger.setTenantId(rs.getLong("tenant_id"));
         trigger.setTriggerCode(rs.getString("trigger_code"));

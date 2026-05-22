@@ -1,11 +1,8 @@
 package com.medkernel.audit;
 
-import com.medkernel.common.ErrorCode;
 import com.medkernel.common.TraceContext;
 import com.medkernel.persistence.EnginePersistenceService;
-import com.medkernel.provenance.SourceAssetBinding;
 import com.medkernel.provenance.SourceAssetBindingService;
-import com.medkernel.provenance.SourceCitation;
 import com.medkernel.provenance.SourceCitationService;
 import com.medkernel.provenance.SourceDocument;
 import org.slf4j.Logger;

@@ -83,10 +83,10 @@ public class UserAdminService {
         SecurityUser user = persistence.findById(userId);
         if (user == null) return null;
         Map<String, Object> view = toListView(user);
-        List<com.medkernel.security.IdentityBinding> bindings =
+        List<com.medkernel.security.SsoIdentityBinding> bindings =
                 persistence.findIdentityBindingsByUser(user.getTenantId(), userId);
         List<Map<String, Object>> bindingViews = new ArrayList<Map<String, Object>>();
-        for (com.medkernel.security.IdentityBinding b : bindings) {
+        for (com.medkernel.security.SsoIdentityBinding b : bindings) {
             Map<String, Object> bv = new LinkedHashMap<String, Object>();
             bv.put("provider_id", b.getProviderId());
             bv.put("external_subject", b.getExternalSubject());
@@ -175,7 +175,8 @@ public class UserAdminService {
         Charset charset = GB18030;
         try {
             new InputStreamReader(file.getInputStream(), GB18030);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("Failed to read file with GB18030, falling back to UTF-8: {}", e.getMessage());
             charset = java.nio.charset.StandardCharsets.UTF_8;
         }
 

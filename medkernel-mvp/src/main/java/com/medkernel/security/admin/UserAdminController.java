@@ -4,6 +4,8 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.common.PagedResult;
 import com.medkernel.security.SecurityContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +40,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin")
 public class UserAdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(UserAdminController.class);
 
     private final UserAdminService userAdminService;
 
@@ -199,7 +203,8 @@ public class UserAdminController {
         } catch (IllegalArgumentException e) {
             return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
         } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "CSV 导入失败: " + e.getMessage());
+            log.error("CSV import failed", e);
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "操作失败，请稍后重试");
         }
     }
 
@@ -211,7 +216,7 @@ public class UserAdminController {
         if (fromCtx != null) return fromCtx;
         String header = request.getHeader("X-Tenant-Id");
         if (header != null && !header.isEmpty()) {
-            try { return Long.parseLong(header); } catch (NumberFormatException ignored) {}
+            try { return Long.parseLong(header); } catch (NumberFormatException e) { log.warn("Invalid tenant ID header: {}", e.getMessage()); }
         }
         return 1L; // 默认租户（本地开发 / 演示）
     }

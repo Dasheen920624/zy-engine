@@ -46,7 +46,7 @@ public class IdentityBindingController {
 
     @GetMapping("/bindings/{bindingId}")
     public ApiResult<Map<String, Object>> getBinding(@PathVariable Long bindingId) {
-        IdentityBinding binding = bindingService.getBindingById(bindingId);
+        SsoIdentityBinding binding = bindingService.getBindingById(bindingId);
         if (binding == null) {
             return ApiResult.notFound("identity binding not found");
         }
@@ -66,7 +66,7 @@ public class IdentityBindingController {
         String externalDisplayName = stringValue(body, "external_display_name", "externalDisplayName");
         String operator = resolveOperator(httpRequest);
         try {
-            IdentityBinding binding = bindingService.bindIdentity(
+            SsoIdentityBinding binding = bindingService.bindIdentity(
                     resolveTenantId(orgCtx), userId, providerId, externalSubject, externalDisplayName, operator);
             return ApiResult.success(binding.getId());
         } catch (IllegalStateException ex) {
@@ -159,15 +159,15 @@ public class IdentityBindingController {
         return value == null ? "" : String.valueOf(value);
     }
 
-    private List<Map<String, Object>> toBindingViews(List<IdentityBinding> bindings) {
+    private List<Map<String, Object>> toBindingViews(List<SsoIdentityBinding> bindings) {
         List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-        for (IdentityBinding binding : bindings) {
+        for (SsoIdentityBinding binding : bindings) {
             result.add(toBindingView(binding));
         }
         return result;
     }
 
-    private Map<String, Object> toBindingView(IdentityBinding binding) {
+    private Map<String, Object> toBindingView(SsoIdentityBinding binding) {
         Map<String, Object> view = new LinkedHashMap<String, Object>();
         view.put("id", binding.getId());
         view.put("tenant_id", binding.getTenantId());

@@ -35,7 +35,7 @@ public class TriggerPointController {
      * 注册触发点。
      */
     @PostMapping
-    public ApiResult<CdssTriggerPoint> registerTrigger(@RequestBody CdssTriggerPoint trigger,
+    public ApiResult<CdssTriggerPointEntity> registerTrigger(@RequestBody CdssTriggerPointEntity trigger,
                                                          HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         trigger.setTenantId(resolveTenantId(orgCtx));
@@ -47,7 +47,7 @@ public class TriggerPointController {
      */
     @PostMapping("/{triggerId}")
     public ApiResult<String> updateTrigger(@PathVariable Long triggerId,
-                                             @RequestBody CdssTriggerPoint trigger,
+                                             @RequestBody CdssTriggerPointEntity trigger,
                                              HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         trigger.setId(triggerId);
@@ -60,7 +60,7 @@ public class TriggerPointController {
      * 查询触发点列表。
      */
     @GetMapping
-    public ApiResult<List<CdssTriggerPoint>> listTriggers(
+    public ApiResult<List<CdssTriggerPointEntity>> listTriggers(
             @RequestParam(required = false) String businessScenario,
             @RequestParam(required = false) String accessStrategy,
             HttpServletRequest httpRequest) {

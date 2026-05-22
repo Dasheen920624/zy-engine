@@ -10,8 +10,8 @@
 | 字段 | 值 |
 |---|---|
 | 状态 | 🟢 **GREEN — CI 双 check 全过，已合并 main 并 tag v0.2-demo** |
-| 最后更新 | 2026-05-21 |
-| 最后验证 commit | `1387c2f` (develop) → squash 进 main `565e8a7` (PR #10) |
+| 最后更新 | 2026-05-22 |
+| 最后验证 commit | `bf77832` (develop) — 安全加固 + 代码质量修复 |
 | 演示候选 tag | `v0.2-demo`（指向 main `565e8a7`） |
 | 验证命令 | `cd medkernel-mvp && mvn -q compile && mvn test` + CI guard-rules + backend-build-test |
 | 结果 | **261 文件编译 PASS、248 测试 0 失败 0 错误**；CI 双 check 全 SUCCESS |
@@ -58,7 +58,7 @@
 | KD-001 | WF-001 待办中心后端全 Mock | 演示只看不点 |
 | KD-002 | MpiController 双副本 | 选一份暴露 |
 | KD-003 | UserSyncController 双副本 | 同上 |
-| KD-004 | HikariCP 未接入 | 禁止压测 |
+| KD-004 | HikariCP 未接入 | ~~已修复~~ PR-FINAL-15a/15b 已接入 |
 | KD-005~007 | Jackson SNAKE_CASE / OrgContext / Placeholder | 演示功能不受影响或跳过 |
 
 ### 已解决的历史 RED 阻塞（FIX-DEV-001..009，归档）

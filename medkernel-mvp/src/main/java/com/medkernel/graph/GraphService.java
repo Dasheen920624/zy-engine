@@ -2,7 +2,6 @@ package com.medkernel.graph;
 
 import com.medkernel.audit.PublishGateService;
 import com.medkernel.common.exception.MissingSourceException;
-import com.medkernel.common.TraceContext;
 import com.medkernel.persistence.EnginePersistenceService;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Config;

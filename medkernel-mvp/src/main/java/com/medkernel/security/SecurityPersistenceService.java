@@ -324,7 +324,7 @@ public class SecurityPersistenceService {
     /**
      * 根据外部身份查找绑定关系。
      */
-    public IdentityBinding findIdentityBinding(Long tenantId, Long providerId, String externalSubject) {
+    public SsoIdentityBinding findIdentityBinding(Long tenantId, Long providerId, String externalSubject) {
         String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
                 + "external_display_name, binding_status, last_verified_time, "
                 + "created_by, created_time, updated_by, updated_time "
@@ -348,12 +348,12 @@ public class SecurityPersistenceService {
     /**
      * 查找用户的所有身份绑定。
      */
-    public List<IdentityBinding> findIdentityBindingsByUser(Long tenantId, Long userId) {
+    public List<SsoIdentityBinding> findIdentityBindingsByUser(Long tenantId, Long userId) {
         String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
                 + "external_display_name, binding_status, last_verified_time, "
                 + "created_by, created_time, updated_by, updated_time "
                 + "FROM sec_identity_binding WHERE tenant_id = ? AND user_id = ?";
-        List<IdentityBinding> bindings = new ArrayList<IdentityBinding>();
+        List<SsoIdentityBinding> bindings = new ArrayList<SsoIdentityBinding>();
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, tenantId);
@@ -549,8 +549,8 @@ public class SecurityPersistenceService {
         return provider;
     }
 
-    private IdentityBinding mapIdentityBinding(ResultSet rs) throws SQLException {
-        IdentityBinding binding = new IdentityBinding();
+    private SsoIdentityBinding mapIdentityBinding(ResultSet rs) throws SQLException {
+        SsoIdentityBinding binding = new SsoIdentityBinding();
         binding.setId(rs.getLong("id"));
         binding.setTenantId(rs.getLong("tenant_id"));
         binding.setUserId(rs.getLong("user_id"));
@@ -730,7 +730,7 @@ public class SecurityPersistenceService {
     /**
      * 按 (tenantId, providerId, externalSubject) 查找绑定。
      */
-    public IdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
+    public SsoIdentityBinding findBinding(Long tenantId, Long providerId, String externalSubject) {
         String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
                 + "external_display_name, binding_status, last_verified_time, "
                 + "created_by, created_time, updated_by, updated_time "
@@ -754,12 +754,12 @@ public class SecurityPersistenceService {
     /**
      * 按用户 ID 查找所有绑定。
      */
-    public List<IdentityBinding> findBindingsByUserId(Long userId) {
+    public List<SsoIdentityBinding> findBindingsByUserId(Long userId) {
         String sql = "SELECT id, tenant_id, user_id, provider_id, external_subject, external_org_code, "
                 + "external_display_name, binding_status, last_verified_time, "
                 + "created_by, created_time, updated_by, updated_time "
                 + "FROM sec_identity_binding WHERE user_id = ?";
-        List<IdentityBinding> bindings = new ArrayList<>();
+        List<SsoIdentityBinding> bindings = new ArrayList<>();
         try (Connection connection = connection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, userId);
@@ -777,7 +777,7 @@ public class SecurityPersistenceService {
     /**
      * 保存绑定（UPDATE + INSERT 两阶段 upsert）。
      */
-    public void saveIdentityBinding(IdentityBinding binding) {
+    public void saveIdentityBinding(SsoIdentityBinding binding) {
         String updateSql = "UPDATE sec_identity_binding SET user_id = ?, "
                 + "external_org_code = ?, external_display_name = ?, binding_status = ?, "
                 + "last_verified_time = ?, updated_by = ?, updated_time = ? "

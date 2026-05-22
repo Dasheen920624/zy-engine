@@ -12,14 +12,20 @@ import com.medkernel.security.usersync.entity.SyncSource;
 import com.medkernel.security.usersync.entity.SyncTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import javax.sql.DataSource;
 
 /**
@@ -29,6 +35,7 @@ import javax.sql.DataSource;
 public class UserSyncApiService {
 
     private static final Logger log = LoggerFactory.getLogger(UserSyncApiService.class);
+    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private final EnginePersistenceProperties properties;
     private final SecurityPersistenceService securityPersistenceService;
@@ -371,8 +378,8 @@ public class UserSyncApiService {
      * 创建平台用户
      */
     private SecurityUser createPlatformUser(Long tenantId, ExternalUser externalUser) {
-        // 生成随机密码哈希
-        String passwordHash = "$2a$10$GNycXiBqR1ydr7zFjdVuKec3GoB4Y1x.YUyLK2jvhYsUTBEZlSjkC";
+        // 同步创建的用户初始密码为随机值，需通过密码重置流程设置真实密码
+        String passwordHash = passwordEncoder.encode(UUID.randomUUID().toString());
 
         String sql = "INSERT INTO sec_user (id, tenant_id, username, password_hash, display_name, "
                 + "email, phone, status, created_by, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";

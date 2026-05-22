@@ -5,6 +5,8 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +27,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/security")
 public class SecurityBaselineController {
+    private static final Logger log = LoggerFactory.getLogger(SecurityBaselineController.class);
+
     private final BaselineAuditChainService auditChainService;
     private final KeyRotationService keyRotationService;
     private final OrganizationContextService organizationContextService;
@@ -104,7 +108,8 @@ public class SecurityBaselineController {
             KeyRotationService.KeyVersion newKey = keyRotationService.rotateKey(newKeyAlias, newKeyMaterial, rotatedBy);
             return ApiResult.success(newKey.toView());
         } catch (Exception e) {
-            return ApiResult.failure(ErrorCode.VALIDATION_ERROR, e.getMessage());
+            log.error("Key rotation failed", e);
+            return ApiResult.failure(ErrorCode.UNKNOWN_ERROR, "操作失败，请稍后重试");
         }
     }
 
