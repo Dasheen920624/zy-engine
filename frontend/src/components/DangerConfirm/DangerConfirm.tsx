@@ -13,6 +13,7 @@ import {
   StopOutlined,
 } from '@ant-design/icons';
 import type { DangerConfirmProps, DangerLevel } from './DangerConfirm.types';
+import styles from './dangerConfirm.module.css';
 
 const { Text, Paragraph } = Typography;
 
@@ -21,11 +22,11 @@ const { Text, Paragraph } = Typography;
 function levelIcon(level: DangerLevel) {
   switch (level) {
     case 'low':
-      return <ExclamationCircleOutlined style={{ color: 'var(--mk-warning)' }} />;
+      return <ExclamationCircleOutlined className={styles.iconWarning} />;
     case 'medium':
-      return <WarningOutlined style={{ color: 'var(--mk-danger)' }} />;
+      return <WarningOutlined className={styles.iconDanger} />;
     case 'high':
-      return <StopOutlined style={{ color: 'var(--mk-danger)' }} />;
+      return <StopOutlined className={styles.iconDanger} />;
   }
 }
 
@@ -105,7 +106,7 @@ export default function DangerConfirm({
       title={
         <Space>
           {levelIcon(level)}
-          <span style={{ color: levelColor(level) }}>{title}</span>
+          <span className={level === 'low' ? styles.titleWarning : styles.titleDanger}>{title}</span>
         </Space>
       }
       open={open}
@@ -130,11 +131,11 @@ export default function DangerConfirm({
 
       {/* 后果列表 */}
       {consequences.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+        <div className={styles.consequenceBlock}>
+          <Text type="secondary" className={styles.fieldLabel}>
             执行后：
           </Text>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
+          <ul className={styles.consequenceList}>
             {consequences.map((c, i) => (
               <li key={i}>
                 <Text>{c}</Text>
@@ -156,8 +157,8 @@ export default function DangerConfirm({
 
       {/* medium/high 级需要输入 confirmText */}
       {confirmText && (level === 'medium' || level === 'high') && (
-        <div style={{ marginBottom: 12 }}>
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+        <div className={styles.confirmBlock}>
+          <Text type="secondary" className={styles.fieldLabel}>
             请输入 <Text code>{confirmText}</Text> 以确认操作：
           </Text>
           <Input
@@ -167,16 +168,16 @@ export default function DangerConfirm({
             status={inputValue && inputValue !== confirmText ? 'error' : undefined}
           />
           {inputValue && inputValue !== confirmText && (
-            <Text type="danger" style={{ fontSize: 12 }}>输入不匹配</Text>
+            <Text type="danger" className={styles.errorText}>输入不匹配</Text>
           )}
         </div>
       )}
 
       {/* high 级必须填原因 */}
       {reasonRequired && (
-        <div style={{ marginBottom: 12 }}>
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
-            操作原因 <span style={{ color: 'var(--mk-danger)' }}>*</span>
+        <div className={styles.confirmBlock}>
+          <Text type="secondary" className={styles.fieldLabel}>
+            操作原因 <span className={styles.textDanger}>*</span>
           </Text>
           <Input.TextArea
             rows={2}

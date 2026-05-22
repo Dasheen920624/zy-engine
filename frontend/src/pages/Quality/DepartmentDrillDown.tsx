@@ -33,6 +33,7 @@ import type {
 } from "../../api/types";
 import { fetchDepartmentDetail } from "../../api/quality";
 import { SourceInfo } from "../../components";
+import styles from "./departmentDrillDown.module.css";
 
 const { Text, Title } = Typography;
 
@@ -74,7 +75,7 @@ function ChangeArrow({ value }: { value: number }) {
   if (value === 0) return null;
   const isPositive = value > 0;
   return (
-    <Text type={isPositive ? "success" : "danger"} style={{ fontSize: 12, marginLeft: 4 }}>
+    <Text type={isPositive ? "success" : "danger"} className={styles.changeArrow}>
       {isPositive ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
       {Math.abs(value).toFixed(1)}%
     </Text>
@@ -179,7 +180,7 @@ export default function DepartmentDrillDown() {
   const displayDetail = detail || MOCK_DETAIL;
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Spin spinning={loading}>
         {/* 面包屑导航 */}
         <Breadcrumb
@@ -200,7 +201,7 @@ export default function DepartmentDrillDown() {
         />
 
         {/* 页面标题 */}
-        <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className={styles.pageHeader}>
           <div>
             <Title level={4} style={{ margin: 0 }}>
               {displayDetail.departmentCode} 质控钻取
@@ -233,7 +234,7 @@ export default function DepartmentDrillDown() {
             <Card
               title={
                 <Space>
-                  <HeartOutlined style={{ color: "var(--mk-success)" }} />
+                  <HeartOutlined className={styles.iconSuccess} />
                   <span>路径执行</span>
                 </Space>
               }
@@ -243,7 +244,7 @@ export default function DepartmentDrillDown() {
                 title="入径患者"
                 value={displayDetail.kpis.pathway.totalEnrolled}
               />
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.kpiDetail}>
                 <Text type="secondary">
                   完成 {displayDetail.kpis.pathway.completed} · 变异率{" "}
                   {displayDetail.kpis.pathway.variationRate}%
@@ -255,7 +256,7 @@ export default function DepartmentDrillDown() {
             <Card
               title={
                 <Space>
-                  <WarningOutlined style={{ color: "var(--mk-warning)" }} />
+                  <WarningOutlined className={styles.iconWarning} />
                   <span>规则命中</span>
                 </Space>
               }
@@ -265,7 +266,7 @@ export default function DepartmentDrillDown() {
                 title="实时拦截"
                 value={displayDetail.kpis.rule.realtimeBlock}
               />
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.kpiDetail}>
                 <Text type="secondary">
                   软提醒 {displayDetail.kpis.rule.softReminder} · 命中率{" "}
                   {displayDetail.kpis.rule.hitRate}%
@@ -277,7 +278,7 @@ export default function DepartmentDrillDown() {
             <Card
               title={
                 <Space>
-                  <BugOutlined style={{ color: "var(--mk-danger)" }} />
+                  <BugOutlined className={styles.iconDanger} />
                   <span>质控问题</span>
                 </Space>
               }
@@ -287,7 +288,7 @@ export default function DepartmentDrillDown() {
                 title="总计"
                 value={displayDetail.kpis.qc.totalIssues}
               />
-              <div style={{ marginTop: 8 }}>
+              <div className={styles.kpiDetail}>
                 <Text type="secondary">
                   已闭环 {displayDetail.kpis.qc.closedIssues} · 整改率{" "}
                   {displayDetail.kpis.qc.rectificationRate}%
@@ -299,7 +300,7 @@ export default function DepartmentDrillDown() {
             <Card
               title={
                 <Space>
-                  <MedicineBoxOutlined style={{ color: "var(--mk-primary)" }} />
+                  <MedicineBoxOutlined className={styles.iconPrimary} />
                   <span>医保风险</span>
                 </Space>
               }

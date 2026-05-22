@@ -4,6 +4,7 @@ import { CheckCircleOutlined, WarningOutlined } from "@ant-design/icons";
 import { importPackageImpact } from "@/api/configPackage";
 import type { ImportImpactResult } from "@/api/types";
 import type { WizardContext } from "../types";
+import styles from "./steps.module.css";
 
 const { Text } = Typography;
 
@@ -46,9 +47,9 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: 40 }}>
+      <div className={styles.loadingContainer}>
         <Spin size="large" />
-        <div style={{ marginTop: 12, color: "var(--mk-text-tertiary)" }}>正在评估影响范围...</div>
+        <div className={styles.loadingHint}>正在评估影响范围...</div>
       </div>
     );
   }
@@ -74,8 +75,8 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
   return (
     <div>
       {/* 目标环境选择 */}
-      <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+      <div className={styles.fieldGroup}>
+        <Text type="secondary" className={styles.fieldLabel}>
           目标环境
         </Text>
         <Select
@@ -125,13 +126,13 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
         </Descriptions.Item>
         <Descriptions.Item label="受影响资产数">{impact.assets_affected}</Descriptions.Item>
         <Descriptions.Item label="新增资产">
-          <Text style={{ color: "var(--mk-success)" }}>{impact.assets_added}</Text>
+          <Text className={styles.textSuccess}>{impact.assets_added}</Text>
         </Descriptions.Item>
         <Descriptions.Item label="修改资产">
-          <Text style={{ color: "var(--mk-brand-primary)" }}>{impact.assets_modified}</Text>
+          <Text className={styles.textPrimary}>{impact.assets_modified}</Text>
         </Descriptions.Item>
         <Descriptions.Item label="移除资产">
-          <Text style={{ color: "var(--mk-danger)" }}>{impact.assets_removed}</Text>
+          <Text className={styles.textDanger}>{impact.assets_removed}</Text>
         </Descriptions.Item>
         <Descriptions.Item label="影响范围">
           {impact.scopes_affected.length > 0 ? impact.scopes_affected.join("、") : "无"}
@@ -141,26 +142,19 @@ export default function Step4Impact({ context, onImpactComplete, onTargetEnviron
       {/* 冲突明细 */}
       {hasConflicts && (
         <div>
-          <h4 style={{ marginBottom: 8, fontWeight: 500, color: "var(--mk-warning)" }}>
+          <h4 className={styles.sectionHeadingWarning}>
             <WarningOutlined style={{ marginRight: 8 }} />
             冲突明细
           </h4>
-          <div style={{ maxHeight: 200, overflow: "auto" }}>
+          <div className={styles.scrollableList}>
             {impact.conflicts.map((conflict, i) => (
               <div
                 key={i}
-                style={{
-                  padding: "8px 12px",
-                  borderBottom: i < impact.conflicts.length - 1 ? "1px solid var(--mk-border-divider)" : "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  fontSize: 13,
-                }}
+                className={i < impact.conflicts.length - 1 ? styles.listItemDivider : styles.listItem}
               >
                 <Tag color="warning">{conflict.conflict_type}</Tag>
-                <code style={{ fontFamily: "var(--mk-font-mono)", fontSize: 12 }}>{conflict.asset_code}</code>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <code className={styles.monoCode}>{conflict.asset_code}</code>
+                <Text type="secondary" className={styles.smallText}>
                   现有版本 {conflict.existing_version} → 新版本 {conflict.new_version}
                 </Text>
               </div>

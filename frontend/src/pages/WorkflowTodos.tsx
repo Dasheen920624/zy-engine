@@ -45,6 +45,7 @@ import {
   delegateTask,
 } from "../api/workflow";
 import { OrgContextSelector } from "../components";
+import styles from "./workflowTodos.module.css";
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -572,7 +573,7 @@ export default function WorkflowTodos() {
                     text={STATUS_MAP[selectedTodo.status].label}
                   />
                 </div>
-                <Text strong style={{ fontSize: 16 }}>
+                <Text strong className={styles.detailTitle}>
                   {selectedTodo.title}
                 </Text>
                 <Paragraph type="secondary">{selectedTodo.description}</Paragraph>

@@ -1,0 +1,35 @@
+.page {
+  padding: var(--mk-spacing-lg);
+}
+
+.changeArrow {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.pageHeader {
+  margin-bottom: var(--mk-spacing-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpiDetail {
+  margin-top: var(--mk-spacing-xs);
+}
+
+.iconSuccess {
+  color: var(--mk-success);
+}
+
+.iconWarning {
+  color: var(--mk-warning);
+}
+
+.iconDanger {
+  color: var(--mk-danger);
+}
+
+.iconPrimary {
+  color: var(--mk-primary);
+}

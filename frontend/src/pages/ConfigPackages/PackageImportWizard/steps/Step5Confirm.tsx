@@ -5,6 +5,7 @@ import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { importPackageConfirm } from "@/api/configPackage";
 import type { ApiError, ConfigPackageDetail } from "@/api/types";
 import type { WizardContext } from "../types";
+import styles from "./steps.module.css";
 
 const { Text } = Typography;
 
@@ -59,10 +60,10 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
         style={{ marginBottom: 16 }}
       >
         <Descriptions.Item label="包编码">
-          <code style={{ fontFamily: "var(--mk-font-mono)" }}>{packageCode}</code>
+          <code className={styles.monoCode}>{packageCode}</code>
         </Descriptions.Item>
         <Descriptions.Item label="版本">
-          <code style={{ fontFamily: "var(--mk-font-mono)" }}>
+          <code className={styles.monoCode}>
             {context.validateResult?.manifest.package_version}
           </code>
         </Descriptions.Item>
@@ -85,9 +86,9 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
       </Descriptions>
 
       {/* 确认输入 */}
-      <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
-          请输入包编码确认 <span style={{ color: "var(--mk-danger)" }}>*</span>
+      <div className={styles.fieldGroup}>
+        <Text type="secondary" className={styles.fieldLabel}>
+          请输入包编码确认 <span className={styles.textDanger}>*</span>
         </Text>
         <Input
           placeholder={`请输入 "${packageCode}" 以确认发布`}
@@ -96,13 +97,13 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
           status={confirmName && confirmName !== packageCode ? "error" : undefined}
         />
         {confirmName && confirmName !== packageCode && (
-          <Text type="danger" style={{ fontSize: 12 }}>包编码不匹配</Text>
+          <Text type="danger" className={styles.smallText}>包编码不匹配</Text>
         )}
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
-          发布原因 <span style={{ color: "var(--mk-danger)" }}>*</span>
+      <div className={styles.fieldGroup}>
+        <Text type="secondary" className={styles.fieldLabel}>
+          发布原因 <span className={styles.textDanger}>*</span>
         </Text>
         <Input.TextArea
           placeholder="必填 · 例：医学审核已通过，建议本周二上线"
@@ -113,7 +114,7 @@ export default function Step5Confirm({ context, onPublishSuccess }: Step5Confirm
       </div>
 
       {/* 发布按钮 */}
-      <div style={{ textAlign: "right", marginTop: 16 }}>
+      <div className={styles.formActions}>
         <Space>
           <Button
             type="primary"

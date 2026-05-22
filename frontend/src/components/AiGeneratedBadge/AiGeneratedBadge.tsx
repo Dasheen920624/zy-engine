@@ -7,6 +7,7 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import type { AiGeneratedBadgeProps } from "./AiGeneratedBadge.types";
+import styles from "./aiGeneratedBadge.module.css";
 
 const { Text } = Typography;
 
@@ -42,13 +43,7 @@ export default function AiGeneratedBadge({
       <Tag
         color="purple"
         icon={<RobotOutlined />}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-          padding: "2px 8px",
-          borderRadius: "var(--mk-radius-full)",
-        }}
+        className={styles.badgeTag}
       >
         <span>AI 候选</span>
         <span
@@ -65,18 +60,11 @@ export default function AiGeneratedBadge({
   );
 
   const renderCard = () => (
-    <div
-      style={{
-        padding: "16px",
-        background: "var(--mk-ai-soft)",
-        borderRadius: "var(--mk-radius-md)",
-        border: "1px solid var(--mk-ai-primary)",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className={styles.cardContainer}>
+      <div className={styles.cardHeader}>
         <Space>
-          <RobotOutlined style={{ color: "var(--mk-ai-primary)" }} />
-          <Text strong style={{ color: "var(--mk-ai-primary)" }}>
+          <RobotOutlined className={styles.aiIcon} />
+          <Text strong className={styles.aiText}>
             AI 候选
           </Text>
         </Space>
@@ -87,7 +75,7 @@ export default function AiGeneratedBadge({
         )}
       </div>
 
-      <div style={{ marginTop: 12 }}>
+      <div className={styles.cardContent}>
         <Space direction="vertical" size="small" style={{ width: "100%" }}>
           <div>
             <Text type="secondary">模型</Text>
@@ -99,12 +87,12 @@ export default function AiGeneratedBadge({
           </div>
           <div>
             <Text type="secondary">置信度</Text>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className={styles.confidenceRow}>
               <Progress
                 percent={confidenceValue}
                 size="small"
                 strokeColor={confidenceColor}
-                style={{ flex: 1 }}
+                className={styles.confidenceProgress}
               />
               <Text style={{ color: confidenceColor, fontWeight: 600 }}>
                 {confidenceValue}%
@@ -115,7 +103,7 @@ export default function AiGeneratedBadge({
       </div>
 
       {reviewStatus === "pending" && (
-        <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+        <div className={styles.cardActions}>
           {onAccept && (
             <Button type="primary" size="small" onClick={onAccept}>
               采纳

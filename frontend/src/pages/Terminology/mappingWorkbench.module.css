@@ -1,0 +1,11 @@
+.page {
+  padding: var(--mk-spacing-lg);
+}
+
+.smallText {
+  font-size: 12px;
+}
+
+.selectionBar {
+  margin-bottom: var(--mk-spacing-md);
+}

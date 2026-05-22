@@ -11,6 +11,7 @@ import {
 import type { OrderSafetyBlockerProps } from './OrderSafetyBlocker.types';
 import ReasonDialog from './ReasonDialog';
 import { recordDecision } from '../../api/ruleActionLog';
+import styles from './OrderSafetyBlocker.module.css';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -99,13 +100,13 @@ export default function OrderSafetyBlocker({
   const severityIcon = () => {
     switch (severity) {
       case 'CRITICAL':
-        return <StopOutlined style={{ color: 'var(--mk-danger)', fontSize: 24 }} />;
+        return <StopOutlined className={styles.iconCritical} />;
       case 'HIGH':
-        return <WarningOutlined style={{ color: 'var(--mk-warning)', fontSize: 24 }} />;
+        return <WarningOutlined className={styles.iconHigh} />;
       case 'MEDIUM':
-        return <ExclamationCircleOutlined style={{ color: 'var(--mk-info)', fontSize: 24 }} />;
+        return <ExclamationCircleOutlined className={styles.iconMedium} />;
       default:
-        return <ExclamationCircleOutlined style={{ color: 'var(--mk-info)', fontSize: 24 }} />;
+        return <ExclamationCircleOutlined className={styles.iconDefault} />;
     }
   };
 
@@ -138,32 +139,32 @@ export default function OrderSafetyBlocker({
         closable={false}
         destroyOnClose
       >
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div className={styles.marginBottom16}>
+          <div className={styles.patientRow}>
             <Text strong>患者：{patientInfo.name} {patientInfo.age}岁</Text>
             <Text type="secondary">住院号 {patientInfo.patientId}</Text>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div className={styles.patientRow}>
             <Text>医嘱：{orderInfo.name}</Text>
             <Text type="secondary">{orderInfo.dose} {orderInfo.frequency}</Text>
           </div>
         </div>
 
-        <Divider style={{ margin: '12px 0' }} />
+        <Divider className={styles.dividerCompact} />
 
-        <div style={{ marginBottom: 16 }}>
-          <Tag color={severityColor()} style={{ marginBottom: 8 }}>
+        <div className={styles.marginBottom16}>
+          <Tag color={severityColor()} className={styles.marginBottom8}>
             风险等级：{severity}
           </Tag>
-          <Paragraph style={{ marginBottom: 8 }}>
-            <WarningOutlined style={{ color: 'var(--mk-warning)', marginRight: 8 }} />
+          <Paragraph className={styles.marginBottom8}>
+            <WarningOutlined className={styles.iconWarning} />
             {riskDescription}
           </Paragraph>
-          <Paragraph type="secondary" style={{ marginBottom: 8, fontSize: 13 }}>
+          <Paragraph type="secondary" className={styles.evidenceText}>
             {evidence}
           </Paragraph>
           {source && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" className={styles.sourceText}>
               来源：{source.documentName}
               {source.section && ` ${source.section}`}
               {source.publishYear && ` (${source.publishYear})`}
@@ -171,11 +172,11 @@ export default function OrderSafetyBlocker({
           )}
         </div>
 
-        <Divider style={{ margin: '12px 0' }} />
+        <Divider className={styles.dividerCompact} />
 
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.marginBottom16}>
           <Text strong>您必须确认以下之一才能继续：</Text>
-          <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+          <ul className={styles.bulletList}>
             <li>
               <Text>已评估出血/血栓风险，仍坚持使用（必须填写理由）</Text>
             </li>
@@ -188,7 +189,7 @@ export default function OrderSafetyBlocker({
           </ul>
         </div>
 
-        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+        <Space className={styles.actionsBar}>
           <Button
             icon={<CloseCircleOutlined />}
             onClick={handleCancelOrder}
@@ -234,9 +235,9 @@ export default function OrderSafetyBlocker({
         ]}
         width={400}
       >
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <MedicineBoxOutlined style={{ fontSize: 48, color: 'var(--mk-success)', marginBottom: 16 }} />
-          <Title level={4} style={{ marginBottom: 8 }}>决策已记录</Title>
+        <div className={styles.successContent}>
+          <MedicineBoxOutlined className={styles.iconSuccess} />
+          <Title level={4} className={styles.successTitle}>决策已记录</Title>
           <Text type="secondary">
             您的决策已写入审计，药师审方时会看到您的理由
           </Text>

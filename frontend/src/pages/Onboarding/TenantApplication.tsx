@@ -9,6 +9,7 @@ import {
   FileTextOutlined,
   CheckCircleOutlined 
 } from '@ant-design/icons';
+import styles from "./tenantApplication.module.css";
 
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
@@ -48,7 +49,7 @@ const TenantApplication: React.FC = () => {
   // 步骤1：填写申请信息
   const renderStep0 = () => (
     <Form form={form} layout="vertical">
-      <Card title="企业信息" style={{ marginBottom: 16 }}>
+      <Card title="企业信息" className={styles.sectionCard}>
         <Form.Item
           name="companyName"
           label="企业/机构名称"
@@ -91,7 +92,7 @@ const TenantApplication: React.FC = () => {
         </Form.Item>
       </Card>
 
-      <Card title="联系人信息" style={{ marginBottom: 16 }}>
+      <Card title="联系人信息" className={styles.sectionCard}>
         <Form.Item
           name="contactName"
           label="联系人姓名"
@@ -127,7 +128,7 @@ const TenantApplication: React.FC = () => {
         </Form.Item>
       </Card>
 
-      <Card title="地址信息" style={{ marginBottom: 16 }}>
+      <Card title="地址信息" className={styles.sectionCard}>
         <Form.Item
           name="province"
           label="省份"
@@ -150,7 +151,7 @@ const TenantApplication: React.FC = () => {
         </Form.Item>
       </Card>
 
-      <Card title="业务需求" style={{ marginBottom: 16 }}>
+      <Card title="业务需求" className={styles.sectionCard}>
         <Form.Item
           name="expectedUsers"
           label="预计用户数"
@@ -172,7 +173,7 @@ const TenantApplication: React.FC = () => {
         </Form.Item>
       </Card>
 
-      <div style={{ textAlign: 'center' }}>
+      <div className={styles.submitArea}>
         <Button 
           type="primary" 
           size="large" 
@@ -217,16 +218,16 @@ const TenantApplication: React.FC = () => {
   );
 
   return (
-    <div style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>
+    <div className={styles.page}>
       <Card>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div className={styles.header}>
           <Title level={3}>客户租户开通申请</Title>
           <Paragraph type="secondary">
             填写以下信息申请开通 MedKernel 平台账号
           </Paragraph>
         </div>
 
-        <Steps current={currentStep} style={{ marginBottom: 24 }}>
+        <Steps current={currentStep} className={styles.steps}>
           <Step title="填写申请" />
           <Step title="等待审核" />
           <Step title="开通完成" />

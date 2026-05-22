@@ -1,0 +1,62 @@
+/* AiCandidateReviewDesk inline style 迁移 */
+
+/* 布局 */
+.page {
+  padding: 24px;
+}
+
+.pageHeader {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.statsRow {
+  margin-bottom: 24px;
+}
+
+.filterCard {
+  margin-bottom: 16px;
+}
+
+.filterBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 间距 */
+.marginBottom12 {
+  margin-bottom: 12px;
+}
+
+/* 代码块 */
+.codeBlock {
+  background: var(--mk-bg-muted);
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 4px;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.codeBlockCompact {
+  background: var(--mk-bg-muted);
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 4px;
+  white-space: pre-wrap;
+}
+
+.warningBlock {
+  background: var(--mk-warning-soft);
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 4px;
+}

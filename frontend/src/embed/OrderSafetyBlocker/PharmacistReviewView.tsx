@@ -6,6 +6,7 @@ import {
   SwapOutlined,
 } from '@ant-design/icons';
 import type { RuleActionLog } from '../../api/ruleActionLog';
+import styles from './pharmacistReviewView.module.css';
 
 const { Text, Paragraph } = Typography;
 
@@ -50,11 +51,11 @@ export default function PharmacistReviewView({
   };
 
   return (
-    <div style={{ border: '1px solid var(--mk-border)', borderRadius: 8, padding: 16 }}>
+    <div className={styles.container}>
       {/* 标题 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <StopOutlined style={{ color: 'var(--mk-danger)', fontSize: 18 }} />
-        <Text strong style={{ fontSize: 16 }}>
+      <div className={styles.header}>
+        <StopOutlined className={styles.headerIcon} />
+        <Text strong className={styles.headerTitle}>
           药师审方
         </Text>
         <Text type="secondary">患者 {actionLog.patient_id}</Text>
@@ -87,27 +88,20 @@ export default function PharmacistReviewView({
       />
 
       {/* 医生决策详情 */}
-      <div
-        style={{
-          background: 'var(--mk-bg-secondary)',
-          borderRadius: 6,
-          padding: 12,
-          marginBottom: 16,
-        }}
-      >
-        <div style={{ marginBottom: 8 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>医生</Text>
+      <div className={styles.decisionBlock}>
+        <div className={styles.fieldGroup}>
+          <Text type="secondary" className={styles.fieldLabel}>医生</Text>
           <div>
             <Text strong>{actionLog.decision_by}</Text>
-            <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+            <Text type="secondary" className={styles.fieldTime}>
               {actionLog.decision_time}
             </Text>
           </div>
         </div>
 
         {actionLog.reason && (
-          <div style={{ marginBottom: 8 }}>
-            <Text type="secondary" style={{ fontSize: 12 }}>理由</Text>
+          <div className={styles.fieldGroup}>
+            <Text type="secondary" className={styles.fieldLabel}>理由</Text>
             <Paragraph
               style={{
                 margin: 0,
@@ -124,8 +118,8 @@ export default function PharmacistReviewView({
 
         {(actionLog.informed_consent || actionLog.family_notified) && (
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>知情同意</Text>
-            <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+            <Text type="secondary" className={styles.fieldLabel}>知情同意</Text>
+            <div className={styles.consentRow}>
               <Checkbox checked={actionLog.informed_consent} disabled>
                 已告知患者及家属出血风险
               </Checkbox>
@@ -139,14 +133,14 @@ export default function PharmacistReviewView({
 
       {/* 来源 */}
       {actionLog.trace_id && (
-        <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 16 }}>
+        <Text type="secondary" className={styles.traceInfo}>
           Trace ID: {actionLog.trace_id}
         </Text>
       )}
 
       {/* 操作按钮（非只读模式） */}
       {!readOnly && (
-        <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Space className={styles.actions}>
           <Button
             type="primary"
             icon={<CheckCircleOutlined />}

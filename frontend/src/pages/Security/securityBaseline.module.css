@@ -1,0 +1,17 @@
+.page {
+  padding: var(--mk-spacing-lg);
+}
+
+.monoCode {
+  font-size: 11px;
+}
+
+.marginTop {
+  margin-top: var(--mk-spacing-sm);
+}
+
+.emptyHint {
+  text-align: center;
+  padding: var(--mk-spacing-lg);
+  color: var(--mk-text-secondary);
+}

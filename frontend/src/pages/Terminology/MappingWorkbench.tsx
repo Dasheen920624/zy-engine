@@ -42,6 +42,7 @@ import {
   rejectAiCandidate,
 } from "../../api/terminology";
 import { SourceInfo, AiGeneratedBadge, OrgContextSelector } from "../../components";
+import styles from "./mappingWorkbench.module.css";
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -417,7 +418,7 @@ export default function MappingWorkbench() {
             <AiGeneratedBadge confidence={record.confidence} />
             <Text strong>{record.proposedStandardCode}</Text>
           </Space>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" className={styles.smallText}>
             {record.proposedStandardName}
           </Text>
         </Space>
@@ -450,7 +451,7 @@ export default function MappingWorkbench() {
   const displaySummary = summary || DEFAULT_SUMMARY;
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Card
         title={
           <Space>
@@ -636,7 +637,7 @@ export default function MappingWorkbench() {
               children: (
                 <>
                   {selectedRowKeys.length > 0 && (
-                    <div style={{ marginBottom: 16 }}>
+                    <div className={styles.selectionBar}>
                       <Space>
                         <Text>已选择 {selectedRowKeys.length} 项</Text>
                         <DangerConfirm

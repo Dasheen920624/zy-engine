@@ -36,6 +36,7 @@ import type {
   AiCandidateReview,
   ReviewSummary,
 } from "../../api/aiCandidateReview";
+import styles from "./AiCandidateReviewDesk.module.css";
 
 const { Text, Title } = Typography;
 
@@ -335,19 +336,12 @@ export default function AiCandidateReviewDesk() {
   const displaySummary = summary || MOCK_SUMMARY;
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Spin spinning={loading}>
         {/* 页面标题 */}
-        <div
-          style={{
-            marginBottom: 24,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        <div className={styles.pageHeader}>
           <div>
-            <Title level={4} style={{ margin: 0 }}>
+            <Title level={4} className={styles.pageTitle}>
               AI 候选配置审核台
             </Title>
             <Text type="secondary">
@@ -365,7 +359,7 @@ export default function AiCandidateReviewDesk() {
         </div>
 
         {/* 审核统计卡片 */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Row gutter={16} className={styles.statsRow}>
           <Col span={6}>
             <Card size="small">
               <Statistic
@@ -411,16 +405,10 @@ export default function AiCandidateReviewDesk() {
         {/* 筛选栏 + 批量操作 */}
         <Card
           size="small"
-          style={{ marginBottom: 16 }}
+          className={styles.filterCard}
           bodyStyle={{ padding: "12px 16px" }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <div className={styles.filterBar}>
             <Space>
               <Select
                 placeholder="候选类型"
@@ -560,13 +548,13 @@ export default function AiCandidateReviewDesk() {
             <Row gutter={16}>
               <Col span={12}>
                 <Text type="secondary">候选编码</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   {reviewingRecord.candidateCode}
                 </div>
               </Col>
               <Col span={12}>
                 <Text type="secondary">候选名称</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   {reviewingRecord.candidateName}
                 </div>
               </Col>
@@ -574,20 +562,20 @@ export default function AiCandidateReviewDesk() {
             <Row gutter={16}>
               <Col span={8}>
                 <Text type="secondary">类型</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   {CANDIDATE_TYPE_LABEL[reviewingRecord.candidateType] ||
                     reviewingRecord.candidateType}
                 </div>
               </Col>
               <Col span={8}>
                 <Text type="secondary">来源</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   {reviewingRecord.sourceName}
                 </div>
               </Col>
               <Col span={8}>
                 <Text type="secondary">模型</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   {reviewingRecord.modelProvider} / {reviewingRecord.modelName}
                 </div>
               </Col>
@@ -595,7 +583,7 @@ export default function AiCandidateReviewDesk() {
             <Row gutter={16}>
               <Col span={8}>
                 <Text type="secondary">置信度</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   <Text
                     type={confidenceTextType(reviewingRecord.confidence)}
                   >
@@ -605,7 +593,7 @@ export default function AiCandidateReviewDesk() {
               </Col>
               <Col span={8}>
                 <Text type="secondary">优先级</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   <Tag
                     color={PRIORITY_TAG[reviewingRecord.priority]?.color || ""}
                   >
@@ -616,7 +604,7 @@ export default function AiCandidateReviewDesk() {
               </Col>
               <Col span={8}>
                 <Text type="secondary">状态</Text>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   <Tag
                     color={
                       REVIEW_STATUS_TAG[reviewingRecord.reviewStatus]?.color || ""
@@ -629,34 +617,17 @@ export default function AiCandidateReviewDesk() {
               </Col>
             </Row>
 
-            <div style={{ marginBottom: 12 }}>
+            <div className={styles.marginBottom12}>
               <Text type="secondary">候选内容</Text>
-              <div
-                style={{
-                  background: "var(--mk-bg-muted)",
-                  padding: 12,
-                  borderRadius: 6,
-                  marginTop: 4,
-                  whiteSpace: "pre-wrap",
-                  maxHeight: 200,
-                  overflow: "auto",
-                }}
-              >
+              <div className={styles.codeBlock}>
                 {reviewingRecord.candidateContent}
               </div>
             </div>
 
             {reviewingRecord.qualityFindings && (
-              <div style={{ marginBottom: 12 }}>
+              <div className={styles.marginBottom12}>
                 <Text type="secondary">质检发现</Text>
-                <div
-                  style={{
-                    background: "var(--mk-warning-soft)",
-                    padding: 12,
-                    borderRadius: 6,
-                    marginTop: 4,
-                  }}
-                >
+                <div className={styles.warningBlock}>
                   {reviewingRecord.qualityFindings}
                 </div>
               </div>
@@ -664,26 +635,18 @@ export default function AiCandidateReviewDesk() {
 
             {reviewingRecord.reviewStatus !== "PENDING" && (
               <>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   <Text type="secondary">审核人</Text>
                   <div>{reviewingRecord.reviewedBy || "-"}</div>
                 </div>
-                <div style={{ marginBottom: 12 }}>
+                <div className={styles.marginBottom12}>
                   <Text type="secondary">审核备注</Text>
                   <div>{reviewingRecord.reviewNote || "-"}</div>
                 </div>
                 {reviewingRecord.modifiedContent && (
-                  <div style={{ marginBottom: 12 }}>
+                  <div className={styles.marginBottom12}>
                     <Text type="secondary">修改后内容</Text>
-                    <div
-                      style={{
-                        background: "var(--mk-bg-muted)",
-                        padding: 12,
-                        borderRadius: 6,
-                        marginTop: 4,
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
+                    <div className={styles.codeBlockCompact}>
                       {reviewingRecord.modifiedContent}
                     </div>
                   </div>

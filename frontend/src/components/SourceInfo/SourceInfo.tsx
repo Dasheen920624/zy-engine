@@ -3,6 +3,7 @@ import { FileTextOutlined } from '@ant-design/icons';
 import type { SourceInfoProps } from './SourceInfo.types';
 import { StatusBadge } from '../StatusBadge';
 import type { StatusKey } from '../StatusBadge/StatusBadge.types';
+import styles from './sourceInfo.module.css';
 
 const { Text, Paragraph } = Typography;
 
@@ -38,33 +39,29 @@ export function SourceInfo({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onClickDocument?.();
       }}
-      style={{
-        cursor: onClickDocument ? 'pointer' : 'default',
-        color: onClickDocument ? 'var(--mk-brand-primary)' : 'var(--mk-text-primary)',
-        textDecoration: onClickDocument ? 'underline' : 'none',
-      }}
+      className={onClickDocument ? styles.docLabelClickable : styles.docLabel}
     >
-      <FileTextOutlined style={{ marginRight: 4 }} />
+      <FileTextOutlined className={styles.docIcon} />
       {source.documentName}
     </span>
   );
 
   const sectionTag = source.section ? (
-    <Text type="secondary" style={{ fontSize: 'var(--mk-text-xs)' }}>
+    <Text type="secondary" className={styles.metaTag}>
       {' · '}
       {source.section}
     </Text>
   ) : null;
 
   const yearTag = source.publishYear ? (
-    <Text type="secondary" style={{ fontSize: 'var(--mk-text-xs)' }}>
+    <Text type="secondary" className={styles.metaTag}>
       {' · '}
       {source.publishYear}
     </Text>
   ) : null;
 
   const versionTag = version ? (
-    <Text type="secondary" style={{ fontSize: 'var(--mk-text-xs)' }}>
+    <Text type="secondary" className={styles.metaTag}>
       v{version}
     </Text>
   ) : null;
@@ -77,14 +74,7 @@ export function SourceInfo({
   if (variant === 'inline') {
     return (
       <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          background: isMissing ? 'var(--mk-danger-soft)' : 'transparent',
-          padding: isMissing ? '2px 8px' : 0,
-          borderRadius: 'var(--mk-radius-sm)',
-        }}
+        className={`${styles.inlineContainer} ${isMissing ? styles.inlineContainerMissing : ''}`}
       >
         {docLabel}
         {sectionTag}
@@ -99,18 +89,10 @@ export function SourceInfo({
   if (variant === 'compact') {
     return (
       <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 4,
-          fontSize: 'var(--mk-text-sm)',
-          background: isMissing ? 'var(--mk-danger-soft)' : 'transparent',
-          padding: isMissing ? '1px 6px' : 0,
-          borderRadius: 'var(--mk-radius-sm)',
-        }}
+        className={`${styles.compactContainer} ${isMissing ? styles.compactContainerMissing : ''}`}
       >
         <FileTextOutlined />
-        <Text style={{ fontSize: 'var(--mk-text-sm)' }}>{source.documentName}</Text>
+        <Text className={styles.compactName}>{source.documentName}</Text>
         {versionTag}
         {badge}
       </span>
@@ -121,17 +103,14 @@ export function SourceInfo({
   return (
     <Card
       size="small"
-      style={{
-        background: isMissing ? 'var(--mk-danger-soft)' : 'var(--mk-bg-panel)',
-        borderColor: isMissing ? 'var(--mk-danger-border)' : 'var(--mk-border)',
-      }}
+      className={isMissing ? styles.cardMissing : styles.cardNormal}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+      <div className={styles.cardHeader}>
         {docLabel}
         {badge}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: 'var(--mk-text-secondary)', fontSize: 'var(--mk-text-xs)' }}>
+      <div className={styles.cardMeta}>
         {source.section && <span>{source.section}</span>}
         {source.publishYear && <span>{source.publishYear}</span>}
         {versionTag}
@@ -141,14 +120,7 @@ export function SourceInfo({
 
       {citation && (
         <Paragraph
-          style={{
-            marginTop: 8,
-            marginBottom: 0,
-            fontSize: 'var(--mk-text-sm)',
-            color: 'var(--mk-text-secondary)',
-            borderLeft: `3px solid var(--mk-brand-primary)`,
-            paddingLeft: 8,
-          }}
+          className={styles.citationBlock}
           ellipsis={{ rows: 3, expandable: true, symbol: '展开' }}
         >
           {citation.excerpt}
@@ -156,7 +128,7 @@ export function SourceInfo({
       )}
 
       {onClickDocument && (
-        <div style={{ marginTop: 8 }}>
+        <div className={styles.viewOriginal}>
           <Text
             role="button"
             tabIndex={0}
@@ -164,7 +136,7 @@ export function SourceInfo({
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') onClickDocument();
             }}
-            style={{ color: 'var(--mk-brand-primary)', cursor: 'pointer', fontSize: 'var(--mk-text-sm)' }}
+            className={styles.viewOriginalLink}
           >
             查看原文
           </Text>

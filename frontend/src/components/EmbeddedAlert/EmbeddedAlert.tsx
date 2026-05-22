@@ -8,6 +8,7 @@ import {
   StopOutlined,
 } from '@ant-design/icons';
 import type { EmbeddedAlertProps, AlertSeverity } from './EmbeddedAlert.types';
+import styles from './embeddedAlert.module.css';
 
 const { Text } = Typography;
 
@@ -16,13 +17,13 @@ const { Text } = Typography;
 function severityIcon(severity: AlertSeverity) {
   switch (severity) {
     case 'info':
-      return <InfoCircleOutlined style={{ color: 'var(--mk-info)' }} />;
+      return <InfoCircleOutlined className={styles.iconInfo} />;
     case 'warning':
-      return <ExclamationCircleOutlined style={{ color: 'var(--mk-warning)' }} />;
+      return <ExclamationCircleOutlined className={styles.iconWarning} />;
     case 'danger':
-      return <StopOutlined style={{ color: 'var(--mk-danger)' }} />;
+      return <StopOutlined className={styles.iconDanger} />;
     case 'success':
-      return <CheckCircleOutlined style={{ color: 'var(--mk-success)' }} />;
+      return <CheckCircleOutlined className={styles.iconSuccess} />;
   }
 }
 
@@ -98,38 +99,31 @@ export default function EmbeddedAlert({
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '8px 12px',
         background: severityBg(severity),
         border: `1px solid ${severityBorder(severity)}`,
-        borderRadius: 4,
-        maxHeight: 80,
-        overflow: 'hidden',
-        fontSize: 13,
       }}
+      className={styles.container}
     >
       {/* 图标 */}
-      <span style={{ flexShrink: 0, fontSize: 16 }}>
+      <span className={styles.icon}>
         {severityIcon(severity)}
       </span>
 
       {/* 内容 */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Text strong style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+      <div className={styles.content}>
+        <div className={styles.titleRow}>
+          <Text strong className={styles.title}>
             {title}
           </Text>
           {confidence !== null && confidence !== undefined && (
-            <Text type="secondary" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
+            <Text type="secondary" className={styles.meta}>
               置信 {confidence}%
             </Text>
           )}
           {ruleRef && (
             <Text
               type="secondary"
-              style={{ fontSize: 11, fontFamily: 'var(--mk-font-mono)', whiteSpace: 'nowrap' }}
+              className={styles.ruleRef}
             >
               {ruleRef.code}@{ruleRef.version}
             </Text>
@@ -137,16 +131,11 @@ export default function EmbeddedAlert({
         </div>
         <Text
           type="secondary"
-          style={{
-            fontSize: 12,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
+          className={styles.evidence}
         >
           {evidence}
           {source && (
-            <span style={{ marginLeft: 8, opacity: 0.7 }}>
+            <span className={styles.source}>
               [{source.documentName}
               {source.section && ` ${source.section}`}
               {source.publishYear && ` (${source.publishYear})`}]
@@ -156,7 +145,7 @@ export default function EmbeddedAlert({
       </div>
 
       {/* 操作按钮 */}
-      <Space size={4} style={{ flexShrink: 0 }}>
+      <Space size={4} className={styles.actions}>
         {actions.slice(0, 3).map((action, i) => (
           <Button
             key={i}
@@ -174,12 +163,7 @@ export default function EmbeddedAlert({
       {onClose && (
         <span
           onClick={handleClose}
-          style={{
-            flexShrink: 0,
-            cursor: 'pointer',
-            opacity: 0.5,
-            fontSize: 12,
-          }}
+          className={styles.closeButton}
         >
           <CloseOutlined />
         </span>

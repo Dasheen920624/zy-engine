@@ -39,6 +39,7 @@ import type {
   EvalRectificationData,
   EvalResultData,
 } from "../../api/eval";
+import styles from "./evalReportPage.module.css";
 
 const { TextArea } = Input;
 
@@ -294,10 +295,8 @@ const EvalReportPage: React.FC = () => {
       key: "score_percentage",
       width: 100,
       render: (v: number) => {
-        let color = "green";
-        if (v < 60) color = "red";
-        else if (v < 80) color = "orange";
-        return <span style={{ color }}>{v}%</span>;
+        const colorClass = v < 60 ? styles.scoreRed : v < 80 ? styles.scoreOrange : styles.scoreGreen;
+        return <span className={colorClass}>{v}%</span>;
       },
     },
     {
@@ -433,7 +432,7 @@ const EvalReportPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       {/* 报告列表 */}
       <Card
         title="评估报告"
@@ -535,7 +534,7 @@ const EvalReportPage: React.FC = () => {
 
             {currentReport.recommendations && currentReport.recommendations.length > 0 && (
               <Card size="small" title="整改建议" style={{ marginBottom: 16 }}>
-                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                <ul className={styles.recommendationList}>
                   {currentReport.recommendations.map((r, i) => (
                     <li key={i}>{r}</li>
                   ))}
@@ -588,8 +587,8 @@ const EvalReportPage: React.FC = () => {
                           <strong>{r.reviewer_name}</strong>
                           {" - "}
                           <Tag color={reviewColor}>{reviewLabel}</Tag>
-                          {r.review_comment && <div style={{ marginTop: 4, color: "var(--mk-text-secondary)" }}>{r.review_comment}</div>}
-                          <div style={{ fontSize: 12, color: "var(--mk-text-tertiary)" }}>{r.reviewed_at?.substring(0, 19)}</div>
+                          {r.review_comment && <div className={styles.reviewComment}>{r.review_comment}</div>}
+                          <div className={styles.reviewTime}>{r.reviewed_at?.substring(0, 19)}</div>
                         </div>
                       ),
                     };
@@ -665,7 +664,7 @@ const EvalReportPage: React.FC = () => {
         onCancel={() => setGenerateModalVisible(false)}
         onOk={handleGenerate}
       >
-        <div style={{ marginBottom: 8 }}>选择评估结果：</div>
+        <div className={styles.generateHint}>选择评估结果：</div>
         <Select
           style={{ width: "100%" }}
           placeholder="请选择评估结果"

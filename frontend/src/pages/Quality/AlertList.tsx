@@ -7,6 +7,7 @@ import { StatusBadge, OrgContextSelector, SourceInfo } from "../../components";
 import { listAlerts, getAlertSummary } from "../../api/quality";
 import type { QualityAlert, ListAlertsParams, AlertSeverity } from "../../api/types";
 import AssignDialog from "./components/AssignDialog";
+import styles from "./alertList.module.css";
 
 const { Title } = Typography;
 
@@ -155,7 +156,7 @@ const AlertList: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Title level={3} style={{ marginBottom: 24 }}>质控预警</Title>
 
       <SourceInfo source={{ documentName: "质控预警", documentId: "quality-alerts" }} />

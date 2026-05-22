@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Switch, Button, Space, Typography, message, Divider, List, Tag } from 'antd';
 import { SaveOutlined, BellOutlined, MailOutlined, MessageOutlined, WechatOutlined } from '@ant-design/icons';
+import styles from './notificationSettings.module.css';
 
 const { Title, Text } = Typography;
 
@@ -120,7 +121,7 @@ const NotificationSettings: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Card
         title={
           <Space>
@@ -147,7 +148,7 @@ const NotificationSettings: React.FC = () => {
                   <div key={field.key}>
                     <Card 
                       size="small" 
-                      style={{ marginBottom: 16 }}
+                      className={styles.settingsCard}
                       title={
                         <Space>
                           <Tag color={typeColorMap[settings[index].notificationType] ?? 'default'}>
@@ -157,19 +158,11 @@ const NotificationSettings: React.FC = () => {
                         </Space>
                       }
                     >
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                      <div className={styles.channelContainer}>
                         {Object.entries(settings[index].channels).map(([channel, enabled]) => (
                           <div 
                             key={channel}
-                            style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: 8,
-                              padding: '8px 16px',
-                              backgroundColor: 'var(--mk-bg-elevated)',
-                              borderRadius: 8,
-                              minWidth: 150
-                            }}
+                            className={styles.channelItem}
                           >
                             {getChannelIcon(channel)}
                             <Text>{getChannelName(channel)}</Text>
@@ -189,7 +182,7 @@ const NotificationSettings: React.FC = () => {
 
           <Divider />
 
-          <div style={{ marginTop: 16 }}>
+          <div className={styles.section}>
             <Title level={5}>通知说明</Title>
             <List
               size="small"
@@ -209,7 +202,7 @@ const NotificationSettings: React.FC = () => {
             />
           </div>
 
-          <div style={{ marginTop: 16 }}>
+          <div className={styles.section}>
             <Title level={5}>渠道说明</Title>
             <List
               size="small"

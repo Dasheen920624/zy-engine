@@ -23,6 +23,7 @@ import {
   type AlertFatigueConfigData,
   type OverrideAnalysis,
 } from "../../api/cdss";
+import styles from "./alertFatiguePage.module.css";
 
 const TRIGGER_OPTIONS = [
   { value: "ORDER_PLACED", label: "医嘱下达" },
@@ -194,7 +195,7 @@ const AlertFatiguePage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       {/* 覆盖模式分析 */}
       <Card title="覆盖模式分析" style={{ marginBottom: 16 }}>
         {analysis && (

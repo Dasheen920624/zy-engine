@@ -26,6 +26,7 @@ import {
 } from "antd";
 import { useMemo, useState } from "react";
 import type { ConfigPackageSummary } from "../../api/types";
+import styles from "./configWizardModal.module.css";
 
 const { Text, Paragraph } = Typography;
 
@@ -260,7 +261,7 @@ export default function ConfigWizardModal({
             ),
             children: (
               <div>
-                <div style={{ marginBottom: 12, display: "flex", justifyContent: "space-between" }}>
+                <div className={styles.sectionHeader}>
                   <Paragraph type="secondary">添加或批量导入科室</Paragraph>
                   <Button icon={<PlusOutlined />} onClick={importPresetDepts}>
                     导入预设科室
@@ -321,7 +322,7 @@ export default function ConfigWizardModal({
             ),
             children: (
               <div>
-                <div style={{ marginBottom: 12, display: "flex", justifyContent: "space-between" }}>
+                <div className={styles.sectionHeader}>
                   <Paragraph type="secondary">添加或批量导入角色</Paragraph>
                   <Button icon={<PlusOutlined />} onClick={importPresetRoles}>
                     导入预设角色
@@ -393,7 +394,7 @@ export default function ConfigWizardModal({
           render={(item) => (
             <Space>
               <Text strong>{item.title}</Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" className={styles.smallText}>
                 {item.description}
               </Text>
             </Space>
@@ -407,7 +408,7 @@ export default function ConfigWizardModal({
         />
       )}
       <Divider />
-      <div style={{ textAlign: "right" }}>
+      <div className={styles.footerRight}>
         <Text type="secondary">已选择 {localSelectedRules.length} 个规则包</Text>
       </div>
     </div>
@@ -427,7 +428,7 @@ export default function ConfigWizardModal({
         render={(item) => (
           <Space direction="vertical" size={0}>
             <Text strong>{item.title}</Text>
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" className={styles.smallText}>
               {item.description}
             </Text>
           </Space>
@@ -451,7 +452,7 @@ export default function ConfigWizardModal({
                 <Checkbox checked disabled>
                   <Space direction="vertical" size={0}>
                     <Text>{tpl.name}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" className={styles.smallText}>
                       {tpl.description}
                     </Text>
                   </Space>

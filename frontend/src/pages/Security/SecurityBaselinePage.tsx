@@ -35,6 +35,7 @@ import {
   type KeyVersion,
   type VulnerabilityScanResult,
 } from "../../api/securityBaseline";
+import styles from "./securityBaseline.module.css";
 
 const KEY_STATUS_MAP: Record<string, { color: string; label: string }> = {
   ACTIVE: { color: "green", label: "活跃" },
@@ -179,7 +180,7 @@ const SecurityBaselinePage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Spin spinning={loading}>
         {/* 安全基线概览 */}
         <Card title={<Space><SafetyCertificateOutlined />安全基线概览</Space>} style={{ marginBottom: 16 }}>
@@ -223,13 +224,13 @@ const SecurityBaselinePage: React.FC = () => {
                 <Descriptions column={1} size="small" bordered>
                   <Descriptions.Item label="总记录数">{baseline.audit_chain.total_records}</Descriptions.Item>
                   <Descriptions.Item label="最后哈希">
-                    <code style={{ fontSize: 11 }}>{baseline.audit_chain.last_record_hash}</code>
+                    <code className={styles.monoCode}>{baseline.audit_chain.last_record_hash}</code>
                   </Descriptions.Item>
                   <Descriptions.Item label="哈希算法">{baseline.audit_chain.hash_algorithm}</Descriptions.Item>
                 </Descriptions>
               )}
               {verifyResult && (
-                <div style={{ marginTop: 12 }}>
+                <div className={styles.marginTop}>
                   <Space>
                     <Tag color={verifyResult.chain_intact ? "green" : "red"} icon={verifyResult.chain_intact ? <CheckCircleOutlined /> : <WarningOutlined />}>
                       {verifyResult.chain_intact ? "链完整" : "链异常"}
@@ -269,7 +270,7 @@ const SecurityBaselinePage: React.FC = () => {
                   )}
                 </>
               ) : (
-                <div style={{ textAlign: "center", padding: 24, color: "var(--mk-text-secondary)" }}>
+                <div className={styles.emptyHint}>
                   点击"执行扫描"开始漏洞扫描
                 </div>
               )}

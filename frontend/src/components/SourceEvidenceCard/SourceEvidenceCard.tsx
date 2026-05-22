@@ -8,6 +8,7 @@ import {
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import type { SourceEvidenceCardProps } from "./SourceEvidenceCard.types";
+import styles from "./sourceEvidenceCard.module.css";
 
 const { Text, Paragraph } = Typography;
 
@@ -57,19 +58,13 @@ export default function SourceEvidenceCard({
   const renderCitation = () => {
     if (!citation) return null;
     return (
-      <div style={{ marginTop: 8 }}>
-        <Text type="secondary" style={{ fontSize: 12 }}>
+      <div className={styles.citationContainer}>
+        <Text type="secondary" className={styles.citationLabel}>
           引用片段 (ID: {citation.id})
           {citation.pageNumber && ` - 第${citation.pageNumber}页`}
         </Text>
         <Paragraph
-          style={{
-            margin: "4px 0 0",
-            padding: "8px",
-            background: "var(--mk-bg-soft)",
-            borderRadius: "var(--mk-radius-sm)",
-            fontSize: 13,
-          }}
+          className={styles.citationExcerpt}
           ellipsis={{ rows: 3, expandable: true, symbol: "展开" }}
         >
           {citation.excerpt}
@@ -90,15 +85,7 @@ export default function SourceEvidenceCard({
   if (variant === "compact") {
     return (
       <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "4px 8px",
-          background: review.status === "missing" ? "var(--mk-warning-soft)" : "var(--mk-bg-soft)",
-          borderRadius: "var(--mk-radius-sm)",
-          border: `1px solid ${review.status === "missing" ? "var(--mk-warning)" : "var(--mk-border)"}`,
-        }}
+        className={`${styles.compact} ${review.status === "missing" ? styles.compactMissing : ""}`}
       >
         {renderSourceHeader()}
         {renderReviewStatus()}
@@ -111,19 +98,13 @@ export default function SourceEvidenceCard({
   if (variant === "card") {
     return (
       <div
-        style={{
-          padding: "16px",
-          background: review.status === "missing" ? "var(--mk-warning-soft)" : "var(--mk-bg-panel)",
-          borderRadius: "var(--mk-radius-md)",
-          border: `1px solid ${review.status === "missing" ? "var(--mk-warning)" : "var(--mk-border)"}`,
-          boxShadow: "var(--mk-shadow-sm)",
-        }}
+        className={`${styles.card} ${review.status === "missing" ? styles.cardMissing : ""}`}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div className={styles.cardHeader}>
           {renderSourceHeader()}
           {renderReviewStatus()}
         </div>
-        <div style={{ marginTop: 8 }}>{renderReviewerInfo()}</div>
+        <div className={styles.cardReviewInfo}>{renderReviewerInfo()}</div>
         {renderCitation()}
         {renderDocumentLink()}
       </div>
@@ -133,17 +114,9 @@ export default function SourceEvidenceCard({
   // Default inline variant
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        padding: "8px",
-        background: review.status === "missing" ? "var(--mk-warning-soft)" : "var(--mk-bg-soft)",
-        borderRadius: "var(--mk-radius-sm)",
-        border: `1px solid ${review.status === "missing" ? "var(--mk-warning)" : "var(--mk-border)"}`,
-      }}
+      className={`${styles.inline} ${review.status === "missing" ? styles.inlineMissing : ""}`}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className={styles.inlineHeader}>
         {renderSourceHeader()}
         {renderReviewStatus()}
       </div>

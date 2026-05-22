@@ -42,6 +42,7 @@ import { useNavigate } from "react-router-dom";
 import { get, post } from "../../api/client";
 import type { ConfigPackageSummary } from "../../api/types";
 import ConfigWizardModal from "./ConfigWizardModal";
+import styles from "./ImplementationGuidePage.module.css";
 
 const { Paragraph, Title, Text } = Typography;
 
@@ -488,7 +489,7 @@ export default function ImplementationGuidePage() {
 
   const renderStep0 = () => (
     <Card title="环境检查" extra={<Button icon={<DesktopOutlined />} onClick={runEnvCheck} loading={checkingEnv} type="primary">开始检查</Button>}>
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+      <Paragraph type="secondary" className={styles.marginBottom16}>
         检查系统环境是否满足运行要求，确保数据库、图谱引擎、AI 工作流引擎等核心服务可用。
       </Paragraph>
       <List
@@ -498,9 +499,9 @@ export default function ImplementationGuidePage() {
             <List.Item.Meta
               avatar={
                 item.passed ? (
-                  <CheckCircleOutlined style={{ fontSize: 20, color: "var(--mk-success, #52c41a)" }} />
+                  <CheckCircleOutlined className={styles.iconSuccess} />
                 ) : (
-                  <DesktopOutlined style={{ fontSize: 20, color: "var(--mk-text-secondary, #999)" }} />
+                  <DesktopOutlined className={styles.iconMuted} />
                 )
               }
               title={item.label}
@@ -512,7 +513,7 @@ export default function ImplementationGuidePage() {
       />
       {envChecks.some((c) => c.passed) && (
         <Alert
-          style={{ marginTop: 16 }}
+          className={styles.marginTop16}
           type={envAllPassed ? "success" : "warning"}
           message={envAllPassed ? "所有环境检查已通过" : "部分环境检查未通过，可继续配置但不影响演示模式"}
           showIcon
@@ -530,7 +531,7 @@ export default function ImplementationGuidePage() {
         </Button>
       }
     >
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+      <Paragraph type="secondary" className={styles.marginBottom16}>
         配置科室、病区和角色，建立组织架构基础。
       </Paragraph>
 
@@ -538,15 +539,15 @@ export default function ImplementationGuidePage() {
         {/* 科室管理 */}
         <Col span={12}>
           <Card type="inner" title="科室管理" size="small">
-            <Form form={deptForm} layout="inline" style={{ marginBottom: 12 }}>
-              <Form.Item name="code" style={{ marginBottom: 0 }}>
+            <Form form={deptForm} layout="inline" className={styles.formInline}>
+              <Form.Item name="code" className={styles.formItemNoMargin}>
                 <Input placeholder="科室编码" size="small" />
               </Form.Item>
-              <Form.Item name="name" style={{ marginBottom: 0 }}>
+              <Form.Item name="name" className={styles.formItemNoMargin}>
                 <Input placeholder="科室名称" size="small" />
               </Form.Item>
-              <Form.Item name="type" initialValue="CLINICAL" style={{ marginBottom: 0 }}>
-                <Select size="small" style={{ width: 120 }} options={DEPT_TYPES} />
+              <Form.Item name="type" initialValue="CLINICAL" className={styles.formItemNoMargin}>
+                <Select size="small" className={styles.selectSmall} options={DEPT_TYPES} />
               </Form.Item>
               <Button size="small" type="primary" onClick={addDepartment}>
                 添加
@@ -587,11 +588,11 @@ export default function ImplementationGuidePage() {
         {/* 角色管理 */}
         <Col span={12}>
           <Card type="inner" title="角色管理" size="small">
-            <Form form={roleForm} layout="inline" style={{ marginBottom: 12 }}>
-              <Form.Item name="code" style={{ marginBottom: 0 }}>
+            <Form form={roleForm} layout="inline" className={styles.formInline}>
+              <Form.Item name="code" className={styles.formItemNoMargin}>
                 <Input placeholder="角色编码" size="small" />
               </Form.Item>
-              <Form.Item name="name" style={{ marginBottom: 0 }}>
+              <Form.Item name="name" className={styles.formItemNoMargin}>
                 <Input placeholder="角色名称" size="small" />
               </Form.Item>
               <Button size="small" type="primary" onClick={addRole}>
@@ -647,7 +648,7 @@ export default function ImplementationGuidePage() {
         </Space>
       }
     >
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+      <Paragraph type="secondary" className={styles.marginBottom16}>
         选择并导入质控规则包、路径规则包等，为系统提供规则引擎支持。
       </Paragraph>
 
@@ -663,20 +664,20 @@ export default function ImplementationGuidePage() {
                 setSelectedRulePackages(updated);
                 persistDraft(current, { selectedRulePackages: updated });
               }}
-              style={{ width: "100%" }}
+              className={styles.fullWidth}
             >
               <Row gutter={[12, 12]}>
                 {rulePackages.map((pkg) => (
                   <Col span={12} key={pkg.package_code}>
                     <Card size="small" hoverable>
-                      <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                      <Space direction="vertical" size={4} className={styles.fullWidth}>
                         <Space>
                           <Checkbox value={pkg.package_code} />
                           <Text strong>{pkg.package_code}</Text>
                           <Tag>{pkg.package_version}</Tag>
                           <Tag color="green">{pkg.status}</Tag>
                         </Space>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
+                        <Text type="secondary" className={styles.textSmall}>
                           作用域: {pkg.scope_level} / {pkg.scope_code}
                         </Text>
                       </Space>
@@ -685,8 +686,8 @@ export default function ImplementationGuidePage() {
                 ))}
               </Row>
             </Checkbox.Group>
-            <div style={{ marginTop: 16, textAlign: "right" }}>
-              <Text type="secondary" style={{ marginRight: 12 }}>
+            <div className={`${styles.marginTop16} ${styles.textRight}`}>
+              <Text type="secondary" className={styles.marginRight12}>
                 已选择 {selectedRulePackages.length} / {rulePackages.length} 个规则包
               </Text>
               <Button
@@ -707,7 +708,7 @@ export default function ImplementationGuidePage() {
 
   const renderStep3 = () => (
     <Card title="路径配置">
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+      <Paragraph type="secondary" className={styles.marginBottom16}>
         配置临床路径模板，启用或禁用路径实例化功能。
       </Paragraph>
       <Table
@@ -744,7 +745,7 @@ export default function ImplementationGuidePage() {
         </Button>
       }
     >
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+      <Paragraph type="secondary" className={styles.marginBottom16}>
         选择常用权限模板，快速分配数据权限和菜单权限。
       </Paragraph>
       <Row gutter={[12, 12]}>
@@ -753,9 +754,7 @@ export default function ImplementationGuidePage() {
             <Card
               size="small"
               hoverable
-              style={{
-                borderColor: selectedPermTemplates.includes(tpl.code) ? "var(--mk-brand-primary, #1677ff)" : undefined,
-              }}
+              className={selectedPermTemplates.includes(tpl.code) ? styles.permCard : undefined}
               onClick={() => togglePermTemplate(tpl.code, !selectedPermTemplates.includes(tpl.code))}
             >
               <Space direction="vertical" size={4}>
@@ -763,7 +762,7 @@ export default function ImplementationGuidePage() {
                   <Checkbox checked={selectedPermTemplates.includes(tpl.code)} />
                   <Text strong>{tpl.name}</Text>
                 </Space>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className={styles.textSmall}>
                   {tpl.description}
                 </Text>
               </Space>
@@ -776,7 +775,7 @@ export default function ImplementationGuidePage() {
 
   const renderStep5 = () => (
     <Card title="验证测试">
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+      <Paragraph type="secondary" className={styles.marginBottom16}>
         运行验证测试，确保所有配置项正确无误。
       </Paragraph>
       {validationResult ? (
@@ -784,19 +783,19 @@ export default function ImplementationGuidePage() {
           type={validationResult.passed ? "success" : "warning"}
           message={validationResult.passed ? "验证测试通过" : "验证测试未完全通过"}
           description={
-            <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+            <ul className={styles.resultList}>
               {validationResult.details.map((d, i) => (
                 <li key={i}>{d}</li>
               ))}
             </ul>
           }
           showIcon
-          style={{ marginBottom: 16 }}
+          className={styles.marginBottom16}
         />
       ) : (
         <Empty description="点击下方按钮运行验证测试" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       )}
-      <div style={{ textAlign: "center" }}>
+      <div className={styles.textCenter}>
         <Button type="primary" icon={<SettingOutlined />} onClick={runValidation} loading={validating} size="large">
           运行验证测试
         </Button>
@@ -806,7 +805,7 @@ export default function ImplementationGuidePage() {
 
   const renderStep6 = () => (
     <Card title="完成上线">
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+      <Paragraph type="secondary" className={styles.marginBottom16}>
         确认所有配置项，完成实施并正式上线。
       </Paragraph>
       <Descriptions bordered column={2}>
@@ -820,7 +819,7 @@ export default function ImplementationGuidePage() {
         <Descriptions.Item label="环境检查">{envAllPassed ? "全部通过" : "部分未通过"}</Descriptions.Item>
         <Descriptions.Item label="验证测试">{validationResult?.passed ? "通过" : "未运行"}</Descriptions.Item>
       </Descriptions>
-      <div style={{ textAlign: "center", marginTop: 24 }}>
+      <div className={styles.textCenterWithMargin}>
         <Button type="primary" size="large" icon={<RocketOutlined />} onClick={handleGoLive}>
           确认上线
         </Button>
@@ -832,7 +831,7 @@ export default function ImplementationGuidePage() {
 
   if (completed) {
     return (
-      <div style={{ padding: 24, maxWidth: 860, margin: "0 auto" }}>
+      <div className={styles.pageContainer}>
         <Result
           status="success"
           icon={<RocketOutlined />}
@@ -860,39 +859,30 @@ export default function ImplementationGuidePage() {
   const progressPercent = Math.round(((current + 1) / STEP_ITEMS.length) * 100);
 
   return (
-    <main style={{ minHeight: "100%", padding: 24, background: "var(--mk-bg-soft, #f5f5f5)" }}>
-      <section style={{ maxWidth: 1180, margin: "0 auto 16px" }}>
-        <Space style={{ color: "var(--mk-brand-primary, #1677ff)", fontSize: 13, fontWeight: 600 }}>
+    <main className={styles.mainContainer}>
+      <section className={styles.section}>
+        <Space className={styles.brandLabel}>
           <RocketOutlined />
           <span>客户实施向导</span>
         </Space>
-        <Title level={2} style={{ margin: "4px 0 8px" }}>
+        <Title level={2} className={styles.mainTitle}>
           实施向导
         </Title>
-        <Paragraph style={{ color: "var(--mk-text-secondary, #666)", maxWidth: 720, margin: 0 }}>
+        <Paragraph className={styles.mainDescription}>
           面向客户实施的配置向导，引导完成环境检查、组织配置、规则导入、路径配置、权限分配和验证测试。
         </Paragraph>
       </section>
 
-      <section style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <Steps current={current} items={STEP_ITEMS} style={{ marginBottom: 24 }} />
+      <section className={styles.sectionWide}>
+        <Steps current={current} items={STEP_ITEMS} className={styles.stepsContainer} />
 
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.progressContainer}>
           <Progress percent={progressPercent} size="small" />
         </div>
 
-        <div style={{ minHeight: 460 }}>{stepRenderers[current]()}</div>
+        <div className={styles.contentArea}>{stepRenderers[current]()}</div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-            paddingTop: 16,
-            borderTop: "1px solid var(--mk-border, #f0f0f0)",
-            marginTop: 16,
-          }}
-        >
+        <div className={styles.footer}>
           <div>
             <Button icon={<SaveOutlined />} onClick={handleSaveProgress}>
               保存进度

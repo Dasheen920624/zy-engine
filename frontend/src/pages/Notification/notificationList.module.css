@@ -1,0 +1,54 @@
+.page {
+  padding: var(--mk-spacing-lg);
+}
+
+.statsContainer {
+  margin-bottom: var(--mk-spacing-md);
+  display: flex;
+  gap: var(--mk-spacing-md);
+}
+
+.statCard {
+  flex: 1;
+}
+
+.statContent {
+  text-align: center;
+}
+
+.statNumber {
+  font-size: var(--mk-font-size-lg);
+  font-weight: var(--mk-font-weight-bold);
+}
+
+.statNumberDanger {
+  composes: statNumber;
+  color: var(--mk-danger);
+}
+
+.statNumberSuccess {
+  composes: statNumber;
+  color: var(--mk-success);
+}
+
+.statNumberSecondary {
+  composes: statNumber;
+  color: var(--mk-text-secondary);
+}
+
+.notificationItem {
+  padding: var(--mk-spacing-sm) var(--mk-spacing-md);
+  margin-bottom: var(--mk-spacing-xs);
+  border-radius: var(--mk-border-radius);
+  border: 1px solid var(--mk-border);
+  cursor: pointer;
+}
+
+.notificationItemUnread {
+  composes: notificationItem;
+  background-color: var(--mk-success-soft);
+}
+
+.notificationContent {
+  margin-bottom: var(--mk-spacing-xs);
+}

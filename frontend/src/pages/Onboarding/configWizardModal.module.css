@@ -1,0 +1,15 @@
+/* PR-V3-INLINE-STYLE: ConfigWizardModal inline style 迁移 */
+
+.sectionHeader {
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.smallText {
+  font-size: 12px;
+}
+
+.footerRight {
+  text-align: right;
+}
