@@ -1,0 +1,280 @@
+/*
+ * /admin/audit 审计日志查询页样式（PR-FINAL-09）。
+ * 100% var(--mk-*) token，零硬编码颜色。等保 2.0 三级显著色（验签失败用 --mk-danger）。
+ */
+
+.pageHeader {
+  margin-bottom: 16px;
+}
+
+.pageTitle {
+  margin-bottom: 4px !important;
+  color: var(--mk-text-primary);
+}
+
+.pageHint {
+  font-size: 12px;
+  color: var(--mk-text-tertiary);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: 8px;
+}
+
+.toolbarItem {
+  min-width: 180px;
+  flex: 1 1 180px;
+}
+
+/* AntD Select 默认不撑满，工具栏里的 Select 强制 100%（避免 inline style="width:100%"）*/
+.toolbarItem :global(.ant-select) {
+  width: 100%;
+}
+
+.toolbarItemLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--mk-text-secondary);
+  margin-bottom: 4px;
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.summaryRow {
+  margin-bottom: 16px;
+}
+
+.summaryCard {
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 120px;
+}
+
+.summaryCardTitle {
+  font-size: 13px;
+  color: var(--mk-text-secondary);
+  margin-bottom: 8px;
+}
+
+.summaryCardValue {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--mk-brand-primary-active);
+}
+
+.summaryList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.summaryListItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--mk-text-primary);
+}
+
+.summaryListItem + .summaryListItem {
+  border-top: 1px dashed var(--mk-border);
+}
+
+.summaryListLabel {
+  color: var(--mk-text-secondary);
+}
+
+.summaryListValue {
+  font-weight: 600;
+  color: var(--mk-text-primary);
+}
+
+.listSection {
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.listToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.listToolbarHint {
+  font-size: 12px;
+  color: var(--mk-text-tertiary);
+}
+
+/* 验签失败行高亮（等保 2.0 三级要求） */
+.brokenRow {
+  background: var(--mk-danger-bg, rgba(255, 77, 79, 0.06));
+}
+
+.brokenRow:hover td {
+  background: var(--mk-danger-bg-hover, rgba(255, 77, 79, 0.12)) !important;
+}
+
+.signatureValidTag {
+  color: var(--mk-success);
+}
+
+.signatureInvalidTag {
+  color: var(--mk-danger);
+  font-weight: 600;
+}
+
+/* SignatureVerifyBanner */
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-left: 4px solid var(--mk-brand-primary);
+  border-radius: 8px;
+}
+
+.bannerTitle {
+  width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mk-text-primary);
+  margin-bottom: 4px;
+}
+
+.bannerTitleHint {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--mk-text-tertiary);
+  margin-left: 8px;
+}
+
+.bannerItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--mk-surface-subtle, var(--mk-surface));
+  border: 1px solid var(--mk-border);
+  border-radius: 6px;
+  min-width: 200px;
+  flex: 1 1 200px;
+}
+
+.bannerItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.bannerItemName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mk-text-primary);
+}
+
+.bannerItemMeta {
+  font-size: 11px;
+  color: var(--mk-text-tertiary);
+}
+
+.bannerItemStatusValid {
+  color: var(--mk-success);
+}
+
+.bannerItemStatusBroken {
+  color: var(--mk-danger);
+  font-weight: 600;
+}
+
+.bannerItemStatusUnknown {
+  color: var(--mk-text-tertiary);
+}
+
+/* AuditLogDetail Drawer */
+.detailSection {
+  margin-bottom: 16px;
+}
+
+.detailSectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mk-text-primary);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--mk-border);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px 16px;
+  font-size: 13px;
+}
+
+.detailLabel {
+  color: var(--mk-text-secondary);
+}
+
+.detailValue {
+  color: var(--mk-text-primary);
+  word-break: break-all;
+}
+
+.detailMissing {
+  color: var(--mk-text-tertiary);
+  font-style: italic;
+}
+
+.payloadBlock {
+  background: var(--mk-surface-subtle, var(--mk-surface));
+  border: 1px solid var(--mk-border);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  color: var(--mk-text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.signatureValid {
+  color: var(--mk-success);
+  font-weight: 600;
+}
+
+.signatureInvalid {
+  color: var(--mk-danger);
+  font-weight: 600;
+}
+
+/* 签名串/前置签名单元，等宽 + 软折行 */
+.signatureCell {
+  word-break: break-all;
+  font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  color: var(--mk-text-primary);
+}
