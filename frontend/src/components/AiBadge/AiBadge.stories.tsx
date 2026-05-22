@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import AiBadge from './AiBadge';
 import type { AiBadgeProps } from './AiBadge.types';
+import styles from './aiBadge.stories.module.css';
 
 const meta: Meta<AiBadgeProps> = {
   title: 'Components/AiBadge',
@@ -29,7 +30,7 @@ type Story = StoryObj<AiBadgeProps>;
 
 export const BadgeVariant: Story = {
   render: () => (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+    <div className={styles.badgeRow}>
       <AiBadge
         confidence={92}
         model="GPT-4o"

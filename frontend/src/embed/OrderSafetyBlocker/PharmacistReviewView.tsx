@@ -62,7 +62,7 @@ export default function PharmacistReviewView({
       </div>
 
       {/* 医嘱信息 */}
-      <Descriptions column={2} size="small" style={{ marginBottom: 16 }}>
+      <Descriptions column={2} size="small" className={styles.infoDescriptions}>
         <Descriptions.Item label="医嘱" span={2}>
           <Text strong>{actionLog.order_id}</Text>
         </Descriptions.Item>
@@ -84,7 +84,7 @@ export default function PharmacistReviewView({
             {decisionLabel(actionLog.decision)}
           </span>
         }
-        style={{ marginBottom: 16 }}
+        className={styles.warningAlert}
       />
 
       {/* 医生决策详情 */}
@@ -102,15 +102,7 @@ export default function PharmacistReviewView({
         {actionLog.reason && (
           <div className={styles.fieldGroup}>
             <Text type="secondary" className={styles.fieldLabel}>理由</Text>
-            <Paragraph
-              style={{
-                margin: 0,
-                padding: '8px 12px',
-                background: 'var(--mk-bg-white)',
-                borderRadius: 4,
-                border: '1px solid var(--mk-border-light)',
-              }}
-            >
+            <Paragraph className={styles.reasonParagraph}>
               {actionLog.reason}
             </Paragraph>
           </div>

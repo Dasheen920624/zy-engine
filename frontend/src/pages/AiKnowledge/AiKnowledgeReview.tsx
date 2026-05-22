@@ -374,7 +374,7 @@ export default function AiKnowledgeReview() {
                       placeholder="审核备注"
                       value={reviewNote}
                       onChange={(e) => setReviewNote(e.target.value)}
-                      style={{ width: 200 }}
+                      className={styles.reviewNoteInput}
                     />
                     <Button
                       type="primary"

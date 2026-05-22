@@ -63,19 +63,16 @@ const generateDiff = (oldText: string, newText: string): DiffLine[] => {
   return result;
 };
 
-const LINE_BG_COLOR: Record<string, string> = {
-  add: "var(--mk-success-soft)",
-  remove: "var(--mk-danger-soft)",
+const LINE_CONTAINER_CLASS: Record<string, string> = {
+  add: styles.lineAdd,
+  remove: styles.lineRemove,
+  normal: styles.lineNormal,
 };
 
-const LINE_BORDER_COLOR: Record<string, string> = {
-  add: "var(--mk-success)",
-  remove: "var(--mk-danger)",
-};
-
-const LINE_TEXT_COLOR: Record<string, string> = {
-  add: "var(--mk-success)",
-  remove: "var(--mk-danger)",
+const LINE_PREFIX_CLASS: Record<string, string> = {
+  add: styles.linePrefixAdd,
+  remove: styles.linePrefixRemove,
+  normal: styles.linePrefixNormal,
 };
 
 const LINE_PREFIX: Record<string, string> = {
@@ -108,17 +105,10 @@ export default function DiffViewer({
   }
   
   const renderLine = (line: DiffLine, index: number) => {
-    const bgColor = LINE_BG_COLOR[line.type] || "transparent";
-    const borderColor = LINE_BORDER_COLOR[line.type] || "transparent";
-    
     return (
       <div
         key={index}
-        className={styles.line}
-        style={{
-          backgroundColor: bgColor,
-          borderLeft: `3px solid ${borderColor}`,
-        }}
+        className={`${styles.line} ${LINE_CONTAINER_CLASS[line.type] || styles.lineNormal}`}
       >
         {showLineNumbers && (
           <>
@@ -138,7 +128,7 @@ export default function DiffViewer({
             )}
           </>
         )}
-        <span style={{ color: LINE_TEXT_COLOR[line.type] || "var(--mk-text-primary)" }}>
+        <span className={`${styles.linePrefix} ${LINE_PREFIX_CLASS[line.type] || styles.linePrefixNormal}`}>
           {LINE_PREFIX[line.type] || " "}
         </span>
         <span>{line.content}</span>

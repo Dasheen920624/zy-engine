@@ -16,3 +16,19 @@
 .contentSection {
   margin-top: var(--mk-spacing-md);
 }
+
+.notificationTitle {
+  margin: 0;
+}
+
+.contentCard {
+  background-color: var(--mk-bg-elevated);
+}
+
+.notificationParagraph {
+  white-space: pre-wrap;
+}
+
+.linkButton {
+  padding: 0;
+}

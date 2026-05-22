@@ -146,7 +146,7 @@ const NotificationList: React.FC<NotificationListProps> = ({ recipientId }) => {
             <BellOutlined />
             <span>通知中心</span>
             {summary && summary.unread > 0 && (
-              <Badge count={summary.unread} style={{ backgroundColor: 'var(--mk-danger)' }} />
+              <Badge count={summary.unread} className={styles.unreadCountBadge} />
             )}
           </Space>
         }

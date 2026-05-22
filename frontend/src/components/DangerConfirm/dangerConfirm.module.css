@@ -40,3 +40,7 @@
 .textDanger {
   color: var(--mk-danger);
 }
+
+.irreversibleAlert {
+  margin-bottom: 16px;
+}

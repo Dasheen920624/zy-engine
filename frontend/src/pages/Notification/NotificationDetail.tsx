@@ -165,7 +165,7 @@ const NotificationDetail: React.FC = () => {
       >
         <Descriptions column={2} bordered>
           <Descriptions.Item label="标题" span={2}>
-            <Title level={4} style={{ margin: 0 }}>{notification.title}</Title>
+            <Title level={4} className={styles.notificationTitle}>{notification.title}</Title>
           </Descriptions.Item>
           <Descriptions.Item label="类型">
             {getTypeTag(notification.notificationType)}
@@ -211,8 +211,8 @@ const NotificationDetail: React.FC = () => {
 
         <div className={styles.contentSection}>
           <Title level={5}>通知内容</Title>
-          <Card style={{ backgroundColor: 'var(--mk-bg-elevated)' }}>
-            <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
+          <Card className={styles.contentCard}>
+            <Paragraph className={styles.notificationParagraph}>
               {notification.content}
             </Paragraph>
           </Card>
@@ -227,7 +227,7 @@ const NotificationDetail: React.FC = () => {
                 <Button 
                   type="link" 
                   onClick={handleGoToBusiness}
-                  style={{ padding: 0 }}
+                  className={styles.linkButton}
                 >
                   {notification.businessUrl}
                 </Button>

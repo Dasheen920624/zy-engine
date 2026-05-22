@@ -1,0 +1,101 @@
+.badge {
+  border-radius: var(--mk-radius-sm);
+  line-height: var(--mk-leading-tight);
+  margin-inline-end: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-space-1);
+  color: var(--mk-status-color);
+  background-color: var(--mk-status-bg);
+}
+
+.sizeSm {
+  font-size: var(--mk-text-xs);
+}
+
+.sizeMd {
+  font-size: var(--mk-text-sm);
+}
+
+.dotOnly {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--mk-status-color);
+}
+
+.draft {
+  --mk-status-color: var(--mk-text-tertiary);
+  --mk-status-bg: var(--mk-bg-disabled);
+}
+
+.reviewed {
+  --mk-status-color: var(--mk-brand-primary);
+  --mk-status-bg: var(--mk-brand-primary-soft);
+}
+
+.published {
+  --mk-status-color: var(--mk-success);
+  --mk-status-bg: var(--mk-success-soft);
+}
+
+.synced {
+  --mk-status-color: var(--mk-success);
+  --mk-status-bg: var(--mk-success-soft);
+}
+
+.active {
+  --mk-status-color: var(--mk-success);
+  --mk-status-bg: var(--mk-success-soft);
+}
+
+.retired {
+  --mk-status-color: var(--mk-text-tertiary);
+  --mk-status-bg: var(--mk-bg-disabled);
+}
+
+.rejected {
+  --mk-status-color: var(--mk-danger);
+  --mk-status-bg: var(--mk-danger-soft);
+}
+
+.pending {
+  --mk-status-color: var(--mk-warning);
+  --mk-status-bg: var(--mk-warning-soft);
+}
+
+.processing {
+  --mk-status-color: var(--mk-brand-primary);
+  --mk-status-bg: var(--mk-brand-primary-soft);
+}
+
+.error {
+  --mk-status-color: var(--mk-danger);
+  --mk-status-bg: var(--mk-danger-soft);
+}
+
+.missing_source {
+  --mk-status-color: var(--mk-warning);
+  --mk-status-bg: var(--mk-warning-soft);
+}
+
+.ai_candidate {
+  --mk-status-color: var(--mk-ai-primary);
+  --mk-status-bg: var(--mk-ai-soft);
+}
+
+.success {
+  --mk-status-color: var(--mk-success);
+  --mk-status-bg: var(--mk-success-soft);
+}
+
+.warning {
+  --mk-status-color: var(--mk-warning);
+  --mk-status-bg: var(--mk-warning-soft);
+}
+
+.danger {
+  --mk-status-color: var(--mk-danger);
+  --mk-status-bg: var(--mk-danger-soft);
+}

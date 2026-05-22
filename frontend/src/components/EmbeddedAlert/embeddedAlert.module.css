@@ -9,6 +9,26 @@
   font-size: 13px;
 }
 
+.info {
+  background: var(--mk-info-soft);
+  border: 1px solid var(--mk-info-border);
+}
+
+.warning {
+  background: var(--mk-warning-soft);
+  border: 1px solid var(--mk-warning-border);
+}
+
+.danger {
+  background: var(--mk-danger-soft);
+  border: 1px solid var(--mk-danger-border);
+}
+
+.success {
+  background: var(--mk-success-soft);
+  border: 1px solid var(--mk-success-border);
+}
+
 .iconInfo {
   color: var(--mk-info);
 }

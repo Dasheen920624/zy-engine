@@ -1,0 +1,36 @@
+.card {
+  position: relative;
+  border-radius: var(--mk-radius-md);
+  box-shadow: var(--mk-shadow-sm);
+}
+
+.highlight {
+  border-left: 3px solid var(--mk-brand-primary);
+  box-shadow: var(--mk-shadow-md);
+}
+
+.traceInfo {
+  font-size: var(--mk-text-xs);
+  color: var(--mk-text-tertiary);
+  font-family: var(--mk-font-mono);
+  margin-bottom: 8px;
+}
+
+.actions {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--mk-duration-fast) var(--mk-ease-standard);
+}
+
+.card:hover .actions {
+  opacity: 1;
+}
+
+.actionIcon {
+  color: var(--mk-text-tertiary);
+  cursor: pointer;
+}

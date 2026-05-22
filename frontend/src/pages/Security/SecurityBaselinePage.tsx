@@ -183,7 +183,7 @@ const SecurityBaselinePage: React.FC = () => {
     <div className={styles.page}>
       <Spin spinning={loading}>
         {/* 安全基线概览 */}
-        <Card title={<Space><SafetyCertificateOutlined />安全基线概览</Space>} style={{ marginBottom: 16 }}>
+        <Card title={<Space><SafetyCertificateOutlined />安全基线概览</Space>} className={styles.sectionCard}>
           {baseline && (
             <Row gutter={16}>
               <Col span={6}>
@@ -201,7 +201,7 @@ const SecurityBaselinePage: React.FC = () => {
             </Row>
           )}
           {baseline && (
-            <Descriptions column={3} size="small" style={{ marginTop: 16 }} bordered>
+            <Descriptions column={3} size="small" className={styles.baselineDescriptions} bordered>
               <Descriptions.Item label="密码哈希算法">{baseline.password_hash_algorithm}</Descriptions.Item>
               <Descriptions.Item label="HSTS">{baseline.hsts_enabled ? "已启用" : "未启用"}</Descriptions.Item>
               <Descriptions.Item label="SBOM 格式">{baseline.sbom_format}</Descriptions.Item>
@@ -218,7 +218,7 @@ const SecurityBaselinePage: React.FC = () => {
             <Card
               title={<Space><CheckCircleOutlined />审计链完整性</Space>}
               extra={<Button type="primary" onClick={handleVerify} loading={loading}>校验链完整性</Button>}
-              style={{ marginBottom: 16 }}
+              className={styles.sectionCard}
             >
               {baseline?.audit_chain && (
                 <Descriptions column={1} size="small" bordered>
@@ -248,7 +248,7 @@ const SecurityBaselinePage: React.FC = () => {
             <Card
               title={<Space><ScanOutlined />漏洞扫描</Space>}
               extra={<Button onClick={handleScan} loading={loading}>执行扫描</Button>}
-              style={{ marginBottom: 16 }}
+              className={styles.sectionCard}
             >
               {scanResult ? (
                 <>
@@ -265,7 +265,7 @@ const SecurityBaselinePage: React.FC = () => {
                       dataSource={scanResult.findings}
                       pagination={false}
                       size="small"
-                      style={{ marginTop: 12 }}
+                      className={styles.findingTable}
                     />
                   )}
                 </>

@@ -24,6 +24,12 @@ const getConfidenceColor = (confidence: number) => {
   return "var(--mk-ai-confidence-low)";
 };
 
+const getConfidenceClass = (confidence: number) => {
+  if (confidence >= 80) return styles.confidenceHigh;
+  if (confidence >= 60) return styles.confidenceMid;
+  return styles.confidenceLow;
+};
+
 export default function AiGeneratedBadge({
   confidence,
   model = "",
@@ -37,6 +43,7 @@ export default function AiGeneratedBadge({
   const reviewConfig = reviewStatus ? reviewStatusConfig[reviewStatus] : undefined;
   const confidenceValue = confidence ?? 0;
   const confidenceColor = getConfidenceColor(confidenceValue);
+  const confidenceClass = getConfidenceClass(confidenceValue);
 
   const renderBadge = () => (
     <Tooltip title={`模型: ${model}\n生成时间: ${generatedAt}\n置信度: ${confidenceValue}%`}>
@@ -46,15 +53,7 @@ export default function AiGeneratedBadge({
         className={styles.badgeTag}
       >
         <span>AI 候选</span>
-        <span
-          style={{
-            display: "inline-block",
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            backgroundColor: confidenceColor,
-          }}
-        />
+        <span className={`${styles.confidenceDot} ${confidenceClass}`} />
       </Tag>
     </Tooltip>
   );
@@ -76,7 +75,7 @@ export default function AiGeneratedBadge({
       </div>
 
       <div className={styles.cardContent}>
-        <Space direction="vertical" size="small" style={{ width: "100%" }}>
+        <Space direction="vertical" size="small" className={styles.fullWidth}>
           <div>
             <Text type="secondary">模型</Text>
             <div>{model}</div>
@@ -94,7 +93,7 @@ export default function AiGeneratedBadge({
                 strokeColor={confidenceColor}
                 className={styles.confidenceProgress}
               />
-              <Text style={{ color: confidenceColor, fontWeight: 600 }}>
+              <Text className={`${styles.confidenceText} ${confidenceClass}`}>
                 {confidenceValue}%
               </Text>
             </div>

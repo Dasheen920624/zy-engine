@@ -27,31 +27,12 @@ function severityIcon(severity: AlertSeverity) {
   }
 }
 
-function severityBg(severity: AlertSeverity): string {
-  switch (severity) {
-    case 'info':
-      return 'var(--mk-info-soft)';
-    case 'warning':
-      return 'var(--mk-warning-soft)';
-    case 'danger':
-      return 'var(--mk-danger-soft)';
-    case 'success':
-      return 'var(--mk-success-soft)';
-  }
-}
-
-function severityBorder(severity: AlertSeverity): string {
-  switch (severity) {
-    case 'info':
-      return 'var(--mk-info-border)';
-    case 'warning':
-      return 'var(--mk-warning-border)';
-    case 'danger':
-      return 'var(--mk-danger-border)';
-    case 'success':
-      return 'var(--mk-success-border)';
-  }
-}
+const severityContainerClass: Record<AlertSeverity, string> = {
+  info: styles.info,
+  warning: styles.warning,
+  danger: styles.danger,
+  success: styles.success,
+};
 
 // ─── 组件 ──────────────────────────────────────────────────────
 
@@ -98,11 +79,7 @@ export default function EmbeddedAlert({
 
   return (
     <div
-      style={{
-        background: severityBg(severity),
-        border: `1px solid ${severityBorder(severity)}`,
-      }}
-      className={styles.container}
+      className={`${styles.container} ${severityContainerClass[severity]}`}
     >
       {/* 图标 */}
       <span className={styles.icon}>

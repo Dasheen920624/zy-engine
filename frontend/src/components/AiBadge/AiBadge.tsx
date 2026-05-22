@@ -5,10 +5,10 @@ import styles from './aiBadge.module.css';
 
 const { Text } = Typography;
 
-function getConfidenceColor(confidence: number): string {
-  if (confidence >= 80) return 'var(--mk-ai-confidence-high)';
-  if (confidence >= 60) return 'var(--mk-ai-confidence-mid)';
-  return 'var(--mk-ai-confidence-low)';
+function getConfidenceClass(confidence: number): string {
+  if (confidence >= 80) return styles.confidenceHigh;
+  if (confidence >= 60) return styles.confidenceMid;
+  return styles.confidenceLow;
 }
 
 export default function AiBadge({
@@ -21,7 +21,7 @@ export default function AiBadge({
   onReject,
   variant = 'badge',
 }: AiBadgeProps) {
-  const confidenceColor = getConfidenceColor(confidence);
+  const confidenceClass = getConfidenceClass(confidence);
 
   if (variant === 'card') {
     return (
@@ -32,7 +32,7 @@ export default function AiBadge({
           body: { padding: 'var(--mk-space-4)' },
         }}
       >
-        <Space direction="vertical" size="small" style={{ width: '100%' }}>
+        <Space direction="vertical" size="small" className={styles.fullWidth}>
           <Space>
             <RobotOutlined className={styles.aiIcon} />
             <Text strong className={styles.aiText}>
@@ -47,10 +47,7 @@ export default function AiBadge({
             <Text type="secondary" className={styles.metaText}>
               置信度:
             </Text>
-            <Text
-              strong
-              style={{ color: confidenceColor, fontSize: 'var(--mk-text-sm)' }}
-            >
+            <Text strong className={`${styles.confidenceText} ${confidenceClass}`}>
               {confidence}%
             </Text>
           </Space>
@@ -59,7 +56,7 @@ export default function AiBadge({
             生成时间: {generatedAt}
           </Text>
 
-          <Space size="small" style={{ marginTop: 'var(--mk-space-1)' }}>
+          <Space size="small" className={styles.actionRow}>
             <Button
               size="small"
               type="primary"
@@ -90,7 +87,7 @@ export default function AiBadge({
         className={styles.badgeTag}
       >
         AI 候选
-        <span style={{ color: confidenceColor, fontWeight: 600 }}>
+        <span className={`${styles.confidenceStrong} ${confidenceClass}`}>
           {confidence}%
         </span>
       </Tag>

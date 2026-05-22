@@ -48,3 +48,33 @@
   display: flex;
   gap: 8px;
 }
+
+.confidenceDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.confidenceText {
+  font-weight: 600;
+}
+
+.confidenceHigh {
+  color: var(--mk-ai-confidence-high);
+  background-color: var(--mk-ai-confidence-high);
+}
+
+.confidenceMid {
+  color: var(--mk-ai-confidence-mid);
+  background-color: var(--mk-ai-confidence-mid);
+}
+
+.confidenceLow {
+  color: var(--mk-ai-confidence-low);
+  background-color: var(--mk-ai-confidence-low);
+}

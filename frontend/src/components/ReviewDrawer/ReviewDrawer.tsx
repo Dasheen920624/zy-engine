@@ -7,6 +7,7 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import type { ReviewDrawerProps } from "./ReviewDrawer.types";
+import styles from "./reviewDrawer.module.css";
 
 const { TextArea } = Input;
 
@@ -74,25 +75,18 @@ export default function ReviewDrawer({
       onClose={handleClose}
       open={visible}
       footer={
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            padding: "12px 0",
-            borderTop: "1px solid var(--mk-border-divider)",
-          }}
-        >
+        <div className={styles.footer}>
           <Space>
             {showReject && (
               <>
                 {showRejectForm ? (
-                  <Space direction="vertical" style={{ width: "100%" }}>
+                  <Space direction="vertical" className={styles.fullWidth}>
                     <TextArea
                       placeholder="请输入驳回理由"
                       value={rejectReason}
                       onChange={(e) => setRejectReason(e.target.value)}
                       rows={3}
-                      style={{ width: 300 }}
+                      className={styles.reasonInput}
                     />
                     <Space>
                       <Button
@@ -123,13 +117,13 @@ export default function ReviewDrawer({
             {showTransfer && (
               <>
                 {showTransferForm ? (
-                  <Space direction="vertical" style={{ width: "100%" }}>
+                  <Space direction="vertical" className={styles.fullWidth}>
                     <TextArea
                       placeholder="请输入转人工理由（可选）"
                       value={transferReason}
                       onChange={(e) => setTransferReason(e.target.value)}
                       rows={3}
-                      style={{ width: 300 }}
+                      className={styles.reasonInput}
                     />
                     <Space>
                       <Button

@@ -17,104 +17,73 @@ import {
   FireOutlined,
 } from '@ant-design/icons';
 import type { StatusBadgeProps, StatusKey } from './StatusBadge.types';
+import styles from './statusBadge.module.css';
 
 interface StatusPreset {
   icon: React.ReactNode;
   text: string;
-  color: string;
-  bgColor: string;
 }
 
 const STATUS_PRESETS: Record<StatusKey, StatusPreset> = {
   draft: {
     icon: <EditOutlined />,
     text: '草稿',
-    color: 'var(--mk-text-tertiary)',
-    bgColor: 'var(--mk-bg-disabled)',
   },
   reviewed: {
     icon: <EyeOutlined />,
     text: '待发布',
-    color: 'var(--mk-brand-primary)',
-    bgColor: 'var(--mk-brand-primary-soft)',
   },
   published: {
     icon: <CheckCircleOutlined />,
     text: '已发布',
-    color: 'var(--mk-success)',
-    bgColor: 'var(--mk-success-soft)',
   },
   synced: {
     icon: <CloudSyncOutlined />,
     text: '已同步',
-    color: 'var(--mk-success)',
-    bgColor: 'var(--mk-success-soft)',
   },
   active: {
     icon: <PlayCircleOutlined />,
     text: '运行中',
-    color: 'var(--mk-success)',
-    bgColor: 'var(--mk-success-soft)',
   },
   retired: {
     icon: <StopOutlined />,
     text: '已下线',
-    color: 'var(--mk-text-tertiary)',
-    bgColor: 'var(--mk-bg-disabled)',
   },
   rejected: {
     icon: <CloseCircleOutlined />,
     text: '已拒绝',
-    color: 'var(--mk-danger)',
-    bgColor: 'var(--mk-danger-soft)',
   },
   pending: {
     icon: <ClockCircleOutlined />,
     text: '待审核',
-    color: 'var(--mk-warning)',
-    bgColor: 'var(--mk-warning-soft)',
   },
   processing: {
     icon: <LoadingOutlined />,
     text: '处理中',
-    color: 'var(--mk-brand-primary)',
-    bgColor: 'var(--mk-brand-primary-soft)',
   },
   error: {
     icon: <WarningOutlined />,
     text: '错误',
-    color: 'var(--mk-danger)',
-    bgColor: 'var(--mk-danger-soft)',
   },
   missing_source: {
     icon: <ExclamationCircleOutlined />,
     text: '来源缺失',
-    color: 'var(--mk-warning)',
-    bgColor: 'var(--mk-warning-soft)',
   },
   ai_candidate: {
     icon: <RobotOutlined />,
     text: 'AI 候选',
-    color: 'var(--mk-ai-primary)',
-    bgColor: 'var(--mk-ai-soft)',
   },
   success: {
     icon: <CheckCircleOutlined />,
     text: '成功',
-    color: 'var(--mk-success)',
-    bgColor: 'var(--mk-success-soft)',
   },
   warning: {
     icon: <AlertOutlined />,
     text: '警告',
-    color: 'var(--mk-warning)',
-    bgColor: 'var(--mk-warning-soft)',
   },
   danger: {
     icon: <FireOutlined />,
     text: '危急',
-    color: 'var(--mk-danger)',
-    bgColor: 'var(--mk-danger-soft)',
   },
 };
 
@@ -139,19 +108,14 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   }
 
   const finalText = text ?? preset.text;
-  const sizeClass = `mk-status-badge--${size}`;
+  const globalSizeClass = `mk-status-badge--${size}`;
+  const sizeClass = size === 'sm' ? styles.sizeSm : styles.sizeMd;
+  const toneClass = styles[status];
 
   if (dotOnly) {
     return (
       <span
-        className={`mk-status-badge mk-status-badge--dot-only ${sizeClass}`}
-        style={{
-          display: 'inline-block',
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          backgroundColor: preset.color,
-        }}
+        className={`mk-status-badge mk-status-badge--dot-only ${globalSizeClass} ${styles.dotOnly} ${toneClass}`}
         title={title}
         role="status"
         aria-label={title}
@@ -161,19 +125,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   return (
     <Tag
-      className={`mk-status-badge ${sizeClass}`}
+      className={`mk-status-badge ${globalSizeClass} ${styles.badge} ${sizeClass} ${toneClass}`}
       bordered={false}
-      style={{
-        color: preset.color,
-        backgroundColor: preset.bgColor,
-        borderRadius: 'var(--mk-radius-sm)',
-        fontSize: size === 'sm' ? 'var(--mk-text-xs)' : 'var(--mk-text-sm)',
-        lineHeight: 'var(--mk-leading-tight)',
-        marginInlineEnd: 0,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 'var(--mk-space-1)',
-      }}
       title={title}
       role="status"
       aria-label={finalText}

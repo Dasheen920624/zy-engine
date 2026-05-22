@@ -42,3 +42,16 @@
 .scrollableResults {
   overflow: auto;
 }
+
+.messageParagraph {
+  margin: 8px 0 0;
+  color: var(--mk-text-secondary);
+}
+
+.panelCard {
+  width: 100%;
+}
+
+.emptyState {
+  padding: 24px;
+}

@@ -60,3 +60,11 @@
   border-radius: 6px;
   margin-top: 4px;
 }
+
+.filterWide {
+  width: 130px;
+}
+
+.filterNarrow {
+  width: 110px;
+}

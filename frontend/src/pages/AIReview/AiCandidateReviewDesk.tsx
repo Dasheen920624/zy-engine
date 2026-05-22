@@ -413,7 +413,7 @@ export default function AiCandidateReviewDesk() {
               <Select
                 placeholder="候选类型"
                 allowClear
-                style={{ width: 130 }}
+                className={styles.filterWide}
                 value={filterType}
                 onChange={setFilterType}
                 options={Object.entries(CANDIDATE_TYPE_LABEL).map(
@@ -423,7 +423,7 @@ export default function AiCandidateReviewDesk() {
               <Select
                 placeholder="审核状态"
                 allowClear
-                style={{ width: 130 }}
+                className={styles.filterWide}
                 value={filterStatus}
                 onChange={setFilterStatus}
                 options={Object.entries(REVIEW_STATUS_TAG).map(
@@ -433,7 +433,7 @@ export default function AiCandidateReviewDesk() {
               <Select
                 placeholder="优先级"
                 allowClear
-                style={{ width: 110 }}
+                className={styles.filterNarrow}
                 value={filterPriority}
                 onChange={setFilterPriority}
                 options={Object.entries(PRIORITY_TAG).map(

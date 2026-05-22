@@ -144,7 +144,7 @@ export default function DangerConfirm({
           type="error"
           showIcon
           message={irreversibleNote}
-          style={{ marginBottom: 16 }}
+          className={styles.irreversibleAlert}
         />
       )}
 

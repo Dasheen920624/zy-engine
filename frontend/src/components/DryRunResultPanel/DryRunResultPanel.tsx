@@ -59,7 +59,7 @@ export default function DryRunResultPanel({
           </div>
           
           <Paragraph
-            style={{ margin: "8px 0 0", color: "var(--mk-text-secondary)" }}
+            className={styles.messageParagraph}
             ellipsis={{ rows: 2, expandable: true, symbol: "展开" }}
           >
             {result.message}
@@ -109,7 +109,7 @@ export default function DryRunResultPanel({
           )}
         </Space>
       }
-      style={{ width: "100%" }}
+      className={styles.panelCard}
       bodyStyle={{ padding: 0 }}
     >
       {loading && (
@@ -118,7 +118,7 @@ export default function DryRunResultPanel({
         </div>
       )}
       {!loading && results.length === 0 && (
-        <Empty description={emptyText} style={{ padding: 24 }} />
+        <Empty description={emptyText} className={styles.emptyState} />
       )}
       {!loading && results.length > 0 && (
         <div className={styles.scrollableResults} style={{ maxHeight }}>

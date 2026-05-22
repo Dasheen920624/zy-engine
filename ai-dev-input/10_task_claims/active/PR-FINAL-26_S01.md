@@ -13,7 +13,7 @@ target_base_branch: develop
 git_base_commit: de19acc93674e49194ce0bd65b4ebab17ced4cf2
 git_status_at_claim: clean
 created_at: 2026-05-22T18:20+08:00
-last_heartbeat: 2026-05-22T22:26+08:00
+last_heartbeat: 2026-05-22T23:07+08:00
 expected_finish: 2026-05-23T18:00+08:00
 heartbeat_interval_minutes: 60
 database_mode: N/A (frontend-only)
@@ -200,3 +200,4 @@ risks:
   - 响应式 < 768px drawer → 需小屏目视
   - global.css 删除 .mk-app-* → 全 src grep 确认 0 引用再删
 ```
+

@@ -52,3 +52,7 @@
 .notificationContent {
   margin-bottom: var(--mk-spacing-xs);
 }
+
+.unreadCountBadge :global(.ant-badge-count) {
+  background-color: var(--mk-danger);
+}

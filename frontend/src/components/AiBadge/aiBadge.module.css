@@ -32,3 +32,31 @@
   align-items: center;
   gap: 4px;
 }
+
+.fullWidth {
+  width: 100%;
+}
+
+.confidenceText {
+  font-size: var(--mk-text-sm);
+}
+
+.confidenceStrong {
+  font-weight: 600;
+}
+
+.confidenceHigh {
+  color: var(--mk-ai-confidence-high);
+}
+
+.confidenceMid {
+  color: var(--mk-ai-confidence-mid);
+}
+
+.confidenceLow {
+  color: var(--mk-ai-confidence-low);
+}
+
+.actionRow {
+  margin-top: var(--mk-space-1);
+}

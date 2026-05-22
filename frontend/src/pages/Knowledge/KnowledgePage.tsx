@@ -33,6 +33,7 @@ import {
   type KnowledgeSourceRegistry,
   type KnowledgeSubscription,
 } from "../../api/knowledge";
+import styles from "./knowledgePage.module.css";
 
 const SOURCE_TYPE_OPTIONS = [
   { value: "STANDARD_TERMINOLOGY", label: "标准术语集" },
@@ -255,7 +256,7 @@ const KnowledgePage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className={styles.page}>
       <Card
         title={
           <Space>
