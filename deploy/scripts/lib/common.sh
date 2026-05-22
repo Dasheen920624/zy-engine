@@ -94,6 +94,24 @@ check_db_postgres() {
     && log_ok "PG 连通：${host}/${db}" || { log_err "PG 连通失败"; return 1; }
 }
 
+check_db_kingbase() {
+  # KingbaseES V8R6 兼容 psql 客户端（ksql），也可用系统 psql
+  local client=""
+  if command -v ksql >/dev/null 2>&1; then
+    client="ksql"
+  elif command -v psql >/dev/null 2>&1; then
+    client="psql"
+  else
+    log_skip "ksql/psql 均未安装，跳过 KingbaseES 连通"; return 0
+  fi
+  local host="${MEDKERNEL_DB_HOST:-}"
+  local user="${MEDKERNEL_DB_USERNAME:-}"
+  local db="${MEDKERNEL_DB_NAME:-}"
+  [ -z "$host" ] || [ -z "$user" ] || [ -z "$db" ] && { log_skip "KingbaseES 凭据未设，跳过"; return 0; }
+  PGPASSWORD="${MEDKERNEL_DB_PASSWORD:-}" $client -h "$host" -U "$user" -d "$db" -p "${MEDKERNEL_DB_PORT:-54321}" -c 'SELECT 1;' -At >/dev/null \
+    && log_ok "KingbaseES 连通：${host}/${db}" || { log_err "KingbaseES 连通失败"; return 1; }
+}
+
 # ---------------------------------------------------------------------------
 # 路径常量
 # ---------------------------------------------------------------------------

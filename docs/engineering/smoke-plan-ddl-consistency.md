@@ -2,11 +2,29 @@
 
 ## 目标
 
-验证 Oracle / DM(DM8) / PostgreSQL / LOCAL_H2_FILE 四方言的表结构存在性。
+验证 Oracle / DM(DM8) / PostgreSQL / KingbaseES / LOCAL_H2_FILE 五方言的表结构存在性。
 
 ## 使用方法
 
+### 手动执行
+
 每方言执行对应段的 SELECT COUNT(*) 语句，确认返回值 >= 0（表存在且可查询）。
+
+### 自动化脚本
+
+```bash
+# Oracle
+./deploy/scripts/smoke-ddl-consistency.sh --dialect oracle --connect user/pass@host:port:sid
+
+# 达梦
+./deploy/scripts/smoke-ddl-consistency.sh --dialect dm --host 10.0.0.20 --user medkernel --password xxx
+
+# PostgreSQL
+./deploy/scripts/smoke-ddl-consistency.sh --dialect postgres --host 10.0.0.30 --user medkernel --password xxx
+
+# KingbaseES
+./deploy/scripts/smoke-ddl-consistency.sh --dialect kingbase --host 10.0.0.40 --user medkernel --password xxx
+```
 
 ---
 
