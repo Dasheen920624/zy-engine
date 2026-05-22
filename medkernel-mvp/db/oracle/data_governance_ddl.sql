@@ -6,16 +6,17 @@
 -- ============================================================================
 
 -- 患者主数据表
+-- PR-FINAL-23: HEALTH_DATA 字段 SM4 加密 — patient_name / id_card_no / phone / address 存密文
 CREATE TABLE md_patient (
   id NUMBER(20) PRIMARY KEY,
   tenant_id VARCHAR2(64) NOT NULL,
   patient_id VARCHAR2(64) NOT NULL,
-  patient_name VARCHAR2(100) NOT NULL,
+  patient_name VARCHAR2(256) NOT NULL,
   gender VARCHAR2(10),
   birth_date DATE,
-  id_card_no VARCHAR2(18),
-  phone VARCHAR2(20),
-  address VARCHAR2(500),
+  id_card_no VARCHAR2(256),
+  phone VARCHAR2(256),
+  address VARCHAR2(1024),
   status VARCHAR2(32) DEFAULT 'ACTIVE' NOT NULL,
   created_time TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
   updated_time TIMESTAMP,
