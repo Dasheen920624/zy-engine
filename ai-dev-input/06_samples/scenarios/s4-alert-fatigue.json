@@ -1,0 +1,18 @@
+{
+  "scenario": "S4 · CDSS 提醒疲劳治理",
+  "description": "CDSS 提醒疲劳治理，包含覆盖分析和疲劳治理配置",
+  "routes": [
+    { "path": "/cdss/fatigue", "title": "临床提醒治理", "expectedElements": ["覆盖模式分析", "疲劳治理配置", "新建配置"] },
+    { "path": "/qc/alerts", "title": "质控预警", "expectedElements": [] }
+  ],
+  "apiEndpoints": [
+    { "method": "GET", "path": "/medkernel/api/cdss/fatigue/configs", "description": "获取疲劳治理配置" },
+    { "method": "GET", "path": "/medkernel/api/cdss/fatigue/override-analysis", "description": "获取覆盖分析数据", "expectedFields": ["total_alerts", "total_overrides", "override_rate"] },
+    { "method": "GET", "path": "/medkernel/api/quality/alerts", "description": "获取质控预警列表" }
+  ],
+  "orgContext": {
+    "tenant_id": "TENANT_DEMO",
+    "group_code": "GROUP_DEMO",
+    "hospital_code": "HOSPITAL_001"
+  }
+}

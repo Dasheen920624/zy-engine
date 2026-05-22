@@ -1,0 +1,20 @@
+{
+  "scenario": "S2 · AMI 路径发布",
+  "description": "医学专家发布 AMI 路径，包含配置包导入向导和路径模板管理",
+  "routes": [
+    { "path": "/config/packages", "title": "配置包中心", "expectedElements": ["配置内容", "状态", "组织范围", "导入配置", "包编码"] },
+    { "path": "/config/packages/import", "title": "配置包导入向导", "expectedElements": [] },
+    { "path": "/pathway/templates", "title": "路径配置", "expectedElements": [] },
+    { "path": "/pathway/templates/AMI_PATHWAY_V1", "title": "路径详情", "expectedElements": [] }
+  ],
+  "apiEndpoints": [
+    { "method": "GET", "path": "/medkernel/api/config/packages", "description": "获取配置包列表" },
+    { "method": "GET", "path": "/medkernel/api/pathway/templates", "description": "获取路径模板列表" },
+    { "method": "GET", "path": "/medkernel/api/pathway/templates/AMI_PATHWAY_V1", "description": "获取路径详情", "expectedFields": ["pathway_code"] }
+  ],
+  "orgContext": {
+    "tenant_id": "TENANT_DEMO",
+    "group_code": "GROUP_DEMO",
+    "hospital_code": "HOSPITAL_001"
+  }
+}

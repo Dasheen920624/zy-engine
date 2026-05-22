@@ -1,0 +1,22 @@
+{
+  "scenario": "S5 · AI 知识审核闭环",
+  "description": "AI 知识审核闭环，包含知识来源注册、候选审核、工作流和溯源",
+  "routes": [
+    { "path": "/aik/sources", "title": "知识来源", "expectedElements": ["来源注册", "知识订阅", "注册来源"] },
+    { "path": "/aik/review", "title": "知识审核台", "expectedElements": ["知识审核台", "审核统计", "待审核候选", "审核历史"] },
+    { "path": "/ai-workflows", "title": "AI 工作流", "expectedElements": [] },
+    { "path": "/provenance", "title": "来源追溯", "expectedElements": [] }
+  ],
+  "apiEndpoints": [
+    { "method": "GET", "path": "/medkernel/api/knowledge/sources", "description": "获取知识来源列表" },
+    { "method": "GET", "path": "/medkernel/api/knowledge/candidates", "description": "获取候选列表" },
+    { "method": "GET", "path": "/medkernel/api/knowledge/candidates/summary", "description": "获取审核统计", "expectedFields": ["total", "pending", "approved", "rejected"] },
+    { "method": "GET", "path": "/medkernel/api/ai/workflows", "description": "获取工作流列表" },
+    { "method": "GET", "path": "/medkernel/api/provenance", "description": "获取溯源数据" }
+  ],
+  "orgContext": {
+    "tenant_id": "TENANT_DEMO",
+    "group_code": "GROUP_DEMO",
+    "hospital_code": "HOSPITAL_001"
+  }
+}

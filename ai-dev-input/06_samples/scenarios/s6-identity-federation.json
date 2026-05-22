@@ -1,0 +1,22 @@
+{
+  "scenario": "S6 · 多医院身份联邦",
+  "description": "多医院身份联邦，包含身份绑定、租户开通、安全基线和用户管理",
+  "routes": [
+    { "path": "/security/identity-binding", "title": "身份绑定管理", "expectedElements": ["身份绑定管理", "用户绑定查询", "绑定身份", "合并用户"] },
+    { "path": "/tenant/onboarding", "title": "租户开通向导", "expectedElements": [] },
+    { "path": "/security/baseline", "title": "安全基线", "expectedElements": [] },
+    { "path": "/admin/users", "title": "用户管理", "expectedElements": [] },
+    { "path": "/sso-login", "title": "SSO 登录", "expectedElements": ["SSO"], "requiresAuth": false }
+  ],
+  "apiEndpoints": [
+    { "method": "GET", "path": "/medkernel/api/identity/bindings/conflicts", "description": "获取身份绑定冲突" },
+    { "method": "GET", "path": "/medkernel/api/tenant/onboarding", "description": "获取租户开通数据" },
+    { "method": "GET", "path": "/medkernel/api/security/baseline", "description": "获取安全基线数据" },
+    { "method": "GET", "path": "/medkernel/api/admin/users", "description": "获取用户列表" }
+  ],
+  "orgContext": {
+    "tenant_id": "TENANT_DEMO",
+    "group_code": "GROUP_DEMO",
+    "hospital_code": "HOSPITAL_001"
+  }
+}

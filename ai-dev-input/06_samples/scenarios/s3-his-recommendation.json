@@ -1,0 +1,20 @@
+{
+  "scenario": "S3 · HIS 推荐",
+  "description": "医生在 HIS 系统收到 AMI 推荐，包含规则定义、校验和患者路径",
+  "routes": [
+    { "path": "/rule/definitions", "title": "规则库", "expectedElements": ["规则库", "搜索规则", "新建规则"] },
+    { "path": "/rule/definitions/AMI_RULE_001", "title": "规则详情", "expectedElements": [] },
+    { "path": "/rule/validate", "title": "规则校验工作台", "expectedElements": [] },
+    { "path": "/pathway/patients", "title": "患者路径", "expectedElements": [] }
+  ],
+  "apiEndpoints": [
+    { "method": "GET", "path": "/medkernel/api/rule/definitions", "description": "获取规则列表" },
+    { "method": "GET", "path": "/medkernel/api/rule/definitions/AMI_RULE_001", "description": "获取规则详情", "expectedFields": ["rule_code"] },
+    { "method": "GET", "path": "/medkernel/api/pathway/patients", "description": "获取患者路径列表" }
+  ],
+  "orgContext": {
+    "tenant_id": "TENANT_DEMO",
+    "group_code": "GROUP_DEMO",
+    "hospital_code": "HOSPITAL_001"
+  }
+}

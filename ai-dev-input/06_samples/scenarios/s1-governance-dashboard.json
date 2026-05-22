@@ -1,0 +1,19 @@
+{
+  "scenario": "S1 · CIO 治理大盘",
+  "description": "集团医院 CIO 查看治理大盘，下钻到质控驾驶舱和部门详情",
+  "routes": [
+    { "path": "/dashboard", "title": "工作台", "expectedElements": ["工作台", "MedKernel", "试点准备", "临床运行", "质控改进", "合规运维"] },
+    { "path": "/qc/dashboard", "title": "院级质控驾驶舱", "expectedElements": ["院级质控驾驶舱", "路径执行", "质控问题", "医保风险", "科室排名"] },
+    { "path": "/qc/department/DEMO_DEPT", "title": "部门下钻", "expectedElements": [] }
+  ],
+  "apiEndpoints": [
+    { "method": "GET", "path": "/medkernel/api/auth/me", "description": "获取当前用户信息" },
+    { "method": "GET", "path": "/medkernel/api/quality/dashboard/kpis", "description": "获取质控 KPI 数据", "expectedFields": ["pathway.totalEnrolled", "pathway.completed"] },
+    { "method": "GET", "path": "/medkernel/api/quality/dashboard/department/DEMO_DEPT", "description": "获取部门数据" }
+  ],
+  "orgContext": {
+    "tenant_id": "TENANT_DEMO",
+    "group_code": "GROUP_DEMO",
+    "hospital_code": "HOSPITAL_001"
+  }
+}
