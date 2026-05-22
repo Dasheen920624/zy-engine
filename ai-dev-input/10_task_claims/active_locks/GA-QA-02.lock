@@ -1,7 +1,0 @@
-task_id: GA-QA-02
-claim_id: GA-QA-02-S01
-owner: TraeAI-GLM5-1
-branch: develop
-git_base_commit: 891c2510f88839f0bf4d096df27e2723e4e664e0
-created_at: 2026-05-23T21:00+08:00
-last_heartbeat: 2026-05-23T21:00+08:00

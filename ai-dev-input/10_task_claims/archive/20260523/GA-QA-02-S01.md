@@ -115,22 +115,21 @@ security_privacy_checked: N/A
 ## Progress
 
 ```text
-- [x] 创建 claim + lock 并 push
-- [x] 安装 @vitest/coverage-v8
-- [x] 配置 vite.config.ts 覆盖率
-- [x] 添加 test:coverage 脚本
-- [x] 添加 frontend CI job
-- [x] 本地验证（本机无 Node.js，CI 环境验证）
-- [x] 更新台账
-- [x] commit + push
+- [ ] 创建 claim + lock 并 push
+- [ ] 安装 @vitest/coverage-v8
+- [ ] 配置 vite.config.ts 覆盖率
+- [ ] 添加 test:coverage 脚本
+- [ ] 添加 frontend CI job
+- [ ] 本地验证
+- [ ] 更新台账
+- [ ] commit + push
 ```
 
 ## Completion
 
 ```text
-commit: 6808d29
-push: develop
-tests: CI 验证（frontend-build-test job）
-review: 待创建
-risks: 本机无 Node.js 环境，覆盖率阈值可能需要根据实际测试结果调整
-```
+commit:
+push:
+tests:
+review:
+risks:
