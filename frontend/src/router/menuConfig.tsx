@@ -4,6 +4,7 @@ import {
   AuditOutlined,
   BellOutlined,
   ContainerOutlined,
+  DatabaseOutlined,
   DesktopOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
@@ -235,8 +236,13 @@ export const menuSections: MenuSection[] = [
         icon: <ToolOutlined />,
         path: "/notifications/settings",
       },
-      // 以下入口待实装：
-      //   key: admin-audit        path: /admin/audit         PR-FINAL-09
+      {
+        key: "admin-audit",
+        label: "审计日志",
+        icon: <DatabaseOutlined />,
+        path: "/admin/audit",
+        pr: "PR-FINAL-09",
+      },
     ],
   },
 ];

@@ -27,12 +27,12 @@
 | **PR-FINAL-01** | LLM Gateway 迁包 `dify/` → `llm/` | 1 | ✅ DONE · Codex-GPT5 · 2026-05-21T22:12+08:00 | 架构师 | 1 天 |
 | **PR-FINAL-02** | 删 patientindex 整包（ADR-0005）| 1 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-03** | 删 security/UserSyncController（ADR-0006）| 1 | ✅ DONE | 架构师 | 1 天 |
-| **PR-FINAL-04** | CSS Modules 框架 + Login/Dashboard 示范抽取 | 1 | 🟡 TODO | 高级 | 2 天 |
+| **PR-FINAL-04** | CSS Modules 框架 + Login/Dashboard 示范抽取 | 1 | ✅ DONE · 2026-05-21 (commit `d6b5bf0`，-27 inline 582→555) | 高级 | 2 天 |
 | **PR-FINAL-05** | ESLint `no-inline-style` + 守门脚本 | 1 | ✅ DONE | 架构师 | 0.5 天 |
 | **PR-FINAL-06** | LoginPage 4 Tab 重写（国情合规 12 条）| 1 | ✅ DONE · Codex-GPT5 · 2026-05-21T22:41+08:00 | 高级 | 2 天 |
 | **PR-FINAL-07** | `/mpi/patients` 患者主索引页 | 2 | 🟡 TODO | 高级 | 5 天 |
-| **PR-FINAL-08** | `/admin/users` 用户管理页 | 2 | 🟡 TODO | 中级 | 3 天 |
-| **PR-FINAL-09** | `/admin/audit` 审计日志查询页 | 2 | 🟡 TODO | 中级 | 3 天 |
+| **PR-FINAL-08** | `/admin/users` 用户管理页 | 2 | 🔴 BLOCKED · 后端 UserController/UserService 缺失（2026-05-22 PR-FINAL-09 inspect 发现：security 包仅有 SSO/audit/usersync/baseline 4 大类，0 个 `/api/users` 或 `/api/admin/users` 端点）。需先开 PR-FINAL-08a 架构师后端任务 | 中级 | 3 天 |
+| **PR-FINAL-09** | `/admin/audit` 审计日志查询页 | 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 | 中级 | 3 天 |
 | **PR-FINAL-10** | `/tenant/onboarding` 租户开通向导 | 2 | ✅ DONE · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick）· 2026-05-22 (#33) | 高级 | 4 天 |
 | **PR-FINAL-11** | `/rule/definitions` 规则库 + DSL 编辑器 | 2 | ✅ DONE · Claude-Opus-4.7 · 2026-05-21 | 高级 | 8 天 |
 | **PR-FINAL-12** | `/adapter/hub` 适配器中心 | 2 | 🟡 TODO | 中级 | 4 天 |
