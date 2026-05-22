@@ -4,17 +4,14 @@ import {
   Badge,
   Button,
   Card,
-  Checkbox,
   Col,
   Input,
-  Modal,
   Row,
   Select,
   Space,
   Statistic,
   Table,
   Tabs,
-  Tag,
   Typography,
   message,
 } from "antd";
@@ -24,9 +21,7 @@ import {
   ExperimentOutlined,
   FileSearchOutlined,
   ReloadOutlined,
-  WarningOutlined,
 } from "@ant-design/icons";
-import type { ColumnsType } from "antd/es/table";
 import type {
   TerminologyItem,
   AiCandidate,
@@ -41,61 +36,20 @@ import {
   batchAdoptMappings,
   rejectAiCandidate,
 } from "../../api/terminology";
-import { SourceInfo, AiGeneratedBadge, OrgContextSelector } from "../../components";
+import { SourceInfo, OrgContextSelector } from "../../components";
+import { CONCEPT_TYPE_MAP, STANDARD_DICT_OPTIONS } from "./MappingWorkbench/constants";
+import DangerConfirm from "./MappingWorkbench/components/DangerConfirm";
+import { MOCK_UNMAPPED, MOCK_MAPPED, MOCK_CONFLICT, MOCK_AI_CANDIDATES, MOCK_SUMMARY } from "./MappingWorkbench/mockData";
+import {
+  getUnmappedColumns,
+  getMappedColumns,
+  getConflictColumns,
+  getAiCandidateColumns,
+} from "./MappingWorkbench/columns";
 import styles from "./mappingWorkbench.module.css";
 
 const { Text } = Typography;
 const { Search } = Input;
-
-// 概念类型配置
-const CONCEPT_TYPE_MAP: Record<ConceptType, { label: string; color: string }> = {
-  DIAGNOSIS: { label: "诊断", color: "blue" },
-  PROCEDURE: { label: "手术/操作", color: "cyan" },
-  DRUG: { label: "药品", color: "green" },
-  LAB: { label: "检验", color: "purple" },
-  OBSERVATION: { label: "观察", color: "orange" },
-  DEVICE: { label: "器械", color: "magenta" },
-};
-
-// 标准字典选项
-const STANDARD_DICT_OPTIONS = [
-  { value: "ICD-11", label: "ICD-11 国际疾病分类" },
-  { value: "ICD-9-CM-3", label: "ICD-9-CM-3 手术操作" },
-  { value: "LOINC", label: "LOINC 检验术语" },
-  { value: "ATC", label: "ATC 药品分类" },
-  { value: "SNOMED-CT", label: "SNOMED-CT 临床术语" },
-];
-
-// DangerConfirm 组件（二次确认）
-function DangerConfirm({
-  level = "low",
-  onConfirm,
-  children,
-  title,
-  description,
-}: {
-  level?: "low" | "medium" | "high";
-  onConfirm: () => void;
-  children: React.ReactNode;
-  title: string;
-  description?: string;
-}) {
-  const handleClick = () => {
-    Modal.confirm({
-      title,
-      content: description || "确认执行此操作？",
-      okText: "确认",
-      cancelText: "取消",
-      okButtonProps: {
-        danger: level === "high",
-        type: level === "low" ? "primary" : "default",
-      },
-      onOk: onConfirm,
-    });
-  };
-
-  return <span onClick={handleClick}>{children}</span>;
-}
 
 export default function MappingWorkbench() {
   const [activeTab, setActiveTab] = useState<string>("unmapped");
@@ -226,227 +180,16 @@ export default function MappingWorkbench() {
     }
   };
 
-  // 未映射列表列定义
-  const unmappedColumns: ColumnsType<TerminologyItem> = [
-    {
-      title: "院内编码",
-      dataIndex: "sourceCode",
-      key: "sourceCode",
-      width: 150,
-    },
-    {
-      title: "院内名称",
-      dataIndex: "sourceName",
-      key: "sourceName",
-      width: 200,
-    },
-    {
-      title: "类型",
-      dataIndex: "conceptType",
-      key: "conceptType",
-      width: 100,
-      render: (type: ConceptType) => (
-        <Tag color={CONCEPT_TYPE_MAP[type]?.color}>{CONCEPT_TYPE_MAP[type]?.label}</Tag>
-      ),
-    },
-    {
-      title: "来源系统",
-      dataIndex: "sourceSystem",
-      key: "sourceSystem",
-      width: 120,
-    },
-    {
-      title: "出现次数",
-      dataIndex: "occurrenceCount",
-      key: "occurrenceCount",
-      width: 100,
-      sorter: (a, b) => (a.occurrenceCount || 0) - (b.occurrenceCount || 0),
-    },
-    {
-      title: "操作",
-      key: "action",
-      width: 150,
-      render: (_, record) => (
-        <Space>
-          <Button size="small" type="primary" onClick={() => handleAdopt(record)}>
-            手动映射
-          </Button>
-        </Space>
-      ),
-    },
-  ];
-
-  // 已映射列表列定义
-  const mappedColumns: ColumnsType<TerminologyItem> = [
-    {
-      title: "院内编码",
-      dataIndex: "sourceCode",
-      key: "sourceCode",
-      width: 150,
-    },
-    {
-      title: "院内名称",
-      dataIndex: "sourceName",
-      key: "sourceName",
-      width: 200,
-    },
-    {
-      title: "类型",
-      dataIndex: "conceptType",
-      key: "conceptType",
-      width: 100,
-      render: (type: ConceptType) => (
-        <Tag color={CONCEPT_TYPE_MAP[type]?.color}>{CONCEPT_TYPE_MAP[type]?.label}</Tag>
-      ),
-    },
-    {
-      title: "标准编码",
-      dataIndex: "standardCode",
-      key: "standardCode",
-      width: 150,
-    },
-    {
-      title: "标准名称",
-      dataIndex: "standardName",
-      key: "standardName",
-      width: 200,
-    },
-    {
-      title: "审核人",
-      dataIndex: "reviewedBy",
-      key: "reviewedBy",
-      width: 120,
-    },
-  ];
-
-  // 冲突列表列定义
-  const conflictColumns: ColumnsType<TerminologyItem> = [
-    {
-      title: "院内编码",
-      dataIndex: "sourceCode",
-      key: "sourceCode",
-      width: 150,
-    },
-    {
-      title: "院内名称",
-      dataIndex: "sourceName",
-      key: "sourceName",
-      width: 200,
-    },
-    {
-      title: "类型",
-      dataIndex: "conceptType",
-      key: "conceptType",
-      width: 100,
-      render: (type: ConceptType) => (
-        <Tag color={CONCEPT_TYPE_MAP[type]?.color}>{CONCEPT_TYPE_MAP[type]?.label}</Tag>
-      ),
-    },
-    {
-      title: "冲突说明",
-      dataIndex: "reviewComment",
-      key: "reviewComment",
-      width: 250,
-      render: (text) => (
-        <Text type="danger">
-          <WarningOutlined /> {text || "多个映射候选冲突"}
-        </Text>
-      ),
-    },
-    {
-      title: "操作",
-      key: "action",
-      width: 150,
-      render: (_, record) => (
-        <Space>
-          <Button size="small" onClick={() => handleAdopt(record)}>
-            手动解决
-          </Button>
-        </Space>
-      ),
-    },
-  ];
-
-  // AI 候选列表列定义
-  const aiCandidateColumns: ColumnsType<AiCandidate> = [
-    {
-      title: "",
-      key: "select",
-      width: 50,
-      render: (_, record) => (
-        <Checkbox
-          checked={selectedRowKeys.includes(`${record.sourceCode}-${record.conceptType}`)}
-          onChange={(e) => {
-            const key = `${record.sourceCode}-${record.conceptType}`;
-            if (e.target.checked) {
-              setSelectedRowKeys([...selectedRowKeys, key]);
-            } else {
-              setSelectedRowKeys(selectedRowKeys.filter((k) => k !== key));
-            }
-          }}
-        />
-      ),
-    },
-    {
-      title: "院内编码",
-      dataIndex: "sourceCode",
-      key: "sourceCode",
-      width: 150,
-    },
-    {
-      title: "院内名称",
-      dataIndex: "sourceName",
-      key: "sourceName",
-      width: 180,
-    },
-    {
-      title: "类型",
-      dataIndex: "conceptType",
-      key: "conceptType",
-      width: 100,
-      render: (type: ConceptType) => (
-        <Tag color={CONCEPT_TYPE_MAP[type]?.color}>{CONCEPT_TYPE_MAP[type]?.label}</Tag>
-      ),
-    },
-    {
-      title: "AI建议",
-      key: "aiSuggestion",
-      width: 250,
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <Space>
-            <AiGeneratedBadge confidence={record.confidence} />
-            <Text strong>{record.proposedStandardCode}</Text>
-          </Space>
-          <Text type="secondary" className={styles.smallText}>
-            {record.proposedStandardName}
-          </Text>
-        </Space>
-      ),
-    },
-    {
-      title: "操作",
-      key: "action",
-      width: 150,
-      render: (_, record) => (
-        <Space>
-          <DangerConfirm
-            level="low"
-            title="确认采纳此映射？"
-            description={`将 ${record.sourceName} 映射到 ${record.proposedStandardCode}`}
-            onConfirm={() => handleAdopt(record)}
-          >
-            <Button size="small" type="primary">
-              采纳
-            </Button>
-          </DangerConfirm>
-          <Button size="small" danger onClick={() => handleReject(record)}>
-            驳回
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+  // 列定义
+  const unmappedColumns = getUnmappedColumns(handleAdopt);
+  const mappedColumns = getMappedColumns();
+  const conflictColumns = getConflictColumns(handleAdopt);
+  const aiCandidateColumns = getAiCandidateColumns({
+    handleAdopt,
+    handleReject,
+    selectedRowKeys,
+    onSelectedRowKeysChange: setSelectedRowKeys,
+  });
 
   const displaySummary = summary || DEFAULT_SUMMARY;
 
@@ -669,134 +412,3 @@ export default function MappingWorkbench() {
     </div>
   );
 }
-
-// ─── 模拟数据 ────────────────────────────────────────────────────────────────
-
-const MOCK_SUMMARY: MappingSummary = {
-  totalUnmapped: 18,
-  totalMapped: 156,
-  totalConflict: 2,
-  totalAiCandidate: 7,
-  byConceptType: {
-    DIAGNOSIS: 45,
-    PROCEDURE: 32,
-    DRUG: 68,
-    LAB: 28,
-    OBSERVATION: 12,
-    DEVICE: 7,
-  },
-};
-
-const MOCK_UNMAPPED: TerminologyItem[] = [
-  {
-    id: 1,
-    sourceSystem: "HIS",
-    sourceCode: "LIS_LDH_001",
-    sourceName: "乳酸脱氢酶",
-    conceptType: "LAB",
-    mappingStatus: "UNMAPPED",
-    occurrenceCount: 1250,
-  },
-  {
-    id: 2,
-    sourceSystem: "HIS",
-    sourceCode: "LIS_TNI_07",
-    sourceName: "肌钙蛋白 I",
-    conceptType: "LAB",
-    mappingStatus: "UNMAPPED",
-    occurrenceCount: 980,
-  },
-  {
-    id: 3,
-    sourceSystem: "HIS",
-    sourceCode: "DRUG_ASP_001",
-    sourceName: "阿司匹林肠溶片",
-    conceptType: "DRUG",
-    mappingStatus: "UNMAPPED",
-    occurrenceCount: 3500,
-  },
-  {
-    id: 4,
-    sourceSystem: "HIS",
-    sourceCode: "DX_AMI_001",
-    sourceName: "急性心肌梗死",
-    conceptType: "DIAGNOSIS",
-    mappingStatus: "UNMAPPED",
-    occurrenceCount: 420,
-  },
-];
-
-const MOCK_MAPPED: TerminologyItem[] = [
-  {
-    id: 101,
-    sourceSystem: "HIS",
-    sourceCode: "LIS_CRP_001",
-    sourceName: "C反应蛋白",
-    conceptType: "LAB",
-    mappingStatus: "MAPPED",
-    standardCode: "LOINC:1988-5",
-    standardName: "C-reactive protein [Mass/volume] in Serum or Plasma",
-    reviewedBy: "张信息",
-    reviewedTime: "2026-05-18T10:00:00",
-  },
-];
-
-const MOCK_CONFLICT: TerminologyItem[] = [
-  {
-    id: 201,
-    sourceSystem: "HIS",
-    sourceCode: "LIS_WBC_001",
-    sourceName: "白细胞计数",
-    conceptType: "LAB",
-    mappingStatus: "CONFLICT",
-    reviewComment: "存在多个LOINC候选: 6690-2 (血液) vs 26464-8 (体液)",
-  },
-  {
-    id: 202,
-    sourceSystem: "HIS",
-    sourceCode: "DX_HTN_001",
-    sourceName: "高血压病",
-    conceptType: "DIAGNOSIS",
-    mappingStatus: "CONFLICT",
-    reviewComment: "ICD-11 BA00 vs BA01 分型不明确",
-  },
-];
-
-const MOCK_AI_CANDIDATES: AiCandidate[] = [
-  {
-    sourceCode: "LIS_LDH_001",
-    sourceName: "乳酸脱氢酶",
-    conceptType: "LAB",
-    proposedStandardCode: "LOINC:2532-0",
-    proposedStandardName: "Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma",
-    confidence: 0.95,
-    mappingSource: "GPT-4-med",
-  },
-  {
-    sourceCode: "LIS_TNI_07",
-    sourceName: "肌钙蛋白 I",
-    conceptType: "LAB",
-    proposedStandardCode: "LOINC:6597-9",
-    proposedStandardName: "Troponin I.cardiac [Mass/volume] in Serum or Plasma",
-    confidence: 0.89,
-    mappingSource: "GPT-4-med",
-  },
-  {
-    sourceCode: "DRUG_ASP_001",
-    sourceName: "阿司匹林肠溶片",
-    conceptType: "DRUG",
-    proposedStandardCode: "ATC:B01AC06",
-    proposedStandardName: "Acetylsalicylic acid",
-    confidence: 0.98,
-    mappingSource: "GPT-4-med",
-  },
-  {
-    sourceCode: "DX_AMI_001",
-    sourceName: "急性心肌梗死",
-    conceptType: "DIAGNOSIS",
-    proposedStandardCode: "ICD-11:BA41",
-    proposedStandardName: "Acute myocardial infarction",
-    confidence: 0.92,
-    mappingSource: "GPT-4-med",
-  },
-];

@@ -1,157 +1,29 @@
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
-  CheckCircleOutlined,
-  CloudUploadOutlined,
-  DesktopOutlined,
-  LockOutlined,
-  MedicineBoxOutlined,
   RocketOutlined,
-  SafetyCertificateOutlined,
-  SaveOutlined,
-  SettingOutlined,
   RightOutlined,
-  TeamOutlined,
+  SaveOutlined,
 } from "@ant-design/icons";
-import {
-  Alert,
-  Button,
-  Card,
-  Checkbox,
-  Col,
-  Descriptions,
-  Empty,
-  Form,
-  Input,
-  List,
-  message,
-  Progress,
-  Result,
-  Row,
-  Select,
-  Space,
-  Spin,
-  Steps,
-  Switch,
-  Table,
-  Tag,
-  Typography,
-} from "antd";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Form, message, Progress, Result, Space, Steps, Typography } from "antd";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { get, post } from "../../api/client";
 import type { ConfigPackageSummary } from "../../api/types";
 import ConfigWizardModal from "./ConfigWizardModal";
+import { loadDraft, saveDraft, clearDraft } from "./ImplementationGuide/types";
+import type { DepartmentInput, RoleInput, ImplementationDraft, EnvCheckItem } from "./ImplementationGuide/types";
+import { STEP_ITEMS, DEFAULT_ENV_CHECKS, SAMPLE_PATHWAYS } from "./ImplementationGuide/constants";
+import Step0EnvCheck from "./ImplementationGuide/steps/Step0EnvCheck";
+import Step1OrgConfig from "./ImplementationGuide/steps/Step1OrgConfig";
+import Step2RuleImport from "./ImplementationGuide/steps/Step2RuleImport";
+import Step3PathwayConfig from "./ImplementationGuide/steps/Step3PathwayConfig";
+import Step4Permission from "./ImplementationGuide/steps/Step4Permission";
+import Step5Validation from "./ImplementationGuide/steps/Step5Validation";
+import Step6GoLive from "./ImplementationGuide/steps/Step6GoLive";
 import styles from "./ImplementationGuidePage.module.css";
 
-const { Paragraph, Title, Text } = Typography;
-
-// ─── 类型 ────────────────────────────────────────────────────
-
-interface EnvCheckItem {
-  key: string;
-  label: string;
-  passed: boolean;
-  detail?: string;
-}
-
-interface DepartmentInput {
-  code: string;
-  name: string;
-  type: string;
-}
-
-interface WardInput {
-  code: string;
-  name: string;
-  departmentCode: string;
-  bedCount?: number;
-}
-
-interface RoleInput {
-  code: string;
-  name: string;
-  permissions: string[];
-}
-
-interface ImplementationDraft {
-  currentStep: number;
-  envChecks?: Record<string, boolean>;
-  departments?: DepartmentInput[];
-  wards?: WardInput[];
-  roles?: RoleInput[];
-  selectedRulePackages?: string[];
-  pathwayConfigs?: Record<string, unknown>;
-  permissionTemplates?: string[];
-  validationPassed?: boolean;
-}
-
-const STORAGE_KEY = "medkernel_impl_guide_draft";
-
-function loadDraft(): ImplementationDraft | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as ImplementationDraft) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveDraft(draft: ImplementationDraft) {
-  // eslint-disable-next-line no-restricted-syntax -- 实施向导进度草稿，非敏感数据
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-}
-
-function clearDraft() {
-  localStorage.removeItem(STORAGE_KEY);
-}
-
-// ─── 步骤定义 ────────────────────────────────────────────────
-
-const STEP_ITEMS = [
-  { title: "环境检查", description: "检查系统环境", icon: <DesktopOutlined /> },
-  { title: "组织配置", description: "科室、病区、角色", icon: <TeamOutlined /> },
-  { title: "规则导入", description: "导入规则包", icon: <SafetyCertificateOutlined /> },
-  { title: "路径配置", description: "配置临床路径", icon: <MedicineBoxOutlined /> },
-  { title: "权限分配", description: "数据与菜单权限", icon: <LockOutlined /> },
-  { title: "验证测试", description: "运行验证测试", icon: <SettingOutlined /> },
-  { title: "完成上线", description: "确认上线", icon: <RocketOutlined /> },
-];
-
-// ─── 环境检查模拟数据 ────────────────────────────────────────
-
-const DEFAULT_ENV_CHECKS: EnvCheckItem[] = [
-  { key: "database", label: "数据库连接", passed: false, detail: "检查 PostgreSQL / H2 可用性" },
-  { key: "graph", label: "图谱引擎", passed: false, detail: "检查 Neo4j / 内存图谱可用性" },
-  { key: "dify", label: "AI 工作流引擎", passed: false, detail: "检查 Dify / 本地引擎可用性" },
-  { key: "storage", label: "文件存储", passed: false, detail: "检查文件上传与存储服务" },
-  { key: "auth", label: "认证服务", passed: false, detail: "检查 SSO / CAS / OIDC 配置" },
-  { key: "network", label: "网络连通性", passed: false, detail: "检查内部服务间网络连通" },
-];
-
-// ─── 科室类型选项 ─────────────────────────────────────────────
-
-const DEPT_TYPES = [
-  { value: "CLINICAL", label: "临床科室" },
-  { value: "SURGICAL", label: "手术科室" },
-  { value: "ICU", label: "重症医学科" },
-  { value: "EMERGENCY", label: "急诊科" },
-  { value: "PHARMACY", label: "药剂科" },
-  { value: "LAB", label: "检验科" },
-  { value: "RADIOLOGY", label: "影像科" },
-  { value: "ADMIN", label: "行政科室" },
-];
-
-// ─── 权限模板 ────────────────────────────────────────────────
-
-const PERMISSION_TEMPLATES = [
-  { code: "ADMIN_FULL", name: "系统管理员", description: "全部数据权限和菜单权限" },
-  { code: "QC_MANAGER", name: "质控管理员", description: "质控规则管理、预警处理、评估配置" },
-  { code: "PATHWAY_EDITOR", name: "路径编辑员", description: "临床路径编辑、发布、变异管理" },
-  { code: "DEPT_HEAD", name: "科室主任", description: "本科室数据查看、质控统计" },
-  { code: "DOCTOR", name: "临床医生", description: "患者路径查看、医嘱录入" },
-  { code: "VIEWER", name: "只读观察者", description: "仅查看权限，无编辑操作" },
-];
+const { Title, Paragraph } = Typography;
 
 // ─── 主组件 ──────────────────────────────────────────────────
 
@@ -162,7 +34,6 @@ export default function ImplementationGuidePage() {
   const [envChecks, setEnvChecks] = useState<EnvCheckItem[]>(DEFAULT_ENV_CHECKS);
   const [checkingEnv, setCheckingEnv] = useState(false);
   const [departments, setDepartments] = useState<DepartmentInput[]>([]);
-  const [wards, setWards] = useState<WardInput[]>([]);
   const [roles, setRoles] = useState<RoleInput[]>([]);
   const [rulePackages, setRulePackages] = useState<ConfigPackageSummary[]>([]);
   const [selectedRulePackages, setSelectedRulePackages] = useState<string[]>([]);
@@ -189,7 +60,6 @@ export default function ImplementationGuidePage() {
       setCurrent(saved.currentStep);
       setDraft(saved);
       if (saved.departments) setDepartments(saved.departments);
-      if (saved.wards) setWards(saved.wards);
       if (saved.roles) setRoles(saved.roles);
       if (saved.selectedRulePackages) setSelectedRulePackages(saved.selectedRulePackages);
       if (saved.permissionTemplates) setSelectedPermTemplates(saved.permissionTemplates);
@@ -231,7 +101,6 @@ export default function ImplementationGuidePage() {
   const handleSaveProgress = () => {
     persistDraft(current, {
       departments,
-      wards,
       roles,
       selectedRulePackages,
       permissionTemplates: selectedPermTemplates,
@@ -421,20 +290,14 @@ export default function ImplementationGuidePage() {
     }
   };
 
+  const handleSelectedRulePackagesChange = (vals: string[]) => {
+    setSelectedRulePackages(vals);
+    persistDraft(current, { selectedRulePackages: vals });
+  };
+
   // ─── Step 3: 路径配置 ──────────────────────────────────
 
   const [pathwayEnabled, setPathwayEnabled] = useState<Record<string, boolean>>({});
-
-  const samplePathways = useMemo(
-    () => [
-      { code: "AMI_STEMI", name: "急性 ST 段抬高型心肌梗死", specialty: "心内科", enabled: true },
-      { code: "PNEUMONIA_COMMUNITY", name: "社区获得性肺炎", specialty: "呼吸内科", enabled: true },
-      { code: "STROKE_ISCHEMIC", name: "缺血性脑卒中", specialty: "神经内科", enabled: false },
-      { code: "HIP_REPLACEMENT", name: "髋关节置换术", specialty: "骨科", enabled: false },
-      { code: "CESAREAN_SECTION", name: "剖宫产术", specialty: "产科", enabled: false },
-    ],
-    [],
-  );
 
   // ─── Step 4: 权限分配 ──────────────────────────────────
 
@@ -485,348 +348,6 @@ export default function ImplementationGuidePage() {
     message.success("实施完成，系统已上线！");
   };
 
-  // ─── 渲染各步骤 ────────────────────────────────────────
-
-  const renderStep0 = () => (
-    <Card title="环境检查" extra={<Button icon={<DesktopOutlined />} onClick={runEnvCheck} loading={checkingEnv} type="primary">开始检查</Button>}>
-      <Paragraph type="secondary" className={styles.marginBottom16}>
-        检查系统环境是否满足运行要求，确保数据库、图谱引擎、AI 工作流引擎等核心服务可用。
-      </Paragraph>
-      <List
-        dataSource={envChecks}
-        renderItem={(item) => (
-          <List.Item>
-            <List.Item.Meta
-              avatar={
-                item.passed ? (
-                  <CheckCircleOutlined className={styles.iconSuccess} />
-                ) : (
-                  <DesktopOutlined className={styles.iconMuted} />
-                )
-              }
-              title={item.label}
-              description={item.detail}
-            />
-            <Tag color={item.passed ? "green" : "default"}>{item.passed ? "通过" : "未检查"}</Tag>
-          </List.Item>
-        )}
-      />
-      {envChecks.some((c) => c.passed) && (
-        <Alert
-          className={styles.marginTop16}
-          type={envAllPassed ? "success" : "warning"}
-          message={envAllPassed ? "所有环境检查已通过" : "部分环境检查未通过，可继续配置但不影响演示模式"}
-          showIcon
-        />
-      )}
-    </Card>
-  );
-
-  const renderStep1 = () => (
-    <Card
-      title="组织配置"
-      extra={
-        <Button type="link" onClick={() => openConfigWizard("org")}>
-          批量配置向导
-        </Button>
-      }
-    >
-      <Paragraph type="secondary" className={styles.marginBottom16}>
-        配置科室、病区和角色，建立组织架构基础。
-      </Paragraph>
-
-      <Row gutter={24}>
-        {/* 科室管理 */}
-        <Col span={12}>
-          <Card type="inner" title="科室管理" size="small">
-            <Form form={deptForm} layout="inline" className={styles.formInline}>
-              <Form.Item name="code" className={styles.formItemNoMargin}>
-                <Input placeholder="科室编码" size="small" />
-              </Form.Item>
-              <Form.Item name="name" className={styles.formItemNoMargin}>
-                <Input placeholder="科室名称" size="small" />
-              </Form.Item>
-              <Form.Item name="type" initialValue="CLINICAL" className={styles.formItemNoMargin}>
-                <Select size="small" className={styles.selectSmall} options={DEPT_TYPES} />
-              </Form.Item>
-              <Button size="small" type="primary" onClick={addDepartment}>
-                添加
-              </Button>
-            </Form>
-            {departments.length === 0 ? (
-              <Empty description="暂无科室" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-              <Table
-                size="small"
-                pagination={false}
-                dataSource={departments}
-                rowKey="code"
-                columns={[
-                  { title: "编码", dataIndex: "code", width: 100 },
-                  { title: "名称", dataIndex: "name" },
-                  {
-                    title: "类型",
-                    dataIndex: "type",
-                    width: 100,
-                    render: (v: string) => DEPT_TYPES.find((d) => d.value === v)?.label ?? v,
-                  },
-                  {
-                    title: "操作",
-                    width: 60,
-                    render: (_: unknown, r: DepartmentInput) => (
-                      <Button type="link" danger size="small" onClick={() => removeDepartment(r.code)}>
-                        删除
-                      </Button>
-                    ),
-                  },
-                ]}
-              />
-            )}
-          </Card>
-        </Col>
-
-        {/* 角色管理 */}
-        <Col span={12}>
-          <Card type="inner" title="角色管理" size="small">
-            <Form form={roleForm} layout="inline" className={styles.formInline}>
-              <Form.Item name="code" className={styles.formItemNoMargin}>
-                <Input placeholder="角色编码" size="small" />
-              </Form.Item>
-              <Form.Item name="name" className={styles.formItemNoMargin}>
-                <Input placeholder="角色名称" size="small" />
-              </Form.Item>
-              <Button size="small" type="primary" onClick={addRole}>
-                添加
-              </Button>
-            </Form>
-            {roles.length === 0 ? (
-              <Empty description="暂无角色" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-              <Table
-                size="small"
-                pagination={false}
-                dataSource={roles}
-                rowKey="code"
-                columns={[
-                  { title: "编码", dataIndex: "code", width: 120 },
-                  { title: "名称", dataIndex: "name" },
-                  {
-                    title: "权限数",
-                    dataIndex: "permissions",
-                    width: 80,
-                    render: (v: string[]) => v?.length ?? 0,
-                  },
-                  {
-                    title: "操作",
-                    width: 60,
-                    render: (_: unknown, r: RoleInput) => (
-                      <Button type="link" danger size="small" onClick={() => removeRole(r.code)}>
-                        删除
-                      </Button>
-                    ),
-                  },
-                ]}
-              />
-            )}
-          </Card>
-        </Col>
-      </Row>
-    </Card>
-  );
-
-  const renderStep2 = () => (
-    <Card
-      title="规则导入"
-      extra={
-        <Space>
-          <Button onClick={loadRulePackages} loading={loadingRules}>
-            刷新列表
-          </Button>
-          <Button type="link" onClick={() => openConfigWizard("rule")}>
-            规则配置向导
-          </Button>
-        </Space>
-      }
-    >
-      <Paragraph type="secondary" className={styles.marginBottom16}>
-        选择并导入质控规则包、路径规则包等，为系统提供规则引擎支持。
-      </Paragraph>
-
-      <Spin spinning={loadingRules}>
-        {rulePackages.length === 0 ? (
-          <Empty description="暂无可用规则包" />
-        ) : (
-          <>
-            <Checkbox.Group
-              value={selectedRulePackages}
-              onChange={(vals) => {
-                const updated = vals as string[];
-                setSelectedRulePackages(updated);
-                persistDraft(current, { selectedRulePackages: updated });
-              }}
-              className={styles.fullWidth}
-            >
-              <Row gutter={[12, 12]}>
-                {rulePackages.map((pkg) => (
-                  <Col span={12} key={pkg.package_code}>
-                    <Card size="small" hoverable>
-                      <Space direction="vertical" size={4} className={styles.fullWidth}>
-                        <Space>
-                          <Checkbox value={pkg.package_code} />
-                          <Text strong>{pkg.package_code}</Text>
-                          <Tag>{pkg.package_version}</Tag>
-                          <Tag color="green">{pkg.status}</Tag>
-                        </Space>
-                        <Text type="secondary" className={styles.textSmall}>
-                          作用域: {pkg.scope_level} / {pkg.scope_code}
-                        </Text>
-                      </Space>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
-            </Checkbox.Group>
-            <div className={`${styles.marginTop16} ${styles.textRight}`}>
-              <Text type="secondary" className={styles.marginRight12}>
-                已选择 {selectedRulePackages.length} / {rulePackages.length} 个规则包
-              </Text>
-              <Button
-                type="primary"
-                icon={<CloudUploadOutlined />}
-                onClick={importSelectedRules}
-                loading={importingRules}
-                disabled={selectedRulePackages.length === 0}
-              >
-                导入选中规则包
-              </Button>
-            </div>
-          </>
-        )}
-      </Spin>
-    </Card>
-  );
-
-  const renderStep3 = () => (
-    <Card title="路径配置">
-      <Paragraph type="secondary" className={styles.marginBottom16}>
-        配置临床路径模板，启用或禁用路径实例化功能。
-      </Paragraph>
-      <Table
-        dataSource={samplePathways}
-        rowKey="code"
-        pagination={false}
-        columns={[
-          { title: "路径编码", dataIndex: "code", width: 180 },
-          { title: "路径名称", dataIndex: "name" },
-          { title: "专科", dataIndex: "specialty", width: 120 },
-          {
-            title: "启用",
-            dataIndex: "code",
-            width: 80,
-            render: (code: string) => (
-              <Switch
-                size="small"
-                checked={pathwayEnabled[code] ?? samplePathways.find((p) => p.code === code)?.enabled ?? false}
-                onChange={(checked) => setPathwayEnabled((prev) => ({ ...prev, [code]: checked }))}
-              />
-            ),
-          },
-        ]}
-      />
-    </Card>
-  );
-
-  const renderStep4 = () => (
-    <Card
-      title="权限分配"
-      extra={
-        <Button type="link" onClick={() => openConfigWizard("permission")}>
-          权限配置向导
-        </Button>
-      }
-    >
-      <Paragraph type="secondary" className={styles.marginBottom16}>
-        选择常用权限模板，快速分配数据权限和菜单权限。
-      </Paragraph>
-      <Row gutter={[12, 12]}>
-        {PERMISSION_TEMPLATES.map((tpl) => (
-          <Col span={8} key={tpl.code}>
-            <Card
-              size="small"
-              hoverable
-              className={selectedPermTemplates.includes(tpl.code) ? styles.permCard : undefined}
-              onClick={() => togglePermTemplate(tpl.code, !selectedPermTemplates.includes(tpl.code))}
-            >
-              <Space direction="vertical" size={4}>
-                <Space>
-                  <Checkbox checked={selectedPermTemplates.includes(tpl.code)} />
-                  <Text strong>{tpl.name}</Text>
-                </Space>
-                <Text type="secondary" className={styles.textSmall}>
-                  {tpl.description}
-                </Text>
-              </Space>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-    </Card>
-  );
-
-  const renderStep5 = () => (
-    <Card title="验证测试">
-      <Paragraph type="secondary" className={styles.marginBottom16}>
-        运行验证测试，确保所有配置项正确无误。
-      </Paragraph>
-      {validationResult ? (
-        <Alert
-          type={validationResult.passed ? "success" : "warning"}
-          message={validationResult.passed ? "验证测试通过" : "验证测试未完全通过"}
-          description={
-            <ul className={styles.resultList}>
-              {validationResult.details.map((d, i) => (
-                <li key={i}>{d}</li>
-              ))}
-            </ul>
-          }
-          showIcon
-          className={styles.marginBottom16}
-        />
-      ) : (
-        <Empty description="点击下方按钮运行验证测试" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-      )}
-      <div className={styles.textCenter}>
-        <Button type="primary" icon={<SettingOutlined />} onClick={runValidation} loading={validating} size="large">
-          运行验证测试
-        </Button>
-      </div>
-    </Card>
-  );
-
-  const renderStep6 = () => (
-    <Card title="完成上线">
-      <Paragraph type="secondary" className={styles.marginBottom16}>
-        确认所有配置项，完成实施并正式上线。
-      </Paragraph>
-      <Descriptions bordered column={2}>
-        <Descriptions.Item label="科室数量">{departments.length}</Descriptions.Item>
-        <Descriptions.Item label="角色数量">{roles.length}</Descriptions.Item>
-        <Descriptions.Item label="规则包">{selectedRulePackages.length} 个已选择</Descriptions.Item>
-        <Descriptions.Item label="权限模板">{selectedPermTemplates.length} 个已选择</Descriptions.Item>
-        <Descriptions.Item label="启用路径">
-          {Object.values(pathwayEnabled).filter(Boolean).length} / {samplePathways.length}
-        </Descriptions.Item>
-        <Descriptions.Item label="环境检查">{envAllPassed ? "全部通过" : "部分未通过"}</Descriptions.Item>
-        <Descriptions.Item label="验证测试">{validationResult?.passed ? "通过" : "未运行"}</Descriptions.Item>
-      </Descriptions>
-      <div className={styles.textCenterWithMargin}>
-        <Button type="primary" size="large" icon={<RocketOutlined />} onClick={handleGoLive}>
-          确认上线
-        </Button>
-      </div>
-    </Card>
-  );
-
   // ─── 完成页面 ──────────────────────────────────────────
 
   if (completed) {
@@ -852,7 +373,15 @@ export default function ImplementationGuidePage() {
 
   // ─── 步骤内容映射 ──────────────────────────────────────
 
-  const stepRenderers = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4, renderStep5, renderStep6];
+  const stepRenderers = [
+    () => <Step0EnvCheck envChecks={envChecks} checkingEnv={checkingEnv} runEnvCheck={runEnvCheck} envAllPassed={envAllPassed} />,
+    () => <Step1OrgConfig departments={departments} roles={roles} deptForm={deptForm} roleForm={roleForm} addDepartment={addDepartment} removeDepartment={removeDepartment} addRole={addRole} removeRole={removeRole} openConfigWizard={openConfigWizard} />,
+    () => <Step2RuleImport rulePackages={rulePackages} selectedRulePackages={selectedRulePackages} loadingRules={loadingRules} importingRules={importingRules} loadRulePackages={loadRulePackages} importSelectedRules={importSelectedRules} onSelectedRulePackagesChange={handleSelectedRulePackagesChange} openConfigWizard={openConfigWizard} />,
+    () => <Step3PathwayConfig pathwayEnabled={pathwayEnabled} onPathwayEnabledChange={setPathwayEnabled} />,
+    () => <Step4Permission selectedPermTemplates={selectedPermTemplates} togglePermTemplate={togglePermTemplate} openConfigWizard={openConfigWizard} />,
+    () => <Step5Validation validating={validating} validationResult={validationResult} runValidation={runValidation} />,
+    () => <Step6GoLive departments={departments} roles={roles} selectedRulePackages={selectedRulePackages} selectedPermTemplates={selectedPermTemplates} pathwayEnabled={pathwayEnabled} envAllPassed={envAllPassed} validationResult={validationResult} handleGoLive={handleGoLive} />,
+  ];
 
   // ─── 进度百分比 ────────────────────────────────────────
 
