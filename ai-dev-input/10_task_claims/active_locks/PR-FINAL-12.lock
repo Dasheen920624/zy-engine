@@ -1,0 +1,7 @@
+task_id: PR-FINAL-12
+claim_id: PR-FINAL-12-S01
+owner: claude-opus-4-7@stoic-kirch-da158e
+branch: claude/pr-final-12-adapter-hub
+git_base_commit: f766353
+created_at: 2026-05-22T17:00+08:00
+last_heartbeat: 2026-05-22T17:00+08:00

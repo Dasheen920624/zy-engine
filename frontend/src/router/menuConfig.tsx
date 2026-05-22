@@ -3,7 +3,9 @@ import {
   AppstoreOutlined,
   AuditOutlined,
   BellOutlined,
+  ClusterOutlined,
   ContainerOutlined,
+  DatabaseOutlined,
   DesktopOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
@@ -127,9 +129,15 @@ export const menuSections: MenuSection[] = [
         path: "/ai-workflows",
         pr: "PR-FINAL-13",
       },
+      {
+        key: "adapter-hub",
+        label: "适配器中心",
+        icon: <ClusterOutlined />,
+        path: "/adapter/hub",
+        pr: "PR-FINAL-12",
+      },
       // 以下入口待实装（参考 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md），实装后从下方移到上方：
       //   key: graph-explore      path: /graph/explore      PR-V0.4
-      //   key: adapter-hub        path: /adapter/hub        PR-FINAL-12
     ],
   },
 
@@ -242,8 +250,13 @@ export const menuSections: MenuSection[] = [
         icon: <ToolOutlined />,
         path: "/notifications/settings",
       },
-      // 以下入口待实装：
-      //   key: admin-audit        path: /admin/audit         PR-FINAL-09
+      {
+        key: "admin-audit",
+        label: "审计日志",
+        icon: <DatabaseOutlined />,
+        path: "/admin/audit",
+        pr: "PR-FINAL-09",
+      },
     ],
   },
 ];
