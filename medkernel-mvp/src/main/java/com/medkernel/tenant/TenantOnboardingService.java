@@ -3,6 +3,8 @@ package com.medkernel.tenant;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.common.exception.BusinessException;
 import com.medkernel.security.SecurityTenant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Service
 public class TenantOnboardingService {
+    private static final Logger log = LoggerFactory.getLogger(TenantOnboardingService.class);
     private final Map<String, Map<String, Object>> applicationStore = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> invitationStore = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> serviceAccountStore = new ConcurrentHashMap<>();
@@ -92,7 +95,7 @@ public class TenantOnboardingService {
     private void createTenant(Map<String, Object> application) {
         // 实际项目中应该创建 SecurityTenant 记录
         // 这里模拟创建
-        System.out.println("Creating tenant: " + application.get("tenantId"));
+        log.info("Creating tenant: {}", application.get("tenantId"));
     }
 
     /**
@@ -114,7 +117,7 @@ public class TenantOnboardingService {
         }
 
         // 实际项目中应该创建 SEC_PLATFORM_AUTHORIZATION 记录
-        System.out.println("Creating platform authorization for tenant: " + tenantId);
+        log.info("Creating platform authorization for tenant: {}", tenantId);
     }
 
     /**
@@ -151,7 +154,7 @@ public class TenantOnboardingService {
      */
     private void sendInvitationEmail(Map<String, Object> invitation) {
         // 实际项目中应该调用邮件服务
-        System.out.println("Sending invitation email to: " + invitation.get("email"));
+        log.info("Sending invitation email to: {}", invitation.get("email"));
     }
 
     /**
@@ -190,7 +193,7 @@ public class TenantOnboardingService {
      */
     private void assignTenantAdminRole(String userId, String tenantId) {
         // 实际项目中应该创建 SEC_USER_ROLE 记录
-        System.out.println("Assigning TENANT_ADMIN role to user: " + userId + " for tenant: " + tenantId);
+        log.info("Assigning TENANT_ADMIN role to user: {} for tenant: {}", userId, tenantId);
     }
 
     /**
