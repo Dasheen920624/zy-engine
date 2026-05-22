@@ -1,0 +1,67 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "MedKernel MVP 业务监控看板",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "panels": [
+    {
+      "title": "Provider 状态",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "medkernel_provider_ready", "legendFormat": "{{provider}}" }
+      ]
+    },
+    {
+      "title": "规则评估 QPS",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "rate(medkernel_rule_evaluation_total[5m])", "legendFormat": "评估/秒" },
+        { "expr": "rate(medkernel_rule_hit_total[5m])", "legendFormat": "命中/秒" }
+      ]
+    },
+    {
+      "title": "规则评估延迟 (P95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, rate(medkernel_rule_evaluation_duration_bucket[5m]))", "legendFormat": "P95" }
+      ]
+    },
+    {
+      "title": "路径操作 QPS",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "rate(medkernel_pathway_operation_total[5m])", "legendFormat": "操作/秒" }
+      ]
+    },
+    {
+      "title": "LLM 调用",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        { "expr": "rate(medkernel_llm_call_total[5m])", "legendFormat": "调用/秒" },
+        { "expr": "rate(medkernel_llm_call_errors_total[5m])", "legendFormat": "错误/秒" }
+      ]
+    },
+    {
+      "title": "质控预警 / CDSS 覆盖",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 16 },
+      "targets": [
+        { "expr": "medkernel_quality_alert_total", "legendFormat": "预警" },
+        { "expr": "medkernel_cdss_override_total", "legendFormat": "覆盖" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["medkernel"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "MedKernel MVP",
+  "uid": "medkernel-mvp"
+}

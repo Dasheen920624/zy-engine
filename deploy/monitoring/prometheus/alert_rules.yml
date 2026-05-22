@@ -1,0 +1,38 @@
+groups:
+  - name: medkernel-alerts
+    rules:
+      - alert: MedKernelProviderDown
+        expr: medkernel_provider_ready == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MedKernel Provider {{ $labels.provider }} 不可用"
+          description: "Provider {{ $labels.provider }} 已持续 2 分钟不可用"
+
+      - alert: MedKernelDatabaseDown
+        expr: medkernel_provider_ready{provider="database"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MedKernel 数据库 Provider 不可用"
+          description: "数据库是主存储，不可降级，已持续 1 分钟不可用"
+
+      - alert: MedKernelLlmErrorRateHigh
+        expr: rate(medkernel_llm_call_errors_total[5m]) / rate(medkernel_llm_call_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM 调用错误率超过 10%"
+          description: "过去 5 分钟 LLM 调用错误率为 {{ $value | humanizePercentage }}"
+
+      - alert: MedKernelRuleEvaluationSlow
+        expr: histogram_quantile(0.95, rate(medkernel_rule_evaluation_duration_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "规则评估 P95 延迟超过 1 秒"
+          description: "规则评估 P95 延迟为 {{ $value }} 秒"
