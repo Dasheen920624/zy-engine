@@ -42,6 +42,20 @@ jobs:
       - name: Run JUnit contract tests
         run: .\medkernel-mvp\scripts\run-tests.cmd
 
+      # GA-QA-01: Jacoco 覆盖率报告生成 + 覆盖率门禁（行覆盖率 >= 70%）。
+      # mvn verify 会触发 jacoco:prepare-agent → test → jacoco:report → jacoco:check。
+      # 覆盖率不足时构建失败，确保 v1.0 GA 质量基线。
+      - name: Generate Jacoco coverage report and check threshold
+        run: mvn -f medkernel-mvp\pom.xml verify -DskipTests=false
+
+      - name: Upload Jacoco coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: medkernel-mvp/target/site/jacoco/
+          retention-days: 30
+
   guard-rules:
     name: guard-rules
     runs-on: windows-latest

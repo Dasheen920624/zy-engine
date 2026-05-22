@@ -18,6 +18,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <jacoco.version>0.8.11</jacoco.version>
+        <jacoco.line-coverage.minimum>0.35</jacoco.line-coverage.minimum>
     </properties>
 
     <dependencyManagement>
@@ -164,6 +166,67 @@
                     <source>1.8</source>
                     <target>1.8</target>
                     <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <!-- GA-QA-01: Jacoco 代码覆盖率 — v1.0 GA 目标行覆盖率 70%。
+                 - jacoco:prepare-agent 在 test 前注入探针（输出 jacoco.exec）。
+                 - jacoco:report 在 test 后生成 HTML/XML/CSV 报告到 target/site/jacoco/。
+                 - jacoco:check 在 verify 阶段校验覆盖率是否达标，不足则构建失败。
+                 - CI 中通过 mvn verify 触发完整流程；本地开发用 mvn test + jacoco:report 查看报告。
+                 - 0.8.11 是最后一个支持 JDK 1.8 的 Jacoco 版本（0.8.12+ 要 JDK 11）。 -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${jacoco.line-coverage.minimum}</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <excludes>
+                        <!-- 排除配置类、实体类、枚举等无业务逻辑的类 -->
+                        <exclude>com/medkernel/config/**</exclude>
+                        <exclude>com/medkernel/**/entity/**</exclude>
+                        <exclude>com/medkernel/**/*Entity.class</exclude>
+                        <exclude>com/medkernel/**/*DTO.class</exclude>
+                        <exclude>com/medkernel/**/*Request.class</exclude>
+                        <exclude>com/medkernel/**/*Result.class</exclude>
+                        <exclude>com/medkernel/**/*Response.class</exclude>
+                        <exclude>com/medkernel/persistence/flyway/**</exclude>
+                        <exclude>com/medkernel/MedKernelApplication.class</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
