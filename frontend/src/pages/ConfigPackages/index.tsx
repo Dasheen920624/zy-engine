@@ -38,7 +38,7 @@ export default function ConfigPackages() {
             配置包中心
           </h1>
           <Text type="secondary" className={styles.pageSubtitle}>
-            路径 / 规则 / 图谱 / Dify / 字典 / 适配器 统一包生命周期 · DRAFT → REVIEWED → PUBLISHED → SYNCED → ACTIVE → RETIRED
+            把本院试点需要的路径、规则、字典和接口配置一次打包、自动校验、审核发布，并保留回滚证据。
           </Text>
         </div>
       </div>

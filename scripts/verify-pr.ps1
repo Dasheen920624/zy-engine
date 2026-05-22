@@ -506,7 +506,7 @@ if (Test-Path "medkernel-mvp/scripts/verify-encoding.cmd") {
 Show-Section "6. AI 协作冲突检查"
 
 if (Test-Path "medkernel-mvp/scripts/check-ai-collaboration.ps1") {
-  $aiOutput = & "medkernel-mvp/scripts/check-ai-collaboration.ps1" 2>&1
+  $aiOutput = & "medkernel-mvp/scripts/check-ai-collaboration.ps1" -TaskId $TaskId -Strict 2>&1
   if ($LASTEXITCODE -eq 0) {
     Show-Pass "AI 协作检查 PASS"
   } else {

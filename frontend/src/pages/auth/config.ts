@@ -1,12 +1,12 @@
-export type LoginTabKey = "sms" | "password" | "sso" | "ldap";
+export type LoginTabKey = "password" | "sso";
 
-const allowedTabs = new Set<LoginTabKey>(["sms", "password", "sso", "ldap"]);
+const allowedTabs = new Set<LoginTabKey>(["password", "sso"]);
 
 function normalizeTab(value: string | undefined): LoginTabKey {
   if (value && allowedTabs.has(value as LoginTabKey)) {
     return value as LoginTabKey;
   }
-  return "sms";
+  return "password";
 }
 
 function readNumber(value: string | undefined, fallback: number): number {
@@ -21,7 +21,7 @@ export const loginRuntimeConfig = {
   psbNumber: import.meta.env.VITE_COMPLIANCE_PSB_NUMBER || "京公网安备 11000002026021 号",
   profile: import.meta.env.VITE_APP_PROFILE || "demo",
   cryptoSuite: import.meta.env.VITE_SECURITY_CRYPTO_SUITE || "SM2",
-  appVersion: import.meta.env.VITE_APP_VERSION || "v0.3-demo",
+  appVersion: import.meta.env.VITE_APP_VERSION || "v1.0-ga",
   lockThreshold: readNumber(import.meta.env.VITE_LOGIN_LOCK_THRESHOLD, 5),
   sessionTimeoutMinutes: readNumber(import.meta.env.VITE_SESSION_TIMEOUT_MINUTES, 30),
 };

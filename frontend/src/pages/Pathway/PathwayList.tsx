@@ -9,7 +9,7 @@ import type { PathwaySummary, ListPathwaysParams } from "../../api/types";
 import ActionMenu from "./components/ActionMenu";
 import styles from "./styles.module.css";
 
-const { Title } = Typography;
+const { Text, Title } = Typography;
 
 const statusOptions = [
   { value: "", label: "全部" },
@@ -97,9 +97,16 @@ const PathwayList: React.FC = () => {
 
   return (
     <div className={styles.page}>
-      <Title level={3} className={styles.pageTitleWithSpacing}>
-        路径模板库
-      </Title>
+      <header className={styles.pageHeader}>
+        <div>
+          <Title level={3} className={styles.pageTitle}>
+            路径配置
+          </Title>
+          <Text type="secondary" className={styles.pageSubtitle}>
+            从专病模板开始配置入径条件、关键节点和发布版本；专家能力在详情页继续展开。
+          </Text>
+        </div>
+      </header>
 
       <Space className={styles.listToolbar} size="middle">
         <OrgContextSelector />
@@ -108,10 +115,10 @@ const PathwayList: React.FC = () => {
           icon={<PlusOutlined />}
           onClick={() => navigate("/pathway/templates/new/edit")}
         >
-          新建路径
+          新建专病路径
         </Button>
         <Input
-          placeholder="搜索路径名称或编码"
+          placeholder="搜索路径"
           prefix={<SearchOutlined />}
           allowClear
           value={search || ""}
@@ -152,7 +159,7 @@ const PathwayList: React.FC = () => {
         locale={{
           emptyText: (
             <div className={styles.tableEmpty}>
-              <Typography.Text type="secondary">还没有路径模板</Typography.Text>
+              <Typography.Text type="secondary">还没有可用于试点的路径配置</Typography.Text>
               <br />
               <Button
                 type="primary"
@@ -160,7 +167,7 @@ const PathwayList: React.FC = () => {
                 className={styles.emptyActionButton}
                 onClick={() => navigate("/pathway/templates/new/edit")}
               >
-                新建路径
+                新建专病路径
               </Button>
             </div>
           ),

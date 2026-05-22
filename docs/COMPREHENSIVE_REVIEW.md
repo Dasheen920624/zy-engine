@@ -1,11 +1,19 @@
 # MedKernel · 全方位最终评审报告（出厂前 QA）
 
-> 版本：1.0 · 2026-05-21  
-> 评审人：架构组（Claude Opus 4.7 切换为「客户 CTO + 信通院评测专家 + 等保测评师 + 内网运维 + 外网 SRE」复合视角）  
-> 适用：本文是 **v0.3 → v1.0 GA 的出厂前 QA 唯一清单**，覆盖 **20 个落地维度**，每维度 ✅/🟡/🔴 三态 + P0/P1/P2 行动项。  
-> 配套：[`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md)（架构）+ [`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)（演示）+ [`DEPLOYMENT_DUAL_MODE.md`](DEPLOYMENT_DUAL_MODE.md)（内外网部署）+ [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md)（团队）+ [`AI_CHARTER.md`](AI_CHARTER.md)（红线）
+> 版本：2.0 · 2026-05-23（v1.0 GA 收口复核）
+> 评审人：架构组（Claude Opus 4.7 切换为「客户 CTO + 信通院评测专家 + 等保测评师 + 内网运维 + 外网 SRE」复合视角）
+> 适用：本文是 **v0.3 → v1.0 GA 的出厂前 QA 唯一清单**，覆盖 **20 个落地维度**，每维度 ✅/🟡/🔴 三态 + P0/P1/P2 行动项。
+> 配套：[`PRODUCT_SIMPLIFICATION_V1_GA.md`](PRODUCT_SIMPLIFICATION_V1_GA.md)（客户主线与全功能极简交互）+ [`AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md)（GA 任务入口）+ [`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md)（架构）+ [`DEPLOYMENT_DUAL_MODE.md`](DEPLOYMENT_DUAL_MODE.md)（内外网部署）+ [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md)（团队）+ [`AI_CHARTER.md`](AI_CHARTER.md)（红线）
 
 ---
+
+## 当前裁决（2026-05-23）
+
+- `v0.3-final` 已发布；本文 2026-05-21 的 `PR-V3-*` 行动项保留为历史评审证据，不再作为新任务入口。
+- 下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**，真实医院 8 周数据验证并入 GA 证据包。
+- 客户反馈“功能多而杂、路线不清晰、菜单不清晰”后，GA 第一优先级改为产品收口：所有功能遵守“最精简化，功能最全，选择最易用”。
+- 配置包、路径、规则、图谱、字典、适配器等配置类功能统一使用 `选模板/导入 → 自动校验 → 看影响 → 审核发布 → 运行证据 → 可回滚` 流程。
+- 等保、国密、个保法、数据安全、医疗机构网络安全等要求仍是 GA 硬门槛，但页面上不让客户手动选择算法或链路，只展示合规状态、证据和整改动作。
 
 ## 0. 评审总览（一张表）
 
@@ -32,7 +40,7 @@
 | 19 | **商业化能力** | 🔴 | **0 计费** — 无订阅 / 用量 / 对账 / 发票 | P1 |
 | 20 | **团队流程 / 法务 / IP** | 🟡 | AI 团队 SOP 已建；软著/专利/开源审计 0 | P1 |
 
-**总览结论**：v0.2-demo → v0.3-pilot 约 **8 周**，v0.3-pilot → v1.0 GA 约 **16 周**（含等保测评 4-6 周 + 信通院 4 周）。总周期 **24 周（约 5.5 个月）到正式商业化**。
+**总览结论**：`v0.3-final` 已发布，下一版本直接进入 **v1.0 GA / tag `v1.0.0`**。GA 剩余工作不再按 `v0.3-pilot` 单独排期，而是以产品收口、合规评测、测试覆盖、运维证据和客户试点数据为一体化准入包推进；预计仍需约 **8-12 周**，其中等保/密评/渗透测试受外部机构周期影响最大。
 
 ---
 

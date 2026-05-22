@@ -188,6 +188,29 @@
   gap: var(--mk-space-4);
 }
 
+.ssoCollapse {
+  margin-top: var(--mk-space-4);
+  border: var(--mk-border-width) solid var(--mk-border-divider);
+  border-radius: var(--mk-radius-md);
+  background: var(--mk-bg-muted);
+}
+
+.ssoCollapse :global(.ant-collapse-header) {
+  align-items: center !important;
+  padding: var(--mk-space-3) var(--mk-space-4) !important;
+}
+
+.ssoCollapse :global(.ant-collapse-content-box) {
+  padding: 0 var(--mk-space-4) var(--mk-space-4) !important;
+}
+
+.ssoCollapseLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mk-space-2);
+  color: var(--mk-text-primary);
+}
+
 .providerGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -197,7 +220,7 @@
 .providerButton {
   height: 48px;
   display: inline-flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: var(--mk-space-2);
 }
