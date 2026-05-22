@@ -13,7 +13,7 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button, Empty, Result, Space, Spin, Statistic, Tabs, Tag, Typography, message, Popconfirm } from "antd";
+import { Button, Collapse, Empty, Result, Space, Spin, Statistic, Tabs, Tag, Typography, message, Popconfirm } from "antd";
 import {
   ArrowLeftOutlined,
   DeleteOutlined,
@@ -237,11 +237,19 @@ export default function PathwayDetail() {
             </dl>
           </section>
 
-          {/* ─── 草稿 / 已发布 JSON 切换 ─── */}
-          <section className={styles.sectionCard} aria-label="pathway-config">
-            <h3 className={styles.sectionTitle}>路径配置</h3>
-            <Tabs items={tabs} />
-          </section>
+          {/* ─── 路径配置（技术详情，默认折叠）─── */}
+          <Collapse
+            ghost
+            items={[
+              {
+                key: "config",
+                label: "技术详情：路径配置",
+                children: (
+                  <Tabs items={tabs} />
+                ),
+              },
+            ]}
+          />
         </div>
 
         <aside className={styles.detailSide}>

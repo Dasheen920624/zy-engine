@@ -52,9 +52,10 @@ export default function ProvidersStatusPage() {
             <>
               <div>{error?.message}</div>
               {error?.traceId && (
-                <div className={`text-muted ${styles.traceId}`}>
-                  trace_id: <code className="text-mono">{error.traceId}</code>
-                </div>
+                <details className={`text-muted ${styles.traceId}`}>
+                  <summary>技术详情</summary>
+                  <code className="text-mono">{error.traceId}</code>
+                </details>
               )}
               <div className={styles.retryArea}>
                 <Button size="small" onClick={() => refetch()}>
@@ -100,7 +101,12 @@ export default function ProvidersStatusPage() {
                 title: "实现",
                 dataIndex: "provider",
                 width: 220,
-                render: (v: string) => <code className="text-mono">{v}</code>,
+                render: (v: string) => (
+                  <details>
+                    <summary className="text-muted" style={{ cursor: "pointer" }}>查看技术详情</summary>
+                    <code className="text-mono">{v}</code>
+                  </details>
+                ),
               },
               {
                 title: "降级 / 备注",

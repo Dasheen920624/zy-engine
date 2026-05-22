@@ -129,7 +129,7 @@ export default function AiWorkflowsPage() {
             <RobotOutlined /> AI 工作流引擎
           </Title>
           <p className={styles.pageSubtitle}>
-            ADR-0013 去 Dify 化策略落地页：监控 LLM Provider 状态、查看 6 种调用类型降级链、管理多步工作流模板。
+            监控 AI 模型服务状态、查看降级策略、管理工作流模板。
           </p>
         </div>
         <div className={styles.headerActions}>

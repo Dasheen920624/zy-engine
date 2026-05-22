@@ -3,6 +3,7 @@ import {
   Alert,
   Button,
   Col,
+  Collapse,
   Input,
   Row,
   Select,
@@ -114,8 +115,8 @@ export default function AuditLogList() {
         width: 200,
         render: (_v, record) => (
           <span>
-            {record.target_type ?? "?"} · <code>{record.target_code ?? "—"}</code>
-            {record.target_version ? ` @ ${record.target_version}` : ""}
+            {record.target_type ?? "?"}
+            {record.target_name ? ` · ${record.target_name}` : ""}
           </span>
         ),
       },
@@ -138,13 +139,6 @@ export default function AuditLogList() {
         key: "signature_valid",
         width: 100,
         render: (v?: boolean) => renderSignatureCell(v),
-      },
-      {
-        title: "Trace ID",
-        dataIndex: "trace_id",
-        key: "trace_id",
-        width: 200,
-        render: (v?: string) => (v ? <code>{v}</code> : "—"),
       },
     ],
     [],
@@ -171,18 +165,6 @@ export default function AuditLogList() {
 
       <div className={styles.toolbar} aria-label="audit-filter-toolbar">
         <div className={styles.toolbarItem}>
-          <label className={styles.toolbarItemLabel} htmlFor="filter-trace">
-            Trace ID
-          </label>
-          <Input
-            id="filter-trace"
-            allowClear
-            placeholder="trace_id 精确匹配"
-            value={draft.trace_id ?? ""}
-            onChange={(e) => setDraft({ ...draft, trace_id: e.target.value })}
-          />
-        </div>
-        <div className={styles.toolbarItem}>
           <label className={styles.toolbarItemLabel}>引擎类型</label>
           <Select<string>
             allowClear
@@ -203,56 +185,12 @@ export default function AuditLogList() {
           />
         </div>
         <div className={styles.toolbarItem}>
-          <label className={styles.toolbarItemLabel}>目标类型</label>
-          <Input
-            allowClear
-            placeholder="如 PathwayTemplate"
-            value={draft.target_type ?? ""}
-            onChange={(e) => setDraft({ ...draft, target_type: e.target.value })}
-          />
-        </div>
-        <div className={styles.toolbarItem}>
-          <label className={styles.toolbarItemLabel}>目标编码</label>
-          <Input
-            allowClear
-            placeholder="target_code"
-            value={draft.target_code ?? ""}
-            onChange={(e) => setDraft({ ...draft, target_code: e.target.value })}
-          />
-        </div>
-        <div className={styles.toolbarItem}>
-          <label className={styles.toolbarItemLabel}>患者 ID</label>
-          <Input
-            allowClear
-            placeholder="患者 ID"
-            value={draft.patient_id ?? ""}
-            onChange={(e) => setDraft({ ...draft, patient_id: e.target.value })}
-          />
-        </div>
-        <div className={styles.toolbarItem}>
-          <label className={styles.toolbarItemLabel}>就诊 ID</label>
-          <Input
-            allowClear
-            placeholder="encounter_id"
-            value={draft.encounter_id ?? ""}
-            onChange={(e) => setDraft({ ...draft, encounter_id: e.target.value })}
-          />
-        </div>
-        <div className={styles.toolbarItem}>
           <label className={styles.toolbarItemLabel}>操作人</label>
           <Input
             allowClear
-            placeholder="operator_id"
+            placeholder="操作人"
             value={draft.operator_id ?? ""}
             onChange={(e) => setDraft({ ...draft, operator_id: e.target.value })}
-          />
-        </div>
-        <div className={styles.toolbarItem}>
-          <label className={styles.toolbarItemLabel}>最大条数</label>
-          <Select<number>
-            value={Number(draft.limit ?? 20)}
-            options={LIMIT_OPTIONS.map((n) => ({ value: n, label: String(n) }))}
-            onChange={(v) => setDraft({ ...draft, limit: v })}
           />
         </div>
         <div className={styles.toolbarActions}>
@@ -262,6 +200,76 @@ export default function AuditLogList() {
           <Button onClick={resetFilters}>重置</Button>
         </div>
       </div>
+
+      <Collapse
+        ghost
+        items={[
+          {
+            key: "advanced",
+            label: "高级筛选",
+            children: (
+              <div className={styles.toolbar} aria-label="audit-advanced-filter">
+                <div className={styles.toolbarItem}>
+                  <label className={styles.toolbarItemLabel} htmlFor="filter-trace">
+                    Trace ID
+                  </label>
+                  <Input
+                    id="filter-trace"
+                    allowClear
+                    placeholder="trace_id 精确匹配"
+                    value={draft.trace_id ?? ""}
+                    onChange={(e) => setDraft({ ...draft, trace_id: e.target.value })}
+                  />
+                </div>
+                <div className={styles.toolbarItem}>
+                  <label className={styles.toolbarItemLabel}>目标类型</label>
+                  <Input
+                    allowClear
+                    placeholder="如 PathwayTemplate"
+                    value={draft.target_type ?? ""}
+                    onChange={(e) => setDraft({ ...draft, target_type: e.target.value })}
+                  />
+                </div>
+                <div className={styles.toolbarItem}>
+                  <label className={styles.toolbarItemLabel}>目标编码</label>
+                  <Input
+                    allowClear
+                    placeholder="target_code"
+                    value={draft.target_code ?? ""}
+                    onChange={(e) => setDraft({ ...draft, target_code: e.target.value })}
+                  />
+                </div>
+                <div className={styles.toolbarItem}>
+                  <label className={styles.toolbarItemLabel}>患者 ID</label>
+                  <Input
+                    allowClear
+                    placeholder="患者 ID"
+                    value={draft.patient_id ?? ""}
+                    onChange={(e) => setDraft({ ...draft, patient_id: e.target.value })}
+                  />
+                </div>
+                <div className={styles.toolbarItem}>
+                  <label className={styles.toolbarItemLabel}>就诊 ID</label>
+                  <Input
+                    allowClear
+                    placeholder="encounter_id"
+                    value={draft.encounter_id ?? ""}
+                    onChange={(e) => setDraft({ ...draft, encounter_id: e.target.value })}
+                  />
+                </div>
+                <div className={styles.toolbarItem}>
+                  <label className={styles.toolbarItemLabel}>最大条数</label>
+                  <Select<number>
+                    value={Number(draft.limit ?? 20)}
+                    options={LIMIT_OPTIONS.map((n) => ({ value: n, label: String(n) }))}
+                    onChange={(v) => setDraft({ ...draft, limit: v })}
+                  />
+                </div>
+              </div>
+            ),
+          },
+        ]}
+      />
 
       <Row gutter={[16, 16]} className={styles.summaryRow}>
         <Col xs={24} md={8}>

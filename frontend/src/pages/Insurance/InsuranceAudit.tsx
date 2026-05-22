@@ -172,13 +172,6 @@ export default function InsuranceAudit() {
 
   const logColumns: ColumnsType<RuleExecLog> = [
     {
-      title: "执行ID",
-      dataIndex: "eval_id",
-      key: "eval_id",
-      width: 150,
-      ellipsis: true,
-    },
-    {
       title: "场景",
       dataIndex: "scenario_code",
       key: "scenario_code",
@@ -274,7 +267,8 @@ export default function InsuranceAudit() {
 
               <Form.Item
                 name="patient_context"
-                label="患者上下文 (JSON)"
+                label="患者上下文"
+                extra="请按模板填写患者信息（JSON 格式），或展开专家模式直接编辑"
                 rules={[
                   { required: true, message: "请输入患者上下文" },
                   {
@@ -361,10 +355,6 @@ export default function InsuranceAudit() {
                 {auditResult.result_id && (
                   <Card size="small" title="审核摘要" className={styles.summaryCard}>
                     <Space direction="vertical" className={styles.summarySpace}>
-                      <Text>
-                        <Text strong>审核ID：</Text>
-                        {auditResult.result_id}
-                      </Text>
                       <Text>
                         <Text strong>耗时：</Text>
                         {auditResult.elapsed_ms} ms

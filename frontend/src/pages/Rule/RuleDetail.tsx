@@ -8,7 +8,7 @@
  */
 
 import { useNavigate, useParams } from "react-router-dom";
-import { Button, Empty, Result, Space, Spin, Statistic, Typography } from "antd";
+import { Button, Collapse, Empty, Result, Space, Spin, Statistic, Typography } from "antd";
 import { ArrowLeftOutlined, EditOutlined, HistoryOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -138,15 +138,23 @@ export default function RuleDetail() {
             </dl>
           </section>
 
-          {/* ─── DSL 只读 ─── */}
-          <section className={styles.sectionCard} aria-label="rule-dsl-readonly">
-            <h3 className={styles.sectionTitle}>规则 DSL（只读）</h3>
-            <div className={`${styles.dslContainer} ${styles.dslReadOnly}`}>
-              <pre className={styles.dslReadOnlyPre} aria-label="dsl-readonly">
-                {dslText}
-              </pre>
-            </div>
-          </section>
+          {/* ─── DSL 只读（技术详情，默认折叠）─── */}
+          <Collapse
+            ghost
+            items={[
+              {
+                key: "dsl",
+                label: "技术详情：规则 DSL",
+                children: (
+                  <div className={`${styles.dslContainer} ${styles.dslReadOnly}`}>
+                    <pre className={styles.dslReadOnlyPre} aria-label="dsl-readonly">
+                      {dslText}
+                    </pre>
+                  </div>
+                ),
+              },
+            ]}
+          />
 
           {/* ─── 触发历史 ─── */}
           <section className={styles.sectionCard} aria-label="rule-exec-logs">
