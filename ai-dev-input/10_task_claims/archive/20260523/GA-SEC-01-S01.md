@@ -4,23 +4,33 @@ claim_id: GA-SEC-01-S01
 task_id: GA-SEC-01
 task_lock_path: ai-dev-input/10_task_claims/active_locks/GA-SEC-01.lock
 slice: S01
-title: 等保 2.0 三级控制点自查闭环
-owner: TraeAI-GLM5
+title: 等保 2.0 三级控制点
+owner: TraeAI-GLM5-1
 role: senior
 status: ACTIVE
 branch: develop
 target_base_branch: develop
-git_base_commit: bd9fc64
+git_base_commit: HEAD
 git_status_at_claim: clean
-created_at: 2026-05-23T23:30+08:00
-last_heartbeat: 2026-05-23T23:30+08:00
-expected_finish: 2026-05-24T11:30+08:00
+created_at: 2026-05-23T22:15+08:00
+last_heartbeat: 2026-05-23T22:15+08:00
+expected_finish: 2026-05-24T06:00+08:00
 heartbeat_interval_minutes: 60
-database_mode: local
+database_mode: none
 oracle_available: false
-local_db_verified: true
+local_db_verified: false
 oracle_verification_required: false
 review_required: true
+review_id:
+review_status: NOT_REQUESTED
+reviewer:
+open_findings: 0
+quality_gate: BLOCKED_UNTIL_APPROVED
+feature_acceptance_required: false
+feature_acceptance_id:
+write_scope:
+read_scope:
+forbidden_scope:
 
 ## Task Lock
 
@@ -31,52 +41,67 @@ ai-dev-input/10_task_claims/active_locks/GA-SEC-01.lock
 ## Write Scope
 
 ```text
-medkernel-mvp/src/main/java/com/medkernel/security/**
-docs/engineering/COMP-001_合规基线与证据包.md
+docs/security/**
+docs/engineering/02_任务台账.md
 ai-dev-input/10_task_claims/active/GA-SEC-01-S01.md
 ai-dev-input/10_task_claims/active_locks/GA-SEC-01.lock
-docs/engineering/02_任务台账.md
 ```
 
 ## Read Scope
 
 ```text
+medkernel-mvp/src/main/resources/application.yml
 medkernel-mvp/src/main/java/com/medkernel/**
-docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md
+deploy/**
+docs/**
 ```
 
 ## Forbidden Scope
 
 ```text
+medkernel-mvp/src/main/java/**
 frontend/src/**
-medkernel-mvp/pom.xml
-medkernel-mvp/src/main/resources/application.yml
-medkernel-mvp/src/main/java/com/medkernel/persistence/**
+ai-dev-input/10_task_claims/active/GA-*.md
+```
+
+## Dependencies
+
+```text
+GA-OPS-01（已完成：监控告警与 SLO）
+GA-REL-01（已完成：分支保护）
 ```
 
 ## Acceptance
 
 ```text
-1. 等保 2.0 三级控制点自查表完成
-2. 安全控制点对应代码实现
-3. COMP-001 合规基线与证据包文档齐备
-4. 后端编译通过
+1. 等保 2.0 三级控制点自查清单
+2. 每个控制点的合规状态和证据
+3. 不合规项的整改计划
+4. 文档可交付审计
 ```
 
 ## Verification
 
 ```text
-mvn compile -pl medkernel-mvp -q
+文档完整性检查
 ```
 
 ## Progress
 
 ```text
 - [ ] 创建 claim + lock 并 push
-- [ ] 分析等保 2.0 三级控制点要求
-- [ ] 实现安全控制点代码
-- [ ] 编写 COMP-001 合规基线与证据包
-- [ ] 后端编译验证
+- [ ] 等保 2.0 三级控制点自查清单
+- [ ] 合规证据映射
+- [ ] 整改计划
 - [ ] 更新台账
 - [ ] commit + push
 ```
+
+## Completion
+
+```text
+commit:
+push:
+tests:
+review:
+risks:
