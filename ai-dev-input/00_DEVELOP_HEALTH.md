@@ -9,7 +9,7 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | 🟢 **GREEN — v0.3-final 已发布，develop @ `d8dd5a4`，全量后端/前端门禁通过** |
+| 状态 | 🟢 **GREEN — v0.3-final 已发布（main `339616f`），全量后端/前端门禁通过** |
 | 最后更新 | 2026-05-23 |
 | 最后验证 commit | `a5ae366` — v0.3-final 发布前最终验证（typecheck + build + mvn compile + mvn test 全 PASS） |
 | 当前发布 tag | `v0.3-final`（指向 main `339616f`，PR #44 squash merge） |
@@ -33,7 +33,7 @@
 
 - ✅ 允许领新功能任务（PR-V2-*、AIK-*、SEC-*、EVAL-* 等），按 02_任务台账 取
 - ✅ 允许 push 到 develop（必须本地 `mvn -q compile` PASS + verify-pr.ps1 自检）
-- ✅ 演示候选已 tag `v0.2-demo` 指向 main `565e8a7`，可作为客户演示基线
+- ✅ 当前演示基线为 tag `v0.3-final`（main `339616f`）；`v0.2-demo` 保留为历史里程碑
 
 ### 演示前 / 部署前还需人工做的事
 
