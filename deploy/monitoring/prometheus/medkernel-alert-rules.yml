@@ -1,4 +1,5 @@
 groups:
+  # === 基础设施告警 ===
   - name: medkernel-backend
     interval: 30s
     rules:
@@ -8,9 +9,10 @@ groups:
         labels:
           severity: critical
           service: medkernel-mvp
+          slo: availability
         annotations:
-          summary: MedKernel backend scrape target is down
-          description: Prometheus cannot scrape the internal actuator endpoint on port 18081.
+          summary: MedKernel 后端服务不可达
+          description: Prometheus 无法在 18081 端口抓取 actuator 指标超过 1 分钟。
 
       - alert: MedKernelApiP95LatencyHigh
         expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="medkernel-mvp"}[5m])) by (le)) > 1
@@ -18,9 +20,10 @@ groups:
         labels:
           severity: warning
           service: medkernel-mvp
+          slo: latency
         annotations:
-          summary: MedKernel API P95 latency is above 1s
-          description: API latency is above the v0.3-final warning threshold for 5 minutes.
+          summary: MedKernel API P95 延迟超过 1 秒
+          description: API 延迟连续 5 分钟超过告警阈值。
 
       - alert: MedKernelApiP95LatencyCritical
         expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="medkernel-mvp"}[2m])) by (le)) > 3
@@ -28,9 +31,10 @@ groups:
         labels:
           severity: critical
           service: medkernel-mvp
+          slo: latency
         annotations:
-          summary: MedKernel API P95 latency is above 3s
-          description: API latency is above the critical threshold for 2 minutes.
+          summary: MedKernel API P95 延迟超过 3 秒
+          description: API 延迟连续 2 分钟超过严重阈值。
 
       - alert: MedKernelApi5xxRateHigh
         expr: sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[5m])), 0.001) > 0.005
@@ -38,9 +42,10 @@ groups:
         labels:
           severity: warning
           service: medkernel-mvp
+          slo: error-rate
         annotations:
-          summary: MedKernel API 5xx rate is above 0.5%
-          description: HTTP 5xx error ratio crossed the warning threshold.
+          summary: MedKernel API 5xx 错误率超过 0.5%
+          description: HTTP 5xx 错误比例超过告警阈值。
 
       - alert: MedKernelApi5xxRateCritical
         expr: sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status=~"5.."}[2m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[2m])), 0.001) > 0.02
@@ -48,9 +53,10 @@ groups:
         labels:
           severity: critical
           service: medkernel-mvp
+          slo: error-rate
         annotations:
-          summary: MedKernel API 5xx rate is above 2%
-          description: HTTP 5xx error ratio crossed the critical threshold.
+          summary: MedKernel API 5xx 错误率超过 2%
+          description: HTTP 5xx 错误比例超过严重阈值。
 
       - alert: MedKernelJvmHeapHigh
         expr: sum(jvm_memory_used_bytes{application="medkernel-mvp",area="heap"}) / clamp_min(sum(jvm_memory_max_bytes{application="medkernel-mvp",area="heap"}), 1) > 0.75
@@ -58,9 +64,10 @@ groups:
         labels:
           severity: warning
           service: medkernel-mvp
+          slo: saturation
         annotations:
-          summary: MedKernel JVM heap usage is above 75%
-          description: JVM heap pressure is above the warning threshold.
+          summary: MedKernel JVM 堆内存使用超过 75%
+          description: JVM 堆内存压力超过告警阈值。
 
       - alert: MedKernelJvmHeapCritical
         expr: sum(jvm_memory_used_bytes{application="medkernel-mvp",area="heap"}) / clamp_min(sum(jvm_memory_max_bytes{application="medkernel-mvp",area="heap"}), 1) > 0.90
@@ -68,9 +75,10 @@ groups:
         labels:
           severity: critical
           service: medkernel-mvp
+          slo: saturation
         annotations:
-          summary: MedKernel JVM heap usage is above 90%
-          description: JVM heap pressure is above the critical threshold.
+          summary: MedKernel JVM 堆内存使用超过 90%
+          description: JVM 堆内存压力超过严重阈值。
 
       - alert: MedKernelProviderNotReady
         expr: medkernel_provider_configured{provider=~"database|model_gateway"} == 1 and on(provider) medkernel_provider_ready{provider=~"database|model_gateway"} == 0
@@ -79,8 +87,8 @@ groups:
           severity: warning
           service: medkernel-mvp
         annotations:
-          summary: MedKernel provider is not ready
-          description: A core provider readiness metric has reported 0 for 5 minutes.
+          summary: MedKernel Provider 未就绪
+          description: 核心 Provider 就绪指标连续 5 分钟报告为 0。
 
       - alert: MedKernelHikariPoolSaturation
         expr: max(hikaricp_connections_active{application="medkernel-mvp"} / clamp_min(hikaricp_connections_max{application="medkernel-mvp"}, 1)) > 0.80
@@ -88,11 +96,12 @@ groups:
         labels:
           severity: warning
           service: medkernel-mvp
+          slo: saturation
         annotations:
-          summary: MedKernel HikariCP pool usage is above 80%
-          description: The database connection pool is approaching saturation.
+          summary: MedKernel HikariCP 连接池使用超过 80%
+          description: 数据库连接池接近饱和。
 
-  # ── 系统资源告警 ──────────────────────────────────────────
+  # === 系统资源告警 ===
   - name: medkernel-system-resources
     interval: 30s
     rules:
@@ -103,8 +112,8 @@ groups:
           severity: warning
           service: medkernel-mvp
         annotations:
-          summary: MedKernel disk usage is above 85%
-          description: "Root filesystem usage is {{ $value | humanizePercentage }}. Consider cleanup or expansion."
+          summary: MedKernel 磁盘使用超过 85%
+          description: "根文件系统使用率 {{ $value | humanizePercentage }}，建议清理或扩容。"
 
       - alert: MedKernelDiskSpaceCritical
         expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) > 0.95
@@ -113,8 +122,8 @@ groups:
           severity: critical
           service: medkernel-mvp
         annotations:
-          summary: MedKernel disk usage is above 95%
-          description: "Root filesystem usage is {{ $value | humanizePercentage }}. Immediate action required."
+          summary: MedKernel 磁盘使用超过 95%
+          description: "根文件系统使用率 {{ $value | humanizePercentage }}，需要立即处理。"
 
       - alert: MedKernelCpuLoadHigh
         expr: process_cpu_usage{application="medkernel-mvp"} > 0.80
@@ -123,8 +132,8 @@ groups:
           severity: warning
           service: medkernel-mvp
         annotations:
-          summary: MedKernel JVM CPU usage is above 80%
-          description: JVM process CPU usage has been above 80% for 10 minutes.
+          summary: MedKernel JVM CPU 使用超过 80%
+          description: JVM 进程 CPU 使用率连续 10 分钟超过 80%。
 
       - alert: MedKernelFileDescriptorHigh
         expr: process_files_open_files{application="medkernel-mvp"} / process_files_max_files{application="medkernel-mvp"} > 0.80
@@ -133,10 +142,10 @@ groups:
           severity: warning
           service: medkernel-mvp
         annotations:
-          summary: MedKernel file descriptor usage is above 80%
-          description: Open file descriptors are approaching the limit. Check for resource leaks.
+          summary: MedKernel 文件描述符使用超过 80%
+          description: 打开的文件描述符接近上限，检查是否存在资源泄漏。
 
-  # ── 业务指标告警 ──────────────────────────────────────────
+  # === 业务层告警 (GA-OPS-01) ===
   - name: medkernel-business
     interval: 30s
     rules:
@@ -147,8 +156,8 @@ groups:
           severity: critical
           service: medkernel-mvp
         annotations:
-          summary: MedKernel AI model gateway is down
-          description: The AI model gateway provider is configured but not ready. AI features are unavailable.
+          summary: MedKernel AI 模型网关不可用
+          description: AI 模型网关已配置但未就绪，AI 功能不可用。
 
       - alert: MedKernelDatabaseProviderDown
         expr: medkernel_provider_configured{provider="database"} == 1 and on(provider) medkernel_provider_ready{provider="database"} == 0
@@ -156,9 +165,10 @@ groups:
         labels:
           severity: critical
           service: medkernel-mvp
+          slo: availability
         annotations:
-          summary: MedKernel database provider is down
-          description: The database provider is configured but not ready. Core data operations are unavailable.
+          summary: MedKernel 数据库 Provider 不可用
+          description: 数据库 Provider 已配置但未就绪，核心数据操作不可用。
 
       - alert: MedKernelGraphProviderDegraded
         expr: medkernel_provider_configured{provider="graph"} == 1 and on(provider) medkernel_provider_ready{provider="graph"} == 0
@@ -167,8 +177,58 @@ groups:
           severity: warning
           service: medkernel-mvp
         annotations:
-          summary: MedKernel graph provider is degraded
-          description: The graph/knowledge base provider is not ready. Graph features are using fallback mode.
+          summary: MedKernel 图谱 Provider 降级
+          description: 图谱/知识库 Provider 未就绪，图谱功能使用降级模式。
+
+      - alert: MedKernelRuleEvalFailRateHigh
+        expr: sum(rate(medkernel_rule_eval_total{result="error"}[5m])) / clamp_min(sum(rate(medkernel_rule_eval_total[5m])), 0.001) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: 规则评估错误率超过 1%
+          description: 规则引擎评估失败比例超过告警阈值，可能影响临床提醒。
+
+      - alert: MedKernelPathwayStuck
+        expr: medkernel_pathway_instance_status{status="stuck"} > 0
+        for: 30m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: 存在停滞的临床路径实例
+          description: 有临床路径实例停滞超过 30 分钟，需要人工干预。
+
+      - alert: MedKernelConfigPublishFailure
+        expr: increase(medkernel_config_publish_total{result="failure"}[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: 配置包发布失败次数过多
+          description: 1 小时内配置包发布失败超过 3 次，可能存在配置冲突或校验问题。
+
+      - alert: MedKernelKnowledgeSyncFailed
+        expr: medkernel_knowledge_sync_status{status="failed"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: 知识同步任务失败
+          description: 知识同步任务失败超过 15 分钟未恢复，影响知识更新。
+
+      - alert: MedKernelAuditLogWriteFailure
+        expr: increase(medkernel_audit_log_write_total{result="failure"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: 审计日志写入失败
+          description: 审计日志写入失败，可能影响合规证据完整性。
 
       - alert: MedKernelHighErrorRate5xx
         expr: sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status=~"5.."}[10m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[10m])), 0.001) > 0.01
@@ -177,13 +237,120 @@ groups:
           severity: warning
           service: medkernel-mvp
         annotations:
-          summary: MedKernel sustained 5xx error rate above 1%
-          description: The 10-minute average 5xx error rate is above 1%, indicating a persistent issue.
+          summary: MedKernel 持续 5xx 错误率超过 1%
+          description: 10 分钟平均 5xx 错误率超过 1%，表明存在持续性问题。
 
-  # ── SLO 违规告警 ──────────────────────────────────────────
+  # === 数据库告警 (GA-OPS-01) ===
+  - name: medkernel-database
+    interval: 30s
+    rules:
+      - alert: MedKernelDbConnectionLeak
+        expr: hikaricp_connections_active{application="medkernel-mvp"} - hikaricp_connections_idle{application="medkernel-mvp"} > hikaricp_connections_max{application="medkernel-mvp"} * 0.9
+        for: 10m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+          slo: saturation
+        annotations:
+          summary: 数据库连接疑似泄漏
+          description: 活跃连接远大于空闲连接且接近最大值，可能存在连接泄漏。
+
+      - alert: MedKernelSlowQuery
+        expr: histogram_quantile(0.99, sum(rate(medkernel_db_query_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+          slo: latency
+        annotations:
+          summary: 数据库慢查询 P99 超过 500ms
+          description: 数据库查询 P99 延迟超过 500ms 阈值。
+
+      - alert: MedKernelDbPoolExhausted
+        expr: hikaricp_connections_pending{application="medkernel-mvp"} > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+          slo: availability
+        annotations:
+          summary: 数据库连接池耗尽
+          description: 有线程等待获取数据库连接，连接池已完全耗尽。
+
+  # === 安全告警 (GA-OPS-01) ===
+  - name: medkernel-security
+    interval: 30s
+    rules:
+      - alert: MedKernelAuthFailureSpike
+        expr: sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",uri=~"/api/auth.*",status="401"}[5m])) > sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",uri=~"/api/auth.*"}[5m])) * 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: 认证失败率异常升高
+          description: 认证接口 401 响应占比超过 50%，可能存在暴力破解或配置错误。
+
+      - alert: MedKernelPermissionDeniedSpike
+        expr: increase(http_server_requests_seconds_count{application="medkernel-mvp",status="403"}[10m]) > 50
+        for: 5m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+        annotations:
+          summary: 权限拒绝次数异常
+          description: 10 分钟内 403 响应超过 50 次，可能存在越权尝试或权限配置问题。
+
+      - alert: MedKernelDataMaskingFailure
+        expr: increase(medkernel_data_masking_total{result="failure"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+        annotations:
+          summary: 数据脱敏处理失败
+          description: 数据脱敏处理失败，可能泄露患者隐私数据。
+
+  # === SLO Burn Rate 告警 (GA-OPS-01) ===
   - name: medkernel-slo
     interval: 60s
     rules:
+      # 可用性 SLO: 99.9%（每月停机 ≤ 43.8 分钟）
+      - alert: MedKernelAvailabilitySLOBurnRateFast
+        expr: (1 - sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status!~"5.."}[1h])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[1h])), 1)) > (1 - 0.999) * 14.4
+        for: 5m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+          slo: availability
+        annotations:
+          summary: 可用性 SLO 快速燃烧率超标
+          description: 过去 1 小时错误率是 SLO 预算的 14.4 倍以上，如持续将很快耗尽月度 SLO 预算。
+
+      - alert: MedKernelAvailabilitySLOBurnRateSlow
+        expr: (1 - sum(rate(http_server_requests_seconds_count{application="medkernel-mvp",status!~"5.."}[6h])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[6h])), 1)) > (1 - 0.999) * 6
+        for: 30m
+        labels:
+          severity: warning
+          service: medkernel-mvp
+          slo: availability
+        annotations:
+          summary: 可用性 SLO 慢速燃烧率超标
+          description: 过去 6 小时错误率是 SLO 预算的 6 倍以上，SLO 预算正在缓慢消耗。
+
+      # 延迟 SLO: P95 < 300ms
+      - alert: MedKernelLatencySLOBurnRateFast
+        expr: (sum(rate(http_server_requests_seconds_bucket{application="medkernel-mvp",le="0.3"}[1h])) / clamp_min(sum(rate(http_server_requests_seconds_count{application="medkernel-mvp"}[1h])), 1)) < 0.95 * 14.4 / 100
+        for: 5m
+        labels:
+          severity: critical
+          service: medkernel-mvp
+          slo: latency
+        annotations:
+          summary: 延迟 SLO 快速燃烧率超标
+          description: 过去 1 小时 P95 > 300ms 的比例远超 SLO 预算允许值。
+
+      # SLO 违规：可用性低于 99.5%
       - alert: MedKernelSLOAvailabilityBreach
         expr: |
           (
@@ -194,11 +361,12 @@ groups:
         labels:
           severity: critical
           service: medkernel-mvp
-          slo: "true"
+          slo: availability
         annotations:
-          summary: MedKernel SLO availability below 99.5%
-          description: "30-minute availability is {{ $value | humanizePercentage }}, below the 99.5% SLO target."
+          summary: MedKernel SLO 可用性低于 99.5%
+          description: "30 分钟可用性为 {{ $value | humanizePercentage }}，低于 99.5% SLO 目标。"
 
+      # SLO 违规：P95 延迟超过 500ms
       - alert: MedKernelSLOLatencyBreach
         expr: |
           histogram_quantile(0.95,
@@ -209,7 +377,7 @@ groups:
         labels:
           severity: warning
           service: medkernel-mvp
-          slo: "true"
+          slo: latency
         annotations:
-          summary: MedKernel SLO P95 latency above 500ms
-          description: "30-minute P95 latency is {{ $value }}s, above the 500ms SLO target."
+          summary: MedKernel SLO P95 延迟超过 500ms
+          description: "30 分钟 P95 延迟为 {{ $value }}s，超过 500ms SLO 目标。"

@@ -43,6 +43,38 @@ probe "/api/health"            "health  "  || FAIL=$((FAIL+1))
 probe "/api/system/providers"  "providers" || FAIL=$((FAIL+1))
 probe "/api/system/org-context" "org-ctx " || FAIL=$((FAIL+1))
 
+# GA-OPS-01: 增强 actuator/health 和 Prometheus 指标检查
+ACTUATOR_URL="${BASE_URL%%/medkernel}:18081/actuator/health"
+log_step "Actuator: $ACTUATOR_URL"
+actuator_resp=$(curl -fsS -m "$TIMEOUT" "$ACTUATOR_URL" 2>&1) || {
+  log_err "actuator/health  失败：$actuator_resp"
+  FAIL=$((FAIL+1))
+}
+if [ -n "$actuator_resp" ]; then
+  if echo "$actuator_resp" | grep -q '"status"[[:space:]]*:[[:space:]]*"UP"'; then
+    log_ok "actuator/health  UP"
+  else
+    log_err "actuator/health  非 UP：$(echo "$actuator_resp" | head -c 200)"
+    FAIL=$((FAIL+1))
+  fi
+fi
+
+# GA-OPS-01: SLO 状态快速检查
+PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9090}"
+if curl -fsS -m 5 "$PROMETHEUS_URL/-/healthy" >/dev/null 2>&1; then
+  log_ok "Prometheus  可达"
+  # 检查是否有活跃的 critical 告警
+  active_alerts=$(curl -fsS -m 5 "$PROMETHEUS_URL/api/v1/alerts?state=firing" 2>/dev/null | grep -c '"severity":"critical"' || true)
+  if [ "$active_alerts" -gt 0 ]; then
+    log_err "SLO: $active_alerts 个 critical 告警正在触发"
+    FAIL=$((FAIL+1))
+  else
+    log_ok "SLO: 无 critical 告警触发"
+  fi
+else
+  log_warn "Prometheus 不可达（跳过 SLO 检查）"
+fi
+
 if [ "$FAIL" -eq 0 ]; then
   log_ok "全部健康检查通过"
   exit 0

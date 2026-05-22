@@ -1,0 +1,225 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "MedKernel SLO 监控看板 (GA-OPS-01)",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "SLO 概览",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "title": "可用性 SLO (99.9%)",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 99.5 },
+              { "color": "yellow", "value": 99.8 },
+              { "color": "green", "value": 99.9 }
+            ]
+          },
+          "unit": "percent",
+          "min": 99,
+          "max": 100
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status!~\"5..\"}[30d])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\"}[30d])), 1) * 100",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        }
+      ]
+    },
+    {
+      "title": "延迟 SLO (P95 < 300ms)",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 200 },
+              { "color": "orange", "value": 300 },
+              { "color": "red", "value": 500 }
+            ]
+          },
+          "unit": "ms",
+          "min": 0,
+          "max": 1000
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"medkernel-mvp\"}[30d])) by (le)) * 1000",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        }
+      ]
+    },
+    {
+      "title": "错误率 SLO (< 0.1%)",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.05 },
+              { "color": "orange", "value": 0.1 },
+              { "color": "red", "value": 0.5 }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status=~\"5..\"}[30d])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\"}[30d])), 1) * 100",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        }
+      ]
+    },
+    {
+      "title": "SLO 预算剩余",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "red", "value": 10 }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "targets": [
+        {
+          "expr": "(1 - (1 - sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status!~\"5..\"}[30d])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\"}[30d])), 1)) / (1 - 0.999)) * 100",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        }
+      ]
+    },
+    {
+      "title": "错误率趋势",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\"}[5m])), 1)",
+          "legendFormat": "5xx 错误率",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        },
+        {
+          "expr": "0.001",
+          "legendFormat": "SLO 阈值 (0.1%)",
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        }
+      ]
+    },
+    {
+      "title": "延迟趋势 (P50/P95/P99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket{application=\"medkernel-mvp\"}[5m])) by (le))",
+          "legendFormat": "P50",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"medkernel-mvp\"}[5m])) by (le))",
+          "legendFormat": "P95",
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{application=\"medkernel-mvp\"}[5m])) by (le))",
+          "legendFormat": "P99",
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        },
+        {
+          "expr": "0.3",
+          "legendFormat": "SLO 阈值 (300ms)",
+          "refId": "D",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+        }
+      ]
+    },
+    {
+      "title": "活跃告警",
+      "type": "alertlist",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 15 },
+      "options": {
+        "groupMode": "default",
+        "groupBy": ["alertname"],
+        "showAnnotations": false,
+        "sortOrder": 1
+      },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["medkernel", "slo", "ga-ops-01"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
+        "hide": 0,
+        "includeAll": false,
+        "label": "数据源",
+        "multi": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "MedKernel SLO Dashboard",
+  "uid": "medkernel-slo",
+  "version": 1
+}

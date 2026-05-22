@@ -37,6 +37,46 @@ if (-not (Probe "/api/health"             "health   ")) { $fail++ }
 if (-not (Probe "/api/system/providers"   "providers")) { $fail++ }
 if (-not (Probe "/api/system/org-context" "org-ctx  ")) { $fail++ }
 
+# GA-OPS-01: 增强 actuator/health 检查
+$actuatorUrl = $Url -replace '/medkernel$', ''
+$actuatorUrl = "$actuatorUrl`:18081/actuator/health"
+Write-Host "==> Actuator: $actuatorUrl" -ForegroundColor Cyan
+try {
+    $actuatorResp = Invoke-RestMethod -Uri $actuatorUrl -Method Get -TimeoutSec $TimeoutSec
+    if ($actuatorResp.status -eq "UP") {
+        Write-Host "[OK]   actuator/health  UP" -ForegroundColor Green
+    } else {
+        Write-Host "[FAIL] actuator/health  status=$($actuatorResp.status)" -ForegroundColor Red
+        $fail++
+    }
+} catch {
+    Write-Host "[FAIL] actuator/health  $($_.Exception.Message)" -ForegroundColor Red
+    $fail++
+}
+
+# GA-OPS-01: SLO 状态快速检查
+$prometheusUrl = if ($env:PROMETHEUS_URL) { $env:PROMETHEUS_URL } else { "http://localhost:9090" }
+try {
+    $null = Invoke-RestMethod -Uri "$prometheusUrl/-/healthy" -Method Get -TimeoutSec 5
+    Write-Host "[OK]   Prometheus  可达" -ForegroundColor Green
+
+    # 检查是否有活跃的 critical 告警
+    try {
+        $alertsResp = Invoke-RestMethod -Uri "$prometheusUrl/api/v1/alerts?state=firing" -Method Get -TimeoutSec 5
+        $criticalAlerts = $alertsResp.data.alerts | Where-Object { $_.labels.severity -eq "critical" }
+        if ($criticalAlerts -and $criticalAlerts.Count -gt 0) {
+            Write-Host "[FAIL] SLO: $($criticalAlerts.Count) 个 critical 告警正在触发" -ForegroundColor Red
+            $fail++
+        } else {
+            Write-Host "[OK]   SLO: 无 critical 告警触发" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "[WARN] 无法查询 Prometheus 告警状态" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "[WARN] Prometheus 不可达（跳过 SLO 检查）" -ForegroundColor Yellow
+}
+
 if ($fail -eq 0) {
     Write-Host "[OK]   全部健康检查通过" -ForegroundColor Green
     exit 0
