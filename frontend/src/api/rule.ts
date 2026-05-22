@@ -144,7 +144,7 @@ function buildQuery(params: Record<string, unknown>): string {
 
 /** 规则列表（后端按 OrganizationContextService 解析 Header 自动过滤组织范围） */
 export async function listRules(filters?: RuleListFilters): Promise<RuleDefinition[]> {
-  return get<RuleDefinition[]>(`/rules${buildQuery(filters ?? {})}`);
+  return get<RuleDefinition[]>(`/rules${buildQuery({ ...(filters ?? {}) })}`);
 }
 
 /** 单条规则详情（可附 versionNo 拿历史版本） */

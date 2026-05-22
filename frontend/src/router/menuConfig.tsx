@@ -3,15 +3,20 @@ import {
   AppstoreOutlined,
   AuditOutlined,
   BellOutlined,
+  ClusterOutlined,
   ContainerOutlined,
+  DatabaseOutlined,
   DesktopOutlined,
   ExperimentOutlined,
   FileSearchOutlined,
+  IdcardOutlined,
   LineChartOutlined,
   MedicineBoxOutlined,
   NodeIndexOutlined,
   ReadOutlined,
+  RobotOutlined,
   SafetyCertificateOutlined,
+  ShopOutlined,
   ToolOutlined,
   UnorderedListOutlined,
   UserSwitchOutlined,
@@ -117,10 +122,22 @@ export const menuSections: MenuSection[] = [
         path: "/rule/definitions",
         pr: "PR-FINAL-11",
       },
+      {
+        key: "ai-workflows",
+        label: "AI 工作流引擎",
+        icon: <RobotOutlined />,
+        path: "/ai-workflows",
+        pr: "PR-FINAL-13",
+      },
+      {
+        key: "adapter-hub",
+        label: "适配器中心",
+        icon: <ClusterOutlined />,
+        path: "/adapter/hub",
+        pr: "PR-FINAL-12",
+      },
       // 以下入口待实装（参考 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md），实装后从下方移到上方：
       //   key: graph-explore      path: /graph/explore      PR-V0.4
-      //   key: adapter-hub        path: /adapter/hub        PR-FINAL-12
-      //   key: ai-workflows       path: /ai-workflows       PR-FINAL-13 （旧 dify-workflows）
     ],
   },
 
@@ -191,10 +208,22 @@ export const menuSections: MenuSection[] = [
         icon: <UserSwitchOutlined />,
         path: "/security/identity-binding",
       },
+      {
+        key: "tenant-onboarding",
+        label: "租户开通向导",
+        icon: <ShopOutlined />,
+        path: "/tenant/onboarding",
+        pr: "PR-FINAL-10",
+      },
+      {
+        key: "mpi",
+        label: "患者主索引",
+        icon: <IdcardOutlined />,
+        path: "/mpi/patients",
+        pr: "PR-FINAL-07",
+      },
       // 以下入口待实装：
-      //   key: mpi                path: /mpi/patients        PR-FINAL-07
       //   key: admin-users        path: /admin/users         PR-FINAL-08
-      //   key: tenant-onboarding  path: /tenant/onboarding   PR-FINAL-10
     ],
   },
 
@@ -221,8 +250,13 @@ export const menuSections: MenuSection[] = [
         icon: <ToolOutlined />,
         path: "/notifications/settings",
       },
-      // 以下入口待实装：
-      //   key: admin-audit        path: /admin/audit         PR-FINAL-09
+      {
+        key: "admin-audit",
+        label: "审计日志",
+        icon: <DatabaseOutlined />,
+        path: "/admin/audit",
+        pr: "PR-FINAL-09",
+      },
     ],
   },
 ];

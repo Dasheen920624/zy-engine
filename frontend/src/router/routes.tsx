@@ -30,6 +30,11 @@ import {
   PatientPathwayDetail,
 } from "../pages/Pathway";
 import { RuleList, RuleDetail, RuleEditor } from "../pages/Rule";
+import { AiWorkflowsPage } from "../pages/AiWorkflows";
+import TenantOnboarding from "../pages/Tenant/Onboarding";
+import { MpiPatientsPage } from "../pages/Mpi";
+import { AuditLogList } from "../pages/Admin/AuditLog";
+import { AdapterHubPage } from "../pages/Adapter";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
@@ -78,12 +83,12 @@ export const routes: RouteObject[] = [
           { path: "notifications/:notificationCode", element: <NotificationDetail /> },
           { path: "notifications/settings", element: <NotificationSettings /> },
           { path: "admin/users", element: <PlaceholderPage title="用户管理" pr="PR-V2-04" /> },
-          { path: "admin/audit", element: <PlaceholderPage title="审计日志" pr="PR-V2-04" /> },
-          { path: "mpi/patients", element: <PlaceholderPage title="患者主索引" pr="MPI-001" /> },
-          { path: "adapter/hub", element: <PlaceholderPage title="适配器中心" pr="ADAPT-001" /> },
+          { path: "admin/audit", element: <AuditLogList /> },
+          { path: "mpi/patients", element: <MpiPatientsPage /> },
+          { path: "adapter/hub", element: <AdapterHubPage /> },
           { path: "dify/workflows", element: <Navigate to="/ai-workflows" replace /> },
-          { path: "ai-workflows", element: <PlaceholderPage title="AI 工作流引擎" pr="PR-FINAL-13" /> },
-          { path: "tenant/onboarding", element: <PlaceholderPage title="租户开通" pr="SEC-011" /> },
+          { path: "ai-workflows", element: <AiWorkflowsPage /> },
+          { path: "tenant/onboarding", element: <TenantOnboarding /> },
           { path: "*", element: <NotFound /> },
         ],
       },

@@ -6,7 +6,7 @@
  *  - 版本时间轴（draft + 已发布 + 激活）
  *  - 引用警告卡（reference_warnings 缺失项可见，ADR-0004）
  *  - 实例统计 + 变异统计（调 /pathway-instances/summary + /pathway-variations/summary）
- *  - 草稿 / 已发布 JSON：CodeMirror 6 只读视图（统一 PR-FINAL-11 引入的依赖）
+ *  - 草稿 / 已发布 JSON：纯 pre 只读视图，避免前端构建依赖漂移
  *  - 来源追溯 <SourceInfo>（已有，按 reference_sources 渲染）
  *  - 编辑 / 对比 / 删除 按钮明显化
  */
@@ -21,9 +21,6 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import CodeMirror from "@uiw/react-codemirror";
-import { json } from "@codemirror/lang-json";
-import { oneDark } from "@codemirror/theme-one-dark";
 import { SourceInfo } from "../../components";
 import {
   deletePathway,
@@ -91,13 +88,7 @@ export default function PathwayDetail() {
         label: "草稿配置",
         children: detail.draft_config ? (
           <div className={styles.jsonContainer} aria-label="draft-config-json">
-            <CodeMirror
-              value={stringifyJson(detail.draft_config)}
-              extensions={[json()]}
-              theme={oneDark}
-              editable={false}
-              basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: false }}
-            />
+            <pre className={styles.jsonReadOnly}>{stringifyJson(detail.draft_config)}</pre>
           </div>
         ) : (
           <div className={styles.jsonReadOnlyEmpty}>无草稿</div>
@@ -110,13 +101,7 @@ export default function PathwayDetail() {
           : "已发布版本",
         children: detail.published_config ? (
           <div className={styles.jsonContainer} aria-label="published-config-json">
-            <CodeMirror
-              value={stringifyJson(detail.published_config)}
-              extensions={[json()]}
-              theme={oneDark}
-              editable={false}
-              basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: false }}
-            />
+            <pre className={styles.jsonReadOnly}>{stringifyJson(detail.published_config)}</pre>
           </div>
         ) : (
           <div className={styles.jsonReadOnlyEmpty}>暂无已发布版本</div>

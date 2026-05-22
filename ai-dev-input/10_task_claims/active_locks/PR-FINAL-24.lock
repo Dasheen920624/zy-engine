@@ -1,0 +1,7 @@
+task_id: PR-FINAL-24
+claim_id: PR-FINAL-24-S02
+owner: claude-opus-4-7@pr-final-24-cherry-pick
+branch: claude/pr-final-24-cherry-pick
+git_base_commit: 7b41fe6
+created_at: 2026-05-22T07:15+08:00
+last_heartbeat: 2026-05-22T07:15+08:00
