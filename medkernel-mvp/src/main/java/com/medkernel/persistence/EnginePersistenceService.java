@@ -864,7 +864,9 @@ public class EnginePersistenceService extends PersistenceRepositorySupport {
                 "/db/local/sec_menu_permission_ddl.sql",
                 "/db/local/prov_release_check_ddl.sql",
                 "/db/local/qa_acceptance_ddl.sql",
-                "/db/local/ops_deployment_ddl.sql"
+                "/db/local/ops_deployment_ddl.sql",
+                "/db/local/config_package_rollback_ddl.sql",
+                "/db/local/impl_onboarding_ddl.sql"
         };
         List<String> statements = new ArrayList<String>();
         for (String resource : resources) {
