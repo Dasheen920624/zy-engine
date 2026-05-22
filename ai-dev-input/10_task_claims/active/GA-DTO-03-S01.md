@@ -1,4 +1,4 @@
-# AI Task Claim
+﻿# AI Task Claim
 
 claim_id: GA-DTO-03-S01
 task_id: GA-DTO-03
@@ -7,7 +7,7 @@ slice: S01
 title: 质控/CDSS Controller DTO 化
 owner: TraeAI-5
 role: senior
-status: ACTIVE
+status: DONE
 branch: develop
 target_base_branch: develop
 git_base_commit: 0291183
