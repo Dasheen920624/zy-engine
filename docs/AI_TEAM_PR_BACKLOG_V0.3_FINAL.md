@@ -42,7 +42,7 @@
 | **PR-FINAL-15b** | 剩余 24 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`6938ca5`) | 架构师 | 5 天 |
 | **PR-FINAL-17** | 拆 EnginePersistenceService（2175 行）| 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`ea8f5f9`) | 架构师 | 5 天 |
-| **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | 🔵 IN_PROGRESS · Codex-GPT5 · 2026-05-22 | 架构师 | 14 天 |
+| **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`PENDING_FINAL_COMMIT`) | 架构师 | 14 天 |
 | **PR-FINAL-19** | 抽取剩余 ~430 处 inline → CSS Modules | 3 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-20** | springdoc-openapi + 前端 types 自动生成 | 3 | ✅ DONE · Claude-Sonnet-4.6 · 2026-05-22，springdoc-openapi-ui 1.7.0 + @Tag/@Operation 全覆盖 53 Controller 403 端点 + openapi-typescript | 架构师 | 3 天 |
 | **PR-FINAL-21** | E2E 6 剧本 fixture + Playwright | 3 | 🟡 TODO | 高级 | 5 天 |
@@ -519,6 +519,14 @@ private Connection connection() throws SQLException {
 ### PR-FINAL-18 · 拆 RuleService / PathwayService / SecurityPersistence 等 5 个超长（架构师，14 天）
 
 **任务**：参见 [`PRODUCT_ARCHITECTURE_FINAL.md §4`](PRODUCT_ARCHITECTURE_FINAL.md#4-数据领域聚合拆分超长-service)
+
+**完成摘要（2026-05-22 · Codex-GPT5）**：
+- `SecurityPersistenceService` 收口为兼容门面，拆出 `UserRepository`、`PlatformUserRepository`、`RoleRepository`、`IdentityProviderRepository`、`SecurityAuditRepository` 与共享 support/mapper。
+- `RuleService` 拆出 `RuleExecutionLogService`，承接执行日志内存环、查询和聚合。
+- `KnowledgePackageService` 拆出 `KnowledgePackageRepository`，承接 `knowledge_package` raw JDBC。
+- `GraphService` 拆出 `GraphQueryService`、`GraphVersionService` 与查询结果类型，保留原 public API 与审计行为。
+- `PathwayService` 拆出 `PathwayTemplateService`，承接路径模板版本 diff。
+- 无 schema/frontend 变更；新增 Java 文件最大 466 行；后端 260 测试 PASS；`verify-pr` 待最终状态同步后记录。
 
 ### PR-FINAL-19 · 抽取剩余 ~430 处 inline → CSS Modules（高级，5 天）
 
