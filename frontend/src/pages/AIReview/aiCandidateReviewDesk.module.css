@@ -1,0 +1,67 @@
+/* PR-FINAL-19b: AiCandidateReviewDesk inline style 抽取（25 处 → CSS Modules） */
+
+.page {
+  padding: 24px;
+}
+
+.headerRow {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titleZeroMargin {
+  margin: 0;
+}
+
+.statsRow {
+  margin-bottom: 24px;
+}
+
+.filterCard {
+  margin-bottom: 16px;
+}
+
+.filterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selectMedium {
+  width: 130px;
+}
+
+.selectSmall {
+  width: 110px;
+}
+
+.formField {
+  margin-bottom: 12px;
+}
+
+.contentBox {
+  background: var(--mk-bg-muted);
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 4px;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.contentBoxShort {
+  background: var(--mk-bg-muted);
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 4px;
+  white-space: pre-wrap;
+}
+
+.warningBox {
+  background: var(--mk-warning-soft);
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
