@@ -146,7 +146,7 @@ jobs:
           Write-Host ""
           Write-Host "[PASS] AI 协作门禁通过 — 无 orphan lock、无重复 task、无 write_scope 重叠" -ForegroundColor Green
 
-  # GA-QA-02: 前端构建、测试和覆盖率门禁
+  # GA-QA-02: 前端构建、测试与覆盖率门禁
   # Node 20 + npm ci + lint + typecheck + test + coverage + build
   # 覆盖率不足 60% 行覆盖率时构建失败，确保 v1.0 GA 质量基线。
   frontend-build-test:

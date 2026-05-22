@@ -46,23 +46,28 @@ export default defineConfig({
     css: false,
     coverage: {
       provider: "v8",
-      reporter: ["text", "lcov", "html"],
+      reporter: ["text", "lcov", "html", "json-summary"],
       reportsDirectory: "./coverage",
-      // v1.0 GA 目标：行覆盖率 60%，分支 50%，函数 50%
+      // v1.0 GA 目标：行覆盖率 >= 60%
       thresholds: {
         lines: 60,
+        functions: 60,
         branches: 50,
-        functions: 50,
+        statements: 60,
       },
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
-        "src/**/*.d.ts",
         "src/**/*.test.{ts,tsx}",
         "src/**/*.spec.{ts,tsx}",
+        "src/**/__tests__/**",
+        "src/**/mocks/**",
         "src/test/**",
-        "src/api/generated-types.ts",
+        "src/**/*.d.ts",
         "src/main.tsx",
         "src/vite-env.d.ts",
+        "src/api/generated-types.ts",
+        "src/styles/**",
+        "src/theme/**",
         "src/**/*.module.css",
         "src/**/*.stories.{ts,tsx}",
       ],
