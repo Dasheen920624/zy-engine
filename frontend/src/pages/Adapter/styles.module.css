@@ -1,0 +1,194 @@
+/*
+ * /adapter/hub 适配器中心样式（PR-FINAL-12）。
+ * 100% var(--mk-*) token，零硬编码颜色。Tab 切换 + 子列表共享。
+ */
+
+.pageHeader {
+  margin-bottom: 16px;
+}
+
+.pageTitle {
+  margin-bottom: 4px !important;
+  color: var(--mk-text-primary);
+}
+
+.pageHint {
+  font-size: 12px;
+  color: var(--mk-text-tertiary);
+}
+
+.section {
+  background: var(--mk-surface);
+  border: 1px solid var(--mk-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mk-text-primary);
+  margin-bottom: 12px;
+}
+
+.sectionHint {
+  font-size: 12px;
+  color: var(--mk-text-tertiary);
+  margin-bottom: 12px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.toolbarItem {
+  min-width: 180px;
+  flex: 1 1 180px;
+}
+
+.toolbarItem :global(.ant-select) {
+  width: 100%;
+}
+
+.toolbarItemLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--mk-text-secondary);
+  margin-bottom: 4px;
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.tableSection {
+  margin-top: 12px;
+}
+
+/* 状态徽标 */
+.enabledTag {
+  color: var(--mk-success);
+}
+
+.disabledTag {
+  color: var(--mk-text-tertiary);
+}
+
+.riskCritical {
+  color: var(--mk-danger);
+  font-weight: 600;
+}
+
+.riskHigh {
+  color: var(--mk-warning, var(--mk-danger));
+  font-weight: 600;
+}
+
+.riskMedium {
+  color: var(--mk-text-primary);
+}
+
+.riskLow {
+  color: var(--mk-text-tertiary);
+}
+
+/* endpoint_url 单元：单行 + ellipsis */
+.endpointCell {
+  font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  color: var(--mk-text-secondary);
+  max-width: 320px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* AdapterDetailDrawer */
+.detailSection {
+  margin-bottom: 16px;
+}
+
+.detailSectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mk-text-primary);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--mk-border);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px 16px;
+  font-size: 13px;
+}
+
+.detailLabel {
+  color: var(--mk-text-secondary);
+}
+
+.detailValue {
+  color: var(--mk-text-primary);
+  word-break: break-all;
+}
+
+.detailMissing {
+  color: var(--mk-text-tertiary);
+  font-style: italic;
+}
+
+.payloadBlock {
+  background: var(--mk-surface-subtle, var(--mk-surface));
+  border: 1px solid var(--mk-border);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  color: var(--mk-text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 280px;
+  overflow: auto;
+}
+
+/* Modal 编辑表单 */
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editFormRow {
+  display: flex;
+  gap: 12px;
+}
+
+.editFormRow > * {
+  flex: 1;
+}
+
+.execResult {
+  background: var(--mk-surface-subtle, var(--mk-surface));
+  border: 1px solid var(--mk-border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+  font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  color: var(--mk-text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 220px;
+  overflow: auto;
+}
