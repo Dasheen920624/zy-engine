@@ -1,7 +1,8 @@
-param(
+﻿param(
   [string]$TaskId = "",
   [string]$ClaimId = "",
-  [switch]$Strict
+  [switch]$Strict,
+  [switch]$RequireClean
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,6 +24,64 @@ function Get-MetadataField($Content, $Name) {
     return $match.Groups[1].Value.Trim()
   }
   return ""
+}
+
+function Get-SectionCodeBlock($Content, $Title) {
+  $pattern = '(?ms)^##\s+' + [regex]::Escape($Title) + '\s*```(?:text)?\s*(.*?)\s*```'
+  $match = [regex]::Match($Content, $pattern)
+  if ($match.Success) {
+    return $match.Groups[1].Value.Trim()
+  }
+  return ""
+}
+
+function Normalize-ScopeList($Raw) {
+  if ([string]::IsNullOrWhiteSpace($Raw)) {
+    return @()
+  }
+  $result = New-Object System.Collections.Generic.List[string]
+  $items = $Raw -split '[,;\r\n]+'
+  foreach ($item in $items) {
+    $scope = $item.Replace([char]92, [char]47).Trim()
+    if ([string]::IsNullOrWhiteSpace($scope)) {
+      continue
+    }
+    if ($scope -match '^\s*#' -or $scope -eq '-' -or $scope -eq 'N/A') {
+      continue
+    }
+    if ($scope.StartsWith('./')) {
+      $scope = $scope.Substring(2)
+    }
+    while ($scope.EndsWith('/')) {
+      $scope = $scope.Substring(0, $scope.Length - 1)
+    }
+    if (-not $result.Contains($scope)) {
+      [void]$result.Add($scope)
+    }
+  }
+  return $result.ToArray()
+}
+
+function Test-ScopeOverlap($A, $B) {
+  if ([string]::IsNullOrWhiteSpace($A) -or [string]::IsNullOrWhiteSpace($B)) {
+    return $false
+  }
+  $left = $A.Replace([char]92, [char]47).Trim()
+  $right = $B.Replace([char]92, [char]47).Trim()
+  while ($left.EndsWith('/')) {
+    $left = $left.Substring(0, $left.Length - 1)
+  }
+  while ($right.EndsWith('/')) {
+    $right = $right.Substring(0, $right.Length - 1)
+  }
+  if ($left -eq $right) {
+    return $true
+  }
+  $leftPrefix = $left.TrimEnd("*")
+  $rightPrefix = $right.TrimEnd("*")
+  $leftWithSlash = $leftPrefix + "/"
+  $rightWithSlash = $rightPrefix + "/"
+  return $leftPrefix.StartsWith($rightWithSlash) -or $rightPrefix.StartsWith($leftWithSlash)
 }
 
 $collaborationIssues = @()
@@ -48,6 +107,8 @@ if ($activeClaims.Count -eq 0) {
     $activeClaimId = Get-MetadataField $content "claim_id"
     $heartbeat = Get-MetadataField $content "last_heartbeat"
     $writeScope = Get-MetadataField $content "write_scope"
+    $writeScopeBlock = Get-SectionCodeBlock $content "Write Scope"
+    $writeScopeItems = @(Normalize-ScopeList (($writeScope, $writeScopeBlock) -join "`n"))
     $taskLockPath = Get-MetadataField $content "task_lock_path"
     $requiredFields = @(
       "claim_id",
@@ -71,7 +132,7 @@ if ($activeClaims.Count -eq 0) {
       $collaborationIssues += $issue
       Write-Output $issue
     }
-    if ([string]::IsNullOrWhiteSpace($writeScope)) {
+    if ($writeScopeItems.Count -eq 0) {
       $issue = ("claim_missing_write_scope file={0}" -f $claim.Name)
       $collaborationIssues += $issue
       Write-Output $issue
@@ -117,7 +178,7 @@ if ($activeClaims.Count -eq 0) {
       ClaimId = $activeClaimId
       TaskId = $claimTask
       Status = $claimStatus
-      WriteScope = $writeScope
+      WriteScope = $writeScopeItems
     }
   }
 
@@ -130,6 +191,20 @@ if ($activeClaims.Count -eq 0) {
     $issue = ("duplicate_active_task_id task_id={0} files={1}" -f $group.Name, $files)
     $collaborationIssues += $issue
     Write-Output $issue
+  }
+
+  for ($i = 0; $i -lt $claimRecords.Count; $i++) {
+    for ($j = $i + 1; $j -lt $claimRecords.Count; $j++) {
+      foreach ($leftScope in @($claimRecords[$i].WriteScope)) {
+        foreach ($rightScope in @($claimRecords[$j].WriteScope)) {
+          if (Test-ScopeOverlap $leftScope $rightScope) {
+            $issue = ("write_scope_overlap left={0}:{1} right={2}:{3}" -f $claimRecords[$i].File, $leftScope, $claimRecords[$j].File, $rightScope)
+            $collaborationIssues += $issue
+            Write-Output $issue
+          }
+        }
+      }
+    }
   }
 }
 
@@ -246,7 +321,7 @@ if (![string]::IsNullOrWhiteSpace($TaskId)) {
 }
 
 $dirty = git status --porcelain
-if ($Strict -and $dirty) {
+if ($RequireClean -and $dirty) {
   throw "working_tree_not_clean"
 }
 

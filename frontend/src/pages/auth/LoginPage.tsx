@@ -2,30 +2,24 @@ import { useEffect, useState } from "react";
 import {
   BankOutlined,
   CloudServerOutlined,
-  LockOutlined,
-  MobileOutlined,
   SafetyCertificateOutlined,
-  UserOutlined,
 } from "@ant-design/icons";
-import { Alert, App, Card, Spin, Tabs, Typography } from "antd";
+import { Alert, App, Card, Collapse, Spin, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import { login } from "../../api/auth";
 import {
   handleSsoCallback,
   initiateSso,
-  ldapAuthenticate,
   listSsoProviders,
   type SsoProvider,
 } from "../../api/sso";
 import { setAuth } from "../../store/auth";
 import { ComplianceFooter } from "./ComplianceFooter";
 import { DemoHint } from "./DemoHint";
-import { isDemoProfile, loginRuntimeConfig, resolveInitialTab, type LoginTabKey } from "./config";
-import { LdapTab } from "./tabs/LdapTab";
+import { isDemoProfile, loginRuntimeConfig, type LoginTabKey } from "./config";
 import { PasswordTab } from "./tabs/PasswordTab";
-import { SmsTab } from "./tabs/SmsTab";
 import { SsoTab } from "./tabs/SsoTab";
-import type { LdapLoginValues, PasswordLoginValues, SmsLoginValues } from "./types";
+import type { PasswordLoginValues } from "./types";
 import styles from "./styles.module.css";
 
 const { Title, Text } = Typography;
@@ -34,19 +28,9 @@ interface LoginPageProps {
   initialTab?: LoginTabKey;
 }
 
-function findProvider(providers: SsoProvider[], providerId?: number) {
-  if (providerId) {
-    return providers.find((provider) => provider.id === providerId);
-  }
-  return providers.find((provider) => provider.providerType.toUpperCase().includes("LDAP"));
-}
-
 export default function LoginPage({ initialTab }: LoginPageProps) {
   const navigate = useNavigate();
   const { message } = App.useApp();
-  const [activeTab, setActiveTab] = useState<LoginTabKey>(() =>
-    resolveInitialTab(initialTab, window.location.search),
-  );
   const [loginLoading, setLoginLoading] = useState(false);
   const [providerLoading, setProviderLoading] = useState(true);
   const [providers, setProviders] = useState<SsoProvider[]>([]);
@@ -88,7 +72,6 @@ export default function LoginPage({ initialTab }: LoginPageProps) {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "SSO 登录失败";
         setProviderError(msg);
-        setActiveTab("sso");
       } finally {
         setCallbackProcessing(false);
       }
@@ -117,14 +100,6 @@ export default function LoginPage({ initialTab }: LoginPageProps) {
     }
   };
 
-  const handleSmsLogin = async (values: SmsLoginValues) => {
-    if (!isDemoProfile() || values.code !== "123456") {
-      message.warning("短信登录通道待后端合规接口接入");
-      return;
-    }
-    await handlePasswordLogin({ username: "zhao01", password: "demo123" });
-  };
-
   const handleSsoInitiate = async (provider: SsoProvider) => {
     setLoginLoading(true);
     try {
@@ -138,83 +113,7 @@ export default function LoginPage({ initialTab }: LoginPageProps) {
       setLoginLoading(false);
     }
   };
-
-  const handleLdapLogin = async (values: LdapLoginValues) => {
-    const provider = findProvider(providers, values.providerId);
-    if (!provider) {
-      message.error("未找到可用的 LDAP 身份源");
-      return;
-    }
-    setLoginLoading(true);
-    try {
-      const result = await ldapAuthenticate(provider.id, values.username, values.password);
-      setAuth(result.token, result.user);
-      message.success("LDAP 登录成功");
-      navigate("/dashboard", { replace: true });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "LDAP 登录失败";
-      message.error(msg);
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  const items = [
-    {
-      key: "sms",
-      label: (
-        <span>
-          <MobileOutlined />
-          手机短信
-        </span>
-      ),
-      children: <SmsTab loading={loginLoading} onSubmit={handleSmsLogin} />,
-    },
-    {
-      key: "password",
-      label: (
-        <span>
-          <UserOutlined />
-          账号密码
-        </span>
-      ),
-      children: (
-        <PasswordTab
-          failedAttempts={failedAttempts}
-          loading={loginLoading}
-          onSubmit={handlePasswordLogin}
-        />
-      ),
-    },
-    {
-      key: "sso",
-      label: (
-        <span>
-          <CloudServerOutlined />
-          SSO
-        </span>
-      ),
-      children: (
-        <SsoTab
-          providers={providers}
-          loading={providerLoading}
-          error={providerError}
-          onInitiate={handleSsoInitiate}
-          onUseLdap={() => setActiveTab("ldap")}
-        />
-      ),
-    },
-    {
-      key: "ldap",
-      label: (
-        <span>
-          <LockOutlined />
-          域账号
-        </span>
-      ),
-      children: <LdapTab providers={providers} loading={loginLoading} onSubmit={handleLdapLogin} />,
-    },
-  ];
+  const openSso = initialTab === "sso";
 
   if (callbackProcessing) {
     return (
@@ -238,19 +137,42 @@ export default function LoginPage({ initialTab }: LoginPageProps) {
           <Text>MedKernel · 管理工作台</Text>
           <div className={styles.securityStrip}>
             <SafetyCertificateOutlined aria-hidden="true" />
-            <span>{loginRuntimeConfig.cryptoSuite} / MFA / 审计留痕</span>
+            <span>{loginRuntimeConfig.cryptoSuite} / 统一认证 / 审计留痕</span>
           </div>
         </div>
         <Card className={styles.loginCard}>
           <div className={styles.cardHeader}>
             <Title level={2}>登录 MedKernel</Title>
-            <Text type="secondary">默认手机号短信，支持院内统一身份认证</Text>
+            <Text type="secondary">使用医院工号或管理员账号登录</Text>
           </div>
-          <Tabs
-            activeKey={activeTab}
-            onChange={(key) => setActiveTab(key as LoginTabKey)}
-            items={items}
-            className={styles.loginTabs}
+          <PasswordTab
+            failedAttempts={failedAttempts}
+            loading={loginLoading}
+            onSubmit={handlePasswordLogin}
+          />
+          <Collapse
+            className={styles.ssoCollapse}
+            defaultActiveKey={openSso ? ["sso"] : []}
+            ghost
+            items={[
+              {
+                key: "sso",
+                label: (
+                  <span className={styles.ssoCollapseLabel}>
+                    <CloudServerOutlined />
+                    医院统一身份认证
+                  </span>
+                ),
+                children: (
+                  <SsoTab
+                    providers={providers}
+                    loading={providerLoading}
+                    error={providerError}
+                    onInitiate={handleSsoInitiate}
+                  />
+                ),
+              },
+            ]}
           />
           <Alert
             className={styles.timeoutAlert}

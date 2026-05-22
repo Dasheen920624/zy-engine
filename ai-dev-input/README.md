@@ -13,11 +13,11 @@
 
 ```
 1. 项目根 README.md           — 项目概览
-2. docs/README.md             — 文档体系导航（V2 金本位）
-3. docs/01_产品事实源.md       — 产品全貌（15 分钟）
-4. docs/05_AI实施手册.md       — 你要做的 PR 在这里
-5. docs/engineering/02_任务台账.md  — 找到任务编号
-6. docs/engineering/00_总入口与AI接手导航.md  — 硬门禁与 DoD
+2. docs/README.md             — 文档体系导航
+3. docs/PRODUCT_SIMPLIFICATION_V1_GA.md — v1.0 GA 产品主线与菜单收口
+4. docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md — 下一版本唯一领单入口
+5. docs/engineering/00_总入口与AI接手导航.md  — 硬门禁与 DoD
+6. docs/engineering/02_任务台账.md  — 确认任务状态
 ```
 
 ---
@@ -50,7 +50,7 @@
 2. git pull --ff-only origin develop
 3. git status -sb 确认工作树干净
 4. .\medkernel-mvp\scripts\detect-db-env.ps1 -BootstrapLocal
-5. 从 docs/engineering/02_任务台账.md "下一批可领" 段选任务
+5. 从 docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md 按 batch 选任务
 6. 在 10_task_claims/active/<claim_id>.md 和 10_task_claims/active_locks/<task_id>.lock 创建并推送任务认领
 7. 开发：同步修改后端代码、测试、样例、API 示例、文档
 8. 跑测试：.\medkernel-mvp\scripts\run-tests.ps1
@@ -68,15 +68,15 @@ AI 禁止在 `main` 领任务、开发、提交或直接合并业务 PR；所有
 
 ## 当前优先任务
 
-以 [docs/05_AI实施手册.md](../docs/05_AI实施手册.md) 为准。下一批 PR 简表：
+下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**。以 [docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md](../docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md) 为准，先完成 Batch 0 开工闸门，再最大并行推进。
 
-| PR | 任务编号 | 内容 | 依赖 |
-|---|---|---|---|
-| PR-01 | DOC-V2-TOKENS | 设计 Token 落地 | 无 |
-| PR-02 | FE-COMP-001 | 公共组件库 v1（C01-C05） | PR-01 |
-| PR-03 | FE-LAYOUT-001 | 路由 + 顶级菜单 + AppLayout | PR-01 |
-| PR-04 | SEC-001 | 用户体系最小可用 | ORG-003 ✅ |
-| PR-05 至 PR-12 | 业务页面 | 解锁 6 大剧本演示 | PR-02 至 PR-04 |
+| Batch | 目标 | 说明 |
+|---|---|---|
+| Batch 0 | 开工闸门 | 并发机制、产品入口、release 闸门 |
+| Batch 1 | 客户可见完整度 | 登录、菜单、首页、6 大剧本、OpenAPI、覆盖率 |
+| Batch 2 | 安全合规与生产运维 | 等保、国密、个保法、监控、数据库 smoke |
+| Batch 3 | 商业化交付材料 | 用户手册、运维手册、培训、合同/SLA |
+| Batch 4 | 技术债收口 | DTO 化、超长文件拆分、性能压测 |
 
 ---
 

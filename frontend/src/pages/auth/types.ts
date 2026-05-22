@@ -2,7 +2,6 @@ export interface PasswordLoginValues {
   username: string;
   password: string;
   captcha?: string;
-  mfaMethod?: string;
 }
 
 export interface SmsLoginValues {

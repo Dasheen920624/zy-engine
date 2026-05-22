@@ -36,12 +36,12 @@ import styles from "./PackageList.module.css";
 const { Text } = Typography;
 
 const ASSET_TYPE_OPTIONS: { value: AssetType; label: string }[] = [
-  { value: "RULE", label: "规则" },
-  { value: "PATH", label: "路径" },
-  { value: "GRAPH", label: "图谱" },
-  { value: "DIFY", label: "Dify" },
-  { value: "TERMINOLOGY", label: "术语" },
-  { value: "ADAPTER", label: "适配器" },
+  { value: "RULE", label: "规则配置" },
+  { value: "PATH", label: "路径配置" },
+  { value: "GRAPH", label: "医学图谱" },
+  { value: "DIFY", label: "AI 工作流" },
+  { value: "TERMINOLOGY", label: "字典映射" },
+  { value: "ADAPTER", label: "系统接入" },
   { value: "MIXED", label: "混合" },
 ];
 
@@ -217,7 +217,7 @@ export default function PackageList({
         <div className={styles.filterBar}>
           <div className={styles.filterField}>
             <Text type="secondary" className={styles.filterLabel}>
-              资产类型
+              配置内容
             </Text>
             <Select
               allowClear
@@ -263,7 +263,7 @@ export default function PackageList({
             </Text>
             <Input
               size="small"
-              placeholder="包编码 / 名称"
+              placeholder="搜索配置包"
               prefix={<SearchOutlined className={styles.iconMuted} />}
               value={filters.keyword}
               onChange={(e) => onFilterChange({ keyword: e.target.value })}
@@ -287,7 +287,7 @@ export default function PackageList({
               icon={<ImportOutlined />}
               onClick={() => navigate("/config/packages/import")}
             >
-              导入
+              导入配置
             </Button>
           </Space>
         </div>
@@ -309,7 +309,7 @@ export default function PackageList({
       <Card
         title={
           <span>
-            配置包列表 · <strong>{filteredPackages.length}</strong> 条
+            待处理配置包 · <strong>{filteredPackages.length}</strong> 条
           </span>
         }
         size="small"

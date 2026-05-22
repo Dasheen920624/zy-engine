@@ -1,4 +1,4 @@
-# 接手前自检脚本：AI 领任务前必须跑通此脚本才能创建 active claim。
+﻿# 接手前自检脚本：AI 领任务前必须跑通此脚本才能创建 active claim。
 #
 # 用法：
 #   .\scripts\verify-task-prereq.ps1 -TaskId PR-V2-01 -Level senior
@@ -349,6 +349,19 @@ if (Test-Path $expectedLock) {
   } else {
     Show-Pass "无 task lock 冲突，可创建 $expectedLock"
   }
+}
+
+$collabScript = "medkernel-mvp/scripts/check-ai-collaboration.ps1"
+if (Test-Path $collabScript) {
+  $collabOutput = & $collabScript -Strict -RequireClean 2>&1
+  if ($LASTEXITCODE -eq 0) {
+    Show-Pass "全局并发状态一致：无 orphan lock / 重复任务 / write_scope 重叠"
+  } else {
+    Show-Fail "全局并发状态不一致，请先清理 claim/lock/review 后再领任务"
+    $collabOutput | Select-Object -Last 8 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+  }
+} else {
+  Show-Warn "缺少 $collabScript，无法做全局并发检查"
 }
 
 # ============================================================

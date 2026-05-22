@@ -13,7 +13,7 @@ interface SideMenuProps {
 /**
  * 左侧分组菜单（PR-FINAL-26：CSS Module + 折叠支持 + 0 inline style）。
  *
- * 顶部「工作台 / 演示与校验」直放（section.label === null），其余按 M1/M3/M4 分组。
+ * 顶部「工作台 / 演示与校验」直放（section.label === null），其余按 v1.0 GA 客户主线分组。
  * 折叠态由 AntD Menu 的 inlineCollapsed 接管，CSS Module 仅做样式增强。
  */
 export default function SideMenu({ collapsed = false }: SideMenuProps) {
