@@ -36,11 +36,11 @@ public class OpenApiConfig {
     private Info apiInfo() {
         return new Info()
                 .title("MedKernel 集团医疗智能中枢 API")
-                .description("专科诊疗路径引擎 REST API — v0.3-final\n\n"
+                .description("专科诊疗路径引擎 REST API — v1.0 GA\n\n"
                         + "**鉴权**：调用受保护端点前请先 POST /api/auth/login 获取 JWT，"
                         + "然后在 Authorize 按钮中填入 Bearer token。\n\n"
                         + "**数据规范**：所有字段均为 snake_case；时间戳为 ISO-8601 字符串。")
-                .version("0.3.0-SNAPSHOT")
+                .version("1.0.0")
                 .contact(new Contact()
                         .name("MedKernel 工程团队")
                         .email("dev@medkernel.internal"))

@@ -4,6 +4,8 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -163,6 +165,7 @@ public class DataPermissionController {
     /**
      * 更新权限分配。
      */
+    @Operation(summary = "更新权限分配")
     @PutMapping("/assignments/{assignmentId}")
     public ApiResult<Map<String, Object>> updateAssignment(@PathVariable Long assignmentId,
                                                              @RequestBody Map<String, Object> body,
@@ -225,6 +228,7 @@ public class DataPermissionController {
     /**
      * 检查权限。
      */
+    @Operation(summary = "检查权限")
     @PostMapping("/check")
     public ApiResult<Map<String, Object>> checkPermission(@RequestBody Map<String, Object> body,
                                                             HttpServletRequest httpRequest) {

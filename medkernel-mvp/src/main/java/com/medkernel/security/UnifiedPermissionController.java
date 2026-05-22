@@ -22,6 +22,7 @@ import java.util.Map;
 /**
  * SEC-008 统一权限管理 API：菜单权限管理 + 统一权限检查。
  */
+@Tag(name = "Unified Permission")
 @RestController
 @RequestMapping("/api/security/unified-permission")
 public class UnifiedPermissionController {
@@ -81,6 +82,7 @@ public class UnifiedPermissionController {
     /**
      * 更新菜单权限。
      */
+    @Operation(summary = "更新菜单权限")
     @PutMapping("/menus/{menuId}")
     public ApiResult<Map<String, Object>> updateMenuPermission(@PathVariable Long menuId,
                                                                  @RequestBody Map<String, Object> body,
@@ -155,6 +157,7 @@ public class UnifiedPermissionController {
     /**
      * 获取用户按钮权限。
      */
+    @Operation(summary = "获取用户按钮权限")
     @GetMapping("/user-buttons")
     public ApiResult<List<Map<String, Object>>> getUserButtonPermissions(
             @RequestParam String userId,
@@ -195,6 +198,7 @@ public class UnifiedPermissionController {
     /**
      * 检查按钮权限。
      */
+    @Operation(summary = "检查按钮权限")
     @PostMapping("/check-button")
     public ApiResult<Map<String, Object>> checkButtonAccess(@RequestBody Map<String, Object> body,
                                                               HttpServletRequest httpRequest) {

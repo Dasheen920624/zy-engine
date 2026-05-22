@@ -3,6 +3,8 @@ package com.medkernel.provider;
 import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.organization.OrganizationContextService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,6 +49,7 @@ public class ReleaseCheckController {
         }
     }
 
+    @Operation(summary = "更新发布检查清单")
     @PutMapping("/checklists/{checklistId}")
     public ApiResult<ReleaseChecklist> updateChecklist(
             @PathVariable("checklistId") Long checklistId,
@@ -112,6 +115,7 @@ public class ReleaseCheckController {
         }
     }
 
+    @Operation(summary = "查询检查结果列表")
     @GetMapping("/results")
     public ApiResult<List<ReleaseCheckResult>> listCheckResults(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -172,6 +176,7 @@ public class ReleaseCheckController {
         }
     }
 
+    @Operation(summary = "豁免阻断项")
     @PostMapping("/results/{checkResultId}/waive")
     public ApiResult<Map<String, Object>> waiveBlock(
             @PathVariable("checkResultId") Long checkResultId,
@@ -197,6 +202,7 @@ public class ReleaseCheckController {
         }
     }
 
+    @Operation(summary = "驳回发布")
     @PostMapping("/results/{checkResultId}/reject")
     public ApiResult<Map<String, Object>> rejectRelease(
             @PathVariable("checkResultId") Long checkResultId,

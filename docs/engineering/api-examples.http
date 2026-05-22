@@ -1,3 +1,10 @@
+### OpenAPI 3.0 Spec (JSON)
+GET http://localhost:18080/medkernel/v3/api-docs
+X-Trace-Id: trace-demo-openapi-spec
+
+### Swagger UI (management port only)
+# GET http://localhost:18081/medkernel/api-docs
+
 ### Health
 GET http://localhost:18080/medkernel/api/health
 X-Trace-Id: trace-demo-health

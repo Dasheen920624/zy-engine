@@ -241,6 +241,27 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- GA-API-01: springdoc-openapi-maven-plugin — 构建时自动生成 OpenAPI 3.0 spec JSON。
+                 - mvn package 后输出到 target/openapi.json，供前端 openapi-typescript 离线生成类型。
+                 - 前端 gen:types:offline 脚本读取此文件，确保类型生成可复现。 -->
+            <plugin>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <id>generate-openapi-spec</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <outputFileName>openapi.json</outputFileName>
+                            <outputDir>${project.build.directory}</outputDir>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

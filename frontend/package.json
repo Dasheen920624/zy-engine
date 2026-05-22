@@ -17,6 +17,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "gen:types": "openapi-typescript http://localhost:18080/medkernel/v3/api-docs -o src/api/generated-types.ts",
+    "gen:types:offline": "openapi-typescript ../medkernel-mvp/target/openapi.json -o src/api/generated-types.ts",
+    "gen:types:all": "npm run gen:types:offline",
     "verify": "npm run lint && npm run format:check && npm run typecheck && npm test",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
