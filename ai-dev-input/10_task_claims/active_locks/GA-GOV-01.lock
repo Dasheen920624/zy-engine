@@ -1,0 +1,7 @@
+task_id: GA-GOV-01
+claim_id: GA-GOV-01-S01
+owner: TraeAI-Main
+branch: ai/GA-GOV-01/collaboration-guard
+git_base_commit: 7a744abea894438856699a94f8a35bf7c0dce396
+created_at: 2026-05-23T19:00:00+08:00
+last_heartbeat: 2026-05-23T19:00:00+08:00

@@ -103,7 +103,64 @@ function Get-TaskAliases([string]$TaskId) {
   } elseif ($TaskId -match '^PR-(\d{2})$') {
     $aliases.Add("PR-V2-$($matches[1])")
   }
+  # GA-* 任务编号无别名，但需确保正则匹配支持 GA- 前缀
   return $aliases | Select-Object -Unique
+}
+
+# GA-* 任务编号模式判断
+function Test-GaTaskId([string]$TaskId) {
+  return $TaskId -match '^GA-[A-Z]+-\d{2}$'
+}
+
+# 从 GA backlog 或台账提取 GA 任务的依赖
+function Get-GaTaskDependencies([string]$TaskId) {
+  $deps = New-Object System.Collections.Generic.List[string]
+
+  # 优先从 GA backlog 提取依赖
+  $gaBacklog = "docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md"
+  if (Test-Path $gaBacklog) {
+    $gaContent = Get-Content $gaBacklog -Raw -Encoding UTF8
+    # 匹配任务行：| GA-XXX-NN | ... | ... | ... | 依赖 | ... |
+    $taskPattern = [regex]::Escape($TaskId)
+    $gaLines = $gaContent -split "`n" | Where-Object { $_ -match "^\|\s*$taskPattern\s*\|" }
+    foreach ($line in $gaLines) {
+      # 提取依赖列（第5列，索引4）
+      $cols = $line -split '\|' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+      if ($cols.Count -ge 5) {
+        $depCol = $cols[4].Trim()
+        $depMatches = [regex]::Matches($depCol, '(?:GA-[A-Z]+-\d{2}|[A-Z]+-\d{3}|PR-V2-\d{2}|PR-FINAL-\d{2})')
+        foreach ($m in $depMatches) {
+          if (-not $deps.Contains($m.Value)) {
+            [void]$deps.Add($m.Value)
+          }
+        }
+      }
+    }
+  }
+
+  # 回退到台账查找
+  if ($deps.Count -eq 0) {
+    $ledger = "docs/engineering/02_任务台账.md"
+    if (Test-Path $ledger) {
+      $ledgerContent = Get-Content $ledger -Raw -Encoding UTF8
+      $taskPattern = [regex]::Escape($TaskId)
+      $ledgerLines = $ledgerContent -split "`n" | Where-Object { $_ -match "^\|\s*$taskPattern\s*\|" }
+      foreach ($line in $ledgerLines) {
+        $cols = $line -split '\|' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        if ($cols.Count -ge 6) {
+          $depCol = $cols[5].Trim()
+          $depMatches = [regex]::Matches($depCol, '(?:GA-[A-Z]+-\d{2}|[A-Z]+-\d{3}|PR-V2-\d{2}|PR-FINAL-\d{2})')
+          foreach ($m in $depMatches) {
+            if (-not $deps.Contains($m.Value)) {
+              [void]$deps.Add($m.Value)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return $deps.ToArray()
 }
 
 function Get-PlaybookTaskSection([string]$Content, [string]$TaskId) {
@@ -256,7 +313,26 @@ if ($myLevel -ge $reqLevel) {
 # ============================================================
 Show-Section "5. 依赖任务全部 DONE"
 
-if (Test-Path $playbook) {
+$isGaTask = Test-GaTaskId $TaskId
+
+if ($isGaTask) {
+  # GA-* 任务：从 GA backlog 或台账提取依赖
+  $gaDeps = Get-GaTaskDependencies $TaskId
+  if ($gaDeps.Count -eq 0) {
+    Show-Pass "GA 任务 $TaskId 无依赖"
+  } else {
+    $ledgerContent = Get-Content $ledger -Raw -Encoding UTF8
+    foreach ($dep in $gaDeps) {
+      $depEscaped = [regex]::Escape($dep)
+      $depLine = $ledgerContent -split "`n" | Where-Object { $_ -match "^\|\s*$depEscaped\s*\|" } | Select-Object -First 1
+      if ($depLine -and $depLine -match "\|\s*DONE\s*\|") {
+        Show-Pass "依赖 $dep = DONE"
+      } else {
+        Show-Fail "依赖 $dep 未完成（台账非 DONE 状态），先做依赖任务"
+      }
+    }
+  }
+} elseif (Test-Path $playbook) {
   $pb = Get-Content $playbook -Raw -Encoding UTF8
   $section = Get-PlaybookTaskSection $pb $TaskId
   if ($section) {

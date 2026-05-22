@@ -88,6 +88,9 @@ $collaborationIssues = @()
 $claimRecords = @()
 $lockRecords = @()
 
+# GA-GOV-01: 支持 GA-* 任务编号的正则模式
+$gaTaskPattern = '^GA-[A-Z]+-\d{2}$'
+
 Write-Section "Git"
 git status --short --branch
 git log -1 --pretty=format:"head=%H%nsubject=%s"
@@ -127,6 +130,15 @@ if ($activeClaims.Count -eq 0) {
       }
     }
     Write-Output ("{0} task_id={1} status={2} last_heartbeat={3}" -f $claim.Name, $claimTask, $claimStatus, $heartbeat)
+    # GA-GOV-01: GA-* 任务必须使用 ai/<TASK-ID>/<slug> 分支命名
+    if (![string]::IsNullOrWhiteSpace($claimTask) -and $claimTask -match $gaTaskPattern) {
+      $claimBranch = Get-MetadataField $content "branch"
+      if (![string]::IsNullOrWhiteSpace($claimBranch) -and $claimBranch -notmatch "^ai/$claimTask/") {
+        $issue = ("ga_task_branch_naming_violation file={0} task_id={1} branch={2} expected_pattern=ai/{1}/<slug>" -f $claim.Name, $claimTask, $claimBranch)
+        $collaborationIssues += $issue
+        Write-Output $issue
+      }
+    }
     if ($missingFields.Count -gt 0) {
       $issue = ("claim_missing_fields file={0} fields={1}" -f $claim.Name, ($missingFields -join ","))
       $collaborationIssues += $issue
@@ -202,6 +214,49 @@ if ($activeClaims.Count -eq 0) {
             $collaborationIssues += $issue
             Write-Output $issue
           }
+        }
+      }
+    }
+  }
+
+  # GA-GOV-01: 检查 GA-* 任务是否修改了共享文件（非架构师任务不允许修改共享文件）
+  $sharedFiles = @(
+    "frontend/src/api/types.ts",
+    "frontend/src/router/menuConfig.tsx",
+    "frontend/src/router/routes.tsx",
+    "frontend/src/styles/tokens.css",
+    "frontend/src/App.tsx",
+    "medkernel-mvp/pom.xml",
+    "medkernel-mvp/src/main/resources/application.yml",
+    "scripts/verify-pr.ps1",
+    "scripts/verify-task-prereq.ps1",
+    "medkernel-mvp/scripts/check-ai-collaboration.ps1",
+    "docs/AI_CHARTER.md",
+    "docs/PRODUCT_ARCHITECTURE_FINAL.md",
+    "docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md"
+  )
+  foreach ($claimRec in $claimRecords) {
+    if ([string]::IsNullOrWhiteSpace($claimRec.TaskId)) { continue }
+    if ($claimRec.TaskId -notmatch $gaTaskPattern) { continue }
+    $claimRole = ""
+    foreach ($claim in $activeClaims) {
+      $content = Get-Content -Path $claim.FullName -Raw
+      $cTaskId = Get-MetadataField $content "task_id"
+      if ($cTaskId -eq $claimRec.TaskId) {
+        $claimRole = Get-MetadataField $content "role"
+        break
+      }
+    }
+    # 架构师角色允许修改共享文件
+    if ($claimRole -eq "architect" -or $claimRole -eq "senior") { continue }
+    foreach ($scope in @($claimRec.WriteScope)) {
+      foreach ($shared in $sharedFiles) {
+        $normalizedScope = $scope.Replace([char]92, [char]47).TrimEnd('*').TrimEnd('/')
+        $normalizedShared = $shared.Replace([char]92, [char]47).TrimEnd('/')
+        if ($normalizedShared.StartsWith($normalizedScope) -or $normalizedScope.StartsWith($normalizedShared)) {
+          $issue = ("ga_task_shared_file_violation file={0} task_id={1} scope={2} shared_file={3}" -f $claimRec.File, $claimRec.TaskId, $scope, $shared)
+          $collaborationIssues += $issue
+          Write-Output $issue
         }
       }
     }

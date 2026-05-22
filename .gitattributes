@@ -31,6 +31,7 @@
 .nvmrc        text eol=lf
 .npmrc        text eol=lf
 .env*         text eol=lf
+*.lock        text eol=lf
 
 # Windows 脚本 - 保留 CRLF
 # 注：PowerShell 5.1 读取无 BOM UTF-8 中文会乱码；
