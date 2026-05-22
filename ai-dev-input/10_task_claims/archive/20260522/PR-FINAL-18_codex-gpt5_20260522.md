@@ -91,7 +91,7 @@ git_status_checked_before_edit: DONE
 last_heartbeat_pushed: DONE
 review_status_synced: DONE
 task_ledger_done_synced: DONE
-commit_hash_recorded: 973bfc5
+commit_hash_recorded: e573631
 post_push_git_status_clean: PENDING_STATUS_SYNC_PUSH
 task_lock_removed_on_archive: DONE
 ```
@@ -144,7 +144,7 @@ submit_allowed: true
 ## Completion
 
 ```text
-commit: 973bfc5
+commit: e573631
 push: origin/develop pending status-sync push
 tests: backend 260 PASS; build PASS; verify-pr 16 PASS / 0 FAIL / 2 WARN
 review: RV-PR-FINAL-18-CODEX-GPT5-R01 APPROVED, open_findings=0
