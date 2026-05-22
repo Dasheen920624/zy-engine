@@ -104,7 +104,7 @@ public class SsoConfigController {
         String ipAddress = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
 
-        SsoConfigService.SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "CAS", ticket, ipAddress, userAgent);
+        SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "CAS", ticket, ipAddress, userAgent);
         return ApiResult.success(buildLoginResponse(result));
     }
 
@@ -124,7 +124,7 @@ public class SsoConfigController {
         String ipAddress = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
 
-        SsoConfigService.SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "OIDC", code, ipAddress, userAgent);
+        SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "OIDC", code, ipAddress, userAgent);
         return ApiResult.success(buildLoginResponse(result));
     }
 
@@ -144,7 +144,7 @@ public class SsoConfigController {
         String ipAddress = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
 
-        SsoConfigService.SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "SAML", samlResponse, ipAddress, userAgent);
+        SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "SAML", samlResponse, ipAddress, userAgent);
         return ApiResult.success(buildLoginResponse(result));
     }
 
@@ -167,7 +167,7 @@ public class SsoConfigController {
 
         // 将用户名和密码作为回调数据传递
         String callbackData = username + ":" + password;
-        SsoConfigService.SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "LDAP-AD", callbackData, ipAddress, userAgent);
+        SsoLoginResult result = ssoConfigService.handleSsoCallback(tenantId, "LDAP-AD", callbackData, ipAddress, userAgent);
         return ApiResult.success(buildLoginResponse(result));
     }
 
@@ -232,7 +232,7 @@ public class SsoConfigController {
         return ApiResult.success(data);
     }
 
-    private Map<String, Object> buildLoginResponse(SsoConfigService.SsoLoginResult result) {
+    private Map<String, Object> buildLoginResponse(SsoLoginResult result) {
         java.util.LinkedHashMap<String, Object> response = new java.util.LinkedHashMap<>();
         response.put("token", result.getToken());
         response.put("user", buildUserInfo(result.getUser()));
