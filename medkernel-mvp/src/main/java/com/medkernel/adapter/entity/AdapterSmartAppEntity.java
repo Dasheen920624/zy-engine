@@ -1,5 +1,9 @@
 package com.medkernel.adapter.entity;
 
+import com.medkernel.common.dataclass.DataClass;
+import com.medkernel.common.dataclass.DataClassification;
+import com.medkernel.common.dataclass.Encrypted;
+import com.medkernel.common.dataclass.Encrypted.MaskPolicy;
 import com.medkernel.persistence.Ids;
 
 import java.time.LocalDateTime;
@@ -7,7 +11,11 @@ import java.time.LocalDateTime;
 /**
  * SMART on FHIR应用配置实体
  * 对应表：adp_smart_app
+ *
+ * <p>分级：{@link DataClassification#SENSITIVE} —— 含 OAuth 客户端密钥，
+ * 必须加密存储。
  */
+@DataClass(DataClassification.SENSITIVE)
 public class AdapterSmartAppEntity {
 
     private Long id;
@@ -17,6 +25,7 @@ public class AdapterSmartAppEntity {
     private String appName;
     private String appType;
     private String clientId;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String clientSecret;
     private String redirectUri;
     private String scope;

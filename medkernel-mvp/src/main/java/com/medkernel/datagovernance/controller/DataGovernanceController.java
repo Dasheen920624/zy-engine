@@ -1,6 +1,7 @@
 package com.medkernel.datagovernance.controller;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.common.dataclass.DataMaskingService;
 import com.medkernel.datagovernance.entity.*;
 import com.medkernel.datagovernance.service.*;
 import com.medkernel.organization.OrganizationContextService;
@@ -15,6 +16,10 @@ import java.util.Map;
 
 /**
  * 数据治理API控制器
+ *
+ * <p>所有返回含 {@link com.medkernel.common.dataclass.Encrypted} 字段实体的接口，
+ * 在响应前自动调用 {@link DataMaskingService#maskEntity} 进行脱敏，
+ * 确保非授权用户仅看到脱敏数据。
  */
 @Tag(name = "Data Governance")
 @RestController
@@ -26,19 +31,22 @@ public class DataGovernanceController {
     private final DepartmentService departmentService;
     private final QualityReportService qualityReportService;
     private final OrganizationContextService organizationContextService;
+    private final DataMaskingService dataMaskingService;
 
     public DataGovernanceController(DataGovernanceService dataGovernanceService,
                                     PatientService patientService,
                                     DoctorService doctorService,
                                     DepartmentService departmentService,
                                     QualityReportService qualityReportService,
-                                    OrganizationContextService organizationContextService) {
+                                    OrganizationContextService organizationContextService,
+                                    DataMaskingService dataMaskingService) {
         this.dataGovernanceService = dataGovernanceService;
         this.patientService = patientService;
         this.doctorService = doctorService;
         this.departmentService = departmentService;
         this.qualityReportService = qualityReportService;
         this.organizationContextService = organizationContextService;
+        this.dataMaskingService = dataMaskingService;
     }
 
     /**
@@ -65,7 +73,9 @@ public class DataGovernanceController {
     public ApiResult<PatientEntity> savePatient(@RequestBody PatientEntity entity,
                                                 HttpServletRequest httpRequest) {
         organizationContextService.resolve(httpRequest);
-        return ApiResult.success(patientService.save(entity));
+        PatientEntity saved = patientService.save(entity);
+        dataMaskingService.maskEntity(saved);
+        return ApiResult.success(saved);
     }
 
     /**
@@ -78,7 +88,9 @@ public class DataGovernanceController {
         Map<String, String> filters = new LinkedHashMap<>();
         organizationContextService.applyExplicitFilters(filters, httpRequest);
         String tenantId = filters.getOrDefault("tenantId", "default");
-        return ApiResult.success(patientService.findByPatientId(tenantId, patientId));
+        PatientEntity patient = patientService.findByPatientId(tenantId, patientId);
+        dataMaskingService.maskEntity(patient);
+        return ApiResult.success(patient);
     }
 
     /**
@@ -90,7 +102,11 @@ public class DataGovernanceController {
         Map<String, String> filters = new LinkedHashMap<>();
         organizationContextService.applyExplicitFilters(filters, httpRequest);
         String tenantId = filters.getOrDefault("tenantId", "default");
-        return ApiResult.success(patientService.findAllByTenantId(tenantId));
+        List<PatientEntity> patients = patientService.findAllByTenantId(tenantId);
+        for (PatientEntity p : patients) {
+            dataMaskingService.maskEntity(p);
+        }
+        return ApiResult.success(patients);
     }
 
     // ============================================================================
@@ -105,7 +121,9 @@ public class DataGovernanceController {
     public ApiResult<DoctorEntity> saveDoctor(@RequestBody DoctorEntity entity,
                                               HttpServletRequest httpRequest) {
         organizationContextService.resolve(httpRequest);
-        return ApiResult.success(doctorService.save(entity));
+        DoctorEntity saved = doctorService.save(entity);
+        dataMaskingService.maskEntity(saved);
+        return ApiResult.success(saved);
     }
 
     /**
@@ -118,7 +136,9 @@ public class DataGovernanceController {
         Map<String, String> filters = new LinkedHashMap<>();
         organizationContextService.applyExplicitFilters(filters, httpRequest);
         String tenantId = filters.getOrDefault("tenantId", "default");
-        return ApiResult.success(doctorService.findByDoctorId(tenantId, doctorId));
+        DoctorEntity doctor = doctorService.findByDoctorId(tenantId, doctorId);
+        dataMaskingService.maskEntity(doctor);
+        return ApiResult.success(doctor);
     }
 
     /**
@@ -130,7 +150,11 @@ public class DataGovernanceController {
         Map<String, String> filters = new LinkedHashMap<>();
         organizationContextService.applyExplicitFilters(filters, httpRequest);
         String tenantId = filters.getOrDefault("tenantId", "default");
-        return ApiResult.success(doctorService.findAllByTenantId(tenantId));
+        List<DoctorEntity> doctors = doctorService.findAllByTenantId(tenantId);
+        for (DoctorEntity d : doctors) {
+            dataMaskingService.maskEntity(d);
+        }
+        return ApiResult.success(doctors);
     }
 
     // ============================================================================

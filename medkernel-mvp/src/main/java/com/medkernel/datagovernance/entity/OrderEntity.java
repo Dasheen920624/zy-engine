@@ -2,14 +2,24 @@ package com.medkernel.datagovernance.entity;
 
 import java.time.LocalDateTime;
 
+import com.medkernel.common.dataclass.DataClass;
+import com.medkernel.common.dataclass.DataClassification;
+import com.medkernel.common.dataclass.Encrypted;
+import com.medkernel.common.dataclass.Encrypted.MaskPolicy;
+
 /**
  * 医嘱主数据实体类
  * 对应数据库表：md_order
+ *
+ * <p>分级：{@link DataClassification#HEALTH_DATA} —— 医嘱名称可能含处方/诊疗信息，
+ * 属健康医疗数据，适用《个人信息保护法》§28。
  */
+@DataClass(DataClassification.HEALTH_DATA)
 public class OrderEntity {
     private Long id;
     private String tenantId;
     private String orderCode;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String orderName;
     private String orderType;
     private String standardCode;

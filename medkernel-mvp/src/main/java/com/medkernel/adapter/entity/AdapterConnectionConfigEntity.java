@@ -1,5 +1,9 @@
 package com.medkernel.adapter.entity;
 
+import com.medkernel.common.dataclass.DataClass;
+import com.medkernel.common.dataclass.DataClassification;
+import com.medkernel.common.dataclass.Encrypted;
+import com.medkernel.common.dataclass.Encrypted.MaskPolicy;
 import com.medkernel.persistence.Ids;
 
 import java.time.LocalDateTime;
@@ -7,7 +11,11 @@ import java.time.LocalDateTime;
 /**
  * 适配器连接配置实体
  * 对应表：adp_connection_config
+ *
+ * <p>分级：{@link DataClassification#SENSITIVE} —— 配置值可能含数据库密码/API Key，
+ * 必须加密存储。
  */
+@DataClass(DataClassification.SENSITIVE)
 public class AdapterConnectionConfigEntity {
 
     private Long id;
@@ -15,6 +23,7 @@ public class AdapterConnectionConfigEntity {
     private String hospitalCode;
     private String adapterCode;
     private String configKey;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String configValue;
     private String configType;
     private String description;

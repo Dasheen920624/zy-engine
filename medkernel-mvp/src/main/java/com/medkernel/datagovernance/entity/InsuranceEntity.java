@@ -2,10 +2,17 @@ package com.medkernel.datagovernance.entity;
 
 import java.time.LocalDateTime;
 
+import com.medkernel.common.dataclass.DataClass;
+import com.medkernel.common.dataclass.DataClassification;
+
 /**
  * 医保主数据实体类
  * 对应数据库表：md_insurance
+ *
+ * <p>分级：{@link DataClassification#SENSITIVE} —— 医保信息含个人关联，
+ * 属敏感个人信息。
  */
+@DataClass(DataClassification.SENSITIVE)
 public class InsuranceEntity {
     private Long id;
     private String tenantId;

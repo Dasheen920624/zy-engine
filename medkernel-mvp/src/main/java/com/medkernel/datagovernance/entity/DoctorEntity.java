@@ -2,19 +2,30 @@ package com.medkernel.datagovernance.entity;
 
 import java.time.LocalDateTime;
 
+import com.medkernel.common.dataclass.DataClass;
+import com.medkernel.common.dataclass.DataClassification;
+import com.medkernel.common.dataclass.Encrypted;
+import com.medkernel.common.dataclass.Encrypted.MaskPolicy;
+
 /**
  * 医生主数据实体类
  * 对应数据库表：md_doctor
+ *
+ * <p>分级：{@link DataClassification#SENSITIVE} —— 含医生姓名和执业证号，
+ * 属个人敏感信息，适用《个人信息保护法》§28。
  */
+@DataClass(DataClassification.SENSITIVE)
 public class DoctorEntity {
     private Long id;
     private String tenantId;
     private String doctorId;
+    @Encrypted(maskPolicy = MaskPolicy.NAME)
     private String doctorName;
     private String gender;
     private String title;
     private String specialtyCode;
     private String departmentCode;
+    @Encrypted(maskPolicy = MaskPolicy.ID_CARD)
     private String licenseNo;
     private String status;
     private LocalDateTime createdTime;

@@ -3,10 +3,19 @@ package com.medkernel.rule;
 import java.util.List;
 import java.util.Map;
 
+import com.medkernel.common.dataclass.DataClass;
+import com.medkernel.common.dataclass.DataClassification;
+import com.medkernel.common.dataclass.Encrypted;
+import com.medkernel.common.dataclass.Encrypted.MaskPolicy;
+
 /**
  * 规则评估结果实体类
  * 对应数据库表：re_rule_eval_result
+ *
+ * <p>分级：{@link DataClassification#HEALTH_DATA} —— 含患者临床数据快照，
+ * 属健康医疗数据，适用《个人信息保护法》§28。
  */
+@DataClass(DataClassification.HEALTH_DATA)
 public class RuleEvalResultEntity {
     private Long id;
     private String evalId;
@@ -18,8 +27,11 @@ public class RuleEvalResultEntity {
     private String severity;
     private String message;
     private String actionsJson;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String evidenceJson;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String inputSnapshotJson;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String outputSnapshotJson;
     private Long elapsedMs;
     private String resultStatus;

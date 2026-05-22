@@ -2,14 +2,24 @@ package com.medkernel.datagovernance.entity;
 
 import java.time.LocalDateTime;
 
+import com.medkernel.common.dataclass.DataClass;
+import com.medkernel.common.dataclass.DataClassification;
+import com.medkernel.common.dataclass.Encrypted;
+import com.medkernel.common.dataclass.Encrypted.MaskPolicy;
+
 /**
  * 诊断主数据实体类
  * 对应数据库表：md_diagnosis
+ *
+ * <p>分级：{@link DataClassification#HEALTH_DATA} —— 诊断名称属健康医疗数据，
+ * 适用《个人信息保护法》§28「敏感个人信息」。
  */
+@DataClass(DataClassification.HEALTH_DATA)
 public class DiagnosisEntity {
     private Long id;
     private String tenantId;
     private String diagnosisCode;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String diagnosisName;
     private String standardCode;
     private String standardSystem;

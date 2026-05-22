@@ -1,5 +1,9 @@
 package com.medkernel.adapter.entity;
 
+import com.medkernel.common.dataclass.DataClass;
+import com.medkernel.common.dataclass.DataClassification;
+import com.medkernel.common.dataclass.Encrypted;
+import com.medkernel.common.dataclass.Encrypted.MaskPolicy;
 import com.medkernel.persistence.Ids;
 
 import java.time.LocalDateTime;
@@ -7,7 +11,11 @@ import java.time.LocalDateTime;
 /**
  * 适配器调用日志实体
  * 对应表：adp_call_log
+ *
+ * <p>分级：{@link DataClassification#HEALTH_DATA} —— 请求参数和响应数据
+ * 可能含患者临床信息，属健康医疗数据。
  */
+@DataClass(DataClassification.HEALTH_DATA)
 public class AdapterCallLogEntity {
 
     private Long id;
@@ -16,7 +24,9 @@ public class AdapterCallLogEntity {
     private String hospitalCode;
     private String adapterCode;
     private String queryCode;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String requestParams;
+    @Encrypted(maskPolicy = MaskPolicy.FULL)
     private String responseData;
     private String status;
     private String errorCode;
