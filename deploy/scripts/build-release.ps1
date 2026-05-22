@@ -61,6 +61,10 @@ if ($IncludeFrontend -and (Test-Path (Join-Path $RepoRoot "frontend"))) {
 Write-Host "`n==> 3. 拷贝 DDL / scripts / docs / profiles" -ForegroundColor Cyan
 Copy-Item (Join-Path $RepoRoot "medkernel-mvp\db") "$stageRoot\" -Recurse
 Copy-Item $ScriptDir "$stageRoot\scripts" -Recurse
+$engineScripts = Join-Path $RepoRoot "medkernel-mvp\scripts"
+if (Test-Path $engineScripts) {
+    Copy-Item $engineScripts "$stageRoot\engine-scripts" -Recurse
+}
 foreach ($d in @("systemd", "nginx", "profiles")) {
     $src = Join-Path $ScriptDir "..\$d"
     if (Test-Path $src) {

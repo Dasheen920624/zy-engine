@@ -31,23 +31,23 @@ CREATE INDEX idx_mpi_pi_source ON mpi_patient_identity(tenant_id, source_system)
 CREATE INDEX idx_mpi_pi_status ON mpi_patient_identity(tenant_id, status);
 
 -- 中文注释
-COMMENT ON TABLE mpi_patient_identity IS UNISTR('\u60A3\u8005\u6807\u8BC6\u6620\u5C04\u8868');
-COMMENT ON COLUMN mpi_patient_identity.id IS UNISTR('\u4E3B\u952E');
-COMMENT ON COLUMN mpi_patient_identity.tenant_id IS UNISTR('\u79DF\u6237ID');
-COMMENT ON COLUMN mpi_patient_identity.platform_patient_id IS UNISTR('\u5E73\u53F0\u5185\u90E8\u60A3\u8005ID');
-COMMENT ON COLUMN mpi_patient_identity.identity_type IS UNISTR('\u6807\u8BC6\u7C7B\u578B');
-COMMENT ON COLUMN mpi_patient_identity.external_id IS UNISTR('\u5916\u90E8\u6807\u8BC6\u503C');
-COMMENT ON COLUMN mpi_patient_identity.id_hash IS UNISTR('\u8131\u654Fhash');
-COMMENT ON COLUMN mpi_patient_identity.source_system IS UNISTR('\u6765\u6E90\u7CFB\u7EDF');
-COMMENT ON COLUMN mpi_patient_identity.status IS UNISTR('\u72B6\u6001');
-COMMENT ON COLUMN mpi_patient_identity.confidence IS UNISTR('\u7F6E\u4FE1\u5EA6');
-COMMENT ON COLUMN mpi_patient_identity.manually_verified IS UNISTR('\u662F\u5426\u4EBA\u5DE5\u786E\u8BA4');
-COMMENT ON COLUMN mpi_patient_identity.verified_by IS UNISTR('\u9A8C\u8BC1\u4EBA');
-COMMENT ON COLUMN mpi_patient_identity.verified_time IS UNISTR('\u9A8C\u8BC1\u65F6\u95F4');
-COMMENT ON COLUMN mpi_patient_identity.merged_to_id IS UNISTR('\u5408\u5E76\u76EE\u6807ID');
-COMMENT ON COLUMN mpi_patient_identity.remarks IS UNISTR('\u5907\u6CE8');
-COMMENT ON COLUMN mpi_patient_identity.created_time IS UNISTR('\u521B\u5EFA\u65F6\u95F4');
-COMMENT ON COLUMN mpi_patient_identity.updated_time IS UNISTR('\u66F4\u65B0\u65F6\u95F4');
+COMMENT ON TABLE mpi_patient_identity IS '患者标识映射表';
+COMMENT ON COLUMN mpi_patient_identity.id IS '主键';
+COMMENT ON COLUMN mpi_patient_identity.tenant_id IS '租户ID';
+COMMENT ON COLUMN mpi_patient_identity.platform_patient_id IS '平台内部患者ID';
+COMMENT ON COLUMN mpi_patient_identity.identity_type IS '标识类型';
+COMMENT ON COLUMN mpi_patient_identity.external_id IS '外部标识值';
+COMMENT ON COLUMN mpi_patient_identity.id_hash IS '脱敏hash';
+COMMENT ON COLUMN mpi_patient_identity.source_system IS '来源系统';
+COMMENT ON COLUMN mpi_patient_identity.status IS '状态';
+COMMENT ON COLUMN mpi_patient_identity.confidence IS '置信度';
+COMMENT ON COLUMN mpi_patient_identity.manually_verified IS '是否人工确认';
+COMMENT ON COLUMN mpi_patient_identity.verified_by IS '验证人';
+COMMENT ON COLUMN mpi_patient_identity.verified_time IS '验证时间';
+COMMENT ON COLUMN mpi_patient_identity.merged_to_id IS '合并目标ID';
+COMMENT ON COLUMN mpi_patient_identity.remarks IS '备注';
+COMMENT ON COLUMN mpi_patient_identity.created_time IS '创建时间';
+COMMENT ON COLUMN mpi_patient_identity.updated_time IS '更新时间';
 
 -- ============================================================================
 -- 就诊标识映射表
@@ -78,22 +78,22 @@ CREATE INDEX idx_mpi_vi_hash ON mpi_visit_identity(tenant_id, id_hash);
 CREATE INDEX idx_mpi_vi_source ON mpi_visit_identity(tenant_id, source_system);
 CREATE INDEX idx_mpi_vi_type ON mpi_visit_identity(tenant_id, visit_type);
 
-COMMENT ON TABLE mpi_visit_identity IS UNISTR('\u5C31\u8BCA\u6807\u8BC6\u6620\u5C04\u8868');
-COMMENT ON COLUMN mpi_visit_identity.id IS UNISTR('\u4E3B\u952E');
-COMMENT ON COLUMN mpi_visit_identity.tenant_id IS UNISTR('\u79DF\u6237ID');
-COMMENT ON COLUMN mpi_visit_identity.platform_visit_id IS UNISTR('\u5E73\u53F0\u5C31\u8BCAID');
-COMMENT ON COLUMN mpi_visit_identity.platform_patient_id IS UNISTR('\u5E73\u53F0\u60A3\u8005ID');
-COMMENT ON COLUMN mpi_visit_identity.visit_type IS UNISTR('\u5C31\u8BCA\u7C7B\u578B');
-COMMENT ON COLUMN mpi_visit_identity.identity_type IS UNISTR('\u6807\u8BC6\u7C7B\u578B');
-COMMENT ON COLUMN mpi_visit_identity.external_id IS UNISTR('\u5916\u90E8\u6807\u8BC6\u503C');
-COMMENT ON COLUMN mpi_visit_identity.id_hash IS UNISTR('\u8131\u654Fhash');
-COMMENT ON COLUMN mpi_visit_identity.source_system IS UNISTR('\u6765\u6E90\u7CFB\u7EDF');
-COMMENT ON COLUMN mpi_visit_identity.visit_date IS UNISTR('\u5C31\u8BCA\u65E5\u671F');
-COMMENT ON COLUMN mpi_visit_identity.department_code IS UNISTR('\u5C31\u8BCA\u79D1\u5BA4');
-COMMENT ON COLUMN mpi_visit_identity.status IS UNISTR('\u72B6\u6001');
-COMMENT ON COLUMN mpi_visit_identity.remarks IS UNISTR('\u5907\u6CE8');
-COMMENT ON COLUMN mpi_visit_identity.created_time IS UNISTR('\u521B\u5EFA\u65F6\u95F4');
-COMMENT ON COLUMN mpi_visit_identity.updated_time IS UNISTR('\u66F4\u65B0\u65F6\u95F4');
+COMMENT ON TABLE mpi_visit_identity IS '就诊标识映射表';
+COMMENT ON COLUMN mpi_visit_identity.id IS '主键';
+COMMENT ON COLUMN mpi_visit_identity.tenant_id IS '租户ID';
+COMMENT ON COLUMN mpi_visit_identity.platform_visit_id IS '平台就诊ID';
+COMMENT ON COLUMN mpi_visit_identity.platform_patient_id IS '平台患者ID';
+COMMENT ON COLUMN mpi_visit_identity.visit_type IS '就诊类型';
+COMMENT ON COLUMN mpi_visit_identity.identity_type IS '标识类型';
+COMMENT ON COLUMN mpi_visit_identity.external_id IS '外部标识值';
+COMMENT ON COLUMN mpi_visit_identity.id_hash IS '脱敏hash';
+COMMENT ON COLUMN mpi_visit_identity.source_system IS '来源系统';
+COMMENT ON COLUMN mpi_visit_identity.visit_date IS '就诊日期';
+COMMENT ON COLUMN mpi_visit_identity.department_code IS '就诊科室';
+COMMENT ON COLUMN mpi_visit_identity.status IS '状态';
+COMMENT ON COLUMN mpi_visit_identity.remarks IS '备注';
+COMMENT ON COLUMN mpi_visit_identity.created_time IS '创建时间';
+COMMENT ON COLUMN mpi_visit_identity.updated_time IS '更新时间';
 
 -- ============================================================================
 -- 标识冲突处理表
@@ -121,19 +121,19 @@ CREATE INDEX idx_mpi_ic_tenant ON mpi_identity_conflict(tenant_id, status);
 CREATE INDEX idx_mpi_ic_type ON mpi_identity_conflict(tenant_id, conflict_type);
 CREATE INDEX idx_mpi_ic_severity ON mpi_identity_conflict(tenant_id, severity);
 
-COMMENT ON TABLE mpi_identity_conflict IS UNISTR('\u6807\u8BC6\u51B2\u7A81\u5904\u7406\u8868');
-COMMENT ON COLUMN mpi_identity_conflict.id IS UNISTR('\u4E3B\u952E');
-COMMENT ON COLUMN mpi_identity_conflict.tenant_id IS UNISTR('\u79DF\u6237ID');
-COMMENT ON COLUMN mpi_identity_conflict.conflict_type IS UNISTR('\u51B2\u7A81\u7C7B\u578B');
-COMMENT ON COLUMN mpi_identity_conflict.severity IS UNISTR('\u4E25\u91CD\u7EA7\u522B');
-COMMENT ON COLUMN mpi_identity_conflict.patient_identity_ids IS UNISTR('\u6D89\u53CA\u60A3\u8005\u6807\u8BC6ID');
-COMMENT ON COLUMN mpi_identity_conflict.visit_identity_ids IS UNISTR('\u6D89\u53CA\u5C31\u8BCA\u6807\u8BC6ID');
-COMMENT ON COLUMN mpi_identity_conflict.conflict_description IS UNISTR('\u51B2\u7A81\u63CF\u8FF0');
-COMMENT ON COLUMN mpi_identity_conflict.status IS UNISTR('\u5904\u7406\u72B6\u6001');
-COMMENT ON COLUMN mpi_identity_conflict.resolution_type IS UNISTR('\u5904\u7406\u65B9\u5F0F');
-COMMENT ON COLUMN mpi_identity_conflict.resolution_notes IS UNISTR('\u5904\u7406\u7ED3\u679C\u8BF4\u660E');
-COMMENT ON COLUMN mpi_identity_conflict.resolved_by IS UNISTR('\u5904\u7406\u4EBA');
-COMMENT ON COLUMN mpi_identity_conflict.resolved_time IS UNISTR('\u5904\u7406\u65F6\u95F4');
-COMMENT ON COLUMN mpi_identity_conflict.target_patient_identity_id IS UNISTR('\u76EE\u6807\u60A3\u8005\u6807\u8BC6ID');
-COMMENT ON COLUMN mpi_identity_conflict.created_time IS UNISTR('\u521B\u5EFA\u65F6\u95F4');
-COMMENT ON COLUMN mpi_identity_conflict.updated_time IS UNISTR('\u66F4\u65B0\u65F6\u95F4');
+COMMENT ON TABLE mpi_identity_conflict IS '标识冲突处理表';
+COMMENT ON COLUMN mpi_identity_conflict.id IS '主键';
+COMMENT ON COLUMN mpi_identity_conflict.tenant_id IS '租户ID';
+COMMENT ON COLUMN mpi_identity_conflict.conflict_type IS '冲突类型';
+COMMENT ON COLUMN mpi_identity_conflict.severity IS '严重级别';
+COMMENT ON COLUMN mpi_identity_conflict.patient_identity_ids IS '涉及患者标识ID';
+COMMENT ON COLUMN mpi_identity_conflict.visit_identity_ids IS '涉及就诊标识ID';
+COMMENT ON COLUMN mpi_identity_conflict.conflict_description IS '冲突描述';
+COMMENT ON COLUMN mpi_identity_conflict.status IS '处理状态';
+COMMENT ON COLUMN mpi_identity_conflict.resolution_type IS '处理方式';
+COMMENT ON COLUMN mpi_identity_conflict.resolution_notes IS '处理结果说明';
+COMMENT ON COLUMN mpi_identity_conflict.resolved_by IS '处理人';
+COMMENT ON COLUMN mpi_identity_conflict.resolved_time IS '处理时间';
+COMMENT ON COLUMN mpi_identity_conflict.target_patient_identity_id IS '目标患者标识ID';
+COMMENT ON COLUMN mpi_identity_conflict.created_time IS '创建时间';
+COMMENT ON COLUMN mpi_identity_conflict.updated_time IS '更新时间';

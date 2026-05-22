@@ -326,7 +326,7 @@ public class SsoService {
                                         String displayName, String operator) {
         long userId = Ids.next();
         String username = "sso_" + externalSubject;
-        String defaultPasswordHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+        String defaultPasswordHash = "$2a$10$GNycXiBqR1ydr7zFjdVuKec3GoB4Y1x.YUyLK2jvhYsUTBEZlSjkC";
         String sql = "INSERT INTO sec_user (id, tenant_id, username, password_hash, display_name, "
                 + "status, user_type, employee_id, created_by, created_time) "
                 + "VALUES (?, ?, ?, ?, ?, 'ACTIVE', 'HOSPITAL', ?, ?, ?)";
