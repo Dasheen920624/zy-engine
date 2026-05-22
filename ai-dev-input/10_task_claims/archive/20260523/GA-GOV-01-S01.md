@@ -7,7 +7,7 @@ slice: S01
 title: 并发机制硬门禁
 owner: TraeAI-Main
 role: senior
-status: ACTIVE
+status: DONE
 branch: ai/GA-GOV-01/collaboration-guard
 target_base_branch: develop
 git_base_commit: 7a744abea894438856699a94f8a35bf7c0dce396
