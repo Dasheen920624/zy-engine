@@ -6,7 +6,6 @@ import ProvidersStatus from "../pages/ProvidersStatus";
 import DemoValidation from "../pages/DemoValidation";
 import ConfigPackages from "../pages/ConfigPackages";
 import PackageImportWizard from "../pages/ConfigPackages/PackageImportWizard";
-import ProvenancePlaceholder from "../pages/ProvenancePlaceholder";
 import WorkflowTodos from "../pages/WorkflowTodos";
 import { QualityDashboard, DepartmentDrillDown, EvalIndicatorSetList, EvalResultList } from "../pages/Quality";
 import AlertList from "../pages/Quality/AlertList";
@@ -19,7 +18,6 @@ import { NotificationList, NotificationDetail, NotificationSettings } from "../p
 import NotFound from "../pages/NotFound";
 import LoginPage from "../pages/auth/LoginPage";
 import RequireAuth from "./RequireAuth";
-import PlaceholderPage from "../components/PlaceholderPage";
 import { MappingWorkbench } from "../pages/Terminology";
 import {
   PathwayList,
