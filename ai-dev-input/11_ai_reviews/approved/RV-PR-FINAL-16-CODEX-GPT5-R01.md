@@ -142,8 +142,8 @@ review_status: APPROVED
 approved_by: Codex-GPT5
 approved_at: 2026-05-22T12:55+08:00
 submit_allowed: true
-commit: PENDING_FINAL_COMMIT
-push: PENDING_FINAL_PUSH
+commit: 6938ca5
+push: origin/develop
 risks: Non-MPI legacy raw Map endpoints may still have local camelCase keys; this task closes configured Jackson + covered API contract surface without schema changes.
 feature_acceptance_status: GOLD_PENDING_PRODUCT_ACCEPTANCE
 optimization_required: false

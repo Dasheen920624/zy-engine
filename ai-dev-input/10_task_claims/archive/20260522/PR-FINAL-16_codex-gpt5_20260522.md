@@ -120,8 +120,8 @@ git_status_checked_before_edit: DONE
 last_heartbeat_pushed: PENDING_FINAL_PUSH
 review_status_synced: DONE
 task_ledger_done_synced: DONE
-commit_hash_recorded: PENDING
-post_push_git_status_clean: PENDING
+commit_hash_recorded: 6938ca5
+post_push_git_status_clean: PENDING_FINAL_PUSH
 task_lock_removed_on_archive: DONE
 ```
 
@@ -186,8 +186,8 @@ N/A
 ## Completion
 
 ```text
-commit: PENDING_FINAL_COMMIT
-push: PENDING_FINAL_PUSH
+commit: 6938ca5
+push: origin/develop
 tests: backend 260 PASS; frontend 176 PASS; verify-pr 18 PASS / 0 FAIL / 2 WARN
 review: RV-PR-FINAL-16-CODEX-GPT5-R01 APPROVED, open_findings=0
 risks: Non-MPI legacy raw Map endpoints still need future DTO cleanup; no schema changes in this task.
