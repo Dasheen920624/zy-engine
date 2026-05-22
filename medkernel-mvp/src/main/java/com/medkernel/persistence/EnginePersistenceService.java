@@ -858,7 +858,8 @@ public class EnginePersistenceService extends PersistenceRepositorySupport {
                 "/db/local/clinical_safety_ddl.sql",
                 "/db/local/knowledge_package_ddl.sql",
                 "/db/local/ai_candidate_review_ddl.sql",
-                "/db/local/cdss_safety_red_line_ddl.sql"
+                "/db/local/cdss_safety_red_line_ddl.sql",
+                "/db/local/ai_safety_ddl.sql"
         };
         List<String> statements = new ArrayList<String>();
         for (String resource : resources) {
