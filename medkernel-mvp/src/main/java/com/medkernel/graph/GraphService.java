@@ -2,6 +2,7 @@ package com.medkernel.graph;
 
 import com.medkernel.audit.PublishGateService;
 import com.medkernel.common.exception.MissingSourceException;
+import com.medkernel.organization.OrganizationContext;
 import com.medkernel.persistence.EnginePersistenceService;
 import org.springframework.stereotype.Service;
 
@@ -39,26 +40,61 @@ public class GraphService {
     }
 
     public List<Map<String, Object>> importGraphVersions(Object request) {
-        return graphVersionService.importGraphVersions(request, graphVersions);
+        return importGraphVersions(request, null);
+    }
+
+    public List<Map<String, Object>> importGraphVersions(Object request, OrganizationContext orgContext) {
+        String tenantId = resolveTenant(orgContext);
+        return graphVersionService.importGraphVersions(request, graphVersions, tenantId);
     }
 
     public List<Map<String, Object>> listGraphVersions() {
-        return graphVersionService.listGraphVersions(graphVersions);
+        return listGraphVersions(null, null);
+    }
+
+    public List<Map<String, Object>> listGraphVersions(Map<String, String> filters, OrganizationContext orgContext) {
+        String tenantId = resolveTenant(orgContext);
+        return graphVersionService.listGraphVersions(graphVersions, tenantId);
     }
 
     public Map<String, Object> getGraphVersion(String graphVersion) {
+        return getGraphVersion(graphVersion, null);
+    }
+
+    public Map<String, Object> getGraphVersion(String graphVersion, OrganizationContext orgContext) {
+        String tenantId = resolveTenant(orgContext);
+        // 先尝试租户键
+        Map<String, Object> entry = graphVersions.get(versionKey(tenantId, graphVersion));
+        if (entry != null) {
+            return entry;
+        }
+        // 回退到旧格式键
         return graphVersionService.getGraphVersion(graphVersion, graphVersions);
     }
 
     public Map<String, Object> activateGraphVersion(String graphVersion, Map<String, Object> request) {
-        return graphVersionService.activateGraphVersion(graphVersion, request, graphVersions, graphVersionLock);
+        return activateGraphVersion(graphVersion, request, null);
+    }
+
+    public Map<String, Object> activateGraphVersion(String graphVersion, Map<String, Object> request, OrganizationContext orgContext) {
+        String tenantId = resolveTenant(orgContext);
+        return graphVersionService.activateGraphVersion(graphVersion, request, graphVersions, graphVersionLock, tenantId);
     }
 
     public Map<String, Object> rollbackVersion(String graphVersion, Map<String, Object> request) {
-        return graphVersionService.rollbackVersion(graphVersion, request, graphVersions, graphVersionLock);
+        return rollbackVersion(graphVersion, request, null);
+    }
+
+    public Map<String, Object> rollbackVersion(String graphVersion, Map<String, Object> request, OrganizationContext orgContext) {
+        String tenantId = resolveTenant(orgContext);
+        return graphVersionService.rollbackVersion(graphVersion, request, graphVersions, graphVersionLock, tenantId);
     }
 
     public List<Map<String, Object>> importGraphEvidences(Object request) {
+        return importGraphEvidences(request, null);
+    }
+
+    public List<Map<String, Object>> importGraphEvidences(Object request, OrganizationContext orgContext) {
         List<Map<String, Object>> entries = normalize(request, "evidences", "evidence_id");
         if (entries.isEmpty()) {
             throw new IllegalArgumentException("graph evidences list is empty");
@@ -76,15 +112,21 @@ public class GraphService {
             throw new IllegalArgumentException("graph evidences invalid: " + errors);
         }
 
+        String tenantId = resolveTenant(orgContext);
         List<Map<String, Object>> imported = new ArrayList<Map<String, Object>>();
         for (Map<String, Object> entry : staged) {
-            graphEvidences.put((String) entry.get("evidence_id"), entry);
+            entry.put("tenant_id", tenantId);
+            graphEvidences.put(evidenceKey(tenantId, (String) entry.get("evidence_id")), entry);
             imported.add(entry);
         }
         return imported;
     }
 
     public List<Map<String, Object>> listGraphEvidences(Map<String, String> filters) {
+        return listGraphEvidences(filters, null);
+    }
+
+    public List<Map<String, Object>> listGraphEvidences(Map<String, String> filters, OrganizationContext orgContext) {
         String graphVersion = filterValue(filters, "graphVersion");
         String targetCode = filterValue(filters, "targetCode");
         String targetType = filterValue(filters, "targetType");
@@ -94,7 +136,13 @@ public class GraphService {
             limit = 100;
         }
 
-        List<Map<String, Object>> all = new ArrayList<Map<String, Object>>(graphEvidences.values());
+        String tenantId = resolveTenant(orgContext);
+        List<Map<String, Object>> all = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> entry : graphEvidences.values()) {
+            if (matchesTenant(entry, tenantId)) {
+                all.add(entry);
+            }
+        }
         Collections.sort(all, new Comparator<Map<String, Object>>() {
             @Override
             public int compare(Map<String, Object> left, Map<String, Object> right) {
@@ -125,7 +173,18 @@ public class GraphService {
     }
 
     public Map<String, Object> getGraphEvidence(String evidenceId) {
-        Map<String, Object> entry = graphEvidences.get(evidenceId);
+        return getGraphEvidence(evidenceId, null);
+    }
+
+    public Map<String, Object> getGraphEvidence(String evidenceId, OrganizationContext orgContext) {
+        String tenantId = resolveTenant(orgContext);
+        // 先尝试租户键
+        Map<String, Object> entry = graphEvidences.get(evidenceKey(tenantId, evidenceId));
+        if (entry != null) {
+            return entry;
+        }
+        // 回退到旧格式键
+        entry = graphEvidences.get(evidenceId);
         if (entry == null) {
             throw new IllegalArgumentException("graph evidence not found: " + evidenceId);
         }
@@ -133,6 +192,10 @@ public class GraphService {
     }
 
     public List<Map<String, Object>> importGraphNodes(Object request) {
+        return importGraphNodes(request, null);
+    }
+
+    public List<Map<String, Object>> importGraphNodes(Object request, OrganizationContext orgContext) {
         List<Map<String, Object>> entries = normalize(request, "nodes", "code");
         if (entries.isEmpty()) {
             throw new IllegalArgumentException("graph nodes list is empty");
@@ -150,15 +213,21 @@ public class GraphService {
             throw new IllegalArgumentException("graph nodes invalid: " + errors);
         }
 
+        String tenantId = resolveTenant(orgContext);
         List<Map<String, Object>> imported = new ArrayList<Map<String, Object>>();
         for (Map<String, Object> entry : staged) {
-            graphNodes.put(nodeKey((String) entry.get("graph_version"), (String) entry.get("code")), entry);
+            entry.put("tenant_id", tenantId);
+            graphNodes.put(nodeKey(tenantId, (String) entry.get("graph_version"), (String) entry.get("code")), entry);
             imported.add(entry);
         }
         return imported;
     }
 
     public List<Map<String, Object>> listGraphNodes(Map<String, String> filters) {
+        return listGraphNodes(filters, null);
+    }
+
+    public List<Map<String, Object>> listGraphNodes(Map<String, String> filters, OrganizationContext orgContext) {
         String graphVersion = filterValue(filters, "graphVersion");
         String type = filterValue(filters, "type");
         int limit = filterInt(filters, "limit", 200);
@@ -166,7 +235,13 @@ public class GraphService {
             limit = 200;
         }
 
-        List<Map<String, Object>> all = new ArrayList<Map<String, Object>>(graphNodes.values());
+        String tenantId = resolveTenant(orgContext);
+        List<Map<String, Object>> all = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> entry : graphNodes.values()) {
+            if (matchesTenant(entry, tenantId)) {
+                all.add(entry);
+            }
+        }
         Collections.sort(all, new Comparator<Map<String, Object>>() {
             @Override
             public int compare(Map<String, Object> left, Map<String, Object> right) {
@@ -192,6 +267,10 @@ public class GraphService {
     }
 
     public List<Map<String, Object>> importGraphEdges(Object request) {
+        return importGraphEdges(request, null);
+    }
+
+    public List<Map<String, Object>> importGraphEdges(Object request, OrganizationContext orgContext) {
         List<Map<String, Object>> entries = normalize(request, "edges", "from_code");
         if (entries.isEmpty()) {
             throw new IllegalArgumentException("graph edges list is empty");
@@ -209,9 +288,11 @@ public class GraphService {
             throw new IllegalArgumentException("graph edges invalid: " + errors);
         }
 
+        String tenantId = resolveTenant(orgContext);
         List<Map<String, Object>> imported = new ArrayList<Map<String, Object>>();
         synchronized (graphEdges) {
             for (Map<String, Object> entry : staged) {
+                entry.put("tenant_id", tenantId);
                 graphEdges.add(entry);
                 imported.add(entry);
             }
@@ -220,6 +301,10 @@ public class GraphService {
     }
 
     public List<Map<String, Object>> listGraphEdges(Map<String, String> filters) {
+        return listGraphEdges(filters, null);
+    }
+
+    public List<Map<String, Object>> listGraphEdges(Map<String, String> filters, OrganizationContext orgContext) {
         String graphVersion = filterValue(filters, "graphVersion");
         String fromCode = filterValue(filters, "fromCode");
         String toCode = filterValue(filters, "toCode");
@@ -229,9 +314,15 @@ public class GraphService {
             limit = 200;
         }
 
+        String tenantId = resolveTenant(orgContext);
         List<Map<String, Object>> snapshot;
         synchronized (graphEdges) {
-            snapshot = new ArrayList<Map<String, Object>>(graphEdges);
+            snapshot = new ArrayList<Map<String, Object>>();
+            for (Map<String, Object> edge : graphEdges) {
+                if (matchesTenant(edge, tenantId)) {
+                    snapshot.add(edge);
+                }
+            }
         }
         List<Map<String, Object>> matched = new ArrayList<Map<String, Object>>();
         for (Map<String, Object> edge : snapshot) {
@@ -375,11 +466,6 @@ public class GraphService {
         return view;
     }
 
-    private String nodeKey(String graphVersion, String code) {
-        return string(graphVersion, "") + "::" + string(code, "");
-    }
-
-
 
 
 
@@ -417,6 +503,37 @@ public class GraphService {
 
     private String nowText() {
         return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now());
+    }
+
+    // =========================================================================
+    // 租户隔离辅助方法
+    // =========================================================================
+
+    private String resolveTenant(OrganizationContext orgContext) {
+        if (orgContext != null && orgContext.getTenantId() != null && !orgContext.getTenantId().trim().isEmpty()) {
+            return orgContext.getTenantId().trim();
+        }
+        return "default";
+    }
+
+    private String versionKey(String tenantId, String graphVersion) {
+        return tenantId + "::" + string(graphVersion, "");
+    }
+
+    private String evidenceKey(String tenantId, String evidenceId) {
+        return tenantId + "::" + string(evidenceId, "");
+    }
+
+    private String nodeKey(String tenantId, String graphVersion, String code) {
+        return tenantId + "::" + string(graphVersion, "") + "::" + string(code, "");
+    }
+
+    private boolean matchesTenant(Map<String, Object> entry, String tenantId) {
+        String entryTenant = string(entry.get("tenant_id"), null);
+        if (entryTenant == null) {
+            return true; // 旧数据视为所有租户可见
+        }
+        return tenantId.equals(entryTenant);
     }
 
     // =========================================================================
