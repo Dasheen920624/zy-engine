@@ -34,6 +34,7 @@ import { InsuranceAudit } from "../pages/Insurance";
 import { ProvenancePage } from "../pages/Provenance";
 import { AiWorkflowsPage } from "../pages/AiWorkflows";
 import TenantOnboarding from "../pages/Tenant/Onboarding";
+import { ImplementationGuidePage } from "../pages/Onboarding";
 import { MpiPatientsPage } from "../pages/Mpi";
 import { AuditLogList } from "../pages/Admin/AuditLog";
 import { UserManagementPage } from "../pages/Admin/UserManagement";
@@ -92,6 +93,7 @@ export const routes: RouteObject[] = [
           { path: "dify/workflows", element: <Navigate to="/ai-workflows" replace /> },
           { path: "ai-workflows", element: <AiWorkflowsPage /> },
           { path: "tenant/onboarding", element: <TenantOnboarding /> },
+          { path: "onboarding/implementation-guide", element: <ImplementationGuidePage /> },
           { path: "*", element: <NotFound /> },
         ],
       },
