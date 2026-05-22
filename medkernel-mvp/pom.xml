@@ -120,7 +120,52 @@
             <version>19.22.0.0</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- PR-FINAL-25: Flyway DB migration（阶段 4 合规上线收口）。
+             零 baseline 设计：项目未上线，Flyway 接管所有 schema 管理。
+             - Spring Boot 2.7 没有 spring-boot-starter-flyway artifact；
+               FlywayAutoConfiguration 在 spring-boot-autoconfigure 里，依赖 flyway-core 即可启用。
+             - DataSource 就绪后自动 migrate 所有 V*__init_*.sql；不再有自定义 init-schema 路径。
+             - 多方言 location 由 application.yml 用 ${medkernel.database.dialect} 占位符切换。
+             - 版本跟随 Spring Boot 2.7.18 BOM（8.5.13），保持 JDK 8 兼容。
+             详见 docs/adr/0014-flyway-zero-baseline.md。 -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
     </dependencies>
+
+    <profiles>
+        <!-- PR-FINAL-25: KingbaseES（人大金仓）JDBC 驱动（信创首选数据库）。
+             人大金仓 JDBC jar (kingbase8) 不在 Maven Central，需要医院 DBA 从官网下载后
+             手动装入本地 Maven 仓库：
+
+               1. 下载 kingbase8-8.6.0.jar（或随医院 KingbaseES 版本）
+                  https://www.kingbase.com.cn → 下载中心 → JDBC
+               2. 装入本地仓库（一次性）：
+                  mvn install:install-file ^
+                      -Dfile=kingbase8-8.6.0.jar ^
+                      -DgroupId=cn.com.kingbase ^
+                      -DartifactId=kingbase8 ^
+                      -Dversion=8.6.0 ^
+                      -Dpackaging=jar
+               3. 启用本 profile 构建：
+                  mvn -P kingbase clean package
+
+             CI 默认不激活本 profile（避免 Maven Central 解析失败）。
+             激活后 application-kingbase.yml 接管 dialect=kingbase 配置，
+             Flyway 自动选 db/migration/kingbase/ 目录。 -->
+        <profile>
+            <id>kingbase</id>
+            <dependencies>
+                <dependency>
+                    <groupId>cn.com.kingbase</groupId>
+                    <artifactId>kingbase8</artifactId>
+                    <version>8.6.0</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

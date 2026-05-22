@@ -5,6 +5,12 @@
 # 警告：本文件中的 jwt-secret 长度 >= 32，但仍是公开测试值，
 # 严禁复制到 application-*.yml 或任何真实部署环境。
 
+spring:
+  # PR-FINAL-25: 测试 profile 强制 Flyway 启用（避免 ${medkernel.database.enabled} 占位符
+  # 在 FlywayAutoConfiguration 早期实例化时未完成 binding 导致 migrate 跳过）
+  flyway:
+    enabled: true
+
 medkernel:
   database:
     role: development
@@ -13,7 +19,6 @@ medkernel:
     url: jdbc:h2:mem:medkernel_contract_test;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_DELAY=-1
     username: sa
     password: ""
-    init-schema: true
   security:
     jwt-secret: test-only-jwt-secret-do-not-use-in-production-medkernel-2026
   dify:

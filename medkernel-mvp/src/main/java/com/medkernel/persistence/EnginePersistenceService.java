@@ -17,6 +17,7 @@ import com.medkernel.provenance.SourceDocumentRepository;
 import com.medkernel.rule.RuleDefinition;
 import com.medkernel.rule.RuleExecLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -38,7 +39,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * PR-FINAL-25：通过 {@code @DependsOn("flyway")} 让此 Service（以及所有依赖它的
+ * {@code @PostConstruct rebuildFromPersistence()} 入口）排在 Flyway migrate 之后初始化。
+ * Spring 会把 dependsOn 关系沿构造器依赖图传递给下游 14+ 个 Service，避免逐个标注。
+ */
 @Service
+@DependsOn("flyway")
 public class EnginePersistenceService extends PersistenceRepositorySupport {
     private final PathwayInstanceRepository pathwayInstanceRepository;
     private final RuleExecLogRepository ruleExecLogRepository;
@@ -82,25 +89,9 @@ public class EnginePersistenceService extends PersistenceRepositorySupport {
         return enabled() ? properties.providerName() : "IN_MEMORY";
     }
 
-    /** 初始化本地文件数据库的 Schema（H2 DDL），仅在 localFileDatabase 且 initSchema 开启时执行。 */
-    @PostConstruct
-    public void initializeLocalSchema() {
-        if (!enabled() || !properties.localFileDatabase() || !properties.isInitSchema()) {
-            return;
-        }
-        List<String> statements = loadLocalSchemaStatements();
-        try (Connection connection = connection();
-             Statement statement = connection.createStatement()) {
-            for (String sql : statements) {
-                String trimmed = sql.trim();
-                if (!trimmed.isEmpty()) {
-                    statement.execute(trimmed);
-                }
-            }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("initialize local database schema failed: " + ex.getMessage(), ex);
-        }
-    }
+    // PR-FINAL-25: 已删 @PostConstruct initializeLocalSchema()。
+    // 30 模块的 H2 schema 由 Flyway db/migration/h2/V1-V30__init_*.sql 接管，
+    // 生产 Oracle/DM/PG/Kingbase 也由对应 V*.sql 接管（详见 docs/adr/0014-flyway-zero-baseline.md）。
 
     /** 保存或更新路径草稿（pe_pathway_def），使用 UPDATE+INSERT 两阶段实现 UPSERT。 */
     public void savePathwayDraft(String pathwayCode, Map<String, Object> config) {
@@ -830,73 +821,8 @@ public class EnginePersistenceService extends PersistenceRepositorySupport {
         return config.isEmpty() ? null : toJson(config);
     }
 
-    private List<String> loadLocalSchemaStatements() {
-        // 按顺序加载本地开发库 DDL：核心表 + 业务追加表。新增 DDL 需要在此显式注册。
-        String[] resources = new String[] {
-                "/db/local/h2_core_ddl.sql",
-                "/db/local/re_rule_eval_result_ddl.sql",
-                "/db/local/sec_ddl.sql",
-                "/db/local/sec_sso_ddl.sql",
-                "/db/local/sec_user_sync_ddl.sql",
-                "/db/local/sec_multi_identity_ddl.sql",
-                "/db/local/sec_audit_chain_ddl.sql",
-                "/db/local/notify_ddl.sql",
-                "/db/local/wf_ddl.sql",
-                "/db/local/tenant_onboarding_ddl.sql",
-                "/db/local/interop_ddl.sql",
-                "/db/local/mpi_ddl.sql",
-                "/db/local/ai_knowledge_job_ddl.sql",
-                "/db/local/ai_knowledge_sync_log_ddl.sql",
-                "/db/local/cdss_trigger_point_ddl.sql",
-                "/db/local/model_provider_config_ddl.sql",
-                "/db/local/cdss_override_log_ddl.sql",
-                "/db/local/quality_finding_ddl.sql",
-                "/db/local/ops_ddl.sql",
-                "/db/local/ops_sync_task_ddl.sql",
-                "/db/local/data_governance_ddl.sql",
-                "/db/local/ai_governance_ddl.sql",
-                "/db/local/clinical_safety_ddl.sql",
-                "/db/local/knowledge_package_ddl.sql",
-                "/db/local/ai_candidate_review_ddl.sql",
-                "/db/local/cdss_safety_red_line_ddl.sql",
-                "/db/local/ai_safety_ddl.sql",
-                "/db/local/sec_data_permission_ddl.sql",
-                "/db/local/sec_menu_permission_ddl.sql",
-                "/db/local/prov_release_check_ddl.sql"
-        };
-        List<String> statements = new ArrayList<String>();
-        for (String resource : resources) {
-            statements.addAll(loadLocalSchemaResource(resource));
-        }
-        return statements;
-    }
-
-    private List<String> loadLocalSchemaResource(String resource) {
-        InputStream stream = EnginePersistenceService.class.getResourceAsStream(resource);
-        if (stream == null) {
-            throw new IllegalStateException("local database schema resource not found: " + resource);
-        }
-        StringBuilder sql = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String trimmed = line.trim();
-                if (!trimmed.startsWith("--")) {
-                    sql.append(line).append('\n');
-                }
-            }
-        } catch (IOException ex) {
-            throw new IllegalStateException("read local database schema failed: " + resource, ex);
-        }
-        List<String> statements = new ArrayList<String>();
-        String[] parts = sql.toString().split(";");
-        for (String part : parts) {
-            if (!part.trim().isEmpty()) {
-                statements.add(part);
-            }
-        }
-        return statements;
-    }
+    // PR-FINAL-25: 已删 loadLocalSchemaStatements() / loadLocalSchemaResource()。
+    // 30 个 DDL 资源现由 Flyway 自动按版本号顺序执行；新增 schema 变更走 V31+.sql。
 
     /**
      * 提供给其他 Service 复用的安全 JSON 序列化：null 返回 null，序列化异常返回 null 不抛出，

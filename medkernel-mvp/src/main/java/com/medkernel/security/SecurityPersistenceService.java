@@ -52,29 +52,8 @@ public class SecurityPersistenceService extends SecurityRepositorySupport {
         this.securityAuditRepository = new SecurityAuditRepository(properties, dataSource);
         this.identityProviderRepository = new IdentityProviderRepository(properties, dataSource);
     }
-    @PostConstruct
-    public void initializeSecuritySchema() {
-        if (!properties.isEnabled() || !properties.localFileDatabase()) {
-            return;
-        }
-        List<String> statements = loadSchemaStatements("/db/local/sec_ddl.sql");
-        if (statements.isEmpty()) {
-            return;
-        }
-        try (Connection connection = connection();
-             Statement statement = connection.createStatement()) {
-            for (String sql : statements) {
-                String trimmed = sql.trim();
-                if (!trimmed.isEmpty()) {
-                    statement.execute(trimmed);
-                }
-            }
-            log.info("SEC schema initialized successfully");
-        } catch (SQLException ex) {
-            log.error("initialize SEC schema failed", ex);
-            throw new IllegalStateException("initialize SEC schema failed: " + ex.getMessage(), ex);
-        }
-    }
+    // PR-FINAL-25: 已删 @PostConstruct initializeSecuritySchema()。
+    // SEC schema 由 Flyway V2__init_security_core.sql 等接管（详见 docs/adr/0014-flyway-zero-baseline.md）。
     public SecurityUser findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
@@ -202,33 +181,5 @@ public class SecurityPersistenceService extends SecurityRepositorySupport {
         return platformUserRepository.createUserWithPassword(
                 tenantId, username, displayName, email, phone, userType, employeeId, passwordHash, createdBy);
     }
-    private List<String> loadSchemaStatements(String resourcePath) {
-        InputStream input = SecurityPersistenceService.class.getResourceAsStream(resourcePath);
-        if (input == null) {
-            log.warn("SEC schema resource not found: {}", resourcePath);
-            return new ArrayList<String>();
-        }
-        List<String> statements = new ArrayList<String>();
-        StringBuilder current = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String trimmed = line.trim();
-                if (trimmed.isEmpty() || trimmed.startsWith("--")) {
-                    continue;
-                }
-                current.append(line).append('\n');
-                if (trimmed.endsWith(";")) {
-                    statements.add(current.toString().replace(";", ""));
-                    current.setLength(0);
-                }
-            }
-            if (current.length() > 0) {
-                statements.add(current.toString());
-            }
-        } catch (IOException ex) {
-            throw new IllegalStateException("load SEC schema resource failed: " + ex.getMessage(), ex);
-        }
-        return statements;
-    }
+    // PR-FINAL-25: 已删 loadSchemaStatements()。schema 加载由 Flyway 接管。
 }

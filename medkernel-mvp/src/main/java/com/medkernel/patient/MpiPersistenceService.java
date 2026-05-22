@@ -43,29 +43,8 @@ public class MpiPersistenceService {
         this.dataSource = dataSource;
     }
 
-    @PostConstruct
-    public void initializeMpiSchema() {
-        if (!properties.isEnabled() || !properties.localFileDatabase()) {
-            return;
-        }
-        List<String> statements = loadSchemaStatements("/db/local/mpi_ddl.sql");
-        if (statements.isEmpty()) {
-            return;
-        }
-        try (Connection connection = connection();
-             Statement statement = connection.createStatement()) {
-            for (String sql : statements) {
-                String trimmed = sql.trim();
-                if (!trimmed.isEmpty()) {
-                    statement.execute(trimmed);
-                }
-            }
-            log.info("MPI schema initialized successfully");
-        } catch (SQLException ex) {
-            log.error("initialize MPI schema failed", ex);
-            throw new IllegalStateException("initialize MPI schema failed: " + ex.getMessage(), ex);
-        }
-    }
+    // PR-FINAL-25: 已删 @PostConstruct initializeMpiSchema()。
+    // MPI schema 由 Flyway V9__init_mpi.sql 在应用启动时统一管理（详见 docs/adr/0014-flyway-zero-baseline.md）。
 
     // ============================================================================
     // 患者标识映射操作
@@ -806,34 +785,5 @@ public class MpiPersistenceService {
         }
     }
 
-    private List<String> loadSchemaStatements(String resourcePath) {
-        List<String> statements = new ArrayList<>();
-        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
-            if (is == null) {
-                log.warn("MPI DDL resource not found: {}", resourcePath);
-                return statements;
-            }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-                StringBuilder current = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    String trimmed = line.trim();
-                    if (trimmed.startsWith("--") || trimmed.isEmpty()) {
-                        continue;
-                    }
-                    current.append(line).append("\n");
-                    if (trimmed.endsWith(";")) {
-                        statements.add(current.toString().trim());
-                        current.setLength(0);
-                    }
-                }
-                if (current.length() > 0) {
-                    statements.add(current.toString().trim());
-                }
-            }
-        } catch (IOException ex) {
-            log.error("load MPI DDL failed", ex);
-        }
-        return statements;
-    }
+    // PR-FINAL-25: 已删 loadSchemaStatements()。schema 加载由 Flyway 接管。
 }

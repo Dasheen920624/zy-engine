@@ -51,6 +51,23 @@ spring:
     default-property-inclusion: NON_NULL
     serialization:
       write-dates-as-timestamps: false
+  # PR-FINAL-25: Flyway 零 baseline 设计 —— 项目未上线，Flyway 接管全部 schema 管理。
+  # - enabled 跟 medkernel.database.enabled 联动（用 Spring 占位符读配置项，不是环境变量；
+  #   测试 profile（application-test.yml）设了 medkernel.database.enabled=true，自动启用 Flyway）
+  # - locations 按方言切目录：dialect=oracle → db/migration/oracle/V*.sql；默认 h2
+  # - table=medkernel_schema_history 避免污染共享 schema 命名空间
+  # - baseline-on-migrate=false 因为没有"历史"baseline 需要承认（项目未上线）
+  # - validate-on-migrate=true 防止 V*.sql checksum 被改后无声漂移
+  # 详见 docs/adr/0014-flyway-zero-baseline.md
+  flyway:
+    # 默认开 —— 零 baseline 设计下 Flyway 是 schema 管理唯一权威；
+    # 如医院手动管理 schema，可设 MEDKERNEL_FLYWAY_ENABLED=false 跳过
+    enabled: ${MEDKERNEL_FLYWAY_ENABLED:true}
+    locations: classpath:db/migration/${medkernel.database.dialect:h2}
+    table: ${MEDKERNEL_FLYWAY_TABLE:medkernel_schema_history}
+    baseline-on-migrate: false
+    validate-on-migrate: true
+    out-of-order: false
 
 medkernel:
   database:
@@ -60,7 +77,6 @@ medkernel:
     url: ${MEDKERNEL_DB_URL:jdbc:oracle:thin:@//192.168.4.25:1521/ORCL}
     username: ${MEDKERNEL_DB_USERNAME:MEDKERNEL}
     password: ${MEDKERNEL_DB_PASSWORD:}
-    init-schema: ${MEDKERNEL_DB_INIT_SCHEMA:true}
     # PR-FINAL-15: HikariCP 连接池配置（替代 29 处散落的旧式 JDBC 直连）。
     # EngineDataSourceConfig 读这里的配置构造 @Bean DataSource，所有 PersistenceService
     # 通过注入 DataSource 拿连接，@Transactional 真正生效（同 Service 内多 DAO 走同 connection）。

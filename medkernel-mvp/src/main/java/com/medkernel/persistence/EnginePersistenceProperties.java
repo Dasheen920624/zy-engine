@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "medkernel.database")
 public class EnginePersistenceProperties {
     private boolean enabled;
-    private boolean initSchema = true;
     private String role = "production";
     private String dialect;
     private String url;
@@ -60,14 +59,6 @@ public class EnginePersistenceProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public boolean isInitSchema() {
-        return initSchema;
-    }
-
-    public void setInitSchema(boolean initSchema) {
-        this.initSchema = initSchema;
     }
 
     public String getRole() {

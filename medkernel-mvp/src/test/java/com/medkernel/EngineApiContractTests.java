@@ -7,6 +7,7 @@ import com.medkernel.persistence.OrganizationPersistenceService;
 import com.medkernel.organization.OrganizationUnit;
 import com.medkernel.provenance.SourceDocument;
 import com.medkernel.security.JwtTokenProvider;
+import org.flywaydb.core.Flyway;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,10 +101,8 @@ class EngineApiContractTests {
         properties.setUrl("jdbc:h2:mem:medkernel_local_contract;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_DELAY=-1");
         properties.setUsername("sa");
         properties.setPassword("");
-        properties.setInitSchema(true);
 
-        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper, testDataSource(properties));
-        service.initializeLocalSchema();
+        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper, initializedTestDataSource(properties));
         service.saveAuditLog("TEST", "LOCAL_DB_WRITE", "CONTRACT", "LOCAL_H2", null, null, "JUNIT",
                 new LinkedHashMap<String, Object>());
 
@@ -120,10 +119,8 @@ class EngineApiContractTests {
                 + ";MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_ON_EXIT=FALSE");
         properties.setUsername("sa");
         properties.setPassword("");
-        properties.setInitSchema(true);
 
-        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper, testDataSource(properties));
-        service.initializeLocalSchema();
+        EnginePersistenceService service = new EnginePersistenceService(properties, objectMapper, initializedTestDataSource(properties));
 
         SourceDocument document = new SourceDocument();
         document.setTenantId("TENANT_SRC_DB");
@@ -160,11 +157,9 @@ class EngineApiContractTests {
                 + ";MODE=Oracle;DATABASE_TO_UPPER=TRUE;DB_CLOSE_ON_EXIT=FALSE");
         properties.setUsername("sa");
         properties.setPassword("");
-        properties.setInitSchema(true);
 
-        DataSource dataSource = testDataSource(properties);
+        DataSource dataSource = initializedTestDataSource(properties);
         EnginePersistenceService engineService = new EnginePersistenceService(properties, objectMapper, dataSource);
-        engineService.initializeLocalSchema();
 
         OrganizationPersistenceService orgService = new OrganizationPersistenceService(properties, dataSource);
         assertTrue(orgService.enabled());
@@ -2192,6 +2187,23 @@ class EngineApiContractTests {
         dataSource.setURL(properties.getUrl());
         dataSource.setUser(properties.getUsername());
         dataSource.setPassword(properties.getPassword());
+        return dataSource;
+    }
+
+    /**
+     * PR-FINAL-25: 用 Flyway 初始化 H2 测试库（取代已删的 EnginePersistenceService.initializeLocalSchema）。
+     * 这些 unit 测试不走 Spring 上下文，需要手动触发 migrate；
+     * 走 @SpringBootTest 的 MockMvc 测试由 Spring Boot FlywayAutoConfiguration 自动 migrate。
+     */
+    private DataSource initializedTestDataSource(EnginePersistenceProperties properties) {
+        DataSource dataSource = testDataSource(properties);
+        Flyway.configure()
+                .dataSource(dataSource)
+                .locations("classpath:db/migration/h2")
+                .table("medkernel_schema_history")
+                .baselineOnMigrate(false)
+                .load()
+                .migrate();
         return dataSource;
     }
 
