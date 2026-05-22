@@ -348,6 +348,8 @@ externalServices:
 
 ## 4. 双形态共同 PR（v0.3 / v1.0 GA / v1.1）
 
+> **归档说明**：v0.3 列为历史参考，v0.3 阶段任务已完成归档。当前唯一目标是 **v1.0 GA / tag `v1.0.0`**。
+
 | PR | 内容 | v0.3 | v1.0 GA | v1.1 |
 |---|---|:---:|:---:|:---:|
 | PR-V3-COMPLIANCE-BACKEND | application.yml 合规配置 | ✅ | | |

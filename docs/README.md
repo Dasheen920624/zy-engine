@@ -17,7 +17,7 @@
 | 6 | [`DEPLOYMENT_DUAL_MODE.md`](DEPLOYMENT_DUAL_MODE.md) | **内外网双部署规格** — 医院本地部署优先，SaaS 受控推进 | 10 分钟 | 实施工程师 / SRE / 售前 |
 | 7 | [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md) | **AI 团队 SOP** — claim / lock / review / DoD / 紧急处置 | 10 分钟（按需查） | 所有 AI |
 
-**旧 v0.3 文档说明**：[`AI_TEAM_PR_BACKLOG_V0.3_FINAL.md`](AI_TEAM_PR_BACKLOG_V0.3_FINAL.md)、[`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)、[`engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md) 均为历史证据，不再作为新任务入口。下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**。
+**旧 v0.3 / v0.2 文档说明**：[`AI_TEAM_PR_BACKLOG_V0.3_FINAL.md`](AI_TEAM_PR_BACKLOG_V0.3_FINAL.md)、[`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)、[`engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md)、[`engineering/2026-05-21-v0.2-demo-release-PR-draft.md`](engineering/2026-05-21-v0.2-demo-release-PR-draft.md)、[`engineering/2026-05-21-v0.2-demo-演示话术.md`](engineering/2026-05-21-v0.2-demo-演示话术.md) 均为历史证据，不再作为新任务入口。下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**。
 
 **阅读顺序（首次接手）**：1 → 2 → 3 → 7 → 按任务补读 4/5/6
 
