@@ -9,15 +9,13 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | 🟢 **GREEN — develop @ `6711e5c` + FIX-DEV-010 主干修复已完成，全量后端/前端门禁通过** |
-| 最后更新 | 2026-05-22 |
-| 最后验证 commit | `8ee84f7` (FIX-DEV-010) — develop 主干健康修复提交，基于 origin/develop `6711e5c` |
-| 演示候选 tag | `v0.2-demo`（指向 main `565e8a7`） |
-| 验证命令 | `mvn -q compile` + `medkernel-mvp/scripts/run-tests.ps1` + `medkernel-mvp/scripts/build.ps1` + `frontend eslint/typecheck/vitest/vite build` + `check-ai-collaboration.ps1` |
-| 结果 | **PASS**：后端 compile/test/build 通过；前端 ESLint 0 error、typecheck/test/build 通过；协作 claim/lock 检查通过 |
-| 详细报告 | [docs/engineering/AUDIT-20260520-增量.md](../docs/engineering/AUDIT-20260520-增量.md) |
-| 历史派单 | [docs/engineering/2026-05-20-破窗行动.md](../docs/engineering/2026-05-20-破窗行动.md) — FIX-DEV-001..009 已全部修复 |
-| 发布 PR | [PR #10](https://github.com/Dasheen920624/medkernel/pull/10) — MERGED via squash 2026-05-21 |
+| 状态 | 🟢 **GREEN — v0.3-final 已发布，develop @ `d8dd5a4`，全量后端/前端门禁通过** |
+| 最后更新 | 2026-05-23 |
+| 最后验证 commit | `a5ae366` — v0.3-final 发布前最终验证（typecheck + build + mvn compile + mvn test 全 PASS） |
+| 当前发布 tag | `v0.3-final`（指向 main `339616f`，PR #44 squash merge） |
+| 验证命令 | `mvn -q compile` + `mvn -q test` + `cd frontend && npm run typecheck && npm run build` + `scripts/verify-pr.ps1` |
+| 结果 | **PASS**：后端 compile/test 通过；前端 typecheck/build 通过；CI guard-rules + backend-build-test 双 PASS |
+| 发布 PR | [PR #44](https://github.com/Dasheen920624/medkernel/pull/44) — v0.3-final release, MERGED via squash 2026-05-23 |
 
 ---
 
@@ -56,10 +54,11 @@
 | 编号 | 描述 | 演示建议 |
 |---|---|---|
 | KD-001 | WF-001 待办中心后端全 Mock | 演示只看不点 |
-| KD-002 | MpiController 双副本 | 选一份暴露 |
-| KD-003 | UserSyncController 双副本 | 同上 |
-| KD-004 | HikariCP 未接入 | ~~已修复~~ PR-FINAL-15a/15b 已接入 |
-| KD-005~007 | Jackson SNAKE_CASE / OrgContext / Placeholder | 演示功能不受影响或跳过 |
+| ~~KD-002~~ | ~~MpiController 双副本~~ | ✅ PR-FINAL-02 已删除 patientindex 整包 |
+| ~~KD-003~~ | ~~UserSyncController 双副本~~ | ✅ PR-FINAL-03 已删除双副本 |
+| ~~KD-004~~ | ~~HikariCP 未接入~~ | ✅ PR-FINAL-15a/15b 已全量接入 |
+| ~~KD-005~~ | ~~Jackson SNAKE_CASE~~ | ✅ PR-FINAL-16 已全局启用 |
+| KD-006~007 | OrgContext / Placeholder 残留 | 演示功能不受影响或跳过 |
 
 ### 当前 RED 责任任务清单
 
