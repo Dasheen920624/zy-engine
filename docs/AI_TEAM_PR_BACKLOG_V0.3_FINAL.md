@@ -45,7 +45,7 @@
 | **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`a40207b`) | 架构师 | 14 天 |
 | **PR-FINAL-19** | 抽取剩余 ~430 处 inline → CSS Modules | 3 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-20** | springdoc-openapi + 前端 types 自动生成 | 3 | ✅ DONE · Claude-Sonnet-4.6 · 2026-05-22，springdoc-openapi-ui 1.7.0 + @Tag/@Operation 全覆盖 53 Controller 403 端点 + openapi-typescript | 架构师 | 3 天 |
-| **PR-FINAL-21** | E2E 6 剧本 fixture + Playwright | 3 | 🟡 TODO | 高级 | 5 天 |
+| **PR-FINAL-21** | E2E 6 剧本 fixture + Playwright | 3 | ✅ DONE · Claude-Sonnet-4.6 · 2026-05-22，6 个演示剧本 spec（S1~S6）覆盖 dashboard/pathway/rule/cdss/aik/security 全路径 | 高级 | 5 天 |
 | **PR-FINAL-22** | 国密 SM2/SM3/SM4（BouncyCastle）| 4 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-23** | 数据分级 + HEALTH_DATA SM4 加密 | 4 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-24** | actuator + Prometheus + Grafana 5 看板 | 4 | ✅ DONE · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick）· 2026-05-22 (#34) | 高级 | 4 天 |

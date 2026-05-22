@@ -1,0 +1,5 @@
+task_id: PR-FINAL-21
+claim_id: PR-FINAL-21-SONNET-20260522
+owner: Claude-Sonnet-4.6
+branch: develop
+git_base_commit: 140efeb
