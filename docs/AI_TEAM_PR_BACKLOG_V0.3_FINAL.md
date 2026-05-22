@@ -41,7 +41,7 @@
 | **PR-FINAL-15a** | HikariCP 框架接入 + 5 核心 PersistenceService 改造 | 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-15b** | 剩余 24 个 Service 的 DriverManager → DataSource 改造（同模板，mechanical work）| 3 | ✅ DONE | 架构师 | 2 天 |
 | **PR-FINAL-16** | Jackson SNAKE_CASE 全局 + 修 30 测试 | 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`6938ca5`) | 架构师 | 5 天 |
-| **PR-FINAL-17** | 拆 EnginePersistenceService（2175 行）| 3 | 🔵 IN_PROGRESS · Codex-GPT5 · 2026-05-22 | 架构师 | 5 天 |
+| **PR-FINAL-17** | 拆 EnginePersistenceService（2175 行）| 3 | ✅ DONE · Codex-GPT5 · 2026-05-22 (`ea8f5f9`) | 架构师 | 5 天 |
 | **PR-FINAL-18** | 拆 RuleService / PathwayService / SecPersistence 等 5 个超长 | 3 | 🟡 TODO | 架构师 | 14 天 |
 | **PR-FINAL-19** | 抽取剩余 ~430 处 inline → CSS Modules | 3 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-20** | springdoc-openapi + 前端 types 自动生成 | 3 | 🟡 TODO | 架构师 | 3 天 |
@@ -509,6 +509,12 @@ private Connection connection() throws SQLException {
 - `provenance/SourceDocumentRepository`（新）
 - `audit/AuditLogRepository`（新）
 - `common/IdAllocatorRepository`（雪花算法 + tenant 隔离）
+
+**完成（2026-05-22 / Codex-GPT5 / `ea8f5f9`）**：
+- `EnginePersistenceService` 从 2150 行降到 1151 行，保留 public facade，避免破坏现有 Service/Controller/Test 调用面。
+- 新增 `PathwayInstanceRepository`、`RuleExecLogRepository`、`SourceDocumentRepository`、`AuditLogRepository`、`IdAllocatorRepository`，并保留既有 `ConfigPackageRepository` 作为配置仓储边界。
+- 新增 `PersistenceRepositorySupport` 承载 HikariCP connection、JSON、时间、tenant-aware ID helper，避免新 Repository 复制底层工具代码。
+- 无 DDL/schema/frontend 变更；backend 260 测试 PASS；`verify-pr` PASS（16 PASS / 0 FAIL / 2 WARN）。
 
 ### PR-FINAL-18 · 拆 RuleService / PathwayService / SecurityPersistence 等 5 个超长（架构师，14 天）
 
