@@ -106,7 +106,7 @@ review_status: APPROVED
 approved_by: Codex-GPT5
 approved_at: 2026-05-22T14:12+08:00
 submit_allowed: true
-commit: e573631
+commit: a40207b
 push: origin/develop pending status-sync push
 risks: RuleService, PathwayService and KnowledgePackageService remain orchestration-heavy, but PR-FINAL-18 closes the requested first architecture slice across the five target domains without API/schema churn.
 feature_acceptance_status: GOLD_PENDING_PRODUCT_ACCEPTANCE
