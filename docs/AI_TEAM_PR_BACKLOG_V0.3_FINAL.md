@@ -46,7 +46,7 @@
 | **PR-FINAL-19** | 抽取剩余 ~430 处 inline → CSS Modules | 3 | 🟡 TODO | 高级 | 5 天 |
 | **PR-FINAL-20** | springdoc-openapi + 前端 types 自动生成 | 3 | ✅ DONE · Claude-Sonnet-4.6 · 2026-05-22，springdoc-openapi-ui 1.7.0 + @Tag/@Operation 全覆盖 53 Controller 403 端点 + openapi-typescript | 架构师 | 3 天 |
 | **PR-FINAL-21** | E2E 6 剧本 fixture + Playwright | 3 | ✅ DONE · Claude-Sonnet-4.6 · 2026-05-22，6 个演示剧本 spec（S1~S6）覆盖 dashboard/pathway/rule/cdss/aik/security 全路径 | 高级 | 5 天 |
-| **PR-FINAL-22** | 国密 SM2/SM3/SM4（BouncyCastle）| 4 | 🟡 TODO | 架构师 | 5 天 |
+| **PR-FINAL-22** | 国密 SM2/SM3/SM4（BouncyCastle）| 4 | ✅ DONE · Claude-Opus-4.7 · 2026-05-22 — `common/crypto/` 子包（SmCryptoService + Config + KeyPair + Exception + JceUnlimitedStrengthEnabler）+ BouncyCastle 1.70 jdk15on + 19 单测含 GB/T 32905-2016 SM3 国标向量 PASS | 架构师 | 5 天 |
 | **PR-FINAL-23** | 数据分级 + HEALTH_DATA SM4 加密 | 4 | 🟡 TODO | 架构师 | 5 天 |
 | **PR-FINAL-24** | actuator + Prometheus + Grafana 5 看板 | 4 | ✅ DONE · Codex-GPT5（实装）+ Claude-Opus-4.7（cherry-pick）· 2026-05-22 (#34) | 高级 | 4 天 |
 | **PR-FINAL-25** | Flyway DB migration + KingbaseES 实测 | 4 | 🟡 TODO | 架构师 | 5 天 |
@@ -170,6 +170,24 @@ private Connection connection() throws SQLException {
 }
 // 同时删除 loadDriver() / 重试循环 / sleepQuietly 等 helper（如果存在）
 ```
+
+### ✅ PR-FINAL-22：国密 SM2/SM3/SM4 集成（DONE 2026-05-22）
+
+**目标**：合规上线所需的国密三件套（GB/T 32918-2017 SM2 + GB/T 32905-2016 SM3 + GB/T 32907-2016 SM4）基础设施，解锁 PR-FINAL-23 / 审计链签名 / 国密 SSO。
+
+**修改**：
+- `medkernel-mvp/pom.xml`：加 `bcprov-jdk15on` + `bcpkix-jdk15on` 1.70（不用 1.78 因 JCE 签名证书与早期 Java 8 build 不兼容；算法实现等价；升级路径写在 pom 注释）
+- **新建** `medkernel-mvp/src/main/java/com/medkernel/common/crypto/` 子包 5 类：`SmCryptoConfig`（@Configuration 注册 BC Provider + 启用 JCE Unlimited） / `SmCryptoService`（@Service 纯函数 API：sm3 / sm3Hex / sm4EncryptEcb·Cbc / sm4DecryptEcb·Cbc / generateSm4Key·Iv / generateSm2KeyPair / sm2Encrypt·Decrypt / sm2Sign·Verify） / `SmKeyPair`（不可变 value object，defensive copy） / `SmCryptoException`（RuntimeException 包装） / `JceUnlimitedStrengthEnabler`（反射移除 JCE 128-bit 限制，兼容 JDK < 8u151，幂等）
+- **新建** 测试 `SmCryptoServiceTest`：JUnit 5 + @Nested 三组 19 单测，含 **GB/T 32905-2016 SM3 国标向量**（`"abc"` → `66c7f0f4...`、64-byte abcd... → `debe9ff9...`、空输入 → `1ab21d83...`）+ SM4 ECB/CBC 往返 + SM2 加解密/签名验签往返 + 边界 case
+
+**关键设计**：
+- 纯函数 stateless，所有 `getInstance` 显式 `Provider="BC"`
+- 算法变体（ECB/CBC/padding/曲线）固化常量，运行时不可配置
+- 异常归一为 `SmCryptoException`；密钥字节 defensive copy
+
+**关联**：
+- 解锁 PR-FINAL-23（HEALTH_DATA SM4 加密）/ 审计链 SM2 签名 / SSO 国密登录
+- 单测含国标向量，BC 升级时回归保障
 
 ### ✅ PR-FINAL-02：删 patientindex 整包（DONE 2026-05-21）
 
