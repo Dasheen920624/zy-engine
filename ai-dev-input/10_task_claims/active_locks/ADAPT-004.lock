@@ -1,0 +1,7 @@
+task_id: ADAPT-004
+claim_id: ADAPT-004-S01
+owner: TraeAI-Main
+branch: develop
+git_base_commit: 56ecfca6c17fb89eb24340e98d35e38a3489a101
+created_at: 2026-05-23T15:20+08:00
+last_heartbeat: 2026-05-23T15:20+08:00
