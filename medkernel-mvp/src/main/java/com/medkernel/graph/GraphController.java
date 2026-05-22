@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Graph")
 @RestController
 @RequestMapping("/api/graph")
 public class GraphController {
@@ -29,6 +32,7 @@ public class GraphController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Disease candidates")
     @PostMapping("/disease-candidates")
     public ApiResult<List<GraphCandidate>> diseaseCandidates(@RequestBody Map<String, Object> request,
                                                               HttpServletRequest httpRequest) {
@@ -36,6 +40,7 @@ public class GraphController {
         return ApiResult.success(graphService.diseaseCandidates(request));
     }
 
+    @Operation(summary = "Evidence")
     @PostMapping("/evidence")
     public ApiResult<List<Map<String, Object>>> evidence(@RequestBody Map<String, Object> request,
                                                           HttpServletRequest httpRequest) {
@@ -43,6 +48,7 @@ public class GraphController {
         return ApiResult.success(graphService.evidence(request));
     }
 
+    @Operation(summary = "Import versions")
     @PostMapping("/versions")
     public ApiResult<List<Map<String, Object>>> importVersions(@RequestBody Object request,
                                                                 HttpServletRequest httpRequest) {
@@ -50,6 +56,7 @@ public class GraphController {
         return ApiResult.success(graphService.importGraphVersions(request));
     }
 
+    @Operation(summary = "List versions")
     @GetMapping("/versions")
     public ApiResult<List<Map<String, Object>>> listVersions(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
@@ -57,6 +64,7 @@ public class GraphController {
         return ApiResult.success(graphService.listGraphVersions());
     }
 
+    @Operation(summary = "Get version")
     @GetMapping("/versions/{graphVersion}")
     public ApiResult<Map<String, Object>> getVersion(@PathVariable String graphVersion,
                                                       HttpServletRequest httpRequest) {
@@ -65,6 +73,7 @@ public class GraphController {
         return ApiResult.success(graphService.getGraphVersion(graphVersion));
     }
 
+    @Operation(summary = "Activate version")
     @PostMapping("/versions/{graphVersion}/activate")
     public ApiResult<Map<String, Object>> activateVersion(@PathVariable String graphVersion,
                                                           @RequestBody(required = false) Map<String, Object> request,
@@ -73,6 +82,7 @@ public class GraphController {
         return ApiResult.success(graphService.activateGraphVersion(graphVersion, request));
     }
 
+    @Operation(summary = "Rollback version")
     @PostMapping("/versions/{graphVersion}/rollback")
     public ApiResult<Map<String, Object>> rollbackVersion(@PathVariable String graphVersion,
                                                           @RequestBody(required = false) Map<String, Object> request,
@@ -81,6 +91,7 @@ public class GraphController {
         return ApiResult.success(graphService.rollbackVersion(graphVersion, request));
     }
 
+    @Operation(summary = "Import evidences")
     @PostMapping("/evidences")
     public ApiResult<List<Map<String, Object>>> importEvidences(@RequestBody Object request,
                                                                  HttpServletRequest httpRequest) {
@@ -88,6 +99,7 @@ public class GraphController {
         return ApiResult.success(graphService.importGraphEvidences(request));
     }
 
+    @Operation(summary = "List evidences")
     @GetMapping("/evidences")
     public ApiResult<List<Map<String, Object>>> listEvidences(@RequestParam(required = false) String graphVersion,
                                                               @RequestParam(required = false) String targetCode,
@@ -105,6 +117,7 @@ public class GraphController {
         return ApiResult.success(graphService.listGraphEvidences(filters));
     }
 
+    @Operation(summary = "Get evidence")
     @GetMapping("/evidences/{evidenceId}")
     public ApiResult<Map<String, Object>> getEvidence(@PathVariable String evidenceId,
                                                        HttpServletRequest httpRequest) {
@@ -113,6 +126,7 @@ public class GraphController {
         return ApiResult.success(graphService.getGraphEvidence(evidenceId));
     }
 
+    @Operation(summary = "Import nodes")
     @PostMapping("/nodes")
     public ApiResult<List<Map<String, Object>>> importNodes(@RequestBody Object request,
                                                               HttpServletRequest httpRequest) {
@@ -120,6 +134,7 @@ public class GraphController {
         return ApiResult.success(graphService.importGraphNodes(request));
     }
 
+    @Operation(summary = "List nodes")
     @GetMapping("/nodes")
     public ApiResult<List<Map<String, Object>>> listNodes(@RequestParam(required = false) String graphVersion,
                                                           @RequestParam(required = false) String type,
@@ -133,6 +148,7 @@ public class GraphController {
         return ApiResult.success(graphService.listGraphNodes(filters));
     }
 
+    @Operation(summary = "Import edges")
     @PostMapping("/edges")
     public ApiResult<List<Map<String, Object>>> importEdges(@RequestBody Object request,
                                                               HttpServletRequest httpRequest) {
@@ -140,6 +156,7 @@ public class GraphController {
         return ApiResult.success(graphService.importGraphEdges(request));
     }
 
+    @Operation(summary = "List edges")
     @GetMapping("/edges")
     public ApiResult<List<Map<String, Object>>> listEdges(@RequestParam(required = false) String graphVersion,
                                                           @RequestParam(required = false) String fromCode,
@@ -169,6 +186,7 @@ public class GraphController {
      * @param httpRequest  HTTP 请求（用于获取操作人信息）
      * @return 同步任务结果
      */
+    @Operation(summary = "Sync to neo4j")
     @PostMapping("/versions/{graphVersion}/sync")
     public ApiResult<Map<String, Object>> syncToNeo4j(@PathVariable String graphVersion,
                                                       @RequestParam(defaultValue = "false") boolean dryRun,
@@ -203,6 +221,7 @@ public class GraphController {
      * @param httpRequest HTTP 请求
      * @return 重试后的同步任务结果
      */
+    @Operation(summary = "Retry sync")
     @PostMapping("/sync-tasks/{taskCode}/retry")
     public ApiResult<Map<String, Object>> retrySync(@PathVariable String taskCode,
                                                     @RequestParam(defaultValue = "false") boolean dryRun,
@@ -219,6 +238,7 @@ public class GraphController {
     /**
      * 列出同步任务。
      */
+    @Operation(summary = "List sync tasks")
     @GetMapping("/sync-tasks")
     public ApiResult<List<Map<String, Object>>> listSyncTasks(@RequestParam(required = false) String status,
                                                               @RequestParam(required = false) String limit,
@@ -233,6 +253,7 @@ public class GraphController {
     /**
      * 获取同步任务详情。
      */
+    @Operation(summary = "Get sync task")
     @GetMapping("/sync-tasks/{taskCode}")
     public ApiResult<Map<String, Object>> getSyncTask(@PathVariable String taskCode,
                                                       HttpServletRequest httpRequest) {

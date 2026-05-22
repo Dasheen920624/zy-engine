@@ -12,11 +12,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Ai Safety")
 @RestController
 @RequestMapping("/api/ai-safety")
 public class AiSafetyController {
@@ -34,6 +37,7 @@ public class AiSafetyController {
     // 红队场景管理
     // =========================================================================
 
+    @Operation(summary = "Create scenario")
     @PostMapping("/red-team/scenarios")
     public ApiResult<RedTeamScenario> createScenario(
             @RequestBody RedTeamScenario scenario,
@@ -47,6 +51,7 @@ public class AiSafetyController {
         }
     }
 
+    @Operation(summary = "Update scenario")
     @PutMapping("/red-team/scenarios/{scenarioId}")
     public ApiResult<RedTeamScenario> updateScenario(
             @PathVariable("scenarioId") Long scenarioId,
@@ -64,6 +69,7 @@ public class AiSafetyController {
         }
     }
 
+    @Operation(summary = "List scenarios")
     @GetMapping("/red-team/scenarios")
     public ApiResult<List<RedTeamScenario>> listScenarios(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -86,6 +92,7 @@ public class AiSafetyController {
     // 红队测试执行
     // =========================================================================
 
+    @Operation(summary = "Execute red team test")
     @PostMapping("/red-team/execute")
     public ApiResult<RedTeamResult> executeRedTeamTest(
             @RequestBody Map<String, Object> executeRequest,
@@ -111,6 +118,7 @@ public class AiSafetyController {
         }
     }
 
+    @Operation(summary = "List red team results")
     @GetMapping("/red-team/results")
     public ApiResult<List<RedTeamResult>> listRedTeamResults(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -130,6 +138,7 @@ public class AiSafetyController {
         }
     }
 
+    @Operation(summary = "Get red team summary")
     @GetMapping("/red-team/summary")
     public ApiResult<Map<String, Object>> getRedTeamSummary(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -150,6 +159,7 @@ public class AiSafetyController {
     // 幻觉检测
     // =========================================================================
 
+    @Operation(summary = "Record detection")
     @PostMapping("/hallucination/detections")
     public ApiResult<HallucinationDetection> recordDetection(
             @RequestBody HallucinationDetection detection,
@@ -163,6 +173,7 @@ public class AiSafetyController {
         }
     }
 
+    @Operation(summary = "List detections")
     @GetMapping("/hallucination/detections")
     public ApiResult<List<HallucinationDetection>> listDetections(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -181,6 +192,7 @@ public class AiSafetyController {
         }
     }
 
+    @Operation(summary = "Review detection")
     @PostMapping("/hallucination/detections/{detectionId}/review")
     public ApiResult<HallucinationDetection> reviewDetection(
             @PathVariable("detectionId") Long detectionId,
@@ -203,6 +215,7 @@ public class AiSafetyController {
         }
     }
 
+    @Operation(summary = "Get hallucination summary")
     @GetMapping("/hallucination/summary")
     public ApiResult<Map<String, Object>> getHallucinationSummary(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,

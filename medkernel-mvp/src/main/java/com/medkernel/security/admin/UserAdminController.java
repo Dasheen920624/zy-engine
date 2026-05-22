@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ import java.util.Map;
  * <p>鉴权：依赖 SecurityFilter 注入 X-Platform-User-Id；生产环境应在 SecurityFilter
  * 中校验 ADMIN 角色，当前 MVP 阶段通过 Header 信任。
  */
+@Tag(name = "User Admin")
 @RestController
 @RequestMapping("/api/admin")
 public class UserAdminController {
@@ -60,6 +63,7 @@ public class UserAdminController {
      * @param page    页码（默认 1）
      * @param size    每页条数（默认 20，上限 200）
      */
+    @Operation(summary = "List users")
     @GetMapping("/users")
     public ApiResult<PagedResult<Map<String, Object>>> listUsers(
             @RequestParam(required = false) String keyword,
@@ -79,6 +83,7 @@ public class UserAdminController {
     /**
      * 查询用户详情（含身份绑定列表）。
      */
+    @Operation(summary = "Get user detail")
     @GetMapping("/users/{id}")
     public ApiResult<Map<String, Object>> getUserDetail(
             @PathVariable Long id,
@@ -97,6 +102,7 @@ public class UserAdminController {
      *
      * <p>请求体：{@code {"status": "DISABLED"}}
      */
+    @Operation(summary = "Update status")
     @PostMapping("/users/{id}/status")
     public ApiResult<Void> updateStatus(
             @PathVariable Long id,
@@ -118,6 +124,7 @@ public class UserAdminController {
     /**
      * 解锁用户账户。
      */
+    @Operation(summary = "Unlock")
     @PostMapping("/users/{id}/unlock")
     public ApiResult<Void> unlock(
             @PathVariable Long id,
@@ -133,6 +140,7 @@ public class UserAdminController {
      *
      * <p>请求体：{@code {"role_codes": ["PLATFORM_ADMIN", "CLINICAL_SPECIALIST"]}}
      */
+    @Operation(summary = "Assign roles")
     @PostMapping("/users/{id}/roles")
     public ApiResult<Void> assignRoles(
             @PathVariable Long id,
@@ -151,6 +159,7 @@ public class UserAdminController {
     /**
      * 查询可分配角色列表。
      */
+    @Operation(summary = "List roles")
     @GetMapping("/roles")
     public ApiResult<List<Map<String, String>>> listRoles(HttpServletRequest request) {
         Long tenantId = resolveTenantId(request);
@@ -164,6 +173,7 @@ public class UserAdminController {
      *
      * <p>请求体：{@code {"new_password": "Mk123456"}}
      */
+    @Operation(summary = "Reset password")
     @PostMapping("/users/{id}/reset-password")
     public ApiResult<Void> resetPassword(
             @PathVariable Long id,
@@ -188,6 +198,7 @@ public class UserAdminController {
      *
      * <p>表单字段：{@code file}（multipart/form-data）
      */
+    @Operation(summary = "Import users")
     @PostMapping("/users/import")
     public ApiResult<Map<String, Object>> importUsers(
             @RequestParam("file") MultipartFile file,

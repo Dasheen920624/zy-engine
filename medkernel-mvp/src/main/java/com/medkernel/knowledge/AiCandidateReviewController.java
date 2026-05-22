@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import java.util.Map;
 /**
  * AI 候选配置审核台 API：提交候选、查询列表、审核、批量审核、统计和历史。
  */
+@Tag(name = "Ai Candidate Review")
 @RestController
 @RequestMapping("/api/knowledge/candidates")
 public class AiCandidateReviewController {
@@ -34,6 +37,7 @@ public class AiCandidateReviewController {
     /**
      * 提交 AI 候选。
      */
+    @Operation(summary = "Submit candidate")
     @PostMapping
     public ApiResult<AiCandidateReview> submitCandidate(@RequestBody AiCandidateReview candidate,
                                                           HttpServletRequest httpRequest) {
@@ -45,6 +49,7 @@ public class AiCandidateReviewController {
     /**
      * 查询候选列表。
      */
+    @Operation(summary = "List candidates")
     @GetMapping
     public ApiResult<List<AiCandidateReview>> listCandidates(
             @RequestParam(required = false) String candidateType,
@@ -60,6 +65,7 @@ public class AiCandidateReviewController {
     /**
      * 获取候选详情。
      */
+    @Operation(summary = "Get candidate")
     @GetMapping("/{candidateId}")
     public ApiResult<AiCandidateReview> getCandidate(@PathVariable Long candidateId,
                                                        HttpServletRequest httpRequest) {
@@ -69,6 +75,7 @@ public class AiCandidateReviewController {
     /**
      * 审核候选。
      */
+    @Operation(summary = "Review candidate")
     @PostMapping("/{candidateId}/review")
     public ApiResult<String> reviewCandidate(@PathVariable Long candidateId,
                                                @RequestBody Map<String, String> body,
@@ -84,6 +91,7 @@ public class AiCandidateReviewController {
     /**
      * 批量审核。
      */
+    @Operation(summary = "Batch review")
     @PostMapping("/batch-review")
     public ApiResult<String> batchReview(@RequestBody Map<String, Object> body,
                                            HttpServletRequest httpRequest) {
@@ -105,6 +113,7 @@ public class AiCandidateReviewController {
     /**
      * 审核统计。
      */
+    @Operation(summary = "Get review summary")
     @GetMapping("/summary")
     public ApiResult<Map<String, Object>> getReviewSummary(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -114,6 +123,7 @@ public class AiCandidateReviewController {
     /**
      * 审核历史。
      */
+    @Operation(summary = "Get review history")
     @GetMapping("/history")
     public ApiResult<List<AiCandidateReview>> getReviewHistory(
             @RequestParam(required = false) String reviewedBy,

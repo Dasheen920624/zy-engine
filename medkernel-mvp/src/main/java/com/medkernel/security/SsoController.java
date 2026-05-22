@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import java.util.Map;
  * SSO 认证 API：单点登录接入端点。
  * 支持 CAS/OIDC/SAML/LDAP-AD 四种协议。
  */
+@Tag(name = "Sso")
 @RestController
 @RequestMapping("/api/security/sso")
 public class SsoController {
@@ -35,6 +38,7 @@ public class SsoController {
     /**
      * 查询可用的 SSO 身份源列表。
      */
+    @Operation(summary = "List sso providers")
     @GetMapping("/providers")
     public ApiResult<List<IdentityProvider>> listSsoProviders(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -44,6 +48,7 @@ public class SsoController {
     /**
      * 发起 SSO 登录：返回重定向 URL。
      */
+    @Operation(summary = "Initiate sso")
     @PostMapping("/providers/{providerId}/initiate")
     public ApiResult<Map<String, Object>> initiateSso(@PathVariable Long providerId,
                                                         HttpServletRequest httpRequest) {
@@ -54,6 +59,7 @@ public class SsoController {
     /**
      * SSO 回调端点：处理 CAS/OIDC 授权码回调。
      */
+    @Operation(summary = "Callback")
     @GetMapping("/callback")
     public ApiResult<Map<String, Object>> callback(
             @RequestParam Long providerId,
@@ -68,6 +74,7 @@ public class SsoController {
     /**
      * SAML ACS 端点：处理 SAML Response。
      */
+    @Operation(summary = "Saml acs")
     @PostMapping("/saml/acs")
     public ApiResult<Map<String, Object>> samlAcs(
             @RequestParam Long providerId,
@@ -82,6 +89,7 @@ public class SsoController {
     /**
      * LDAP 直接验证：用户名/密码方式。
      */
+    @Operation(summary = "Ldap authenticate")
     @PostMapping("/ldap/authenticate")
     public ApiResult<Map<String, Object>> ldapAuthenticate(
             @RequestBody Map<String, Object> body,

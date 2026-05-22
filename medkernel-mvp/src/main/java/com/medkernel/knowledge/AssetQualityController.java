@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import java.util.Map;
 /**
  * AI 候选资产自动质检 API：执行质检、查询发现、解决发现、摘要统计。
  */
+@Tag(name = "Asset Quality")
 @RestController
 @RequestMapping("/api/knowledge/quality")
 public class AssetQualityController {
@@ -34,6 +37,7 @@ public class AssetQualityController {
     /**
      * 执行质检（支持 assetType/assetCode 过滤）。
      */
+    @Operation(summary = "Run quality check")
     @PostMapping("/check")
     public ApiResult<List<QualityFinding>> runQualityCheck(
             @RequestBody(required = false) Map<String, String> body,
@@ -48,6 +52,7 @@ public class AssetQualityController {
     /**
      * 全量质检。
      */
+    @Operation(summary = "Run full quality check")
     @PostMapping("/full-check")
     public ApiResult<List<QualityFinding>> runFullQualityCheck(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -58,6 +63,7 @@ public class AssetQualityController {
     /**
      * 查询质检发现。
      */
+    @Operation(summary = "List findings")
     @GetMapping("/findings")
     public ApiResult<List<QualityFinding>> listFindings(
             @RequestParam(required = false) String findingType,
@@ -73,6 +79,7 @@ public class AssetQualityController {
     /**
      * 解决质检发现。
      */
+    @Operation(summary = "Resolve finding")
     @PostMapping("/findings/{findingId}/resolve")
     public ApiResult<String> resolveFinding(@PathVariable Long findingId,
                                               @RequestBody Map<String, String> body,
@@ -86,6 +93,7 @@ public class AssetQualityController {
     /**
      * 质检摘要统计。
      */
+    @Operation(summary = "Get quality summary")
     @GetMapping("/summary")
     public ApiResult<Map<String, Object>> getQualitySummary(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);

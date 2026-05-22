@@ -11,11 +11,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Model Gateway")
 @RestController
 @RequestMapping("/api/model-gateway")
 public class ModelGatewayController {
@@ -29,6 +32,7 @@ public class ModelGatewayController {
         this.orgContextService = orgContextService;
     }
 
+    @Operation(summary = "Invoke")
     @PostMapping("/invoke")
     public ApiResult<Map<String, Object>> invoke(
             @RequestParam("call_type") String callType,
@@ -46,12 +50,14 @@ public class ModelGatewayController {
         return ApiResult.success(result);
     }
 
+    @Operation(summary = "List providers")
     @GetMapping("/providers")
     public ApiResult<List<Map<String, Object>>> listProviders() {
         List<Map<String, Object>> providers = gatewayService.listProviders();
         return ApiResult.success(providers);
     }
 
+    @Operation(summary = "Get degradation chains")
     @GetMapping("/degradation-chains")
     public ApiResult<Map<String, Object>> getDegradationChains(
             @RequestParam(value = "call_type", required = false) String callType) {
@@ -66,6 +72,7 @@ public class ModelGatewayController {
         return ApiResult.success(allChains);
     }
 
+    @Operation(summary = "Get provider status")
     @GetMapping("/providers/{providerType}/status")
     public ApiResult<Map<String, Object>> getProviderStatus(@PathVariable("providerType") String providerType) {
         Map<String, Object> status = gatewayService.getProviderStatus(providerType.toUpperCase());

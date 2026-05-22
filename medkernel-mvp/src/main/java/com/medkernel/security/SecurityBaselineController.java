@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -24,6 +26,7 @@ import java.util.Map;
  * 安全基线 API。
  * 提供审计链校验、密钥轮换、漏洞扫描、安全基线状态查询。
  */
+@Tag(name = "Security Baseline")
 @RestController
 @RequestMapping("/api/security")
 public class SecurityBaselineController {
@@ -43,16 +46,19 @@ public class SecurityBaselineController {
 
     // ==================== 审计链 API ====================
 
+    @Operation(summary = "Get audit chain status")
     @GetMapping("/audit-chain/status")
     public ApiResult<Map<String, Object>> getAuditChainStatus(HttpServletRequest httpRequest) {
         return ApiResult.success(auditChainService.getChainStatus());
     }
 
+    @Operation(summary = "Verify audit chain")
     @PostMapping("/audit-chain/verify")
     public ApiResult<Map<String, Object>> verifyAuditChain(HttpServletRequest httpRequest) {
         return ApiResult.success(auditChainService.verifyChain());
     }
 
+    @Operation(summary = "Append to chain")
     @PostMapping("/audit-chain/append")
     public ApiResult<Map<String, Object>> appendToChain(
             @RequestBody Map<String, Object> request,
@@ -75,6 +81,7 @@ public class SecurityBaselineController {
 
     // ==================== 密钥轮换 API ====================
 
+    @Operation(summary = "List key versions")
     @GetMapping("/keys")
     public ApiResult<List<Map<String, Object>>> listKeyVersions(HttpServletRequest httpRequest) {
         List<KeyRotationService.KeyVersion> keys = keyRotationService.listKeyVersions();
@@ -85,6 +92,7 @@ public class SecurityBaselineController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Get active key")
     @GetMapping("/keys/active")
     public ApiResult<Map<String, Object>> getActiveKey(HttpServletRequest httpRequest) {
         KeyRotationService.KeyVersion key = keyRotationService.getActiveKey();
@@ -94,6 +102,7 @@ public class SecurityBaselineController {
         return ApiResult.success(key.toView());
     }
 
+    @Operation(summary = "Rotate key")
     @PostMapping("/keys/rotate")
     public ApiResult<Map<String, Object>> rotateKey(
             @RequestBody Map<String, Object> request,
@@ -113,6 +122,7 @@ public class SecurityBaselineController {
         }
     }
 
+    @Operation(summary = "Revoke key")
     @PostMapping("/keys/{keyId}/revoke")
     public ApiResult<Map<String, Object>> revokeKey(
             @PathVariable long keyId,
@@ -129,6 +139,7 @@ public class SecurityBaselineController {
 
     // ==================== 安全基线 API ====================
 
+    @Operation(summary = "Get baseline status")
     @GetMapping("/baseline")
     public ApiResult<Map<String, Object>> getBaselineStatus(HttpServletRequest httpRequest) {
         Map<String, Object> baseline = keyRotationService.getSecurityBaselineStatus();
@@ -137,6 +148,7 @@ public class SecurityBaselineController {
         return ApiResult.success(baseline);
     }
 
+    @Operation(summary = "Perform vulnerability scan")
     @PostMapping("/vulnerability-scan")
     public ApiResult<Map<String, Object>> performVulnerabilityScan(HttpServletRequest httpRequest) {
         KeyRotationService.VulnerabilityScanResult result = keyRotationService.performVulnerabilityScan();

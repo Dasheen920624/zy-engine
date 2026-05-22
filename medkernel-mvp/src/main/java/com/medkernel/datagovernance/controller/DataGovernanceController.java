@@ -6,6 +6,8 @@ import com.medkernel.datagovernance.service.*;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.Map;
 /**
  * 数据治理API控制器
  */
+@Tag(name = "Data Governance")
 @RestController
 @RequestMapping("/api/data-governance")
 public class DataGovernanceController {
@@ -41,6 +44,7 @@ public class DataGovernanceController {
     /**
      * 获取数据治理概览
      */
+    @Operation(summary = "Get overview")
     @GetMapping("/overview")
     public ApiResult<Map<String, Object>> getOverview(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<>();
@@ -56,6 +60,7 @@ public class DataGovernanceController {
     /**
      * 保存患者主数据
      */
+    @Operation(summary = "Save patient")
     @PostMapping("/patients")
     public ApiResult<PatientEntity> savePatient(@RequestBody PatientEntity entity,
                                                 HttpServletRequest httpRequest) {
@@ -66,6 +71,7 @@ public class DataGovernanceController {
     /**
      * 根据患者ID查找患者
      */
+    @Operation(summary = "Get patient")
     @GetMapping("/patients/{patientId}")
     public ApiResult<PatientEntity> getPatient(@PathVariable String patientId,
                                                HttpServletRequest httpRequest) {
@@ -78,6 +84,7 @@ public class DataGovernanceController {
     /**
      * 获取所有患者列表
      */
+    @Operation(summary = "List patients")
     @GetMapping("/patients")
     public ApiResult<List<PatientEntity>> listPatients(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<>();
@@ -93,6 +100,7 @@ public class DataGovernanceController {
     /**
      * 保存医生主数据
      */
+    @Operation(summary = "Save doctor")
     @PostMapping("/doctors")
     public ApiResult<DoctorEntity> saveDoctor(@RequestBody DoctorEntity entity,
                                               HttpServletRequest httpRequest) {
@@ -103,6 +111,7 @@ public class DataGovernanceController {
     /**
      * 根据医生ID查找医生
      */
+    @Operation(summary = "Get doctor")
     @GetMapping("/doctors/{doctorId}")
     public ApiResult<DoctorEntity> getDoctor(@PathVariable String doctorId,
                                              HttpServletRequest httpRequest) {
@@ -115,6 +124,7 @@ public class DataGovernanceController {
     /**
      * 获取所有医生列表
      */
+    @Operation(summary = "List doctors")
     @GetMapping("/doctors")
     public ApiResult<List<DoctorEntity>> listDoctors(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<>();
@@ -130,6 +140,7 @@ public class DataGovernanceController {
     /**
      * 保存科室主数据
      */
+    @Operation(summary = "Save department")
     @PostMapping("/departments")
     public ApiResult<DepartmentEntity> saveDepartment(@RequestBody DepartmentEntity entity,
                                                       HttpServletRequest httpRequest) {
@@ -140,6 +151,7 @@ public class DataGovernanceController {
     /**
      * 根据科室编码查找科室
      */
+    @Operation(summary = "Get department")
     @GetMapping("/departments/{deptCode}")
     public ApiResult<DepartmentEntity> getDepartment(@PathVariable String deptCode,
                                                      HttpServletRequest httpRequest) {
@@ -152,6 +164,7 @@ public class DataGovernanceController {
     /**
      * 获取所有科室列表
      */
+    @Operation(summary = "List departments")
     @GetMapping("/departments")
     public ApiResult<List<DepartmentEntity>> listDepartments(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<>();
@@ -167,6 +180,7 @@ public class DataGovernanceController {
     /**
      * 执行数据质量检查
      */
+    @Operation(summary = "Execute quality check")
     @PostMapping("/quality/check/{ruleCode}")
     public ApiResult<Map<String, Object>> executeQualityCheck(@PathVariable String ruleCode,
                                                               HttpServletRequest httpRequest) {
@@ -179,6 +193,7 @@ public class DataGovernanceController {
     /**
      * 获取数据质量报告
      */
+    @Operation(summary = "Get quality report")
     @GetMapping("/quality/report")
     public ApiResult<Map<String, Object>> getQualityReport(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<>();
@@ -190,6 +205,7 @@ public class DataGovernanceController {
     /**
      * 获取数据质量监控指标
      */
+    @Operation(summary = "Get quality monitor")
     @GetMapping("/quality/monitor")
     public ApiResult<Map<String, Object>> getQualityMonitor(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<>();

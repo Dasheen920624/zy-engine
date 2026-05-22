@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,6 +19,7 @@ import java.util.UUID;
 /**
  * 嵌入器配置和告警管理
  */
+@Tag(name = "Embed Config")
 @RestController
 @RequestMapping("/api/embed")
 public class EmbedConfigController {
@@ -42,6 +45,7 @@ public class EmbedConfigController {
     /**
      * 获取嵌入器配置
      */
+    @Operation(summary = "Get config")
     @GetMapping("/config")
     public ApiResult<Map<String, Object>> getConfig() {
         Map<String, Object> config = new LinkedHashMap<>();
@@ -55,6 +59,7 @@ public class EmbedConfigController {
     /**
      * 获取历史告警（当前返回空列表，后续对接持久化）
      */
+    @Operation(summary = "Get alerts")
     @GetMapping("/alerts")
     public ApiResult<List<Map<String, Object>>> getAlerts(
             String patientId,
@@ -67,6 +72,7 @@ public class EmbedConfigController {
     /**
      * 执行告警动作（如一键入径）
      */
+    @Operation(summary = "Execute action")
     @GetMapping("/alerts/{alertId}/action")
     public ApiResult<Void> executeAction(String alertId, String actionType) {
         // TODO: 实现动作执行逻辑（入径、查看证据等）
@@ -76,6 +82,7 @@ public class EmbedConfigController {
     /**
      * 发布测试告警（开发用）
      */
+    @Operation(summary = "Publish test alert")
     @GetMapping("/test-alert")
     public ApiResult<Map<String, Object>> publishTestAlert() {
         Map<String, Object> alert = new LinkedHashMap<>();

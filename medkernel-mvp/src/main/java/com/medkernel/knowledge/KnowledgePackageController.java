@@ -14,12 +14,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Knowledge Package")
 @RestController
 @RequestMapping("/api/knowledge/packages")
 public class KnowledgePackageController {
@@ -34,6 +37,7 @@ public class KnowledgePackageController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Export package")
     @PostMapping("/export")
     public ApiResult<Map<String, Object>> exportPackage(
             @RequestBody Map<String, Object> request,
@@ -51,6 +55,7 @@ public class KnowledgePackageController {
         }
     }
 
+    @Operation(summary = "Import package")
     @PostMapping("/{packageId}/import")
     public ApiResult<Map<String, Object>> importPackage(
             @PathVariable Long packageId,
@@ -71,6 +76,7 @@ public class KnowledgePackageController {
         }
     }
 
+    @Operation(summary = "Preview import")
     @PostMapping("/{packageId}/preview")
     public ApiResult<Map<String, Object>> previewImport(
             @PathVariable Long packageId,
@@ -83,6 +89,7 @@ public class KnowledgePackageController {
         }
     }
 
+    @Operation(summary = "List packages")
     @GetMapping
     public ApiResult<List<Map<String, Object>>> listPackages(
             @RequestParam(required = false) Long tenant_id,
@@ -105,6 +112,7 @@ public class KnowledgePackageController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Get package")
     @GetMapping("/{packageId}")
     public ApiResult<Map<String, Object>> getPackage(
             @PathVariable Long packageId,
@@ -117,6 +125,7 @@ public class KnowledgePackageController {
         }
     }
 
+    @Operation(summary = "Sync package")
     @PostMapping("/{packageId}/sync")
     public ApiResult<Map<String, Object>> syncPackage(
             @PathVariable Long packageId,
@@ -137,6 +146,7 @@ public class KnowledgePackageController {
         }
     }
 
+    @Operation(summary = "Get sync status")
     @GetMapping("/{packageId}/sync-status")
     public ApiResult<Map<String, Object>> getSyncStatus(
             @PathVariable Long packageId,

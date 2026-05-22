@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Provenance")
 @RestController
 @RequestMapping("/api/provenance")
 public class ProvenanceController {
@@ -33,6 +36,7 @@ public class ProvenanceController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Import source documents")
     @PostMapping("/source-documents")
     public ApiResult<Map<String, Object>> importSourceDocuments(@RequestBody Object request,
                                                                  HttpServletRequest httpRequest) {
@@ -40,6 +44,7 @@ public class ProvenanceController {
         return ApiResult.success(provenanceService.importDocuments(request));
     }
 
+    @Operation(summary = "List source documents")
     @GetMapping("/source-documents")
     public ApiResult<List<Map<String, Object>>> listSourceDocuments(@RequestParam(required = false) String sourceType,
                                                                     @RequestParam(required = false) String source_type,
@@ -59,6 +64,7 @@ public class ProvenanceController {
         return ApiResult.success(provenanceService.listDocuments(filters));
     }
 
+    @Operation(summary = "Get source document")
     @GetMapping("/source-documents/{documentCode}")
     public ApiResult<Map<String, Object>> getSourceDocument(@PathVariable String documentCode,
                                                             HttpServletRequest httpRequest) {
@@ -67,6 +73,7 @@ public class ProvenanceController {
         return ApiResult.success(provenanceService.getDocument(documentCode, filters.get("tenantId")));
     }
 
+    @Operation(summary = "Import citations")
     @PostMapping("/citations")
     public ApiResult<Map<String, Object>> importCitations(@RequestBody Object request,
                                                            HttpServletRequest httpRequest) {
@@ -74,6 +81,7 @@ public class ProvenanceController {
         return ApiResult.success(sourceCitationService.importCitations(request));
     }
 
+    @Operation(summary = "List citations")
     @GetMapping("/citations")
     public ApiResult<List<Map<String, Object>>> listCitations(
             @RequestParam(required = false) String documentCode,
@@ -92,6 +100,7 @@ public class ProvenanceController {
         return ApiResult.success(sourceCitationService.listCitations(filters));
     }
 
+    @Operation(summary = "Get citation")
     @GetMapping("/citations/{citationId}")
     public ApiResult<Map<String, Object>> getCitation(@PathVariable String citationId,
                                                       HttpServletRequest httpRequest) {
@@ -100,6 +109,7 @@ public class ProvenanceController {
         return ApiResult.success(sourceCitationService.getCitation(citationId, filters.get("tenantId")));
     }
 
+    @Operation(summary = "Get citations by document")
     @GetMapping("/source-documents/{documentCode}/citations")
     public ApiResult<List<Map<String, Object>>> getCitationsByDocument(
             @PathVariable String documentCode,
@@ -110,6 +120,7 @@ public class ProvenanceController {
                 documentCode, filters.get("tenantId")));
     }
 
+    @Operation(summary = "Import bindings")
     @PostMapping("/bindings")
     public ApiResult<Map<String, Object>> importBindings(@RequestBody Object request,
                                                           HttpServletRequest httpRequest) {
@@ -117,6 +128,7 @@ public class ProvenanceController {
         return ApiResult.success(sourceAssetBindingService.importBindings(request));
     }
 
+    @Operation(summary = "List bindings")
     @GetMapping("/bindings")
     public ApiResult<List<Map<String, Object>>> listBindings(
             @RequestParam(required = false) String assetType,
@@ -139,6 +151,7 @@ public class ProvenanceController {
         return ApiResult.success(sourceAssetBindingService.listBindings(filters));
     }
 
+    @Operation(summary = "Get binding")
     @GetMapping("/bindings/{bindingId}")
     public ApiResult<Map<String, Object>> getBinding(@PathVariable String bindingId,
                                                      HttpServletRequest httpRequest) {
@@ -147,6 +160,7 @@ public class ProvenanceController {
         return ApiResult.success(sourceAssetBindingService.getBinding(bindingId, filters.get("tenantId")));
     }
 
+    @Operation(summary = "Get bindings by asset")
     @GetMapping("/assets/{assetType}/{assetCode}/bindings")
     public ApiResult<List<Map<String, Object>>> getBindingsByAsset(
             @PathVariable String assetType,
@@ -158,6 +172,7 @@ public class ProvenanceController {
                 assetType, assetCode, filters.get("tenantId")));
     }
 
+    @Operation(summary = "Get bindings by document")
     @GetMapping("/source-documents/{documentCode}/bindings")
     public ApiResult<List<Map<String, Object>>> getBindingsByDocument(
             @PathVariable String documentCode,

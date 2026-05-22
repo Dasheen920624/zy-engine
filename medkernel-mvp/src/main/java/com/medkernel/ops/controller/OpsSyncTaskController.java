@@ -7,6 +7,8 @@ import com.medkernel.ops.service.OpsSyncTaskService;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
@@ -22,6 +24,7 @@ import java.util.List;
  *   <li>POST /api/ops/tasks/{id}/retry - 重试任务</li>
  * </ul>
  */
+@Tag(name = "Ops Sync Task")
 @RestController
 @RequestMapping("/api/ops/tasks")
 public class OpsSyncTaskController {
@@ -43,6 +46,7 @@ public class OpsSyncTaskController {
      * @param request  HTTP请求
      * @return 任务列表
      */
+    @Operation(summary = "List")
     @GetMapping
     public ApiResult<List<OpsSyncTask>> list(
             @RequestParam(required = false) String status,
@@ -69,6 +73,7 @@ public class OpsSyncTaskController {
      * @param request HTTP请求
      * @return 任务详情
      */
+    @Operation(summary = "Get")
     @GetMapping("/{id}")
     public ApiResult<OpsSyncTask> get(@PathVariable Long id, HttpServletRequest request) {
         Long tenantId = organizationContextService.getTenantId(request);
@@ -88,6 +93,7 @@ public class OpsSyncTaskController {
      * @param taskParam 任务参数
      * @return 创建的任务
      */
+    @Operation(summary = "Create")
     @PostMapping
     public ApiResult<OpsSyncTask> create(HttpServletRequest request,
                                           @RequestBody CreateTaskParam taskParam) {
@@ -125,6 +131,7 @@ public class OpsSyncTaskController {
      * @param request HTTP请求
      * @return 操作结果
      */
+    @Operation(summary = "Cancel")
     @PostMapping("/{id}/cancel")
     public ApiResult<Void> cancel(@PathVariable Long id, HttpServletRequest request) {
         Long tenantId = organizationContextService.getTenantId(request);
@@ -146,6 +153,7 @@ public class OpsSyncTaskController {
      * @param request HTTP请求
      * @return 操作结果
      */
+    @Operation(summary = "Retry")
     @PostMapping("/{id}/retry")
     public ApiResult<Void> retry(@PathVariable Long id, HttpServletRequest request) {
         Long tenantId = organizationContextService.getTenantId(request);

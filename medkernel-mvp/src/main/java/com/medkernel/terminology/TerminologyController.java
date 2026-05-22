@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Terminology")
 @RestController
 @RequestMapping("/api/terminology")
 public class TerminologyController {
@@ -27,6 +30,7 @@ public class TerminologyController {
         this.organizationContextService = organizationContextService;
     }
 
+    @Operation(summary = "Normalize")
     @PostMapping("/normalize")
     public ApiResult<Map<String, Object>> normalize(@RequestBody Map<String, Object> request,
                                                      HttpServletRequest httpRequest) {
@@ -34,6 +38,7 @@ public class TerminologyController {
         return ApiResult.success(terminologyService.normalize(request));
     }
 
+    @Operation(summary = "Import mappings")
     @PostMapping("/mappings")
     public ApiResult<List<Map<String, Object>>> importMappings(@RequestBody Object request,
                                                                 HttpServletRequest httpRequest) {
@@ -41,6 +46,7 @@ public class TerminologyController {
         return ApiResult.success(terminologyService.importMappings(request));
     }
 
+    @Operation(summary = "List mappings")
     @GetMapping("/mappings")
     public ApiResult<List<Map<String, Object>>> listMappings(HttpServletRequest httpRequest) {
         Map<String, String> filters = new LinkedHashMap<String, String>();
@@ -48,6 +54,7 @@ public class TerminologyController {
         return ApiResult.success(terminologyService.listMappings());
     }
 
+    @Operation(summary = "Get mapping")
     @GetMapping("/mappings/{sourceSystem}/{sourceCode}")
     public ApiResult<Map<String, Object>> getMapping(@PathVariable String sourceSystem,
                                                      @PathVariable String sourceCode,
@@ -82,6 +89,7 @@ public class TerminologyController {
      * 查询未映射治理队列。
      * 支持按 governance_status / source_system / concept_type 过滤。
      */
+    @Operation(summary = "List pending mappings")
     @GetMapping("/pending")
     public ApiResult<List<Map<String, Object>>> listPendingMappings(
             @RequestParam(required = false) String governanceStatus,
@@ -101,6 +109,7 @@ public class TerminologyController {
     /**
      * 审批映射：将 PENDING_MAPPING 记录标记为 APPROVED，并写入映射缓存。
      */
+    @Operation(summary = "Approve pending mapping")
     @PostMapping("/pending/{queueId}/approve")
     public ApiResult<Map<String, Object>> approvePendingMapping(@PathVariable String queueId,
                                                                  @RequestBody Map<String, Object> request,
@@ -112,6 +121,7 @@ public class TerminologyController {
     /**
      * 驳回映射：将 PENDING_MAPPING 记录标记为 REJECTED。
      */
+    @Operation(summary = "Reject pending mapping")
     @PostMapping("/pending/{queueId}/reject")
     public ApiResult<Map<String, Object>> rejectPendingMapping(@PathVariable String queueId,
                                                                 @RequestBody Map<String, Object> request,

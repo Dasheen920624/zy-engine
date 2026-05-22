@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.Map;
 /**
  * 提醒疲劳治理和覆盖分析 API。
  */
+@Tag(name = "Alert Fatigue")
 @RestController
 @RequestMapping("/api/cdss/fatigue")
 public class AlertFatigueController {
@@ -34,6 +37,7 @@ public class AlertFatigueController {
 
     // ==================== 疲劳治理配置 ====================
 
+    @Operation(summary = "Create config")
     @PostMapping("/configs")
     public ApiResult<Map<String, Object>> createConfig(
             @RequestBody Map<String, Object> request,
@@ -47,6 +51,7 @@ public class AlertFatigueController {
         }
     }
 
+    @Operation(summary = "List configs")
     @GetMapping("/configs")
     public ApiResult<List<Map<String, Object>>> listConfigs(HttpServletRequest httpRequest) {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
@@ -58,6 +63,7 @@ public class AlertFatigueController {
         return ApiResult.success(views);
     }
 
+    @Operation(summary = "Update config")
     @PutMapping("/configs/{configId}")
     public ApiResult<Map<String, Object>> updateConfig(
             @PathVariable String configId,
@@ -74,6 +80,7 @@ public class AlertFatigueController {
 
     // ==================== 覆盖分析 ====================
 
+    @Operation(summary = "Get override analysis")
     @GetMapping("/override-analysis")
     public ApiResult<Map<String, Object>> getOverrideAnalysis(HttpServletRequest httpRequest) {
         OrganizationContext orgContext = organizationContextService.resolve(httpRequest);

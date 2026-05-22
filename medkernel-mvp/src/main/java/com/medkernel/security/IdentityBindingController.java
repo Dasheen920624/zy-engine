@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,6 +23,7 @@ import java.util.Map;
 /**
  * 身份绑定管理 API：多身份源绑定、合并和解绑。
  */
+@Tag(name = "Identity Binding")
 @RestController
 @RequestMapping("/api/security/identity")
 public class IdentityBindingController {
@@ -37,6 +40,7 @@ public class IdentityBindingController {
     /**
      * 查询用户的身份绑定列表。
      */
+    @Operation(summary = "List bindings by user")
     @GetMapping("/bindings/user/{userId}")
     public ApiResult<List<Map<String, Object>>> listBindingsByUser(@PathVariable Long userId,
                                                                     HttpServletRequest httpRequest) {
@@ -44,6 +48,7 @@ public class IdentityBindingController {
         return ApiResult.success(toBindingViews(bindingService.listBindingsByUser(resolveTenantId(orgCtx), userId)));
     }
 
+    @Operation(summary = "Get binding")
     @GetMapping("/bindings/{bindingId}")
     public ApiResult<Map<String, Object>> getBinding(@PathVariable Long bindingId) {
         SsoIdentityBinding binding = bindingService.getBindingById(bindingId);
@@ -56,6 +61,7 @@ public class IdentityBindingController {
     /**
      * 绑定外部身份到平台用户。
      */
+    @Operation(summary = "Bind identity")
     @PostMapping("/bindings")
     public ApiResult<Long> bindIdentity(@RequestBody Map<String, Object> body,
                                         HttpServletRequest httpRequest) {
@@ -77,6 +83,7 @@ public class IdentityBindingController {
     /**
      * 解绑：标记为 DETACHED，保留审计。
      */
+    @Operation(summary = "Unbind identity")
     @DeleteMapping("/bindings/{bindingId}")
     public ApiResult<String> unbindIdentity(@PathVariable Long bindingId,
                                               HttpServletRequest httpRequest) {
@@ -89,6 +96,7 @@ public class IdentityBindingController {
     /**
      * 合并绑定：将源用户绑定转移到目标用户。
      */
+    @Operation(summary = "Merge bindings")
     @PostMapping("/merge")
     public ApiResult<Map<String, Object>> mergeBindings(@RequestBody Map<String, Object> body,
                                                           HttpServletRequest httpRequest) {
@@ -101,6 +109,7 @@ public class IdentityBindingController {
                 resolveTenantId(orgCtx), sourceUserId, targetUserId, mergeReason, operator));
     }
 
+    @Operation(summary = "List merge records")
     @GetMapping("/merge/user/{userId}")
     public ApiResult<List<Map<String, Object>>> listMergeRecords(@PathVariable Long userId,
                                                                   HttpServletRequest httpRequest) {
@@ -108,6 +117,7 @@ public class IdentityBindingController {
         return ApiResult.success(bindingService.listMergeRecordsByUser(resolveTenantId(orgCtx), userId));
     }
 
+    @Operation(summary = "List unbind records")
     @GetMapping("/unbind/user/{userId}")
     public ApiResult<List<Map<String, Object>>> listUnbindRecords(@PathVariable Long userId,
                                                                    HttpServletRequest httpRequest) {
@@ -118,6 +128,7 @@ public class IdentityBindingController {
     /**
      * 查找冲突绑定。
      */
+    @Operation(summary = "Find conflicts")
     @GetMapping("/conflicts")
     public ApiResult<List<Map<String, Object>>> findConflicts(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);

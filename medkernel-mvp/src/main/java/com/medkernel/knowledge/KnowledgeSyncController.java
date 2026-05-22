@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,7 @@ import java.util.Map;
  *   <li>GET /api/knowledge/sync/summary - 同步统计</li>
  * </ul>
  */
+@Tag(name = "Knowledge Sync")
 @RestController
 @RequestMapping("/api/knowledge/sync")
 public class KnowledgeSyncController {
@@ -58,6 +61,7 @@ public class KnowledgeSyncController {
      * }
      * </pre>
      */
+    @Operation(summary = "Trigger sync")
     @PostMapping
     public ApiResult<KnowledgeSyncLog> triggerSync(@RequestBody Map<String, Object> body,
                                                     HttpServletRequest httpRequest) {
@@ -90,6 +94,7 @@ public class KnowledgeSyncController {
     /**
      * 触发自动同步（定时任务调用）。
      */
+    @Operation(summary = "Trigger auto sync")
     @PostMapping("/auto")
     public ApiResult<List<KnowledgeSyncLog>> triggerAutoSync(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
@@ -102,6 +107,7 @@ public class KnowledgeSyncController {
     /**
      * 查询同步详情。
      */
+    @Operation(summary = "Get sync log")
     @GetMapping("/{logId}")
     public ApiResult<KnowledgeSyncLog> getSyncLog(@PathVariable Long logId) {
         KnowledgeSyncLog log = syncService.getSyncLog(logId);
@@ -119,6 +125,7 @@ public class KnowledgeSyncController {
      * @param reviewStatus 审核状态过滤（可选）
      * @param limit        返回条数上限（默认50）
      */
+    @Operation(summary = "List sync logs")
     @GetMapping
     public ApiResult<List<KnowledgeSyncLog>> listSyncLogs(
             @RequestParam(required = false) String sourceCode,
@@ -137,6 +144,7 @@ public class KnowledgeSyncController {
      * 差异预览。
      * 对 PENDING 或 DIFF_READY 状态的同步执行差异分析。
      */
+    @Operation(summary = "Preview diff")
     @PostMapping("/{logId}/preview")
     public ApiResult<KnowledgeSyncLog> previewDiff(@PathVariable Long logId) {
         try {
@@ -161,6 +169,7 @@ public class KnowledgeSyncController {
      * }
      * </pre>
      */
+    @Operation(summary = "Review sync")
     @PostMapping("/{logId}/review")
     public ApiResult<String> reviewSync(@PathVariable Long logId,
                                          @RequestBody Map<String, String> body) {
@@ -185,6 +194,7 @@ public class KnowledgeSyncController {
     /**
      * 审核通过后执行实际同步。
      */
+    @Operation(summary = "Approve and execute")
     @PostMapping("/{logId}/approve")
     public ApiResult<KnowledgeSyncLog> approveAndExecute(@PathVariable Long logId) {
         try {
@@ -200,6 +210,7 @@ public class KnowledgeSyncController {
     /**
      * 重试失败的同步。
      */
+    @Operation(summary = "Retry sync")
     @PostMapping("/{logId}/retry")
     public ApiResult<KnowledgeSyncLog> retrySync(@PathVariable Long logId) {
         try {
@@ -215,6 +226,7 @@ public class KnowledgeSyncController {
     /**
      * 取消同步。
      */
+    @Operation(summary = "Cancel sync")
     @PostMapping("/{logId}/cancel")
     public ApiResult<String> cancelSync(@PathVariable Long logId,
                                          HttpServletRequest httpRequest) {
@@ -234,6 +246,7 @@ public class KnowledgeSyncController {
     /**
      * 同步统计汇总。
      */
+    @Operation(summary = "Summarize sync")
     @GetMapping("/summary")
     public ApiResult<Map<String, Object>> summarizeSync(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);

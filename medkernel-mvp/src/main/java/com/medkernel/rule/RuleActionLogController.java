@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.Map;
  * 规则动作日志控制器
  * 提供决策记录和查询的REST API
  */
+@Tag(name = "Rule Action Log")
 @RestController
 @RequestMapping("/api/rule-action-logs")
 public class RuleActionLogController {
@@ -36,6 +39,7 @@ public class RuleActionLogController {
     /**
      * 记录用户决策
      */
+    @Operation(summary = "Record decision")
     @PostMapping
     public ApiResult<RuleActionLog> recordDecision(@RequestBody Map<String, Object> request,
                                                    HttpServletRequest httpRequest) {
@@ -47,6 +51,7 @@ public class RuleActionLogController {
     /**
      * 查询决策日志列表
      */
+    @Operation(summary = "List action logs")
     @GetMapping
     public ApiResult<List<RuleActionLog>> listActionLogs(@RequestParam(required = false) String patientId,
                                                          @RequestParam(required = false) String encounterId,
@@ -69,6 +74,7 @@ public class RuleActionLogController {
     /**
      * 根据ID获取决策日志
      */
+    @Operation(summary = "Get action log")
     @GetMapping("/{logId}")
     public ApiResult<RuleActionLog> getActionLog(@PathVariable String logId,
                                                  HttpServletRequest httpRequest) {
@@ -85,6 +91,7 @@ public class RuleActionLogController {
     /**
      * 根据患者查询决策日志
      */
+    @Operation(summary = "Get action logs by patient")
     @GetMapping("/patient/{patientId}")
     public ApiResult<List<RuleActionLog>> getActionLogsByPatient(@PathVariable String patientId,
                                                                  @RequestParam(required = false) String encounterId,
@@ -99,6 +106,7 @@ public class RuleActionLogController {
     /**
      * 根据订单查询决策日志
      */
+    @Operation(summary = "Get action logs by order")
     @GetMapping("/order/{orderId}")
     public ApiResult<List<RuleActionLog>> getActionLogsByOrder(@PathVariable String orderId,
                                                                HttpServletRequest httpRequest) {
