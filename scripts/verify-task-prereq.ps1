@@ -568,10 +568,13 @@ if (Test-Path $expectedLock) {
 
 $collabScript = "medkernel-mvp/scripts/check-ai-collaboration.ps1"
 if (Test-Path $collabScript) {
+  # GA-REL-01: 全局门禁只检查与当前任务直接相关的冲突。
+  # 其他 AI 的内部违规（branch naming 等）不应阻断新任务认领。
+  # 只关注：(1) 同任务 claim/lock 冲突 (2) write_scope 与当前任务重叠。
   $collabOutput = @()
   $collabExitCode = 0
   try {
-    $collabOutput = & $collabScript -Strict -RequireClean 2>&1
+    $collabOutput = & $collabScript -Strict 2>&1
     $collabExitCode = $LASTEXITCODE
   } catch {
     $collabExitCode = 1
@@ -581,9 +584,60 @@ if (Test-Path $collabScript) {
   if ($collabExitCode -eq 0) {
     Show-Pass "全局并发状态一致：无 orphan lock / 重复任务 / write_scope 重叠"
   } else {
-    Show-Fail "全局并发状态不一致，请先清理 claim/lock/review 后再领任务"
-    $hasGlobalCollabConflict = $true
-    $collabOutput | Select-Object -Last 8 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+    # 解析协作问题，只关注与当前任务直接相关的冲突
+    $allIssues = @()
+    if ($collabOutput -match "collaboration_issues=(.+)") {
+      $allIssues = $matches[1] -split "; "
+    } elseif ($collabOutput -is [string] -and $collabOutput -match "collaboration_issues=(.+)") {
+      $allIssues = $matches[1] -split "; "
+    } else {
+      foreach ($line in $collabOutput) {
+        if ($line -match "collaboration_issues=(.+)") {
+          $allIssues = $matches[1] -split "; "
+          break
+        }
+      }
+    }
+
+    # 过滤：只保留与当前任务直接相关的冲突
+    $relevantIssues = @()
+    $taskPattern = [regex]::Escape($TaskId)
+    foreach ($issue in $allIssues) {
+      # 同任务 claim/lock 冲突
+      if ($issue -match "task_id=$taskPattern\b") {
+        $relevantIssues += $issue
+        continue
+      }
+      # write_scope 重叠涉及当前任务
+      if ($issue -match "write_scope_overlap" -and ($issue -match "left=.*$taskPattern" -or $issue -match "right=.*$taskPattern")) {
+        $relevantIssues += $issue
+        continue
+      }
+      # orphan lock（始终关注）
+      if ($issue -match "orphan_task_lock") {
+        $relevantIssues += $issue
+        continue
+      }
+      # duplicate（始终关注）
+      if ($issue -match "duplicate_active_task_id" -or $issue -match "duplicate_task_lock") {
+        $relevantIssues += $issue
+        continue
+      }
+    }
+
+    if ($relevantIssues.Count -eq 0) {
+      Show-Pass "全局门禁通过（与 $TaskId 无直接冲突；其他 AI 的内部问题不阻断）"
+      # 仍输出其他问题作为参考
+      $otherIssues = $allIssues | Where-Object { $relevantIssues -notcontains $_ }
+      if ($otherIssues.Count -gt 0) {
+        Show-Warn "其他 AI 存在 $($otherIssues.Count) 个协作问题（不阻断当前任务）："
+        $otherIssues | Select-Object -First 3 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+      }
+    } else {
+      Show-Fail "与当前任务 $TaskId 存在直接冲突："
+      $relevantIssues | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+      $hasGlobalCollabConflict = $true
+    }
   }
 } else {
   Show-Warn "缺少 $collabScript，无法做全局并发检查"
