@@ -1,0 +1,7 @@
+task_id: NOTIFY-001
+claim_id: NOTIFY-001-S01
+owner: TraeAI-Main
+branch: develop
+git_base_commit: 7a744abea894438856699a94f8a35bf7c0dce396
+created_at: 2026-05-23T10:00+08:00
+last_heartbeat: 2026-05-23T10:00+08:00
