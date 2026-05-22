@@ -347,8 +347,13 @@ public class GraphService {
     }
 
     public List<GraphCandidate> diseaseCandidates(Map<String, Object> request) {
+        return diseaseCandidates(request, null);
+    }
+
+    public List<GraphCandidate> diseaseCandidates(Map<String, Object> request, OrganizationContext orgContext) {
         long start = System.currentTimeMillis();
-        GraphCandidateQueryResult result = graphQueryService.diseaseCandidates(request, graphNodes, graphEdges);
+        GraphCandidateQueryResult result = graphQueryService.diseaseCandidates(request, graphNodes, graphEdges,
+                resolveTenant(orgContext));
         audit("DISEASE_CANDIDATES", "Disease", null, result.getGraphVersion(), result.getSource(),
                 result.getCandidates().size(), result.isDegraded(), result.getDegradedReason(),
                 System.currentTimeMillis() - start);
@@ -356,8 +361,13 @@ public class GraphService {
     }
 
     public List<Map<String, Object>> evidence(Map<String, Object> request) {
+        return evidence(request, null);
+    }
+
+    public List<Map<String, Object>> evidence(Map<String, Object> request, OrganizationContext orgContext) {
         long start = System.currentTimeMillis();
-        GraphEvidenceQueryResult result = graphQueryService.evidence(request, graphEvidences);
+        GraphEvidenceQueryResult result = graphQueryService.evidence(request, graphEvidences,
+                resolveTenant(orgContext));
         audit("EVIDENCE_QUERY", "Evidence", result.getTargetCode(), result.getGraphVersion(), result.getSource(),
                 result.getEvidence().size(), result.isDegraded(), result.getDegradedReason(),
                 System.currentTimeMillis() - start);

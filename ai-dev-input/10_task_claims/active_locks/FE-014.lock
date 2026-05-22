@@ -1,3 +1,7 @@
-FE-014
+task_id: FE-014
+claim_id: FE-014-S01
 owner: TraeAI-Main
-claimed_at: 2026-05-20
+branch: develop
+git_base_commit: unknown_preexisting_claim
+created_at: 2026-05-20
+last_heartbeat: 2026-05-22T18:50+08:00

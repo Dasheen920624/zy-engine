@@ -9,12 +9,12 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | 🔴 **RED — develop @ `de19acc` 编译失败，冻结新任务，仅允许 FIX-DEV-010 主干编译修复** |
+| 状态 | 🟢 **GREEN — develop @ `6711e5c` + FIX-DEV-010 主干修复已完成，全量后端/前端门禁通过** |
 | 最后更新 | 2026-05-22 |
-| 最后验证 commit | `de19acc` (develop) — 编译失败，IdentityBinding 重命名后拆分仓储仍引用旧类名 |
+| 最后验证 commit | `6711e5c` (origin/develop) + FIX-DEV-010 final patch（最终提交后以归档 claim 记录为准） |
 | 演示候选 tag | `v0.2-demo`（指向 main `565e8a7`） |
-| 验证命令 | `cd medkernel-mvp && mvn -q compile && mvn test` + CI guard-rules + backend-build-test |
-| 结果 | **mvn -q compile FAIL**：`IdentityProviderRepository` / `SecurityUserRowMapper` 仍引用已重命名的 `IdentityBinding` |
+| 验证命令 | `mvn -q compile` + `medkernel-mvp/scripts/run-tests.ps1` + `medkernel-mvp/scripts/build.ps1` + `frontend eslint/typecheck/vitest/vite build` + `check-ai-collaboration.ps1` |
+| 结果 | **PASS**：后端 compile/test/build 通过；前端 ESLint 0 error、typecheck/test/build 通过；协作 claim/lock 检查通过 |
 | 详细报告 | [docs/engineering/AUDIT-20260520-增量.md](../docs/engineering/AUDIT-20260520-增量.md) |
 | 历史派单 | [docs/engineering/2026-05-20-破窗行动.md](../docs/engineering/2026-05-20-破窗行动.md) — FIX-DEV-001..009 已全部修复 |
 | 发布 PR | [PR #10](https://github.com/Dasheen920624/medkernel/pull/10) — MERGED via squash 2026-05-21 |
@@ -63,11 +63,9 @@
 
 ### 当前 RED 责任任务清单
 
-| Fix Task | 责任任务 | 状态 | 解决方式 |
-|---|---|---|---|
-| FIX-DEV-010 | PR-FINAL-18 × SEC-008 集成 | IN_PROGRESS | 将拆分后的 identity provider 仓储和 mapper 对齐 `SsoIdentityBinding`；规范化阻塞协作哨兵的 active claim / lock 元数据；验证 `mvn -q compile`、协作检查和 verify-pr |
+无。FIX-DEV-010 已完成，develop 恢复 GREEN。
 
-### 已解决的历史 RED 阻塞（FIX-DEV-001..009，归档）
+### 已解决的历史 RED 阻塞（FIX-DEV-001..010，归档）
 
 | Fix Task | 责任任务 | 状态 | 解决方式 |
 |---|---|---|---|
@@ -80,8 +78,9 @@
 | FIX-DEV-007 | AIK-001 | ✅ DONE | Knowledge* 符号引用已对齐 |
 | FIX-DEV-008 | SEC-011 | ✅ DONE | TenantOnboarding* 类型 + 符号已修 |
 | FIX-DEV-009 | 多任务 | ✅ DONE | 散点错全部消解 |
+| FIX-DEV-010 | PR-FINAL-18 × SEC-008 × PR-FINAL-26 集成 | ✅ DONE | 对齐 `SsoIdentityBinding` 拆分仓储引用；修复图谱租户隔离 fallback；收敛前端契约类型与远程布局卫生债；规范化 active claim / lock 元数据 |
 
-`mvn -q compile` + `mvn test`：**261 文件 0 错、248 测试 0 失败**（2026-05-21 实测）。
+2026-05-22 实测：后端 `mvn -q compile` PASS、`run-tests.ps1` PASS、`build.ps1` PASS；前端 ESLint 0 error（保留历史 warning）、TypeScript PASS、Vitest 41 files / 192 tests PASS、Vite build PASS；`verify-pr.ps1 -TaskId FIX-DEV-010` PASS（17 PASS / 0 FAIL / 2 WARN）。
 
 ---
 

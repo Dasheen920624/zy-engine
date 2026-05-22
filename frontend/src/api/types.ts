@@ -84,7 +84,14 @@ export interface RawSystemProviders {
 
 // ─── 规则引擎 (FE-003) ───────────────────────────────────────────────
 
-export type ScenarioCode = "PATHWAY_ENTRY" | "AMI_RECOMMEND" | "EMR_QC" | "INSURANCE_QC" | "ORDER_SAFETY";
+export type ScenarioCode =
+  | "PATHWAY_ENTRY"
+  | "AMI_RECOMMEND"
+  | "EMR_QC"
+  | "INSURANCE_QC"
+  | "ORDER_SAFETY"
+  | "FOLLOWUP"
+  | "OPERATION";
 
 export type Severity = "HIGH" | "MEDIUM" | "LOW" | "INFO";
 
@@ -93,15 +100,15 @@ export interface EvaluateRequest {
   rule_package_code?: string;
   rule_package_version?: string;
   operator_id?: string;
-  patient_context: {
-    patient: { patient_id: string; gender?: string; age?: number };
-    encounter: {
+  patient_context: Record<string, unknown> & {
+    patient?: { patient_id: string; gender?: string; age?: number };
+    encounter?: {
       encounter_id: string;
       visit_type?: string;
       department_code?: string;
       arrival_time?: string;
     };
-    facts: Record<string, unknown>;
+    facts?: Record<string, unknown>;
   };
   // 组织上下文（body 显式声明，优先级高于 Header）
   tenant_id?: string;

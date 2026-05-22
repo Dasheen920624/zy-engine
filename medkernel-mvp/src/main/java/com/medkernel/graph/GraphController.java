@@ -37,16 +37,16 @@ public class GraphController {
     @PostMapping("/disease-candidates")
     public ApiResult<List<GraphCandidate>> diseaseCandidates(@RequestBody Map<String, Object> request,
                                                               HttpServletRequest httpRequest) {
-        organizationContextService.resolveWithBody(httpRequest, request);
-        return ApiResult.success(graphService.diseaseCandidates(request));
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        return ApiResult.success(graphService.diseaseCandidates(request, orgContext));
     }
 
     @Operation(summary = "Evidence")
     @PostMapping("/evidence")
     public ApiResult<List<Map<String, Object>>> evidence(@RequestBody Map<String, Object> request,
                                                           HttpServletRequest httpRequest) {
-        organizationContextService.resolveWithBody(httpRequest, request);
-        return ApiResult.success(graphService.evidence(request));
+        OrganizationContext orgContext = organizationContextService.resolveWithBody(httpRequest, request);
+        return ApiResult.success(graphService.evidence(request, orgContext));
     }
 
     @Operation(summary = "Import versions")

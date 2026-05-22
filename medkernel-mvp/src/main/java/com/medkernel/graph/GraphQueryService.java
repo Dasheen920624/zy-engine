@@ -29,6 +29,12 @@ public class GraphQueryService {
     public GraphCandidateQueryResult diseaseCandidates(Map<String, Object> request,
                                                   Map<String, Map<String, Object>> graphNodes,
                                                   List<Map<String, Object>> graphEdges) {
+        return diseaseCandidates(request, graphNodes, graphEdges, null);
+    }
+    public GraphCandidateQueryResult diseaseCandidates(Map<String, Object> request,
+                                                  Map<String, Map<String, Object>> graphNodes,
+                                                  List<Map<String, Object>> graphEdges,
+                                                  String tenantId) {
         String graphVersion = graphVersion(request);
         try {
             if (properties.ready()) {
@@ -37,19 +43,24 @@ public class GraphQueryService {
             }
             List<GraphCandidate> candidates = fallbackCandidates(request, graphVersion,
                     properties.isEnabled() ? "Neo4j配置不完整，已使用内置AMI图谱降级召回。" : null,
-                    graphNodes, graphEdges);
+                    graphNodes, graphEdges, tenantId);
             return new GraphCandidateQueryResult(candidates, graphVersion, "FALLBACK_HEURISTIC",
                     properties.isEnabled(), degradedReason(candidates));
         } catch (RuntimeException ex) {
             List<GraphCandidate> candidates = fallbackCandidates(request, graphVersion,
                     "Neo4j查询不可用，已使用内置AMI图谱降级召回：" + ex.getClass().getSimpleName(),
-                    graphNodes, graphEdges);
+                    graphNodes, graphEdges, tenantId);
             return new GraphCandidateQueryResult(candidates, graphVersion, "FALLBACK_HEURISTIC",
                     true, degradedReason(candidates));
         }
     }
     public GraphEvidenceQueryResult evidence(Map<String, Object> request,
                                         Map<String, Map<String, Object>> graphEvidences) {
+        return evidence(request, graphEvidences, null);
+    }
+    public GraphEvidenceQueryResult evidence(Map<String, Object> request,
+                                        Map<String, Map<String, Object>> graphEvidences,
+                                        String tenantId) {
         String targetCode = string(request.get("target_code"), null);
         String graphVersion = graphVersion(request);
         try {
@@ -59,13 +70,13 @@ public class GraphQueryService {
             }
             List<Map<String, Object>> evidence = fallbackEvidence(targetCode, graphVersion,
                     properties.isEnabled() ? "Neo4j配置不完整，已使用内置AMI证据降级返回。" : null,
-                    graphEvidences);
+                    graphEvidences, tenantId);
             return new GraphEvidenceQueryResult(evidence, targetCode, graphVersion, "FALLBACK_HEURISTIC",
                     properties.isEnabled(), degradedReasonFromMaps(evidence));
         } catch (RuntimeException ex) {
             List<Map<String, Object>> evidence = fallbackEvidence(targetCode, graphVersion,
                     "Neo4j证据查询不可用，已使用内置AMI证据降级返回：" + ex.getClass().getSimpleName(),
-                    graphEvidences);
+                    graphEvidences, tenantId);
             return new GraphEvidenceQueryResult(evidence, targetCode, graphVersion, "FALLBACK_HEURISTIC",
                     true, degradedReasonFromMaps(evidence));
         }
@@ -156,11 +167,13 @@ public class GraphQueryService {
         }
         private List<GraphCandidate> fallbackCandidates(Map<String, Object> request, String graphVersion, String reason,
                                                       Map<String, Map<String, Object>> graphNodes,
-                                                      List<Map<String, Object>> graphEdges) {
+                                                      List<Map<String, Object>> graphEdges,
+                                                      String tenantId) {
             List<String> codes = factCodes(request);
             // 已注册图谱：用 imported edges 召回 Disease，得到任何 Disease 即采用导入数据；
             // 否则回退到内置 AMI 启发式，保持向后兼容。
-            List<GraphCandidate> registered = registeredCandidatesFor(codes, graphVersion, reason, graphNodes, graphEdges);
+            List<GraphCandidate> registered = registeredCandidatesFor(codes, graphVersion, reason, graphNodes, graphEdges,
+                    tenantId);
             if (!registered.isEmpty()) {
                 return registered;
             }
@@ -198,9 +211,11 @@ public class GraphQueryService {
             return candidates;
         }
         private List<Map<String, Object>> fallbackEvidence(String targetCode, String graphVersion, String reason,
-                                                         Map<String, Map<String, Object>> graphEvidences) {
+                                                         Map<String, Map<String, Object>> graphEvidences,
+                                                         String tenantId) {
             // 优先使用已注册的图谱证据：targetCode 匹配时返回所有匹配项（不限版本），让用户可以通过 import 配置扩展演示数据。
-            List<Map<String, Object>> registered = registeredEvidenceFor(targetCode, graphVersion, graphEvidences);
+            List<Map<String, Object>> registered = registeredEvidenceFor(targetCode, graphVersion, graphEvidences,
+                    tenantId);
             if (!registered.isEmpty()) {
                 for (Map<String, Object> evidence : registered) {
                     evidence.put("graph_source", "REGISTERED_FALLBACK");
@@ -228,7 +243,8 @@ public class GraphQueryService {
         }
         private List<GraphCandidate> registeredCandidatesFor(List<String> factCodes, String graphVersion, String reason,
                                                            Map<String, Map<String, Object>> graphNodes,
-                                                           List<Map<String, Object>> graphEdges) {
+                                                           List<Map<String, Object>> graphEdges,
+                                                           String tenantId) {
             List<GraphCandidate> candidates = new ArrayList<GraphCandidate>();
             if (factCodes == null || factCodes.isEmpty()) {
                 return candidates;
@@ -243,6 +259,9 @@ public class GraphQueryService {
             // 聚合 disease -> matched edges/weight，让多 fact 命中同一 disease 时分数累加。
             Map<String, DiseaseAggregate> aggregates = new LinkedHashMap<String, DiseaseAggregate>();
             for (Map<String, Object> edge : snapshot) {
+                if (!matchesTenant(edge, tenantId)) {
+                    continue;
+                }
                 String edgeVersion = String.valueOf(edge.get("graph_version"));
                 if (graphVersion != null && !graphVersion.equalsIgnoreCase(edgeVersion)) {
                     continue;
@@ -252,7 +271,8 @@ public class GraphQueryService {
                     continue;
                 }
                 String toCode = String.valueOf(edge.get("to_code"));
-                Map<String, Object> diseaseNode = graphNodes.get(nodeKey(edgeVersion, toCode));
+                Map<String, Object> diseaseNode = findNode(graphNodes, tenantId, string(edge.get("tenant_id"), null),
+                        edgeVersion, toCode);
                 if (diseaseNode == null || !"DISEASE".equalsIgnoreCase(String.valueOf(diseaseNode.get("type")))) {
                     continue;
                 }
@@ -263,7 +283,8 @@ public class GraphQueryService {
                 }
                 double weight = toDouble(edge.get("weight"), 0.5);
                 agg.score += weight * 100;
-                Map<String, Object> fromNode = graphNodes.get(nodeKey(edgeVersion, fromCode));
+                Map<String, Object> fromNode = findNode(graphNodes, tenantId, string(edge.get("tenant_id"), null),
+                        edgeVersion, fromCode);
                 String fromName = fromNode == null ? fromCode : String.valueOf(fromNode.get("name"));
                 agg.relations.add(relation(String.valueOf(edge.get("relation_type")), fromCode, fromName, weight));
             }
@@ -300,7 +321,8 @@ public class GraphQueryService {
             }
         }
         private List<Map<String, Object>> registeredEvidenceFor(String targetCode, String graphVersion,
-                                                              Map<String, Map<String, Object>> graphEvidences) {
+                                                              Map<String, Map<String, Object>> graphEvidences,
+                                                              String tenantId) {
             List<Map<String, Object>> matched = new ArrayList<Map<String, Object>>();
             if (targetCode == null || graphEvidences.isEmpty()) {
                 return matched;
@@ -308,6 +330,9 @@ public class GraphQueryService {
             // 优先匹配传入版本，没有时返回所有 targetCode 命中的证据，作为跨版本的兜底。
             List<Map<String, Object>> sameVersion = new ArrayList<Map<String, Object>>();
             for (Map<String, Object> entry : graphEvidences.values()) {
+                if (!matchesTenant(entry, tenantId)) {
+                    continue;
+                }
                 if (!targetCode.equalsIgnoreCase(String.valueOf(entry.get("target_code")))) {
                     continue;
                 }
@@ -447,7 +472,31 @@ public class GraphQueryService {
         private boolean hasText(String value) {
             return value != null && !value.trim().isEmpty();
         }
-        private String nodeKey(String graphVersion, String code) {
+        private Map<String, Object> findNode(Map<String, Map<String, Object>> graphNodes, String tenantId,
+                                             String entryTenantId, String graphVersion, String code) {
+            Map<String, Object> node = graphNodes.get(tenantNodeKey(tenantId, graphVersion, code));
+            if (node != null) {
+                return node;
+            }
+            if (entryTenantId != null && !entryTenantId.equals(tenantId)) {
+                node = graphNodes.get(tenantNodeKey(entryTenantId, graphVersion, code));
+                if (node != null) {
+                    return node;
+                }
+            }
+            return graphNodes.get(legacyNodeKey(graphVersion, code));
+        }
+        private boolean matchesTenant(Map<String, Object> entry, String tenantId) {
+            if (!hasText(tenantId)) {
+                return true;
+            }
+            String entryTenant = string(entry.get("tenant_id"), null);
+            return entryTenant == null || tenantId.equals(entryTenant);
+        }
+        private String tenantNodeKey(String tenantId, String graphVersion, String code) {
+            return string(tenantId, "") + "::" + string(graphVersion, "") + "::" + string(code, "");
+        }
+        private String legacyNodeKey(String graphVersion, String code) {
             return string(graphVersion, "") + "::" + string(code, "");
         }
         private double toDouble(Object value, double defaultValue) {
