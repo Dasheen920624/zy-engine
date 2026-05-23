@@ -43,6 +43,7 @@ public class PathwayService {
     private final PublishGateService publishGateService;
     private final PathwayConfigSupport configSupport = new PathwayConfigSupport();
     private final PathwayTemplateService templateService;
+    private final com.medkernel.system.BusinessOperationMetrics businessMetrics;
     private final Map<String, PatientPathwayInstance> activeInstances = new ConcurrentHashMap<String, PatientPathwayInstance>();
     private final Map<String, Map<String, Object>> pathwayDrafts = new ConcurrentHashMap<String, Map<String, Object>>();
     private final Map<String, Map<String, Object>> publishedPathways = new ConcurrentHashMap<String, Map<String, Object>>();
@@ -52,12 +53,14 @@ public class PathwayService {
 
     public PathwayService(RuleService ruleService, AdapterHubService adapterHubService,
                           EnginePersistenceService persistenceService, PublishGateService publishGateService,
-                          PathwayTemplateService templateService) {
+                          PathwayTemplateService templateService,
+                          com.medkernel.system.BusinessOperationMetrics businessMetrics) {
         this.ruleService = ruleService;
         this.adapterHubService = adapterHubService;
         this.persistenceService = persistenceService;
         this.publishGateService = publishGateService;
         this.templateService = templateService;
+        this.businessMetrics = businessMetrics;
     }
 
     /**
@@ -429,6 +432,7 @@ public class PathwayService {
     }
 
     public PatientPathwayInstance admit(Map<String, Object> request, OrganizationContext orgContext) {
+        long startNanos = System.nanoTime();
         String encounterId = String.valueOf(request.get("encounter_id"));
         String pathwayCode = String.valueOf(request.get("pathway_code"));
         String versionNo = string(request.get("version_no"), activeVersion(pathwayCode, "1.0.0"));
@@ -462,6 +466,10 @@ public class PathwayService {
         auditDetail.put("current_node_code", firstNodeCode);
         audit("ADMIT", "PATIENT_PATHWAY", pathwayCode, instance, auditDetail,
                 string(request.get("doctor_id"), null));
+
+        // OPS-003: 记录路径操作指标
+        businessMetrics.recordPathwayOperation(System.nanoTime() - startNanos);
+
         return instance;
     }
 

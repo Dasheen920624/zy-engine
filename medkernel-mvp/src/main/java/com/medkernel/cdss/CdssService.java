@@ -35,16 +35,19 @@ public class CdssService {
     private final RuleService ruleService;
     private final EnginePersistenceService persistenceService;
     private final OrganizationContextService organizationContextService;
+    private final com.medkernel.system.BusinessOperationMetrics businessMetrics;
 
     /** 活动告警存储（生产环境应替换为数据库） */
     private final Map<String, CdssAlert> activeAlerts = new ConcurrentHashMap<>();
 
     public CdssService(RuleService ruleService,
                        EnginePersistenceService persistenceService,
-                       OrganizationContextService organizationContextService) {
+                       OrganizationContextService organizationContextService,
+                       com.medkernel.system.BusinessOperationMetrics businessMetrics) {
         this.ruleService = ruleService;
         this.persistenceService = persistenceService;
         this.organizationContextService = organizationContextService;
+        this.businessMetrics = businessMetrics;
     }
 
     /**
@@ -53,6 +56,7 @@ public class CdssService {
      */
     public List<CdssAlert> evaluate(String triggerPoint, Map<String, Object> patientContext,
                                      String tenantId) {
+        long startNanos = System.nanoTime();
         // 1. 将触发点映射到规则引擎场景码
         String scenarioCode = mapTriggerToScenario(triggerPoint);
         if (scenarioCode == null) {
@@ -90,6 +94,11 @@ public class CdssService {
             // 存储活动告警
             activeAlerts.put(alert.getAlertId(), alert);
         }
+
+        // OPS-003: 记录规则评估指标
+        long elapsedNanos = System.nanoTime() - startNanos;
+        boolean hasHit = !alerts.isEmpty();
+        businessMetrics.recordRuleEvaluation(elapsedNanos, hasHit);
 
         return alerts;
     }
@@ -159,6 +168,11 @@ public class CdssService {
 
         // 从活动告警中移除
         activeAlerts.remove(alertId);
+
+        // OPS-003: 记录 CDSS 超控指标
+        if ("OVERRIDE".equals(overrideType)) {
+            businessMetrics.recordCdssOverride();
+        }
 
         return alert;
     }

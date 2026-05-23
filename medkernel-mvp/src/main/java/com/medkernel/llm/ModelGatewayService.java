@@ -42,6 +42,7 @@ public class ModelGatewayService {
     private final LlmProviderFactory llmProviderFactory;
     private final AiKnowledgeJobService jobService;
     private final ModelGatewayProperties properties;
+    private final com.medkernel.system.BusinessOperationMetrics businessMetrics;
 
     private final Map<String, ModelProvider> providerMap = new LinkedHashMap<String, ModelProvider>();
     private final List<ModelProvider> providers = new ArrayList<ModelProvider>();
@@ -49,11 +50,13 @@ public class ModelGatewayService {
     public ModelGatewayService(List<ModelProvider> staticProviders,
                                LlmProviderFactory llmProviderFactory,
                                AiKnowledgeJobService jobService,
-                               ModelGatewayProperties properties) {
+                               ModelGatewayProperties properties,
+                               com.medkernel.system.BusinessOperationMetrics businessMetrics) {
         this.staticProviders = staticProviders != null ? staticProviders : Collections.<ModelProvider>emptyList();
         this.llmProviderFactory = llmProviderFactory;
         this.jobService = jobService;
         this.properties = properties;
+        this.businessMetrics = businessMetrics;
     }
 
     @PostConstruct
@@ -131,6 +134,10 @@ public class ModelGatewayService {
                 }
 
                 logModelCall(callType, provider, result, elapsed, fallbackUsed, fallbackProvider, fallbackModel, request);
+
+                // OPS-003: 记录 LLM 调用指标
+                businessMetrics.recordLlmCall(elapsed * 1_000_000L, false);
+
                 return result;
             } catch (Exception ex) {
                 long elapsed = System.currentTimeMillis() - start;
@@ -142,6 +149,9 @@ public class ModelGatewayService {
                     fallbackModel = provider.getProviderName();
                 }
                 logModelCall(callType, provider, lastResult, elapsed, fallbackUsed, fallbackProvider, fallbackModel, request);
+
+                // OPS-003: 记录 LLM 调用错误指标
+                businessMetrics.recordLlmCall(elapsed * 1_000_000L, true);
             }
         }
 

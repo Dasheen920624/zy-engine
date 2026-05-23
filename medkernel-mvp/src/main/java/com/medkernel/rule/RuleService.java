@@ -1015,16 +1015,16 @@ public class RuleService {
      */
     private void enrichWithSourceReferences(RuleResult result, String ruleCode) {
         try {
-            List<com.medkernel.provenance.SourceAssetBinding> bindings =
+            List<Map<String, Object>> bindings =
                     sourceAssetBindingService.getBindingsByAsset("RULE", ruleCode, null);
             List<Map<String, Object>> refs = new ArrayList<Map<String, Object>>();
-            for (com.medkernel.provenance.SourceAssetBinding binding : bindings) {
+            for (Map<String, Object> binding : bindings) {
                 Map<String, Object> ref = new LinkedHashMap<String, Object>();
-                ref.put("document_code", binding.getDocumentCode());
-                ref.put("citation_id", binding.getCitationId());
-                ref.put("binding_type", binding.getBindingType());
-                ref.put("confidence", binding.getConfidence());
-                ref.put("description", binding.getDescription());
+                ref.put("document_code", binding.get("document_code"));
+                ref.put("citation_id", binding.get("citation_id"));
+                ref.put("binding_type", binding.get("binding_type"));
+                ref.put("confidence", binding.get("confidence"));
+                ref.put("description", binding.get("description"));
                 refs.add(ref);
             }
             // 如果没有绑定但有 RuleDefinition 上的 referenceDocumentCode，也加入
@@ -1042,7 +1042,8 @@ public class RuleService {
             }
             result.setSourceReferences(refs);
         } catch (RuntimeException ex) {
-            logger.warn("[PROV-005] Failed to enrich source references for rule {}: {}", ruleCode, ex.getMessage());
+            org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RuleService.class);
+            log.warn("[PROV-005] Failed to enrich source references for rule {}: {}", ruleCode, ex.getMessage());
         }
     }
 
