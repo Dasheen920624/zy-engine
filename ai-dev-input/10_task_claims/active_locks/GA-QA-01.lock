@@ -1,0 +1,4 @@
+task_id: GA-QA-01
+ai: TraeAI-Main
+locked_at: "2026-05-23T20:30:00+08:00"
+branch: ai/GA-QA-01/jacoco-coverage
