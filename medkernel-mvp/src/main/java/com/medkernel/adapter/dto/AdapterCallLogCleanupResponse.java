@@ -4,21 +4,18 @@ package com.medkernel.adapter.dto;
  * 适配器调用日志清理响应 DTO。
  */
 public class AdapterCallLogCleanupResponse {
-
-    private int removedCount;
-    private int maxAgeHours;
+    private Integer removedCount;
+    private Integer maxAgeHours;
 
     public static AdapterCallLogCleanupResponse of(int removedCount, int maxAgeHours) {
-        AdapterCallLogCleanupResponse resp = new AdapterCallLogCleanupResponse();
-        resp.removedCount = removedCount;
-        resp.maxAgeHours = maxAgeHours;
-        return resp;
+        AdapterCallLogCleanupResponse dto = new AdapterCallLogCleanupResponse();
+        dto.setRemovedCount(removedCount);
+        dto.setMaxAgeHours(maxAgeHours);
+        return dto;
     }
 
-    // Getters and Setters
-    public int getRemovedCount() { return removedCount; }
-    public void setRemovedCount(int removedCount) { this.removedCount = removedCount; }
-
-    public int getMaxAgeHours() { return maxAgeHours; }
-    public void setMaxAgeHours(int maxAgeHours) { this.maxAgeHours = maxAgeHours; }
+    public Integer getRemovedCount() { return removedCount; }
+    public void setRemovedCount(Integer removedCount) { this.removedCount = removedCount; }
+    public Integer getMaxAgeHours() { return maxAgeHours; }
+    public void setMaxAgeHours(Integer maxAgeHours) { this.maxAgeHours = maxAgeHours; }
 }

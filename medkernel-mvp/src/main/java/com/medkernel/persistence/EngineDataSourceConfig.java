@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
-
 /**
  * PR-FINAL-15：HikariCP DataSource 接入。
  *
@@ -45,16 +44,21 @@ public class EngineDataSourceConfig {
     public DataSource dataSource(EnginePersistenceProperties properties) {
         if (!properties.isEnabled()) {
             // DB 未启用时使用 H2 内存库占位，避免连接外部数据库失败导致启动中断
-            log.warn("medkernel.database.enabled=false → using H2 in-memory DataSource as placeholder");
+            log.info("medkernel.database.enabled=false → 使用 H2 内存数据库作为本地开发占位");
             HikariConfig config = new HikariConfig();
-            config.setJdbcUrl("jdbc:h2:mem:medkernel-noop;DB_CLOSE_DELAY=-1");
+            config.setJdbcUrl("jdbc:h2:mem:medkernel;DB_CLOSE_DELAY=-1;MODE=Oracle");
             config.setUsername("sa");
             config.setPassword("");
-            config.setPoolName("MedKernelNoOpH2");
-            config.setMaximumPoolSize(1);
-            config.setMinimumIdle(0);
-            return new HikariDataSource(config);
+            config.setDriverClassName("org.h2.Driver");
+            config.setMaximumPoolSize(2);
+            config.setMinimumIdle(1);
+            config.setPoolName("MedKernelHikari-H2Local");
+            HikariDataSource ds = new HikariDataSource(config);
+            log.info("HikariCP H2 DataSource initialized (local dev fallback): pool={} max=2",
+                    config.getPoolName());
+            return ds;
         }
+
         EnginePersistenceProperties.HikariOptions opts = properties.getHikari();
 
         HikariConfig config = new HikariConfig();
