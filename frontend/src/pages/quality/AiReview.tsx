@@ -1,6 +1,8 @@
-import { Table, Tag, Button, Space, Card, Typography } from "antd";
-import { RobotOutlined, CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import { useState } from "react";
+import { Table, Tag, Button, Space, Card, Typography, Modal, Progress, Descriptions, List } from "antd";
+import { RobotOutlined, CheckOutlined, CloseOutlined, AuditOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
+import { useLlmExplain } from "@/shared/api/hooks";
 
 const MOCK = [
   { id: "1", text: "胸痛 AMI 患者建议 90 分钟内 PCI", confidence: 0.96, sources: 3, status: "待审核" },
@@ -10,8 +12,13 @@ const MOCK = [
 ];
 
 const STATUS: Record<string, string> = { 待审核: "orange", 已采纳: "green", 已拒绝: "red" };
+const BAND: Record<string, string> = { 高: "green", 中: "blue", 低: "orange" };
+const SOURCE_COLOR: Record<string, string> = { guideline: "purple", paper: "blue", kb: "cyan", rule: "magenta" };
 
 export default function AiReview() {
+  const [explainId, setExplainId] = useState<string | undefined>();
+  const explain = useLlmExplain(explainId);
+
   return (
     <PageShell
       title="AI 知识审核"
@@ -44,8 +51,11 @@ export default function AiReview() {
           { title: "状态", dataIndex: "status", render: (v) => <Tag color={STATUS[v]}>{v}</Tag> },
           {
             title: "操作",
-            render: () => (
+            render: (_, row) => (
               <Space>
+                <Button type="link" size="small" icon={<AuditOutlined />} onClick={() => setExplainId(row.id)}>
+                  可解释性
+                </Button>
                 <Button type="link" size="small" icon={<CheckOutlined />}>采纳</Button>
                 <Button type="link" size="small" icon={<CloseOutlined />} danger>拒绝</Button>
               </Space>
@@ -53,6 +63,55 @@ export default function AiReview() {
           },
         ]}
       />
+
+      {/* GA-EXT-14 · AI 决策可解释性看板 */}
+      <Modal
+        open={!!explainId}
+        onCancel={() => setExplainId(undefined)}
+        footer={null}
+        title="AI 决策可解释性"
+        width={720}
+      >
+        {explain.isLoading && <Typography.Text>加载中...</Typography.Text>}
+        {explain.data && (
+          <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+            <Card size="small">
+              <Typography.Title level={5} style={{ margin: 0 }}>{explain.data.shortAnswer}</Typography.Title>
+              <Space style={{ marginTop: 8 }}>
+                <span>AI 置信度</span>
+                <Tag color={BAND[explain.data.confidenceBand]}>
+                  {explain.data.confidenceBand} · {(explain.data.confidence * 100).toFixed(0)}%
+                </Tag>
+              </Space>
+              <Progress percent={Math.round(explain.data.confidence * 100)} strokeColor="#1565c0" />
+            </Card>
+
+            <Card size="small" title="证据来源">
+              <List
+                size="small"
+                dataSource={explain.data.sources}
+                renderItem={(s) => (
+                  <List.Item>
+                    <Space>
+                      <Tag color={SOURCE_COLOR[s.type] ?? "default"}>{s.type}</Tag>
+                      <strong>{s.title}</strong>
+                      <Typography.Text type="secondary">· {s.anchor} · {s.publishedAt}</Typography.Text>
+                    </Space>
+                  </List.Item>
+                )}
+              />
+            </Card>
+
+            <Descriptions size="small" column={1} bordered>
+              <Descriptions.Item label="AI 模型">{explain.data.aiModel}</Descriptions.Item>
+              <Descriptions.Item label="训练数据范围">{explain.data.trainingDataRange}</Descriptions.Item>
+              <Descriptions.Item label="合规警示">
+                <Typography.Text type="warning">{explain.data.warning}</Typography.Text>
+              </Descriptions.Item>
+            </Descriptions>
+          </Space>
+        )}
+      </Modal>
     </PageShell>
   );
 }
