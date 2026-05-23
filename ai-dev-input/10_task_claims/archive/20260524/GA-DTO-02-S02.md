@@ -7,7 +7,7 @@ slice: S02
 title: Knowledge/AI review Controller DTO化
 owner: TraeAI-Main
 role: senior
-status: DONE
+status: ACTIVE
 branch: ai/GA-DTO-02/knowledge-dto
 target_base_branch: develop
 git_base_commit: 3a48fa7
