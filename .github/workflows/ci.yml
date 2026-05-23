@@ -4,130 +4,96 @@ on:
   push:
     branches:
       - main
-      - develop
   pull_request:
     branches:
       - main
-      - develop
 
 jobs:
+  # 必需 check #1（分支保护规则匹配）
   backend-build-test:
     name: backend-build-test
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 8
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '8'
+          java-version: "21"
+          cache: maven
 
-      - name: Show Java version
-        run: java -version
+      - name: Show versions
+        run: |
+          java -version
+          mvn -version
 
-      - name: Verify encoding and JSON samples
-        run: .\medkernel-mvp\scripts\verify-encoding.cmd
+      - name: Compile backend (medkernel-backend)
+        working-directory: medkernel-backend
+        run: mvn -B -q -DskipTests compile
 
-      # 显式独立 mvn compile，便于在 CI 日志里立刻看到"编译失败"vs"测试失败"vs"打包失败"。
-      # 这一步对应 ai-dev-input/00_DEVELOP_HEALTH.md 的 GREEN/RED 判定。
-      - name: Compile only (gates DEVELOP_HEALTH)
-        run: mvn -q -f medkernel-mvp\pom.xml compile
+      - name: Run unit tests (skeleton smoke)
+        working-directory: medkernel-backend
+        run: mvn -B -q test
 
-      - name: Build backend MVP
-        run: .\medkernel-mvp\scripts\build.cmd
-
-      - name: Run JUnit contract tests
-        run: .\medkernel-mvp\scripts\run-tests.cmd
-
+  # 必需 check #2（分支保护规则匹配）
   guard-rules:
     name: guard-rules
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout (full history for git diff)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Prepare diff base
-        shell: pwsh
-        env:
-          EVENT_BEFORE: ${{ github.event.before }}
-        run: |
-          if ($env:GITHUB_EVENT_NAME -eq "pull_request" -and $env:GITHUB_BASE_REF) {
-            git fetch --no-tags origin "+refs/heads/$env:GITHUB_BASE_REF:refs/remotes/origin/$env:GITHUB_BASE_REF"
-            git rev-parse "origin/$env:GITHUB_BASE_REF"
-          } elseif ($env:GITHUB_EVENT_NAME -eq "push" -and $env:EVENT_BEFORE -and $env:EVENT_BEFORE -notmatch '^0{40}$') {
-            git rev-parse $env:EVENT_BEFORE
-          }
-
-      - name: Enforce branch policy
-        if: github.event_name == 'pull_request'
-        shell: pwsh
-        run: |
-          $base = $env:GITHUB_BASE_REF
-          $head = $env:GITHUB_HEAD_REF
-          Write-Host "PR branch policy: $head -> $base"
-
-          if ($base -eq "main" -and $head -ne "develop") {
-            throw "AI 变更不允许直接 PR 到 main；必须先合入 develop，再由用户发起 develop -> main 发布 PR。"
-          }
-
-          if ($base -eq "develop" -and $head -eq "main") {
-            throw "不允许从 main 合回 develop；AI 任务必须基于 develop。"
-          }
-
-      - name: Run verify-pr.ps1 (skip backend/frontend build, only guard rules)
-        shell: pwsh
-        env:
-          EVENT_BEFORE: ${{ github.event.before }}
-        run: |
-          if ($env:GITHUB_EVENT_NAME -eq "push" -and $env:EVENT_BEFORE -and $env:EVENT_BEFORE -notmatch '^0{40}$') {
-            $env:MEDKERNEL_DIFF_BASE = $env:EVENT_BEFORE
-            Write-Host "Push diff base = $env:MEDKERNEL_DIFF_BASE"
-          }
-          $head = $env:GITHUB_HEAD_REF
-          if ($head -match '^ai/([A-Za-z0-9-]+)/') {
-            $taskId = $matches[1]
-          } elseif ($head -match '^feature/([A-Za-z0-9-]+)/') {
-            $taskId = $matches[1]
-          } else {
-            $taskId = "CI-PR-$($env:GITHUB_RUN_ID)"
-          }
-          Write-Host "Resolved TaskId = $taskId"
-          .\scripts\verify-pr.ps1 -TaskId $taskId -SkipFrontend -SkipBackend
-
-  # GA-GOV-01: 并发机制硬门禁 — orphan lock、重复 task、write_scope 重叠均自动阻断
-  ai-collaboration-guard:
-    name: ai-collaboration-guard
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check AI collaboration integrity
-        shell: pwsh
+      - name: Enforce trunk-based PR rule
         run: |
-          Write-Host "=== AI Collaboration Guard (GA-GOV-01) ===" -ForegroundColor Cyan
-          Write-Host ""
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            BASE="${GITHUB_BASE_REF}"
+            HEAD="${GITHUB_HEAD_REF}"
+            echo "PR: ${HEAD} -> ${BASE}"
+            if [ "${BASE}" != "main" ]; then
+              echo "::error::v1.0 GA trunk-based: PR base 必须是 main（当前 base=${BASE}）"
+              exit 1
+            fi
+          fi
 
-          $script = ".\medkernel-mvp\scripts\check-ai-collaboration.ps1"
-          if (-not (Test-Path $script)) {
-            throw "check-ai-collaboration.ps1 not found at $script"
-          }
+      - name: Verify CONSTITUTION + backlog exist
+        run: |
+          test -f docs/CONSTITUTION.md || { echo "::error::缺 docs/CONSTITUTION.md"; exit 1; }
+          test -f docs/V1_GA_REWRITE_PLAN.md || { echo "::error::缺 docs/V1_GA_REWRITE_PLAN.md"; exit 1; }
+          test -f docs/backlog.md || { echo "::error::缺 docs/backlog.md"; exit 1; }
+          echo "✓ 3 张权威文档齐备"
 
-          # 严格模式：orphan lock / 重复 task / write_scope 重叠均阻断
-          & $script -Strict 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host ""
-            Write-Host "[BLOCKED] AI 协作门禁未通过 — 存在 orphan lock、重复 task 或 write_scope 重叠" -ForegroundColor Red
-            Write-Host "请先清理 ai-dev-input/10_task_claims/ 下的冲突项后再提交" -ForegroundColor Red
+      - name: Forbid legacy task naming in new code
+        run: |
+          # 仅在新代码区域（非 archive）禁止旧命名
+          if git ls-files medkernel-backend frontend/src docs/CONSTITUTION.md docs/V1_GA_REWRITE_PLAN.md docs/backlog.md 2>/dev/null \
+             | xargs grep -l "PR-V2-\|PR-V3-\|PR-FINAL-\|DOC-V2-" 2>/dev/null; then
+            echo "::error::新代码区不允许引用 PR-V2-/PR-V3-/PR-FINAL-/DOC-V2- 旧任务命名"
             exit 1
-          }
+          fi
+          echo "✓ 新代码区无旧任务命名残留"
 
-          Write-Host ""
-          Write-Host "[PASS] AI 协作门禁通过 — 无 orphan lock、无重复 task、无 write_scope 重叠" -ForegroundColor Green
+  # 前端骨架编译检查
+  frontend-build-test:
+    name: frontend-build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install (no lockfile yet, will be regenerated)
+        working-directory: frontend
+        run: npm install --no-audit --no-fund --no-package-lock
+
+      - name: Type check
+        working-directory: frontend
+        run: npm run typecheck
