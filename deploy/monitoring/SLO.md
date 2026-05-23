@@ -50,7 +50,60 @@
 | `medkernel_quality_alert_total` | Counter | 质控预警总次数 |
 | `medkernel_cdss_override_total` | Counter | CDSS 覆盖总次数 |
 
-## 5. 运维部署
+## 5. SLO 证据
+
+### 5.1 Healthcheck 验证
+
+```powershell
+# Windows
+PowerShell -ExecutionPolicy Bypass -File deploy/scripts/healthcheck.ps1
+
+# Linux
+bash deploy/scripts/healthcheck.sh
+```
+
+验证项：
+- `/medkernel/actuator/health` 返回 200 + `{"status":"UP"}`
+- `/medkernel/actuator/health/readiness` 返回 Provider 状态
+- `/medkernel/actuator/prometheus` 返回 Prometheus 指标
+
+### 5.2 Grafana 看板清单
+
+| 看板 | 文件 | 用途 |
+|------|------|------|
+| SLO 总览 | `medkernel-slo.json` | SLO 达标率、错误预算 |
+| 安全监控 | `medkernel-security.json` | 安全事件、审计日志 |
+| 后端概览 | `medkernel-mvp.json` | JVM、API、数据库 |
+| 系统概览 | `medkernel-system-overview.json` | CPU、内存、磁盘、网络 |
+| JVM 运行时 | `medkernel-jvm-runtime.json` | GC、线程、堆内存 |
+| 数据库连接池 | `medkernel-db-pool.json` | HikariCP 连接池状态 |
+| 业务操作 | `medkernel-business-operations.json` | 规则评估、路径操作、CDSS |
+| API 性能 | `medkernel-api-performance.json` | API 延迟分布、错误率 |
+
+### 5.3 告警规则清单
+
+| 规则 | 条件 | 严重级别 |
+|------|------|----------|
+| MedKernelBackendDown | `up{job="medkernel-backend"} == 0` 持续 1m | Critical |
+| MedKernelApiP95LatencyHigh | P95 > 1s 持续 5m | Warning |
+| MedKernelApiP95LatencyCritical | P95 > 3s 持续 2m | Critical |
+| MedKernelDatabaseProviderDown | Provider 不可用持续 1m | Critical |
+| MedKernelLlmErrorRateHigh | 错误率 > 10% 持续 5m | Warning |
+| MedKernelRuleEvaluationSlow | P95 > 1s 持续 5m | Warning |
+
+### 5.4 监控部署
+
+```bash
+# Docker Compose 一键启动监控栈
+docker compose -f deploy/docker-compose.monitoring.yml up -d
+
+# 包含：Prometheus + Grafana + Alertmanager
+# Prometheus: http://localhost:9090
+# Grafana: http://localhost:3000 (admin/admin)
+# Alertmanager: http://localhost:9093
+```
+
+## 6. 运维部署
 
 ```bash
 # Prometheus
