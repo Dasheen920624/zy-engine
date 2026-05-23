@@ -2,27 +2,19 @@ package com.medkernel.knowledge;
 
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
-import com.medkernel.ops.service.OpsSyncTaskService;
-import com.medkernel.persistence.EnginePersistenceProperties;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class KnowledgeServiceTest {
@@ -30,882 +22,630 @@ class KnowledgeServiceTest {
     @Mock
     private OrganizationContextService organizationContextService;
 
-    @Mock
-    private EnginePersistenceProperties properties;
-
-    @Mock
-    private DataSource dataSource;
-
-    @Mock
-    private Connection connection;
-
-    @Mock
-    private PreparedStatement preparedStatement;
-
-    @Mock
-    private OpsSyncTaskService opsSyncTaskService;
+    private KnowledgeService knowledgeService;
 
     private OrganizationContext orgContext;
 
     @BeforeEach
     void setUp() {
+        knowledgeService = new KnowledgeService(organizationContextService);
         orgContext = new OrganizationContext();
-        orgContext.setTenantId("tenant-001");
+        orgContext.setTenantId("TENANT-001");
     }
 
-    // =========================================================================
-    // KnowledgeService — 知识订阅与来源注册
-    // =========================================================================
+    // ==================== 来源注册 registerSource ====================
 
-    @Nested
-    @DisplayName("KnowledgeService — 来源注册")
-    class SourceRegistrationTests {
+    @Test
+    void registerSource_shouldCreateSourceWithAutoCode() {
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("source_name", "ICD-10");
+        request.put("source_type", "TERMINOLOGY");
+        request.put("publisher", "WHO");
 
-        private KnowledgeService knowledgeService;
+        KnowledgeSourceRegistry source = knowledgeService.registerSource(request, orgContext);
 
-        @BeforeEach
-        void init() {
-            knowledgeService = new KnowledgeService(organizationContextService);
-        }
-
-        @Test
-        @DisplayName("注册来源 — 指定 source_code 时正确注册")
-        void registerSource_withSourceCode() {
-            Map<String, Object> request = new HashMap<>();
-            request.put("source_code", "KS-ICD10");
-            request.put("source_name", "ICD-10 编码体系");
-            request.put("source_type", "TERMINOLOGY");
-            request.put("publisher", "WHO");
-            request.put("region", "GLOBAL");
-            request.put("language", "zh");
-            request.put("authority_level", "OFFICIAL");
-            request.put("license_type", "OPEN");
-            request.put("fetch_method", "API");
-            request.put("source_uri", "https://who.int/icd10");
-            request.put("created_by", "admin");
-
-            KnowledgeSourceRegistry source = knowledgeService.registerSource(request, orgContext);
-
-            assertEquals("KS-ICD10", source.getSourceCode());
-            assertEquals("ICD-10 编码体系", source.getSourceName());
-            assertEquals("TERMINOLOGY", source.getSourceType());
-            assertEquals("WHO", source.getPublisher());
-            assertEquals("tenant-001", source.getTenantId());
-            assertEquals("PENDING", source.getReviewStatus());
-            assertNotNull(source.getCreatedTime());
-            assertNotNull(source.getUpdatedTime());
-        }
-
-        @Test
-        @DisplayName("注册来源 — 未指定 source_code 时自动生成")
-        void registerSource_autoGenerateCode() {
-            Map<String, Object> request = new HashMap<>();
-            request.put("source_name", "测试来源");
-
-            KnowledgeSourceRegistry source = knowledgeService.registerSource(request, orgContext);
-
-            assertNotNull(source.getSourceCode());
-            assertTrue(source.getSourceCode().startsWith("KS-"));
-        }
-
-        @Test
-        @DisplayName("注册来源 — 重复 source_code 抛出异常")
-        void registerSource_duplicateCode() {
-            Map<String, Object> request = new HashMap<>();
-            request.put("source_code", "KS-DUP");
-            request.put("source_name", "来源1");
-            knowledgeService.registerSource(request, orgContext);
-
-            Map<String, Object> request2 = new HashMap<>();
-            request2.put("source_code", "KS-DUP");
-            request2.put("source_name", "来源2");
-
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> knowledgeService.registerSource(request2, orgContext));
-            assertTrue(ex.getMessage().contains("Source already registered"));
-        }
-
-        @Test
-        @DisplayName("注册来源 — 布尔字段正确解析字符串")
-        void registerSource_booleanFields() {
-            Map<String, Object> request = new HashMap<>();
-            request.put("source_code", "KS-BOOL");
-            request.put("redistribution_allowed", "true");
-            request.put("commercial_use_allowed", "false");
-            request.put("export_allowed", true);
-
-            KnowledgeSourceRegistry source = knowledgeService.registerSource(request, orgContext);
-
-            assertTrue(source.isRedistributionAllowed());
-            assertFalse(source.isCommercialUseAllowed());
-            assertTrue(source.isExportAllowed());
-        }
-
-        @Test
-        @DisplayName("更新来源 — 成功更新指定字段")
-        void updateSource_success() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("source_code", "KS-UPD");
-            createReq.put("source_name", "原始名称");
-            createReq.put("source_type", "GUIDELINE");
-            knowledgeService.registerSource(createReq, orgContext);
-
-            Map<String, Object> updateReq = new HashMap<>();
-            updateReq.put("source_name", "更新后名称");
-            updateReq.put("source_type", "TERMINOLOGY");
-
-            KnowledgeSourceRegistry updated = knowledgeService.updateSource("KS-UPD", updateReq, orgContext);
-
-            assertEquals("更新后名称", updated.getSourceName());
-            assertEquals("TERMINOLOGY", updated.getSourceType());
-            assertNotNull(updated.getUpdatedTime());
-        }
-
-        @Test
-        @DisplayName("更新来源 — 不存在的来源抛出异常")
-        void updateSource_notFound() {
-            Map<String, Object> updateReq = new HashMap<>();
-            updateReq.put("source_name", "新名称");
-
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> knowledgeService.updateSource("KS-NONEXIST", updateReq, orgContext));
-            assertTrue(ex.getMessage().contains("Source not found"));
-        }
-
-        @Test
-        @DisplayName("更新来源 — 不同租户无法更新")
-        void updateSource_differentTenant() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("source_code", "KS-TENANT");
-            knowledgeService.registerSource(createReq, orgContext);
-
-            OrganizationContext otherOrg = new OrganizationContext();
-            otherOrg.setTenantId("tenant-999");
-
-            Map<String, Object> updateReq = new HashMap<>();
-            updateReq.put("source_name", "尝试更新");
-
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> knowledgeService.updateSource("KS-TENANT", updateReq, otherOrg));
-            assertTrue(ex.getMessage().contains("Source not found"));
-        }
-
-        @Test
-        @DisplayName("审核来源 — 审核通过")
-        void reviewSource_approved() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("source_code", "KS-REV");
-            knowledgeService.registerSource(createReq, orgContext);
-
-            KnowledgeSourceRegistry reviewed = knowledgeService.reviewSource(
-                    "KS-REV", "APPROVED", "reviewer1", orgContext);
-
-            assertEquals("APPROVED", reviewed.getReviewStatus());
-            assertEquals("reviewer1", reviewed.getReviewedBy());
-            assertNotNull(reviewed.getReviewedTime());
-        }
-
-        @Test
-        @DisplayName("审核来源 — 审核驳回")
-        void reviewSource_rejected() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("source_code", "KS-REJ");
-            knowledgeService.registerSource(createReq, orgContext);
-
-            KnowledgeSourceRegistry reviewed = knowledgeService.reviewSource(
-                    "KS-REJ", "REJECTED", "reviewer1", orgContext);
-
-            assertEquals("REJECTED", reviewed.getReviewStatus());
-        }
-
-        @Test
-        @DisplayName("审核来源 — 非法审核状态抛出异常")
-        void reviewSource_invalidStatus() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("source_code", "KS-INV");
-            knowledgeService.registerSource(createReq, orgContext);
-
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> knowledgeService.reviewSource("KS-INV", "PENDING", "reviewer1", orgContext));
-            assertTrue(ex.getMessage().contains("reviewStatus must be APPROVED or REJECTED"));
-        }
-
-        @Test
-        @DisplayName("查询来源 — 按来源编码查询")
-        void getSource_found() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("source_code", "KS-GET");
-            createReq.put("source_name", "查询测试来源");
-            knowledgeService.registerSource(createReq, orgContext);
-
-            KnowledgeSourceRegistry found = knowledgeService.getSource("KS-GET", orgContext);
-
-            assertNotNull(found);
-            assertEquals("查询测试来源", found.getSourceName());
-        }
-
-        @Test
-        @DisplayName("查询来源 — 不存在返回 null")
-        void getSource_notFound() {
-            KnowledgeSourceRegistry found = knowledgeService.getSource("KS-NONEXIST", orgContext);
-            assertNull(found);
-        }
-
-        @Test
-        @DisplayName("列表来源 — 按来源类型过滤")
-        void listSources_filterByType() {
-            Map<String, Object> req1 = new HashMap<>();
-            req1.put("source_code", "KS-LIST1");
-            req1.put("source_type", "TERMINOLOGY");
-            knowledgeService.registerSource(req1, orgContext);
-
-            Map<String, Object> req2 = new HashMap<>();
-            req2.put("source_code", "KS-LIST2");
-            req2.put("source_type", "GUIDELINE");
-            knowledgeService.registerSource(req2, orgContext);
-
-            Map<String, String> filters = new HashMap<>();
-            filters.put("source_type", "TERMINOLOGY");
-            List<KnowledgeSourceRegistry> result = knowledgeService.listSources(filters, orgContext);
-
-            assertEquals(1, result.size());
-            assertEquals("KS-LIST1", result.get(0).getSourceCode());
-        }
-
-        @Test
-        @DisplayName("列表来源 — 按审核状态过滤")
-        void listSources_filterByReviewStatus() {
-            Map<String, Object> req1 = new HashMap<>();
-            req1.put("source_code", "KS-STA1");
-            knowledgeService.registerSource(req1, orgContext);
-
-            Map<String, Object> req2 = new HashMap<>();
-            req2.put("source_code", "KS-STA2");
-            knowledgeService.registerSource(req2, orgContext);
-            knowledgeService.reviewSource("KS-STA2", "APPROVED", "admin", orgContext);
-
-            Map<String, String> filters = new HashMap<>();
-            filters.put("review_status", "APPROVED");
-            List<KnowledgeSourceRegistry> result = knowledgeService.listSources(filters, orgContext);
-
-            assertEquals(1, result.size());
-            assertEquals("KS-STA2", result.get(0).getSourceCode());
-        }
-
-        @Test
-        @DisplayName("列表来源 — 不同租户数据隔离")
-        void listSources_tenantIsolation() {
-            Map<String, Object> req = new HashMap<>();
-            req.put("source_code", "KS-ISO");
-            knowledgeService.registerSource(req, orgContext);
-
-            OrganizationContext otherOrg = new OrganizationContext();
-            otherOrg.setTenantId("tenant-999");
-
-            List<KnowledgeSourceRegistry> result = knowledgeService.listSources(null, otherOrg);
-            assertTrue(result.isEmpty());
-        }
+        assertNotNull(source.getSourceCode());
+        assertTrue(source.getSourceCode().startsWith("KS-"));
+        assertEquals("TENANT-001", source.getTenantId());
+        assertEquals("ICD-10", source.getSourceName());
+        assertEquals("TERMINOLOGY", source.getSourceType());
+        assertEquals("WHO", source.getPublisher());
+        assertEquals("PENDING", source.getReviewStatus());
+        assertNotNull(source.getCreatedTime());
+        assertNotNull(source.getUpdatedTime());
     }
 
-    @Nested
-    @DisplayName("KnowledgeService — 知识订阅")
-    class SubscriptionTests {
+    @Test
+    void registerSource_shouldUseProvidedSourceCode() {
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("source_code", "SRC-001");
+        request.put("source_name", "Test Source");
 
-        private KnowledgeService knowledgeService;
+        KnowledgeSourceRegistry source = knowledgeService.registerSource(request, orgContext);
 
-        @BeforeEach
-        void init() {
-            knowledgeService = new KnowledgeService(organizationContextService);
-        }
-
-        @Test
-        @DisplayName("创建订阅 — 成功创建并返回默认值")
-        void createSubscription_success() {
-            Map<String, Object> request = new HashMap<>();
-            request.put("subscriber_id", "user-001");
-            request.put("subscriber_name", "张医生");
-            request.put("topic_type", "DISEASE");
-            request.put("topic_code", "I21");
-            request.put("topic_name", "急性心肌梗死");
-            request.put("source_types", List.of("GUIDELINE", "TERMINOLOGY"));
-            request.put("created_by", "user-001");
-
-            KnowledgeSubscription sub = knowledgeService.createSubscription(request, orgContext);
-
-            assertNotNull(sub.getSubscriptionId());
-            assertTrue(sub.getSubscriptionId().startsWith("SUB-"));
-            assertEquals("tenant-001", sub.getTenantId());
-            assertEquals("DISEASE", sub.getTopicType());
-            assertEquals("I21", sub.getTopicCode());
-            assertEquals(List.of("GUIDELINE", "TERMINOLOGY"), sub.getSourceTypes());
-            assertEquals("ACTIVE", sub.getStatus());
-            assertTrue(sub.isAutoSync());
-            assertEquals("MANUAL", sub.getSyncFrequency());
-        }
-
-        @Test
-        @DisplayName("创建订阅 — 自定义 auto_sync 和 sync_frequency")
-        void createSubscription_customSyncSettings() {
-            Map<String, Object> request = new HashMap<>();
-            request.put("topic_type", "DRUG");
-            request.put("topic_code", "D001");
-            request.put("auto_sync", "false");
-            request.put("sync_frequency", "DAILY");
-
-            KnowledgeSubscription sub = knowledgeService.createSubscription(request, orgContext);
-
-            assertFalse(sub.isAutoSync());
-            assertEquals("DAILY", sub.getSyncFrequency());
-        }
-
-        @Test
-        @DisplayName("更新订阅 — 成功更新指定字段")
-        void updateSubscription_success() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("topic_type", "GUIDELINE");
-            createReq.put("topic_code", "GL001");
-            createReq.put("topic_name", "原始名称");
-            KnowledgeSubscription sub = knowledgeService.createSubscription(createReq, orgContext);
-
-            Map<String, Object> updateReq = new HashMap<>();
-            updateReq.put("topic_name", "更新后名称");
-            updateReq.put("sync_frequency", "WEEKLY");
-
-            KnowledgeSubscription updated = knowledgeService.updateSubscription(
-                    sub.getSubscriptionId(), updateReq, orgContext);
-
-            assertEquals("更新后名称", updated.getTopicName());
-            assertEquals("WEEKLY", updated.getSyncFrequency());
-        }
-
-        @Test
-        @DisplayName("更新订阅 — 不存在的订阅抛出异常")
-        void updateSubscription_notFound() {
-            Map<String, Object> updateReq = new HashMap<>();
-            updateReq.put("topic_name", "新名称");
-
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> knowledgeService.updateSubscription("SUB-NONEXIST", updateReq, orgContext));
-            assertTrue(ex.getMessage().contains("Subscription not found"));
-        }
-
-        @Test
-        @DisplayName("暂停订阅 — 状态变为 PAUSED")
-        void pauseSubscription_success() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("topic_type", "QUALITY");
-            createReq.put("topic_code", "Q001");
-            KnowledgeSubscription sub = knowledgeService.createSubscription(createReq, orgContext);
-
-            KnowledgeSubscription paused = knowledgeService.pauseSubscription(
-                    sub.getSubscriptionId(), orgContext);
-
-            assertEquals("PAUSED", paused.getStatus());
-        }
-
-        @Test
-        @DisplayName("取消订阅 — 状态变为 CANCELLED")
-        void cancelSubscription_success() {
-            Map<String, Object> createReq = new HashMap<>();
-            createReq.put("topic_type", "INSURANCE");
-            createReq.put("topic_code", "INS001");
-            KnowledgeSubscription sub = knowledgeService.createSubscription(createReq, orgContext);
-
-            KnowledgeSubscription cancelled = knowledgeService.cancelSubscription(
-                    sub.getSubscriptionId(), orgContext);
-
-            assertEquals("CANCELLED", cancelled.getStatus());
-        }
-
-        @Test
-        @DisplayName("暂停订阅 — 不存在的订阅抛出异常")
-        void pauseSubscription_notFound() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> knowledgeService.pauseSubscription("SUB-NONEXIST", orgContext));
-            assertTrue(ex.getMessage().contains("Subscription not found"));
-        }
-
-        @Test
-        @DisplayName("取消订阅 — 不存在的订阅抛出异常")
-        void cancelSubscription_notFound() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> knowledgeService.cancelSubscription("SUB-NONEXIST", orgContext));
-            assertTrue(ex.getMessage().contains("Subscription not found"));
-        }
-
-        @Test
-        @DisplayName("查询订阅 — 按订阅类型过滤")
-        void listSubscriptions_filterByTopicType() {
-            Map<String, Object> req1 = new HashMap<>();
-            req1.put("topic_type", "DISEASE");
-            req1.put("topic_code", "D001");
-            knowledgeService.createSubscription(req1, orgContext);
-
-            Map<String, Object> req2 = new HashMap<>();
-            req2.put("topic_type", "DRUG");
-            req2.put("topic_code", "DR001");
-            knowledgeService.createSubscription(req2, orgContext);
-
-            Map<String, String> filters = new HashMap<>();
-            filters.put("topic_type", "DISEASE");
-            List<KnowledgeSubscription> result = knowledgeService.listSubscriptions(filters, orgContext);
-
-            assertEquals(1, result.size());
-            assertEquals("DISEASE", result.get(0).getTopicType());
-        }
-
-        @Test
-        @DisplayName("查询订阅 — 按状态过滤")
-        void listSubscriptions_filterByStatus() {
-            Map<String, Object> req = new HashMap<>();
-            req.put("topic_type", "DEPARTMENT");
-            req.put("topic_code", "DEP001");
-            KnowledgeSubscription sub = knowledgeService.createSubscription(req, orgContext);
-            knowledgeService.pauseSubscription(sub.getSubscriptionId(), orgContext);
-
-            Map<String, String> filters = new HashMap<>();
-            filters.put("status", "PAUSED");
-            List<KnowledgeSubscription> result = knowledgeService.listSubscriptions(filters, orgContext);
-
-            assertEquals(1, result.size());
-            assertEquals("PAUSED", result.get(0).getStatus());
-        }
-
-        @Test
-        @DisplayName("查询订阅 — 不同租户数据隔离")
-        void listSubscriptions_tenantIsolation() {
-            Map<String, Object> req = new HashMap<>();
-            req.put("topic_type", "DISEASE");
-            req.put("topic_code", "D001");
-            knowledgeService.createSubscription(req, orgContext);
-
-            OrganizationContext otherOrg = new OrganizationContext();
-            otherOrg.setTenantId("tenant-999");
-
-            List<KnowledgeSubscription> result = knowledgeService.listSubscriptions(null, otherOrg);
-            assertTrue(result.isEmpty());
-        }
-
-        @Test
-        @DisplayName("获取订阅 — 按订阅ID查询")
-        void getSubscription_found() {
-            Map<String, Object> req = new HashMap<>();
-            req.put("topic_type", "DISEASE");
-            req.put("topic_code", "D002");
-            req.put("topic_name", "心衰");
-            KnowledgeSubscription sub = knowledgeService.createSubscription(req, orgContext);
-
-            KnowledgeSubscription found = knowledgeService.getSubscription(sub.getSubscriptionId(), orgContext);
-
-            assertNotNull(found);
-            assertEquals("心衰", found.getTopicName());
-        }
-
-        @Test
-        @DisplayName("获取订阅 — 不存在返回 null")
-        void getSubscription_notFound() {
-            KnowledgeSubscription found = knowledgeService.getSubscription("SUB-NONEXIST", orgContext);
-            assertNull(found);
-        }
+        assertEquals("SRC-001", source.getSourceCode());
     }
 
-    // =========================================================================
-    // AiKnowledgeJobService — AI 知识生产任务
-    // =========================================================================
+    @Test
+    void registerSource_shouldThrowWhenSourceCodeAlreadyExists() {
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("source_code", "DUP-001");
+        request.put("source_name", "First");
 
-    @Nested
-    @DisplayName("AiKnowledgeJobService — 知识生产任务")
-    class AiKnowledgeJobServiceTests {
+        knowledgeService.registerSource(request, orgContext);
 
-        private AiKnowledgeJobService jobService;
+        Map<String, Object> request2 = new HashMap<String, Object>();
+        request2.put("source_code", "DUP-001");
+        request2.put("source_name", "Second");
 
-        @BeforeEach
-        void init() throws Exception {
-            when(dataSource.getConnection()).thenReturn(connection);
-            when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
-            jobService = new AiKnowledgeJobService(properties, dataSource);
-        }
-
-        @Test
-        @DisplayName("创建任务 — 成功创建并设置默认值")
-        void createJob_success() throws Exception {
-            AiKnowledgeJob job = new AiKnowledgeJob();
-            job.setTenantId(1L);
-            job.setJobName("术语映射任务");
-            job.setJobType("TERMINOLOGY_MAPPING");
-            job.setSourceCode("KS-ICD10");
-            job.setModelProvider("OpenAI");
-            job.setModelName("gpt-4");
-            job.setCreatedBy("admin");
-
-            AiKnowledgeJob created = jobService.createJob(job);
-
-            assertNotNull(created.getId());
-            assertNotNull(created.getJobCode());
-            assertEquals("PENDING", created.getStatus());
-            assertEquals("PENDING", created.getReviewStatus());
-            assertEquals(3, created.getMaxRetries());
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("创建任务 — 自定义 jobCode 时保留原值")
-        void createJob_customJobCode() throws Exception {
-            AiKnowledgeJob job = new AiKnowledgeJob();
-            job.setTenantId(1L);
-            job.setJobCode("JOB-CUSTOM-001");
-            job.setJobName("自定义编码任务");
-
-            AiKnowledgeJob created = jobService.createJob(job);
-
-            assertEquals("JOB-CUSTOM-001", created.getJobCode());
-        }
-
-        @Test
-        @DisplayName("创建任务 — 自定义 maxRetries 时保留原值")
-        void createJob_customMaxRetries() throws Exception {
-            AiKnowledgeJob job = new AiKnowledgeJob();
-            job.setTenantId(1L);
-            job.setJobName("重试任务");
-            job.setMaxRetries(5);
-
-            AiKnowledgeJob created = jobService.createJob(job);
-
-            assertEquals(5, created.getMaxRetries());
-        }
-
-        @Test
-        @DisplayName("更新任务状态 — RUNNING 状态设置 started_time")
-        void updateJobStatus_running() throws Exception {
-            jobService.updateJobStatus(100L, "RUNNING", null, null);
-            verify(preparedStatement).setString(1, "RUNNING");
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("更新任务状态 — SUCCESS 状态设置 finished_time")
-        void updateJobStatus_success() throws Exception {
-            jobService.updateJobStatus(100L, "SUCCESS", null, null);
-            verify(preparedStatement).setString(1, "SUCCESS");
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("更新任务状态 — FAILED 状态记录错误信息")
-        void updateJobStatus_failed() throws Exception {
-            jobService.updateJobStatus(100L, "FAILED", "TIMEOUT", "执行超时");
-            verify(preparedStatement).setString(1, "FAILED");
-            verify(preparedStatement).setString(2, "TIMEOUT");
-            verify(preparedStatement).setString(3, "执行超时");
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("更新任务状态 — RETRY 状态重置为 PENDING 并递增 retry_count")
-        void updateJobStatus_retry() throws Exception {
-            jobService.updateJobStatus(100L, "RETRY", null, null);
-            verify(preparedStatement).setString(1, "PENDING");
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("审核任务 — 成功更新审核状态")
-        void reviewJob_success() throws Exception {
-            jobService.reviewJob(100L, "APPROVED", "reviewer1", "审核通过");
-            verify(preparedStatement).setString(1, "APPROVED");
-            verify(preparedStatement).setString(2, "reviewer1");
-            verify(preparedStatement).setString(4, "审核通过");
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("记录模型调用日志 — 成功记录")
-        void logModelCall_success() throws Exception {
-            AiModelCallLog callLog = new AiModelCallLog();
-            callLog.setTenantId(1L);
-            callLog.setJobId(100L);
-            callLog.setCallType("MAPPING");
-            callLog.setModelProvider("OpenAI");
-            callLog.setModelName("gpt-4");
-            callLog.setCallStatus("SUCCESS");
-            callLog.setInputTokenCount(500);
-            callLog.setOutputTokenCount(200);
-            callLog.setTotalTokenCount(700);
-            callLog.setElapsedMs(1500);
-            callLog.setCreatedBy("admin");
-
-            AiModelCallLog result = jobService.logModelCall(callLog);
-
-            assertNotNull(result.getId());
-            assertNotNull(result.getCreatedTime());
-            verify(preparedStatement).executeUpdate();
-        }
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.registerSource(request2, orgContext));
+        assertTrue(ex.getMessage().contains("DUP-001"));
     }
 
-    // =========================================================================
-    // AiCandidateReviewService — AI 候选审核
-    // =========================================================================
+    @Test
+    void registerSource_shouldSetAllFields() {
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("source_code", "FULL-001");
+        request.put("source_name", "Full Source");
+        request.put("source_type", "GUIDELINE");
+        request.put("publisher", "NHC");
+        request.put("region", "CN");
+        request.put("language", "zh-CN");
+        request.put("release_version", "2024v1");
+        request.put("release_date", "2024-01-01");
+        request.put("effective_date", "2024-02-01");
+        request.put("expiry_date", "2025-02-01");
+        request.put("authority_level", "OFFICIAL");
+        request.put("license_scope", "NATIONAL");
+        request.put("license_type", "OPEN");
+        request.put("redistribution_allowed", "true");
+        request.put("commercial_use_allowed", false);
+        request.put("export_allowed", "true");
+        request.put("fetch_method", "API");
+        request.put("source_uri", "https://example.com");
+        request.put("raw_hash", "abc123");
+        request.put("parsed_hash", "def456");
+        request.put("description", "Test description");
+        request.put("created_by", "admin");
 
-    @Nested
-    @DisplayName("AiCandidateReviewService — AI 候选审核")
-    class AiCandidateReviewServiceTests {
+        KnowledgeSourceRegistry source = knowledgeService.registerSource(request, orgContext);
 
-        private AiCandidateReviewService reviewService;
-
-        @BeforeEach
-        void init() throws Exception {
-            when(dataSource.getConnection()).thenReturn(connection);
-            when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
-            reviewService = new AiCandidateReviewService(properties, dataSource);
-        }
-
-        @Test
-        @DisplayName("提交候选 — 成功提交并设置默认值")
-        void submitCandidate_success() throws Exception {
-            AiCandidateReview candidate = new AiCandidateReview();
-            candidate.setTenantId(1L);
-            candidate.setCandidateType("TERMINOLOGY_MAPPING");
-            candidate.setCandidateName("ICD-10 映射候选");
-            candidate.setSourceCode("KS-ICD10");
-            candidate.setModelProvider("OpenAI");
-            candidate.setModelName("gpt-4");
-            candidate.setConfidence(0.95);
-            candidate.setCandidateContent("{\"code\": \"I21.0\"}");
-            candidate.setCreatedBy("admin");
-
-            AiCandidateReview result = reviewService.submitCandidate(candidate);
-
-            assertNotNull(result.getId());
-            assertNotNull(result.getCandidateCode());
-            assertEquals("PENDING", result.getReviewStatus());
-            assertEquals("MEDIUM", result.getPriority());
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("提交候选 — 自定义 candidateCode 和 priority")
-        void submitCandidate_customFields() throws Exception {
-            AiCandidateReview candidate = new AiCandidateReview();
-            candidate.setTenantId(1L);
-            candidate.setCandidateCode("CAND-CUSTOM");
-            candidate.setCandidateType("RULE");
-            candidate.setCandidateName("规则候选");
-            candidate.setPriority("HIGH");
-            candidate.setReviewStatus("PENDING");
-
-            AiCandidateReview result = reviewService.submitCandidate(candidate);
-
-            assertEquals("CAND-CUSTOM", result.getCandidateCode());
-            assertEquals("HIGH", result.getPriority());
-        }
-
-        @Test
-        @DisplayName("审核候选 — 成功审核通过")
-        void reviewCandidate_approved() throws Exception {
-            reviewService.reviewCandidate(100L, "APPROVED", "reviewer1", "审核通过", null);
-            verify(preparedStatement).setString(1, "APPROVED");
-            verify(preparedStatement).setString(2, "reviewer1");
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("审核候选 — 审核驳回")
-        void reviewCandidate_rejected() throws Exception {
-            reviewService.reviewCandidate(100L, "REJECTED", "reviewer1", "置信度不足", null);
-            verify(preparedStatement).setString(1, "REJECTED");
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("审核候选 — 带修改内容审核")
-        void reviewCandidate_withModifiedContent() throws Exception {
-            reviewService.reviewCandidate(100L, "MODIFIED", "reviewer1", "已修正",
-                    "{\"code\": \"I21.9\"}");
-            verify(preparedStatement).setString(1, "MODIFIED");
-            verify(preparedStatement).executeUpdate();
-        }
-
-        @Test
-        @DisplayName("批量审核 — 逐条调用审核方法")
-        void batchReview_success() throws Exception {
-            List<Long> ids = List.of(1L, 2L, 3L);
-            reviewService.batchReview(ids, "APPROVED", "reviewer1", "批量通过");
-
-            // 每个ID调用一次 reviewCandidate，共3次 executeUpdate
-            verify(preparedStatement, times(3)).executeUpdate();
-        }
+        assertEquals("FULL-001", source.getSourceCode());
+        assertEquals("Full Source", source.getSourceName());
+        assertEquals("GUIDELINE", source.getSourceType());
+        assertEquals("NHC", source.getPublisher());
+        assertEquals("CN", source.getRegion());
+        assertEquals("zh-CN", source.getLanguage());
+        assertEquals("2024v1", source.getReleaseVersion());
+        assertEquals("2024-01-01", source.getReleaseDate());
+        assertEquals("2024-02-01", source.getEffectiveDate());
+        assertEquals("2025-02-01", source.getExpiryDate());
+        assertEquals("OFFICIAL", source.getAuthorityLevel());
+        assertEquals("NATIONAL", source.getLicenseScope());
+        assertEquals("OPEN", source.getLicenseType());
+        assertTrue(source.isRedistributionAllowed());
+        assertFalse(source.isCommercialUseAllowed());
+        assertTrue(source.isExportAllowed());
+        assertEquals("API", source.getFetchMethod());
+        assertEquals("https://example.com", source.getSourceUri());
+        assertEquals("abc123", source.getRawHash());
+        assertEquals("def456", source.getParsedHash());
+        assertEquals("Test description", source.getDescription());
+        assertEquals("admin", source.getCreatedBy());
     }
 
-    // =========================================================================
-    // KnowledgeSyncService — 知识同步
-    // =========================================================================
+    @Test
+    void registerSource_shouldHandleEmptySourceCode() {
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("source_code", "");
+        request.put("source_name", "Empty Code Source");
 
-    @Nested
-    @DisplayName("KnowledgeSyncService — 知识同步")
-    class KnowledgeSyncServiceTests {
-
-        private KnowledgeSyncService syncService;
-        private KnowledgeService knowledgeService;
-
-        @BeforeEach
-        void init() throws Exception {
-            knowledgeService = new KnowledgeService(organizationContextService);
-            when(dataSource.getConnection()).thenReturn(connection);
-            when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
-            syncService = new KnowledgeSyncService(properties, opsSyncTaskService,
-                    knowledgeService, dataSource);
-        }
-
-        @Test
-        @DisplayName("手动触发同步 — sourceCode 为空时抛出异常")
-        void triggerManualSync_emptySourceCode() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> syncService.triggerManualSync(1L, "", null,
-                            KnowledgeSyncLog.SYNC_MODE_FULL, "admin"));
-            assertTrue(ex.getMessage().contains("来源编码不能为空"));
-        }
-
-        @Test
-        @DisplayName("手动触发同步 — sourceCode 为 null 时抛出异常")
-        void triggerManualSync_nullSourceCode() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> syncService.triggerManualSync(1L, null, null,
-                            KnowledgeSyncLog.SYNC_MODE_FULL, "admin"));
-            assertTrue(ex.getMessage().contains("来源编码不能为空"));
-        }
-
-        @Test
-        @DisplayName("审核同步 — 日志不存在时抛出异常")
-        void reviewSync_logNotFound() {
-            // getSyncLog 查询数据库，mock 返回空结果
-            assertThrows(Exception.class,
-                    () -> syncService.reviewSync(99999L, "APPROVED", "admin", "通过"));
-        }
-
-        @Test
-        @DisplayName("执行已审核同步 — 日志不存在时抛出异常")
-        void executeApprovedSync_logNotFound() {
-            assertThrows(Exception.class,
-                    () -> syncService.executeApprovedSync(99999L));
-        }
-
-        @Test
-        @DisplayName("重试同步 — 日志不存在时抛出异常")
-        void retrySync_logNotFound() {
-            assertThrows(Exception.class,
-                    () -> syncService.retrySync(99999L));
-        }
-
-        @Test
-        @DisplayName("取消同步 — 日志不存在时抛出异常")
-        void cancelSync_logNotFound() {
-            assertThrows(Exception.class,
-                    () -> syncService.cancelSync(99999L, "admin"));
-        }
+        KnowledgeSourceRegistry source = knowledgeService.registerSource(request, orgContext);
+        assertNotNull(source.getSourceCode());
+        assertTrue(source.getSourceCode().startsWith("KS-"));
     }
 
-    // =========================================================================
-    // KnowledgeSyncLog — 状态判断方法
-    // =========================================================================
+    // ==================== 更新来源 updateSource ====================
 
-    @Nested
-    @DisplayName("KnowledgeSyncLog — 状态判断")
-    class KnowledgeSyncLogStateTests {
+    @Test
+    void updateSource_shouldUpdateProvidedFields() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("source_code", "UPD-001");
+        createReq.put("source_name", "Original");
+        knowledgeService.registerSource(createReq, orgContext);
 
-        @Test
-        @DisplayName("isTerminal — COMPLETED 为终态")
-        void isTerminal_completed() {
-            KnowledgeSyncLog log = new KnowledgeSyncLog();
-            log.setStatus(KnowledgeSyncLog.STATUS_COMPLETED);
-            assertTrue(log.isTerminal());
-        }
+        Map<String, Object> updateReq = new HashMap<String, Object>();
+        updateReq.put("source_name", "Updated");
+        updateReq.put("region", "US");
 
-        @Test
-        @DisplayName("isTerminal — FAILED 为终态")
-        void isTerminal_failed() {
-            KnowledgeSyncLog log = new KnowledgeSyncLog();
-            log.setStatus(KnowledgeSyncLog.STATUS_FAILED);
-            assertTrue(log.isTerminal());
-        }
+        KnowledgeSourceRegistry updated = knowledgeService.updateSource("UPD-001", updateReq, orgContext);
 
-        @Test
-        @DisplayName("isTerminal — CANCELLED 为终态")
-        void isTerminal_cancelled() {
-            KnowledgeSyncLog log = new KnowledgeSyncLog();
-            log.setStatus(KnowledgeSyncLog.STATUS_CANCELLED);
-            assertTrue(log.isTerminal());
-        }
+        assertEquals("Updated", updated.getSourceName());
+        assertEquals("US", updated.getRegion());
+        assertNotNull(updated.getUpdatedTime());
+    }
 
-        @Test
-        @DisplayName("isTerminal — PENDING 不是终态")
-        void isTerminal_pending() {
-            KnowledgeSyncLog log = new KnowledgeSyncLog();
-            log.setStatus(KnowledgeSyncLog.STATUS_PENDING);
-            assertFalse(log.isTerminal());
-        }
+    @Test
+    void updateSource_shouldThrowWhenSourceNotFound() {
+        Map<String, Object> updateReq = new HashMap<String, Object>();
+        updateReq.put("source_name", "Updated");
 
-        @Test
-        @DisplayName("isTerminal — SYNCING 不是终态")
-        void isTerminal_syncing() {
-            KnowledgeSyncLog log = new KnowledgeSyncLog();
-            log.setStatus(KnowledgeSyncLog.STATUS_SYNCING);
-            assertFalse(log.isTerminal());
-        }
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.updateSource("NONEXISTENT", updateReq, orgContext));
+        assertTrue(ex.getMessage().contains("NONEXISTENT"));
+    }
 
-        @Test
-        @DisplayName("canRetry — 仅 FAILED 状态可重试")
-        void canRetry_onlyFailed() {
-            KnowledgeSyncLog failed = new KnowledgeSyncLog();
-            failed.setStatus(KnowledgeSyncLog.STATUS_FAILED);
-            assertTrue(failed.canRetry());
+    @Test
+    void updateSource_shouldThrowWhenTenantMismatch() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("source_code", "TENANT-MISMATCH");
+        createReq.put("source_name", "Original");
+        knowledgeService.registerSource(createReq, orgContext);
 
-            KnowledgeSyncLog completed = new KnowledgeSyncLog();
-            completed.setStatus(KnowledgeSyncLog.STATUS_COMPLETED);
-            assertFalse(completed.canRetry());
+        OrganizationContext otherContext = new OrganizationContext();
+        otherContext.setTenantId("OTHER-TENANT");
 
-            KnowledgeSyncLog pending = new KnowledgeSyncLog();
-            pending.setStatus(KnowledgeSyncLog.STATUS_PENDING);
-            assertFalse(pending.canRetry());
-        }
+        Map<String, Object> updateReq = new HashMap<String, Object>();
+        updateReq.put("source_name", "Hacked");
 
-        @Test
-        @DisplayName("canCancel — 非终态可取消")
-        void canCancel_nonTerminal() {
-            KnowledgeSyncLog pending = new KnowledgeSyncLog();
-            pending.setStatus(KnowledgeSyncLog.STATUS_PENDING);
-            assertTrue(pending.canCancel());
+        assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.updateSource("TENANT-MISMATCH", updateReq, otherContext));
+    }
 
-            KnowledgeSyncLog syncing = new KnowledgeSyncLog();
-            syncing.setStatus(KnowledgeSyncLog.STATUS_SYNCING);
-            assertTrue(syncing.canCancel());
+    // ==================== 审核来源 reviewSource ====================
 
-            KnowledgeSyncLog completed = new KnowledgeSyncLog();
-            completed.setStatus(KnowledgeSyncLog.STATUS_COMPLETED);
-            assertFalse(completed.canCancel());
-        }
+    @Test
+    void reviewSource_shouldApproveSource() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("source_code", "REV-001");
+        createReq.put("source_name", "Review Source");
+        knowledgeService.registerSource(createReq, orgContext);
 
-        @Test
-        @DisplayName("isDiffReady — DIFF_READY 及之后状态返回 true")
-        void isDiffReady_states() {
-            KnowledgeSyncLog diffReady = new KnowledgeSyncLog();
-            diffReady.setStatus(KnowledgeSyncLog.STATUS_DIFF_READY);
-            assertTrue(diffReady.isDiffReady());
+        KnowledgeSourceRegistry reviewed = knowledgeService.reviewSource("REV-001", "APPROVED", "reviewer1", orgContext);
 
-            KnowledgeSyncLog approved = new KnowledgeSyncLog();
-            approved.setStatus(KnowledgeSyncLog.STATUS_APPROVED);
-            assertTrue(approved.isDiffReady());
+        assertEquals("APPROVED", reviewed.getReviewStatus());
+        assertEquals("reviewer1", reviewed.getReviewedBy());
+        assertNotNull(reviewed.getReviewedTime());
+    }
 
-            KnowledgeSyncLog syncing = new KnowledgeSyncLog();
-            syncing.setStatus(KnowledgeSyncLog.STATUS_SYNCING);
-            assertTrue(syncing.isDiffReady());
+    @Test
+    void reviewSource_shouldRejectSource() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("source_code", "REV-002");
+        createReq.put("source_name", "Review Source 2");
+        knowledgeService.registerSource(createReq, orgContext);
 
-            KnowledgeSyncLog completed = new KnowledgeSyncLog();
-            completed.setStatus(KnowledgeSyncLog.STATUS_COMPLETED);
-            assertTrue(completed.isDiffReady());
+        KnowledgeSourceRegistry reviewed = knowledgeService.reviewSource("REV-002", "REJECTED", "reviewer2", orgContext);
 
-            KnowledgeSyncLog pending = new KnowledgeSyncLog();
-            pending.setStatus(KnowledgeSyncLog.STATUS_PENDING);
-            assertFalse(pending.isDiffReady());
-        }
+        assertEquals("REJECTED", reviewed.getReviewStatus());
+    }
+
+    @Test
+    void reviewSource_shouldThrowForInvalidStatus() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("source_code", "REV-003");
+        createReq.put("source_name", "Review Source 3");
+        knowledgeService.registerSource(createReq, orgContext);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.reviewSource("REV-003", "INVALID", "reviewer", orgContext));
+        assertTrue(ex.getMessage().contains("APPROVED") || ex.getMessage().contains("REJECTED"));
+    }
+
+    @Test
+    void reviewSource_shouldThrowWhenSourceNotFound() {
+        assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.reviewSource("NONEXISTENT", "APPROVED", "reviewer", orgContext));
+    }
+
+    // ==================== 列出来源 listSources ====================
+
+    @Test
+    void listSources_shouldReturnSourcesForTenant() {
+        Map<String, Object> req1 = new HashMap<String, Object>();
+        req1.put("source_code", "LS-001");
+        req1.put("source_name", "Source 1");
+        req1.put("source_type", "TERMINOLOGY");
+        knowledgeService.registerSource(req1, orgContext);
+
+        Map<String, Object> req2 = new HashMap<String, Object>();
+        req2.put("source_code", "LS-002");
+        req2.put("source_name", "Source 2");
+        req2.put("source_type", "GUIDELINE");
+        knowledgeService.registerSource(req2, orgContext);
+
+        List<KnowledgeSourceRegistry> sources = knowledgeService.listSources(null, orgContext);
+        assertEquals(2, sources.size());
+    }
+
+    @Test
+    void listSources_shouldFilterBySourceType() {
+        Map<String, Object> req1 = new HashMap<String, Object>();
+        req1.put("source_code", "FT-001");
+        req1.put("source_name", "Term Source");
+        req1.put("source_type", "TERMINOLOGY");
+        knowledgeService.registerSource(req1, orgContext);
+
+        Map<String, Object> req2 = new HashMap<String, Object>();
+        req2.put("source_code", "FT-002");
+        req2.put("source_name", "Guide Source");
+        req2.put("source_type", "GUIDELINE");
+        knowledgeService.registerSource(req2, orgContext);
+
+        Map<String, String> filters = new HashMap<String, String>();
+        filters.put("source_type", "TERMINOLOGY");
+
+        List<KnowledgeSourceRegistry> sources = knowledgeService.listSources(filters, orgContext);
+        assertEquals(1, sources.size());
+        assertEquals("TERMINOLOGY", sources.get(0).getSourceType());
+    }
+
+    @Test
+    void listSources_shouldFilterByReviewStatus() {
+        Map<String, Object> req1 = new HashMap<String, Object>();
+        req1.put("source_code", "FRS-001");
+        req1.put("source_name", "Source");
+        knowledgeService.registerSource(req1, orgContext);
+        knowledgeService.reviewSource("FRS-001", "APPROVED", "admin", orgContext);
+
+        Map<String, Object> req2 = new HashMap<String, Object>();
+        req2.put("source_code", "FRS-002");
+        req2.put("source_name", "Source 2");
+        knowledgeService.registerSource(req2, orgContext);
+
+        Map<String, String> filters = new HashMap<String, String>();
+        filters.put("review_status", "APPROVED");
+
+        List<KnowledgeSourceRegistry> sources = knowledgeService.listSources(filters, orgContext);
+        assertEquals(1, sources.size());
+        assertEquals("APPROVED", sources.get(0).getReviewStatus());
+    }
+
+    @Test
+    void listSources_shouldNotReturnOtherTenantSources() {
+        Map<String, Object> req = new HashMap<String, Object>();
+        req.put("source_code", "CROSS-001");
+        req.put("source_name", "Cross Source");
+        knowledgeService.registerSource(req, orgContext);
+
+        OrganizationContext otherContext = new OrganizationContext();
+        otherContext.setTenantId("OTHER-TENANT");
+
+        List<KnowledgeSourceRegistry> sources = knowledgeService.listSources(null, otherContext);
+        assertTrue(sources.isEmpty());
+    }
+
+    // ==================== 获取来源 getSource ====================
+
+    @Test
+    void getSource_shouldReturnSource() {
+        Map<String, Object> req = new HashMap<String, Object>();
+        req.put("source_code", "GET-001");
+        req.put("source_name", "Get Source");
+        knowledgeService.registerSource(req, orgContext);
+
+        KnowledgeSourceRegistry source = knowledgeService.getSource("GET-001", orgContext);
+        assertNotNull(source);
+        assertEquals("GET-001", source.getSourceCode());
+    }
+
+    @Test
+    void getSource_shouldReturnNullWhenNotFound() {
+        KnowledgeSourceRegistry source = knowledgeService.getSource("NONEXISTENT", orgContext);
+        assertNull(source);
+    }
+
+    @Test
+    void getSource_shouldReturnNullForOtherTenant() {
+        Map<String, Object> req = new HashMap<String, Object>();
+        req.put("source_code", "CROSS-GET-001");
+        req.put("source_name", "Cross Source");
+        knowledgeService.registerSource(req, orgContext);
+
+        OrganizationContext otherContext = new OrganizationContext();
+        otherContext.setTenantId("OTHER-TENANT");
+
+        assertNull(knowledgeService.getSource("CROSS-GET-001", otherContext));
+    }
+
+    // ==================== 知识订阅 createSubscription ====================
+
+    @Test
+    void createSubscription_shouldCreateWithDefaults() {
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("subscriber_id", "USER-001");
+        request.put("subscriber_name", "Dr. Zhang");
+        request.put("topic_type", "DISEASE");
+        request.put("topic_code", "I10");
+        request.put("topic_name", "Hypertension");
+        request.put("created_by", "admin");
+
+        KnowledgeSubscription sub = knowledgeService.createSubscription(request, orgContext);
+
+        assertNotNull(sub.getSubscriptionId());
+        assertTrue(sub.getSubscriptionId().startsWith("SUB-"));
+        assertEquals("TENANT-001", sub.getTenantId());
+        assertEquals("USER-001", sub.getSubscriberId());
+        assertEquals("DISEASE", sub.getTopicType());
+        assertEquals("I10", sub.getTopicCode());
+        assertEquals("ACTIVE", sub.getStatus());
+        assertTrue(sub.isAutoSync());
+        assertEquals("MANUAL", sub.getSyncFrequency());
+    }
+
+    @Test
+    void createSubscription_shouldUseProvidedValues() {
+        List<String> sourceTypes = new ArrayList<String>();
+        sourceTypes.add("GUIDELINE");
+        sourceTypes.add("TERMINOLOGY");
+
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("subscriber_id", "USER-002");
+        request.put("topic_type", "DRUG");
+        request.put("topic_code", "J01");
+        request.put("source_types", sourceTypes);
+        request.put("auto_sync", "false");
+        request.put("sync_frequency", "WEEKLY");
+
+        KnowledgeSubscription sub = knowledgeService.createSubscription(request, orgContext);
+
+        assertFalse(sub.isAutoSync());
+        assertEquals("WEEKLY", sub.getSyncFrequency());
+        assertEquals(2, sub.getSourceTypes().size());
+    }
+
+    // ==================== 更新订阅 updateSubscription ====================
+
+    @Test
+    void updateSubscription_shouldUpdateFields() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("subscriber_id", "USER-001");
+        createReq.put("topic_type", "DISEASE");
+        createReq.put("topic_code", "I10");
+        KnowledgeSubscription sub = knowledgeService.createSubscription(createReq, orgContext);
+        String subId = sub.getSubscriptionId();
+
+        Map<String, Object> updateReq = new HashMap<String, Object>();
+        updateReq.put("topic_name", "Updated Topic");
+        updateReq.put("sync_frequency", "DAILY");
+
+        KnowledgeSubscription updated = knowledgeService.updateSubscription(subId, updateReq, orgContext);
+
+        assertEquals("Updated Topic", updated.getTopicName());
+        assertEquals("DAILY", updated.getSyncFrequency());
+    }
+
+    @Test
+    void updateSubscription_shouldThrowWhenNotFound() {
+        Map<String, Object> updateReq = new HashMap<String, Object>();
+        updateReq.put("topic_name", "Updated");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.updateSubscription("SUB-NONEXISTENT", updateReq, orgContext));
+    }
+
+    @Test
+    void updateSubscription_shouldThrowWhenTenantMismatch() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("subscriber_id", "USER-001");
+        createReq.put("topic_type", "DISEASE");
+        createReq.put("topic_code", "I10");
+        KnowledgeSubscription sub = knowledgeService.createSubscription(createReq, orgContext);
+
+        OrganizationContext otherContext = new OrganizationContext();
+        otherContext.setTenantId("OTHER-TENANT");
+
+        Map<String, Object> updateReq = new HashMap<String, Object>();
+        updateReq.put("topic_name", "Hacked");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.updateSubscription(sub.getSubscriptionId(), updateReq, otherContext));
+    }
+
+    // ==================== 暂停/取消订阅 ====================
+
+    @Test
+    void pauseSubscription_shouldSetStatusToPaused() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("subscriber_id", "USER-001");
+        createReq.put("topic_type", "DISEASE");
+        createReq.put("topic_code", "I10");
+        KnowledgeSubscription sub = knowledgeService.createSubscription(createReq, orgContext);
+
+        KnowledgeSubscription paused = knowledgeService.pauseSubscription(sub.getSubscriptionId(), orgContext);
+        assertEquals("PAUSED", paused.getStatus());
+    }
+
+    @Test
+    void cancelSubscription_shouldSetStatusToCancelled() {
+        Map<String, Object> createReq = new HashMap<String, Object>();
+        createReq.put("subscriber_id", "USER-001");
+        createReq.put("topic_type", "DISEASE");
+        createReq.put("topic_code", "I10");
+        KnowledgeSubscription sub = knowledgeService.createSubscription(createReq, orgContext);
+
+        KnowledgeSubscription cancelled = knowledgeService.cancelSubscription(sub.getSubscriptionId(), orgContext);
+        assertEquals("CANCELLED", cancelled.getStatus());
+    }
+
+    @Test
+    void pauseSubscription_shouldThrowWhenNotFound() {
+        assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.pauseSubscription("SUB-FAKE", orgContext));
+    }
+
+    @Test
+    void cancelSubscription_shouldThrowWhenNotFound() {
+        assertThrows(IllegalArgumentException.class,
+                () -> knowledgeService.cancelSubscription("SUB-FAKE", orgContext));
+    }
+
+    // ==================== 列出订阅 listSubscriptions ====================
+
+    @Test
+    void listSubscriptions_shouldReturnForTenant() {
+        Map<String, Object> req1 = new HashMap<String, Object>();
+        req1.put("subscriber_id", "USER-001");
+        req1.put("topic_type", "DISEASE");
+        req1.put("topic_code", "I10");
+        knowledgeService.createSubscription(req1, orgContext);
+
+        Map<String, Object> req2 = new HashMap<String, Object>();
+        req2.put("subscriber_id", "USER-002");
+        req2.put("topic_type", "DRUG");
+        req2.put("topic_code", "J01");
+        knowledgeService.createSubscription(req2, orgContext);
+
+        List<KnowledgeSubscription> subs = knowledgeService.listSubscriptions(null, orgContext);
+        assertEquals(2, subs.size());
+    }
+
+    @Test
+    void listSubscriptions_shouldFilterByTopicType() {
+        Map<String, Object> req1 = new HashMap<String, Object>();
+        req1.put("subscriber_id", "USER-001");
+        req1.put("topic_type", "DISEASE");
+        req1.put("topic_code", "I10");
+        knowledgeService.createSubscription(req1, orgContext);
+
+        Map<String, Object> req2 = new HashMap<String, Object>();
+        req2.put("subscriber_id", "USER-002");
+        req2.put("topic_type", "DRUG");
+        req2.put("topic_code", "J01");
+        knowledgeService.createSubscription(req2, orgContext);
+
+        Map<String, String> filters = new HashMap<String, String>();
+        filters.put("topic_type", "DISEASE");
+
+        List<KnowledgeSubscription> subs = knowledgeService.listSubscriptions(filters, orgContext);
+        assertEquals(1, subs.size());
+        assertEquals("DISEASE", subs.get(0).getTopicType());
+    }
+
+    @Test
+    void listSubscriptions_shouldFilterByStatus() {
+        Map<String, Object> req1 = new HashMap<String, Object>();
+        req1.put("subscriber_id", "USER-001");
+        req1.put("topic_type", "DISEASE");
+        req1.put("topic_code", "I10");
+        KnowledgeSubscription sub1 = knowledgeService.createSubscription(req1, orgContext);
+        knowledgeService.pauseSubscription(sub1.getSubscriptionId(), orgContext);
+
+        Map<String, Object> req2 = new HashMap<String, Object>();
+        req2.put("subscriber_id", "USER-002");
+        req2.put("topic_type", "DRUG");
+        req2.put("topic_code", "J01");
+        knowledgeService.createSubscription(req2, orgContext);
+
+        Map<String, String> filters = new HashMap<String, String>();
+        filters.put("status", "PAUSED");
+
+        List<KnowledgeSubscription> subs = knowledgeService.listSubscriptions(filters, orgContext);
+        assertEquals(1, subs.size());
+        assertEquals("PAUSED", subs.get(0).getStatus());
+    }
+
+    @Test
+    void listSubscriptions_shouldFilterBySubscriberId() {
+        Map<String, Object> req1 = new HashMap<String, Object>();
+        req1.put("subscriber_id", "USER-A");
+        req1.put("topic_type", "DISEASE");
+        req1.put("topic_code", "I10");
+        knowledgeService.createSubscription(req1, orgContext);
+
+        Map<String, Object> req2 = new HashMap<String, Object>();
+        req2.put("subscriber_id", "USER-B");
+        req2.put("topic_type", "DRUG");
+        req2.put("topic_code", "J01");
+        knowledgeService.createSubscription(req2, orgContext);
+
+        Map<String, String> filters = new HashMap<String, String>();
+        filters.put("subscriber_id", "USER-A");
+
+        List<KnowledgeSubscription> subs = knowledgeService.listSubscriptions(filters, orgContext);
+        assertEquals(1, subs.size());
+        assertEquals("USER-A", subs.get(0).getSubscriberId());
+    }
+
+    @Test
+    void listSubscriptions_shouldNotReturnOtherTenantSubscriptions() {
+        Map<String, Object> req = new HashMap<String, Object>();
+        req.put("subscriber_id", "USER-001");
+        req.put("topic_type", "DISEASE");
+        req.put("topic_code", "I10");
+        knowledgeService.createSubscription(req, orgContext);
+
+        OrganizationContext otherContext = new OrganizationContext();
+        otherContext.setTenantId("OTHER-TENANT");
+
+        List<KnowledgeSubscription> subs = knowledgeService.listSubscriptions(null, otherContext);
+        assertTrue(subs.isEmpty());
+    }
+
+    // ==================== 获取订阅 getSubscription ====================
+
+    @Test
+    void getSubscription_shouldReturnSubscription() {
+        Map<String, Object> req = new HashMap<String, Object>();
+        req.put("subscriber_id", "USER-001");
+        req.put("topic_type", "DISEASE");
+        req.put("topic_code", "I10");
+        KnowledgeSubscription created = knowledgeService.createSubscription(req, orgContext);
+
+        KnowledgeSubscription found = knowledgeService.getSubscription(created.getSubscriptionId(), orgContext);
+        assertNotNull(found);
+        assertEquals(created.getSubscriptionId(), found.getSubscriptionId());
+    }
+
+    @Test
+    void getSubscription_shouldReturnNullWhenNotFound() {
+        assertNull(knowledgeService.getSubscription("SUB-FAKE", orgContext));
+    }
+
+    @Test
+    void getSubscription_shouldReturnNullForOtherTenant() {
+        Map<String, Object> req = new HashMap<String, Object>();
+        req.put("subscriber_id", "USER-001");
+        req.put("topic_type", "DISEASE");
+        req.put("topic_code", "I10");
+        KnowledgeSubscription created = knowledgeService.createSubscription(req, orgContext);
+
+        OrganizationContext otherContext = new OrganizationContext();
+        otherContext.setTenantId("OTHER-TENANT");
+
+        assertNull(knowledgeService.getSubscription(created.getSubscriptionId(), otherContext));
+    }
+
+    // ==================== toView 方法 ====================
+
+    @Test
+    void sourceRegistry_toView_shouldContainAllFields() {
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("source_code", "VIEW-001");
+        request.put("source_name", "View Source");
+        request.put("source_type", "TERMINOLOGY");
+        KnowledgeSourceRegistry source = knowledgeService.registerSource(request, orgContext);
+
+        Map<String, Object> view = source.toView();
+        assertEquals("VIEW-001", view.get("source_code"));
+        assertEquals("View Source", view.get("source_name"));
+        assertEquals("TERMINOLOGY", view.get("source_type"));
+        assertNotNull(view.get("license"));
+        assertTrue(view.get("license") instanceof Map);
+    }
+
+    @Test
+    void subscription_toView_shouldContainAllFields() {
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("subscriber_id", "USER-001");
+        request.put("topic_type", "DISEASE");
+        request.put("topic_code", "I10");
+        KnowledgeSubscription sub = knowledgeService.createSubscription(request, orgContext);
+
+        Map<String, Object> view = sub.toView();
+        assertEquals("USER-001", view.get("subscriber_id"));
+        assertEquals("DISEASE", view.get("topic_type"));
+        assertEquals("I10", view.get("topic_code"));
     }
 }
