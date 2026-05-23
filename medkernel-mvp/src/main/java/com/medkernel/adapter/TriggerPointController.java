@@ -1,7 +1,9 @@
 package com.medkernel.adapter;
 
 import com.medkernel.adapter.dto.CdssTriggerPointResponse;
+import com.medkernel.adapter.dto.TriggerExecuteEventData;
 import com.medkernel.adapter.dto.TriggerExecuteResponse;
+import com.medkernel.adapter.dto.TriggerMatchContext;
 import com.medkernel.adapter.dto.TriggerMatchResponse;
 import com.medkernel.common.ApiResult;
 import com.medkernel.dto.TriggerMatchRequest;
@@ -118,8 +120,7 @@ public class TriggerPointController {
             @PathVariable String triggerCode,
             @Valid @RequestBody TriggerExecuteRequest request,
             HttpServletRequest httpRequest) {
-        Map<String, Object> eventData = request.getEventData() != null
-                ? request.getEventData() : new LinkedHashMap<String, Object>();
+        Map<String, Object> eventData = toEventDataMap(request.getEventData());
         OrganizationContext orgCtx = organizationContextService.resolveWithBody(httpRequest, eventData);
         return ApiResult.success(TriggerExecuteResponse.fromMap(
                 triggerPointService.executeTrigger(resolveTenantId(orgCtx), triggerCode, eventData)));
@@ -148,9 +149,24 @@ public class TriggerPointController {
         Map<String, Object> body = new LinkedHashMap<String, Object>();
         body.put("businessScenario", request.getBusinessScenario());
         if (request.getContext() != null) {
-            body.putAll(request.getContext());
+            TriggerMatchContext ctx = request.getContext();
+            if (ctx.getPatientId() != null) body.put("patient_id", ctx.getPatientId());
+            if (ctx.getEncounterId() != null) body.put("encounter_id", ctx.getEncounterId());
+            if (ctx.getTriggerPoint() != null) body.put("triggerPoint", ctx.getTriggerPoint());
+            if (ctx.getAdditionalData() != null) body.putAll(ctx.getAdditionalData());
         }
         return body;
+    }
+
+    private Map<String, Object> toEventDataMap(TriggerExecuteEventData eventData) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        if (eventData != null) {
+            if (eventData.getEventType() != null) map.put("eventType", eventData.getEventType());
+            if (eventData.getPatientId() != null) map.put("patient_id", eventData.getPatientId());
+            if (eventData.getEncounterId() != null) map.put("encounter_id", eventData.getEncounterId());
+            if (eventData.getPayload() != null) map.putAll(eventData.getPayload());
+        }
+        return map;
     }
 
     private Long resolveTenantId(OrganizationContext orgCtx) {

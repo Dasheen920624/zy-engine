@@ -1,7 +1,8 @@
 package com.medkernel.dto;
 
+import com.medkernel.adapter.dto.TriggerExecuteEventData;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.Map;
+import javax.validation.Valid;
 
 /**
  * 触发点执行请求 DTO：替代 TriggerPointController.executeTrigger 的 Map&lt;String, Object&gt;。
@@ -9,9 +10,10 @@ import java.util.Map;
 @Schema(description = "触发点执行请求")
 public class TriggerExecuteRequest {
 
+    @Valid
     @Schema(description = "事件数据（触发点执行所需的业务数据）")
-    private Map<String, Object> eventData;
+    private TriggerExecuteEventData eventData;
 
-    public Map<String, Object> getEventData() { return eventData; }
-    public void setEventData(Map<String, Object> eventData) { this.eventData = eventData; }
+    public TriggerExecuteEventData getEventData() { return eventData; }
+    public void setEventData(TriggerExecuteEventData eventData) { this.eventData = eventData; }
 }

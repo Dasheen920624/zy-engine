@@ -1,6 +1,8 @@
 package com.medkernel.dto;
 
+import com.medkernel.adapter.dto.SmartAppContext;
 import io.swagger.v3.oas.annotations.media.Schema;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
 /**
@@ -22,8 +24,9 @@ public class SmartAppQueryRequest {
     @Schema(description = "就诊ID", example = "E_AMI_001")
     private String encounter_id;
 
+    @Valid
     @Schema(description = "附加上下文参数")
-    private java.util.Map<String, Object> context;
+    private SmartAppContext context;
 
     public String getLaunch_id() { return launch_id; }
     public void setLaunch_id(String launch_id) { this.launch_id = launch_id; }
@@ -33,6 +36,6 @@ public class SmartAppQueryRequest {
     public void setPatient_id(String patient_id) { this.patient_id = patient_id; }
     public String getEncounter_id() { return encounter_id; }
     public void setEncounter_id(String encounter_id) { this.encounter_id = encounter_id; }
-    public java.util.Map<String, Object> getContext() { return context; }
-    public void setContext(java.util.Map<String, Object> context) { this.context = context; }
+    public SmartAppContext getContext() { return context; }
+    public void setContext(SmartAppContext context) { this.context = context; }
 }

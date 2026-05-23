@@ -1,6 +1,7 @@
 package com.medkernel.adapter;
 
 import com.medkernel.adapter.dto.AdapterDefinitionResponse;
+import com.medkernel.adapter.dto.AdapterQueryParams;
 import com.medkernel.adapter.dto.AdapterQueryResponse;
 import com.medkernel.common.ApiResult;
 import com.medkernel.dto.AdapterQueryRequest;
@@ -83,7 +84,13 @@ public class AdapterHubController {
         map.put("adapter_code", request.getAdapter_code());
         map.put("query_code", request.getQuery_code());
         if (request.getParams() != null) {
-            map.put("params", request.getParams());
+            Map<String, Object> paramsMap = new LinkedHashMap<String, Object>();
+            AdapterQueryParams p = request.getParams();
+            if (p.getQueryType() != null) paramsMap.put("queryType", p.getQueryType());
+            if (p.getFilters() != null) paramsMap.put("filters", p.getFilters());
+            if (p.getPaginationOffset() != null) paramsMap.put("paginationOffset", p.getPaginationOffset());
+            if (p.getPaginationLimit() != null) paramsMap.put("paginationLimit", p.getPaginationLimit());
+            map.put("params", paramsMap);
         }
         return map;
     }

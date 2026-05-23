@@ -1,6 +1,8 @@
 package com.medkernel.dto;
 
+import com.medkernel.adapter.dto.InteropQueryParams;
 import io.swagger.v3.oas.annotations.media.Schema;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
 /**
@@ -17,13 +19,14 @@ public class InteropQueryRequest {
     @Schema(description = "查询编码", example = "QUERY_FHIR_PATIENT", requiredMode = Schema.RequiredMode.REQUIRED)
     private String query_code;
 
+    @Valid
     @Schema(description = "查询参数（如 patient_id、encounter_id 等）")
-    private java.util.Map<String, Object> params;
+    private InteropQueryParams params;
 
     public String getAdapter_code() { return adapter_code; }
     public void setAdapter_code(String adapter_code) { this.adapter_code = adapter_code; }
     public String getQuery_code() { return query_code; }
     public void setQuery_code(String query_code) { this.query_code = query_code; }
-    public java.util.Map<String, Object> getParams() { return params; }
-    public void setParams(java.util.Map<String, Object> params) { this.params = params; }
+    public InteropQueryParams getParams() { return params; }
+    public void setParams(InteropQueryParams params) { this.params = params; }
 }

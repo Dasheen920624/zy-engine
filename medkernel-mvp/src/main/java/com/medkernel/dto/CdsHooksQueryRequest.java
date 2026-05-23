@@ -1,6 +1,8 @@
 package com.medkernel.dto;
 
+import com.medkernel.adapter.dto.CdsHooksContext;
 import io.swagger.v3.oas.annotations.media.Schema;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
 /**
@@ -22,8 +24,9 @@ public class CdsHooksQueryRequest {
     @Schema(description = "就诊ID", example = "E_AMI_001")
     private String encounter_id;
 
+    @Valid
     @Schema(description = "附加上下文参数")
-    private java.util.Map<String, Object> context;
+    private CdsHooksContext context;
 
     public String getHook_id() { return hook_id; }
     public void setHook_id(String hook_id) { this.hook_id = hook_id; }
@@ -33,6 +36,6 @@ public class CdsHooksQueryRequest {
     public void setPatient_id(String patient_id) { this.patient_id = patient_id; }
     public String getEncounter_id() { return encounter_id; }
     public void setEncounter_id(String encounter_id) { this.encounter_id = encounter_id; }
-    public java.util.Map<String, Object> getContext() { return context; }
-    public void setContext(java.util.Map<String, Object> context) { this.context = context; }
+    public CdsHooksContext getContext() { return context; }
+    public void setContext(CdsHooksContext context) { this.context = context; }
 }
