@@ -47,6 +47,7 @@ public class RuleService {
     private final EnginePersistenceService persistenceService;
     private final RuleEvalResultRepository ruleEvalResultRepository;
     private final RuleExecutionLogService ruleExecutionLogService;
+    private final com.medkernel.provenance.SourceAssetBindingService sourceAssetBindingService;
     private final RuleDslEvaluator dslEvaluator = new RuleDslEvaluator();
     private final Map<String, RuleDefinition> ruleStore = new ConcurrentHashMap<String, RuleDefinition>();
     // 第三方规则引擎评估结果环形缓冲；后续可接 Oracle/达梦持久化，但单批先保证 DB-only 也能回查。
@@ -55,10 +56,12 @@ public class RuleService {
     private final AtomicLong batchSequence = new AtomicLong();
     public RuleService(EnginePersistenceService persistenceService,
                        RuleEvalResultRepository ruleEvalResultRepository,
-                       RuleExecutionLogService ruleExecutionLogService) {
+                       RuleExecutionLogService ruleExecutionLogService,
+                       com.medkernel.provenance.SourceAssetBindingService sourceAssetBindingService) {
         this.persistenceService = persistenceService;
         this.ruleEvalResultRepository = ruleEvalResultRepository;
         this.ruleExecutionLogService = ruleExecutionLogService;
+        this.sourceAssetBindingService = sourceAssetBindingService;
     }
     public List<RuleDefinition> importRules(Object request) {
         return importRules(request, null);
@@ -395,7 +398,12 @@ public class RuleService {
         }
         List<RuleResult> results = new ArrayList<RuleResult>();
         for (RuleDefinition definition : published) {
-            results.add(executeDefinition(definition, patientContext));
+            RuleResult result = executeDefinition(definition, patientContext);
+            // PROV-005: 为命中规则填充来源证据链
+            if (result.isHit()) {
+                enrichWithSourceReferences(result, definition.getRuleCode());
+            }
+            results.add(result);
         }
         return results;
     }
@@ -1001,6 +1009,43 @@ public class RuleService {
         results.add(ecg);
         return results;
     }
+    /**
+     * PROV-005: 为命中规则填充来源证据链。
+     * 从 SourceAssetBindingService 查询规则关联的来源文档和引用。
+     */
+    private void enrichWithSourceReferences(RuleResult result, String ruleCode) {
+        try {
+            List<com.medkernel.provenance.SourceAssetBinding> bindings =
+                    sourceAssetBindingService.getBindingsByAsset("RULE", ruleCode, null);
+            List<Map<String, Object>> refs = new ArrayList<Map<String, Object>>();
+            for (com.medkernel.provenance.SourceAssetBinding binding : bindings) {
+                Map<String, Object> ref = new LinkedHashMap<String, Object>();
+                ref.put("document_code", binding.getDocumentCode());
+                ref.put("citation_id", binding.getCitationId());
+                ref.put("binding_type", binding.getBindingType());
+                ref.put("confidence", binding.getConfidence());
+                ref.put("description", binding.getDescription());
+                refs.add(ref);
+            }
+            // 如果没有绑定但有 RuleDefinition 上的 referenceDocumentCode，也加入
+            if (refs.isEmpty()) {
+                RuleDefinition def = ruleStore.values().stream()
+                        .filter(d -> ruleCode.equals(d.getRuleCode()))
+                        .findFirst().orElse(null);
+                if (def != null && def.getReferenceDocumentCode() != null) {
+                    Map<String, Object> ref = new LinkedHashMap<String, Object>();
+                    ref.put("document_code", def.getReferenceDocumentCode());
+                    ref.put("citation_id", def.getReferenceCitationId());
+                    ref.put("binding_type", def.getReferenceBindingType());
+                    refs.add(ref);
+                }
+            }
+            result.setSourceReferences(refs);
+        } catch (RuntimeException ex) {
+            logger.warn("[PROV-005] Failed to enrich source references for rule {}: {}", ruleCode, ex.getMessage());
+        }
+    }
+
     private RuleResult executeDefinition(RuleDefinition definition, Map<String, Object> patientContext) {
         long start = System.currentTimeMillis();
         RuleResult result = new RuleResult();

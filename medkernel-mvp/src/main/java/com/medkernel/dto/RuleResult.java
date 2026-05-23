@@ -11,6 +11,8 @@ public class RuleResult {
     private String message;
     private List<String> actions = new ArrayList<String>();
     private List<Map<String, Object>> evidence = new ArrayList<Map<String, Object>>();
+    /** PROV-005: 来源证据链 — 命中规则关联的来源文档和引用 */
+    private List<Map<String, Object>> sourceReferences = new ArrayList<Map<String, Object>>();
 
     public String getRuleCode() {
         return ruleCode;
@@ -58,6 +60,14 @@ public class RuleResult {
 
     public void setEvidence(List<Map<String, Object>> evidence) {
         this.evidence = evidence;
+    }
+
+    public List<Map<String, Object>> getSourceReferences() {
+        return sourceReferences;
+    }
+
+    public void setSourceReferences(List<Map<String, Object>> sourceReferences) {
+        this.sourceReferences = sourceReferences;
     }
 }
 
