@@ -182,4 +182,52 @@ public class ProvenanceController {
         return ApiResult.success(sourceAssetBindingService.getBindingsByDocument(
                 documentCode, filters.get("tenantId")));
     }
+
+    /**
+     * PROV-006: 来源影响分析 — 反查受影响资产。
+     * 给定一个来源文档，返回所有关联的资产及其详情，按资产类型分组汇总。
+     */
+    @Operation(summary = "Impact analysis - find affected assets by source document")
+    @GetMapping("/source-documents/{documentCode}/impact")
+    public ApiResult<Map<String, Object>> getImpactAnalysis(
+            @PathVariable String documentCode,
+            HttpServletRequest httpRequest) {
+        Map<String, String> filters = new LinkedHashMap<String, String>();
+        organizationContextService.applyExplicitFilters(filters, httpRequest);
+        String tenantId = filters.get("tenantId");
+
+        List<Map<String, Object>> bindings = sourceAssetBindingService.getBindingsByDocument(documentCode, tenantId);
+
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("document_code", documentCode);
+        result.put("total_bindings", bindings.size());
+
+        // 按资产类型分组
+        Map<String, List<Map<String, Object>>> grouped = new LinkedHashMap<String, List<Map<String, Object>>>();
+        for (Map<String, Object> binding : bindings) {
+            String assetType = String.valueOf(binding.getOrDefault("asset_type", "UNKNOWN"));
+            grouped.computeIfAbsent(assetType, k -> new java.util.ArrayList<Map<String, Object>>()).add(binding);
+        }
+
+        // 汇总每种资产类型的影响
+        List<Map<String, Object>> impactSummary = new java.util.ArrayList<Map<String, Object>>();
+        for (Map.Entry<String, List<Map<String, Object>>> entry : grouped.entrySet()) {
+            Map<String, Object> summary = new LinkedHashMap<String, Object>();
+            summary.put("asset_type", entry.getKey());
+            summary.put("affected_count", entry.getValue().size());
+            summary.put("assets", entry.getValue());
+            impactSummary.add(summary);
+        }
+        result.put("impact_by_type", impactSummary);
+
+        // 统计绑定类型分布
+        Map<String, Integer> bindingTypeCounts = new LinkedHashMap<String, Integer>();
+        for (Map<String, Object> binding : bindings) {
+            String bindingType = String.valueOf(binding.getOrDefault("binding_type", "UNKNOWN"));
+            bindingTypeCounts.merge(bindingType, 1, Integer::sum);
+        }
+        result.put("binding_type_distribution", bindingTypeCounts);
+
+        return ApiResult.success(result);
+    }
 }
