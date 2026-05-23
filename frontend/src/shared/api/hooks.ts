@@ -1,0 +1,144 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "./client";
+
+/**
+ * MedKernel v1.0 GA · React Query hooks（按业务域分组）。
+ * 与后端 /api/v1/* 路由一一对应。
+ */
+
+// ──────────────────────────────────────────
+// 临床运行 · MPI 患者主索引
+// ──────────────────────────────────────────
+export function useMpiPatients(q?: string) {
+  return useQuery({
+    queryKey: ["mpi", "patients", q ?? ""],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/clinical/mpi/patients", { params: { q } });
+      return data as Array<{ mpiId: string; maskedName: string; gender: string; age: number; idLast4: string; mergedCount: number; status: string }>;
+    },
+  });
+}
+
+export function useMpiStats() {
+  return useQuery({
+    queryKey: ["mpi", "stats"],
+    queryFn: async () => (await apiClient.get("/clinical/mpi/stats")).data as Record<string, number>,
+  });
+}
+
+// ──────────────────────────────────────────
+// 试点准备 · 路径模板
+// ──────────────────────────────────────────
+export function usePathwayTemplates() {
+  return useQuery({
+    queryKey: ["pathway", "templates"],
+    queryFn: async () =>
+      (await apiClient.get("/tenant/pathways")).data as Array<{ id: string; name: string; disease: string; department: string; nodes: number; status: string }>,
+  });
+}
+
+export function usePublishPathway() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => (await apiClient.post(`/tenant/pathways/${id}/publish`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["pathway", "templates"] }),
+  });
+}
+
+// ──────────────────────────────────────────
+// 试点准备 · 规则库
+// ──────────────────────────────────────────
+export function useRules() {
+  return useQuery({
+    queryKey: ["rules"],
+    queryFn: async () =>
+      (await apiClient.get("/tenant/rules")).data as Array<{ id: string; name: string; category: string; severity: string; hits: number; status: string }>,
+  });
+}
+
+export interface RuleValidateInput {
+  patientMpi: string;
+  orderText: string;
+}
+
+export interface RuleHit {
+  ruleId: string;
+  ruleName: string;
+  severity: string;
+  source: string;
+  suggestion: string;
+}
+
+export interface RuleValidateOutput {
+  patientMpi: string;
+  hitCount: number;
+  hits: RuleHit[];
+}
+
+export function useRuleValidate() {
+  return useMutation({
+    mutationFn: async (input: RuleValidateInput) =>
+      (await apiClient.post<RuleValidateOutput>("/tenant/rules/validate", input)).data,
+  });
+}
+
+// ──────────────────────────────────────────
+// 临床运行 · CDSS
+// ──────────────────────────────────────────
+export function useCdssAlerts() {
+  return useQuery({
+    queryKey: ["cdss", "alerts"],
+    queryFn: async () =>
+      (await apiClient.get("/clinical/cdss/alerts")).data as Array<{ id: string; text: string; source: string; adoptionRate: number; status: string; doctor: string }>,
+  });
+}
+
+export function useCdssDecide() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, decision, reason }: { id: string; decision: "adopt" | "reject"; reason?: string }) =>
+      (await apiClient.post(`/clinical/cdss/alerts/${id}/${decision}`, null, { params: { reason } })).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cdss", "alerts"] }),
+  });
+}
+
+// ──────────────────────────────────────────
+// 合规运维 · 审计日志
+// ──────────────────────────────────────────
+export function useAuditEvents() {
+  return useQuery({
+    queryKey: ["audit", "events"],
+    queryFn: async () =>
+      (await apiClient.get("/compliance/audit/events")).data as Array<{ id: string; time: string; user: string; action: string; traceId: string; signature: string }>,
+  });
+}
+
+export function useAuditSnapshot() {
+  return useMutation({
+    mutationFn: async (reason: string) =>
+      (await apiClient.post("/compliance/audit/snapshot", null, { params: { reason } })).data,
+  });
+}
+
+// ──────────────────────────────────────────
+// 高级工具 · LLM Gateway
+// ──────────────────────────────────────────
+export function useLlmProviders() {
+  return useQuery({
+    queryKey: ["llm", "providers"],
+    queryFn: async () =>
+      (await apiClient.get("/advanced/llm/providers")).data as Array<{ id: string; name: string; local: boolean; healthy: boolean }>,
+  });
+}
+
+// ──────────────────────────────────────────
+// 系统 · Health probe
+// ──────────────────────────────────────────
+export function useSystemRuntime() {
+  return useQuery({
+    queryKey: ["system", "runtime"],
+    queryFn: async () =>
+      (await apiClient.get("/system/runtime")).data as Record<string, unknown>,
+    refetchInterval: 30_000,
+  });
+}

@@ -1,14 +1,14 @@
-import { Card, Table, Input, Button, Space, Tag, Statistic, Row, Col } from "antd";
+import { useState } from "react";
+import { Card, Table, Input, Button, Tag, Statistic, Row, Col, Spin } from "antd";
 import { MergeCellsOutlined, SearchOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
-
-const MOCK = [
-  { mpi: "MPI-000123456", name: "张**", gender: "男", age: 58, idLast4: "1234", merged: 2, status: "稳定" },
-  { mpi: "MPI-000123457", name: "李**", gender: "女", age: 42, idLast4: "5678", merged: 0, status: "稳定" },
-  { mpi: "MPI-000123458", name: "王**", gender: "男", age: 65, idLast4: "9012", merged: 1, status: "冲突待处理" },
-];
+import { useMpiPatients, useMpiStats } from "@/shared/api/hooks";
 
 export default function Mpi() {
+  const [q, setQ] = useState("");
+  const stats = useMpiStats();
+  const patients = useMpiPatients(q);
+
   return (
     <PageShell
       title="患者主索引"
@@ -16,29 +16,38 @@ export default function Mpi() {
       primary={<Button type="primary" icon={<MergeCellsOutlined />}>批量合并</Button>}
     >
       <Row gutter={12}>
-        <Col span={6}><Card><Statistic title="累计患者" value={1248322} /></Card></Col>
-        <Col span={6}><Card><Statistic title="今日新增" value={283} valueStyle={{ color: "#1565c0" }} /></Card></Col>
-        <Col span={6}><Card><Statistic title="待处理冲突" value={12} valueStyle={{ color: "#faad14" }} /></Card></Col>
-        <Col span={6}><Card><Statistic title="跨院区合并" value={47} valueStyle={{ color: "#52c41a" }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="累计患者" value={stats.data?.total ?? 0} /></Card></Col>
+        <Col span={6}><Card><Statistic title="今日新增" value={stats.data?.todayNew ?? 0} valueStyle={{ color: "#1565c0" }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="待处理冲突" value={stats.data?.conflicts ?? 0} valueStyle={{ color: "#faad14" }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="跨院区合并" value={stats.data?.crossSiteMerged ?? 0} valueStyle={{ color: "#52c41a" }} /></Card></Col>
       </Row>
       <Card>
-        <Space style={{ marginBottom: 12 }}>
-          <Input.Search placeholder="搜身份证 / 姓名 / MPI ID（已脱敏展示）" style={{ width: 360 }} prefix={<SearchOutlined />} />
-        </Space>
-        <Table
-          rowKey="mpi"
-          dataSource={MOCK}
-          pagination={false}
-          columns={[
-            { title: "MPI ID", dataIndex: "mpi" },
-            { title: "姓名（脱敏）", dataIndex: "name" },
-            { title: "性别", dataIndex: "gender" },
-            { title: "年龄", dataIndex: "age" },
-            { title: "身份证末 4", dataIndex: "idLast4" },
-            { title: "合并就诊号", dataIndex: "merged", render: (v) => v > 0 ? <Tag color="blue">{v}</Tag> : "—" },
-            { title: "状态", dataIndex: "status", render: (v) => <Tag color={v === "冲突待处理" ? "orange" : "default"}>{v}</Tag> },
-          ]}
+        <Input.Search
+          placeholder="搜身份证末 4 / 姓名 / MPI ID"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onSearch={(v) => setQ(v)}
+          style={{ width: 360, marginBottom: 12 }}
+          prefix={<SearchOutlined />}
         />
+        {patients.isLoading ? (
+          <Spin />
+        ) : (
+          <Table
+            rowKey="mpiId"
+            dataSource={patients.data ?? []}
+            pagination={false}
+            columns={[
+              { title: "MPI ID", dataIndex: "mpiId" },
+              { title: "姓名（脱敏）", dataIndex: "maskedName" },
+              { title: "性别", dataIndex: "gender" },
+              { title: "年龄", dataIndex: "age" },
+              { title: "身份证末 4", dataIndex: "idLast4" },
+              { title: "合并就诊号", dataIndex: "mergedCount", render: (v: number) => v > 0 ? <Tag color="blue">{v}</Tag> : "—" },
+              { title: "状态", dataIndex: "status", render: (v: string) => <Tag color={v === "冲突待处理" ? "orange" : "default"}>{v}</Tag> },
+            ]}
+          />
+        )}
       </Card>
     </PageShell>
   );
