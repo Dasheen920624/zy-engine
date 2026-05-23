@@ -14,9 +14,8 @@ class MaskingServiceTest {
     private final MaskingService masking = new MaskingService(crypto);
 
     private static SmCryptoService create() {
-        SmCryptoService c = new SmCryptoService();
-        c.init();
-        return c;
+        // BC Provider 由 SmCryptoService 静态块自动注册，无需手动 init()
+        return new SmCryptoService();
     }
 
     @Test

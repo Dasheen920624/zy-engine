@@ -11,7 +11,6 @@ class TsaServiceTest {
     @Test
     void stampReturnsSerialPlusSm3Hash() {
         SmCryptoService crypto = new SmCryptoService();
-        crypto.init();
         TsaService tsa = new TsaService(crypto);
         var token = tsa.stamp("MedKernel · 审计快照 · TSA 测试向量");
         assertThat(token.serial()).startsWith("TSA-");
