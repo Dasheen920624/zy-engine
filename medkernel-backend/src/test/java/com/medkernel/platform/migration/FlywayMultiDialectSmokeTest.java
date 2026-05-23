@@ -30,7 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlywayMultiDialectSmokeTest {
 
     @Container
-    @Tag("docker")
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
             DockerImageName.parse("postgres:15-alpine"))
             .withDatabaseName("medkernel")
@@ -38,7 +37,6 @@ class FlywayMultiDialectSmokeTest {
             .withPassword("medkernel");
 
     @Container
-    @Tag("docker")
     static OracleContainer oracle = new OracleContainer(
             DockerImageName.parse("gvenzl/oracle-xe:21-slim-faststart"))
             .withDatabaseName("medkernel")
