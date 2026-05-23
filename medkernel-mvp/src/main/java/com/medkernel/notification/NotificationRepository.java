@@ -63,6 +63,11 @@ public class NotificationRepository {
         return notificationCrudRepository.cleanupExpiredNotifications();
     }
 
+    /** 判断持久化是否启用。 */
+    public boolean enabled() {
+        return notificationCrudRepository.enabled();
+    }
+
     // =========================================================================
     // NOTIFY_CHANNEL_CONFIG CRUD（委托 ChannelConfigRepository）
     // =========================================================================
