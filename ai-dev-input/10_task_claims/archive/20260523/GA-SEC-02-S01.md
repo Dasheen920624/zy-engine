@@ -5,22 +5,32 @@ task_id: GA-SEC-02
 task_lock_path: ai-dev-input/10_task_claims/active_locks/GA-SEC-02.lock
 slice: S01
 title: 国密套件与密钥轮换
-owner: TraeAI-GLM5
+owner: TraeAI-GLM5-1
 role: senior
 status: ACTIVE
 branch: develop
 target_base_branch: develop
-git_base_commit: 8be0210
+git_base_commit: HEAD
 git_status_at_claim: clean
-created_at: 2026-05-24T00:30+08:00
-last_heartbeat: 2026-05-24T00:30+08:00
-expected_finish: 2026-05-24T12:30+08:00
+created_at: 2026-05-23T23:45+08:00
+last_heartbeat: 2026-05-23T23:45+08:00
+expected_finish: 2026-05-24T07:00+08:00
 heartbeat_interval_minutes: 60
-database_mode: local
+database_mode: none
 oracle_available: false
-local_db_verified: true
+local_db_verified: false
 oracle_verification_required: false
 review_required: true
+review_id:
+review_status: NOT_REQUESTED
+reviewer:
+open_findings: 0
+quality_gate: BLOCKED_UNTIL_APPROVED
+feature_acceptance_required: false
+feature_acceptance_id:
+write_scope:
+read_scope:
+forbidden_scope:
 
 ## Task Lock
 
@@ -31,54 +41,68 @@ ai-dev-input/10_task_claims/active_locks/GA-SEC-02.lock
 ## Write Scope
 
 ```text
-medkernel-mvp/src/main/java/com/medkernel/common/crypto/**
-medkernel-mvp/src/main/java/com/medkernel/security/KeyManagementService.java
-medkernel-mvp/src/main/java/com/medkernel/security/KeyRotationService.java
-docs/engineering/SM_CRYPTO_SUITE.md
+docs/security/**
+deploy/nginx/**
+docs/engineering/02_任务台账.md
 ai-dev-input/10_task_claims/active/GA-SEC-02-S01.md
 ai-dev-input/10_task_claims/active_locks/GA-SEC-02.lock
-docs/engineering/02_任务台账.md
 ```
 
 ## Read Scope
 
 ```text
-medkernel-mvp/src/main/java/com/medkernel/common/crypto/**
-medkernel-mvp/src/main/java/com/medkernel/security/**
+deploy/**
+docs/**
+medkernel-mvp/src/main/resources/application.yml
 ```
 
 ## Forbidden Scope
 
 ```text
+medkernel-mvp/src/main/java/**
 frontend/src/**
-medkernel-mvp/pom.xml
-medkernel-mvp/src/main/resources/application.yml
-medkernel-mvp/src/main/java/com/medkernel/persistence/**
+ai-dev-input/10_task_claims/active/GA-*.md（其他 AI 的 claim）
+```
+
+## Dependencies
+
+```text
+GA-SEC-01（已完成：等保控制点自查）
 ```
 
 ## Acceptance
 
 ```text
-1. SM2/SM3/SM4 国密套件配置完整
-2. 密钥轮换机制可运行
-3. 兼容模式文档（国密/国际双栈）齐备
-4. 后端编译通过
+1. 国密套件配置文档（Nginx TLS + 国密双证书）
+2. 密钥轮换操作指南
+3. 兼容模式文档（国密 + RSA 双栈）
+4. Nginx 国密配置示例
+5. 所有文档可交付审计
 ```
 
 ## Verification
 
 ```text
-mvn compile -pl medkernel-mvp -q
+文档完整性检查
 ```
 
 ## Progress
 
-```text`
+```text
 - [ ] 创建 claim + lock 并 push
-- [ ] 审查现有 SmCryptoService 和 KeyManagementService
-- [ ] 补充密钥轮换兼容模式
-- [ ] 编写国密套件文档
-- [ ] 后端编译验证
+- [ ] 国密套件配置文档
+- [ ] 密钥轮换操作指南
+- [ ] 兼容模式文档
+- [ ] Nginx 国密配置示例
 - [ ] 更新台账
 - [ ] commit + push
 ```
+
+## Completion
+
+```text
+commit:
+push:
+tests:
+review:
+risks:
