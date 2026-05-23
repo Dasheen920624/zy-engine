@@ -7,6 +7,8 @@ import com.medkernel.audit.PublishGateService;
 import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.organization.OrganizationDirectoryService;
 import com.medkernel.persistence.EnginePersistenceService;
+import com.medkernel.provider.ReleaseCheckResult;
+import com.medkernel.provider.ReleaseCheckService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -41,18 +43,21 @@ public class ConfigPackageService {
     private final OrganizationDirectoryService organizationDirectoryService;
     private final ConfigPackageRepository configPackageRepository;
     private final PublishGateService publishGateService;
+    private final ReleaseCheckService releaseCheckService;
     private final Map<String, ConfigPackage> packageStore = new ConcurrentHashMap<String, ConfigPackage>();
 
     public ConfigPackageService(ObjectMapper objectMapper, EnginePersistenceService persistenceService,
                                 OrganizationDirectoryService organizationDirectoryService,
                                 ConfigPackageRepository configPackageRepository,
-                                PublishGateService publishGateService) {
+                                PublishGateService publishGateService,
+                                ReleaseCheckService releaseCheckService) {
         this.canonicalMapper = objectMapper.copy();
         this.canonicalMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         this.persistenceService = persistenceService;
         this.organizationDirectoryService = organizationDirectoryService;
         this.configPackageRepository = configPackageRepository;
         this.publishGateService = publishGateService;
+        this.releaseCheckService = releaseCheckService;
     }
 
     public List<Map<String, Object>> importPackages(Object request) {
@@ -197,6 +202,29 @@ public class ConfigPackageService {
         if (!gateResult.isReadyToPublish()) {
             throw new MissingSourceException(publishGateService.formatBlockingMessage(gateResult));
         }
+
+        // PROV-004: 发布检查阻断 — 执行 ReleaseCheckService 检查清单
+        Long tenantIdLong = null;
+        try {
+            tenantIdLong = Long.parseLong(tenantId);
+        } catch (NumberFormatException ignored) {
+            // 使用 null 作为默认值
+        }
+        ReleaseCheckResult releaseCheck = releaseCheckService.executeCheck(
+                tenantIdLong, "CONFIG_PACKAGE", packageCode, packageVersion, approvedBy);
+        if ("BLOCKED".equals(releaseCheck.getCheckStatus())) {
+            String blockMsg = "发布检查阻断: " + releaseCheck.getBlockedReason()
+                    + " (checkCode=" + releaseCheck.getCheckCode() + ")";
+            log.warn("[PROV-004] {}", blockMsg);
+            throw new IllegalStateException(blockMsg);
+        }
+        if ("FAILED".equals(releaseCheck.getCheckStatus())) {
+            String failMsg = "发布检查未通过: " + releaseCheck.getFailedItems() + "项失败"
+                    + " (checkCode=" + releaseCheck.getCheckCode() + ")";
+            log.warn("[PROV-004] {}", failMsg);
+            throw new IllegalStateException(failMsg);
+        }
+        log.info("[PROV-004] 发布检查通过: checkCode={}, status={}", releaseCheck.getCheckCode(), releaseCheck.getCheckStatus());
 
         configPackage.setStatus("PUBLISHED");
         configPackage.setApprovedBy(approvedBy);
