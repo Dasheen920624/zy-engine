@@ -2,14 +2,16 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
-// Vite 配置。本工程面向内网部署，build 输出为静态资源，由后端 nginx 或网关挂载。
-// 开发期通过 proxy 把 /medkernel 转发到后端 18080，避免 CORS。
+/**
+ * MedKernel v1.0 GA · Vite 配置
+ * 开发期 proxy /medkernel → http://localhost:18080，避免 CORS。
+ * 前端骨架按 FSD 分层（app/pages/widgets/features/entities/shared），alias 仅暴露 @ 根。
+ */
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
-      "@styles": path.resolve(__dirname, "src/styles"),
     },
   },
   server: {
@@ -25,7 +27,7 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
-    target: "es2020",
+    target: "es2022",
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
@@ -40,7 +42,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["e2e/**", "node_modules/**", "dist/**"],
     css: false,

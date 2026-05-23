@@ -1,7 +1,0 @@
-target/
-m2repo/
-*.log
-*.tmp
-.idea/
-.vscode/
-

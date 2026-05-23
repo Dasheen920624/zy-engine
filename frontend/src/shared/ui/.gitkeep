@@ -1,0 +1,2 @@
+# shared/ui/ — UI 原子（Antd 二次封装）
+# 例：StepFlow（7 步流模板）、StatusBadge（4 状态机）、EmptyError、LoadingShell
