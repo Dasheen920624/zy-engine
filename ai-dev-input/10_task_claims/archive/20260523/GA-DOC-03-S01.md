@@ -4,48 +4,32 @@ claim_id: GA-DOC-03-S01
 task_id: GA-DOC-03
 task_lock_path: ai-dev-input/10_task_claims/active_locks/GA-DOC-03.lock
 slice: S01
-title: 培训材料
-owner: TraeAI-GLM5
+title: 医院 IT、医生、实施工程师培训材料齐备
+owner: TraeAI-1
 role: senior
 status: ACTIVE
-branch: develop
+branch: ai/GA-DOC-03/training-materials
 target_base_branch: develop
-git_base_commit: daf988a
+git_base_commit: b74f78c
 git_status_at_claim: clean
-created_at: 2026-05-24T05:00+08:00
-last_heartbeat: 2026-05-24T05:00+08:00
-expected_finish: 2026-05-24T17:00+08:00
-
-## Task Lock
-
-```text
-ai-dev-input/10_task_claims/active_locks/GA-DOC-03.lock
-```
-
-## Write Scope
-
-```text
-docs/training/**
-ai-dev-input/10_task_claims/active/GA-DOC-03-S01.md
-ai-dev-input/10_task_claims/active_locks/GA-DOC-03.lock
-docs/engineering/02_任务台账.md
-```
+created_at: 2026-05-23T23:00+08:00
+last_heartbeat: 2026-05-23T23:00+08:00
+expected_finish: 2026-05-24T12:00+08:00
+write_scope:
+  - docs/training/**
+read_scope:
+  - docs/manuals/**
+  - docs/ops/**
+  - docs/user-guide/**
+forbidden_scope:
+  - medkernel-mvp/src/main/java/**
+  - frontend/src/**
 
 ## Acceptance
 
 ```text
-1. 医院 IT 培训材料齐备
-2. 医生培训材料齐备
-3. 实施工程师培训材料齐备
-```
-
-## Progress
-
-```text
-- [ ] 创建 claim + lock 并 push
-- [ ] 编写医院IT培训材料
-- [ ] 编写医生培训材料
-- [ ] 编写实施工程师培训材料
-- [ ] 更新台账
-- [ ] commit + push
+1. docs/training/it-staff-training.md — 医院信息科IT人员培训材料
+2. docs/training/clinical-user-training.md — 临床医生培训材料
+3. docs/training/implementation-engineer-training.md — 实施工程师培训材料
+4. 所有培训材料面向不同角色，可直接交付
 ```
