@@ -5,9 +5,9 @@ export default function NotFound() {
   const navigate = useNavigate();
   return (
     <Result
-      status="404"
-      title="404"
-      subTitle="此页面不存在或还未实装"
+      status="info"
+      title="此功能待 W3 业务域任务实装"
+      subTitle="点击下方按钮回到工作台，查看当前可用的演示路径。"
       extra={
         <Button type="primary" onClick={() => navigate("/dashboard")}>
           返回工作台
