@@ -7,7 +7,7 @@ slice: S01
 title: 多方言 smoke 矩阵和 Flyway rollback 证据
 owner: TraeAI-1
 role: senior
-status: DONE
+status: ACTIVE
 branch: ai/GA-DB-01/multi-dialect-smoke
 target_base_branch: develop
 git_base_commit: ea0cbcb
