@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, Form, Input, Button, Result, Space, Tag, Spin } from "antd";
 import { PageShell } from "@/shared/ui/PageShell";
 import { useRuleValidate, type RuleHit, type RuleValidateInput } from "@/shared/api/hooks";
