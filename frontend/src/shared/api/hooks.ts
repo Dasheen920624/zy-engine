@@ -142,3 +142,64 @@ export function useSystemRuntime() {
     refetchInterval: 30_000,
   });
 }
+
+// ──────────────────────────────────────────
+// W5 · GA-EXT-01 医保 DRG 月更
+// ──────────────────────────────────────────
+export function useDrgRulesets() {
+  return useQuery({
+    queryKey: ["drg", "rulesets"],
+    queryFn: async () =>
+      (await apiClient.get("/quality/insurance/drg/rulesets")).data as Array<{
+        version: string; effectiveFrom: string; groupCount: number; source: string; status: string;
+      }>,
+  });
+}
+
+export function useDrgSync() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => (await apiClient.post("/quality/insurance/drg/sync")).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["drg"] }),
+  });
+}
+
+// ──────────────────────────────────────────
+// W5 · GA-EXT-14 AI 可解释性
+// ──────────────────────────────────────────
+export interface LlmExplainSource {
+  type: string;
+  title: string;
+  anchor: string;
+  publishedAt: string;
+}
+
+export interface LlmExplain {
+  decisionId: string;
+  shortAnswer: string;
+  confidence: number;
+  confidenceBand: string;
+  sources: LlmExplainSource[];
+  trainingDataRange: string;
+  aiModel: string;
+  warning: string;
+}
+
+export function useLlmExplain(decisionId?: string) {
+  return useQuery({
+    queryKey: ["llm", "explain", decisionId ?? ""],
+    queryFn: async () => (await apiClient.get<LlmExplain>(`/advanced/llm/explain/${decisionId}`)).data,
+    enabled: !!decisionId,
+  });
+}
+
+// ──────────────────────────────────────────
+// W5 · GA-EXT-21 国产化自检
+// ──────────────────────────────────────────
+export function useDomesticSnapshot() {
+  return useQuery({
+    queryKey: ["domestic", "snapshot"],
+    queryFn: async () => (await apiClient.get("/advanced/domestic/snapshot")).data as Record<string, unknown>,
+    refetchInterval: 60_000,
+  });
+}

@@ -1,54 +1,92 @@
-import { Card, Tag, Space, Progress, List, Typography } from "antd";
-import { CheckCircleFilled, ExclamationCircleFilled } from "@ant-design/icons";
+import { Card, Tag, Space, Progress, Descriptions, Typography, Spin, Alert } from "antd";
 import { PageShell } from "@/shared/ui/PageShell";
+import { useDomesticSnapshot } from "@/shared/api/hooks";
 
-const STACK = [
-  { layer: "操作系统", component: "麒麟 V10 SP3", level: "core", status: "ok" },
-  { layer: "JDK", component: "KAE-JDK 21（OpenJDK 21 LTS）", level: "core", status: "ok" },
-  { layer: "数据库", component: "达梦 8.1.3", level: "core", status: "ok" },
-  { layer: "数据库", component: "人大金仓 V9", level: "alt", status: "ok" },
-  { layer: "中间件", component: "Tomcat 10.1 + Hikari 5", level: "open", status: "ok" },
-  { layer: "国密 Provider", component: "BC-FJA 1.0.2.5 + KAE Provider", level: "core", status: "warn" },
-  { layer: "前端 CDN", component: "未启用（内网部署）", level: "n/a", status: "ok" },
-  { layer: "镜像基础", component: "openEuler:22.03-LTS-SP4 + distroless 备选", level: "core", status: "ok" },
-];
-
-const LEVEL: Record<string, string> = { core: "blue", alt: "cyan", open: "default", "n/a": "default" };
-const LEVEL_LABEL: Record<string, string> = { core: "国产化核心", alt: "国产化备选", open: "开源通用", "n/a": "不适用" };
+const LEVEL: Record<string, string> = { core: "blue", alt: "cyan", open: "default" };
+const LEVEL_LABEL: Record<string, string> = { core: "国产化核心", alt: "国产化备选", open: "开源通用" };
 
 export default function DomesticCheck() {
+  const snap = useDomesticSnapshot();
+
+  if (snap.isLoading) {
+    return (
+      <PageShell title="国产化自检" description="实时检测当前 OS / JDK / DB / 中间件">
+        <Spin />
+      </PageShell>
+    );
+  }
+
+  const data = snap.data as Record<string, unknown>;
+  const os = data?.os as { name: string; version: string; arch: string; domesticLevel: string } | undefined;
+  const jdk = data?.jdk as { vendor: string; version: string; vmName: string; domesticLevel: string } | undefined;
+  const middleware = data?.middleware as Array<{ name: string; version: string; domesticLevel: string }> | undefined;
+  const cryptoMeta = data?.crypto as { provider: string; supports: string[]; domesticLevel: string } | undefined;
+  const score = data?.score as number | undefined;
+
   return (
     <PageShell
       title="国产化自检"
-      description="一键展示当前 OS / JDK / DB / 中间件 / 国密 Provider 的国产化等级"
+      description="实时检测当前 OS / JDK / DB / 中间件 / 国密 Provider 的国产化等级"
     >
       <Card title="本机国产化得分">
-        <Progress percent={87} strokeColor="#52c41a" />
+        <Progress percent={score ?? 0} strokeColor={(score ?? 0) >= 85 ? "#52c41a" : "#faad14"} />
         <Typography.Text style={{ marginTop: 8, display: "block" }}>
-          7/8 层已用国产化主选；BC-FJA + KAE Provider 互操作性测试中（GA-OPS-03 国产化矩阵任务中）。
+          基于实时 JVM/OS 探测 · 信通院评测前自查就绪
         </Typography.Text>
       </Card>
-      <Card title="技术栈清单">
-        <List
-          dataSource={STACK}
-          renderItem={(s) => (
-            <List.Item>
-              <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                <Space>
-                  {s.status === "ok" ? (
-                    <CheckCircleFilled style={{ color: "#52c41a" }} />
-                  ) : (
-                    <ExclamationCircleFilled style={{ color: "#faad14" }} />
-                  )}
-                  <strong>{s.layer}</strong>
-                  <span>{s.component}</span>
-                </Space>
-                <Tag color={LEVEL[s.level]}>{LEVEL_LABEL[s.level]}</Tag>
-              </Space>
-            </List.Item>
-          )}
-        />
+
+      <Card title="操作系统">
+        <Descriptions column={2} size="small">
+          <Descriptions.Item label="名称">{os?.name}</Descriptions.Item>
+          <Descriptions.Item label="版本">{os?.version}</Descriptions.Item>
+          <Descriptions.Item label="架构">{os?.arch}</Descriptions.Item>
+          <Descriptions.Item label="国产化等级">
+            <Tag color={LEVEL[os?.domesticLevel ?? "open"]}>{LEVEL_LABEL[os?.domesticLevel ?? "open"]}</Tag>
+          </Descriptions.Item>
+        </Descriptions>
       </Card>
+
+      <Card title="JDK / JVM">
+        <Descriptions column={2} size="small">
+          <Descriptions.Item label="厂商">{jdk?.vendor}</Descriptions.Item>
+          <Descriptions.Item label="版本">{jdk?.version}</Descriptions.Item>
+          <Descriptions.Item label="JVM">{jdk?.vmName}</Descriptions.Item>
+          <Descriptions.Item label="国产化等级">
+            <Tag color={LEVEL[jdk?.domesticLevel ?? "open"]}>{LEVEL_LABEL[jdk?.domesticLevel ?? "open"]}</Tag>
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
+
+      <Card title="国密 Provider">
+        <Descriptions column={2} size="small">
+          <Descriptions.Item label="提供方">{cryptoMeta?.provider}</Descriptions.Item>
+          <Descriptions.Item label="支持算法">
+            <Space>{cryptoMeta?.supports.map((a) => <Tag key={a} color="purple">{a}</Tag>)}</Space>
+          </Descriptions.Item>
+          <Descriptions.Item label="等级">
+            <Tag color={LEVEL[cryptoMeta?.domesticLevel ?? "open"]}>{LEVEL_LABEL[cryptoMeta?.domesticLevel ?? "open"]}</Tag>
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
+
+      <Card title="中间件">
+        <Space wrap>
+          {middleware?.map((m) => (
+            <Tag key={m.name} color={LEVEL[m.domesticLevel]}>
+              {m.name} {m.version} · {LEVEL_LABEL[m.domesticLevel]}
+            </Tag>
+          ))}
+        </Space>
+      </Card>
+
+      {(score ?? 0) < 85 && (
+        <Alert
+          type="warning"
+          showIcon
+          message="国产化得分低于 85 分"
+          description="信通院评测建议切换到麒麟/统信 OS + KAE-JDK21 + 达梦/人大金仓数据库以达到 core 等级。"
+        />
+      )}
     </PageShell>
   );
 }
