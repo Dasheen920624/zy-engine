@@ -77,7 +77,7 @@ COMMENT ON COLUMN wf_approval_action.action_type IS '操作类型：APPROVE/REJE
 CREATE TABLE IF NOT EXISTS wf_approval_rule (
   id BIGINT PRIMARY KEY,
   tenant_id VARCHAR(64) NOT NULL,
-  rule_code VARCHAR2(128) NOT NULL,
+  rule_code VARCHAR(128) NOT NULL,
   rule_name VARCHAR(200) NOT NULL,
   business_type VARCHAR(64) NOT NULL,
   approval_type VARCHAR(32) NOT NULL,
