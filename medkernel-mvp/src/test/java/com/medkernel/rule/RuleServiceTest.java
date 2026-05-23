@@ -4,10 +4,7 @@ import com.medkernel.common.exception.MissingSourceException;
 import com.medkernel.dto.RuleResult;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.persistence.EnginePersistenceService;
-import com.medkernel.rule.RuleDslEvaluator.EvaluationOutcome;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -21,22 +18,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("RuleService 单元测试")
 class RuleServiceTest {
 
     @Mock
@@ -55,846 +41,1615 @@ class RuleServiceTest {
         ruleService = new RuleService(persistenceService, ruleEvalResultRepository, ruleExecutionLogService);
     }
 
-    // ──────────────────────── 辅助方法 ────────────────────────
+    // ==================== importRules ====================
 
-    private Map<String, Object> buildRuleMap(String ruleCode, String ruleName, String ruleType,
-                                              String severity, boolean enabled, String referenceDocumentCode) {
+    @Test
+    void shouldImportRules_whenGivenListOfMaps() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        Map<String, Object> rule2 = buildRuleMap("R002", "Rule 2", "EMR_QC");
+
+        List<Map<String, Object>> request = Arrays.asList(rule1, rule2);
+        List<RuleDefinition> imported = ruleService.importRules(request);
+
+        assertEquals(2, imported.size());
+        assertEquals("R001", imported.get(0).getRuleCode());
+        assertEquals("R002", imported.get(1).getRuleCode());
+        assertEquals("DRAFT", imported.get(0).getStatus());
+        verify(persistenceService, times(2)).saveRuleDefinition(any(RuleDefinition.class), isNull());
+    }
+
+    @Test
+    void shouldImportRules_whenGivenMapWithRulesKey() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        Map<String, Object> wrapper = new LinkedHashMap<>();
+        wrapper.put("rules", Collections.singletonList(rule1));
+        wrapper.put("package_code", "PKG001");
+        wrapper.put("package_version", "1.0.0");
+
+        List<RuleDefinition> imported = ruleService.importRules(wrapper);
+
+        assertEquals(1, imported.size());
+        assertEquals("PKG001", imported.get(0).getPackageCode());
+        assertEquals("1.0.0", imported.get(0).getPackageVersion());
+    }
+
+    @Test
+    void shouldImportRules_whenGivenSingleMap() {
+        Map<String, Object> rule = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        List<RuleDefinition> imported = ruleService.importRules(rule);
+        assertEquals(1, imported.size());
+        assertEquals("R001", imported.get(0).getRuleCode());
+    }
+
+    @Test
+    void shouldImportRules_withOrganizationContext() {
+        Map<String, Object> rule = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+
+        List<RuleDefinition> imported = ruleService.importRules(Collections.singletonList(rule), orgContext);
+
+        assertEquals(1, imported.size());
+        assertEquals("T001", imported.get(0).getTenantId());
+        assertEquals("HOSP001", imported.get(0).getHospitalCode());
+    }
+
+    @Test
+    void shouldThrowException_whenImportingRuleWithoutRuleCode() {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("rule_name", "No Code");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.importRules(Collections.singletonList(rule)));
+    }
+
+    @Test
+    void shouldInheritPackageCode_whenWrapperHasPackageCodeButRulesDoNot() {
+        Map<String, Object> rule = buildRuleMap("R001", "Rule 1", "GENERAL");
+        // rule does not have package_code
+        Map<String, Object> wrapper = new LinkedHashMap<>();
+        wrapper.put("rules", Collections.singletonList(rule));
+        wrapper.put("package_code", "PKG_INHERITED");
+
+        List<RuleDefinition> imported = ruleService.importRules(wrapper);
+        assertEquals("PKG_INHERITED", imported.get(0).getPackageCode());
+    }
+
+    @Test
+    void shouldNotOverridePackageCode_whenRuleAlreadyHasOne() {
+        Map<String, Object> rule = buildRuleMap("R001", "Rule 1", "GENERAL");
+        rule.put("package_code", "PKG_OWN");
+        Map<String, Object> wrapper = new LinkedHashMap<>();
+        wrapper.put("rules", Collections.singletonList(rule));
+        wrapper.put("package_code", "PKG_INHERITED");
+
+        List<RuleDefinition> imported = ruleService.importRules(wrapper);
+        assertEquals("PKG_OWN", imported.get(0).getPackageCode());
+    }
+
+    // ==================== publish ====================
+
+    @Test
+    void shouldPublishRule_whenRuleExistsAndHasReference() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("version_no", "1.0.0");
+        request.put("approved_by", "admin");
+
+        RuleDefinition published = ruleService.publish("R001", request);
+
+        assertEquals("PUBLISHED", published.getStatus());
+        assertEquals("admin", published.getPublishedBy());
+        assertNotNull(published.getPublishedTime());
+        verify(persistenceService).saveRuleDefinition(any(RuleDefinition.class), eq("admin"));
+    }
+
+    @Test
+    void shouldThrowException_whenPublishingNonExistentRule() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("version_no", "1.0.0");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.publish("NON_EXISTENT", request));
+    }
+
+    @Test
+    void shouldThrowMissingSourceException_whenPublishingRuleWithoutReference() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        // no reference_document_code
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("version_no", "1.0.0");
+
+        assertThrows(MissingSourceException.class,
+                () -> ruleService.publish("R001", request));
+    }
+
+    @Test
+    void shouldPublishRule_withOrganizationContext() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+
+        ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("version_no", "1.0.0");
+        request.put("approved_by", "admin");
+
+        RuleDefinition published = ruleService.publish("R001", request, orgContext);
+        assertEquals("PUBLISHED", published.getStatus());
+    }
+
+    // ==================== reviewPackage ====================
+
+    @Test
+    void shouldReviewPackage_whenPackageExists() {
+        importRulesInPackage("PKG001", "1.0.0", 3);
+
+        Map<String, Object> review = ruleService.reviewPackage("PKG001", "1.0.0");
+
+        assertEquals("PKG001", review.get("package_code"));
+        assertEquals(3, review.get("total_rules"));
+        assertTrue(review.containsKey("ready_to_publish"));
+        assertTrue(review.containsKey("issues"));
+        assertTrue(review.containsKey("by_type"));
+        assertTrue(review.containsKey("by_status"));
+    }
+
+    @Test
+    void shouldThrowException_whenReviewingNonExistentPackage() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.reviewPackage("NON_EXISTENT", "1.0.0"));
+    }
+
+    @Test
+    void shouldReviewPackage_withOrgContext() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        ruleMap.put("package_code", "PKG001");
+        ruleMap.put("package_version", "1.0.0");
+        ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        Map<String, Object> review = ruleService.reviewPackage("PKG001", "1.0.0", orgContext);
+        assertEquals(1, review.get("total_rules"));
+    }
+
+    // ==================== publishPackage ====================
+
+    @Test
+    void shouldPublishPackage_whenAllRulesHaveReferences() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        rule1.put("package_code", "PKG001");
+        rule1.put("package_version", "1.0.0");
+        rule1.put("reference_document_code", "DOC001");
+
+        Map<String, Object> rule2 = buildRuleMap("R002", "Rule 2", "EMR_QC");
+        rule2.put("package_code", "PKG001");
+        rule2.put("package_version", "1.0.0");
+        rule2.put("reference_document_code", "DOC002");
+
+        ruleService.importRules(Arrays.asList(rule1, rule2));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("package_version", "1.0.0");
+        request.put("approved_by", "admin");
+
+        Map<String, Object> result = ruleService.publishPackage("PKG001", request);
+
+        assertEquals(2, result.get("published_count"));
+        assertEquals("admin", result.get("published_by"));
+        verify(persistenceService, atLeast(2)).saveRuleDefinition(any(RuleDefinition.class), eq("admin"));
+    }
+
+    @Test
+    void shouldThrowMissingSourceException_whenPublishingPackageWithoutReferences() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        rule1.put("package_code", "PKG001");
+        rule1.put("package_version", "1.0.0");
+        // no reference_document_code
+
+        ruleService.importRules(Collections.singletonList(rule1));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("package_version", "1.0.0");
+
+        assertThrows(MissingSourceException.class,
+                () -> ruleService.publishPackage("PKG001", request));
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentException_whenPublishingPackageWithDslIssues() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        rule1.put("package_code", "PKG001");
+        rule1.put("package_version", "1.0.0");
+        rule1.put("reference_document_code", "DOC001");
+        // condition with empty all[] - DSL issue
+        rule1.put("condition", Map.of("all", Collections.emptyList()));
+
+        ruleService.importRules(Collections.singletonList(rule1));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("package_version", "1.0.0");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.publishPackage("PKG001", request));
+    }
+
+    @Test
+    void shouldThrowException_whenPublishingNonExistentPackage() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.publishPackage("NON_EXISTENT", request));
+    }
+
+    @Test
+    void shouldThrowException_whenPackageCodeIsNull() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.publishPackage(null, request));
+    }
+
+    // ==================== listRules ====================
+
+    @Test
+    void shouldListAllRules_whenNoFilters() {
+        ruleService.importRules(Arrays.asList(
+                buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY"),
+                buildRuleMap("R002", "Rule 2", "EMR_QC")));
+
+        List<RuleDefinition> rules = ruleService.listRules();
+
+        assertEquals(2, rules.size());
+    }
+
+    @Test
+    void shouldListRulesSortedByRuleCode() {
+        ruleService.importRules(Arrays.asList(
+                buildRuleMap("R002", "Rule 2", "EMR_QC"),
+                buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY")));
+
+        List<RuleDefinition> rules = ruleService.listRules();
+
+        assertEquals("R001", rules.get(0).getRuleCode());
+        assertEquals("R002", rules.get(1).getRuleCode());
+    }
+
+    @Test
+    void shouldFilterRulesByTenantId() {
+        OrganizationContext org1 = buildOrgContext("T001", "HOSP001");
+        OrganizationContext org2 = buildOrgContext("T002", "HOSP002");
+
+        ruleService.importRules(Collections.singletonList(buildRuleMap("R001", "Rule 1", "GENERAL")), org1);
+        ruleService.importRules(Collections.singletonList(buildRuleMap("R002", "Rule 2", "GENERAL")), org2);
+
+        Map<String, String> filters = new HashMap<>();
+        filters.put("tenantId", "T001");
+
+        List<RuleDefinition> rules = ruleService.listRules(filters);
+        assertEquals(1, rules.size());
+        assertEquals("R001", rules.get(0).getRuleCode());
+    }
+
+    @Test
+    void shouldFilterRulesByHospitalCode() {
+        OrganizationContext org1 = buildOrgContext("T001", "HOSP001");
+        OrganizationContext org2 = buildOrgContext("T001", "HOSP002");
+
+        ruleService.importRules(Collections.singletonList(buildRuleMap("R001", "Rule 1", "GENERAL")), org1);
+        ruleService.importRules(Collections.singletonList(buildRuleMap("R002", "Rule 2", "GENERAL")), org2);
+
+        Map<String, String> filters = new HashMap<>();
+        filters.put("hospitalCode", "HOSP001");
+
+        List<RuleDefinition> rules = ruleService.listRules(filters);
+        assertEquals(1, rules.size());
+    }
+
+    @Test
+    void shouldReturnEmptyList_whenNoRulesImported() {
+        List<RuleDefinition> rules = ruleService.listRules();
+        assertTrue(rules.isEmpty());
+    }
+
+    // ==================== getRule ====================
+
+    @Test
+    void shouldGetRule_byCodeAndVersion() {
+        ruleService.importRules(Collections.singletonList(buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY")));
+
+        RuleDefinition rule = ruleService.getRule("R001", "1.0.0");
+
+        assertNotNull(rule);
+        assertEquals("R001", rule.getRuleCode());
+    }
+
+    @Test
+    void shouldGetRule_latestWhenVersionIsNull() {
+        ruleService.importRules(Collections.singletonList(buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY")));
+
+        RuleDefinition rule = ruleService.getRule("R001", null);
+
+        assertNotNull(rule);
+        assertEquals("R001", rule.getRuleCode());
+    }
+
+    @Test
+    void shouldReturnNull_whenRuleNotFound() {
+        RuleDefinition rule = ruleService.getRule("NON_EXISTENT", "1.0.0");
+        assertNull(rule);
+    }
+
+    @Test
+    void shouldGetRule_withOrganizationContext() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        ruleService.importRules(Collections.singletonList(buildRuleMap("R001", "Rule 1", "GENERAL")), orgContext);
+
+        RuleDefinition rule = ruleService.getRule("R001", "1.0.0", orgContext);
+        assertNotNull(rule);
+        assertEquals("T001", rule.getTenantId());
+    }
+
+    @Test
+    void shouldFallbackToLegacyDefault_whenOrgContextRuleNotFound() {
+        // Import without org context (becomes legacy default)
+        ruleService.importRules(Collections.singletonList(buildRuleMap("R001", "Rule 1", "GENERAL")));
+
+        OrganizationContext orgContext = buildOrgContext("T_OTHER", "HOSP_OTHER");
+        RuleDefinition rule = ruleService.getRule("R001", null, orgContext);
+
+        assertNotNull(rule);
+        assertEquals("R001", rule.getRuleCode());
+    }
+
+    // ==================== evaluate ====================
+
+    @Test
+    void shouldEvaluateBuiltInRules_whenNoPublishedRules() {
+        Map<String, Object> patientContext = buildStemiPatientContext();
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        // Built-in STEMI rule should be present
+        assertTrue(results.stream().anyMatch(r -> "R_AMI_STEMI_CANDIDATE".equals(r.getRuleCode())));
+    }
+
+    @Test
+    void shouldEvaluatePublishedRules_whenAvailable() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Test Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("version_no", "1.0.0");
+        request.put("approved_by", "admin");
+        ruleService.publish("R001", request);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        Map<String, Object> patient = new LinkedHashMap<>();
+        patient.put("age", "65");
+        patientContext.put("patient", patient);
+
+        Map<String, Object> evalRequest = new LinkedHashMap<>();
+        evalRequest.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(evalRequest);
+
+        assertNotNull(results);
+        assertEquals(1, results.size());
+        assertEquals("R001", results.get(0).getRuleCode());
+    }
+
+    @Test
+    void shouldEvaluateWithOrgContext() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Test Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("version_no", "1.0.0");
+        request.put("approved_by", "admin");
+        ruleService.publish("R001", request, orgContext);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        Map<String, Object> patient = new LinkedHashMap<>();
+        patient.put("age", "65");
+        patientContext.put("patient", patient);
+
+        Map<String, Object> evalRequest = new LinkedHashMap<>();
+        evalRequest.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(evalRequest, orgContext);
+        assertNotNull(results);
+    }
+
+    // ==================== evaluateForScenario ====================
+
+    @Test
+    void shouldEvaluateForScenario_whenValidRequest() {
+        // Import and publish a rule with scenario_codes
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        Map<String, Object> patient = new LinkedHashMap<>();
+        patient.put("age", "65");
+        patientContext.put("patient", patient);
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> result = ruleService.evaluateForScenario(request);
+
+        assertNotNull(result.get("result_id"));
+        assertNotNull(result.get("trace_id"));
+        assertEquals("PATHWAY_ENTRY", result.get("scenario_code"));
+        assertTrue(result.containsKey("results"));
+    }
+
+    @Test
+    void shouldThrowException_whenScenarioCodeMissing() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", Map.of("patient", Map.of("age", "65")));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.evaluateForScenario(request));
+    }
+
+    @Test
+    void shouldThrowException_whenUnsupportedScenarioCode() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "UNSUPPORTED_SCENARIO");
+        request.put("patient_context", Map.of("patient", Map.of("age", "65")));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.evaluateForScenario(request));
+    }
+
+    @Test
+    void shouldThrowException_whenPatientContextMissing() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.evaluateForScenario(request));
+    }
+
+    @Test
+    void shouldThrowException_whenPatientContextEmpty() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", Collections.emptyMap());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.evaluateForScenario(request));
+    }
+
+    @Test
+    void shouldThrowException_whenRequestIsNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.evaluateForScenario(null));
+    }
+
+    @Test
+    void shouldEvaluateForScenario_withOrgContext() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest, orgContext);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        Map<String, Object> patient = new LinkedHashMap<>();
+        patient.put("age", "65");
+        patientContext.put("patient", patient);
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> result = ruleService.evaluateForScenario(request, orgContext);
+        assertNotNull(result.get("result_id"));
+        assertEquals("T001", result.get("tenant_id"));
+    }
+
+    @Test
+    void shouldReturnWarning_whenNoRulesMatchScenario() {
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> result = ruleService.evaluateForScenario(request);
+
+        List<?> warnings = (List<?>) result.get("warnings");
+        assertNotNull(warnings);
+        assertFalse(warnings.isEmpty());
+        Map<?, ?> warning = (Map<?, ?>) warnings.get(0);
+        assertEquals("NO_RULES_MATCHED", warning.get("code"));
+    }
+
+    @Test
+    void shouldUseDefaultOrg_whenNoOrgContext() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> result = ruleService.evaluateForScenario(request);
+        assertEquals("default", result.get("tenant_id"));
+    }
+
+    // ==================== batchEvaluateForScenario ====================
+
+    @Test
+    void shouldBatchEvaluateForScenario_whenValidRequest() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext1 = new LinkedHashMap<>();
+        patientContext1.put("patient", Map.of("age", "65"));
+        Map<String, Object> patientContext2 = new LinkedHashMap<>();
+        patientContext2.put("patient", Map.of("age", "70"));
+
+        Map<String, Object> item1 = new LinkedHashMap<>();
+        item1.put("patient_context", patientContext1);
+        item1.put("case_id", "CASE001");
+        Map<String, Object> item2 = new LinkedHashMap<>();
+        item2.put("patient_context", patientContext2);
+        item2.put("case_id", "CASE002");
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("items", Arrays.asList(item1, item2));
+
+        Map<String, Object> result = ruleService.batchEvaluateForScenario(request);
+
+        assertNotNull(result.get("batch_id"));
+        assertEquals(2, result.get("total_items"));
+        List<?> evaluations = (List<?>) result.get("evaluations");
+        assertEquals(2, evaluations.size());
+    }
+
+    @Test
+    void shouldThrowException_whenItemsIsEmpty() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("items", Collections.emptyList());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.batchEvaluateForScenario(request));
+    }
+
+    @Test
+    void shouldThrowException_whenItemsIsNotCollection() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("items", "not_a_list");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.batchEvaluateForScenario(request));
+    }
+
+    @Test
+    void shouldThrowException_whenItemMissingPatientContext() {
+        Map<String, Object> item = new LinkedHashMap<>();
+        // no patient_context
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("items", Collections.singletonList(item));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.batchEvaluateForScenario(request));
+    }
+
+    @Test
+    void shouldThrowException_whenItemIsNotMap() {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("items", Collections.singletonList("not_a_map"));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.batchEvaluateForScenario(request));
+    }
+
+    // ==================== getEvaluation ====================
+
+    @Test
+    void shouldGetEvaluation_byResultId() {
+        // First create an evaluation via evaluateForScenario
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> evalResult = ruleService.evaluateForScenario(request);
+        String resultId = String.valueOf(evalResult.get("result_id"));
+
+        Map<String, Object> retrieved = ruleService.getEvaluation(resultId);
+        assertEquals(resultId, retrieved.get("result_id"));
+    }
+
+    @Test
+    void shouldThrowException_whenResultIdIsNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.getEvaluation(null));
+    }
+
+    @Test
+    void shouldThrowException_whenResultIdIsEmpty() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.getEvaluation(""));
+    }
+
+    @Test
+    void shouldThrowException_whenEvaluationNotFound() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ruleService.getEvaluation("non_existent_id"));
+    }
+
+    // ==================== listEvaluations ====================
+
+    @Test
+    void shouldListEvaluations_whenEvaluationsExist() {
+        createSampleEvaluation();
+
+        List<Map<String, Object>> evaluations = ruleService.listEvaluations(null);
+        assertFalse(evaluations.isEmpty());
+    }
+
+    @Test
+    void shouldFilterEvaluations_byScenarioCode() {
+        createSampleEvaluation();
+
+        Map<String, String> filters = new HashMap<>();
+        filters.put("scenarioCode", "PATHWAY_ENTRY");
+
+        List<Map<String, Object>> evaluations = ruleService.listEvaluations(filters);
+        assertFalse(evaluations.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmpty_whenFilterDoesNotMatch() {
+        createSampleEvaluation();
+
+        Map<String, String> filters = new HashMap<>();
+        filters.put("scenarioCode", "NON_EXISTENT");
+
+        List<Map<String, Object>> evaluations = ruleService.listEvaluations(filters);
+        assertTrue(evaluations.isEmpty());
+    }
+
+    @Test
+    void shouldFilterEvaluations_byTenantId() {
+        createSampleEvaluation();
+
+        Map<String, String> filters = new HashMap<>();
+        filters.put("tenantId", "default");
+
+        List<Map<String, Object>> evaluations = ruleService.listEvaluations(filters);
+        assertFalse(evaluations.isEmpty());
+    }
+
+    @Test
+    void shouldRespectLimitAndOffset() {
+        createSampleEvaluation();
+
+        Map<String, String> filters = new HashMap<>();
+        filters.put("limit", "1");
+        filters.put("offset", "0");
+
+        List<Map<String, Object>> evaluations = ruleService.listEvaluations(filters);
+        assertTrue(evaluations.size() <= 1);
+    }
+
+    @Test
+    void shouldReturnEmptyList_whenNoEvaluations() {
+        List<Map<String, Object>> evaluations = ruleService.listEvaluations(null);
+        assertTrue(evaluations.isEmpty());
+    }
+
+    // ==================== simulate ====================
+
+    @Test
+    void shouldSimulate_withInlineRule() {
+        Map<String, Object> inlineRule = new LinkedHashMap<>();
+        inlineRule.put("rule_code", "R_SIM");
+        inlineRule.put("rule_name", "Sim Rule");
+        inlineRule.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        Map<String, Object> patient = new LinkedHashMap<>();
+        patient.put("age", "65");
+        patientContext.put("patient", patient);
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+        request.put("rule", inlineRule);
+
+        RuleResult result = ruleService.simulate(request);
+
+        assertNotNull(result);
+        assertEquals("R_SIM", result.getRuleCode());
+    }
+
+    @Test
+    void shouldSimulate_withExistingRuleCode() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Test Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+        request.put("rule_code", "R001");
+
+        RuleResult result = ruleService.simulate(request);
+        assertNotNull(result);
+        assertEquals("R001", result.getRuleCode());
+    }
+
+    @Test
+    void shouldSimulate_withBuiltInRules_whenNoRuleCodeAndNoPublishedRules() {
+        Map<String, Object> patientContext = buildStemiPatientContext();
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        RuleResult result = ruleService.simulate(request);
+        assertNotNull(result);
+        assertEquals("R_AMI_STEMI_CANDIDATE", result.getRuleCode());
+        assertTrue(result.isHit());
+    }
+
+    @Test
+    void shouldSimulate_withOrgContext() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Test Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest, orgContext);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+        request.put("rule_code", "R001");
+
+        RuleResult result = ruleService.simulate(request, orgContext);
+        assertNotNull(result);
+    }
+
+    // ==================== listExecLogs / summarizeExecLogs / getExecLog ====================
+
+    @Test
+    void shouldDelegateListExecLogs() {
+        Map<String, String> filters = new HashMap<>();
+        when(ruleExecutionLogService.listExecLogs(filters)).thenReturn(Collections.emptyList());
+
+        List<RuleExecLogEntry> logs = ruleService.listExecLogs(filters);
+        assertTrue(logs.isEmpty());
+        verify(ruleExecutionLogService).listExecLogs(filters);
+    }
+
+    @Test
+    void shouldDelegateSummarizeExecLogs() {
+        Map<String, String> filters = new HashMap<>();
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("total", 0);
+        when(ruleExecutionLogService.summarizeExecLogs(filters)).thenReturn(summary);
+
+        Map<String, Object> result = ruleService.summarizeExecLogs(filters);
+        assertEquals(0, result.get("total"));
+        verify(ruleExecutionLogService).summarizeExecLogs(filters);
+    }
+
+    @Test
+    void shouldDelegateGetExecLog() {
+        RuleExecLogEntry entry = new RuleExecLogEntry();
+        entry.setLogId("rxl-1");
+        when(ruleExecutionLogService.getExecLog("rxl-1")).thenReturn(entry);
+
+        RuleExecLogEntry result = ruleService.getExecLog("rxl-1");
+        assertEquals("rxl-1", result.getLogId());
+        verify(ruleExecutionLogService).getExecLog("rxl-1");
+    }
+
+    // ==================== Organization context integration ====================
+
+    @Test
+    void shouldApplyDepartmentScope_whenRuleHasDepartmentCode() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Dept Rule", "GENERAL");
+        ruleMap.put("department_code", "DEPT001");
+
+        List<RuleDefinition> imported = ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        assertEquals("DEPARTMENT", imported.get(0).getScopeLevel());
+        assertEquals("DEPT001", imported.get(0).getScopeCode());
+    }
+
+    @Test
+    void shouldApplyHospitalScope_whenNoFinerGrainedCode() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Hosp Rule", "GENERAL");
+        List<RuleDefinition> imported = ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        assertEquals("HOSPITAL", imported.get(0).getScopeLevel());
+        assertEquals("HOSP001", imported.get(0).getScopeCode());
+    }
+
+    @Test
+    void shouldApplyDefaultOrg_whenNoOrgContext() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Default Rule", "GENERAL");
+
+        List<RuleDefinition> imported = ruleService.importRules(Collections.singletonList(ruleMap));
+
+        assertEquals("default", imported.get(0).getTenantId());
+        assertEquals("DEFAULT_HOSPITAL", imported.get(0).getHospitalCode());
+        assertEquals("HOSPITAL", imported.get(0).getScopeLevel());
+    }
+
+    @Test
+    void shouldUseRuleJsonOrg_whenNoOrgContext() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Body Rule", "GENERAL");
+        ruleMap.put("tenant_id", "T_FROM_BODY");
+        ruleMap.put("hospital_code", "HOSP_FROM_BODY");
+
+        List<RuleDefinition> imported = ruleService.importRules(Collections.singletonList(ruleMap));
+
+        assertEquals("T_FROM_BODY", imported.get(0).getTenantId());
+        assertEquals("HOSP_FROM_BODY", imported.get(0).getHospitalCode());
+        assertEquals("BODY", imported.get(0).getOrgSource());
+    }
+
+    @Test
+    void shouldUseLegacyOrgCode_whenNoHospitalCode() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Legacy Rule", "GENERAL");
+        ruleMap.put("org_code", "LEGACY_ORG");
+
+        List<RuleDefinition> imported = ruleService.importRules(Collections.singletonList(ruleMap));
+
+        assertEquals("LEGACY_ORG", imported.get(0).getHospitalCode());
+        assertEquals("LEGACY_ORG", imported.get(0).getLegacyOrgCode());
+    }
+
+    @Test
+    void shouldApplyCampusScope_whenCampusCodePresent() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Campus Rule", "GENERAL");
+        ruleMap.put("campus_code", "CAMPUS001");
+
+        List<RuleDefinition> imported = ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        assertEquals("CAMPUS", imported.get(0).getScopeLevel());
+        assertEquals("CAMPUS001", imported.get(0).getScopeCode());
+    }
+
+    @Test
+    void shouldApplySiteScope_whenSiteCodePresent() {
+        OrganizationContext orgContext = buildOrgContext("T001", "HOSP001");
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Site Rule", "GENERAL");
+        ruleMap.put("site_code", "SITE001");
+
+        List<RuleDefinition> imported = ruleService.importRules(Collections.singletonList(ruleMap), orgContext);
+
+        assertEquals("SITE", imported.get(0).getScopeLevel());
+        assertEquals("SITE001", imported.get(0).getScopeCode());
+    }
+
+    // ==================== DSL evaluation scenarios ====================
+
+    @Test
+    void shouldHitRule_whenConditionMatches() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Age Rule", "GENERAL");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+        assertEquals(1, results.size());
+        assertTrue(results.get(0).isHit());
+    }
+
+    @Test
+    void shouldNotHitRule_whenConditionDoesNotMatch() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Age Rule", "GENERAL");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "30"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+        assertEquals(1, results.size());
+        assertFalse(results.get(0).isHit());
+    }
+
+    @Test
+    void shouldHandleExistsOperator() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Exists Rule", "GENERAL");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.diagnosis", "operator", "exists"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("diagnosis", "AMI"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+        assertTrue(results.get(0).isHit());
+    }
+
+    @Test
+    void shouldHandleInOperator() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "In Rule", "GENERAL");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.blood_type", "operator", "in",
+                        "value", List.of("A", "B", "O")))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("blood_type", "A"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+        assertTrue(results.get(0).isHit());
+    }
+
+    @Test
+    void shouldHandleAnyOperator() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Any Rule", "GENERAL");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("condition", Map.of("any", List.of(
+                Map.of("fact", "patient.allergy_a", "operator", "equals", "value", "true"),
+                Map.of("fact", "patient.allergy_b", "operator", "equals", "value", "true"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("allergy_b", "true"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+        assertTrue(results.get(0).isHit());
+    }
+
+    // ==================== Built-in STEMI rule ====================
+
+    @Test
+    void shouldHitStemiRule_whenChestPainAndStElevation() {
+        Map<String, Object> patientContext = buildStemiPatientContext();
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+
+        RuleResult stemiResult = results.stream()
+                .filter(r -> "R_AMI_STEMI_CANDIDATE".equals(r.getRuleCode()))
+                .findFirst().orElse(null);
+
+        assertNotNull(stemiResult);
+        assertTrue(stemiResult.isHit());
+        assertEquals("HIGH", stemiResult.getSeverity());
+        assertFalse(stemiResult.getActions().isEmpty());
+    }
+
+    @Test
+    void shouldNotHitStemiRule_whenOnlyChestPain() {
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        Map<String, Object> facts = new LinkedHashMap<>();
+        List<Map<String, Object>> complaints = new ArrayList<>();
+        Map<String, Object> complaint = new LinkedHashMap<>();
+        complaint.put("code", "CHEST_PAIN");
+        complaints.add(complaint);
+        facts.put("chief_complaints", complaints);
+        patientContext.put("facts", facts);
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+
+        RuleResult stemiResult = results.stream()
+                .filter(r -> "R_AMI_STEMI_CANDIDATE".equals(r.getRuleCode()))
+                .findFirst().orElse(null);
+
+        assertNotNull(stemiResult);
+        assertFalse(stemiResult.isHit());
+    }
+
+    // ==================== Scenario candidate matching ====================
+
+    @Test
+    void shouldMatchScenarioByRuleType_whenNoScenarioCodesDeclared() {
+        // PATHWAY_ENTRY rule type maps to PATHWAY_ENTRY scenario by default
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        // no scenario_codes declared - should use default mapping
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> result = ruleService.evaluateForScenario(request);
+        List<?> results = (List<?>) result.get("results");
+        assertEquals(1, results.size());
+    }
+
+    @Test
+    void shouldFilterByPackageCode_inScenarioEvaluation() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        rule1.put("reference_document_code", "DOC001");
+        rule1.put("package_code", "PKG001");
+        rule1.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        rule1.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+
+        Map<String, Object> rule2 = buildRuleMap("R002", "Rule 2", "PATHWAY_ENTRY");
+        rule2.put("reference_document_code", "DOC002");
+        rule2.put("package_code", "PKG002");
+        rule2.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        rule2.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "70"))));
+
+        ruleService.importRules(Arrays.asList(rule1, rule2));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+        ruleService.publish("R002", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("rule_package_code", "PKG001");
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> result = ruleService.evaluateForScenario(request);
+        List<?> results = (List<?>) result.get("results");
+        assertEquals(1, results.size());
+    }
+
+    @Test
+    void shouldFilterByRuleCodes_inScenarioEvaluation() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Rule 1", "PATHWAY_ENTRY");
+        rule1.put("reference_document_code", "DOC001");
+        rule1.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        rule1.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+
+        Map<String, Object> rule2 = buildRuleMap("R002", "Rule 2", "PATHWAY_ENTRY");
+        rule2.put("reference_document_code", "DOC002");
+        rule2.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        rule2.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "70"))));
+
+        ruleService.importRules(Arrays.asList(rule1, rule2));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+        ruleService.publish("R002", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("rule_codes", List.of("R001"));
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> result = ruleService.evaluateForScenario(request);
+        List<?> results = (List<?>) result.get("results");
+        assertEquals(1, results.size());
+    }
+
+    // ==================== Rule priority sorting ====================
+
+    @Test
+    void shouldSortPublishedRulesByPriority() {
+        Map<String, Object> ruleLow = buildRuleMap("R_LOW", "Low Priority", "GENERAL");
+        ruleLow.put("reference_document_code", "DOC001");
+        ruleLow.put("priority", 1);
+        ruleLow.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+
+        Map<String, Object> ruleHigh = buildRuleMap("R_HIGH", "High Priority", "GENERAL");
+        ruleHigh.put("reference_document_code", "DOC002");
+        ruleHigh.put("priority", 10);
+        ruleHigh.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+
+        ruleService.importRules(Arrays.asList(ruleLow, ruleHigh));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R_LOW", publishRequest);
+        ruleService.publish("R_HIGH", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+        assertEquals("R_HIGH", results.get(0).getRuleCode());
+        assertEquals("R_LOW", results.get(1).getRuleCode());
+    }
+
+    // ==================== Rule severity ====================
+
+    @Test
+    void shouldReturnCriticalSeverity_whenSafetyBlockType() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Safety Rule", "SAFETY_BLOCK");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("severity", null);
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        List<RuleResult> results = ruleService.evaluate(request);
+        assertEquals("CRITICAL", results.get(0).getSeverity());
+    }
+
+    // ==================== Disabled rules ====================
+
+    @Test
+    void shouldNotEvaluateDisabledRules() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Disabled Rule", "GENERAL");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("enabled", false);
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("patient_context", patientContext);
+
+        // Disabled rule should not be evaluated, falls back to built-in
+        List<RuleResult> results = ruleService.evaluate(request);
+        assertTrue(results.stream().noneMatch(r -> "R001".equals(r.getRuleCode())));
+    }
+
+    // ==================== Evaluation ring buffer ====================
+
+    @Test
+    void shouldPersistEvaluationToResultRepository() {
+        when(ruleEvalResultRepository.enabled()).thenReturn(true);
+
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        ruleService.evaluateForScenario(request);
+
+        verify(ruleEvalResultRepository).save(any(RuleEvalResultEntity.class));
+    }
+
+    @Test
+    void shouldNotPersist_whenResultRepositoryNotEnabled() {
+        when(ruleEvalResultRepository.enabled()).thenReturn(false);
+
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        ruleService.evaluateForScenario(request);
+
+        verify(ruleEvalResultRepository, never()).save(any(RuleEvalResultEntity.class));
+    }
+
+    // ==================== Review package details ====================
+
+    @Test
+    void shouldReportReadyToPublish_whenNoIssues() {
+        Map<String, Object> rule = buildRuleMap("R001", "Good Rule", "PATHWAY_ENTRY");
+        rule.put("package_code", "PKG001");
+        rule.put("package_version", "1.0.0");
+        rule.put("reference_document_code", "DOC001");
+        rule.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(rule));
+
+        Map<String, Object> review = ruleService.reviewPackage("PKG001", "1.0.0");
+
+        assertTrue((Boolean) review.get("ready_to_publish"));
+        List<?> issues = (List<?>) review.get("issues");
+        assertTrue(issues.isEmpty());
+    }
+
+    @Test
+    void shouldReportNotReady_whenMissingReferenceDocument() {
+        Map<String, Object> rule = buildRuleMap("R001", "No Ref Rule", "PATHWAY_ENTRY");
+        rule.put("package_code", "PKG001");
+        rule.put("package_version", "1.0.0");
+        // no reference_document_code
+        ruleService.importRules(Collections.singletonList(rule));
+
+        Map<String, Object> review = ruleService.reviewPackage("PKG001", "1.0.0");
+
+        assertFalse((Boolean) review.get("ready_to_publish"));
+        List<?> issues = (List<?>) review.get("issues");
+        assertFalse(issues.isEmpty());
+    }
+
+    @Test
+    void shouldReportNotReady_whenDslConditionInvalid() {
+        Map<String, Object> rule = buildRuleMap("R001", "Bad DSL Rule", "PATHWAY_ENTRY");
+        rule.put("package_code", "PKG001");
+        rule.put("package_version", "1.0.0");
+        rule.put("reference_document_code", "DOC001");
+        rule.put("condition", "not_a_map");
+
+        ruleService.importRules(Collections.singletonList(rule));
+
+        Map<String, Object> review = ruleService.reviewPackage("PKG001", "1.0.0");
+
+        assertFalse((Boolean) review.get("ready_to_publish"));
+    }
+
+    @Test
+    void shouldReportEnabledAndDisabledCounts() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Enabled Rule", "GENERAL");
+        rule1.put("package_code", "PKG001");
+        rule1.put("package_version", "1.0.0");
+        rule1.put("enabled", true);
+
+        Map<String, Object> rule2 = buildRuleMap("R002", "Disabled Rule", "GENERAL");
+        rule2.put("package_code", "PKG001");
+        rule2.put("package_version", "1.0.0");
+        rule2.put("enabled", false);
+
+        ruleService.importRules(Arrays.asList(rule1, rule2));
+
+        Map<String, Object> review = ruleService.reviewPackage("PKG001", "1.0.0");
+
+        assertEquals(1, review.get("enabled_rules"));
+        assertEquals(1, review.get("disabled_rules"));
+    }
+
+    @Test
+    void shouldReportMixedVersion() {
+        Map<String, Object> rule1 = buildRuleMap("R001", "Rule 1", "GENERAL");
+        rule1.put("package_code", "PKG001");
+        rule1.put("package_version", "1.0.0");
+
+        Map<String, Object> rule2 = buildRuleMap("R002", "Rule 2", "GENERAL");
+        rule2.put("package_code", "PKG001");
+        rule2.put("package_version", "2.0.0");
+
+        ruleService.importRules(Arrays.asList(rule1, rule2));
+
+        Map<String, Object> review = ruleService.reviewPackage("PKG001", null);
+
+        assertEquals("MIXED", review.get("package_version"));
+    }
+
+    // ==================== Supported scenario codes ====================
+
+    @Test
+    void shouldSupportAllStandardScenarioCodes() {
+        String[] scenarios = {"PATHWAY_ENTRY", "EMR_QC", "INSURANCE_QC", "ORDER_SAFETY",
+                "DRUG_INDICATION", "EXAM_RATIONALITY"};
+
+        for (String scenario : scenarios) {
+            Map<String, Object> request = new LinkedHashMap<>();
+            request.put("scenario_code", scenario);
+            request.put("patient_context", Map.of("patient", Map.of("age", "65")));
+
+            // Should not throw unsupported scenario_code exception
+            assertDoesNotThrow(() -> ruleService.evaluateForScenario(request));
+        }
+    }
+
+    // ==================== Evaluation result fields ====================
+
+    @Test
+    void shouldIncludeAllRequiredFields_inScenarioEvaluationResult() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        Map<String, Object> result = ruleService.evaluateForScenario(request);
+
+        assertTrue(result.containsKey("result_id"));
+        assertTrue(result.containsKey("trace_id"));
+        assertTrue(result.containsKey("scenario_code"));
+        assertTrue(result.containsKey("evaluated_count"));
+        assertTrue(result.containsKey("hit_count"));
+        assertTrue(result.containsKey("elapsed_ms"));
+        assertTrue(result.containsKey("results"));
+        assertTrue(result.containsKey("warnings"));
+        assertTrue(result.containsKey("created_time"));
+    }
+
+    // ==================== Helper methods ====================
+
+    private Map<String, Object> buildRuleMap(String ruleCode, String ruleName, String ruleType) {
         Map<String, Object> rule = new LinkedHashMap<>();
         rule.put("rule_code", ruleCode);
         rule.put("rule_name", ruleName);
         rule.put("rule_type", ruleType);
-        rule.put("severity", severity);
-        rule.put("enabled", enabled);
         rule.put("version_no", "1.0.0");
-        if (referenceDocumentCode != null) {
-            rule.put("reference_document_code", referenceDocumentCode);
-        }
-        // 默认 condition
-        Map<String, Object> condition = new LinkedHashMap<>();
-        condition.put("fact", "patient.gender");
-        condition.put("operator", "equals");
-        condition.put("value", "male");
-        rule.put("condition", condition);
+        rule.put("severity", "HIGH");
+        rule.put("enabled", true);
+        rule.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
         return rule;
     }
 
-    private Map<String, Object> buildPatientContext() {
-        Map<String, Object> ctx = new LinkedHashMap<>();
-        Map<String, Object> patient = new LinkedHashMap<>();
-        patient.put("patient_id", "P001");
-        patient.put("gender", "male");
-        patient.put("age", 65);
-        ctx.put("patient", patient);
+    private OrganizationContext buildOrgContext(String tenantId, String hospitalCode) {
+        OrganizationContext ctx = new OrganizationContext();
+        ctx.setTenantId(tenantId);
+        ctx.setHospitalCode(hospitalCode);
+        ctx.setEffectiveScopeLevel("HOSPITAL");
+        ctx.setEffectiveScopeCode(hospitalCode);
+        ctx.setSource("HEADER");
+        return ctx;
+    }
 
-        Map<String, Object> encounter = new LinkedHashMap<>();
-        encounter.put("encounter_id", "E001");
-        encounter.put("class", "EMER");
-        ctx.put("encounter", encounter);
-
+    private Map<String, Object> buildStemiPatientContext() {
+        Map<String, Object> context = new LinkedHashMap<>();
         Map<String, Object> facts = new LinkedHashMap<>();
+
         List<Map<String, Object>> complaints = new ArrayList<>();
-        Map<String, Object> complaint1 = new LinkedHashMap<>();
-        complaint1.put("code", "CHEST_PAIN");
-        complaint1.put("text", "胸痛");
-        complaints.add(complaint1);
+        Map<String, Object> complaint = new LinkedHashMap<>();
+        complaint.put("code", "CHEST_PAIN");
+        complaints.add(complaint);
         facts.put("chief_complaints", complaints);
 
         List<Map<String, Object>> exams = new ArrayList<>();
-        Map<String, Object> exam1 = new LinkedHashMap<>();
-        exam1.put("finding_codes", Arrays.asList("ST_ELEVATION_CONTIGUOUS_LEADS"));
-        exams.add(exam1);
+        Map<String, Object> exam = new LinkedHashMap<>();
+        exam.put("finding_codes", List.of("ST_ELEVATION_CONTIGUOUS_LEADS"));
+        exams.add(exam);
         facts.put("exams", exams);
 
-        facts.put("diagnosis_codes", Arrays.asList("I21.0"));
-        ctx.put("facts", facts);
-        return ctx;
+        context.put("facts", facts);
+        return context;
     }
 
-    private OrganizationContext buildDefaultOrgContext() {
-        OrganizationContext ctx = new OrganizationContext();
-        ctx.setTenantId("default");
-        ctx.setHospitalCode("ZYHOSPITAL");
-        ctx.setEffectiveScopeLevel("HOSPITAL");
-        ctx.setEffectiveScopeCode("ZYHOSPITAL");
-        ctx.setSource("DEFAULT");
-        return ctx;
-    }
-
-    // ──────────────────────── importRules ────────────────────────
-
-    @Nested
-    @DisplayName("importRules 导入规则")
-    class ImportRulesTests {
-
-        @Test
-        @DisplayName("成功导入规则定义列表")
-        void importRulesSuccess() {
-            Map<String, Object> rule1 = buildRuleMap("R_001", "测试规则1", "GENERAL", "HIGH", true, "DOC001");
-            Map<String, Object> rule2 = buildRuleMap("R_002", "测试规则2", "PATHWAY_ENTRY", "CRITICAL", true, "DOC002");
-            List<Map<String, Object>> request = Arrays.asList(rule1, rule2);
-
-            List<RuleDefinition> imported = ruleService.importRules(request);
-
-            assertEquals(2, imported.size());
-            assertEquals("R_001", imported.get(0).getRuleCode());
-            assertEquals("R_002", imported.get(1).getRuleCode());
-            assertEquals("DRAFT", imported.get(0).getStatus());
-            assertEquals("DRAFT", imported.get(1).getStatus());
-            verify(persistenceService).saveRuleDefinition(eq(imported.get(0)), isNull());
-            verify(persistenceService).saveRuleDefinition(eq(imported.get(1)), isNull());
-        }
-
-        @Test
-        @DisplayName("导入规则使用 Map 包装格式（含 package_code）")
-        void importRulesWithPackageCode() {
-            Map<String, Object> rule1 = buildRuleMap("R_001", "测试规则1", "GENERAL", "HIGH", true, null);
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("package_code", "PKG_001");
-            request.put("package_version", "1.0.0");
-            request.put("rules", Collections.singletonList(rule1));
-
-            List<RuleDefinition> imported = ruleService.importRules(request);
-
-            assertEquals(1, imported.size());
-            assertEquals("PKG_001", imported.get(0).getPackageCode());
-            assertEquals("1.0.0", imported.get(0).getPackageVersion());
-        }
-
-        @Test
-        @DisplayName("导入规则缺少 rule_code 时抛出异常")
-        void importRulesMissingRuleCode() {
-            Map<String, Object> rule = new LinkedHashMap<>();
-            rule.put("rule_name", "无编码规则");
-            List<Map<String, Object>> request = Collections.singletonList(rule);
-
-            assertThrows(IllegalArgumentException.class, () -> ruleService.importRules(request));
-        }
-
-        @Test
-        @DisplayName("导入规则默认值填充正确")
-        void importRulesDefaultValues() {
-            Map<String, Object> rule = new LinkedHashMap<>();
-            rule.put("rule_code", "R_DEFAULT");
-            List<Map<String, Object>> request = Collections.singletonList(rule);
-
-            List<RuleDefinition> imported = ruleService.importRules(request);
-
-            assertEquals(1, imported.size());
-            RuleDefinition def = imported.get(0);
-            assertEquals("R_DEFAULT", def.getRuleName()); // rule_name 默认取 ruleCode
-            assertEquals("GENERAL", def.getRuleType());   // rule_type 默认 GENERAL
-            assertEquals("1.0.0", def.getVersionNo());    // version_no 默认 1.0.0
-            assertEquals("HIGH", def.getSeverity());      // severity 默认 HIGH
-            assertTrue(def.isEnabled());                   // enabled 默认 true
+    private void importRulesInPackage(String packageCode, String packageVersion, int count) {
+        for (int i = 0; i < count; i++) {
+            Map<String, Object> rule = buildRuleMap("R00" + (i + 1), "Rule " + (i + 1), "GENERAL");
+            rule.put("package_code", packageCode);
+            rule.put("package_version", packageVersion);
+            ruleService.importRules(Collections.singletonList(rule));
         }
     }
 
-    // ──────────────────────── publish ────────────────────────
-
-    @Nested
-    @DisplayName("publish 发布规则")
-    class PublishTests {
-
-        @Test
-        @DisplayName("成功发布已导入的规则")
-        void publishSuccess() {
-            Map<String, Object> ruleMap = buildRuleMap("R_PUB_001", "可发布规则", "GENERAL", "HIGH", true, "DOC001");
-            ruleService.importRules(Collections.singletonList(ruleMap));
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("version_no", "1.0.0");
-            request.put("approved_by", "admin");
-
-            RuleDefinition published = ruleService.publish("R_PUB_001", request);
-
-            assertEquals("PUBLISHED", published.getStatus());
-            assertEquals("admin", published.getPublishedBy());
-            assertNotNull(published.getPublishedTime());
-            verify(persistenceService).saveRuleDefinition(eq(published), eq("admin"));
-        }
-
-        @Test
-        @DisplayName("发布不存在的规则时抛出异常")
-        void publishNonExistentRule() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("version_no", "1.0.0");
-
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.publish("R_NOT_EXIST", request));
-        }
-
-        @Test
-        @DisplayName("发布缺少来源文档绑定的规则时抛出 MissingSourceException")
-        void publishWithoutReferenceDocument() {
-            Map<String, Object> ruleMap = buildRuleMap("R_NO_REF", "无来源规则", "GENERAL", "HIGH", true, null);
-            ruleService.importRules(Collections.singletonList(ruleMap));
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("version_no", "1.0.0");
-
-            assertThrows(MissingSourceException.class,
-                    () -> ruleService.publish("R_NO_REF", request));
-        }
-    }
-
-    // ──────────────────────── listRules ────────────────────────
-
-    @Nested
-    @DisplayName("listRules 列出规则")
-    class ListRulesTests {
-
-        @Test
-        @DisplayName("列出所有已导入规则")
-        void listAllRules() {
-            Map<String, Object> rule1 = buildRuleMap("R_001", "规则1", "GENERAL", "HIGH", true, null);
-            Map<String, Object> rule2 = buildRuleMap("R_002", "规则2", "GENERAL", "HIGH", true, null);
-            ruleService.importRules(Arrays.asList(rule1, rule2));
-
-            List<RuleDefinition> rules = ruleService.listRules();
-
-            assertEquals(2, rules.size());
-        }
-
-        @Test
-        @DisplayName("无规则时返回空列表")
-        void listRulesEmpty() {
-            List<RuleDefinition> rules = ruleService.listRules();
-
-            assertTrue(rules.isEmpty());
-        }
-
-        @Test
-        @DisplayName("规则按 ruleCode 排序")
-        void listRulesSortedByCode() {
-            Map<String, Object> ruleB = buildRuleMap("R_BBB", "规则B", "GENERAL", "HIGH", true, null);
-            Map<String, Object> ruleA = buildRuleMap("R_AAA", "规则A", "GENERAL", "HIGH", true, null);
-            ruleService.importRules(Arrays.asList(ruleB, ruleA));
-
-            List<RuleDefinition> rules = ruleService.listRules();
-
-            assertEquals("R_AAA", rules.get(0).getRuleCode());
-            assertEquals("R_BBB", rules.get(1).getRuleCode());
-        }
-    }
-
-    // ──────────────────────── getRule ────────────────────────
-
-    @Nested
-    @DisplayName("getRule 获取单条规则")
-    class GetRuleTests {
-
-        @Test
-        @DisplayName("按 ruleCode 和 versionNo 获取规则")
-        void getRuleByCodeAndVersion() {
-            Map<String, Object> ruleMap = buildRuleMap("R_GET_001", "查询规则", "GENERAL", "HIGH", true, null);
-            ruleService.importRules(Collections.singletonList(ruleMap));
-
-            RuleDefinition found = ruleService.getRule("R_GET_001", "1.0.0");
-
-            assertNotNull(found);
-            assertEquals("R_GET_001", found.getRuleCode());
-        }
-
-        @Test
-        @DisplayName("不存在的规则返回 null")
-        void getRuleNotFound() {
-            RuleDefinition found = ruleService.getRule("R_NOT_EXIST", "1.0.0");
-
-            assertNull(found);
-        }
-
-        @Test
-        @DisplayName("versionNo 为 null 时返回最新版本")
-        void getRuleLatestVersion() {
-            Map<String, Object> ruleMap = buildRuleMap("R_LATEST", "最新版本规则", "GENERAL", "HIGH", true, null);
-            ruleService.importRules(Collections.singletonList(ruleMap));
-
-            RuleDefinition found = ruleService.getRule("R_LATEST", null);
-
-            assertNotNull(found);
-            assertEquals("R_LATEST", found.getRuleCode());
-        }
-    }
-
-    // ──────────────────────── evaluate ────────────────────────
-
-    @Nested
-    @DisplayName("evaluate 评估规则")
-    class EvaluateTests {
-
-        @Test
-        @DisplayName("无已发布规则时回退到内置 AMI 规则")
-        void evaluateWithBuiltInRules() {
-            Map<String, Object> request = buildPatientContext();
-
-            List<RuleResult> results = ruleService.evaluate(request);
-
-            assertNotNull(results);
-            assertFalse(results.isEmpty());
-            // 内置规则至少包含 STEMI 候选和心电图质控
-            assertTrue(results.stream().anyMatch(r -> "R_AMI_STEMI_CANDIDATE".equals(r.getRuleCode())));
-            assertTrue(results.stream().anyMatch(r -> "R_AMI_ECG_TIMELY".equals(r.getRuleCode())));
-        }
-
-        @Test
-        @DisplayName("内置 STEMI 规则在胸痛+ST抬高时命中")
-        void evaluateBuiltInStemiHit() {
-            Map<String, Object> request = buildPatientContext();
-
-            List<RuleResult> results = ruleService.evaluate(request);
-
-            RuleResult stemi = results.stream()
-                    .filter(r -> "R_AMI_STEMI_CANDIDATE".equals(r.getRuleCode()))
-                    .findFirst().orElse(null);
-            assertNotNull(stemi);
-            assertTrue(stemi.isHit());
-            assertEquals("HIGH", stemi.getSeverity());
-            assertFalse(stemi.getActions().isEmpty());
-        }
-
-        @Test
-        @DisplayName("已发布配置化规则评估命中")
-        void evaluatePublishedRuleHit() {
-            // 导入并发布一条规则
-            Map<String, Object> ruleMap = buildRuleMap("R_EVAL_001", "性别判断规则", "GENERAL", "HIGH", true, "DOC001");
-            ruleService.importRules(Collections.singletonList(ruleMap));
-
-            Map<String, Object> pubRequest = new LinkedHashMap<>();
-            pubRequest.put("version_no", "1.0.0");
-            pubRequest.put("approved_by", "admin");
-            ruleService.publish("R_EVAL_001", pubRequest);
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-
-            List<RuleResult> results = ruleService.evaluate(request);
-
-            assertNotNull(results);
-            assertTrue(results.stream().anyMatch(r -> "R_EVAL_001".equals(r.getRuleCode()) && r.isHit()));
-        }
-
-        @Test
-        @DisplayName("已发布配置化规则评估未命中")
-        void evaluatePublishedRuleMiss() {
-            Map<String, Object> ruleMap = new LinkedHashMap<>();
-            ruleMap.put("rule_code", "R_EVAL_MISS");
-            ruleMap.put("rule_name", "不命中规则");
-            ruleMap.put("rule_type", "GENERAL");
-            ruleMap.put("severity", "HIGH");
-            ruleMap.put("enabled", true);
-            ruleMap.put("reference_document_code", "DOC001");
-            Map<String, Object> condition = new LinkedHashMap<>();
-            condition.put("fact", "patient.gender");
-            condition.put("operator", "equals");
-            condition.put("value", "female");
-            ruleMap.put("condition", condition);
-
-            ruleService.importRules(Collections.singletonList(ruleMap));
-
-            Map<String, Object> pubRequest = new LinkedHashMap<>();
-            pubRequest.put("version_no", "1.0.0");
-            pubRequest.put("approved_by", "admin");
-            ruleService.publish("R_EVAL_MISS", pubRequest);
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-
-            List<RuleResult> results = ruleService.evaluate(request);
-
-            RuleResult missResult = results.stream()
-                    .filter(r -> "R_EVAL_MISS".equals(r.getRuleCode()))
-                    .findFirst().orElse(null);
-            assertNotNull(missResult);
-            assertFalse(missResult.isHit());
-        }
-
-        @Test
-        @DisplayName("DRAFT 规则不参与评估")
-        void evaluateSkipsDraftRules() {
-            Map<String, Object> ruleMap = buildRuleMap("R_DRAFT_ONLY", "草稿规则", "GENERAL", "HIGH", true, "DOC001");
-            ruleService.importRules(Collections.singletonList(ruleMap));
-            // 不发布，保持 DRAFT 状态
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-
-            List<RuleResult> results = ruleService.evaluate(request);
-
-            // DRAFT 规则不参与评估，回退到内置规则
-            assertTrue(results.stream().noneMatch(r -> "R_DRAFT_ONLY".equals(r.getRuleCode())));
-        }
-
-        @Test
-        @DisplayName("disabled 规则不参与评估")
-        void evaluateSkipsDisabledRules() {
-            Map<String, Object> ruleMap = buildRuleMap("R_DISABLED", "禁用规则", "GENERAL", "HIGH", false, "DOC001");
-            ruleService.importRules(Collections.singletonList(ruleMap));
-
-            // 手动设置为 PUBLISHED + disabled
-            RuleDefinition def = ruleService.getRule("R_DISABLED", "1.0.0");
-            def.setStatus("PUBLISHED");
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-
-            List<RuleResult> results = ruleService.evaluate(request);
-
-            assertTrue(results.stream().noneMatch(r -> "R_DISABLED".equals(r.getRuleCode())));
-        }
-    }
-
-    // ──────────────────────── simulate ────────────────────────
-
-    @Nested
-    @DisplayName("simulate 模拟规则")
-    class SimulateTests {
-
-        @Test
-        @DisplayName("模拟内联规则定义")
-        void simulateInlineRule() {
-            Map<String, Object> inlineRule = new LinkedHashMap<>();
-            inlineRule.put("rule_code", "R_SIM_INLINE");
-            inlineRule.put("rule_name", "内联模拟规则");
-            inlineRule.put("rule_type", "GENERAL");
-            inlineRule.put("severity", "HIGH");
-            Map<String, Object> condition = new LinkedHashMap<>();
-            condition.put("fact", "patient.gender");
-            condition.put("operator", "equals");
-            condition.put("value", "male");
-            inlineRule.put("condition", condition);
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-            request.put("rule", inlineRule);
-
-            RuleResult result = ruleService.simulate(request);
-
-            assertNotNull(result);
-            assertEquals("R_SIM_INLINE", result.getRuleCode());
-            assertTrue(result.isHit());
-        }
-
-        @Test
-        @DisplayName("模拟指定 ruleCode 的已发布规则")
-        void simulatePublishedRuleByCode() {
-            Map<String, Object> ruleMap = buildRuleMap("R_SIM_PUB", "模拟发布规则", "GENERAL", "HIGH", true, "DOC001");
-            ruleService.importRules(Collections.singletonList(ruleMap));
-
-            Map<String, Object> pubRequest = new LinkedHashMap<>();
-            pubRequest.put("version_no", "1.0.0");
-            pubRequest.put("approved_by", "admin");
-            ruleService.publish("R_SIM_PUB", pubRequest);
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-            request.put("rule_code", "R_SIM_PUB");
-
-            RuleResult result = ruleService.simulate(request);
-
-            assertNotNull(result);
-            assertEquals("R_SIM_PUB", result.getRuleCode());
-            assertTrue(result.isHit());
-        }
-
-        @Test
-        @DisplayName("无匹配规则时回退到内置 STEMI 规则")
-        void simulateFallbackToBuiltIn() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-
-            RuleResult result = ruleService.simulate(request);
-
-            assertNotNull(result);
-            assertEquals("R_AMI_STEMI_CANDIDATE", result.getRuleCode());
-        }
-
-        @Test
-        @DisplayName("模拟内联规则未命中")
-        void simulateInlineRuleMiss() {
-            Map<String, Object> inlineRule = new LinkedHashMap<>();
-            inlineRule.put("rule_code", "R_SIM_MISS");
-            inlineRule.put("rule_name", "模拟未命中规则");
-            Map<String, Object> condition = new LinkedHashMap<>();
-            condition.put("fact", "patient.gender");
-            condition.put("operator", "equals");
-            condition.put("value", "female");
-            inlineRule.put("condition", condition);
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-            request.put("rule", inlineRule);
-
-            RuleResult result = ruleService.simulate(request);
-
-            assertNotNull(result);
-            assertFalse(result.isHit());
-        }
-    }
-
-    // ──────────────────────── listExecLogs ────────────────────────
-
-    @Nested
-    @DisplayName("listExecLogs 查询执行日志")
-    class ListExecLogsTests {
-
-        @Test
-        @DisplayName("委托给 RuleExecutionLogService 查询")
-        void listExecLogsDelegates() {
-            List<RuleExecLogEntry> expectedLogs = new ArrayList<>();
-            when(ruleExecutionLogService.listExecLogs(any())).thenReturn(expectedLogs);
-
-            Map<String, String> filters = new HashMap<>();
-            filters.put("ruleCode", "R_001");
-            List<RuleExecLogEntry> logs = ruleService.listExecLogs(filters);
-
-            assertEquals(expectedLogs, logs);
-            verify(ruleExecutionLogService).listExecLogs(filters);
-        }
-
-        @Test
-        @DisplayName("无过滤条件查询全部日志")
-        void listExecLogsWithoutFilters() {
-            List<RuleExecLogEntry> expectedLogs = new ArrayList<>();
-            when(ruleExecutionLogService.listExecLogs(isNull())).thenReturn(expectedLogs);
-
-            List<RuleExecLogEntry> logs = ruleService.listExecLogs(null);
-
-            assertEquals(expectedLogs, logs);
-            verify(ruleExecutionLogService).listExecLogs(null);
-        }
-    }
-
-    // ──────────────────────── summarizeExecLogs ────────────────────────
-
-    @Nested
-    @DisplayName("summarizeExecLogs 汇总执行日志")
-    class SummarizeExecLogsTests {
-
-        @Test
-        @DisplayName("委托给 RuleExecutionLogService 汇总")
-        void summarizeExecLogsDelegates() {
-            Map<String, Object> expectedSummary = new LinkedHashMap<>();
-            expectedSummary.put("total", 10);
-            expectedSummary.put("total_hits", 5);
-            when(ruleExecutionLogService.summarizeExecLogs(any())).thenReturn(expectedSummary);
-
-            Map<String, String> filters = new HashMap<>();
-            filters.put("tenantId", "default");
-            Map<String, Object> summary = ruleService.summarizeExecLogs(filters);
-
-            assertEquals(expectedSummary, summary);
-            verify(ruleExecutionLogService).summarizeExecLogs(filters);
-        }
-
-        @Test
-        @DisplayName("无过滤条件汇总全部日志")
-        void summarizeExecLogsWithoutFilters() {
-            Map<String, Object> expectedSummary = new LinkedHashMap<>();
-            expectedSummary.put("total", 0);
-            when(ruleExecutionLogService.summarizeExecLogs(isNull())).thenReturn(expectedSummary);
-
-            Map<String, Object> summary = ruleService.summarizeExecLogs(null);
-
-            assertEquals(expectedSummary, summary);
-            verify(ruleExecutionLogService).summarizeExecLogs(null);
-        }
-    }
-
-    // ──────────────────────── getExecLog ────────────────────────
-
-    @Nested
-    @DisplayName("getExecLog 获取单条执行日志")
-    class GetExecLogTests {
-
-        @Test
-        @DisplayName("委托给 RuleExecutionLogService 获取")
-        void getExecLogDelegates() {
-            RuleExecLogEntry expected = new RuleExecLogEntry();
-            expected.setLogId("rxl-1");
-            expected.setRuleCode("R_001");
-            when(ruleExecutionLogService.getExecLog("rxl-1")).thenReturn(expected);
-
-            RuleExecLogEntry log = ruleService.getExecLog("rxl-1");
-
-            assertNotNull(log);
-            assertEquals("rxl-1", log.getLogId());
-            verify(ruleExecutionLogService).getExecLog("rxl-1");
-        }
-    }
-
-    // ──────────────────────── reviewPackage ────────────────────────
-
-    @Nested
-    @DisplayName("reviewPackage 审查规则包")
-    class ReviewPackageTests {
-
-        @Test
-        @DisplayName("审查包含来源文档绑定的规则包")
-        void reviewPackageWithReference() {
-            Map<String, Object> rule1 = buildRuleMap("R_PKG_001", "包规则1", "GENERAL", "HIGH", true, "DOC001");
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("package_code", "PKG_REVIEW");
-            request.put("rules", Collections.singletonList(rule1));
-            ruleService.importRules(request);
-
-            Map<String, Object> review = ruleService.reviewPackage("PKG_REVIEW", null);
-
-            assertNotNull(review);
-            assertEquals("PKG_REVIEW", review.get("package_code"));
-            assertEquals(1, review.get("total_rules"));
-            assertTrue((Boolean) review.get("ready_to_publish"));
-        }
-
-        @Test
-        @DisplayName("审查缺少来源文档绑定的规则包")
-        void reviewPackageWithoutReference() {
-            Map<String, Object> rule1 = buildRuleMap("R_PKG_NOREF", "无来源包规则", "GENERAL", "HIGH", true, null);
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("package_code", "PKG_NOREF");
-            request.put("rules", Collections.singletonList(rule1));
-            ruleService.importRules(request);
-
-            Map<String, Object> review = ruleService.reviewPackage("PKG_NOREF", null);
-
-            assertNotNull(review);
-            assertFalse((Boolean) review.get("ready_to_publish"));
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> issues = (List<Map<String, Object>>) review.get("issues");
-            assertFalse(issues.isEmpty());
-        }
-
-        @Test
-        @DisplayName("审查不存在的规则包时抛出异常")
-        void reviewNonExistentPackage() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.reviewPackage("PKG_NOT_EXIST", null));
-        }
-    }
-
-    // ──────────────────────── publishPackage ────────────────────────
-
-    @Nested
-    @DisplayName("publishPackage 发布规则包")
-    class PublishPackageTests {
-
-        @Test
-        @DisplayName("成功发布包含来源文档绑定的规则包")
-        void publishPackageSuccess() {
-            Map<String, Object> rule1 = buildRuleMap("R_PKG_PUB_001", "可发布包规则", "GENERAL", "HIGH", true, "DOC001");
-            Map<String, Object> importRequest = new LinkedHashMap<>();
-            importRequest.put("package_code", "PKG_PUB");
-            importRequest.put("rules", Collections.singletonList(rule1));
-            ruleService.importRules(importRequest);
-
-            Map<String, Object> pubRequest = new LinkedHashMap<>();
-            pubRequest.put("approved_by", "admin");
-
-            Map<String, Object> result = ruleService.publishPackage("PKG_PUB", pubRequest);
-
-            assertNotNull(result);
-            assertEquals(1, result.get("published_count"));
-            assertEquals("admin", result.get("published_by"));
-        }
-
-        @Test
-        @DisplayName("发布缺少来源文档绑定的规则包时抛出 MissingSourceException")
-        void publishPackageWithoutReference() {
-            Map<String, Object> rule1 = buildRuleMap("R_PKG_NOREF2", "无来源包规则2", "GENERAL", "HIGH", true, null);
-            Map<String, Object> importRequest = new LinkedHashMap<>();
-            importRequest.put("package_code", "PKG_NOREF2");
-            importRequest.put("rules", Collections.singletonList(rule1));
-            ruleService.importRules(importRequest);
-
-            Map<String, Object> pubRequest = new LinkedHashMap<>();
-            pubRequest.put("approved_by", "admin");
-
-            assertThrows(MissingSourceException.class,
-                    () -> ruleService.publishPackage("PKG_NOREF2", pubRequest));
-        }
-    }
-
-    // ──────────────────────── evaluateForScenario ────────────────────────
-
-    @Nested
-    @DisplayName("evaluateForScenario 场景化评估")
-    class EvaluateForScenarioTests {
-
-        @Test
-        @DisplayName("缺少 scenario_code 时抛出异常")
-        void evaluateForScenarioMissingCode() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("patient_context", buildPatientContext());
-
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.evaluateForScenario(request));
-        }
-
-        @Test
-        @DisplayName("不支持的 scenario_code 时抛出异常")
-        void evaluateForScenarioUnsupportedCode() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("scenario_code", "UNSUPPORTED_CODE");
-            request.put("patient_context", buildPatientContext());
-
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.evaluateForScenario(request));
-        }
-
-        @Test
-        @DisplayName("缺少 patient_context 时抛出异常")
-        void evaluateForScenarioMissingPatientContext() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("scenario_code", "PATHWAY_ENTRY");
-
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.evaluateForScenario(request));
-        }
-
-        @Test
-        @DisplayName("空 patient_context 时抛出异常")
-        void evaluateForScenarioEmptyPatientContext() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("scenario_code", "PATHWAY_ENTRY");
-            request.put("patient_context", new LinkedHashMap<>());
-
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.evaluateForScenario(request));
-        }
-
-        @Test
-        @DisplayName("场景化评估返回标准化结果信封")
-        void evaluateForScenarioReturnsEnvelope() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("scenario_code", "PATHWAY_ENTRY");
-            request.put("patient_context", buildPatientContext());
-
-            Map<String, Object> result = ruleService.evaluateForScenario(request);
-
-            assertNotNull(result);
-            assertNotNull(result.get("result_id"));
-            assertNotNull(result.get("trace_id"));
-            assertEquals("PATHWAY_ENTRY", result.get("scenario_code"));
-            assertNotNull(result.get("results"));
-        }
-    }
-
-    // ──────────────────────── getEvaluation ────────────────────────
-
-    @Nested
-    @DisplayName("getEvaluation 获取评估结果")
-    class GetEvaluationTests {
-
-        @Test
-        @DisplayName("获取已记录的评估结果")
-        void getEvaluationSuccess() {
-            // 先执行一次场景化评估以产生记录
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("scenario_code", "PATHWAY_ENTRY");
-            request.put("patient_context", buildPatientContext());
-
-            Map<String, Object> evalResult = ruleService.evaluateForScenario(request);
-            String resultId = String.valueOf(evalResult.get("result_id"));
-
-            Map<String, Object> fetched = ruleService.getEvaluation(resultId);
-
-            assertNotNull(fetched);
-            assertEquals(resultId, fetched.get("result_id"));
-        }
-
-        @Test
-        @DisplayName("获取不存在的评估结果时抛出异常")
-        void getEvaluationNotFound() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.getEvaluation("nonexistent-id"));
-        }
-
-        @Test
-        @DisplayName("resultId 为 null 时抛出异常")
-        void getEvaluationNullId() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.getEvaluation(null));
-        }
-    }
-
-    // ──────────────────────── listEvaluations ────────────────────────
-
-    @Nested
-    @DisplayName("listEvaluations 列出评估结果")
-    class ListEvaluationsTests {
-
-        @Test
-        @DisplayName("无评估记录时返回空列表")
-        void listEvaluationsEmpty() {
-            List<Map<String, Object>> evaluations = ruleService.listEvaluations(null);
-
-            assertTrue(evaluations.isEmpty());
-        }
-
-        @Test
-        @DisplayName("执行评估后可列出评估记录")
-        void listEvaluationsAfterEval() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("scenario_code", "EMR_QC");
-            request.put("patient_context", buildPatientContext());
-            ruleService.evaluateForScenario(request);
-
-            List<Map<String, Object>> evaluations = ruleService.listEvaluations(null);
-
-            assertFalse(evaluations.isEmpty());
-        }
-    }
-
-    // ──────────────────────── batchEvaluateForScenario ────────────────────────
-
-    @Nested
-    @DisplayName("batchEvaluateForScenario 批量场景化评估")
-    class BatchEvaluateForScenarioTests {
-
-        @Test
-        @DisplayName("批量评估多条患者上下文")
-        void batchEvaluateSuccess() {
-            Map<String, Object> item1 = new LinkedHashMap<>();
-            item1.put("patient_context", buildPatientContext());
-            item1.put("case_id", "CASE001");
-
-            Map<String, Object> patientCtx2 = new LinkedHashMap<>();
-            Map<String, Object> patient2 = new LinkedHashMap<>();
-            patient2.put("patient_id", "P002");
-            patient2.put("gender", "female");
-            patientCtx2.put("patient", patient2);
-            Map<String, Object> encounter2 = new LinkedHashMap<>();
-            encounter2.put("encounter_id", "E002");
-            patientCtx2.put("encounter", encounter2);
-            Map<String, Object> facts2 = new LinkedHashMap<>();
-            patientCtx2.put("facts", facts2);
-
-            Map<String, Object> item2 = new LinkedHashMap<>();
-            item2.put("patient_context", patientCtx2);
-            item2.put("case_id", "CASE002");
-
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("scenario_code", "PATHWAY_ENTRY");
-            request.put("items", Arrays.asList(item1, item2));
-
-            Map<String, Object> result = ruleService.batchEvaluateForScenario(request);
-
-            assertNotNull(result);
-            assertNotNull(result.get("batch_id"));
-            assertEquals(2, result.get("total_items"));
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> evaluations = (List<Map<String, Object>>) result.get("evaluations");
-            assertEquals(2, evaluations.size());
-        }
-
-        @Test
-        @DisplayName("items 为空时抛出异常")
-        void batchEvaluateEmptyItems() {
-            Map<String, Object> request = new LinkedHashMap<>();
-            request.put("scenario_code", "PATHWAY_ENTRY");
-            request.put("items", Collections.emptyList());
-
-            assertThrows(IllegalArgumentException.class,
-                    () -> ruleService.batchEvaluateForScenario(request));
-        }
+    private void createSampleEvaluation() {
+        Map<String, Object> ruleMap = buildRuleMap("R001", "Pathway Rule", "PATHWAY_ENTRY");
+        ruleMap.put("reference_document_code", "DOC001");
+        ruleMap.put("scenario_codes", List.of("PATHWAY_ENTRY"));
+        ruleMap.put("condition", Map.of("all", List.of(
+                Map.of("fact", "patient.age", "operator", "equals", "value", "65"))));
+        ruleService.importRules(Collections.singletonList(ruleMap));
+
+        Map<String, Object> publishRequest = new LinkedHashMap<>();
+        publishRequest.put("version_no", "1.0.0");
+        publishRequest.put("approved_by", "admin");
+        ruleService.publish("R001", publishRequest);
+
+        Map<String, Object> patientContext = new LinkedHashMap<>();
+        patientContext.put("patient", Map.of("age", "65"));
+
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("scenario_code", "PATHWAY_ENTRY");
+        request.put("patient_context", patientContext);
+
+        ruleService.evaluateForScenario(request);
     }
 }
