@@ -1,5 +1,11 @@
 package com.medkernel.knowledge;
 
+import com.medkernel.knowledge.dto.CreateSubscriptionRequest;
+import com.medkernel.knowledge.dto.RegisterSourceRequest;
+import com.medkernel.knowledge.dto.SourceQueryRequest;
+import com.medkernel.knowledge.dto.SubscriptionQueryRequest;
+import com.medkernel.knowledge.dto.UpdateSourceRequest;
+import com.medkernel.knowledge.dto.UpdateSubscriptionRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.stereotype.Service;
@@ -30,8 +36,8 @@ public class KnowledgeService {
 
     // ==================== 来源注册 CRUD ====================
 
-    public KnowledgeSourceRegistry registerSource(Map<String, Object> request, OrganizationContext orgContext) {
-        String sourceCode = (String) request.get("source_code");
+    public KnowledgeSourceRegistry registerSource(RegisterSourceRequest request, OrganizationContext orgContext) {
+        String sourceCode = request.getSourceCode();
         if (sourceCode == null || sourceCode.isEmpty()) {
             sourceCode = "KS-" + String.format("%04d", SOURCE_SEQ.getAndIncrement());
         }
@@ -42,28 +48,15 @@ public class KnowledgeService {
         KnowledgeSourceRegistry source = new KnowledgeSourceRegistry();
         source.setTenantId(orgContext.getTenantId());
         source.setSourceCode(sourceCode);
-        source.setSourceName((String) request.get("source_name"));
-        source.setSourceType((String) request.get("source_type"));
-        source.setPublisher((String) request.get("publisher"));
-        source.setRegion((String) request.get("region"));
-        source.setLanguage((String) request.get("language"));
-        source.setReleaseVersion((String) request.get("release_version"));
-        source.setReleaseDate((String) request.get("release_date"));
-        source.setEffectiveDate((String) request.get("effective_date"));
-        source.setExpiryDate((String) request.get("expiry_date"));
-        source.setAuthorityLevel((String) request.get("authority_level"));
-        source.setLicenseScope((String) request.get("license_scope"));
-        source.setLicenseType((String) request.get("license_type"));
-        source.setRedistributionAllowed(toBool(request.get("redistribution_allowed")));
-        source.setCommercialUseAllowed(toBool(request.get("commercial_use_allowed")));
-        source.setExportAllowed(toBool(request.get("export_allowed")));
-        source.setFetchMethod((String) request.get("fetch_method"));
-        source.setSourceUri((String) request.get("source_uri"));
-        source.setRawHash((String) request.get("raw_hash"));
-        source.setParsedHash((String) request.get("parsed_hash"));
+        source.setSourceName(request.getSourceName());
+        source.setSourceType(request.getSourceType());
+        source.setAuthorityLevel(request.getAuthorityLevel());
+        source.setLanguage(request.getLanguage());
+        source.setRegion(request.getRegion());
+        source.setLicenseScope(request.getLicenseScope());
+        source.setDescription(request.getDescription());
         source.setReviewStatus("PENDING");
-        source.setDescription((String) request.get("description"));
-        source.setCreatedBy((String) request.get("created_by"));
+        source.setCreatedBy(orgContext.getUserId());
         source.setCreatedTime(LocalDateTime.now().toString());
         source.setUpdatedTime(LocalDateTime.now().toString());
 
@@ -71,29 +64,18 @@ public class KnowledgeService {
         return source;
     }
 
-    public KnowledgeSourceRegistry updateSource(String sourceCode, Map<String, Object> request, OrganizationContext orgContext) {
+    public KnowledgeSourceRegistry updateSource(String sourceCode, UpdateSourceRequest request, OrganizationContext orgContext) {
         KnowledgeSourceRegistry source = sourceStore.get(sourceCode);
         if (source == null || !orgContext.getTenantId().equals(source.getTenantId())) {
             throw new IllegalArgumentException("Source not found: " + sourceCode);
         }
-        if (request.containsKey("source_name")) source.setSourceName((String) request.get("source_name"));
-        if (request.containsKey("source_type")) source.setSourceType((String) request.get("source_type"));
-        if (request.containsKey("publisher")) source.setPublisher((String) request.get("publisher"));
-        if (request.containsKey("region")) source.setRegion((String) request.get("region"));
-        if (request.containsKey("language")) source.setLanguage((String) request.get("language"));
-        if (request.containsKey("release_version")) source.setReleaseVersion((String) request.get("release_version"));
-        if (request.containsKey("release_date")) source.setReleaseDate((String) request.get("release_date"));
-        if (request.containsKey("effective_date")) source.setEffectiveDate((String) request.get("effective_date"));
-        if (request.containsKey("expiry_date")) source.setExpiryDate((String) request.get("expiry_date"));
-        if (request.containsKey("authority_level")) source.setAuthorityLevel((String) request.get("authority_level"));
-        if (request.containsKey("license_scope")) source.setLicenseScope((String) request.get("license_scope"));
-        if (request.containsKey("license_type")) source.setLicenseType((String) request.get("license_type"));
-        if (request.containsKey("redistribution_allowed")) source.setRedistributionAllowed(toBool(request.get("redistribution_allowed")));
-        if (request.containsKey("commercial_use_allowed")) source.setCommercialUseAllowed(toBool(request.get("commercial_use_allowed")));
-        if (request.containsKey("export_allowed")) source.setExportAllowed(toBool(request.get("export_allowed")));
-        if (request.containsKey("fetch_method")) source.setFetchMethod((String) request.get("fetch_method"));
-        if (request.containsKey("source_uri")) source.setSourceUri((String) request.get("source_uri"));
-        if (request.containsKey("description")) source.setDescription((String) request.get("description"));
+        if (request.getSourceName() != null) source.setSourceName(request.getSourceName());
+        if (request.getSourceType() != null) source.setSourceType(request.getSourceType());
+        if (request.getAuthorityLevel() != null) source.setAuthorityLevel(request.getAuthorityLevel());
+        if (request.getLanguage() != null) source.setLanguage(request.getLanguage());
+        if (request.getRegion() != null) source.setRegion(request.getRegion());
+        if (request.getLicenseScope() != null) source.setLicenseScope(request.getLicenseScope());
+        if (request.getDescription() != null) source.setDescription(request.getDescription());
         source.setUpdatedTime(LocalDateTime.now().toString());
         return source;
     }
@@ -113,17 +95,14 @@ public class KnowledgeService {
         return source;
     }
 
-    public List<KnowledgeSourceRegistry> listSources(Map<String, String> filters, OrganizationContext orgContext) {
+    public List<KnowledgeSourceRegistry> listSources(SourceQueryRequest query, OrganizationContext orgContext) {
         List<KnowledgeSourceRegistry> result = new ArrayList<KnowledgeSourceRegistry>();
         for (KnowledgeSourceRegistry source : sourceStore.values()) {
             if (!orgContext.getTenantId().equals(source.getTenantId())) continue;
-            if (filters != null) {
-                String sourceType = filters.get("source_type");
-                if (sourceType != null && !sourceType.equalsIgnoreCase(source.getSourceType())) continue;
-                String reviewStatus = filters.get("review_status");
-                if (reviewStatus != null && !reviewStatus.equalsIgnoreCase(source.getReviewStatus())) continue;
-                String authorityLevel = filters.get("authority_level");
-                if (authorityLevel != null && !authorityLevel.equalsIgnoreCase(source.getAuthorityLevel())) continue;
+            if (query != null) {
+                if (query.getSourceType() != null && !query.getSourceType().equalsIgnoreCase(source.getSourceType())) continue;
+                if (query.getReviewStatus() != null && !query.getReviewStatus().equalsIgnoreCase(source.getReviewStatus())) continue;
+                if (query.getAuthorityLevel() != null && !query.getAuthorityLevel().equalsIgnoreCase(source.getAuthorityLevel())) continue;
             }
             result.add(source);
         }
@@ -140,22 +119,18 @@ public class KnowledgeService {
 
     // ==================== 知识订阅 CRUD ====================
 
-    public KnowledgeSubscription createSubscription(Map<String, Object> request, OrganizationContext orgContext) {
+    public KnowledgeSubscription createSubscription(CreateSubscriptionRequest request, OrganizationContext orgContext) {
         String subscriptionId = "SUB-" + String.format("%04d", SUB_SEQ.getAndIncrement());
 
         KnowledgeSubscription sub = new KnowledgeSubscription();
         sub.setTenantId(orgContext.getTenantId());
         sub.setSubscriptionId(subscriptionId);
-        sub.setSubscriberId((String) request.get("subscriber_id"));
-        sub.setSubscriberName((String) request.get("subscriber_name"));
-        sub.setTopicType((String) request.get("topic_type"));
-        sub.setTopicCode((String) request.get("topic_code"));
-        sub.setTopicName((String) request.get("topic_name"));
-        sub.setSourceTypes(toStringList(request.get("source_types")));
-        sub.setAutoSync(toBool(request.getOrDefault("auto_sync", "true")));
-        sub.setSyncFrequency((String) request.getOrDefault("sync_frequency", "MANUAL"));
+        sub.setSubscriberId(request.getSubscriberId());
+        sub.setTopicType(request.getTopicType());
+        sub.setTopicCode(request.getTopicId());
+        sub.setSyncFrequency(request.getSyncMode());
         sub.setStatus("ACTIVE");
-        sub.setCreatedBy((String) request.get("created_by"));
+        sub.setCreatedBy(orgContext.getUserId());
         sub.setCreatedTime(LocalDateTime.now().toString());
         sub.setUpdatedTime(LocalDateTime.now().toString());
 
@@ -163,15 +138,15 @@ public class KnowledgeService {
         return sub;
     }
 
-    public KnowledgeSubscription updateSubscription(String subscriptionId, Map<String, Object> request, OrganizationContext orgContext) {
+    public KnowledgeSubscription updateSubscription(String subscriptionId, UpdateSubscriptionRequest request, OrganizationContext orgContext) {
         KnowledgeSubscription sub = subscriptionStore.get(subscriptionId);
         if (sub == null || !orgContext.getTenantId().equals(sub.getTenantId())) {
             throw new IllegalArgumentException("Subscription not found: " + subscriptionId);
         }
-        if (request.containsKey("topic_name")) sub.setTopicName((String) request.get("topic_name"));
-        if (request.containsKey("source_types")) sub.setSourceTypes(toStringList(request.get("source_types")));
-        if (request.containsKey("auto_sync")) sub.setAutoSync(toBool(request.get("auto_sync")));
-        if (request.containsKey("sync_frequency")) sub.setSyncFrequency((String) request.get("sync_frequency"));
+        if (request.getTopicType() != null) sub.setTopicType(request.getTopicType());
+        if (request.getTopicId() != null) sub.setTopicCode(request.getTopicId());
+        if (request.getSubscriberId() != null) sub.setSubscriberId(request.getSubscriberId());
+        if (request.getSyncMode() != null) sub.setSyncFrequency(request.getSyncMode());
         sub.setUpdatedTime(LocalDateTime.now().toString());
         return sub;
     }
@@ -196,17 +171,14 @@ public class KnowledgeService {
         return sub;
     }
 
-    public List<KnowledgeSubscription> listSubscriptions(Map<String, String> filters, OrganizationContext orgContext) {
+    public List<KnowledgeSubscription> listSubscriptions(SubscriptionQueryRequest query, OrganizationContext orgContext) {
         List<KnowledgeSubscription> result = new ArrayList<KnowledgeSubscription>();
         for (KnowledgeSubscription sub : subscriptionStore.values()) {
             if (!orgContext.getTenantId().equals(sub.getTenantId())) continue;
-            if (filters != null) {
-                String topicType = filters.get("topic_type");
-                if (topicType != null && !topicType.equalsIgnoreCase(sub.getTopicType())) continue;
-                String status = filters.get("status");
-                if (status != null && !status.equalsIgnoreCase(sub.getStatus())) continue;
-                String subscriberId = filters.get("subscriber_id");
-                if (subscriberId != null && !subscriberId.equals(sub.getSubscriberId())) continue;
+            if (query != null) {
+                if (query.getTopicType() != null && !query.getTopicType().equalsIgnoreCase(sub.getTopicType())) continue;
+                if (query.getStatus() != null && !query.getStatus().equalsIgnoreCase(sub.getStatus())) continue;
+                if (query.getSubscriberId() != null && !query.getSubscriberId().equals(sub.getSubscriberId())) continue;
             }
             result.add(sub);
         }
@@ -219,28 +191,5 @@ public class KnowledgeService {
             return null;
         }
         return sub;
-    }
-
-    // ==================== 辅助方法 ====================
-
-    private boolean toBool(Object value) {
-        if (value == null) return false;
-        if (value instanceof Boolean) return (Boolean) value;
-        return "true".equalsIgnoreCase(value.toString());
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<String> toStringList(Object value) {
-        if (value == null) return new ArrayList<String>();
-        if (value instanceof List) {
-            List<String> result = new ArrayList<String>();
-            for (Object item : (List<Object>) value) {
-                if (item != null) result.add(item.toString());
-            }
-            return result;
-        }
-        List<String> result = new ArrayList<String>();
-        result.add(value.toString());
-        return result;
     }
 }

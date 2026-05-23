@@ -2,6 +2,7 @@ package com.medkernel.knowledge;
 
 import com.medkernel.common.ApiResult;
 import com.medkernel.knowledge.dto.QualityCheckRequest;
+import com.medkernel.knowledge.dto.QualitySummaryResponse;
 import com.medkernel.knowledge.dto.ResolveFindingRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
@@ -18,7 +19,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 /**
  * AI 候选资产自动质检 API：执行质检、查询发现、解决发现、摘要统计。
@@ -98,10 +98,10 @@ public class AssetQualityController {
      */
     @Operation(summary = "Get quality summary")
     @GetMapping("/summary")
-    public ApiResult<Map<String, Object>> getQualitySummary(HttpServletRequest httpRequest) {
+    public ApiResult<QualitySummaryResponse> getQualitySummary(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         Long tenantId = resolveTenantId(orgCtx);
-        return ApiResult.success(qualityService.getQualitySummary(tenantId));
+        return ApiResult.success(QualitySummaryResponse.fromMap(qualityService.getQualitySummary(tenantId)));
     }
 
     private Long resolveTenantId(OrganizationContext orgCtx) {

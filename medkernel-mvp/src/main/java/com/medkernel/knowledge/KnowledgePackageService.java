@@ -125,7 +125,7 @@ public class KnowledgePackageService {
         return pkg;
     }
     // ==================== 导入知识包 ====================
-    public Map<String, Object> importPackage(Long packageId, String conflictStrategy) {
+    public KnowledgePackage importPackage(Long packageId, String conflictStrategy) {
         if (packageId == null) {
             throw new IllegalArgumentException("packageId is required");
         }
@@ -146,28 +146,17 @@ public class KnowledgePackageService {
         if (content == null || content.isEmpty()) {
             throw new IllegalArgumentException("knowledge package content is empty");
         }
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("package_id", packageId);
-        result.put("package_code", pkg.getPackageCode());
-        result.put("package_version", pkg.getPackageVersion());
-        result.put("conflict_strategy", conflictStrategy);
         int importedRules = importRules(content, conflictStrategy);
         int importedTerminologies = importTerminologies(content, conflictStrategy);
         int importedPathways = importPathways(content, conflictStrategy);
         int importedGraphs = importGraphs(content, conflictStrategy);
         int importedSources = importSources(content, conflictStrategy);
-        result.put("imported_rules", importedRules);
-        result.put("imported_terminologies", importedTerminologies);
-        result.put("imported_pathways", importedPathways);
-        result.put("imported_graphs", importedGraphs);
-        result.put("imported_sources", importedSources);
-        result.put("imported_time", nowText());
         pkg.setStatus("IMPORTED");
         pkg.setUpdatedTime(LocalDateTime.now());
         packageRepository.update(pkg);
         packageStore.put(pkg.getId(), pkg);
         audit("IMPORT", pkg);
-        return result;
+        return pkg;
     }
     // ==================== 导入预览 ====================
     public Map<String, Object> previewImport(Long packageId) {
@@ -266,7 +255,7 @@ public class KnowledgePackageService {
         return pkg;
     }
     // ==================== 院内同步 ====================
-    public Map<String, Object> syncPackage(Long packageId, String syncMode) {
+    public KnowledgePackage syncPackage(Long packageId, String syncMode) {
         if (packageId == null) {
             throw new IllegalArgumentException("packageId is required");
         }
@@ -286,11 +275,10 @@ public class KnowledgePackageService {
         packageRepository.update(pkg);
         packageStore.put(pkg.getId(), pkg);
         try {
-            Map<String, Object> result;
             if ("FULL".equals(pkg.getExportType())) {
-                result = performFullSync(pkg);
+                performFullSync(pkg);
             } else {
-                result = performIncrementalSync(pkg);
+                performIncrementalSync(pkg);
             }
             pkg.setSyncStatus("SYNCED");
             pkg.setSyncTime(LocalDateTime.now());
@@ -298,7 +286,7 @@ public class KnowledgePackageService {
             packageRepository.update(pkg);
             packageStore.put(pkg.getId(), pkg);
             audit("SYNC", pkg);
-            return result;
+            return pkg;
         } catch (RuntimeException ex) {
             pkg.setSyncStatus("ERROR");
             pkg.setSyncError(truncate(ex.getMessage(), 500));
@@ -408,12 +396,11 @@ public class KnowledgePackageService {
     private List<Map<String, Object>> collectSources(KnowledgePackage pkg) {
         List<Map<String, Object>> sources = new ArrayList<Map<String, Object>>();
         try {
-            Map<String, String> filters = new LinkedHashMap<String, String>();
             com.medkernel.organization.OrganizationContext orgContext = new com.medkernel.organization.OrganizationContext();
             if (pkg.getTenantId() != null) {
                 orgContext.setTenantId(String.valueOf(pkg.getTenantId()));
             }
-            List<KnowledgeSourceRegistry> sourceList = knowledgeService.listSources(filters, orgContext);
+            List<KnowledgeSourceRegistry> sourceList = knowledgeService.listSources(null, orgContext);
             for (KnowledgeSourceRegistry source : sourceList) {
                 sources.add(source.toView());
             }

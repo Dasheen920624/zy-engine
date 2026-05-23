@@ -3,6 +3,8 @@ package com.medkernel.knowledge;
 import com.medkernel.common.ApiResult;
 import com.medkernel.knowledge.dto.BatchReviewRequest;
 import com.medkernel.knowledge.dto.ReviewCandidateRequest;
+import com.medkernel.knowledge.dto.ReviewSummaryResponse;
+import com.medkernel.knowledge.dto.SubmitCandidateRequest;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +20,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 /**
  * AI 候选配置审核台 API：提交候选、查询列表、审核、批量审核、统计和历史。
@@ -42,10 +43,17 @@ public class AiCandidateReviewController {
      */
     @Operation(summary = "Submit candidate")
     @PostMapping
-    public ApiResult<AiCandidateReview> submitCandidate(@RequestBody AiCandidateReview candidate,
+    public ApiResult<AiCandidateReview> submitCandidate(@Valid @RequestBody SubmitCandidateRequest request,
                                                           HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        AiCandidateReview candidate = new AiCandidateReview();
         candidate.setTenantId(resolveTenantId(orgCtx));
+        candidate.setCandidateType(request.getCandidateType());
+        candidate.setCandidateCode(request.getCandidateCode());
+        candidate.setCandidateContent(request.getOriginalContent());
+        candidate.setConfidence(request.getConfidenceScore());
+        candidate.setPriority(request.getPriority());
+        candidate.setReviewNote(request.getReviewNote());
         return ApiResult.success(reviewService.submitCandidate(candidate));
     }
 
@@ -111,9 +119,9 @@ public class AiCandidateReviewController {
      */
     @Operation(summary = "Get review summary")
     @GetMapping("/summary")
-    public ApiResult<Map<String, Object>> getReviewSummary(HttpServletRequest httpRequest) {
+    public ApiResult<ReviewSummaryResponse> getReviewSummary(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        return ApiResult.success(reviewService.getReviewSummary(resolveTenantId(orgCtx)));
+        return ApiResult.success(ReviewSummaryResponse.fromMap(reviewService.getReviewSummary(resolveTenantId(orgCtx))));
     }
 
     /**
