@@ -1,6 +1,9 @@
 package com.medkernel.knowledge;
 
 import com.medkernel.common.ApiResult;
+import com.medkernel.knowledge.dto.CreateJobRequest;
+import com.medkernel.knowledge.dto.LogModelCallRequest;
+import com.medkernel.knowledge.dto.ModelCallSummaryResponse;
 import com.medkernel.knowledge.dto.ReviewJobRequest;
 import com.medkernel.knowledge.dto.UpdateJobStatusRequest;
 import com.medkernel.organization.OrganizationContext;
@@ -18,7 +21,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 /**
  * AI 知识生产任务 API：任务管理和模型调用记录。
@@ -42,10 +44,16 @@ public class AiKnowledgeJobController {
      */
     @Operation(summary = "Create job")
     @PostMapping
-    public ApiResult<AiKnowledgeJob> createJob(@RequestBody AiKnowledgeJob job,
+    public ApiResult<AiKnowledgeJob> createJob(@Valid @RequestBody CreateJobRequest request,
                                                  HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        AiKnowledgeJob job = new AiKnowledgeJob();
         job.setTenantId(resolveTenantId(orgCtx));
+        job.setJobType(request.getJobType());
+        job.setJobName(request.getDescription());
+        job.setSourceCode(request.getSourceCode());
+        job.setInputSummary(request.getParameters());
+        job.setCreatedBy(request.getCreatedBy());
         return ApiResult.success(jobService.createJob(job));
     }
 
@@ -110,10 +118,21 @@ public class AiKnowledgeJobController {
      */
     @Operation(summary = "Log model call")
     @PostMapping("/model-calls")
-    public ApiResult<AiModelCallLog> logModelCall(@RequestBody AiModelCallLog callLog,
+    public ApiResult<AiModelCallLog> logModelCall(@Valid @RequestBody LogModelCallRequest request,
                                                     HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
+        AiModelCallLog callLog = new AiModelCallLog();
         callLog.setTenantId(resolveTenantId(orgCtx));
+        callLog.setJobId(request.getJobId());
+        callLog.setCallType(request.getCallType());
+        callLog.setModelProvider(request.getModelProvider());
+        callLog.setModelVersion(request.getModelVersion());
+        callLog.setInputTokenCount(request.getInputTokens());
+        callLog.setOutputTokenCount(request.getOutputTokens());
+        callLog.setElapsedMs(request.getElapsedMs() != null ? request.getElapsedMs().intValue() : null);
+        callLog.setCallStatus(request.getCallStatus());
+        callLog.setErrorCode(request.getErrorCode());
+        callLog.setErrorMessage(request.getErrorMessage());
         return ApiResult.success(jobService.logModelCall(callLog));
     }
 
@@ -137,9 +156,9 @@ public class AiKnowledgeJobController {
      */
     @Operation(summary = "Summarize model calls")
     @GetMapping("/model-calls/summary")
-    public ApiResult<Map<String, Object>> summarizeModelCalls(HttpServletRequest httpRequest) {
+    public ApiResult<ModelCallSummaryResponse> summarizeModelCalls(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
-        return ApiResult.success(jobService.summarizeModelCalls(resolveTenantId(orgCtx)));
+        return ApiResult.success(ModelCallSummaryResponse.fromMap(jobService.summarizeModelCalls(resolveTenantId(orgCtx))));
     }
 
     private Long resolveTenantId(OrganizationContext orgCtx) {

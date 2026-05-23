@@ -1,0 +1,7 @@
+task_id: GA-DTO-02
+claim_id: GA-DTO-02-S02
+owner: TraeAI-Main
+branch: ai/GA-DTO-02/knowledge-dto
+git_base_commit: 3a48fa7
+created_at: 2026-05-24T01:00:00+08:00
+last_heartbeat: 2026-05-24T01:00:00+08:00

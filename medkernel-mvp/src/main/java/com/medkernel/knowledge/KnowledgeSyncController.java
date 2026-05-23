@@ -4,6 +4,7 @@ import com.medkernel.common.ApiResult;
 import com.medkernel.common.ErrorCode;
 import com.medkernel.knowledge.dto.ReviewSyncRequest;
 import com.medkernel.knowledge.dto.TriggerSyncRequest;
+import com.medkernel.knowledge.dto.SyncSummaryResponse;
 import com.medkernel.organization.OrganizationContext;
 import com.medkernel.organization.OrganizationContextService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +20,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 医疗知识同步 API：同步触发、差异预览、审核、重试、取消。
@@ -219,10 +219,10 @@ public class KnowledgeSyncController {
      */
     @Operation(summary = "Summarize sync")
     @GetMapping("/summary")
-    public ApiResult<Map<String, Object>> summarizeSync(HttpServletRequest httpRequest) {
+    public ApiResult<SyncSummaryResponse> summarizeSync(HttpServletRequest httpRequest) {
         OrganizationContext orgCtx = organizationContextService.resolve(httpRequest);
         Long tenantId = resolveTenantId(orgCtx);
-        return ApiResult.success(syncService.summarizeSync(tenantId));
+        return ApiResult.success(SyncSummaryResponse.fromMap(syncService.summarizeSync(tenantId)));
     }
 
     // ---- 辅助方法 ----
