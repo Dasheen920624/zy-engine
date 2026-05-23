@@ -27,11 +27,17 @@ cd frontend
 npm install
 ```
 
-内网部署若需私有 npm 源：
+如需使用国内镜像加速：
 
 ```powershell
-npm config set registry https://your-internal-npm-mirror/
+npm config set registry https://registry.npmmirror.com/
 npm install
+```
+
+恢复公网官方源：
+
+```powershell
+npm config set registry https://registry.npmjs.org/
 ```
 
 依赖版本已在 `package.json` 中固定为精确版本。私有镜像必须同步这些精确版本及其传递依赖；若出现 `vite-node`、`@testing-library/dom` 等包缺失，应先补齐镜像或临时指定完整 npm registry 后再安装。
