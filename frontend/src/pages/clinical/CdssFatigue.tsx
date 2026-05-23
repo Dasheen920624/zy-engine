@@ -23,7 +23,7 @@ export default function CdssFatigue() {
   return (
     <PageShell
       title="临床提醒治理"
-      description="医嘱提醒疲劳治理 · 医生只看到与自己患者相关的，主操作只有"采纳 / 不采纳""
+      description={'医嘱提醒疲劳治理 · 医生只看到与自己患者相关的，主操作只有"采纳 / 不采纳"'}
       primary={<Button type="primary">治理疲劳规则</Button>}
     >
       <Row gutter={12}>
