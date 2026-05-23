@@ -1,0 +1,2 @@
+# shared/api/ — OpenAPI 类型生成产物 + axios client
+# 由 npm run gen:types 从后端 /v3/api-docs 自动生成 generated-types.ts

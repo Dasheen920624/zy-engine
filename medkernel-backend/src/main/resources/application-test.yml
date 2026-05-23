@@ -1,0 +1,8 @@
+# test profile — CI 用，Testcontainers 5 方言矩阵
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:15:///medkernel_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/postgres

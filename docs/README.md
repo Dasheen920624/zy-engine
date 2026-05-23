@@ -1,221 +1,86 @@
-# 集团医疗智能中枢 MedKernel — 文档中心
+# MedKernel 文档中心
 
-> 版本：V4.0 · 2026-05-23（v1.0 GA 产品收口）
-> 这是项目所有文档的**唯一权威导航**。任何 AI、产品、前端、后端、QA、实施工程师从这里开始。
-
----
-
-## 0. 顶层权威文档（任何角色接手前必看的目录）
-
-| # | 文档 | 一句话 | 阅读时长 | 受众 |
-|---|---|---|:---:|---|
-| 1 | [`PRODUCT_SIMPLIFICATION_V1_GA.md`](PRODUCT_SIMPLIFICATION_V1_GA.md) | **v1.0 GA 产品收口方案** — 一条主线、四个工作区、全功能极简交互、完整服务能力、中国国情验收 | 8 分钟 | 客户 / 产品 / 售前 / 所有 AI |
-| 2 | [`AI_TEAM_PR_BACKLOG_V1.0_GA.md`](AI_TEAM_PR_BACKLOG_V1.0_GA.md) | **v1.0 GA 并行领单卡** — 下一版本唯一任务入口，按批次支持最大并行开发 | 10 分钟 | AI 团队 / 架构师 |
-| 3 | [`AI_CHARTER.md`](AI_CHARTER.md) | **AI 必读 1 页纸** — 红线 + 硬约束 + 提交流程 | 5 分钟 | 所有 AI |
-| 4 | [`PRODUCT_ARCHITECTURE_FINAL.md`](PRODUCT_ARCHITECTURE_FINAL.md) | **产品架构白皮书** — 三产品×模块边界 + Controller 归档 + v1.0 GA 七维度 | 10 分钟 | 架构师 / 高级 AI / 产品 |
-| 5 | [`COMPREHENSIVE_REVIEW.md`](COMPREHENSIVE_REVIEW.md) | **全方位评审** — 20 维度全栈评审 + 法律合规清单 + 等保 2.0 三级落地 | 15 分钟 | 产品 / 架构 / CTO / 合规 |
-| 6 | [`DEPLOYMENT_DUAL_MODE.md`](DEPLOYMENT_DUAL_MODE.md) | **内外网双部署规格** — 医院本地部署优先，SaaS 受控推进 | 10 分钟 | 实施工程师 / SRE / 售前 |
-| 7 | [`AI_TEAM_SOP.md`](AI_TEAM_SOP.md) | **AI 团队 SOP** — claim / lock / review / DoD / 紧急处置 | 10 分钟（按需查） | 所有 AI |
-
-**旧 v0.3 文档说明**：[`AI_TEAM_PR_BACKLOG_V0.3_FINAL.md`](AI_TEAM_PR_BACKLOG_V0.3_FINAL.md)、[`v0.3-DEMO-REDESIGN.md`](v0.3-DEMO-REDESIGN.md)、[`engineering/2026-05-21-roadmap-v0.3.md`](engineering/2026-05-21-roadmap-v0.3.md) 均为历史证据，不再作为新任务入口。下一版本唯一目标是 **v1.0 GA / tag `v1.0.0`**。
-
-**阅读顺序（首次接手）**：1 → 2 → 3 → 7 → 按任务补读 4/5/6
+> 版本：5.0 · 2026-05-23（v1.0 GA 全量重启基线）
+> v1.0 GA 阶段：旧 5 套命名 + 金本位 5 份已归档到 `docs/archive/v0.3/`，文档体系简化为 **3 张权威 + 按需手册**。
 
 ---
 
-## 1. 三层文档结构
+## 0. 任何人接手前必看 3 张
+
+| 顺序 | 文档 | 一句话 | 受众 |
+|---|---|---|---|
+| 1 | [**CONSTITUTION.md**](CONSTITUTION.md) | **产品宪法** — 12 条硬约束 / 5 菜单 / 4 状态机 / 7 步流 / 6 阶段租户生命周期 / 术语 / 设计 token | 所有人 |
+| 2 | [**V1_GA_REWRITE_PLAN.md**](V1_GA_REWRITE_PLAN.md) | **12 周方案** — Phase-0~6 / W1 Day-by-Day / 技术栈 / 风险 | 产品 / 架构 / 项目 |
+| 3 | [**backlog.md**](backlog.md) | **单一任务台账** — 74 项 GA-* + 3 字段（id/owner/status） | AI 团队 / 实施 |
+
+**阅读顺序**：1（必读 5 分钟）→ 2（按需 10 分钟）→ 3（领任务时查）
+
+---
+
+## 1. 目录结构
 
 ```
 docs/
-├── README.md                           ← 你在这里（文档主入口）
-│
-├── 01_产品事实源.md                     ┐
-├── 02_场景剧本图.md                     │
-├── 03_设计系统.md                       │ 金本位 5 份
-├── 04_页面规格书.md                     │ （产品 + 设计 + 实施）
-├── 05_AI实施手册.md                     ┘
-│
-├── engineering/                        ← 工程规范（架构 + 开发）
-│   ├── 00_总入口与AI接手导航.md          硬门禁与 DoD
-│   ├── 02_任务台账.md                   任务状态唯一权威
-│   ├── 03_AI能力分级与并行冲突规约.md
-│   ├── 05_架构总图与服务边界.md
-│   ├── 06_后端开发规范.md
-│   ├── 07_前端开发规范.md
-│   ├── 08_国产化兼容性规约.md
-│   ├── 09_内网部署与版本管理.md
-│   ├── 数据库Provider与离线AI开发约定.md
-│   ├── 编码与中文备注规范.md
-│   ├── 用户体系与身份联邦详细设计方案.md
-│   ├── AI医疗知识工厂与字典映射方案.md
-│   ├── 产品功能业务核查与开工清单.md
-│   ├── smoke-plan-*.md
-│   └── api-examples.http
-│
-└── engineering/reference-implementations/
-    └── *.md                            ← AI 可复制的代码样板
+├─ CONSTITUTION.md            ← 产品宪法（最高优先级）
+├─ V1_GA_REWRITE_PLAN.md      ← 12 周方案
+├─ backlog.md                 ← 单一任务台账
+├─ README.md                  ← 你在这里
+├─ handbook/                  ← 实施手册（按需写，≤ 10 份）
+│   ├─ implementation.md      # 实施工程师手册
+│   ├─ operations.md          # 运维手册
+│   ├─ user-guides/           # 4 治理模块用户手册
+│   └─ training/              # 3 角色培训材料
+├─ adr/                       ← 架构决策记录（重大架构决策才写）
+├─ legal/                     ← 合同 / SLA / 隐私 / DPA / License
+├─ release/                   ← 发布证据
+│   └─ v1.0.0-ga-evidence.md  # W12 出版前填齐
+└─ archive/v0.3/              ← v0.3 历史归档（仅供查阅）
+    ├─ 01-05_*.md             # 旧金本位 5 份
+    ├─ engineering/           # 旧 35+ ADR 与历史文档
+    ├─ ai-dev-input/          # 旧 claim/lock 协作体系
+    ├─ legacy-embed/          # 旧临床嵌入器构建（embed.html / embed-build.config.ts）
+    └─ ai-branches-snapshot-20260524.md  # 25 个旧 ai/GA-* 分支 SHA 索引
 ```
 
 ---
 
-## 2. 金本位 5 份（必读）
+## 2. 命名归一（v1.0 GA 单轨）
 
-| # | 文档 | 一句话 | 阅读时长 |
-|---|---|---|:---:|
-| 01 | [产品事实源](01_产品事实源.md) | 产品定义、三产品分层、9 角色 × 3 产品矩阵、6 大剧本、22 不变量、术语表 | 20 分钟 |
-| 02 | [场景剧本图](02_场景剧本图.md) | 6 大客户验收剧本的精确 storyboard（逐帧 + 系统时序 + 设计抉择 + 验收点） | 30 分钟 |
-| 03 | [设计系统](03_设计系统.md) | Design Tokens + 13 核心组件 API + 三产品密度模式 + 7 全局模式 | 25 分钟 |
-| 04 | [页面规格书](04_页面规格书.md) | 18 个目标页面 + 4 个嵌入组件的精确规格（URL/布局/API/状态/DoD） | 按需查 |
-| 05 | [AI实施手册](05_AI实施手册.md) | 接下来 12 个 PR 的精确清单（独占文件 / 依赖 / 验收脚本 / 工时） | 按需查 |
-
-### 2.1 三产品分层是 V2 的核心判断
-
-平台本质是 **三个不同节奏的产品共用一套底座**：
-
-| 产品 | 用户 | 节奏 | 信息密度 | 设计取向 |
-|---|---|---|---|---|
-| **A 配置工厂** | 医学专家、信息科 | 周/月 | 中 | Notion / Figma 范 |
-| **B 临床嵌入器** | 医生、护士、药师 | 秒/分钟 | 极低 | Linear / Apple Health 范 |
-| **C 质控驾驶舱** | 管理层、质控、医保 | 日/周 | 极高 | Datadog / Grafana 范 |
-
-详情见 [01_产品事实源.md §3](01_产品事实源.md#3-三产品分层v2-核心决策)。
-
----
-
-## 3. 最小阅读路径（按角色）
-
-### 3.1 新接手 AI（任何任务）— 5 份必读
-
-```
-1. docs/README.md                                （5 分钟，本文 — 文档导航）
-2. docs/PRODUCT_SIMPLIFICATION_V1_GA.md           （8 分钟，产品主线和菜单收口）
-3. docs/AI_TEAM_PR_BACKLOG_V1.0_GA.md             （10 分钟，找到你的 GA 任务）
-4. docs/engineering/00_总入口与AI接手导航.md      （10 分钟，硬门禁与 DoD）
-5. docs/engineering/02_任务台账.md                （5 分钟，确认任务状态）
-```
-
-**总计：约 40 分钟**，即可获取产品主线、任务入口和协作门禁。
-
-按任务类型补充阅读：
-- 业务/剧本相关 → `docs/02_场景剧本图.md`（只读对应场景）
-- 前端/视觉相关 → `docs/03_设计系统.md`
-- 实现某个页面 → `docs/04_页面规格书.md`（只读你的页面那一节）
-- 后端开发 → `docs/engineering/06_后端开发规范.md` + `05_架构总图.md`
-- 前端开发 → `docs/engineering/07_前端开发规范.md`
-- 部署运维 → `docs/engineering/09_内网部署与版本管理.md`
-
-### 3.2 前端开发新页面
-
-```
-1. docs/README.md
-2. docs/03_设计系统.md（建立设计语言）
-3. docs/04_页面规格书.md（找你的页面那一节）
-4. docs/engineering/07_前端开发规范.md（代码规范）
-```
-
-### 3.3 后端开发新 API
-
-```
-1. docs/README.md
-2. docs/01_产品事实源.md §7（不变量）
-3. docs/04_页面规格书.md（页面需要哪些 API）
-4. docs/engineering/06_后端开发规范.md（代码规范）
-5. docs/engineering/数据库Provider与离线AI开发约定.md
-```
-
-### 3.4 产品经理审需求
-
-```
-1. docs/README.md
-2. docs/01_产品事实源.md
-3. docs/02_场景剧本图.md（找对应剧本）
-```
-
-### 3.5 实施工程师准备客户演示
-
-```
-1. docs/02_场景剧本图.md（6 大剧本）
-2. docs/产品手册.md（客户演示与学习）
-3. docs/engineering/09_内网部署与版本管理.md
-4. deploy/README.md
-```
-
----
-
-## 4. 工程规范（与金本位互补）
-
-| 文档 | 用途 |
+| 维度 | v1.0 GA |
 |---|---|
-| [00_总入口与AI接手导航](engineering/00_总入口与AI接手导航.md) | 硬门禁、DoD、验证命令、红线 |
-| [02_任务台账](engineering/02_任务台账.md) | 任务状态唯一权威（DONE/IN_PROGRESS/TODO） |
-| [03_AI能力分级与并行冲突规约](engineering/03_AI能力分级与并行冲突规约.md) | 初/中/高级 AI 边界 + 文件冲突仲裁 |
-| [05_架构总图与服务边界](engineering/05_架构总图与服务边界.md) | 四层架构 + Provider 抽象 + 跨数据库 |
-| [06_后端开发规范](engineering/06_后端开发规范.md) | Spring Boot 2.7 / JDK 1.8 / API 契约 |
-| [07_前端开发规范](engineering/07_前端开发规范.md) | React 18 / TS / Vite / Ant Design 5 |
-| [08_国产化兼容性规约](engineering/08_国产化兼容性规约.md) | CentOS 7 / 统信 / 麒麟 / 鲲鹏 / 龙芯 |
-| [09_内网部署与版本管理](engineering/09_内网部署与版本管理.md) | 打包 / 升级 / 回滚 / 灾备 |
-| [数据库Provider与离线AI开发约定](engineering/数据库Provider与离线AI开发约定.md) | Oracle/DM/PG/Kingbase/LOCAL_H2 分层 |
-| [编码与中文备注规范](engineering/编码与中文备注规范.md) | UTF-8 无 BOM、中文备注规范 |
-| [用户体系与身份联邦详细设计方案](engineering/用户体系与身份联邦详细设计方案.md) | SEC-001 / SSO / LDAP / API 客户端详细方案 |
-| [AI医疗知识工厂与字典映射方案](engineering/AI医疗知识工厂与字典映射方案.md) | AIK-* 系列详细方案 |
-| [产品功能业务核查与开工清单](engineering/产品功能业务核查与开工清单.md) | 医学/医保/质控开工前核查 |
-| [产品手册](产品手册.md) | 客户演示、演示数据、Oracle 主库验证与学习路径 |
+| 任务命名 | `GA-<DOMAIN>-<NN>` 单一（旧 PR-V2-* / PR-V3-* / PR-FINAL-* / DOC-V2-* 已废） |
+| 分支模型 | trunk-based：`main` 单线 + `feat/*` 短分支（≤ 3 天），废除 `develop` |
+| PR base | 一律 → `main` |
+| 文档登记 | 文档与代码改动**同 PR**，废除 DOC-V2-* 独立登记流程 |
+| 任务台账 | 单一 [`backlog.md`](backlog.md)，废除 `02_任务台账.md` 与 `ai-dev-input/10_task_claims/` 体系 |
 
 ---
 
-## 5. 历史归档说明
+## 3. 历史 v0.3 查询
 
-历史归档已在 2026-05-18 物理删除，当前工作树不再保留 `_archive/` 目录，也不允许新文档继续引用它。旧文档只可通过 git 历史溯源，例如 `git checkout pre-cleanup-20260518`。
+需要查 v0.3 时代的产品方案 / 任务历史 / 旧代码：
 
-历史长文的实施依据已收敛到当前 V2 文档：
+```bash
+# 旧 main 状态
+git checkout legacy/v0.3-main-20260524
 
-| 历史资料类型 | 当前权威替代 |
-|---|---|
-| 产品化方案、九大产品能力、多角色诉求 | [01_产品事实源.md](01_产品事实源.md) |
-| 客户验收剧本、演示 story | [02_场景剧本图.md](02_场景剧本图.md) |
-| 前端交互、视觉、原型 | [03_设计系统.md](03_设计系统.md) 与 [04_页面规格书.md](04_页面规格书.md) |
-| AI 复刻式实现、并行开发计划 | [05_AI实施手册.md](05_AI实施手册.md) 与 [engineering/02_任务台账.md](engineering/02_任务台账.md) |
+# 旧 develop 状态（含 567 个领先 commit）
+git checkout legacy/v0.3-develop-20260524
 
----
+# 25 个 ai/GA-* 分支 SHA 索引
+cat docs/archive/v0.3/ai-branches-snapshot-20260524.md
+```
 
-## 6. 文档权威链（冲突仲裁）
-
-当多个文档对同一事项有不同描述时，按以下优先级仲裁：
-
-| 决策类型 | 权威文档 | 说明 |
-|---|---|---|
-| **产品定位、角色、能力、场景** | [01_产品事实源.md](01_产品事实源.md) | 产品决策的唯一权威 |
-| **架构边界、Provider 抽象** | [05_架构总图与服务边界.md](engineering/05_架构总图与服务边界.md) | 架构决策的唯一权威 |
-| **后端代码规范** | [06_后端开发规范.md](engineering/06_后端开发规范.md) | 后端实现的强制规范 |
-| **前端代码规范** | [07_前端开发规范.md](engineering/07_前端开发规范.md) | 前端实现的强制规范 |
-| **任务状态** | [02_任务台账.md](engineering/02_任务台账.md) | 任务状态的唯一权威 |
-| **禁用模式** | [forbidden-patterns.md](engineering/forbidden-patterns.md) | 禁用模式的唯一权威 |
-| **数据库分层** | [数据库Provider与离线AI开发约定.md](engineering/数据库Provider与离线AI开发约定.md) | 数据库使用的权威 |
-| **Git 分支** | [分支策略与发布管理.md](engineering/分支策略与发布管理.md) | 分支策略的权威 |
-| **编码标准** | [编码与中文备注规范.md](engineering/编码与中文备注规范.md) | 编码的权威 |
-
-**原则：** 其他文档引用权威文档，不重复定义。
+→ 旧文档原文全部保留在 [`docs/archive/v0.3/`](archive/v0.3/)。
 
 ---
 
-## 7. 文档维护规则
+## 4. 关联文档
 
-- 修改 V2 金本位 5 份 → 必须创建 `DOC-V2-*` 任务在台账登记
-- V2 文档之间冲突 → 按 §6 权威链仲裁
-- V2 与历史资料冲突 → 永远以 V2 为准
-- 新增产品需求 → 先更新 01_产品事实源.md → 传导到 02/04/05
-- 历史归档目录已删除，不允许新增 `_archive/` 引用
-- 禁止"先实现后补设计"
-- 重复内容必须引用权威文档，不重复定义
+- [项目根 README](../README.md)
+- [后端 README](../medkernel-backend/README.md)
+- [前端 README](../frontend/README.md)
 
 ---
 
-## 7. 常见误区
-
-| 误区 | 正确做法 |
-|---|---|
-| 看到历史任务记录里有旧文档名就引用 | 历史文档已删除，永远以 docs/01-05 为准 |
-| 把 V2 5 份当成"参考"而自由发挥 | V2 是强制规范，违反必须改 |
-| 同时改多个文档而不开 DOC-V2-* 任务 | 任何文档修改必须先登记任务 |
-| 写新页面不读 04_页面规格书.md | 必须先读对应页面的精确规格，不允许自由设计 |
-| 跳过 03_设计系统.md 直接用 Ant Design 默认色 | 必须用 tokens.css 中的 CSS Variables |
+**End of docs README v5.0.**

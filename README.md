@@ -1,147 +1,111 @@
-# 集团化医疗智能引擎平台（medkernel）
+# 集团医疗智能中枢 · MedKernel
 
-> 让医院能像产品经理管理软件一样管理临床路径、规则和医学知识：版本化、可灰度、可追溯、可下线，每一次诊疗决策都能回到来源。
-
-面向集团化医院 / 多院区 / 专科医联体，提供路径引擎、规则引擎、图谱引擎、Dify AI 工作流、字典标准化、适配器中心、质控审计能力的产品化解决方案。支持单医院、集团化医院、多院区、卫生所/站点等多组织形态，支持国产化部署（Oracle / 达梦 / PostgreSQL / KingbaseES）。
-
-部署形态：院内 / 专网部署是当前优先交付形态；外网 / SaaS 基准服务可用于租户开通、标准知识包运营、脱敏治理包和客户演示。当前 MVP 尚未完成生产级外网账号、MFA、租户隔离、WAF/网关和合规闭环，不能直接裸露公网承载真实患者数据。
+> v1.0 GA 全量重启基线 · 2026-05-23
+> 把指南、路径、规则和院内数据接起来，在临床现场提醒医生，在质控侧形成整改闭环，并留下合规证据。
 
 ---
 
-## 文档入口（任何人接手前先看这一份）
+## 一句话定位
 
-**👉 [docs/README.md](docs/README.md)** — 项目所有文档的唯一权威导航。
+MedKernel = **集团医疗智能中枢**，面向集团医院 / 多院区 / 三甲三乙，提供 4 大主线 + 1 高级工具：
 
-文档分三层：
-
-| 层级 | 路径 | 内容 |
-|---|---|---|
-| **金本位**（产品+设计+实施） | [`docs/`](docs/) | 5 份核心：产品事实源 / 场景剧本图 / 设计系统 / 页面规格书 / AI 实施手册 |
-| **工程规范**（架构+开发） | [`docs/engineering/`](docs/engineering/) | 架构总图 / 前后端规范 / 国产化适配 / 部署 / 任务台账 / 编码规范 |
-
-> 历史归档已物理删除（2026-05-18，commit `e336bb8` 之后）。如需溯源旧文档（V1 草稿 / 19 份 V2 之前主线 / 11 份早期资料），请 `git checkout pre-cleanup-20260518` 回到清理前快照。
-
----
-
-## 目录速查
-
-| 目录 | 用途 |
+| 主线 | 客户能理解的话 |
 |---|---|
-| [`docs/`](docs/) | 所有文档（产品 + 工程 + 归档） |
-| [`medkernel-mvp/`](medkernel-mvp/README.md) | 后端 MVP 工程（Spring Boot 2.7 / JDK 1.8） |
-| [`frontend/`](frontend/README.md) | 前端工程（React 18 + TypeScript + Vite + Ant Design 5） |
-| [`ai-dev-input/`](ai-dev-input/README.md) | AI 协作运行时（任务卡 / claim / review / 验收记录 / 演示数据 / DDL） |
-| [`deploy/`](deploy/README.md) | 内网自动化部署（Linux *.sh / Windows *.ps1） |
+| 试点准备 | 把医院、系统、路径、规则准备好 |
+| 临床运行 | 患者进路径、医生收到提醒、任务有人处理 |
+| 质控改进 | 看问题、派整改、看效果 |
+| 合规运维 | 身份、审计、安全、监控、交付证据 |
+
+> 详见 [产品宪法](docs/CONSTITUTION.md)。
 
 ---
 
-## 快速开始
+## 技术栈（v1.0 GA）
 
-### 后端（首次启动）
+| 层 | 选型 |
+|---|---|
+| 后端 | JDK 21 LTS + Spring Boot 3.3 + Jakarta EE + Spring Security 6 + Spring Data JDBC + Hikari 5 + Flyway 10 |
+| 加密 | BouncyCastle 1.78.1（SM2 / SM3 / SM4 + FIPS 路径预留） |
+| 数据库 | PostgreSQL / Oracle 23ai / 达梦 8 / 人大金仓 V9 / H2（5 方言全支持） |
+| 知识图谱 | Neo4j 5.23 |
+| 监控 | OpenTelemetry 1.41 + Prometheus + Tempo + Loki + Grafana |
+| 前端 | Node 20 LTS + React 18 + Antd 5 + Vite 5 + TypeScript 5.6 + React Query 5 + Zustand 5 |
+| 部署 | 内外网双形态：内网（国产化栈）+ 外网（SaaS） |
 
-```powershell
-cd medkernel-mvp
-.\scripts\detect-db-env.ps1 -BootstrapLocal   # 自动选择 Oracle 或 LOCAL_H2
-.\scripts\run-tests.cmd                        # 跑测试
-.\scripts\build.cmd                            # 构建
-.\scripts\start-memory.cmd                     # 启动（内存态）
+---
+
+## 仓库结构
+
+```
+medkernel/
+├─ medkernel-backend/    ← Spring Boot 3 + JDK 21 + Jakarta EE
+├─ frontend/             ← React 18 + Antd 5 + FSD（app/pages/widgets/features/entities/shared）
+├─ docs/                 ← 文档中心（CONSTITUTION + 12 周方案 + 任务台账 + handbook）
+└─ deploy/               ← 部署脚本 + 监控配置（Grafana / Prometheus / Nginx / systemd）
 ```
 
-健康检查：
+---
 
-```text
-http://localhost:18080/medkernel/api/health
-http://localhost:18080/medkernel/api/system/providers
+## 启动
+
+### 后端
+
+```bash
+cd medkernel-backend
+mvn spring-boot:run
 ```
 
-### 前端（首次启动）
+→ `http://localhost:18080/medkernel/api/v1/system/ping`
+→ `http://localhost:18080/medkernel/actuator/health`
+→ `http://localhost:18080/medkernel/swagger-ui.html`
+
+### 前端
 
 ```bash
 cd frontend
 npm install
 npm run dev
-# 浏览器访问 http://localhost:5173
 ```
 
----
-
-## 当前后端能力（已实现）
-
-- 三大引擎主路径：路径（PATH-001 至 PATH-008）、规则（RULE-001 至 RULE-008）、图谱（GRAPH-001、GRAPH-003、GRAPH-004）
-- 配置包统一模型 + 多数据库持久化（PKG-001 至 PKG-004）
-- 5 段组织上下文与继承（ORG-001 至 ORG-004）
-- 来源追溯（PROV-001 至 PROV-003）、字典映射（TERM-001、TERM-002）、Dify 适配（DIFY-001）
-- 审计日志、健康检查、Provider 状态接口
-- 跨数据库 DDL：Oracle / DM / PostgreSQL / KingbaseES / LOCAL_H2_FILE 五套同步维护
-
-详细 API 见 [docs/04_页面规格书.md](docs/04_页面规格书.md) 与 [docs/engineering/api-examples.http](docs/engineering/api-examples.http)。
+→ `http://localhost:5173`
 
 ---
 
-## 当前前端能力（已实现）
+## 关键文档
 
-当前可用页面：
-
-- `/dashboard` 工作台首页（功能状态总览）
-- `/system/providers` Provider 状态（接真实 API）
-- `/config/packages` 配置包中心（列表 / Review / diff / publish / export，支持 MSW 演示）
-
-当前占位页面：
-
-- `/demo-validation` 演示与规则校验工作台
-- `/provenance` 来源追溯
-
-完整页面规划见 [docs/04_页面规格书.md](docs/04_页面规格书.md) 共 18 个目标页面。
-
-下一步 12 个 PR 见 [docs/05_AI实施手册.md](docs/05_AI实施手册.md)。
+| 文档 | 一句话 |
+|---|---|
+| [docs/CONSTITUTION.md](docs/CONSTITUTION.md) | 产品宪法：12 条硬约束 / 5 菜单 / 4 状态机 / 7 步流 / 6 阶段租户生命周期 |
+| [docs/V1_GA_REWRITE_PLAN.md](docs/V1_GA_REWRITE_PLAN.md) | 12 周方案：Phase-0~6 / W1 Day-by-Day / 风险 |
+| [docs/backlog.md](docs/backlog.md) | 单一任务台账：74 项 GA-* + 3 字段（id/owner/status） |
+| [docs/README.md](docs/README.md) | 文档中心导航 |
 
 ---
 
-## 产品核心原则（22 条不变量摘要）
+## 国情合规底线
 
-完整不变量见 [docs/01_产品事实源.md §7](docs/01_产品事实源.md#7-22-个不变量任何-ai-不得违反)。
-
-**红线（违反即停止）：**
-
-- 不允许硬编码单医院 / 单院区 / 单系统厂商逻辑
-- 不允许 Neo4j / Dify / 大模型成为测试环境强依赖（DB-only 模式必须可独立验收）
-- 不允许配置静默覆盖已发布版本（同 code+version 内容不同 → 错误）
-- 不允许关键医疗建议绕过医生确认
-- 不允许医学/医保/质控配置缺来源直接发布（`MISSING_SOURCE` 必须阻断）
-- 不允许发布/回滚/审核绕过审计
-- 不允许日志输出密码 / API Key / 患者完整身份
-
-**架构基线：**
-
-- Oracle 是生产权威数据源；达梦 / PostgreSQL / KingbaseES 是国产化交付；LOCAL_H2_FILE 是开发本地库
-- Neo4j 是图谱投影，Dify 是 AI 工作流执行目标，均为可降级 Provider
-- 业务服务只调 Provider 接口，不直接依赖具体实现
-- 医院差异通过组织范围、配置包、字典映射、适配器绑定实现
-- 所有配置版本化、可审核、可发布、可回滚、可追溯
+| 维度 | 标准 |
+|---|---|
+| 等级保护 | 等保 2.0 三级 |
+| 商用密码 | GM/T 0054 + GB/T 39786 商密评测 |
+| 个人信息 | 个保法 + GB/T 35273-2020 个人信息安全规范 |
+| 数据出境 | 数据出境安全评估办法 |
+| 医疗法规 | 电子病历应用管理规范 + 医师法 + 医疗卫生机构网络安全管理办法 |
+| 备案 | ICP 备案 + 公安备案 + 算法备案 |
 
 ---
 
-## AI 协作流程
+## v0.3 历史
 
-本仓库面向**多 AI 并行开发**。AI 接手任务的标准流程：
+v0.3-final 已发布并归档。需要查询历史：
 
-```
-1. 阅读 docs/README.md（5 分钟）
-2. 按任务类型读对应金本位文档（15 分钟）
-3. 读 docs/engineering/02_任务台账.md 找到任务行
-4. 按 docs/engineering/00_总入口与AI接手导航.md 的硬门禁执行
-5. 在 ai-dev-input/10_task_claims/active/ 创建认领
-6. 开发 → 自检 → 在 ai-dev-input/11_ai_reviews/pending/ 创建评审
-7. APPROVED 后 commit + push + 归档 claim/review
+```bash
+git checkout legacy/v0.3-main-20260524     # v0.3-final main
+git checkout legacy/v0.3-develop-20260524  # v0.3-final develop（含 567 commit）
 ```
 
-详细执行清单见 [docs/05_AI实施手册.md](docs/05_AI实施手册.md)。
+旧文档全部归档在 [docs/archive/v0.3/](docs/archive/v0.3/)。
 
 ---
 
-## 维护
-
-- 文档体系：[docs/README.md](docs/README.md)（V2 体系，2026-05-18 重构）
-- 版本管理：[VERSIONING.md](VERSIONING.md)
-- 变更日志：[CHANGELOG.md](CHANGELOG.md)
-- 部署运维：[deploy/README.md](deploy/README.md)
+**MedKernel · v1.0 GA · 2026-08-15 目标发版日**

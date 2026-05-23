@@ -1,16 +1,17 @@
-import { Button, Result } from "antd";
-import { Link } from "react-router-dom";
+import { Result, Button } from "antd";
+import { useNavigate } from "react-router-dom";
 
 export default function NotFound() {
+  const navigate = useNavigate();
   return (
     <Result
       status="404"
       title="404"
-      subTitle="页面不存在 · 该路由可能尚未由 FE-xxx 任务交付"
+      subTitle="此页面不存在或还未实装"
       extra={
-        <Link to="/dashboard">
-          <Button type="primary">返回工作台</Button>
-        </Link>
+        <Button type="primary" onClick={() => navigate("/dashboard")}>
+          返回工作台
+        </Button>
       }
     />
   );
