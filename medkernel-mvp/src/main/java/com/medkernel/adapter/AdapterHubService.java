@@ -44,7 +44,7 @@ public class AdapterHubService {
         Map<String, Object> result = definition == null
                 ? unsupported(adapterCode, queryCode, params)
                 : success(definition, params, System.currentTimeMillis() - start);
-        audit(adapterCode, queryCode, params, result);
+        audit(adapterCode, queryCode, params, result, tenantId, hospitalCode);
         return result;
     }
 
@@ -218,7 +218,8 @@ public class AdapterHubService {
         return view;
     }
 
-    private void audit(String adapterCode, String queryCode, Map<String, Object> params, Map<String, Object> result) {
+    private void audit(String adapterCode, String queryCode, Map<String, Object> params, Map<String, Object> result,
+                       String tenantId, String hospitalCode) {
         Map<String, Object> detail = new LinkedHashMap<String, Object>();
         detail.put("adapter_code", canonical(adapterCode));
         detail.put("query_code", canonical(queryCode));
@@ -246,6 +247,8 @@ public class AdapterHubService {
             logEntry.setTraceId(TraceContext.getTraceId());
             logEntry.setAdapterCode(canonical(adapterCode));
             logEntry.setQueryCode(canonical(queryCode));
+            logEntry.setTenantId(tenantId);
+            logEntry.setHospitalCode(hospitalCode);
             logEntry.setStatus(string(result.get("status"), "UNKNOWN"));
             logEntry.setElapsedMs(result.get("elapsed_ms") instanceof Number
                     ? ((Number) result.get("elapsed_ms")).longValue() : 0L);

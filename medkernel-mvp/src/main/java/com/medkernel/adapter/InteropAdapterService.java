@@ -2,6 +2,7 @@ package com.medkernel.adapter;
 
 import com.medkernel.common.TraceContext;
 import com.medkernel.persistence.EnginePersistenceService;
+import com.medkernel.adapter.entity.AdapterCallLogEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,12 +26,15 @@ public class InteropAdapterService {
     private static final Logger logger = LoggerFactory.getLogger(InteropAdapterService.class);
     
     private final EnginePersistenceService persistenceService;
+    private final AdapterExecutionLogService executionLogService;
     private final Map<String, InteropAdapterDefinition> adapterDefinitions = new ConcurrentHashMap<>();
     private final Map<String, CdsHooksServiceDefinition> cdsHooksDefinitions = new ConcurrentHashMap<>();
     private final Map<String, SmartAppDefinition> smartAppDefinitions = new ConcurrentHashMap<>();
-    
-    public InteropAdapterService(EnginePersistenceService persistenceService) {
+
+    public InteropAdapterService(EnginePersistenceService persistenceService,
+                                  AdapterExecutionLogService executionLogService) {
         this.persistenceService = persistenceService;
+        this.executionLogService = executionLogService;
         seedInteropDefinitions();
     }
     
@@ -606,7 +610,7 @@ public class InteropAdapterService {
         detail.put("elapsed_ms", result.get("elapsed_ms"));
         detail.put("adapter_type", result.get("adapter_type"));
         detail.put("protocol", result.get("protocol"));
-        
+
         try {
             persistenceService.saveAuditLog("INTEROP_ADAPTER", "QUERY", "INTEROP_ADAPTER_QUERY",
                     canonical(adapterCode) + "." + canonical(queryCode),
@@ -618,6 +622,23 @@ public class InteropAdapterService {
             logger.warn("[traceId={}] interop adapter audit log persistence failed: {}",
                     TraceContext.getTraceId(), ex.getMessage());
         }
+
+        // ADAPT-004: 写入适配器执行日志
+        try {
+            AdapterCallLogEntity logEntry = new AdapterCallLogEntity();
+            logEntry.setTraceId(TraceContext.getTraceId());
+            logEntry.setAdapterCode(canonical(adapterCode));
+            logEntry.setQueryCode(canonical(queryCode));
+            logEntry.setStatus(string(result.get("status"), "UNKNOWN"));
+            logEntry.setElapsedMs(result.get("elapsed_ms") instanceof Number ? ((Number) result.get("elapsed_ms")).longValue() : 0L);
+            logEntry.setPatientId(string(params.get("patient_id"), null));
+            logEntry.setEncounterId(string(params.get("encounter_id"), null));
+            logEntry.setOperatorId(string(params.get("operator_id"), null));
+            executionLogService.recordCallLog(logEntry);
+        } catch (RuntimeException ex) {
+            logger.warn("[traceId={}] interop adapter execution log record failed: {}",
+                    TraceContext.getTraceId(), ex.getMessage());
+        }
     }
     
     private void auditCdsHooks(String hookId, String hookType, Map<String, Object> context, Map<String, Object> result) {
@@ -627,7 +648,7 @@ public class InteropAdapterService {
         detail.put("status", result.get("status"));
         detail.put("mock", result.get("mock"));
         detail.put("cards_count", result.get("cards") != null ? ((List<?>) result.get("cards")).size() : 0);
-        
+
         try {
             persistenceService.saveAuditLog("CDS_HOOKS", "QUERY", "CDS_HOOKS_QUERY",
                     hookId,
@@ -639,6 +660,23 @@ public class InteropAdapterService {
             logger.warn("[traceId={}] CDS Hooks audit log persistence failed: {}",
                     TraceContext.getTraceId(), ex.getMessage());
         }
+
+        // ADAPT-004: 写入适配器执行日志
+        try {
+            AdapterCallLogEntity logEntry = new AdapterCallLogEntity();
+            logEntry.setTraceId(TraceContext.getTraceId());
+            logEntry.setAdapterCode("CDS_HOOKS");
+            logEntry.setQueryCode(hookId);
+            logEntry.setStatus(string(result.get("status"), "UNKNOWN"));
+            logEntry.setElapsedMs(result.get("elapsed_ms") instanceof Number ? ((Number) result.get("elapsed_ms")).longValue() : 0L);
+            logEntry.setPatientId(string(context.get("patient_id"), null));
+            logEntry.setEncounterId(string(context.get("encounter_id"), null));
+            logEntry.setOperatorId(string(context.get("user_id"), null));
+            executionLogService.recordCallLog(logEntry);
+        } catch (RuntimeException ex) {
+            logger.warn("[traceId={}] CDS Hooks execution log record failed: {}",
+                    TraceContext.getTraceId(), ex.getMessage());
+        }
     }
     
     private void auditSmartApp(String appId, Map<String, Object> launchContext, Map<String, Object> result) {
@@ -647,7 +685,7 @@ public class InteropAdapterService {
         detail.put("status", result.get("status"));
         detail.put("mock", result.get("mock"));
         detail.put("app_type", result.get("app_type"));
-        
+
         try {
             persistenceService.saveAuditLog("SMART_ON_FHIR", "LAUNCH", "SMART_APP_LAUNCH",
                     appId,
@@ -657,6 +695,23 @@ public class InteropAdapterService {
                     detail);
         } catch (RuntimeException ex) {
             logger.warn("[traceId={}] SMART on FHIR audit log persistence failed: {}",
+                    TraceContext.getTraceId(), ex.getMessage());
+        }
+
+        // ADAPT-004: 写入适配器执行日志
+        try {
+            AdapterCallLogEntity logEntry = new AdapterCallLogEntity();
+            logEntry.setTraceId(TraceContext.getTraceId());
+            logEntry.setAdapterCode("SMART_ON_FHIR");
+            logEntry.setQueryCode(appId);
+            logEntry.setStatus(string(result.get("status"), "UNKNOWN"));
+            logEntry.setElapsedMs(result.get("elapsed_ms") instanceof Number ? ((Number) result.get("elapsed_ms")).longValue() : 0L);
+            logEntry.setPatientId(string(launchContext.get("patient_id"), null));
+            logEntry.setEncounterId(string(launchContext.get("encounter_id"), null));
+            logEntry.setOperatorId(string(launchContext.get("user_id"), null));
+            executionLogService.recordCallLog(logEntry);
+        } catch (RuntimeException ex) {
+            logger.warn("[traceId={}] SMART on FHIR execution log record failed: {}",
                     TraceContext.getTraceId(), ex.getMessage());
         }
     }
