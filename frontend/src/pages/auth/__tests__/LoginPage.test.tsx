@@ -61,7 +61,7 @@ vi.mock("../DemoHint", () => ({
   DemoHint: () => <div data-testid="demo-hint" />,
 }));
 vi.mock("../tabs/PasswordTab", () => ({
-  PasswordTab: ({ onSubmit }: { onSubmit: (v: unknown) => void }) => (
+  PasswordTab: ({ onSubmit: _onSubmit }: { onSubmit: (v: unknown) => void }) => (
     <div data-testid="password-tab" />
   ),
 }));

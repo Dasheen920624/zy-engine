@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ApiError } from "../types";
-import type { ApiResult, PagedResult, OrgContext, ProviderStatus } from "../types";
+import { ApiError } from "./types";
+import type { ApiResult, PagedResult, OrgContext } from "./types";
 
 describe("ApiResult 类型守卫", () => {
   it("成功的 ApiResult 应有 success=true", () => {

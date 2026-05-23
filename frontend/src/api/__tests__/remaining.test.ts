@@ -3,16 +3,16 @@ import { resetMocks } from "./testUtils";
 
 vi.mock("../client", () => ({
   http: {
-    get: (...args: unknown[]) => vi.fn(...args),
-    post: (...args: unknown[]) => vi.fn(...args),
-    put: (...args: unknown[]) => vi.fn(...args),
-    delete: (...args: unknown[]) => vi.fn(...args),
-    patch: (...args: unknown[]) => vi.fn(...args),
+    get: () => vi.fn(),
+    post: () => vi.fn(),
+    put: () => vi.fn(),
+    delete: () => vi.fn(),
+    patch: () => vi.fn(),
   },
-  get: (...args: unknown[]) => vi.fn(...args),
-  post: (...args: unknown[]) => vi.fn(...args),
-  put: (...args: unknown[]) => vi.fn(...args),
-  del: (...args: unknown[]) => vi.fn(),
+  get: () => vi.fn(),
+  post: () => vi.fn(),
+  put: () => vi.fn(),
+  del: () => vi.fn(),
 }));
 
 import * as adapterHub from "../adapterHub";

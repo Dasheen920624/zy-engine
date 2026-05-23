@@ -29,7 +29,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("KnowledgePage", () => {
   it("应渲染知识库页面", () => {
-    render(wrapper(<KnowledgePage />));
+    render(<KnowledgePage />, { wrapper });
     const heading = screen.queryByRole("heading");
     expect(heading || document.querySelector(".mk-page-header")).toBeTruthy();
   });

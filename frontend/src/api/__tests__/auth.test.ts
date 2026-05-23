@@ -5,14 +5,14 @@ vi.mock("../client", () => ({
   http: {
     get: (...args: unknown[]) => mockHttpGet(...args),
     post: (...args: unknown[]) => mockHttpPost(...args),
-    put: (...args: unknown[]) => vi.fn(),
-    delete: (...args: unknown[]) => vi.fn(),
-    patch: (...args: unknown[]) => vi.fn(),
+    put: () => vi.fn(),
+    delete: () => vi.fn(),
+    patch: () => vi.fn(),
   },
   get: (...args: unknown[]) => mockGet(...args),
   post: (...args: unknown[]) => mockPost(...args),
-  put: (...args: unknown[]) => vi.fn(),
-  del: (...args: unknown[]) => vi.fn(),
+  put: () => vi.fn(),
+  del: () => vi.fn(),
 }));
 
 import * as auth from "../auth";

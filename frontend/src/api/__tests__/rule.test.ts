@@ -3,15 +3,15 @@ import { mockGet, mockPost, mockDel, resetMocks } from "./testUtils";
 
 vi.mock("../client", () => ({
   http: {
-    get: (...args: unknown[]) => vi.fn(...args),
-    post: (...args: unknown[]) => vi.fn(...args),
-    put: (...args: unknown[]) => vi.fn(...args),
-    delete: (...args: unknown[]) => vi.fn(...args),
-    patch: (...args: unknown[]) => vi.fn(...args),
+    get: () => vi.fn(),
+    post: () => vi.fn(),
+    put: () => vi.fn(),
+    delete: () => vi.fn(),
+    patch: () => vi.fn(),
   },
   get: (...args: unknown[]) => mockGet(...args),
   post: (...args: unknown[]) => mockPost(...args),
-  put: (...args: unknown[]) => vi.fn(),
+  put: () => vi.fn(),
   del: (...args: unknown[]) => mockDel(...args),
 }));
 

@@ -3,9 +3,9 @@ import { Button, Checkbox, Space, Tag, Typography } from "antd";
 import { WarningOutlined } from "@ant-design/icons";
 import type { TerminologyItem, AiCandidate, ConceptType } from "../../../api/types";
 import { AiGeneratedBadge } from "../../../components";
-import { CONCEPT_TYPE_MAP } from "../constants";
-import DangerConfirm from "./DangerConfirm";
-import styles from "../../mappingWorkbench.module.css";
+import { CONCEPT_TYPE_MAP } from "./constants";
+import DangerConfirm from "./components/DangerConfirm";
+import styles from "../mappingWorkbench.module.css";
 
 const { Text } = Typography;
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ApiError } from "../types";
-import type { ApiErrorCode } from "../types";
+import { ApiError } from "./types";
+import type { ApiErrorCode } from "./types";
 
 describe("ApiError", () => {
   it("应正确构造 ApiError", () => {

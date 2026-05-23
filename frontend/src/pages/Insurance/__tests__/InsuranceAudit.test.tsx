@@ -25,7 +25,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("InsuranceAudit", () => {
   it("应渲染医保审核页面", () => {
-    render(wrapper(<InsuranceAudit />));
+    render(<InsuranceAudit />, { wrapper });
     const heading = screen.queryByRole("heading");
     expect(heading || document.querySelector(".mk-page-header")).toBeTruthy();
   });

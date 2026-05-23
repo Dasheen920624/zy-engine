@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { formatDateTime, formatDate, formatNumber, formatPercent, formatCurrency } from "../format";
+import { describe, it, expect } from "vitest";
+import { formatDateTime, formatDate, formatNumber, formatPercent, formatCurrency } from "./format";
 
 describe("formatDateTime", () => {
   it("应返回 '-' 当值为 null", () => {

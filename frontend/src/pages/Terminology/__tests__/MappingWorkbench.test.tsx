@@ -28,7 +28,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("MappingWorkbench", () => {
   it("应渲染术语映射工作台页面", () => {
-    render(wrapper(<MappingWorkbench />));
+    render(<MappingWorkbench />, { wrapper });
     const heading = screen.queryByRole("heading");
     expect(heading || document.querySelector(".mk-page-header")).toBeTruthy();
   });

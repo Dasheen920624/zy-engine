@@ -27,7 +27,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("NotificationList", () => {
   it("应渲染通知列表页面", () => {
-    render(wrapper(<NotificationList />));
+    render(<NotificationList recipientId="test-user" />, { wrapper });
     const heading = screen.queryByRole("heading");
     expect(heading || document.querySelector(".mk-page-header")).toBeTruthy();
   });

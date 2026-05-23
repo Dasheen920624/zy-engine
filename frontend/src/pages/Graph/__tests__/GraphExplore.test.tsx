@@ -26,7 +26,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("GraphExplore", () => {
   it("应渲染知识图谱页面", () => {
-    render(wrapper(<GraphExplore />));
+    render(<GraphExplore />, { wrapper });
     // 页面应包含标题或关键元素
     const heading = screen.queryByRole("heading");
     expect(heading || document.querySelector(".mk-page-header")).toBeTruthy();

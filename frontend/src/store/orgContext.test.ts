@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getOrgContext, setOrgContext, subscribeOrgContext } from "../orgContext";
-import type { OrgContext } from "../../api/types";
+import { getOrgContext, setOrgContext, subscribeOrgContext } from "./orgContext";
+import type { OrgContext } from "../api/types";
 
 describe("orgContext store", () => {
   beforeEach(() => {

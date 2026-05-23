@@ -50,26 +50,26 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("PathwayList", () => {
   it("应渲染路径配置页面", () => {
-    render(wrapper(<PathwayList />));
+    render(<PathwayList />, { wrapper });
   });
 
   it("应显示路径配置标题", () => {
-    render(wrapper(<PathwayList />));
+    render(<PathwayList />, { wrapper });
     expect(screen.getByText("路径配置")).toBeTruthy();
   });
 
   it("应显示新建专病路径按钮", () => {
-    render(wrapper(<PathwayList />));
+    render(<PathwayList />, { wrapper });
     expect(screen.getByText("新建专病路径")).toBeTruthy();
   });
 
   it("应显示搜索输入框", () => {
-    render(wrapper(<PathwayList />));
+    render(<PathwayList />, { wrapper });
     expect(screen.getByPlaceholderText("搜索路径")).toBeTruthy();
   });
 
   it("应显示组织上下文选择器", () => {
-    render(wrapper(<PathwayList />));
+    render(<PathwayList />, { wrapper });
     expect(screen.getByTestId("org-context-selector")).toBeTruthy();
   });
 });

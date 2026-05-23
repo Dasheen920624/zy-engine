@@ -81,7 +81,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("PackageDetail", () => {
   it("应在无选中包时显示空状态", () => {
-    render(wrapper(<PackageDetail selectedPkg={null} />));
+    render(<PackageDetail selectedPkg={null} />, { wrapper });
     expect(screen.getByText("选择配置包查看详情")).toBeTruthy();
   });
 
@@ -97,7 +97,7 @@ describe("PackageDetail", () => {
       created_by: "admin",
       created_time: "2026-05-01T10:00:00",
     };
-    render(wrapper(<PackageDetail selectedPkg={selectedPkg as never} />));
+    render(<PackageDetail selectedPkg={selectedPkg as never} />, { wrapper });
     expect(screen.getByText("基础信息")).toBeTruthy();
   });
 
@@ -113,7 +113,7 @@ describe("PackageDetail", () => {
       created_by: "admin",
       created_time: "2026-05-01T10:00:00",
     };
-    render(wrapper(<PackageDetail selectedPkg={selectedPkg as never} />));
+    render(<PackageDetail selectedPkg={selectedPkg as never} />, { wrapper });
     expect(screen.getByText("重新校验")).toBeTruthy();
   });
 
@@ -129,7 +129,7 @@ describe("PackageDetail", () => {
       created_by: "admin",
       created_time: "2026-05-01T10:00:00",
     };
-    render(wrapper(<PackageDetail selectedPkg={selectedPkg as never} />));
+    render(<PackageDetail selectedPkg={selectedPkg as never} />, { wrapper });
     expect(screen.getByText("导出")).toBeTruthy();
   });
 });

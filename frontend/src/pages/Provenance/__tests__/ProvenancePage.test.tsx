@@ -37,12 +37,12 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("ProvenancePage", () => {
   it("应渲染来源追溯标题", () => {
-    render(wrapper(<ProvenancePage />));
+    render(<ProvenancePage />, { wrapper });
     expect(screen.getByText("来源追溯")).toBeTruthy();
   });
 
   it("应显示三个卡片区域", () => {
-    render(wrapper(<ProvenancePage />));
+    render(<ProvenancePage />, { wrapper });
     expect(screen.getByText("来源文档库")).toBeTruthy();
     expect(screen.getByText("来源文档")).toBeTruthy();
     expect(screen.getByText("引用片段")).toBeTruthy();
@@ -50,7 +50,7 @@ describe("ProvenancePage", () => {
   });
 
   it("应显示刷新按钮", () => {
-    render(wrapper(<ProvenancePage />));
+    render(<ProvenancePage />, { wrapper });
     const refreshButtons = screen.getAllByText("刷新");
     expect(refreshButtons.length).toBeGreaterThanOrEqual(2);
   });

@@ -1,4 +1,4 @@
-import { Button, Card, Col, Empty, Form, Input, Row, Select, Space, Table, Typography } from "antd";
+import { Button, Card, Col, Empty, Form, Input, Row, Select, Table, Typography } from "antd";
 import type { FormInstance } from "antd";
 import type { DepartmentInput, RoleInput } from "../types";
 import { DEPT_TYPES } from "../constants";

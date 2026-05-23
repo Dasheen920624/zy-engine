@@ -13,7 +13,7 @@ import type { ConfigPackageSummary } from "../../api/types";
 import ConfigWizardModal from "./ConfigWizardModal";
 import { loadDraft, saveDraft, clearDraft } from "./ImplementationGuide/types";
 import type { DepartmentInput, RoleInput, ImplementationDraft, EnvCheckItem } from "./ImplementationGuide/types";
-import { STEP_ITEMS, DEFAULT_ENV_CHECKS, SAMPLE_PATHWAYS } from "./ImplementationGuide/constants";
+import { STEP_ITEMS, DEFAULT_ENV_CHECKS } from "./ImplementationGuide/constants";
 import Step0EnvCheck from "./ImplementationGuide/steps/Step0EnvCheck";
 import Step1OrgConfig from "./ImplementationGuide/steps/Step1OrgConfig";
 import Step2RuleImport from "./ImplementationGuide/steps/Step2RuleImport";

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getCurrentUser, getCurrentRole, switchMockRole, getAvailableRoles, subscribeCurrentUser } from "../currentUser";
+import { getCurrentUser, getCurrentRole, switchMockRole, getAvailableRoles, subscribeCurrentUser } from "./currentUser";
 
 describe("currentUser store", () => {
   beforeEach(() => {

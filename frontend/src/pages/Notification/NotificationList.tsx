@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, List, Badge, Tag, Button, Space, Typography, Empty, Spin, message, Dropdown, Menu } from 'antd';
-import { BellOutlined, CheckOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
+import { BellOutlined, CheckOutlined, FilterOutlined } from '@ant-design/icons';
 import { notificationApi } from '../../api/notification';
 import type { Notification, NotificationSummary } from '../../api/notification';
 import { useNavigate } from 'react-router-dom';

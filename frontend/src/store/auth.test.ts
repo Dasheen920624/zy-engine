@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getToken, getUser, isAuthenticated, setAuth, clearAuth, subscribeAuth } from "../auth";
-import type { UserInfo } from "../../api/types";
+import { getToken, getUser, isAuthenticated, setAuth, clearAuth, subscribeAuth } from "./auth";
+import type { UserInfo } from "../api/types";
 
 const mockUser: UserInfo = {
   id: 1,
