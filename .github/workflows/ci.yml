@@ -66,15 +66,15 @@ jobs:
           test -f docs/backlog.md || { echo "::error::缺 docs/backlog.md"; exit 1; }
           echo "✓ 3 张权威文档齐备"
 
-      - name: Forbid legacy task naming in new code
+      - name: Forbid legacy task naming in code
         run: |
-          # 仅在新代码区域（非 archive）禁止旧命名
-          if git ls-files medkernel-backend frontend/src docs/CONSTITUTION.md docs/V1_GA_REWRITE_PLAN.md docs/backlog.md 2>/dev/null \
-             | xargs grep -l "PR-V2-\|PR-V3-\|PR-FINAL-\|DOC-V2-" 2>/dev/null; then
-            echo "::error::新代码区不允许引用 PR-V2-/PR-V3-/PR-FINAL-/DOC-V2- 旧任务命名"
+          # 仅扫源码区（不扫 docs/，docs 必须能解释"已废除"的来龙去脉）
+          files=$(git ls-files medkernel-backend frontend/src 2>/dev/null)
+          if [ -n "$files" ] && echo "$files" | xargs grep -lE "PR-V[23]-[A-Z]+|PR-FINAL-[0-9]+|DOC-V2-[A-Z]+" 2>/dev/null; then
+            echo "::error::代码区不允许引用 PR-V2-XXX / PR-V3-XXX / PR-FINAL-NN / DOC-V2-XXX 旧任务命名"
             exit 1
           fi
-          echo "✓ 新代码区无旧任务命名残留"
+          echo "✓ 代码区无旧任务命名残留"
 
   # 前端骨架编译检查
   frontend-build-test:
