@@ -1,0 +1,7 @@
+task_id: GA-UX-01
+claim_id: GA-UX-01-S01
+owner: TraeAI-1
+branch: ai/GA-UX-01/no-placeholder
+git_base_commit: 0dbead4
+created_at: 2026-05-23T14:30:00+08:00
+last_heartbeat: 2026-05-23T14:30:00+08:00
