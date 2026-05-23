@@ -1,5 +1,6 @@
 package com.medkernel.datagovernance.repository;
 
+import com.medkernel.common.dataclass.FieldEncryptionService;
 import com.medkernel.datagovernance.entity.DoctorEntity;
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
@@ -18,7 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 医生主数据数据库访问层
+ * 医生主数据数据库访问层。
+ *
+ * <p>GA-DATA-01：透明 SM4 加密。{@link FieldEncryptionService} 在 save 前加密
+ * 标 {@code @Encrypted} 的字段，read 后解密。Service 层无感知。
  */
 @Repository
 public class DoctorRepository {
@@ -26,14 +30,21 @@ public class DoctorRepository {
 
     private final EnginePersistenceProperties properties;
     private final DataSource dataSource;
+    private final FieldEncryptionService fieldEncryption;
 
-    public DoctorRepository(EnginePersistenceProperties properties, DataSource dataSource) {
+    public DoctorRepository(EnginePersistenceProperties properties,
+                            DataSource dataSource,
+                            FieldEncryptionService fieldEncryption) {
         this.properties = properties;
         this.dataSource = dataSource;
+        this.fieldEncryption = fieldEncryption;
     }
 
     /**
-     * 保存医生主数据（新增或更新）
+     * 保存医生主数据（新增或更新）。
+     *
+     * <p>写入前加密 {@code @Encrypted} 字段，写入完成后解密回明文，
+     * 调用方拿到的 entity 始终是明文状态。
      */
     public void save(DoctorEntity entity) {
         if (!properties.isEnabled() || !properties.hasRequiredCredentials()) {
@@ -44,6 +55,7 @@ public class DoctorRepository {
             entity.setId(Ids.next());
         }
 
+        fieldEncryption.encryptEntity(entity);
         try (Connection connection = connection()) {
             Long existingId = findIdByUniqueKey(connection, entity.getTenantId(), entity.getDoctorId());
             if (existingId != null) {
@@ -54,6 +66,8 @@ public class DoctorRepository {
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("save doctor failed: " + ex.getMessage(), ex);
+        } finally {
+            fieldEncryption.decryptEntity(entity);
         }
     }
 
@@ -178,6 +192,8 @@ public class DoctorRepository {
         entity.setCreatedTime(createdTime != null ? createdTime.toLocalDateTime() : null);
         Timestamp updatedTime = rs.getTimestamp("updated_time");
         entity.setUpdatedTime(updatedTime != null ? updatedTime.toLocalDateTime() : null);
+        // GA-DATA-01：从数据库读出的 @Encrypted 字段为密文，统一解密回明文。
+        fieldEncryption.decryptEntity(entity);
         return entity;
     }
 

@@ -1,5 +1,6 @@
 package com.medkernel.rule;
 
+import com.medkernel.common.dataclass.FieldEncryptionService;
 import com.medkernel.persistence.EnginePersistenceProperties;
 import com.medkernel.persistence.Ids;
 import org.slf4j.Logger;
@@ -18,7 +19,10 @@ import java.util.UUID;
 /**
  * 规则评估结果 Repository。
  *
- * 风格与 ConfigPackageRepository 一致：手写 Connection + PreparedStatement + try-with-resources。
+ * <p>GA-DATA-01：透明 SM4 加密。{@link FieldEncryptionService} 在 save 前加密
+ * 标 {@code @Encrypted} 的字段，read 后解密。Service 层无感知。
+ *
+ * <p>风格与 ConfigPackageRepository 一致：手写 Connection + PreparedStatement + try-with-resources。
  * 跨方言策略：
  *  - hit_flag 在 Oracle/DM/H2 用 NUMBER/INT (0/1)，在 PostgreSQL 用 SMALLINT (0/1) 而非 BOOLEAN；
  *  - actions/evidence/*_snapshot 在所有方言统一为 CLOB/TEXT，写入 JSON 字符串，避免 PG JSONB 类型差异。
@@ -31,10 +35,14 @@ public class RuleEvalResultRepository {
 
     private final EnginePersistenceProperties properties;
     private final DataSource dataSource;
+    private final FieldEncryptionService fieldEncryption;
 
-    public RuleEvalResultRepository(EnginePersistenceProperties properties, DataSource dataSource) {
+    public RuleEvalResultRepository(EnginePersistenceProperties properties,
+                                    DataSource dataSource,
+                                    FieldEncryptionService fieldEncryption) {
         this.properties = properties;
         this.dataSource = dataSource;
+        this.fieldEncryption = fieldEncryption;
     }
 
     public boolean enabled() {
@@ -52,7 +60,9 @@ public class RuleEvalResultRepository {
             entity.setId(Ids.next());
         }
 
-        // 1) 先尝试 UPDATE
+        // GA-DATA-01：写入前加密 @Encrypted 字段
+        fieldEncryption.encryptEntity(entity);
+        try (Connection connection = connection()) {
         String updateSql = "UPDATE re_rule_eval_result SET " +
                 "rule_version=?, patient_id=?, encounter_id=?, hit_flag=?, severity=?, message=?, " +
                 "actions=?, evidence=?, input_snapshot=?, output_snapshot=?, elapsed_ms=?, " +
@@ -61,7 +71,6 @@ public class RuleEvalResultRepository {
                 "department_code=?, scope_level=?, scope_code=?, org_source=? " +
                 "WHERE eval_id=? AND rule_code=?";
 
-        try (Connection connection = connection()) {
             int updated;
             try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
                 int i = 1;
@@ -145,6 +154,9 @@ public class RuleEvalResultRepository {
         } catch (SQLException ex) {
             log.error("save rule eval result failed: evalId={}, ruleCode={}", entity.getEvalId(), entity.getRuleCode(), ex);
             throw new IllegalStateException("save rule eval result failed: " + ex.getMessage(), ex);
+        } finally {
+            // GA-DATA-01：写入完成后解密回明文，调用方拿到的 entity 始终是明文状态
+            fieldEncryption.decryptEntity(entity);
         }
     }
 
@@ -250,6 +262,8 @@ public class RuleEvalResultRepository {
         entity.setOrgSource(rs.getString("org_source"));
         java.sql.Timestamp ts = rs.getTimestamp("created_time");
         entity.setCreatedTime(ts == null ? null : ts.toString());
+        // GA-DATA-01：从数据库读出的 @Encrypted 字段为密文，统一解密回明文。
+        fieldEncryption.decryptEntity(entity);
         return entity;
     }
 
