@@ -21,6 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/release-check")
+@Tag(name = "发布检查", description = "发布前检查清单管理、检查执行和审批")
 public class ReleaseCheckController {
 
     private final ReleaseCheckService releaseCheckService;
@@ -36,6 +37,7 @@ public class ReleaseCheckController {
     // 清单管理
     // =========================================================================
 
+    @Operation(summary = "创建发布检查清单")
     @PostMapping("/checklists")
     public ApiResult<ReleaseChecklist> createChecklist(
             @RequestBody ReleaseChecklist checklist,
@@ -65,6 +67,7 @@ public class ReleaseCheckController {
         }
     }
 
+    @Operation(summary = "查询发布检查清单列表")
     @GetMapping("/checklists")
     public ApiResult<List<ReleaseChecklist>> listChecklists(
             @RequestParam(value = "tenant_id", required = false) Long tenantId,
@@ -87,6 +90,7 @@ public class ReleaseCheckController {
     // 检查执行
     // =========================================================================
 
+    @Operation(summary = "执行发布检查")
     @PostMapping("/execute")
     public ApiResult<ReleaseCheckResult> executeCheck(
             @RequestBody Map<String, String> request,
@@ -134,6 +138,7 @@ public class ReleaseCheckController {
         }
     }
 
+    @Operation(summary = "获取检查结果详情")
     @GetMapping("/results/{checkResultId}")
     public ApiResult<ReleaseCheckResult> getCheckResult(
             @PathVariable("checkResultId") Long checkResultId,
@@ -154,6 +159,7 @@ public class ReleaseCheckController {
     // 审批管理
     // =========================================================================
 
+    @Operation(summary = "审批通过发布")
     @PostMapping("/results/{checkResultId}/approve")
     public ApiResult<Map<String, Object>> approveRelease(
             @PathVariable("checkResultId") Long checkResultId,

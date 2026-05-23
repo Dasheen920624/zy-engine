@@ -1,49 +1,32 @@
-# AI Task Claim
+# GA-API-01 认领文档
 
-claim_id: GA-API-01-S01
-task_id: GA-API-01
-task_lock_path: ai-dev-input/10_task_claims/active_locks/GA-API-01.lock
-slice: S01
-title: OpenAPI 与前端类型生成
-owner: TraeAI-5
-role: senior
-status: ACTIVE
-branch: develop
-target_base_branch: develop
-git_base_commit: 69b46dd
-git_status_at_claim: clean
-created_at: 2026-05-23T20:30+08:00
-last_heartbeat: 2026-05-23T20:30+08:00
-expected_finish: 2026-05-23T23:00+08:00
+## 任务信息
+- 任务编号: GA-API-01
+- 任务名称: OpenAPI 与前端类型生成
+- 认领ID: GA-API-01-S01
+- 持有者: TraeAI-GLM5
+- 认领时间: 2026-05-23T19:00:00+08:00
+- 基准提交: 3f69e96
 
-## Write Scope
+## 核心验收标准
+1. OpenAPI 规范与 Controller 一致
+2. 前端类型生成可复现
+3. springdoc-openapi 接入并配置
+4. 所有 Controller 添加 OpenAPI 注解
 
-```text
-medkernel-mvp/src/main/resources/application.yml
-frontend/src/api/generated-types.ts
-frontend/package.json
-frontend/scripts/gen-api-types.sh
-ai-dev-input/10_task_claims/active/GA-API-01-S01.md
-ai-dev-input/10_task_claims/active_locks/GA-API-01.lock
-docs/engineering/02_任务台账.md
-```
+## 独占范围
+- medkernel-mvp/src/main/java/**
+- docs/engineering/api-examples.http
 
-## Acceptance
+## 执行计划
+1. 添加 springdoc-openapi 依赖到 pom.xml
+2. 配置 application.yml 中 OpenAPI 相关设置
+3. 创建 OpenAPI 配置类（OpenApiConfig）
+4. 为所有 Controller 添加 @Tag、@Operation 等注解
+5. 配置前端类型生成脚本（openapi-typescript）
+6. 验证 OpenAPI 规范生成正确
+7. 验证前端类型生成可复现
 
-```text
-1. 后端 springdoc 配置正确，/v3/api-docs 输出完整 OpenAPI spec
-2. 前端 gen:types 脚本可执行并生成 generated-types.ts
-3. generated-types.ts 提交到代码库
-4. CI 中添加类型生成验证步骤
-5. 类型生成可复现（同一 spec 产出相同类型）
-```
-
-## Progress
-
-```text
-- [ ] 创建 claim + lock 并 push
-- [ ] 验证后端 OpenAPI spec 输出
-- [ ] 运行 gen:types 生成前端类型
-- [ ] 验证类型生成可复现
-- [ ] 更新台账 + commit + push
-```
+## 关联 GA 硬指标
+- D1: 编译与测试
+- D6: API OpenAPI 文档齐备

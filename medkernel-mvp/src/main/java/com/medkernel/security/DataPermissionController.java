@@ -27,6 +27,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/security/data-permission")
+@Tag(name = "数据权限", description = "SEC-002 数据权限管理：策略管理、权限分配、权限检查")
 public class DataPermissionController {
 
     private final DataPermissionService dataPermissionService;
@@ -45,6 +46,7 @@ public class DataPermissionController {
     /**
      * 创建数据权限策略。
      */
+    @Operation(summary = "创建数据权限策略")
     @PostMapping("/policies")
     public ApiResult<Map<String, Object>> createPolicy(@RequestBody Map<String, Object> body,
                                                         HttpServletRequest httpRequest) {
@@ -79,6 +81,7 @@ public class DataPermissionController {
     /**
      * 更新数据权限策略。
      */
+    @Operation(summary = "更新数据权限策略")
     @PutMapping("/policies/{policyId}")
     public ApiResult<Map<String, Object>> updatePolicy(@PathVariable Long policyId,
                                                         @RequestBody Map<String, Object> body,
@@ -107,6 +110,7 @@ public class DataPermissionController {
     /**
      * 查询数据权限策略列表。
      */
+    @Operation(summary = "查询数据权限策略列表")
     @GetMapping("/policies")
     public ApiResult<List<Map<String, Object>>> listPolicies(
             @RequestParam(required = false) String policyType,
@@ -125,6 +129,7 @@ public class DataPermissionController {
     /**
      * 分配数据权限。
      */
+    @Operation(summary = "分配数据权限")
     @PostMapping("/assignments")
     public ApiResult<Map<String, Object>> assignPermission(@RequestBody Map<String, Object> body,
                                                              HttpServletRequest httpRequest) {
@@ -197,6 +202,7 @@ public class DataPermissionController {
     /**
      * 查询权限分配列表。
      */
+    @Operation(summary = "查询权限分配列表")
     @GetMapping("/assignments")
     public ApiResult<List<Map<String, Object>>> listAssignments(
             @RequestParam(required = false) String principalType,
@@ -211,6 +217,7 @@ public class DataPermissionController {
     /**
      * 移除权限分配。
      */
+    @Operation(summary = "移除权限分配")
     @DeleteMapping("/assignments/{assignmentId}")
     public ApiResult<String> removeAssignment(@PathVariable Long assignmentId) {
         try {
@@ -262,6 +269,7 @@ public class DataPermissionController {
     /**
      * 获取数据过滤条件。
      */
+    @Operation(summary = "获取数据过滤条件")
     @PostMapping("/filter")
     public ApiResult<List<Map<String, Object>>> filterData(@RequestBody Map<String, Object> body,
                                                              HttpServletRequest httpRequest) {
