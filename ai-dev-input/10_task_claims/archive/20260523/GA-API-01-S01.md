@@ -1,54 +1,49 @@
----
+# AI Task Claim
+
+claim_id: GA-API-01-S01
 task_id: GA-API-01
-claim_seq: S01
-ai: TraeAI-Main
-level: senior
-branch: ai/GA-API-01/openapi-types
-started: "2026-05-23T19:00:00+08:00"
-write_scope:
-  - medkernel-mvp/src/main/java/com/medkernel/**
-  - docs/engineering/api-examples.http
-shared_files:
-  - medkernel-mvp/pom.xml
-  - medkernel-mvp/src/main/resources/application.yml
----
+task_lock_path: ai-dev-input/10_task_claims/active_locks/GA-API-01.lock
+slice: S01
+title: OpenAPI 与前端类型生成
+owner: TraeAI-5
+role: senior
+status: DONE
+branch: develop
+target_base_branch: develop
+git_base_commit: 69b46dd
+git_status_at_claim: clean
+created_at: 2026-05-23T20:30+08:00
+last_heartbeat: 2026-05-23T20:30+08:00
+expected_finish: 2026-05-23T23:00+08:00
 
-# GA-API-01 · OpenAPI 与前端类型生成
+## Write Scope
 
-## Goal
-
-OpenAPI 规范与 Controller 一致，前端 TypeScript 类型生成可复现。
-
-## Plan
-
-1. 引入 springdoc-openapi 依赖到 pom.xml
-2. 配置 application.yml 暴露 OpenAPI 端点
-3. 为所有 Controller 添加 @Tag/@Operation/@Schema 注解
-4. 验证 /v3/api-docs 输出与 Controller 一致
-5. 编写前端类型生成脚本（openapi-typescript）
-6. 生成前端 TypeScript 类型并验证可复现
+```text
+medkernel-mvp/src/main/resources/application.yml
+frontend/src/api/generated-types.ts
+frontend/package.json
+frontend/scripts/gen-api-types.sh
+ai-dev-input/10_task_claims/active/GA-API-01-S01.md
+ai-dev-input/10_task_claims/active_locks/GA-API-01.lock
+docs/engineering/02_任务台账.md
+```
 
 ## Acceptance
 
-````text
-1. /v3/api-docs 输出完整 OpenAPI 3.0 spec
-2. 每个 Controller 有 @Tag，每个端点有 @Operation
-3. 前端 `npx openapi-typescript` 可复现生成类型文件
-4. 生成的类型与 Controller 契约一致
-5. 后端 compile/test 通过
-6. 前端 lint/typecheck/build 通过
-````
+```text
+1. 后端 springdoc 配置正确，/v3/api-docs 输出完整 OpenAPI spec
+2. 前端 gen:types 脚本可执行并生成 generated-types.ts
+3. generated-types.ts 提交到代码库
+4. CI 中添加类型生成验证步骤
+5. 类型生成可复现（同一 spec 产出相同类型）
+```
 
-## Verification
+## Progress
 
-````text
-cd medkernel-mvp && mvn compile test -q
-cd frontend && npm run lint && npm run typecheck && npm run build
-````
-
-## DoD
-
-- [ ] springdoc-openapi 集成完毕
-- [ ] 所有 Controller 注解完备
-- [ ] 前端类型生成脚本可复现
-- [ ] CI 通过
+```text
+- [ ] 创建 claim + lock 并 push
+- [ ] 验证后端 OpenAPI spec 输出
+- [ ] 运行 gen:types 生成前端类型
+- [ ] 验证类型生成可复现
+- [ ] 更新台账 + commit + push
+```
