@@ -1,10 +1,11 @@
 package com.medkernel.dto;
 
+import com.medkernel.adapter.dto.SampleRow;
 import io.swagger.v3.oas.annotations.media.Schema;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 适配器定义导入请求 DTO：替代 AdapterHubController.importDefinitions 的 Object。
@@ -51,8 +52,9 @@ public class AdapterDefinitionImportRequest {
         @Schema(description = "查询结果字段列表")
         private List<String> schema;
 
+        @Valid
         @Schema(description = "样例行数据")
-        private List<Map<String, Object>> sample_rows;
+        private List<SampleRow> sample_rows;
 
         @Schema(description = "来源标识", example = "IMPORTED")
         private String source;
@@ -73,8 +75,8 @@ public class AdapterDefinitionImportRequest {
         public void setDescription(String description) { this.description = description; }
         public List<String> getSchema() { return schema; }
         public void setSchema(List<String> schema) { this.schema = schema; }
-        public List<Map<String, Object>> getSample_rows() { return sample_rows; }
-        public void setSample_rows(List<Map<String, Object>> sample_rows) { this.sample_rows = sample_rows; }
+        public List<SampleRow> getSample_rows() { return sample_rows; }
+        public void setSample_rows(List<SampleRow> sample_rows) { this.sample_rows = sample_rows; }
         public String getSource() { return source; }
         public void setSource(String source) { this.source = source; }
     }

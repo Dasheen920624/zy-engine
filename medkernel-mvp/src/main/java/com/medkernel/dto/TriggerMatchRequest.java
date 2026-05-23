@@ -1,6 +1,8 @@
 package com.medkernel.dto;
 
+import com.medkernel.adapter.dto.TriggerMatchContext;
 import io.swagger.v3.oas.annotations.media.Schema;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
 /**
@@ -13,11 +15,12 @@ public class TriggerMatchRequest {
     @Schema(description = "业务场景编码", example = "ORDER", requiredMode = Schema.RequiredMode.REQUIRED)
     private String businessScenario;
 
+    @Valid
     @Schema(description = "附加上下文参数")
-    private java.util.Map<String, Object> context;
+    private TriggerMatchContext context;
 
     public String getBusinessScenario() { return businessScenario; }
     public void setBusinessScenario(String businessScenario) { this.businessScenario = businessScenario; }
-    public java.util.Map<String, Object> getContext() { return context; }
-    public void setContext(java.util.Map<String, Object> context) { this.context = context; }
+    public TriggerMatchContext getContext() { return context; }
+    public void setContext(TriggerMatchContext context) { this.context = context; }
 }

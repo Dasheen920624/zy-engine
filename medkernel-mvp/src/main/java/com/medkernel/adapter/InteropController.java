@@ -1,7 +1,10 @@
 package com.medkernel.adapter;
 
+import com.medkernel.adapter.dto.CdsHooksContext;
 import com.medkernel.adapter.dto.InteropAdapterListItemResponse;
+import com.medkernel.adapter.dto.InteropQueryParams;
 import com.medkernel.adapter.dto.InteropQueryResponse;
+import com.medkernel.adapter.dto.SmartAppContext;
 import com.medkernel.common.ApiResult;
 import com.medkernel.dto.InteropQueryRequest;
 import com.medkernel.dto.CdsHooksQueryRequest;
@@ -123,7 +126,13 @@ public class InteropController {
         map.put("adapter_code", request.getAdapter_code());
         map.put("query_code", request.getQuery_code());
         if (request.getParams() != null) {
-            map.put("params", request.getParams());
+            Map<String, Object> paramsMap = new LinkedHashMap<String, Object>();
+            InteropQueryParams p = request.getParams();
+            if (p.getQueryType() != null) paramsMap.put("queryType", p.getQueryType());
+            if (p.getFilters() != null) paramsMap.put("filters", p.getFilters());
+            if (p.getPaginationOffset() != null) paramsMap.put("paginationOffset", p.getPaginationOffset());
+            if (p.getPaginationLimit() != null) paramsMap.put("paginationLimit", p.getPaginationLimit());
+            map.put("params", paramsMap);
         }
         return map;
     }
@@ -141,7 +150,11 @@ public class InteropController {
             map.put("encounter_id", request.getEncounter_id());
         }
         if (request.getContext() != null) {
-            map.putAll(request.getContext());
+            CdsHooksContext ctx = request.getContext();
+            if (ctx.getPatientId() != null) map.put("patient_id", ctx.getPatientId());
+            if (ctx.getEncounterId() != null) map.put("encounter_id", ctx.getEncounterId());
+            if (ctx.getUserId() != null) map.put("user_id", ctx.getUserId());
+            if (ctx.getSelections() != null) map.put("selections", ctx.getSelections());
         }
         return map;
     }
@@ -159,7 +172,11 @@ public class InteropController {
             map.put("encounter_id", request.getEncounter_id());
         }
         if (request.getContext() != null) {
-            map.putAll(request.getContext());
+            SmartAppContext ctx = request.getContext();
+            if (ctx.getPatientId() != null) map.put("patient_id", ctx.getPatientId());
+            if (ctx.getEncounterId() != null) map.put("encounter_id", ctx.getEncounterId());
+            if (ctx.getUserId() != null) map.put("user_id", ctx.getUserId());
+            if (ctx.getScope() != null) map.put("scope", ctx.getScope());
         }
         return map;
     }

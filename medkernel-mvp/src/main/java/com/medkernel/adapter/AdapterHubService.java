@@ -1,5 +1,6 @@
 package com.medkernel.adapter;
 
+import com.medkernel.adapter.dto.SampleRow;
 import com.medkernel.common.TraceContext;
 import com.medkernel.dto.AdapterDefinitionImportRequest;
 import com.medkernel.persistence.EnginePersistenceService;
@@ -285,7 +286,16 @@ public class AdapterHubService {
             if (item.getQuery_name() != null) entry.put("query_name", item.getQuery_name());
             if (item.getDescription() != null) entry.put("description", item.getDescription());
             if (item.getSchema() != null) entry.put("schema", item.getSchema());
-            if (item.getSample_rows() != null) entry.put("sample_rows", item.getSample_rows());
+            if (item.getSample_rows() != null) {
+                List<Map<String, Object>> sampleRows = new ArrayList<Map<String, Object>>();
+                for (SampleRow row : item.getSample_rows()) {
+                    Map<String, Object> rowMap = new LinkedHashMap<String, Object>();
+                    if (row.getRowId() != null) rowMap.put("rowId", row.getRowId());
+                    if (row.getColumns() != null) rowMap.putAll(row.getColumns());
+                    sampleRows.add(rowMap);
+                }
+                entry.put("sample_rows", sampleRows);
+            }
             if (item.getSource() != null) entry.put("source", item.getSource());
             list.add(entry);
         }
