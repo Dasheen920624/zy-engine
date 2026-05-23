@@ -552,27 +552,51 @@ public class GraphService {
 
     /**
      * 获取指定版本的节点列表（包级访问，供 GraphSyncService）。
+     * GRAPH-006: 增加 tenantId 过滤，仅返回指定租户的节点。
      */
-    List<Map<String, Object>> getNodesByVersion(String graphVersion) {
+    List<Map<String, Object>> getNodesByVersion(String graphVersion, String tenantId) {
         List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
         for (Map<String, Object> entry : graphNodes.values()) {
-            if (graphVersion == null || graphVersion.equalsIgnoreCase(String.valueOf(entry.get("graph_version")))) {
-                result.add(entry);
+            if (graphVersion != null && !graphVersion.equalsIgnoreCase(String.valueOf(entry.get("graph_version")))) {
+                continue;
             }
+            if (tenantId != null && !matchesTenant(entry, tenantId)) {
+                continue;
+            }
+            result.add(entry);
         }
         return result;
     }
 
     /**
-     * 获取指定版本的边列表（包级访问，供 GraphSyncService）。
+     * 获取指定版本的节点列表（包级访问，无租户过滤，向后兼容）。
      */
-    List<Map<String, Object>> getEdgesByVersion(String graphVersion) {
+    List<Map<String, Object>> getNodesByVersion(String graphVersion) {
+        return getNodesByVersion(graphVersion, null);
+    }
+
+    /**
+     * 获取指定版本的边列表（包级访问，供 GraphSyncService）。
+     * GRAPH-006: 增加 tenantId 过滤，仅返回指定租户的边。
+     */
+    List<Map<String, Object>> getEdgesByVersion(String graphVersion, String tenantId) {
         List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
         for (Map<String, Object> entry : graphEdges) {
-            if (graphVersion == null || graphVersion.equalsIgnoreCase(String.valueOf(entry.get("graph_version")))) {
-                result.add(entry);
+            if (graphVersion != null && !graphVersion.equalsIgnoreCase(String.valueOf(entry.get("graph_version")))) {
+                continue;
             }
+            if (tenantId != null && !matchesTenant(entry, tenantId)) {
+                continue;
+            }
+            result.add(entry);
         }
         return result;
+    }
+
+    /**
+     * 获取指定版本的边列表（包级访问，无租户过滤，向后兼容）。
+     */
+    List<Map<String, Object>> getEdgesByVersion(String graphVersion) {
+        return getEdgesByVersion(graphVersion, null);
     }
 }

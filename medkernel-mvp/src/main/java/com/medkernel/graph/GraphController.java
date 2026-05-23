@@ -198,9 +198,10 @@ public class GraphController {
     public ApiResult<Map<String, Object>> syncToNeo4j(@PathVariable String graphVersion,
                                                       @RequestParam(defaultValue = "false") boolean dryRun,
                                                       HttpServletRequest httpRequest) {
-        organizationContextService.resolve(httpRequest);
+        OrganizationContext orgContext = organizationContextService.resolve(httpRequest);
+        String tenantId = orgContext != null && orgContext.getTenantId() != null ? orgContext.getTenantId() : "default";
         String triggeredBy = httpRequest.getHeader("X-Operator-Id");
-        GraphSyncTask task = graphSyncService.syncToNeo4j(graphVersion, dryRun, triggeredBy);
+        GraphSyncTask task = graphSyncService.syncToNeo4j(graphVersion, dryRun, triggeredBy, tenantId);
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("task_code", task.getTaskCode());
         result.put("task_type", task.getTaskType());

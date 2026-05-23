@@ -44,19 +44,23 @@ public class GraphSyncService {
      * @param graphVersion 图谱版本号（同步该版本下的节点和边）
      * @param dryRun       true 时仅预览同步结果，不实际写入 Neo4j
      * @param triggeredBy  触发人
+     * @param tenantId     租户ID（GRAPH-006: 多租户隔离）
      * @return 同步任务结果
      */
-    public GraphSyncTask syncToNeo4j(String graphVersion, boolean dryRun, String triggeredBy) {
+    public GraphSyncTask syncToNeo4j(String graphVersion, boolean dryRun, String triggeredBy, String tenantId) {
         if (!properties.ready()) {
             throw new IllegalStateException("Neo4j 配置不完整，无法执行同步。请检查 medkernel.graph.uri/username/password 配置。");
         }
         if (!hasText(graphVersion)) {
             graphVersion = properties.getDefaultVersion();
         }
+        if (!hasText(tenantId)) {
+            tenantId = "default";
+        }
 
         GraphSyncTask task = new GraphSyncTask();
         task.setId(Ids.next());
-        task.setTenantId("default");
+        task.setTenantId(tenantId);
         task.setTaskCode("GRAPH_SYNC-" + task.getId());
         task.setTaskType("GRAPH_SYNC");
         task.setTargetSystem("NEO4J");
@@ -68,9 +72,9 @@ public class GraphSyncService {
         task.setRetryCount(0);
         task.setMaxRetries(3);
 
-        // 从 GraphService 获取待同步数据
-        List<Map<String, Object>> nodesToSync = graphService.getNodesByVersion(graphVersion);
-        List<Map<String, Object>> edgesToSync = graphService.getEdgesByVersion(graphVersion);
+        // GRAPH-006: 从 GraphService 获取指定租户的待同步数据
+        List<Map<String, Object>> nodesToSync = graphService.getNodesByVersion(graphVersion, tenantId);
+        List<Map<String, Object>> edgesToSync = graphService.getEdgesByVersion(graphVersion, tenantId);
         task.setTotalCount(nodesToSync.size() + edgesToSync.size());
 
         List<GraphSyncDetail> details = new ArrayList<GraphSyncDetail>();
@@ -81,7 +85,7 @@ public class GraphSyncService {
 
             // 同步节点
             for (Map<String, Object> node : nodesToSync) {
-                GraphSyncDetail detail = syncNode(session, node, dryRun);
+                GraphSyncDetail detail = syncNode(session, node, dryRun, tenantId);
                 details.add(detail);
                 if ("SUCCESS".equals(detail.getStatus())) {
                     task.setSuccessCount(task.getSuccessCount() + 1);
@@ -94,7 +98,7 @@ public class GraphSyncService {
 
             // 同步边
             for (Map<String, Object> edge : edgesToSync) {
-                GraphSyncDetail detail = syncEdge(session, edge, dryRun);
+                GraphSyncDetail detail = syncEdge(session, edge, dryRun, tenantId);
                 details.add(detail);
                 if ("SUCCESS".equals(detail.getStatus())) {
                     task.setSuccessCount(task.getSuccessCount() + 1);
@@ -152,10 +156,10 @@ public class GraphSyncService {
                 "同步任务查询需要 OPS_SYNC_TASK 持久化支持（OPS-002）。");
     }
 
-    private GraphSyncDetail syncNode(Session session, Map<String, Object> node, boolean dryRun) {
+    private GraphSyncDetail syncNode(Session session, Map<String, Object> node, boolean dryRun, String tenantId) {
         GraphSyncDetail detail = new GraphSyncDetail();
         detail.setId(Ids.next());
-        detail.setTenantId("default");
+        detail.setTenantId(tenantId != null ? tenantId : "default");
         detail.setItemType("NODE");
         detail.setItemCode(string(node.get("code"), ""));
         detail.setOperation("CREATE");
@@ -197,10 +201,10 @@ public class GraphSyncService {
         return detail;
     }
 
-    private GraphSyncDetail syncEdge(Session session, Map<String, Object> edge, boolean dryRun) {
+    private GraphSyncDetail syncEdge(Session session, Map<String, Object> edge, boolean dryRun, String tenantId) {
         GraphSyncDetail detail = new GraphSyncDetail();
         detail.setId(Ids.next());
-        detail.setTenantId("default");
+        detail.setTenantId(tenantId != null ? tenantId : "default");
         detail.setItemType("EDGE");
         detail.setItemCode(string(edge.get("from_code"), "") + "->" + string(edge.get("to_code"), ""));
         detail.setOperation("CREATE");
