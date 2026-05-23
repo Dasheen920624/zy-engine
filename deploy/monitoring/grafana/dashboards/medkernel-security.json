@@ -36,7 +36,7 @@
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",uri=~\"/api/auth.*\",status=\"401\"}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",uri=~\"/api/auth.*\"}[5m])), 1)",
           "legendFormat": "401 失败率",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -52,7 +52,7 @@
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status=\"403\"}[5m]))",
           "legendFormat": "403 拒绝率",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -75,7 +75,7 @@
           "expr": "increase(medkernel_data_masking_total{result=\"failure\"}[1h])",
           "legendFormat": "脱敏失败次数",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -98,7 +98,7 @@
           "expr": "increase(medkernel_audit_log_write_total{result=\"failure\"}[1h])",
           "legendFormat": "审计日志失败次数",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -112,7 +112,7 @@
         "showAnnotations": false,
         "sortOrder": 1
       },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "filters": [
         { "condition": "=", "key": "slo", "value": "" },
         { "condition": "=", "key": "severity", "value": "critical" }
@@ -127,19 +127,19 @@
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status=~\"2..\"}[5m])) by (status)",
           "legendFormat": "{{status}}",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         },
         {
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status=~\"4..\"}[5m])) by (status)",
           "legendFormat": "{{status}}",
           "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         },
         {
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status=~\"5..\"}[5m])) by (status)",
           "legendFormat": "{{status}}",
           "refId": "C",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     }
@@ -148,19 +148,7 @@
   "schemaVersion": 39,
   "tags": ["medkernel", "security", "ga-ops-01"],
   "templating": {
-    "list": [
-      {
-        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
-        "hide": 0,
-        "includeAll": false,
-        "label": "数据源",
-        "multi": false,
-        "name": "DS_PROMETHEUS",
-        "options": [],
-        "query": "prometheus",
-        "type": "datasource"
-      }
-    ]
+    "list": []
   },
   "time": { "from": "now-6h", "to": "now" },
   "title": "MedKernel Security Dashboard",

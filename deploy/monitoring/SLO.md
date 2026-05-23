@@ -1,25 +1,32 @@
 # MedKernel v1.0 GA SLO
 
+> 本文件为 SLO 快速参考。完整 SLO 定义见 `docs/slo/medkernel-slo.md`
+
 > 版本：1.0 · 2026-05-23
 
 ## 1. SLO 定义
 
 | SLO | 目标 | 指标 | 计算方式 |
 |-----|------|------|----------|
-| 可用性 | 99.5% | `medkernel_provider_ready{provider="database"}` | 月度 UP 时间 / 月度总时间 |
-| 规则评估延迟 P95 | < 500ms | `medkernel_rule_evaluation_duration` | histogram_quantile(0.95, rate) |
-| 路径操作延迟 P95 | < 1s | `medkernel_pathway_operation_duration` | histogram_quantile(0.95, rate) |
-| LLM 调用成功率 | > 90% | `medkernel_llm_call_total` / `medkernel_llm_call_errors_total` | 1 - error_rate |
-| 规则评估可用性 | 99% | HTTP 2xx rate on /api/rule-engine/evaluate | 成功请求 / 总请求 |
+| 可用性 | ≥ 99.5% | `http_server_requests_seconds_count{status!~"5.."}` | 成功请求 / 总请求（30 天滚动） |
+| API P95 延迟 | ≤ 500ms | `http_server_requests_seconds_bucket` | histogram_quantile(0.95, rate) |
+| API 错误率 | ≤ 0.1% | `http_server_requests_seconds_count{status=~"5.."}` | 5xx 请求 / 总请求（30 天滚动） |
+| 数据库连接池饱和度 | ≤ 80% | `hikaricp_connections_active/max` | 活跃连接 / 最大连接 |
+| JVM 堆使用率 | ≤ 75% | `jvm_memory_used/max_bytes{area="heap"}` | 已用堆 / 最大堆 |
+| Provider 就绪率 | 100%（核心） | `medkernel_provider_ready/configured` | 就绪 Provider / 已配置 Provider |
 
 ## 2. 告警规则
 
 | 告警 | 条件 | 严重级别 | 通知 |
 |------|------|----------|------|
-| 数据库 Provider 不可用 | `medkernel_provider_ready{provider="database"} == 0` 持续 1 分钟 | Critical | 立即 |
-| 任一 Provider 不可用 | `medkernel_provider_ready == 0` 持续 2 分钟 | Warning | 5 分钟内 |
+| 数据库 Provider 不可用 | `medkernel_provider_ready{provider="database"} == 0` 持续 2 分钟 | Critical | 立即 |
+| 任一 Provider 不可用 | `medkernel_provider_ready == 0` 持续 5 分钟 | Warning | 5 分钟内 |
 | LLM 错误率 > 10% | `rate(errors[5m]) / rate(total[5m]) > 0.1` 持续 5 分钟 | Warning | 5 分钟内 |
-| 规则评估 P95 > 1s | `histogram_quantile(0.95, rate) > 1` 持续 5 分钟 | Warning | 5 分钟内 |
+| API P95 延迟 > 1s | `histogram_quantile(0.95, rate) > 1` 持续 5 分钟 | Warning | 5 分钟内 |
+| SLO 可用性低于 99.5% | 30 分钟可用性 < 99.5% 持续 5 分钟 | Critical | 立即 |
+| SLO P95 延迟超过 500ms | 30 分钟 P95 > 500ms 持续 5 分钟 | Warning | 5 分钟内 |
+
+> 完整告警规则共 33 条，详见 `deploy/monitoring/prometheus/medkernel-alert-rules.yml`
 
 ## 3. 监控端点
 
@@ -55,8 +62,8 @@
 ```bash
 # Prometheus
 docker run -d -p 9090:9090 \
-  -v ./deploy/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
-  -v ./deploy/monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml \
+  -v ./deploy/monitoring/prometheus/prometheus-medkernel.yml:/etc/prometheus/prometheus.yml \
+  -v ./deploy/monitoring/prometheus/medkernel-alert-rules.yml:/etc/prometheus/medkernel-alert-rules.yml \
   prom/prometheus
 
 # Grafana

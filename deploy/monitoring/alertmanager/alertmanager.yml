@@ -1,9 +1,14 @@
 # MedKernel Alertmanager Configuration
 # v1.0 GA — 生产就绪告警路由与通知
+#
+# ⚠️  注意：以下 SMTP 和 Webhook 配置均为占位符，部署时必须按医院实际环境配置！
+#     - SMTP 服务器地址、端口、认证信息需替换
+#     - Webhook URL 需替换为实际的钉钉/企业微信/飞书机器人地址
+#     - 邮件收件人需替换为实际运维值班邮箱
 
 global:
   resolve_timeout: 5m
-  # 邮件通知全局配置（按实际环境覆盖）
+  # 邮件通知全局配置（⚠️ 占位符，需按医院实际 SMTP 环境覆盖）
   smtp_smarthost: "localhost:587"
   smtp_from: "alertmanager@medkernel.local"
   smtp_require_tls: true
@@ -82,3 +87,45 @@ receivers:
     webhook_configs:
       - url: "http://localhost:5001/alerts/provider"
         send_resolved: true
+
+  # === 以下为通知模板示例（按需启用） ===
+
+  # 企业微信（WeChat Work）Webhook 示例
+  # - name: "wechat-receiver"
+  #   webhook_configs:
+  #     - url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_WECHAT_WEBHOOK_KEY"
+  #       send_resolved: true
+  #       http_config:
+  #         headers:
+  #           Content-Type: application/json
+
+  # 钉钉（DingTalk）Webhook 示例
+  # - name: "dingtalk-receiver"
+  #   webhook_configs:
+  #     - url: "https://oapi.dingtalk.com/robot/send?access_token=YOUR_DINGTALK_ACCESS_TOKEN"
+  #       send_resolved: true
+  #       http_config:
+  #         headers:
+  #           Content-Type: application/json
+
+# === 维护窗口静默规则示例（按需启用） ===
+# 维护窗口期间自动静默告警，避免误通知
+# 可通过 Alertmanager API 或 UI 手动创建：
+#   amtool silence add --duration=2h --comment="计划维护窗口" service=medkernel-mvp
+#
+# time_intervals:
+#   - name: maintenance-window
+#     time_intervals:
+#       - times:
+#           - start_time: "02:00"
+#             end_time: "06:00"
+#         weekdays: ["saturday", "sunday"]
+#         location: "Asia/Shanghai"
+#
+# route:
+#   routes:
+#     - match:
+#         service: medkernel-mvp
+#       receiver: "default-receiver"
+#       mute_time_intervals:
+#         - maintenance-window

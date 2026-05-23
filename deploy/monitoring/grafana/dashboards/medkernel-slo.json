@@ -47,7 +47,7 @@
         {
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status!~\"5..\"}[30d])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\"}[30d])), 1) * 100",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -74,7 +74,7 @@
         {
           "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"medkernel-mvp\"}[30d])) by (le)) * 1000",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -101,7 +101,7 @@
         {
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status=~\"5..\"}[30d])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\"}[30d])), 1) * 100",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -127,7 +127,7 @@
         {
           "expr": "(1 - (1 - sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status!~\"5..\"}[30d])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\"}[30d])), 1)) / (1 - 0.999)) * 100",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -143,13 +143,13 @@
           "expr": "sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"medkernel-mvp\"}[5m])), 1)",
           "legendFormat": "5xx 错误率",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         },
         {
           "expr": "0.001",
           "legendFormat": "SLO 阈值 (0.1%)",
           "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -165,25 +165,25 @@
           "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket{application=\"medkernel-mvp\"}[5m])) by (le))",
           "legendFormat": "P50",
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         },
         {
           "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"medkernel-mvp\"}[5m])) by (le))",
           "legendFormat": "P95",
           "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         },
         {
           "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{application=\"medkernel-mvp\"}[5m])) by (le))",
           "legendFormat": "P99",
           "refId": "C",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         },
         {
           "expr": "0.3",
           "legendFormat": "SLO 阈值 (300ms)",
           "refId": "D",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -197,26 +197,14 @@
         "showAnnotations": false,
         "sortOrder": 1
       },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": ["medkernel", "slo", "ga-ops-01"],
   "templating": {
-    "list": [
-      {
-        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
-        "hide": 0,
-        "includeAll": false,
-        "label": "数据源",
-        "multi": false,
-        "name": "DS_PROMETHEUS",
-        "options": [],
-        "query": "prometheus",
-        "type": "datasource"
-      }
-    ]
+    "list": []
   },
   "time": { "from": "now-6h", "to": "now" },
   "title": "MedKernel SLO Dashboard",
