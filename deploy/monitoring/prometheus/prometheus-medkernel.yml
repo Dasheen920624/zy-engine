@@ -15,6 +15,14 @@ alerting:
             - alertmanager:9093
 
 scrape_configs:
+  - job_name: 'node-exporter'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          product: medkernel
+          environment: pilot
+
   - job_name: medkernel-backend
     scrape_interval: 15s
     scrape_timeout: 5s

@@ -11,7 +11,7 @@
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
       "targets": [
-        { "expr": "medkernel_provider_ready", "legendFormat": "{{provider}}" }
+        { "expr": "medkernel_provider_ready", "legendFormat": "{{provider}}", "datasource": {"type": "prometheus", "uid": "prometheus"} }
       ]
     },
     {
@@ -19,8 +19,8 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 6, "y": 0 },
       "targets": [
-        { "expr": "rate(medkernel_rule_evaluation_total[5m])", "legendFormat": "评估/秒" },
-        { "expr": "rate(medkernel_rule_hit_total[5m])", "legendFormat": "命中/秒" }
+        { "expr": "rate(medkernel_rule_evaluation_total[5m])", "legendFormat": "评估/秒", "datasource": {"type": "prometheus", "uid": "prometheus"} },
+        { "expr": "rate(medkernel_rule_hit_total[5m])", "legendFormat": "命中/秒", "datasource": {"type": "prometheus", "uid": "prometheus"} }
       ]
     },
     {
@@ -28,7 +28,7 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "targets": [
-        { "expr": "histogram_quantile(0.95, rate(medkernel_rule_evaluation_duration_bucket[5m]))", "legendFormat": "P95" }
+        { "expr": "histogram_quantile(0.95, rate(medkernel_rule_evaluation_duration_bucket[5m]))", "legendFormat": "P95", "datasource": {"type": "prometheus", "uid": "prometheus"} }
       ]
     },
     {
@@ -36,7 +36,7 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "targets": [
-        { "expr": "rate(medkernel_pathway_operation_total[5m])", "legendFormat": "操作/秒" }
+        { "expr": "rate(medkernel_pathway_operation_total[5m])", "legendFormat": "操作/秒", "datasource": {"type": "prometheus", "uid": "prometheus"} }
       ]
     },
     {
@@ -44,8 +44,8 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
       "targets": [
-        { "expr": "rate(medkernel_llm_call_total[5m])", "legendFormat": "调用/秒" },
-        { "expr": "rate(medkernel_llm_call_errors_total[5m])", "legendFormat": "错误/秒" }
+        { "expr": "rate(medkernel_llm_call_total[5m])", "legendFormat": "调用/秒", "datasource": {"type": "prometheus", "uid": "prometheus"} },
+        { "expr": "rate(medkernel_llm_call_errors_total[5m])", "legendFormat": "错误/秒", "datasource": {"type": "prometheus", "uid": "prometheus"} }
       ]
     },
     {
@@ -53,8 +53,8 @@
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 16 },
       "targets": [
-        { "expr": "medkernel_quality_alert_total", "legendFormat": "预警" },
-        { "expr": "medkernel_cdss_override_total", "legendFormat": "覆盖" }
+        { "expr": "medkernel_quality_alert_total", "legendFormat": "预警", "datasource": {"type": "prometheus", "uid": "prometheus"} },
+        { "expr": "medkernel_cdss_override_total", "legendFormat": "覆盖", "datasource": {"type": "prometheus", "uid": "prometheus"} }
       ]
     }
   ],
@@ -62,6 +62,8 @@
   "tags": ["medkernel"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
   "title": "MedKernel MVP",
-  "uid": "medkernel-mvp"
+  "uid": "medkernel-mvp",
+  "version": 1
 }
