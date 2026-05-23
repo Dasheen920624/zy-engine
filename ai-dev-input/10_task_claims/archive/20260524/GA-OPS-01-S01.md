@@ -7,7 +7,7 @@ slice: S01
 title: 运维监控与 SLO 证据
 owner: TraeAI-1
 role: senior
-status: DONE
+status: ACTIVE
 branch: ai/GA-OPS-01/ops-monitoring
 target_base_branch: develop
 git_base_commit: fad1969
