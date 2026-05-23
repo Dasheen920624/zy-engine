@@ -1,35 +1,38 @@
 package com.medkernel.shared.web;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * GA-CORE-07 / W1-G4：Virtual Threads 端到端 smoke。
  *
- * <p>HTTP 请求经 Tomcat 进入 Controller 时，{@code Thread.currentThread().isVirtual()}
- * 应该返回 true（Spring Boot 3.2+ 默认行为）。
+ * <p>必须用 RANDOM_PORT 启动真实 Tomcat（而非 MockMvc）才能验证
+ * {@code spring.threads.virtual.enabled=true} 在 Tomcat connector 上生效。
  */
-@SpringBootTest
-@AutoConfigureMockMvc
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class RuntimeProbeControllerTest {
 
     @Autowired
-    MockMvc mvc;
+    TestRestTemplate rest;
 
     @Test
-    void runtimeReportsJdk21() throws Exception {
-        mvc.perform(get("/api/v1/system/runtime"))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.javaVersion", org.hamcrest.Matchers.startsWith("21")))
-           .andExpect(jsonPath("$.isVirtualThread").value(true));
+    @SuppressWarnings("unchecked")
+    void runtimeReportsJdk21AndVirtualThread() {
+        Map<String, Object> body = rest.getForObject("/api/v1/system/runtime", Map.class);
+
+        assertThat(body).isNotNull();
+        assertThat((String) body.get("javaVersion")).startsWith("21");
+        assertThat((Boolean) body.get("isVirtualThread"))
+            .as("Spring Boot 3.3 + JDK 21 默认应使 HTTP 请求跑在 Virtual Thread 上")
+            .isTrue();
     }
 }

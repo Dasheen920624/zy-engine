@@ -38,9 +38,12 @@ class SecurityConfigSmokeTest {
     }
 
     @Test
-    void protectedEndpointReturns401WithoutToken() throws Exception {
-        MockMvc mvc = MockMvcBuilders.webAppContextSetup(context).build();
-        mvc.perform(get("/api/v1/protected-placeholder"))
+    void protectedActuatorEndpointReturns401WithoutToken() throws Exception {
+        // /actuator/metrics 未在白名单中，OAuth2 Resource Server 必须返 401
+        MockMvc mvc = MockMvcBuilders.webAppContextSetup(context)
+            .apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity())
+            .build();
+        mvc.perform(get("/actuator/metrics"))
            .andExpect(status().isUnauthorized());
     }
 

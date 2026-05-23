@@ -2,7 +2,7 @@
 -- 真实 schema 将在 GA-CORE-03 / GA-TENANT-01 等任务中加入
 
 CREATE TABLE IF NOT EXISTS medkernel_meta (
-    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     schema_ver  VARCHAR(32) NOT NULL,
     applied_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     note        CLOB
