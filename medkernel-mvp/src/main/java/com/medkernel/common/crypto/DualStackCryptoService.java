@@ -1,5 +1,6 @@
 package com.medkernel.common.crypto;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.medkernel.security.KeyRotationService;
@@ -25,6 +26,7 @@ public class DualStackCryptoService {
     private final SmCryptoService smCryptoService;
     private final CryptoMode cryptoMode;
 
+    @Autowired
     public DualStackCryptoService(SmCryptoService smCryptoService) {
         this.smCryptoService = smCryptoService;
         this.cryptoMode = CryptoMode.SM_ONLY;

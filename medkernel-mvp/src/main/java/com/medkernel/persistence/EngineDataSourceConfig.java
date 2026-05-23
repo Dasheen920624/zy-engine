@@ -44,7 +44,16 @@ public class EngineDataSourceConfig {
     @ConditionalOnMissingBean(DataSource.class)
     public DataSource dataSource(EnginePersistenceProperties properties) {
         if (!properties.isEnabled()) {
-            log.warn("medkernel.database.enabled=false → HikariDataSource 仍按配置初始化但不会被 PersistenceService 使用");
+            // DB 未启用时使用 H2 内存库占位，避免连接外部数据库失败导致启动中断
+            log.warn("medkernel.database.enabled=false → using H2 in-memory DataSource as placeholder");
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl("jdbc:h2:mem:medkernel-noop;DB_CLOSE_DELAY=-1");
+            config.setUsername("sa");
+            config.setPassword("");
+            config.setPoolName("MedKernelNoOpH2");
+            config.setMaximumPoolSize(1);
+            config.setMinimumIdle(0);
+            return new HikariDataSource(config);
         }
         EnginePersistenceProperties.HikariOptions opts = properties.getHikari();
 

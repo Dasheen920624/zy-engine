@@ -42,7 +42,11 @@ public class SecurityFilter implements Filter {
             "/api/system/org-context",
             "/api/security/sso/callback",
             "/api/security/sso/saml/acs",
-            "/actuator/health"
+            "/actuator/health",
+            "/v3/api-docs",
+            "/api-docs",
+            "/api-docs/swagger-ui",
+            "/swagger-ui"
     ));
 
     private final JwtTokenProvider jwtTokenProvider;
