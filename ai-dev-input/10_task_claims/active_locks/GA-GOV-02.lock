@@ -1,6 +1,6 @@
 task_id: GA-GOV-02
 claim_id: GA-GOV-02-S01
-owner: TraeAI-GLM5
+owner: TraeAI-Main
 branch: develop
 git_base_commit: 5d5eed56aa77cf41d39b5265251a1590333e5507
 created_at: 2026-05-23T20:30:00+08:00

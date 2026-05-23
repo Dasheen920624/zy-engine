@@ -7,7 +7,7 @@ slice: S01
 title: Vitest coverage + 前端 CI
 owner: TraeAI-GLM5
 role: senior
-status: ACTIVE
+status: DONE
 branch: ai/GA-QA-02/frontend-coverage
 target_base_branch: develop
 git_base_commit: 891c251
