@@ -10,6 +10,7 @@ import {
   ExperimentOutlined,
   FileSearchOutlined,
   IdcardOutlined,
+  KeyOutlined,
   LineChartOutlined,
   MedicineBoxOutlined,
   NodeIndexOutlined,
@@ -86,6 +87,12 @@ export const menuSections: MenuSection[] = [
         icon: <ShopOutlined />,
         path: "/tenant/onboarding",
         pr: "PR-FINAL-10",
+      },
+      {
+        key: "tenant-application",
+        label: "租户申请",
+        icon: <IdcardOutlined />,
+        path: "/tenant/application",
       },
       {
         key: "config-packages",
@@ -216,6 +223,12 @@ export const menuSections: MenuSection[] = [
         path: "/aik/review",
         pr: "PR-V2-05",
       },
+      {
+        key: "aik-candidates",
+        label: "候选审核台",
+        icon: <RobotOutlined />,
+        path: "/aik/candidates",
+      },
     ],
   },
 
@@ -242,6 +255,12 @@ export const menuSections: MenuSection[] = [
         icon: <DatabaseOutlined />,
         path: "/admin/audit",
         pr: "PR-FINAL-09",
+      },
+      {
+        key: "admin-service-accounts",
+        label: "服务账号管理",
+        icon: <KeyOutlined />,
+        path: "/admin/service-accounts",
       },
       {
         key: "security-baseline",

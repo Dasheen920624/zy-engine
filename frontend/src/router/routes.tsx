@@ -30,11 +30,12 @@ import {
 import { RuleList, RuleDetail, RuleEditor, RuleValidate } from "../pages/Rule";
 import { GraphExplore } from "../pages/Graph";
 import { AiKnowledgeReview } from "../pages/AiKnowledge";
+import AiCandidateReviewDesk from "../pages/AIReview/AiCandidateReviewDesk";
 import { InsuranceAudit } from "../pages/Insurance";
 import { ProvenancePage } from "../pages/Provenance";
 import { AiWorkflowsPage } from "../pages/AiWorkflows";
 import TenantOnboarding from "../pages/Tenant/Onboarding";
-import { ImplementationGuidePage } from "../pages/Onboarding";
+import { ImplementationGuidePage, TenantApplication, ServiceAccountManagement } from "../pages/Onboarding";
 import { MpiPatientsPage } from "../pages/Mpi";
 import { AuditLogList } from "../pages/Admin/AuditLog";
 import { UserManagementPage } from "../pages/Admin/UserManagement";
@@ -79,6 +80,7 @@ export const routes: RouteObject[] = [
           { path: "qc/insurance", element: <InsuranceAudit /> },
           { path: "aik/sources", element: <KnowledgePage /> },
           { path: "aik/review", element: <AiKnowledgeReview /> },
+          { path: "aik/candidates", element: <AiCandidateReviewDesk /> },
           { path: "security/baseline", element: <SecurityBaselinePage /> },
           { path: "cdss/fatigue", element: <AlertFatiguePage /> },
           { path: "security/identity-binding", element: <IdentityBindingManagement /> },
@@ -88,11 +90,13 @@ export const routes: RouteObject[] = [
           { path: "notifications/settings", element: <NotificationSettings /> },
           { path: "admin/users", element: <UserManagementPage /> },
           { path: "admin/audit", element: <AuditLogList /> },
+          { path: "admin/service-accounts", element: <ServiceAccountManagement /> },
           { path: "mpi/patients", element: <MpiPatientsPage /> },
           { path: "adapter/hub", element: <AdapterHubPage /> },
           { path: "dify/workflows", element: <Navigate to="/ai-workflows" replace /> },
           { path: "ai-workflows", element: <AiWorkflowsPage /> },
           { path: "tenant/onboarding", element: <TenantOnboarding /> },
+          { path: "tenant/application", element: <TenantApplication /> },
           { path: "onboarding/implementation-guide", element: <ImplementationGuidePage /> },
           { path: "*", element: <NotFound /> },
         ],
