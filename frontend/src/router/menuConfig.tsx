@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   AppstoreOutlined,
   AuditOutlined,
+  BarChartOutlined,
   BellOutlined,
   ClusterOutlined,
   ContainerOutlined,
@@ -267,6 +268,18 @@ export const menuSections: MenuSection[] = [
         label: "安全基线",
         icon: <SafetyCertificateOutlined />,
         path: "/security/baseline",
+      },
+      {
+        key: "admin-license",
+        label: "授权管理",
+        icon: <SafetyCertificateOutlined />,
+        path: "/admin/license",
+      },
+      {
+        key: "admin-usage",
+        label: "用量报告",
+        icon: <BarChartOutlined />,
+        path: "/admin/usage",
       },
       {
         key: "system-providers",

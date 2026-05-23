@@ -1,0 +1,25 @@
+.page {
+  padding: var(--mk-spacing-lg);
+}
+
+.sectionCard {
+  margin-bottom: 16px;
+}
+
+.emptyHint {
+  text-align: center;
+  padding: var(--mk-spacing-lg);
+  color: var(--mk-text-secondary);
+}
+
+.marginTop {
+  margin-top: var(--mk-spacing-sm);
+}
+
+.statusBanner {
+  margin-bottom: 16px;
+}
+
+.featureTable {
+  margin-top: 12px;
+}

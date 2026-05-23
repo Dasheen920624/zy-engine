@@ -22,6 +22,18 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class LicenseService {
 
+    /**
+     * License 状态枚举。
+     */
+    public enum LicenseStatus {
+        /** 有效（剩余天数 > 30） */
+        VALID,
+        /** 即将过期（剩余天数 <= 30） */
+        WARNING,
+        /** 已过期 */
+        EXPIRED
+    }
+
     private static final Logger log = LoggerFactory.getLogger(LicenseService.class);
 
     private LicenseInfo currentLicense;
@@ -157,6 +169,68 @@ public class LicenseService {
         } else if (daysRemaining <= 30) {
             log.info("[license] License expires in {} days. Consider renewal.", daysRemaining);
         }
+    }
+
+    /**
+     * 获取 License 状态。
+     *
+     * @return VALID（剩余 > 30 天）、WARNING（剩余 <= 30 天）、EXPIRED（已过期）
+     */
+    public LicenseStatus getLicenseStatus() {
+        if (currentLicense == null) return LicenseStatus.EXPIRED;
+        if (currentLicense.isExpired()) return LicenseStatus.EXPIRED;
+        if (currentLicense.getDaysRemaining() <= 30) return LicenseStatus.WARNING;
+        return LicenseStatus.VALID;
+    }
+
+    /**
+     * 获取降级模式信息。
+     *
+     * @return 降级功能说明
+     */
+    public Map<String, Object> getDegradationInfo() {
+        Map<String, Object> info = new LinkedHashMap<String, Object>();
+        LicenseStatus status = getLicenseStatus();
+        info.put("status", status.name());
+        info.put("degraded", status == LicenseStatus.EXPIRED);
+
+        if (status == LicenseStatus.EXPIRED) {
+            info.put("mode", "READ_ONLY");
+            info.put("description", "License 已过期，系统处于只读降级模式");
+            Map<String, Object> restrictions = new LinkedHashMap<String, Object>();
+            restrictions.put("write_operations", "禁止所有 POST/PUT/DELETE 请求");
+            restrictions.put("feature_access", "所有高级功能不可用");
+            restrictions.put("user_management", "无法新增或修改用户");
+            restrictions.put("data_export", "仍可导出数据（只读操作）");
+            info.put("restrictions", restrictions);
+            if (currentLicense != null) {
+                info.put("expires_at", currentLicense.getExpiresAt());
+                info.put("days_overdue", Math.abs(currentLicense.getDaysRemaining()));
+            }
+        } else if (status == LicenseStatus.WARNING) {
+            info.put("mode", "NORMAL");
+            info.put("description", "License 即将过期，请及时续期");
+            if (currentLicense != null) {
+                info.put("days_remaining", currentLicense.getDaysRemaining());
+                info.put("expires_at", currentLicense.getExpiresAt());
+            }
+        } else {
+            info.put("mode", "NORMAL");
+            info.put("description", "License 有效，所有功能正常可用");
+            if (currentLicense != null) {
+                info.put("days_remaining", currentLicense.getDaysRemaining());
+                info.put("expires_at", currentLicense.getExpiresAt());
+            }
+        }
+
+        return info;
+    }
+
+    /**
+     * 判断是否处于降级模式。
+     */
+    public boolean isDegradedMode() {
+        return getLicenseStatus() == LicenseStatus.EXPIRED;
     }
 
     private LicenseInfo createTrialLicense() {

@@ -40,6 +40,7 @@ import { MpiPatientsPage } from "../pages/Mpi";
 import { AuditLogList } from "../pages/Admin/AuditLog";
 import { UserManagementPage } from "../pages/Admin/UserManagement";
 import { AdapterHubPage } from "../pages/Adapter";
+import { LicensePage, UsageDashboard } from "../pages/Commercial";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
@@ -91,6 +92,8 @@ export const routes: RouteObject[] = [
           { path: "admin/users", element: <UserManagementPage /> },
           { path: "admin/audit", element: <AuditLogList /> },
           { path: "admin/service-accounts", element: <ServiceAccountManagement /> },
+          { path: "admin/license", element: <LicensePage /> },
+          { path: "admin/usage", element: <UsageDashboard /> },
           { path: "mpi/patients", element: <MpiPatientsPage /> },
           { path: "adapter/hub", element: <AdapterHubPage /> },
           { path: "dify/workflows", element: <Navigate to="/ai-workflows" replace /> },
