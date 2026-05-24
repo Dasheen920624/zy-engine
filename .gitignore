@@ -30,6 +30,14 @@ application-secret.yml
 .DS_Store
 Thumbs.db
 
+# AI tool workspaces (prevent accidental commits from other AI assistants)
+.workbuddy/
+.aider*
+.cursor/
+.continue/
+.copilot/
+.cody/
+
 # Temporary files
 *.tmp
 *.bak
