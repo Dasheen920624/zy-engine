@@ -140,7 +140,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distribution: [temurin, zulu, dragonwell]
+        # GA-OPS-03 国产化 JDK 矩阵候选：
+        # - temurin: Eclipse Adoptium（事实标准）
+        # - zulu: Azul Zulu（金融 + 医疗常见选型）
+        # - corretto: Amazon Corretto（AWS 默认 + LTS 长期支持）
+        # KAE-JDK / LoongJDK / Dragonwell 等纯国产 distribution
+        # 由 GA-PILOT-* 阶段客户内网 self-hosted runner 单独补
+        distribution: [temurin, zulu, corretto]
 
     steps:
       - name: Checkout
