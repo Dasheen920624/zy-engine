@@ -58,6 +58,6 @@ git checkout legacy/v0.3-main-20260524
 
 ## 关联文档
 
-- [v1.0 GA 重启方案](../../V1_GA_REWRITE_PLAN.md)
+- [v1.0 GA 当前实施方案](../../MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md)
 - [产品宪法](../../CONSTITUTION.md)
 - [新单一任务台账](../../backlog.md)

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 const { Title, Text, Link } = Typography;
 
 /**
- * GA-PROD-04 · 默认登录 1 路径 + MFA/SSO 折叠区
+ * 默认登录路径 + MFA/SSO 折叠区。
  *
  * 与 docs/CONSTITUTION.md §1 第 6 条对齐：
  * - 默认只有账号密码 1 个主动作

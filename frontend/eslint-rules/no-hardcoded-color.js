@@ -8,7 +8,7 @@
  *   - 字符串字面量含 hex/rgb/rgba/hsl
  *
  * 例外：
- *   - frontend/src/styles/tokens.css 是 token 定义文件
+ *   - frontend/src/shared/config/theme.ts 是品牌色 token 定义文件
  *
  * 错误示例：
  *   <div style={{ color: '#1890ff' }}>
@@ -35,7 +35,10 @@ function isHardcodedColor(str) {
 }
 
 function isTokenFile(filename) {
-  return filename.includes('tokens.css') || filename.includes('tokens.ts');
+  const normalized = filename.replaceAll('\\', '/');
+  return normalized.includes('tokens.css') ||
+    normalized.includes('tokens.ts') ||
+    normalized.endsWith('src/shared/config/theme.ts');
 }
 
 export default {
@@ -48,8 +51,7 @@ export default {
     messages: {
       hardcodedColor:
         '禁止硬编码颜色 "{{value}}"。请改用 CSS 变量如 var(--mk-primary)。' +
-        '完整 token 见 docs/03_设计系统.md §2。' +
-        '强制依据：ADR-0003。',
+        '完整 token 见 docs/CONSTITUTION.md §8 与 docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md §11。',
     },
     schema: [],
   },

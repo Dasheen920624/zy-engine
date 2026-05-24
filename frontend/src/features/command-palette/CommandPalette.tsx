@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { menuSections } from "@/shared/config/menu";
 
 /**
- * GA-PROD-05 · 全局命令面板（⌘K / Ctrl+K）
+ * 全局命令面板。
  *
  * 极致易用，对老 IT 友好 — 任何人 1 秒打开 → 输入关键词 → Enter 跳菜单。
  * 后续会扩展到：搜患者 / 搜配置包 / 搜规则 / 搜审计快照。

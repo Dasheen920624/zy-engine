@@ -10,7 +10,7 @@ import { StatusBadge } from "@/shared/ui/StatusBadge";
 import { TenantLifecyclePanel } from "@/features/tenant-lifecycle/TenantLifecyclePanel";
 
 /**
- * GA-PROD-01 · 工作台 1 屏即懂
+ * 工作台：一屏看懂系统健康、试点进度、待办和生命周期。
  *
  * 严格遵守 docs/CONSTITUTION.md §5 第 1 条：院长首屏 ≤ 10 秒看懂今天系统状态，0 技术名词。
  * 不滚动即可看完核心四件事：今天系统健康、试点进度、待办、生命周期。
@@ -24,7 +24,7 @@ export function WorkbenchPanel() {
 
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      {/* 1. 院级生命周期面板（GA-PROD-11 核心） */}
+      {/* 1. 院级生命周期面板 */}
       <TenantLifecyclePanel />
 
       {/* 2. 今日健康四指标（一眼看完） */}

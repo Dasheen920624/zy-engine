@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 const { Title, Text } = Typography;
 
 /**
- * GA-PROD-01 · 通用页骨架（FSD layout 标准）
+ * 通用页骨架。
  *
  * 所有客户可见页面统一使用此 PageShell，保证：
  * - 1 个主标题 + 1 句业务描述（不超过 30 字）
