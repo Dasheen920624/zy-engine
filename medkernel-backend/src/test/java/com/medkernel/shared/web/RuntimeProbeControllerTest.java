@@ -16,9 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>必须用 RANDOM_PORT 启动真实 Tomcat（而非 MockMvc）才能验证
  * {@code spring.threads.virtual.enabled=true} 在 Tomcat connector 上生效。
+ *
+ * <p>GA-ENG-BASE-03：升级断言以匹配 ApiResult 包络结构。
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@ActiveProfiles("dev")
 class RuntimeProbeControllerTest {
 
     @Autowired
@@ -27,11 +29,17 @@ class RuntimeProbeControllerTest {
     @Test
     @SuppressWarnings("unchecked")
     void runtimeReportsJdk21AndVirtualThread() {
-        Map<String, Object> body = rest.getForObject("/api/v1/system/runtime", Map.class);
+        Map<String, Object> envelope = rest.getForObject("/api/v1/system/runtime", Map.class);
 
-        assertThat(body).isNotNull();
-        assertThat((String) body.get("javaVersion")).startsWith("21");
-        assertThat((Boolean) body.get("isVirtualThread"))
+        assertThat(envelope).isNotNull();
+        assertThat(envelope.get("success")).isEqualTo(Boolean.TRUE);
+        assertThat(envelope.get("code")).isEqualTo("OK");
+        assertThat(envelope.get("traceId")).isNotNull();
+
+        Map<String, Object> data = (Map<String, Object>) envelope.get("data");
+        assertThat(data).isNotNull();
+        assertThat((String) data.get("javaVersion")).startsWith("21");
+        assertThat((Boolean) data.get("virtualThread"))
             .as("Spring Boot 3.3 + JDK 21 默认应使 HTTP 请求跑在 Virtual Thread 上")
             .isTrue();
     }

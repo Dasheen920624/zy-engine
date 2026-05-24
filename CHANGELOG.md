@@ -8,6 +8,26 @@
 
 ## [Unreleased]
 
+### Added (2026-05-25) · GA-ENG-BASE 骨架
+
+引擎一切之根：统一 API 契约 + 上下文 + 审计 + 5 方言 DDL 起点。后续 E1-E5 任务都将依赖本骨架。
+
+- **shared/api/**：标准 API 包络。
+  - `ApiResult<T>`：统一响应体（`success` / `code` / `message` / `data` / `errors` / `traceId` / `timestamp`），裸 POJO / Map 在 PR 检查阶段视作违反产品宪法第 7 条
+  - `ApiError`：字段级错误明细，用于 Bean Validation 失败回传
+  - `PageRequest` / `PageResponse`：服务端分页（默认 20、最大 200）
+  - `CursorRequest` / `CursorResponse`：游标分页（默认 50、最大 500），用于审计日志、证据流、大规模搜索
+- **shared/api/error/**：统一错误处理。
+  - `ErrorCode` 枚举：业务错误码 + HTTP 状态映射，命名前缀 `ENG-API-*` / `ENG-BASE-*` / `ENG-SYS-*`
+  - `ApiException`：业务异常基类，提供 `notFound` / `forbidden` / `conflict` / `tenantMissing` 等工厂方法
+  - `GlobalExceptionHandler`：翻译 Bean Validation / Security / 业务异常 / 未捕获异常为 `ApiResult`，敏感细节不泄露给客户端
+- **shared/trace/**：`TraceIdFilter` — `X-Trace-Id` 请求/响应头 + SLF4J MDC + `RequestContext` 三处同步，header 注入防御（仅允许字母数字短横线下划线 + 长度 128 内）
+- **shared/context/**：`RequestContext` + `OrgScope`，承载 traceId / 组织六级树 / 用户 ID，提供 `runWith` / `callWith` 闭包，配合 Virtual Threads 一处请求一片上下文
+- **shared/audit/**：`AuditAction` 枚举 + `AuditEvent` 记录 + `AuditEventPublisher`（基于 Spring `ApplicationEventPublisher`，内置 `LoggingAuditSink` 写入 audit logger），GA-ENG-BASE-04 实施时将增加 `AuditPersistenceSink` 落库到 `audit_event` 表
+- **db/migration/{h2,postgres,oracle,dm,kingbase}/V2__org_audit_baseline.sql**：5 方言一致的 `org_unit`（六级组织树 + 状态/审计字段 + 唯一约束 + 检查约束）和 `audit_event`（操作留痕 + 4 类索引）DDL；Oracle/DM 字段 `level_code` 规避保留字
+- **HealthController / RuntimeProbeController**：示范改造为 `ApiResult<PingResponse>` / `ApiResult<RuntimeProbeResponse>` + Record DTO，作为后续 30+ 业务 Controller 改造模板
+- **测试**：29 项新单元 + 集成测试（ApiResult 序列化、PageResponse 边界、TraceId 头注入防御、GlobalExceptionHandler 5 类映射、RequestContext ThreadLocal 闭包、AuditEventPublisher 上下文传递、H2 V1+V2 Flyway 应用），均通过
+
 ### Added (2026-05-19)
 - **分支策略与发布管理**（多 AI 并行 + main 永远稳定）：
   - 新增 [`docs/engineering/分支策略与发布管理.md`](docs/engineering/分支策略与发布管理.md)

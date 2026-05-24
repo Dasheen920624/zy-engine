@@ -1,0 +1,52 @@
+-- MedKernel v1.0 GA · 人大金仓 V9 baseline schema（兼容 PostgreSQL 语法）
+-- 引擎一切之根：组织六级树 + 审计留痕。
+
+CREATE TABLE IF NOT EXISTS org_unit (
+    id              BIGSERIAL PRIMARY KEY,
+    parent_id       BIGINT NULL,
+    tenant_id       VARCHAR(64)  NOT NULL,
+    level_code      VARCHAR(32)  NOT NULL,
+    code            VARCHAR(128) NOT NULL,
+    name            VARCHAR(256) NOT NULL,
+    name_pinyin     VARCHAR(256) NULL,
+    specialty_id    VARCHAR(64)  NULL,
+    status          VARCHAR(32)  NOT NULL DEFAULT 'ACTIVE',
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_by      VARCHAR(64)  NOT NULL DEFAULT 'system',
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_by      VARCHAR(64)  NOT NULL DEFAULT 'system',
+    CONSTRAINT uk_org_unit_tenant_code UNIQUE (tenant_id, code),
+    CONSTRAINT ck_org_unit_level CHECK (level_code IN ('TENANT','GROUP','HOSPITAL','CAMPUS','SITE','DEPARTMENT','WARD')),
+    CONSTRAINT ck_org_unit_status CHECK (status IN ('ACTIVE','SUSPENDED','ARCHIVED'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_org_unit_parent ON org_unit (parent_id);
+CREATE INDEX IF NOT EXISTS idx_org_unit_tenant_lv ON org_unit (tenant_id, level_code);
+
+CREATE TABLE IF NOT EXISTS audit_event (
+    id              BIGSERIAL PRIMARY KEY,
+    event_id        VARCHAR(64)  NOT NULL,
+    trace_id        VARCHAR(128) NULL,
+    occurred_at     TIMESTAMPTZ  NOT NULL,
+    actor_user_id   VARCHAR(64)  NULL,
+    action          VARCHAR(32)  NOT NULL,
+    resource_type   VARCHAR(128) NOT NULL,
+    resource_id     VARCHAR(128) NOT NULL,
+    summary         VARCHAR(512) NULL,
+    payload_digest  VARCHAR(128) NULL,
+    tenant_id       VARCHAR(64)  NOT NULL,
+    hospital_id     VARCHAR(64)  NULL,
+    department_id   VARCHAR(64)  NULL,
+    ip_address      VARCHAR(64)  NULL,
+    user_agent      VARCHAR(512) NULL,
+    signature       VARCHAR(512) NULL,
+    status          VARCHAR(32)  NOT NULL DEFAULT 'RECORDED',
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    CONSTRAINT uk_audit_event_event_id UNIQUE (event_id),
+    CONSTRAINT ck_audit_event_status CHECK (status IN ('RECORDED','SIGNED','TSA_SIGNED','REJECTED'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_event_resource ON audit_event (resource_type, resource_id, occurred_at);
+CREATE INDEX IF NOT EXISTS idx_audit_event_actor    ON audit_event (actor_user_id, occurred_at);
+CREATE INDEX IF NOT EXISTS idx_audit_event_tenant   ON audit_event (tenant_id, occurred_at);
+CREATE INDEX IF NOT EXISTS idx_audit_event_trace    ON audit_event (trace_id);

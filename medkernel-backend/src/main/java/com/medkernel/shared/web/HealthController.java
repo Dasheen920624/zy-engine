@@ -1,29 +1,50 @@
 package com.medkernel.shared.web;
 
 import java.time.Instant;
-import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.medkernel.shared.api.ApiResult;
+
 /**
- * MedKernel v1.0 GA · 基础健康端点。
- * <p>真实 health 由 spring-boot-actuator 提供（/actuator/health）；
- * 本端点提供"产品宪法生效中"的极简心跳，供前端骨架校验后端是否启动。
+ * MedKernel v1.0 GA · 基础心跳端点。
+ *
+ * <p>真实健康检查由 Spring Boot Actuator 提供（{@code /actuator/health}）；
+ * 本端点提供"产品宪法生效中"的极简心跳，并作为 GA-ENG-BASE-03 标准 ApiResult 范例。
+ *
+ * <p>对外契约示例：
+ * <pre>{@code
+ * GET /api/v1/system/ping
+ * → {
+ *     "success": true, "code": "OK", "message": "操作成功",
+ *     "data": { "product": "MedKernel", "version": "1.0.0-SNAPSHOT", ... },
+ *     "traceId": "...", "timestamp": "..."
+ *   }
+ * }</pre>
  */
 @RestController
 @RequestMapping("/api/v1/system")
 public class HealthController {
 
+    private final String version;
+    private final String stage;
+
+    public HealthController(@Value("${medkernel.version:1.0.0-SNAPSHOT}") String version,
+                            @Value("${medkernel.stage:v1.0 GA · 0 业务引擎全能力上线}") String stage) {
+        this.version = version;
+        this.stage = stage;
+    }
+
     @GetMapping("/ping")
-    public Map<String, Object> ping() {
-        return Map.of(
-            "status", "ok",
-            "product", "MedKernel",
-            "version", "1.0.0-SNAPSHOT",
-            "stage", "v1.0 GA Phase-1 skeleton",
-            "timestamp", Instant.now().toString()
-        );
+    public ApiResult<PingResponse> ping() {
+        return ApiResult.ok(new PingResponse(
+            "MedKernel",
+            version,
+            stage,
+            Instant.now()
+        ));
     }
 }
