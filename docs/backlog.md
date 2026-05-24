@@ -53,6 +53,39 @@
 
 ---
 
+## Phase-2.5 · 业务深规系统恢复（5 阶段 R0-R4，与 Phase-3 部分并行）
+
+> 用户决策（2026-05-24）：v0.3 5 份金本位 4249 行业务细节按 5 阶段恢复，纳入 [CONSTITUTION §12 业务深规索引](CONSTITUTION.md#12-业务深规索引v10-ga-业务细节系统恢复)。
+> R1-R4 独立 PR → main，每阶段完成后立即可用，不必等全部做完。
+
+### Phase-2.5a 文档恢复 5 阶段
+
+| ID | 名 | owner | status |
+|---|---|---|---|
+| GA-SPEC-R0 | 蓝图 PR：4 子目录骨架 + ia-mapping.md + _template.md + components-checklist.md + CONSTITUTION §12 锚点 | claude | in_progress |
+| GA-SPEC-R1 | 设计系统（tokens.md + components.md + patterns.md，~800 行） | - | pending |
+| GA-SPEC-R2 | 产品事实（facts.md：9 能力 + 22 不变量 + 9 角色，~400 行） | - | pending |
+| GA-SPEC-R3 | 场景剧本（S1-S6 各一份，~1200 行） | - | pending |
+| GA-SPEC-R4 | 页面规格（31 客户业务页 + 4 嵌入组件 × 12 字段，~2500 行） | - | pending |
+
+### Phase-2.5b 9 个未实装核心组件（按 components-checklist 优先级）
+
+| ID | 组件 | 触发硬约束 | owner | status |
+|---|---|---|---|---|
+| GA-UI-01 | `<SourceInfo>` 来源信息条 | §不变量 8 来源必须 | - | pending |
+| GA-UI-02 | `<AiBadge>` AI 候选标识 | §1.9 AI 内容必须标识 | - | pending |
+| GA-UI-03 | `<OrgContextSelector>` 组织上下文 | §不变量 21 组织上下文必传 | - | pending |
+| GA-UI-04 | `<TracedCard>` 带 traceId 卡片 | §不变量 12 trace_id 全链路 | - | pending |
+| GA-UI-05 | `<DangerConfirm>` 三级危险确认 | §1.6 默认 1 主按钮 | - | pending |
+| GA-UI-06 | `<StepWizard>` 扩展（在 StepFlow 基础加草稿）| §4 7 步流 | - | pending |
+| GA-UI-07 | `<EmptyState>` 空状态 | §不变量 22 六态强制 | - | pending |
+| GA-UI-08 | `<ErrorState>` 错误状态 | §不变量 22 六态强制 | - | pending |
+| GA-UI-09 | `<EmbeddedAlert>` 嵌入预警条 | B 临床嵌入器 EM01-04 用 | - | pending |
+
+C10 `<AuditTrail>` 归 GA-EXT-12 多租户审计；C11 `<RuleDslEditor>` / C12 `<PathwayCanvas>` 归各业务域 PR 内实装。
+
+---
+
 ## Phase-3 · 业务域实装（W3-W4，5 域 5 AI 并行）
 
 | ID | 名 | owner | status |
@@ -145,12 +178,14 @@
 | Phase-0 基线重置 | 5 | 2 |
 | Phase-1 现代化骨架 | 8 | 8 |
 | Phase-2 产品收口 | 11 | 25 |
+| Phase-2.5a 业务深规恢复 R0-R4 | 5 | 8 |
+| Phase-2.5b UI 9 组件实装 | 9 | 12 |
 | Phase-3 业务域实装 | 5（× 5 AI 并行）| 100 |
 | Phase-4 客户必查 P0 | 16 | 60 |
 | Phase-4 客户必查 P1 | 10 | 35 |
 | Phase-5 质量/运维/文档/法务 | 14 | 50 |
 | Phase-6 试点与发版 | 5 | 15 |
-| **合计** | **74 项** | **~295 人日** |
+| **合计** | **88 项** | **~315 人日** |
 
 → **平均 5 AI 并行**：~12 周 = **GA tag 日期 2026-08-15**
 
@@ -161,3 +196,4 @@
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
 | 1.0 | 2026-05-23 | 架构 + 产品评审 | 初版（5 套旧命名归一）|
+| 1.1 | 2026-05-24 | 用户决策 + Claude | 新增 Phase-2.5 业务深规恢复 5 阶段（R0-R4）+ Phase-2.5b 9 组件实装（GA-UI-01~09）；合计 74→88 项 / 295→315 人日 |
