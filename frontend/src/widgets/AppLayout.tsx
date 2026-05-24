@@ -61,15 +61,27 @@ export function AppLayout() {
     }
   };
 
+  const siderWidth = collapsed ? 80 : 240;
+
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ minHeight: "100vh" }} hasSider>
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
         trigger={null}
         width={240}
-        style={{ background: token.colorBgContainer }}
+        style={{
+          background: token.colorBgContainer,
+          position: "fixed",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          height: "100vh",
+          overflow: "auto",
+          zIndex: 20,
+          borderRight: `1px solid ${token.colorBorderSecondary}`,
+        }}
       >
         <div
           style={{
@@ -80,6 +92,10 @@ export function AppLayout() {
             color: token.colorPrimary,
             fontWeight: 600,
             fontSize: collapsed ? 14 : 16,
+            position: "sticky",
+            top: 0,
+            background: token.colorBgContainer,
+            zIndex: 1,
           }}
         >
           {collapsed ? "MK" : "集团医疗智能中枢"}
@@ -91,6 +107,7 @@ export function AppLayout() {
           defaultOpenKeys={menuSections.filter((s) => !s.hidden && s.items.length > 1).map((s) => s.key)}
           items={items}
           onClick={handleMenuClick}
+          style={{ borderRight: 0 }}
         />
         {/* 高级工具：底部隐藏式入口（与 §2.1 对齐） */}
         {!collapsed && advancedItems.length > 0 && (
@@ -109,7 +126,7 @@ export function AppLayout() {
           </div>
         )}
       </Sider>
-      <Layout>
+      <Layout style={{ marginLeft: siderWidth, transition: "margin-left 0.2s" }}>
         <Header
           style={{
             padding: "0 16px",
@@ -118,6 +135,10 @@ export function AppLayout() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            width: "100%",
           }}
         >
           <Space>
