@@ -8,6 +8,20 @@
 
 ## [Unreleased]
 
+### Added (2026-05-25) · GA-ENG-BASE-01 完整化 — JWT → OrgScope + 组织单元 API
+
+- **shared/context/JwtClaimsResolver**：约定 JWT claim 命名（`sub` / `tenant_id` / `group_id` / `hospital_id` / `campus_id` / `site_id` / `department_id` / `ward_id` / `specialty_id` / `roles`）；roles 支持 List/String/逗号串三种形态
+- **shared/context/TenantContextEnricherFilter**：Spring Security 鉴权后运行，从 SecurityContextHolder 读取 JwtAuthenticationToken，把 OrgScope + userId 注入 RequestContext；退出时回退到 traceId-only snapshot，防止跨请求泄漏
+- **engine/org/**：新建 engine 模块第一域。
+  - `OrgLevel` 枚举（TENANT/GROUP/HOSPITAL/CAMPUS/SITE/DEPARTMENT/WARD），与 DDL CHECK 约束严格对应
+  - `OrgUnitStatus` 枚举（ACTIVE/SUSPENDED/ARCHIVED）
+  - `OrgUnit` Spring Data JDBC 实体，Java 字段 `level` 映射到 DDL `level_code` 列（规避 Oracle/DM 保留字）
+  - `OrgUnitRepository` extends `ListCrudRepository`，所有查询强制带 tenantId 参数（不提供未带租户的全表方法）
+  - `OrgUnitService`：requireCurrentTenant() 缺租户抛 ApiException.tenantMissing()，避免越权
+  - `OrgUnitController`：`GET /api/v1/tenant/org-units` 列表 + `/{code}` 详情 + `/by-level` + `/children-map` 扁平树
+- **shared/security/SecurityConfig**：注入 TenantContextEnricherFilter 到 BearerTokenAuthenticationFilter 之后；新增 `buildJwtAuthenticationConverter()` 把 JWT `roles` claim 映射为 `ROLE_*` 权限（如 `roles=["doctor","qa-manager"]` → `ROLE_DOCTOR` + `ROLE_QA_MANAGER`），可配合 `@PreAuthorize("hasRole('DOCTOR')")` 使用
+- **测试**：17 项新单元/集成测试（JwtClaimsResolver 6 + TenantContextEnricherFilter 2 + OrgUnitService 5 + OrgUnitRepository 4 真 H2 + Flyway V1+V2），全部通过
+
 ### Added (2026-05-25) · GA-ENG-BASE 骨架
 
 引擎一切之根：统一 API 契约 + 上下文 + 审计 + 5 方言 DDL 起点。后续 E1-E5 任务都将依赖本骨架。

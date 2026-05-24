@@ -1,0 +1,118 @@
+package com.medkernel.engine.org;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
+import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest;
+import org.springframework.test.context.TestPropertySource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * OrgUnitRepository 集成测试：H2 + Flyway V1+V2 + Spring Data JDBC。
+ *
+ * <p>{@link DataJdbcTest} 默认禁用 Flyway；通过 {@link ImportAutoConfiguration} 把它重新挂回来，
+ * 让 V1__init.sql + V2__org_audit_baseline.sql 创建出 org_unit 表后再跑测试。
+ */
+@DataJdbcTest
+@ImportAutoConfiguration(FlywayAutoConfiguration.class)
+@AutoConfigureTestDatabase(replace = Replace.NONE)
+@TestPropertySource(properties = {
+    // DATABASE_TO_LOWER 让 H2 把所有标识符存为小写，匹配 Spring Data JDBC 默认带引号的 SQL（"org_unit"）
+    "spring.datasource.url=jdbc:h2:mem:orgunit-repo-${random.uuid};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1",
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "spring.datasource.username=sa",
+    "spring.datasource.password=",
+    "spring.flyway.enabled=true",
+    "spring.flyway.locations=classpath:db/migration/h2"
+})
+class OrgUnitRepositoryTest {
+
+    @Autowired
+    OrgUnitRepository repository;
+
+    @AfterEach
+    void wipe() {
+        repository.deleteAll();
+    }
+
+    @Test
+    void persistsAndReadsBackOrgUnit() {
+        OrgUnit hospital = newHospital("t-1", "HOSP-001", "总院");
+        OrgUnit saved = repository.save(hospital);
+
+        assertThat(saved.id()).isNotNull();
+        assertThat(saved.tenantId()).isEqualTo("t-1");
+        assertThat(saved.level()).isEqualTo(OrgLevel.HOSPITAL);
+        assertThat(saved.status()).isEqualTo(OrgUnitStatus.ACTIVE);
+
+        Optional<OrgUnit> reloaded = repository.findByTenantIdAndCode("t-1", "HOSP-001");
+        assertThat(reloaded).isPresent();
+        assertThat(reloaded.get().name()).isEqualTo("总院");
+    }
+
+    @Test
+    void findsByLevel() {
+        repository.save(newHospital("t-1", "HOSP-001", "总院"));
+        repository.save(newHospital("t-1", "HOSP-002", "东区分院"));
+        repository.save(newDepartment("t-1", "DEPT-CARDIO", "心内科"));
+
+        List<OrgUnit> hospitals = repository.findByTenantIdAndLevelOrderByCodeAsc("t-1", OrgLevel.HOSPITAL);
+        assertThat(hospitals).hasSize(2);
+        assertThat(hospitals).extracting(OrgUnit::code).containsExactly("HOSP-001", "HOSP-002");
+
+        List<OrgUnit> departments = repository.findByTenantIdAndLevelOrderByCodeAsc("t-1", OrgLevel.DEPARTMENT);
+        assertThat(departments).hasSize(1);
+    }
+
+    @Test
+    void isolatesByTenant() {
+        repository.save(newHospital("t-1", "HOSP-001", "A 院"));
+        repository.save(newHospital("t-2", "HOSP-001", "B 院"));
+
+        assertThat(repository.countByTenantId("t-1")).isEqualTo(1);
+        assertThat(repository.countByTenantId("t-2")).isEqualTo(1);
+
+        Optional<OrgUnit> aSide = repository.findByTenantIdAndCode("t-1", "HOSP-001");
+        Optional<OrgUnit> bSide = repository.findByTenantIdAndCode("t-2", "HOSP-001");
+        assertThat(aSide).isPresent();
+        assertThat(bSide).isPresent();
+        assertThat(aSide.get().name()).isEqualTo("A 院");
+        assertThat(bSide.get().name()).isEqualTo("B 院");
+    }
+
+    @Test
+    void pageReturnsRequestedRange() {
+        for (int i = 1; i <= 25; i++) {
+            String code = String.format("HOSP-%03d", i);
+            repository.save(newHospital("t-page", code, "院 " + i));
+        }
+        List<OrgUnit> firstPage = repository.pageByTenantId("t-page", 0, 10);
+        List<OrgUnit> thirdPage = repository.pageByTenantId("t-page", 20, 10);
+
+        assertThat(firstPage).hasSize(10);
+        assertThat(thirdPage).hasSize(5);
+        assertThat(firstPage.get(0).code()).isEqualTo("HOSP-001");
+        assertThat(thirdPage.get(thirdPage.size() - 1).code()).isEqualTo("HOSP-025");
+    }
+
+    private OrgUnit newHospital(String tenantId, String code, String name) {
+        Instant now = Instant.now();
+        return new OrgUnit(null, null, tenantId, OrgLevel.HOSPITAL, code, name, null, null,
+            OrgUnitStatus.ACTIVE, now, "system", now, "system");
+    }
+
+    private OrgUnit newDepartment(String tenantId, String code, String name) {
+        Instant now = Instant.now();
+        return new OrgUnit(null, null, tenantId, OrgLevel.DEPARTMENT, code, name, null, null,
+            OrgUnitStatus.ACTIVE, now, "system", now, "system");
+    }
+}

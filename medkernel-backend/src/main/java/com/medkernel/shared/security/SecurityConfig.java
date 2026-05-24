@@ -1,5 +1,8 @@
 package com.medkernel.shared.security;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -10,9 +13,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+
+import com.medkernel.shared.context.JwtClaimsResolver;
+import com.medkernel.shared.context.TenantContextEnricherFilter;
 
 /**
  * GA-CORE-02 / W1-G3 闸门：Spring Security 6 OAuth2 Resource Server + JWT。
@@ -25,12 +35,20 @@ import org.springframework.security.web.SecurityFilterChain;
  *   <li>白名单：/api/v1/system/** + /actuator/health + /actuator/prometheus + Swagger
  *   <li>dev profile 用 HS256 + 共享密钥简化本地开发；prod 必须用 RS256 + JWKS
  * </ul>
+ *
+ * <p>GA-ENG-BASE-01 升级：
+ * <ul>
+ *   <li>{@link #jwtAuthenticationConverter()} 把 JWT 的 {@code roles} claim 映射为 {@code ROLE_*} 权限</li>
+ *   <li>在 {@link BearerTokenAuthenticationFilter} 之后追加 {@link TenantContextEnricherFilter}，
+ *       让 Controller 内的代码可以通过 {@code RequestContext.currentOrgScope()} 拿到组织上下文</li>
+ * </ul>
  */
 @Configuration
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http,
+                                    TenantContextEnricherFilter tenantEnricher) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -47,9 +65,37 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
             )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
+                .jwtAuthenticationConverter(buildJwtAuthenticationConverter())
+            ))
+            .addFilterAfter(tenantEnricher, BearerTokenAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * JWT roles claim → ROLE_* 权限。
+     *
+     * <p>例：claim {@code roles=["doctor","qa-manager"]} → 权限 {@code ROLE_DOCTOR}、{@code ROLE_QA_MANAGER}。
+     * 业务代码可用 {@code @PreAuthorize("hasRole('DOCTOR')")} 控制访问（GA-ENG-BASE-02 引入数据范围切面时统一规范）。
+     *
+     * <p>不暴露为 Spring Bean —— 一旦作为 {@link Converter} bean 暴露，Spring MVC 的
+     * {@code mvcConversionService} 会尝试将其注册为通用类型转换器，因泛型擦除丢失类型信息而启动失败。
+     * 仅在 SecurityFilterChain 内部使用即可。
+     */
+    private JwtAuthenticationConverter buildJwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> mapRoles(JwtClaimsResolver.resolveRoles(jwt)));
+        return converter;
+    }
+
+    private Collection<GrantedAuthority> mapRoles(Collection<String> roles) {
+        return roles.stream()
+            .filter(r -> r != null && !r.isBlank())
+            .map(r -> r.trim().toUpperCase().replace('-', '_'))
+            .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toCollection(java.util.ArrayList::new));
     }
 
     /**
