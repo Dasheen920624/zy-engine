@@ -32,11 +32,11 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-BASE-01 组织与租户上下文：tenant/group/hospital/campus/site/department/user/role/package version | - | pending |
+| GA-ENG-BASE-01 组织与租户上下文：tenant/group/hospital/campus/site/department/user/role/package version | claude | in_progress |
 | GA-ENG-BASE-02 身份权限：用户、角色、菜单权限、动作权限、数据范围、无权限响应 | - | pending |
-| GA-ENG-BASE-03 API 契约：ApiResult、ProblemDetail、分页、错误码、DTO 校验、幂等、traceId | - | pending |
-| GA-ENG-BASE-04 审计上下文：写操作、审核、发布、运行、反馈、导出、回滚统一留痕 | - | pending |
-| GA-ENG-BASE-05 数据迁移：5 方言表族、审计字段、状态字段、版本字段、索引和约束门禁 | - | pending |
+| GA-ENG-BASE-03 API 契约：ApiResult、ProblemDetail、分页、错误码、DTO 校验、幂等、traceId | claude | done |
+| GA-ENG-BASE-04 审计上下文：写操作、审核、发布、运行、反馈、导出、回滚统一留痕 | claude | in_progress |
+| GA-ENG-BASE-05 数据迁移：5 方言表族、审计字段、状态字段、版本字段、索引和约束门禁 | claude | in_progress |
 | GA-ENG-BASE-06 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流 | - | pending |
 | GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | - | pending |
 | GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | - | pending |
@@ -131,6 +131,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.1 | 2026-05-25 | Claude | GA-ENG-BASE-03 完成（API 契约骨架）；GA-ENG-BASE-01/04/05 进入 in_progress（仅交付 traceId/orgScope/audit 上下文 + org_unit/audit_event 5 方言 DDL；JWT→OrgScope/userId、权限、审计落库后续 PR） |
 | 4.0 | 2026-05-24 | Codex | 最终收束：增加代码净化门禁，细化 E6 业务医疗服务包，明确 AI 团队交付顺序 |
 | 3.1 | 2026-05-24 | Codex | 增加全系统产品与交互体验固定规范及分页、低打扰、可信解释验收任务 |
 | 3.0 | 2026-05-24 | 用户决策 + Codex | 台账重排为“0 业务引擎全能力上线”，业务划分后置 |
