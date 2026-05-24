@@ -1,8 +1,10 @@
 # 集团医疗智能中枢 MedKernel · 管理工作台前端
 
-本目录是 MedKernel **正式前端工程**。当前已具备路由、Layout、组织上下文、API client、查询缓存、MSW mock、单元测试、Provider 状态页和配置包中心。业务页面按 [`docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md`](../docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md) 接力落地。
+本目录是 MedKernel **正式前端工程**。当前执行为 **0 业务引擎全能力上线**：先做引擎控制台、路由菜单元数据、组织上下文、API client、查询缓存、六态模板、7 步流、状态机、发布审核、证据和降级状态；引擎验收前不按业务菜单拆页面闭环。
 
-命名口径（v0.3-final 收口）：对外统一称「**集团医疗智能中枢 · MedKernel**」，工作台称「**管理工作台**」。可部署在院内、专网、VPN/零信任网关后；外网 SaaS 形态见 [`docs/DEPLOYMENT_DUAL_MODE.md`](../docs/DEPLOYMENT_DUAL_MODE.md)。
+业务细节继续查 [`docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md`](../docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md)，全系统交互体验按 [`docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md`](../docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md) 固定执行；当前编码任务只按 [`docs/backlog.md`](../docs/backlog.md) 的 `GA-ENG-*` 引擎任务推进。
+
+命名口径（v1.0 GA 主线校准）：对外统一称「**集团医疗智能中枢 · MedKernel**」，工作台称「**管理工作台**」。可部署在院内、专网、VPN/零信任网关后；外网 SaaS 形态以 [`docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md`](../docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md) 为准。
 
 ## 技术栈
 
@@ -55,9 +57,9 @@ npm run dev
 启动前确认后端已运行：
 
 ```powershell
-cd ../medkernel-mvp
-./scripts/start-memory.cmd
-# 健康检查 http://localhost:18080/medkernel/api/health
+cd ../medkernel-backend
+mvn spring-boot:run
+# 健康检查 http://localhost:18080/medkernel/actuator/health
 ```
 
 ### 4. 构建产物
@@ -88,42 +90,27 @@ frontend/
 ├── .env.example            # 环境变量样例
 ├── .nvmrc                  # Node 版本声明
 └── src/
-    ├── main.tsx            # 入口：QueryClient + Router + 主题 Provider
-    ├── App.tsx             # 路由出口
-    ├── styles/tokens.css   # 设计系统 CSS Variables
-    ├── styles/tokens.ts    # 运行时主题色 token（唯一允许定义 JS 色值）
-    ├── styles/global.css   # 全局样式（与原型对齐）
-    ├── theme/
-    │   ├── tokens.ts       # 主题 registry + 自定义主题色派生
-    │   ├── ThemeProvider.tsx
-    │   └── ThemeSelector.tsx
-    ├── api/
-    │   ├── client.ts       # axios 实例 + 拦截器（traceId / 组织上下文 / ApiError）
-    │   ├── system.ts       # /system/* 接口
-    │   └── types.ts        # ApiResult / OrgContext / ApiError
-    ├── store/
-    │   └── orgContext.ts   # 组织上下文 store（localStorage 持久化）
-    ├── hooks/
-    │   └── useOrgContext.ts
-    ├── utils/
-    │   └── traceId.ts      # 前端 traceId 生成器
-    ├── layouts/
-    │   └── AppLayout.tsx   # Sider + Header + Outlet
-    ├── router/
-    │   └── routes.tsx      # 路由定义
+    ├── app/
+    │   ├── main.tsx        # 入口
+    │   ├── App.tsx         # 应用外壳
+    │   ├── router.tsx      # 路由出口
+    │   └── index.css       # 全局样式入口
+    ├── shared/
+    │   ├── api/            # axios client + hooks
+    │   ├── config/         # routes/menu/theme 单一元数据
+    │   ├── lib/            # 通用 store/lib
+    │   └── ui/             # PageShell / StatusBadge / StepFlow / ColumnManager
+    ├── widgets/            # AppLayout / WorkbenchPanel
+    ├── features/           # 横切功能
+    ├── entities/           # 领域实体类型与轻逻辑
     ├── pages/
-    │   ├── Dashboard.tsx
-    │   ├── ProvidersStatus.tsx        # 调真实 /api/system/providers
-    │   ├── DemoValidationPlaceholder.tsx
-    │   ├── ConfigPackages.tsx
-    │   ├── ProvenancePlaceholder.tsx
-    │   └── NotFound.tsx
-    ├── mocks/
-    │   ├── handlers.ts     # MSW handlers
-    │   ├── browser.ts      # MSW browser worker
-    │   └── server.ts       # MSW node server（vitest）
+    │   ├── tenant/
+    │   ├── clinical/
+    │   ├── quality/
+    │   ├── compliance/
+    │   └── advanced/
     └── test/
-        └── setup.ts        # vitest setup（@testing-library/jest-dom + MSW）
+        └── setup.ts        # vitest setup
 ```
 
 ## 全局约定
@@ -163,13 +150,11 @@ setOrg({ ...org, hospital_code: "HOSPITAL_BETA" });
 
 ### 主题色
 
-- 默认色值仍以 `src/styles/tokens.css` 为兜底，当前默认是深海医疗蓝。
-- 运行时主题由 `src/theme/tokens.ts` 管理，支持深海医疗蓝、经典蓝、院区绿、AI 紫和本地自定义。
-- `ThemeSelector` 写入 `localStorage`，刷新后保留当前主题。
-- 自定义主题当前暴露主色和菜单色，自动派生 hover、active、soft、info、data-1 等变量。
-- 后期接租户配置时，只需要把后端返回的主题包转换为同样的 `ThemeDefinition` / `ThemeOverrides`。
+- Antd 主题 token 由 `src/shared/config/theme.ts` 管理，并与 `docs/CONSTITUTION.md` 保持一致。
+- 主题模式由 `src/shared/lib/themeStore.ts` 和 `ThemeSwitcher` 管理，支持默认、老年医生、暗黑、护眼和跟随系统。
+- 后期接租户配置时，只允许把后端主题包转换为统一 token，不在页面内写散落色值。
 
-### CSS Modules（v0.3-final 起强制，PR-FINAL-04 落地）
+### CSS Modules
 
 所有**静态样式**必须放进同名 `<Component>.module.css`（Vite 默认支持，无需额外配置）。JSX 内联 `style={{ ... }}` 已被 `medkernel/no-inline-style` ESLint 规则拦截，且 `scripts/check-inline-style-count.ps1` 守门「只减不增」（baseline 555，目标 ≤ 100）。
 
@@ -201,7 +186,7 @@ export function PatientList() {
 }
 ```
 
-**强制 token**：颜色 / 字号 / 间距 / 圆角 / 阴影 / 字体 一律走 `var(--mk-*)`，严禁 hex / px / rem 字面量。唯一允许写 hex 的文件：`src/styles/tokens.css` / `src/styles/tokens.ts` / `src/theme/tokens.ts`。
+**强制 token**：颜色 / 字号 / 间距 / 圆角 / 阴影 / 字体一律走统一主题 token 或 CSS 变量，严禁页面内散落 hex 色值。唯一允许写品牌色的文件：`src/shared/config/theme.ts`。
 
 **动态样式豁免**：仅当样式值依赖运行时变量（transform / motion / progress 宽度等），可保留 inline 并加 `// eslint-disable-next-line medkernel/no-inline-style` 说明理由。推荐用 CSS 变量注入：
 
@@ -237,30 +222,35 @@ export function PatientList() {
 
 - 通过 nginx 把 `dist/` 静态资源与 `/medkernel/api` 反代到同源。
 
-## 9 角色诉求自检（FE-002 范围内）
+## 框架自检
 
-- [x] **产品设计师**：状态颜色 + 图标 + 文字三重编码（AntD `Badge` + `Tag` + `Statistic`）；空 / 加载 / 错误 / 无权限 4 态（`Skeleton` / `Empty` / `Alert` + 404 `Result`）。
-- [x] **前端**：Layout / 路由 / API client / 错误处理 / 组织上下文 / mock / 测试 全部就位。
-- [x] **测试**：vitest + MSW 单元/集成测试基础设施，覆盖 `traceId` 与 `ProvidersStatus`。
-- [x] **架构师**：组织上下文 Header 三方合并（Body 优先由后端处理）；`ApiError` 统一错误码；traceId 端到端。
-- [x] **信息科**：内网离线构建、私有 npm 源、`.env.local` 凭据不进 Git。
-- [ ] **临床医生 / 院领导 / 产品经理**：等 FE-003、FE-007 业务页面落地后才能完整满足。
+- [ ] route/menu/breadcrumb/permission 使用单一元数据。
+- [ ] 页面外壳统一使用 PageShell 和六态模板。
+- [ ] 状态展示统一走 StatusBadge 与 4 套状态机。
+- [ ] 配置类页面只使用 7 步流外壳，不自创流程。
+- [ ] 页面遵守一页一目标、1 主按钮、≤3 默认筛选、角色默认视图和专家模式。
+- [ ] 知识、候选、规则、路径、日志和证据列表使用服务端分页/游标、详情抽屉、批量任务和异步导出。
+- [ ] 临床嵌入提醒按低打扰规则展示，非红线风险不遮挡主流程。
+- [ ] API client 统一处理 traceId、组织上下文和 ApiError。
+- [ ] MSW 只作为开发和测试开关，不作为业务完成证据。
+- [ ] `.env.local` 凭据不进 Git，内网私有 npm 源配置不写入源码。
 
 ## 后续任务
 
-参见 [../docs/engineering/02_任务台账.md](../docs/engineering/02_任务台账.md) F 泳道：
+参见 [../docs/backlog.md](../docs/backlog.md) 的引擎上线任务：
 
-- FE-003 演示与规则校验工作台
-- FE-004 配置包中心
-- FE-005 规则配置器
-- FE-006 路径画布（AntV X6）
-- FE-007 质控看板（ECharts）
-- FE-008 来源追溯
-- FE-010 Playwright E2E + axe-core 可访问性扫描
+- `GA-ENG-BASE-06` 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流
+- `GA-ENG-BASE-08` 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出
+- `GA-ENG-API-*` 引擎接口前端调用契约
+- `GA-ENG-API-13` 大规模列表 API：分页/游标、排序、过滤、批量任务、导出任务
+- `GA-ENG-PKG-01` 包发布、灰度、全量、同步、回滚和证据
+- `GA-ENG-EMBED-01` iframe/SDK/纯 API 嵌入与降级状态
+- `GA-ENG-EVID-01` 证据链展示和导出
 
 ## 维护约定
 
-- 任何新页面需在 `src/router/routes.tsx` 注册 + Layout 菜单同步更新。
+- 任何新页面需先更新 `src/shared/config/routes.ts` / `src/shared/config/menu.ts`，保持 route/menu/breadcrumb/permission 单一元数据。
+- 任何新页面需先说明角色、主目标、默认筛选、数据规模、六态、降级、证据入口和是否需要专家模式。
 - 任何新接口需在 `src/api/*` 单独文件封装，不在组件内直接 axios。
 - 真正权限必须由后端校验，前端只做体验控制（菜单禁用 / 按钮隐藏）。
 - 不在前端代码或 localStorage 存放 token / API Key / 数据库密码 / 患者完整隐私。

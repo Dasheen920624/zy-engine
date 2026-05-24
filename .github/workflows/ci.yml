@@ -84,9 +84,12 @@ jobs:
       - name: Verify CONSTITUTION + backlog exist
         run: |
           test -f docs/CONSTITUTION.md || { echo "::error::缺 docs/CONSTITUTION.md"; exit 1; }
-          test -f docs/V1_GA_REWRITE_PLAN.md || { echo "::error::缺 docs/V1_GA_REWRITE_PLAN.md"; exit 1; }
+          test -f docs/MEDKERNEL_FOUNDATION_AND_SERVICES.md || { echo "::error::缺 docs/MEDKERNEL_FOUNDATION_AND_SERVICES.md"; exit 1; }
+          test -f docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md || { echo "::error::缺 docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md"; exit 1; }
+          test -f docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md || { echo "::error::缺 docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md"; exit 1; }
+          test -f docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md || { echo "::error::缺 docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md"; exit 1; }
           test -f docs/backlog.md || { echo "::error::缺 docs/backlog.md"; exit 1; }
-          echo "✓ 3 张权威文档齐备"
+          echo "✓ 6 张权威文档齐备"
 
       - name: Forbid legacy task naming in code
         run: |

@@ -4,7 +4,7 @@ import { Card, Steps, Space, Typography, Select, Row, Col, Tag } from "antd";
 const { Text } = Typography;
 
 /**
- * GA-PROD-11 · 租户生命周期面板（与 docs/CONSTITUTION.md §6 对齐）
+ * 租户生命周期面板（与 docs/CONSTITUTION.md §6 对齐）。
  *
  * 6 阶段：0 准备 → 1 试运行 → 2 验收 → 3 推广 → 4 运行 → 5 续约
  *

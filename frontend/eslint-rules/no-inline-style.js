@@ -1,8 +1,8 @@
 /**
- * ESLint 规则：禁止 JSX 内联 style={{}}（v0.3-final 风格统一）。
+ * ESLint 规则：禁止 JSX 内联 style={{}}。
  *
- * 上下文：v0.3-final 收口（docs/v0.3-DEMO-REDESIGN.md §4.3 / docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md）
- * 实测前端 582 处 `style={{ ... }}` 跨 64 个文件，是 UI 风格杂乱的核心来源。
+ * 上下文：产品宪法和产品体验固定规范要求页面使用统一 token、CSS Modules 和组件外壳。
+ * 存量 `style={{ ... }}` 是 UI 风格杂乱的核心来源。
  * 新代码必须把静态样式放进同名 `.module.css`（vite 默认支持 CSS Modules）。
  *
  * 触发位置：JSX 属性 style={...}
@@ -38,7 +38,7 @@ export default {
         'JSX 内联 style={{}} 被禁止。' +
         '请把静态样式抽取到同名 `.module.css`（CSS Modules）或使用 `var(--mk-*)` 类名。' +
         '若必须动态（transform / motion），请添加 `// eslint-disable-next-line medkernel/no-inline-style` 并说明理由。' +
-        '详见 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md §UI 统一风格。',
+        '详见 docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md §11。',
     },
     schema: [],
   },

@@ -3,7 +3,7 @@ import { ExperimentOutlined } from "@ant-design/icons";
 import { create } from "zustand";
 
 /**
- * GA-PROD-10 · 客户演示模式
+ * 客户演示模式。
  *
  * 一键塞入 fixture + 屏幕隐藏调试信息 + 路演水印。
  * 销售刚需 — 跑 6 大客户验收剧本时使用。

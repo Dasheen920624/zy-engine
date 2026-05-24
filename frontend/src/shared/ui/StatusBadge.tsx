@@ -2,7 +2,7 @@ import { Tag } from "antd";
 import type { CSSProperties } from "react";
 
 /**
- * GA-PROD-02 · 4 套统一状态机（与 docs/CONSTITUTION.md §3 对齐）
+ * 4 套统一状态机（与 docs/CONSTITUTION.md §3 对齐）。
  *
  * 资产类、变更类、待办类、告警类全平台统一这 4 套，禁止自创。
  */

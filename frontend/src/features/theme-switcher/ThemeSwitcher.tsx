@@ -4,10 +4,8 @@ import type { MenuProps } from "antd";
 import { useThemeStore } from "@/shared/lib/themeStore";
 
 /**
- * GA-PROD-08 · 主题切换：默认 / 老年医生模式 / 暗黑 / 护眼 / 跟随系统
- *
- * 与 docs/CONSTITUTION.md 表 3.6 PR-UX-05/06 对齐。
- * 50+ 医生群体 + 夜班医生刚需。
+ * 主题切换：默认 / 老年医生模式 / 暗黑 / 护眼 / 跟随系统。
+ * 与产品宪法的设计 token 和产品体验固定规范保持一致。
  */
 export function ThemeSwitcher() {
   const { mode, setMode } = useThemeStore();
