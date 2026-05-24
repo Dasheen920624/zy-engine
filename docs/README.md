@@ -25,6 +25,29 @@ docs/
 ├─ V1_GA_REWRITE_PLAN.md      ← 12 周方案
 ├─ backlog.md                 ← 单一任务台账
 ├─ README.md                  ← 你在这里
+├─ product/                   ← 产品事实源（R0 骨架 ✅ / R2 完整填充待启动）
+│   ├─ README.md
+│   ├─ ia-mapping.md          # 旧 v0.3 18 页 ↔ 新 v1.0 GA 31 页映射（R0 ✅）
+│   └─ facts.md               # 9 能力 / 22 不变量 / 9 角色（R2）
+├─ scenarios/                 ← 6 业务剧本（R0 骨架 ✅ / R3 完整填充待启动）
+│   ├─ README.md
+│   └─ S1-S6-*.md             # 6 大客户验收剧本（R3）
+├─ design-system/             ← 设计系统（R0 13 组件清单 ✅ / R1 完整填充待启动）
+│   ├─ README.md
+│   ├─ components-checklist.md  # 13 组件清单 + 实装状态（R0 ✅）
+│   ├─ tokens.md              # 6 套 token 矩阵（R1）
+│   ├─ components.md          # 13 组件完整 API（R1）
+│   └─ patterns.md            # 7 全局模式 + 六态（R1）
+├─ specs/                     ← 页面规格（R0 模板 + 子目录骨架 ✅ / R4 完整填充待启动）
+│   ├─ README.md
+│   ├─ _template.md           # 12 字段空白模板（R0 ✅）
+│   ├─ workbench/             # 工作台 1 页（R4）
+│   ├─ tenant/                # 试点准备 7 页（R4）
+│   ├─ clinical/              # 临床运行 6 页（R4）
+│   ├─ quality/               # 质控改进 6 页（R4）
+│   ├─ compliance/            # 合规运维 6 页（R4）
+│   ├─ advanced/              # 高级工具 5 页（R4）
+│   └─ embed/                 # 4 嵌入组件（R4）
 ├─ handbook/                  ← 实施手册（按需写，≤ 10 份）
 │   ├─ implementation.md      # 实施工程师手册
 │   ├─ operations.md          # 运维手册
@@ -41,6 +64,8 @@ docs/
     ├─ legacy-embed/          # 旧临床嵌入器构建（embed.html / embed-build.config.ts）
     └─ ai-branches-snapshot-20260524.md  # 25 个旧 ai/GA-* 分支 SHA 索引
 ```
+
+**新增 4 子目录的作用**：把旧 v0.3 5 份金本位（4249 行）按用途拆分到 product / scenarios / design-system / specs，便于 AI 协同精读小文件，避免 CONSTITUTION 膨胀。详见 [CONSTITUTION §12 业务深规索引](CONSTITUTION.md#12-业务深规索引v10-ga-业务细节系统恢复)。
 
 ---
 

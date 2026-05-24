@@ -254,11 +254,31 @@ docs/
 
 ---
 
-## 12. 修订记录
+## 12. 业务深规索引（v1.0 GA 业务细节系统恢复）
+
+> 本节是**导航锚点** — CONSTITUTION 保持薄（仅纲领，~270 行），业务细节按四张表分布在子目录。
+> 任何 AI 协同开发前先按此索引精读相关章节，再动手写代码。
+> 五阶段恢复方案见 [backlog.md §Phase-2.5 业务深规系统恢复](backlog.md#phase-25--业务深规系统恢复5-阶段-r0-r4与-phase-3-部分并行)。
+
+| 子目录 | 内容 | 状态 |
+|---|---|---|
+| [product/](product/) | 产品事实源（9 能力 / 22 不变量 / 9 角色矩阵 / 业务术语扩展） | R0 骨架 + [ia-mapping](product/ia-mapping.md) ✅ ／ R2 完整填充待启动 |
+| [scenarios/](scenarios/) | 6 大客户验收剧本（逐帧 Storyboard + Mermaid 系统时序 + DoD） | R0 骨架 ✅ ／ R3 完整填充待启动 |
+| [design-system/](design-system/) | 设计 Token + 13 组件 API + 7 全局模式 + 六态/A11Y/性能基线 | R0 [13 组件清单](design-system/components-checklist.md) ✅ ／ R1 完整填充待启动 |
+| [specs/](specs/) | 31 客户业务页 + 4 嵌入组件 × 12 字段精确规格 | R0 [模板](specs/_template.md) + 5 域子目录骨架 ✅ ／ R4 完整填充待启动 |
+
+**关键映射表**（任何写新页前必读）：[product/ia-mapping.md](product/ia-mapping.md) — 旧 v0.3 18 页 + 4 嵌入 → 新 v1.0 GA 31 页 + 4 嵌入的四态映射。
+
+→ 任何修改本表的 PR 必须同步更新 [README.md §1 目录树](README.md) 与本节状态。
+
+---
+
+## 13. 修订记录
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
 | 1.0 | 2026-05-23 | 架构 + 产品评审 | 初版（合并 PRODUCT_SIMPLIFICATION_V1_GA.md + 6 阶段租户生命周期 + 命名归一）|
+| 1.1 | 2026-05-24 | 用户决策 + Claude | R0 蓝图 PR — 加 §12 业务深规索引锚点（5 阶段恢复方案启动），引入 product/scenarios/design-system/specs/ 4 子目录 |
 
 ---
 
