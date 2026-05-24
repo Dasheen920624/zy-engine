@@ -1,5 +1,5 @@
-// 前端 ESLint flat config（ESLint 9 风格）
-// 与 docs/engineering/07_前端开发规范.md 对齐。
+// 前端 ESLint flat config（ESLint 9 风格）。
+// 与 docs/CONSTITUTION.md 和 docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md 对齐。
 
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
@@ -7,7 +7,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 
-// MedKernel 自定义规则（强制 ADR-0003/0004/0014 + 项目重命名决策 + v0.3-final 风格统一）
+// MedKernel 自定义规则（产品宪法 + 产品体验固定规范）。
 import noHardcodedColor from "./eslint-rules/no-hardcoded-color.js";
 import requireSourceInfo from "./eslint-rules/require-source-info-for-medical.js";
 import forbidDeprecatedNaming from "./eslint-rules/forbid-deprecated-naming.js";
@@ -69,7 +69,7 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
 
-      // === 反模式（07_前端开发规范.md §17）===
+      // === 反模式（产品体验固定规范 §12）===
       "no-console": ["warn", { allow: ["warn", "error"] }],
       "no-debugger": "error",
       "no-alert": "error",
@@ -81,12 +81,12 @@ export default tseslint.config(
           selector:
             "ImportDeclaration[source.value='axios']:not(:has(ImportSpecifier))",
           message:
-            "禁止直接 import axios。请使用 @/api/client 中的 get/post 封装（见 07_前端开发规范.md §6）。",
+            "禁止直接 import axios。请使用 @/shared/api/client 中的 get/post 封装。",
         },
         {
           selector: "CallExpression[callee.object.name='localStorage'][callee.property.name='setItem']",
           message:
-            "localStorage 写入需慎重。禁止存放 token / API Key / 患者完整隐私（见 07_前端开发规范.md §12）。",
+            "localStorage 写入需慎重。禁止存放 token / API Key / 患者完整隐私。",
         },
       ],
       "no-restricted-imports": [
@@ -97,7 +97,7 @@ export default tseslint.config(
               name: "axios",
               importNames: ["default"],
               message:
-                "禁止直接 import axios 默认导出。请使用 @/api/client。",
+                "禁止直接 import axios 默认导出。请使用 @/shared/api/client。",
             },
           ],
         },
@@ -110,11 +110,11 @@ export default tseslint.config(
       "object-shorthand": "warn",
       "no-nested-ternary": "warn",
 
-      // === MedKernel 自定义规则（ADR-0003/0004/0014 + 重命名 + 风格统一） ===
+      // === MedKernel 自定义规则（产品宪法 + 体验门禁） ===
       "medkernel/no-hardcoded-color": "error",
       "medkernel/require-source-info-for-medical": "warn",
       "medkernel/forbid-deprecated-naming": "error",
-      // v0.3-final：存量 582 处 inline style 渐进式抽取，先 warn 不阻断 CI；
+      // 存量 inline style 渐进式抽取，先 warn 不阻断 CI；
       // CI 跑数量监控（scripts/check-inline-style-count.ps1）实现"只减不增"。
       "medkernel/no-inline-style": "warn",
     },
@@ -130,7 +130,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["src/api/client.ts"],
+    files: ["src/shared/api/client.ts"],
     rules: {
       "no-restricted-imports": "off",
       "no-restricted-syntax": "off",

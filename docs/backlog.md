@@ -1,193 +1,129 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：1.0 · 2026-05-23
-> 范围：v1.0 GA 全部任务
-> 命名归一：旧 5 套（PR-V2-* / PR-V3-* / PR-FINAL-* / GA-* / DOC-V2-*）已废，本文是唯一权威
+> 版本：4.0 · 2026-05-24
+> 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
-> 协作：领单时把 owner 填上 + status 改 in_progress + 同 PR commit
+> 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
 
 ---
 
-## Phase-0 · 基线重置（W1 Day-1~3）
+## 0. 当前边界
 
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-RESET-01 | 仓库结构重组（保留 git 历史，新目录骨架） | - | pending |
-| GA-RESET-02 | trunk-based 切换：废除 develop，main 单线 + feat/* 短分支 | - | pending |
-| GA-RESET-03 | 任务台账归一为 docs/backlog.md（本文）| - | done |
-| GA-RESET-04 | 旧 5 套命名 + claim/lock + 金本位 → docs/archive/v0.3/ | - | pending |
-| GA-RESET-05 | 新 docs/CONSTITUTION.md + 必要 ADR 起步 | - | done |
+| 先做 | 后做 |
+|---|---|
+| 组织、权限、上下文、审计、版本、知识、字典、规则、路径、推荐、评估、随访、包发布、嵌入、模型网关、证据链 | 试点准备、临床运行、质控改进、合规运维、专业领域服务包这些业务菜单包装 |
+
+禁止单病种硬编码、业务 mock 假闭环、业务模块直连模型或 Dify。
 
 ---
 
-## Phase-1 · 现代化骨架（W1 Day-3~5）
+## E0 · 文档与计划清场
 
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-CORE-01 | JDK 21 + Spring Boot 3.3 + Jakarta EE 9 + Maven 3.9 baseline | - | pending |
-| GA-CORE-02 | Spring Security 6 OAuth2/OIDC + 国密 BC-FJA 1.78.1 | - | pending |
-| GA-CORE-03 | Spring Data JDBC + Hikari 5 + 5 方言 SPI + Flyway 10 | - | pending |
-| GA-CORE-04 | OpenTelemetry 1.41 + Prometheus + Tempo + Loki + Grafana | - | pending |
-| GA-CORE-05 | Spring Cloud Gateway 4 + RateLimiter + WAF 链 | - | pending |
-| GA-CORE-06 | Global ProblemDetail + Sealed Exception + i18n + KMS Vault | - | pending |
-| GA-CORE-07 | Virtual Threads 默认开启 + Tomcat 10 virtual executor | - | pending |
-| GA-CORE-08 | 前端 Node 20 + FSD 重组 + 路由元数据 + 4 状态机 Badge + 6 态模板 | - | pending |
-
----
-
-## Phase-2 · 产品收口（W2）
-
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-PROD-01 | 5 组菜单 + 隐藏式高级工具 + 工作台 1 屏即懂 | - | pending |
-| GA-PROD-02 | 4 套统一状态机全平台实装 | - | pending |
-| GA-PROD-03 | 7 步极简配置流模板（7 处复用）| - | pending |
-| GA-PROD-04 | 默认登录 1 路径 + MFA/SSO/国密折叠区 | - | pending |
-| GA-PROD-05 | 全局命令面板（⌘K）| - | pending |
-| GA-PROD-06 | 全局"导出审计快照"按钮 | - | pending |
-| GA-PROD-07 | 权限指纹 chip | - | pending |
-| GA-PROD-08 | 老年医生模式 + 暗黑模式 + 护眼模式 | - | pending |
-| GA-PROD-09 | 列管理 + 视图保存 + 视图分享 | - | pending |
-| GA-PROD-10 | 客户演示模式（一键 fixture + 隐藏调试 + 水印）| - | pending |
-| GA-PROD-11 | 租户生命周期管理（6 阶段 + 工作台面板 + 3 维切片 + 自动推进）| - | pending |
-
----
-
-## Phase-2.5 · 业务深规系统恢复（5 阶段 R0-R4，与 Phase-3 部分并行）
-
-> 用户决策（2026-05-24）：v0.3 5 份金本位 4249 行业务细节按 5 阶段恢复，纳入 [CONSTITUTION §12 业务深规索引](CONSTITUTION.md#12-业务深规索引v10-ga-业务细节系统恢复)。
-> R1-R4 独立 PR → main，每阶段完成后立即可用，不必等全部做完。
-
-### Phase-2.5a 文档恢复 5 阶段
-
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-SPEC-R0 | 蓝图 PR：4 子目录骨架 + ia-mapping.md + _template.md + components-checklist.md + CONSTITUTION §12 锚点 | claude | in_progress |
-| GA-SPEC-R1 | 设计系统（tokens.md + components.md + patterns.md，~800 行） | - | pending |
-| GA-SPEC-R2 | 产品事实（facts.md：9 能力 + 22 不变量 + 9 角色，~400 行） | - | pending |
-| GA-SPEC-R3 | 场景剧本（S1-S6 各一份，~1200 行） | - | pending |
-| GA-SPEC-R4 | 页面规格（31 客户业务页 + 4 嵌入组件 × 12 字段，~2500 行） | - | pending |
-
-### Phase-2.5b 9 个未实装核心组件（按 components-checklist 优先级）
-
-| ID | 组件 | 触发硬约束 | owner | status |
-|---|---|---|---|---|
-| GA-UI-01 | `<SourceInfo>` 来源信息条 | §不变量 8 来源必须 | - | pending |
-| GA-UI-02 | `<AiBadge>` AI 候选标识 | §1.9 AI 内容必须标识 | - | pending |
-| GA-UI-03 | `<OrgContextSelector>` 组织上下文 | §不变量 21 组织上下文必传 | - | pending |
-| GA-UI-04 | `<TracedCard>` 带 traceId 卡片 | §不变量 12 trace_id 全链路 | - | pending |
-| GA-UI-05 | `<DangerConfirm>` 三级危险确认 | §1.6 默认 1 主按钮 | - | pending |
-| GA-UI-06 | `<StepWizard>` 扩展（在 StepFlow 基础加草稿）| §4 7 步流 | - | pending |
-| GA-UI-07 | `<EmptyState>` 空状态 | §不变量 22 六态强制 | - | pending |
-| GA-UI-08 | `<ErrorState>` 错误状态 | §不变量 22 六态强制 | - | pending |
-| GA-UI-09 | `<EmbeddedAlert>` 嵌入预警条 | B 临床嵌入器 EM01-04 用 | - | pending |
-
-C10 `<AuditTrail>` 归 GA-EXT-12 多租户审计；C11 `<RuleDslEditor>` / C12 `<PathwayCanvas>` 归各业务域 PR 内实装。
-
----
-
-## Phase-3 · 业务域实装（W3-W4，5 域 5 AI 并行）
-
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-TENANT-01 | 试点准备域（7 菜单）按 7 步流标准实装 | - | pending |
-| GA-CLINICAL-01 | 临床运行域（6 菜单）按统一状态机实装 | - | pending |
-| GA-QUALITY-01 | 质控改进域（6 菜单，AI 知识审核 / 知识审核台合并）| - | pending |
-| GA-COMPLIANCE-01 | 合规运维域（6 菜单）| - | pending |
-| GA-ADVANCED-01 | 高级工具域（5 菜单，含国产化自检 + 开发者控制台）| - | pending |
-
----
-
-## Phase-4 · 客户必查能力（W5-W6 + 增量 W8）
-
-### Phase-4 P0（原 Batch 9 P0 16 项）
-
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-EXT-01 | 医保 DRG/DIP/付费目录每月自动同步 + 历史对照 | - | pending |
-| GA-EXT-02 | 医疗器械 UDI + 药品本位码自动校验 | - | pending |
-| GA-EXT-03 | 传染病 / VTE / 死亡报告卡一键预填 | - | pending |
-| GA-EXT-04 | 病案首页质控接入 + DRG 入组率看板 | - | pending |
-| GA-EXT-05 | NCIS 国家平台数据上报适配 | - | pending |
-| GA-EXT-06 | 多机构主索引联邦（集团多院区）| - | pending |
-| GA-EXT-08 | 可信时间戳服务（TSA + 国密 CA）| - | pending |
-| GA-EXT-09 | 数据生命周期管理（DLM）+ 自动归档 + 7 年保留 | - | pending |
-| GA-EXT-10 | 数据脱敏中心（开发/测试/培训/出境 4 套规则）| - | pending |
-| GA-EXT-11 | 医师 CA 电子签名（BJCA / GDCA 集成）| - | pending |
-| GA-EXT-12 | 多租户隔离审计 + 数据墙 | - | pending |
-| GA-EXT-13 | 离线许可证签发 | - | pending |
-| GA-EXT-14 | AI 决策可解释性看板（置信度 + 来源 + 训练范围）| - | pending |
-| GA-EXT-15 | AI 模型版本管理 + 一键回滚 | - | pending |
-| GA-EXT-18 | WAF / IPS 攻击溯源接入 | - | pending |
-| GA-EXT-21 | 国产化兼容性自检页 | - | pending |
-
-### Phase-4 P1（原 Batch 9 P1 10 项）
-
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-EXT-07 | HRP / 财务 / 物资接口（集团版） | - | pending |
-| GA-EXT-16 | 多机房灾备方案（RPO ≤ 1h, RTO ≤ 4h）| - | pending |
-| GA-EXT-17 | 同城双活 + 异地容灾架构 | - | pending |
-| GA-EXT-19 | 数据出境评估包 | - | pending |
-| GA-EXT-20 | 合规 chatbot | - | pending |
-| GA-EXT-22 | 客户成功看板 | - | pending |
-| GA-EXT-23 | 临床路径变异分析 + 优化建议 | - | pending |
-| GA-EXT-24 | 学术出口（脱敏数据集 + 投稿模板）| - | pending |
-| GA-EXT-25 | 应急预案触发器（疫情/突发）| - | pending |
-| GA-EXT-26 | 集团版品牌定制（多租户 logo/颜色/域名）| - | pending |
-
----
-
-## Phase-5 · 质量、运维、文档、法务（W7-W9）
-
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-QA-01 | 后端覆盖率 ≥ 70%（Jacoco + JUnit 5 + Testcontainers）| - | pending |
-| GA-QA-02 | 前端覆盖率 ≥ 60%（Vitest 2 + RTL 16 + msw 2）| - | pending |
-| GA-QA-03 | E2E 6 剧本 Playwright 稳定绿 | - | pending |
-| GA-OPS-01 | OpenTelemetry + Prometheus + Tempo + Loki + Grafana + 告警 | - | pending |
-| GA-OPS-02 | 备份恢复演练 ≥ 3 次录像 + 升级回滚演练 | - | pending |
-| GA-OPS-03 | 4 OS × JDK 21 国产化矩阵 CI | - | pending |
-| GA-OPS-04 | SBOM (CycloneDX) + 镜像 cosign 签名 + Reproducible Build | - | pending |
-| GA-OPS-05 | 离线安装包 + 一键安装/升级/回滚脚本 | - | pending |
-| GA-PERF-01 | 1000 并发 60 min + 5000 万 MPI 压测 + LLM 降级链压测 | - | pending |
-| GA-SEC-01 | 等保 2.0 三级第三方测评（外部 4 周并行）| - | pending |
-| GA-SEC-02 | 商密 GM/T 0054 + GB/T 39786 评测（外部 4 周并行）| - | pending |
-| GA-SEC-03 | 渗透测试（外部 2 周）| - | pending |
-| GA-DOC-01 | 用户手册 4 治理模块 + 实施手册 + 运维手册 + 培训材料 3 角色 | - | pending |
-| GA-LEGAL-01 | 合同 + SLA + 隐私政策 + DPA + License + 用量报告 | - | pending |
-
----
-
-## Phase-6 · 试点与发版（W10-W12）
-
-| ID | 名 | owner | status |
-|---|---|---|---|
-| GA-PILOT-01 | 试点医院切真实流量 W1（7×24 真实数据）| - | pending |
-| GA-PILOT-02 | 试点医院 W2 + 整改修复 | - | pending |
-| GA-PILOT-03 | 试点医院验收单（院方 + 乙方双签）| - | pending |
-| GA-RELEASE-01 | 出厂评审 + v1.0.0-ga-evidence.md 填齐 | - | pending |
-| GA-RELEASE-02 | tag v1.0.0 发版 + 后置 7 天稳定性观察 | - | pending |
-
----
-
-## 统计
-
-| Phase | 任务数 | 工时（人日）|
+| id | owner | status |
 |---|---|---|
-| Phase-0 基线重置 | 5 | 2 |
-| Phase-1 现代化骨架 | 8 | 8 |
-| Phase-2 产品收口 | 11 | 25 |
-| Phase-2.5a 业务深规恢复 R0-R4 | 5 | 8 |
-| Phase-2.5b UI 9 组件实装 | 9 | 12 |
-| Phase-3 业务域实装 | 5（× 5 AI 并行）| 100 |
-| Phase-4 客户必查 P0 | 16 | 60 |
-| Phase-4 客户必查 P1 | 10 | 35 |
-| Phase-5 质量/运维/文档/法务 | 14 | 50 |
-| Phase-6 试点与发版 | 5 | 15 |
-| **合计** | **88 项** | **~315 人日** |
+| GA-ENG-DOC-01 当前权威文档统一：README、docs README、宪法、总览、实施方案、详细规范、台账 | codex | done |
+| GA-ENG-DOC-02 清除旧计划和不相关参考入口 | codex | done |
+| GA-ENG-DOC-03 详细规范保留并允许继续细化，新增细节只进唯一详细规范 | codex | done |
+| GA-ENG-DOC-04 全系统产品与交互体验固定规范：角色、页面、分页、低打扰、可信解释和体验门禁 | codex | done |
 
-→ **平均 5 AI 并行**：~12 周 = **GA tag 日期 2026-08-15**
+---
+
+## E1 · 基础底座上线
+
+| id | owner | status |
+|---|---|---|
+| GA-ENG-BASE-01 组织与租户上下文：tenant/group/hospital/campus/site/department/user/role/package version | - | pending |
+| GA-ENG-BASE-02 身份权限：用户、角色、菜单权限、动作权限、数据范围、无权限响应 | - | pending |
+| GA-ENG-BASE-03 API 契约：ApiResult、ProblemDetail、分页、错误码、DTO 校验、幂等、traceId | - | pending |
+| GA-ENG-BASE-04 审计上下文：写操作、审核、发布、运行、反馈、导出、回滚统一留痕 | - | pending |
+| GA-ENG-BASE-05 数据迁移：5 方言表族、审计字段、状态字段、版本字段、索引和约束门禁 | - | pending |
+| GA-ENG-BASE-06 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流 | - | pending |
+| GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | - | pending |
+| GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | - | pending |
+| GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | - | pending |
+| GA-ENG-BASE-10 前端视觉债净化：硬编码颜色、内联样式、console、localStorage 敏感写入和 axios 直连规则全部归零 | - | pending |
+
+---
+
+## E2 · 引擎接口上线
+
+| id | owner | status |
+|---|---|---|
+| GA-ENG-API-01 标准上下文 API：患者、就诊、诊断、医嘱、报告、组织、包版本快照 | - | pending |
+| GA-ENG-API-02 临床事件 API：同步、异步、批量、回放、重试、死信、回调 | - | pending |
+| GA-ENG-API-03 知识资产 API：来源、解析、引用、版本、审核、替换、历史重放、分页、筛选、搜索、异步导出 | - | pending |
+| GA-ENG-API-04 字典映射 API：标准字典、院内字典、候选映射、冲突、发布 | - | pending |
+| GA-ENG-API-05 规则引擎 API：定义、测试、影响分析、发布、执行、解释 | - | pending |
+| GA-ENG-API-06 路径引擎 API：模板、专病包、患者路径、节点推进、变异、关键时钟 | - | pending |
+| GA-ENG-API-07 推荐/CDSS API：触发、推荐卡、来源解释、医师反馈、疲劳治理输入 | - | pending |
+| GA-ENG-API-08 评估质控 API：指标、运行、结果、问题、整改、复核 | - | pending |
+| GA-ENG-API-09 随访 API：计划、任务、问卷、异常回院、结果回流 | - | pending |
+| GA-ENG-API-10 包发布 API：知识包、配置包、校验、灰度、全量、同步、回滚 | - | pending |
+| GA-ENG-API-11 嵌入 API：launch token、iframe/SDK/纯 API、回调、降级 | - | pending |
+| GA-ENG-API-12 模型能力网关 API：能力代码、路由、脱敏、结构化输出、审计、B0 降级 | - | pending |
+| GA-ENG-API-13 大规模列表 API：统一分页/游标、排序、过滤、total estimate、批量任务、导出任务、traceId | - | pending |
+
+---
+
+## E3 · 引擎执行上线
+
+| id | owner | status |
+|---|---|---|
+| GA-ENG-KNOW-01 知识资产引擎：来源登记、解析、hash、引用锚点、可信分级 | - | pending |
+| GA-ENG-KNOW-02 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离 | - | pending |
+| GA-ENG-TERM-01 字典映射引擎：未映射发现、候选推荐、人工确认、冲突处理、映射包发布 | - | pending |
+| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释 | - | pending |
+| GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真 | - | pending |
+| GA-ENG-CDSS-01 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | - | pending |
+| GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | - | pending |
+| GA-ENG-FOLLOW-01 随访引擎：计划生成、任务、问卷、异常事件和回流 | - | pending |
+| GA-ENG-PKG-01 包发布引擎：导入导出、校验、灰度、全量、同步、回滚、证据 | - | pending |
+
+---
+
+## E4 · 嵌入、模型与证据上线
+
+| id | owner | status |
+|---|---|---|
+| GA-ENG-EMBED-01 iframe/SDK/纯 API 嵌入：启动、安全、最小数据、反馈、降级占位 | - | pending |
+| GA-ENG-LLM-01 模型能力网关：provider 无关、组织/场景路由、结构输出、调用审计 | - | pending |
+| GA-ENG-LLM-02 B0/B1/B2：无模型基线、模型辅助、探索生成的策略和验收 | - | pending |
+| GA-ENG-EVID-01 证据链：来源、生成、审核、发布、运行、反馈、整改、回滚可导出 | - | pending |
+| GA-ENG-DEGRADE-01 降级链：模型、Dify、图投影、外部系统故障时主链路仍可运行 | - | pending |
+
+---
+
+## E5 · 引擎全能力验收
+
+| id | owner | status |
+|---|---|---|
+| GA-ENG-QA-01 引擎 E2E：来源到推荐、评估、随访、包发布、嵌入和证据全链路 | - | pending |
+| GA-ENG-QA-02 五方言迁移、性能、并发、备份恢复和国产化自检 | - | pending |
+| GA-ENG-QA-03 医疗安全：AI 候选标识、医师确认、禁忌红线、旧版隔离、高风险审核 | - | pending |
+| GA-ENG-QA-04 无模型/无 Dify/无图投影验收：B0 主链路通过 | - | pending |
+| GA-ENG-QA-05 引擎全能力上线评审：允许进入业务服务包装阶段 | - | pending |
+| GA-ENG-QA-06 产品体验验收：10 万级列表分页筛选、低打扰嵌入、六态、可信解释、证据导出、驾驶舱下钻通过 | - | pending |
+| GA-ENG-QA-07 代码净化验收：生产代码无业务 mock、无新接口裸 Map、无前端假闭环、无旧计划引用 | - | pending |
+
+---
+
+## E6 · 业务服务包装（引擎验收后启动）
+
+| id | owner | status |
+|---|---|---|
+| GA-SVC-PILOT-01 租户与组织服务包：集团、医院、院区、社区、科室、角色、生命周期 | - | pending |
+| GA-SVC-PILOT-02 接入与数据质量服务包：HIS/EMR/LIS/PACS/医保/病案/随访适配、字段映射、体检 | - | pending |
+| GA-SVC-PILOT-03 资产准备服务包：知识包、配置包、字典映射、规则、路径、灰度、全量、回滚 | - | pending |
+| GA-SVC-CLINICAL-01 患者与路径运行服务包：MPI、患者路径、关键时钟、变异、节点推进 | - | pending |
+| GA-SVC-CLINICAL-02 临床提醒与反馈服务包：CDSS 卡片、规则校验、疲劳治理、采纳/不采纳回流 | - | pending |
+| GA-SVC-CLINICAL-03 临床协同服务包：待办、通知、护理、报告解读、床旁知识、随访触发 | - | pending |
+| GA-SVC-QUALITY-01 质控驾驶舱服务包：院级指标、风险热力、价值指标、下钻和证据 | - | pending |
+| GA-SVC-QUALITY-02 病案医保服务包：病历内涵质控、DRG/DIP、编码、费用、医保审核 | - | pending |
+| GA-SVC-QUALITY-03 整改闭环服务包：问题生成、责任科室、整改、复核、豁免、报告 | - | pending |
+| GA-SVC-COMPLIANCE-01 身份安全服务包：用户、身份绑定、数据权限、租户隔离、安全基线 | - | pending |
+| GA-SVC-COMPLIANCE-02 审计运维服务包：审计日志、证据包、Provider/模型状态、备份恢复、离线许可 | - | pending |
+| GA-SVC-DOMAIN-01 专病路径服务包：胸痛/心梗、卒中、肿瘤、慢病、感染、围手术期、妇儿、急重症、基层双向转诊、中医药 | - | pending |
+| GA-SVC-DOMAIN-02 专业协同服务包：护理、药事、医技报告、手术麻醉输血、营养康复心理疼痛、院感公卫、科研真实世界、区域协同 | - | pending |
 
 ---
 
@@ -195,5 +131,10 @@ C10 `<AuditTrail>` 归 GA-EXT-12 多租户审计；C11 `<RuleDslEditor>` / C12 `
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
-| 1.0 | 2026-05-23 | 架构 + 产品评审 | 初版（5 套旧命名归一）|
-| 1.1 | 2026-05-24 | 用户决策 + Claude | 新增 Phase-2.5 业务深规恢复 5 阶段（R0-R4）+ Phase-2.5b 9 组件实装（GA-UI-01~09）；合计 74→88 项 / 295→315 人日 |
+| 4.0 | 2026-05-24 | Codex | 最终收束：增加代码净化门禁，细化 E6 业务医疗服务包，明确 AI 团队交付顺序 |
+| 3.1 | 2026-05-24 | Codex | 增加全系统产品与交互体验固定规范及分页、低打扰、可信解释验收任务 |
+| 3.0 | 2026-05-24 | 用户决策 + Codex | 台账重排为“0 业务引擎全能力上线”，业务划分后置 |
+
+---
+
+**End of MedKernel backlog.**

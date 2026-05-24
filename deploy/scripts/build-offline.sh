@@ -52,8 +52,26 @@ mkdir -p "$WORK_DIR/monitoring"
 cp -r "$ROOT_DIR/deploy/monitoring/"* "$WORK_DIR/monitoring/" 2>/dev/null || true
 
 # 6. 拷贝运维 / 备份 runbook
-cp "$ROOT_DIR/docs/handbook/runbooks/backup-restore.md" "$WORK_DIR/docs/" 2>/dev/null || true
-cp "$ROOT_DIR/docs/handbook/runbooks/upgrade-rollback.md" "$WORK_DIR/docs/" 2>/dev/null || true
+copy_first_existing() {
+    local dst="$1"
+    shift
+
+    for src in "$@"; do
+        if [ -f "$src" ]; then
+            cp "$src" "$dst"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+copy_first_existing "$WORK_DIR/docs/backup-restore.md" \
+    "$ROOT_DIR/docs/handbook/runbooks/backup-restore.md" \
+    "$ROOT_DIR/docs/ops/backup-restore-runbook.md" 2>/dev/null || true
+copy_first_existing "$WORK_DIR/docs/upgrade-rollback.md" \
+    "$ROOT_DIR/docs/handbook/runbooks/upgrade-rollback.md" \
+    "$ROOT_DIR/docs/ops/upgrade-rollback-runbook.md" 2>/dev/null || true
 cp "$ROOT_DIR/docs/CONSTITUTION.md" "$WORK_DIR/docs/" 2>/dev/null || true
 
 # 7. 生成 manifest

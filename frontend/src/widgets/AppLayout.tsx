@@ -17,7 +17,7 @@ import { ThemeSwitcher } from "@/features/theme-switcher/ThemeSwitcher";
 const { Header, Sider, Content } = Layout;
 
 /**
- * GA-PROD-01 · 主布局：左侧 SideMenu + 顶部 Header
+ * 主布局：左侧 SideMenu + 顶部 Header。
  *
  * 严格遵守 docs/CONSTITUTION.md §1 第 2 条：左侧 SideMenu 永远是主菜单，
  * 顶部 Header 只放品牌、面包屑、命令面板、审计快照、主题、权限指纹。

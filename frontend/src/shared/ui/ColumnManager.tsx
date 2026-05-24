@@ -4,7 +4,7 @@ import { SettingOutlined, SaveOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 
 /**
- * GA-PROD-09 · 列管理 + 视图保存
+ * 列管理 + 视图保存。
  *
  * 任何 Antd Table 接入此组件后获得：
  * - 显示/隐藏列（动态控制）

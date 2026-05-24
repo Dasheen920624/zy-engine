@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 const { Text } = Typography;
 
 /**
- * GA-PROD-03 · 7 步极简配置流模板（与 docs/CONSTITUTION.md §4 对齐）
+ * 7 步极简配置流模板（与 docs/CONSTITUTION.md §4 对齐）。
  *
  * 配置包、规则、路径、图谱、字典、适配器、评估指标 7 处全部复用此组件。
  * 任何配置类页面缺这 7 步即视为 PR 不通过。

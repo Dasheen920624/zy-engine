@@ -4,7 +4,7 @@ import { SafetyOutlined } from "@ant-design/icons";
 const { Text } = Typography;
 
 /**
- * GA-PROD-07 · 权限指纹 chip
+ * 权限指纹 chip。
  *
  * 任何页面右上角显示当前用户"能改什么 / 能看什么"，减少 90% 客户工单。
  *

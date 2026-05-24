@@ -3,7 +3,7 @@ import { ExportOutlined } from "@ant-design/icons";
 import { useLocation } from "react-router-dom";
 
 /**
- * GA-PROD-06 · 全局"导出审计快照"按钮（与 docs/CONSTITUTION.md §5 第 7 角色对齐）
+ * 全局“导出审计快照”按钮（与 docs/CONSTITUTION.md §5 第 7 角色对齐）。
  *
  * 任意页面右上角统一存在。点击后导出包含：
  * - 当前页面路径 + traceId + 时间戳
