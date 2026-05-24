@@ -34,9 +34,31 @@ jobs:
         working-directory: medkernel-backend
         run: mvn -B -q -DskipTests compile
 
-      - name: Run unit tests (skeleton smoke)
+      - name: Run unit tests
         working-directory: medkernel-backend
         run: mvn -B -q test
+
+      - name: Generate JaCoCo coverage report
+        working-directory: medkernel-backend
+        run: mvn -B -q jacoco:report
+
+      - name: Build + SBOM
+        working-directory: medkernel-backend
+        run: mvn -B -q package -DskipTests
+
+      - name: Upload SBOM artifact (CycloneDX)
+        uses: actions/upload-artifact@v4
+        with:
+          name: medkernel-backend-sbom-${{ github.sha }}
+          path: medkernel-backend/target/bom.json
+          if-no-files-found: warn
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: medkernel-backend-coverage-${{ github.sha }}
+          path: medkernel-backend/target/site/jacoco/
+          if-no-files-found: warn
 
   # 必需 check #2（分支保护规则匹配）
   guard-rules:
@@ -68,7 +90,6 @@ jobs:
 
       - name: Forbid legacy task naming in code
         run: |
-          # 仅扫源码区（不扫 docs/，docs 必须能解释"已废除"的来龙去脉）
           files=$(git ls-files medkernel-backend frontend/src 2>/dev/null)
           if [ -n "$files" ] && echo "$files" | xargs grep -lE "PR-V[23]-[A-Z]+|PR-FINAL-[0-9]+|DOC-V2-[A-Z]+" 2>/dev/null; then
             echo "::error::代码区不允许引用 PR-V2-XXX / PR-V3-XXX / PR-FINAL-NN / DOC-V2-XXX 旧任务命名"
@@ -90,10 +111,57 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install (no lockfile yet, will be regenerated)
+      - name: Install
         working-directory: frontend
         run: npm install --no-audit --no-fund --no-package-lock
 
       - name: Type check
         working-directory: frontend
         run: npm run typecheck
+
+      - name: Unit tests with coverage
+        working-directory: frontend
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: medkernel-frontend-coverage-${{ github.sha }}
+          path: frontend/coverage/
+          if-no-files-found: warn
+
+  # GA-OPS-03 · 国产化 JDK 矩阵（多发行版兼容性 smoke）
+  # 选用 Temurin / Zulu / Dragonwell 三个 GA 阶段必须验证的 OpenJDK 21 发行版。
+  # KAE-JDK / LoongJDK 等纯国产发行版没有公开 GitHub Action distribution，
+  # 由 GA-PILOT-* 阶段在客户内网 self-hosted runner 上自检。
+  jdk-matrix-smoke:
+    name: jdk-matrix-smoke (${{ matrix.distribution }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # GA-OPS-03 国产化 JDK 矩阵候选：
+        # - temurin: Eclipse Adoptium（事实标准）
+        # - zulu: Azul Zulu（金融 + 医疗常见选型）
+        # - corretto: Amazon Corretto（AWS 默认 + LTS 长期支持）
+        # KAE-JDK / LoongJDK / Dragonwell 等纯国产 distribution
+        # 由 GA-PILOT-* 阶段客户内网 self-hosted runner 单独补
+        distribution: [temurin, zulu, corretto]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (${{ matrix.distribution }})
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: "21"
+
+      - name: Smoke compile
+        working-directory: medkernel-backend
+        run: mvn -B -q -DskipTests compile
+
+      - name: Smoke test
+        working-directory: medkernel-backend
+        run: mvn -B -q test
