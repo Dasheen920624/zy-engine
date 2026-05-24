@@ -10,7 +10,6 @@ target/
 *.out
 *.err
 *.pid
-medkernel-mvp/data/
 *.mv.db
 *.trace.db
 
