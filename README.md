@@ -52,12 +52,32 @@ medkernel/
 ├─ medkernel-backend/    ← Spring Boot 3 + JDK 21 + Jakarta EE
 ├─ frontend/             ← React 18 + Antd 5 + FSD（app/pages/widgets/features/entities/shared）
 ├─ docs/                 ← 文档中心（引擎总览 + 宪法 + 产品体验规范 + 引擎上线方案 + 详细规范 + 任务台账）
-└─ deploy/               ← 部署脚本 + 监控配置（Grafana / Prometheus / Nginx / systemd）
+└─ deploy/               ← Docker 部署平台 + 监控配置（PostgreSQL / Neo4j / Dify / Grafana / Prometheus）
 ```
 
 ---
 
 ## 启动
+
+### 完整开发平台（Docker）
+
+需要持久 PostgreSQL、Neo4j、监控或 Dify 时，使用容器化开发平台。运行数据默认保留在
+`/Users/zhikunzheng/work/medkernel/runtime/`，不会提交到仓库：
+
+```bash
+./deploy/docker/scripts/up.sh core
+./deploy/docker/scripts/healthcheck.sh core
+```
+
+完整模式（附加 Prometheus、Grafana 和官方 Dify `v1.14.0`）：
+
+```bash
+./deploy/docker/scripts/up.sh full
+./deploy/docker/scripts/healthcheck.sh full
+```
+
+具体服务端口、备份和服务器迁移步骤见
+[deploy/docker/README.md](deploy/docker/README.md)。
 
 ### 后端
 
