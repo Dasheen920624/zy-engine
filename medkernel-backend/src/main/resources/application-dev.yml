@@ -9,7 +9,13 @@ spring:
     console:
       enabled: true
   flyway:
-    enabled: false      # GA-CORE-03 实装时切 true，并加载 db/migration/h2/V*.sql
+    enabled: true
+    locations: classpath:db/migration/h2
+
+management:
+  health:
+    neo4j:
+      enabled: false    # 本地最小环境不强依赖 Neo4j 查询投影
 
 security:
   bypass: true          # 仅 dev 跳过鉴权；prod 必须 false

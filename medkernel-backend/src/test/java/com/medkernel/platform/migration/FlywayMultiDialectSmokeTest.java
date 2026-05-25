@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>dm / kingbase 在 CI 跑不动（无公开 docker image），由 GA-OPS-03 国产化矩阵在内网 CI 跑
  * </ul>
  */
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class FlywayMultiDialectSmokeTest {
 
     @Container
