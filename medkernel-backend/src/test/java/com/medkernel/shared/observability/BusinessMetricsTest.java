@@ -37,10 +37,11 @@ class BusinessMetricsTest {
     BusinessMetrics metrics;
 
     @Test
-    void allFiveBusinessMetersRegistered() {
+    void allBusinessMetersRegistered() {
         assertThat(registry.find("medkernel_tenant_onboarding_total").counter()).isNotNull();
         assertThat(registry.find("medkernel_cdss_alerts_total").counter()).isNotNull();
         assertThat(registry.find("medkernel_audit_chain_signed_total").counter()).isNotNull();
+        assertThat(registry.find("medkernel_audit_persistence_failures_total").counter()).isNotNull();
         assertThat(registry.find("medkernel_pathway_active").gauge()).isNotNull();
         assertThat(registry.find("medkernel_quality_findings_open").gauge()).isNotNull();
     }

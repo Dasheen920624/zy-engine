@@ -105,18 +105,47 @@ export function useCdssDecide() {
 // ──────────────────────────────────────────
 // 合规运维 · 审计日志
 // ──────────────────────────────────────────
+export type AuditEventRow = {
+  id: string;
+  eventId: string;
+  occurredAt: string;
+  user: string | null;
+  action: string;
+  actionCode: string;
+  resourceType: string;
+  resourceId: string;
+  traceId: string | null;
+  signature: string | null;
+  status: string;
+};
+
+type AuditEventsEnvelope = {
+  code: string;
+  data: { items: AuditEventRow[]; nextCursor: string | null; hasNext: boolean };
+};
+
+type AuditSnapshotEnvelope = {
+  code: string;
+  data: AuditEventRow;
+};
+
 export function useAuditEvents() {
   return useQuery({
     queryKey: ["audit", "events"],
-    queryFn: async () =>
-      (await apiClient.get("/compliance/audit/events")).data as Array<{ id: string; time: string; user: string; action: string; traceId: string; signature: string }>,
+    queryFn: async () => {
+      const resp = await apiClient.get<AuditEventsEnvelope>("/compliance/audit/events");
+      return resp.data.data?.items ?? [];
+    },
   });
 }
 
 export function useAuditSnapshot() {
   return useMutation({
-    mutationFn: async (reason: string) =>
-      (await apiClient.post("/compliance/audit/snapshot", null, { params: { reason } })).data,
+    mutationFn: async (reason: string) => {
+      const resp = await apiClient.post<AuditSnapshotEnvelope>(
+        "/compliance/audit/snapshot", null, { params: { reason } });
+      return resp.data.data;
+    },
   });
 }
 
