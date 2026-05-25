@@ -1,0 +1,39 @@
+package com.medkernel.engine.knowledge;
+
+import java.time.Instant;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
+/**
+ * 知识身份（跨版本的稳定主题，比如"瑞舒伐他汀说明书" / "高血压合并糖尿病治疗指南"）。
+ *
+ * <p>{@code current_version_id} 由 Service 层在激活/替换/撤回时维护，
+ * 客户端不应直接修改它。
+ */
+@Table("knowledge_identity")
+public record KnowledgeIdentity(
+    @Id Long id,
+    @Column("tenant_id") String tenantId,
+    @Column("identity_code") String identityCode,
+    @Column("domain") KnowledgeDomain domain,
+    @Column("subject") String subject,
+    @Column("specialty_id") String specialtyId,
+    @Column("description") String description,
+    @Column("status") KnowledgeIdentityStatus status,
+    @Column("current_version_id") Long currentVersionId,
+    @Column("created_at") Instant createdAt,
+    @Column("created_by") String createdBy,
+    @Column("updated_at") Instant updatedAt,
+    @Column("updated_by") String updatedBy
+) {
+
+    public boolean isActive() {
+        return status == KnowledgeIdentityStatus.ACTIVE;
+    }
+
+    public boolean hasCurrentVersion() {
+        return currentVersionId != null;
+    }
+}

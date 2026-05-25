@@ -10,9 +10,12 @@ import static com.medkernel.engine.security.PermissionCode.AUDIT_READ;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_PUBLISH;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_READ;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_WRITE;
+import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_EXPORT;
 import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_PUBLISH;
 import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_READ;
 import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_REVIEW;
+import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_WITHDRAW;
+import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_WRITE;
 import static com.medkernel.engine.security.PermissionCode.ORG_PUBLISH;
 import static com.medkernel.engine.security.PermissionCode.ORG_READ;
 import static com.medkernel.engine.security.PermissionCode.ORG_WRITE;
@@ -78,7 +81,7 @@ public final class DefaultPermissionPolicy {
         // 医务处：知识/规则/路径审核与发布
         map.put(RoleCode.MEDICAL_AFFAIRS, EnumSet.of(
             ORG_READ,
-            KNOWLEDGE_READ, KNOWLEDGE_REVIEW, KNOWLEDGE_PUBLISH,
+            KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW, KNOWLEDGE_PUBLISH, KNOWLEDGE_WITHDRAW, KNOWLEDGE_EXPORT,
             RULE_READ, RULE_WRITE, RULE_PUBLISH,
             PATHWAY_READ, PATHWAY_WRITE, PATHWAY_PUBLISH,
             TERM_READ,
@@ -90,7 +93,7 @@ public final class DefaultPermissionPolicy {
         map.put(RoleCode.QA_MANAGER, EnumSet.of(
             ORG_READ,
             EVALUATION_READ, EVALUATION_WRITE, EVALUATION_PUBLISH,
-            KNOWLEDGE_READ,
+            KNOWLEDGE_READ, KNOWLEDGE_EXPORT,
             RULE_READ,
             PATHWAY_READ,
             RECOMMENDATION_READ,
@@ -109,14 +112,14 @@ public final class DefaultPermissionPolicy {
             ORG_READ,
             PATHWAY_READ, PATHWAY_WRITE,
             RULE_READ, RULE_WRITE,
-            KNOWLEDGE_READ, KNOWLEDGE_REVIEW,
+            KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW,
             EVALUATION_READ,
             RECOMMENDATION_READ));
 
         // 专科专家：知识/路径审核
         map.put(RoleCode.SPECIALIST, EnumSet.of(
             ORG_READ,
-            KNOWLEDGE_READ, KNOWLEDGE_REVIEW,
+            KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW,
             PATHWAY_READ, PATHWAY_WRITE,
             RULE_READ, RULE_WRITE,
             RECOMMENDATION_READ));
@@ -140,7 +143,7 @@ public final class DefaultPermissionPolicy {
         map.put(RoleCode.AUDIT_COMPLIANCE, EnumSet.of(
             ORG_READ,
             AUDIT_READ, AUDIT_EXPORT,
-            KNOWLEDGE_READ,
+            KNOWLEDGE_READ, KNOWLEDGE_EXPORT,
             RULE_READ,
             PATHWAY_READ,
             EVALUATION_READ));
