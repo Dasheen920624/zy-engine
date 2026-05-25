@@ -30,6 +30,7 @@ public class BusinessMetrics {
     private Counter tenantOnboarding;
     private Counter cdssAlerts;
     private Counter auditChainSigned;
+    private Counter auditPersistenceFailures;
 
     private final AtomicLong activePathways = new AtomicLong();
     private final AtomicLong openFindings = new AtomicLong();
@@ -39,7 +40,7 @@ public class BusinessMetrics {
     }
 
     @PostConstruct
-    void register() {
+    public void register() {
         this.tenantOnboarding = Counter.builder("medkernel_tenant_onboarding_total")
             .description("试点准备：累计完成开通的租户数")
             .register(registry);
@@ -50,6 +51,10 @@ public class BusinessMetrics {
 
         this.auditChainSigned = Counter.builder("medkernel_audit_chain_signed_total")
             .description("合规运维：累计完成审计链验签的条目数")
+            .register(registry);
+
+        this.auditPersistenceFailures = Counter.builder("medkernel_audit_persistence_failures_total")
+            .description("合规运维：审计事件落库失败累计数（业务调用不受影响，但需要告警）")
             .register(registry);
 
         Gauge.builder("medkernel_pathway_active", activePathways, AtomicLong::doubleValue)
@@ -64,6 +69,7 @@ public class BusinessMetrics {
     public void incTenantOnboarding() { tenantOnboarding.increment(); }
     public void incCdssAlerts() { cdssAlerts.increment(); }
     public void incAuditChainSigned() { auditChainSigned.increment(); }
+    public void incAuditPersistenceFailures() { auditPersistenceFailures.increment(); }
 
     public void setActivePathways(long n) { activePathways.set(n); }
     public void setOpenFindings(long n) { openFindings.set(n); }

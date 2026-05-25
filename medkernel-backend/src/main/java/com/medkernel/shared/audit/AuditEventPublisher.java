@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
  * <p>调用 {@link #publish(AuditAction, String, String, String)} 发布事件；
  * 事件通过 Spring {@link ApplicationEventPublisher} 在请求线程内同步分发到所有 {@code @EventListener}。
  *
- * <p>当前 PR 只接入 {@link LoggingAuditSink} 写入 INFO 日志，便于本地开发观察审计轨迹。
- * GA-ENG-BASE-04 任务实施时将新增 {@code AuditPersistenceSink} 将事件落库到 {@code audit_event} 表，
- * 并补上 SM3 签名链。
+ * <p>{@link LoggingAuditSink} 同步写入 INFO 日志便于本地开发观察；
+ * {@code com.medkernel.shared.audit.persistence.AuditPersistenceSink} 在事务提交后异步落库
+ * 并写入 SM3 哈希链（GA-ENG-BASE-04）。
  */
 @Component
 public class AuditEventPublisher {

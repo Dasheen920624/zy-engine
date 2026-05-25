@@ -41,11 +41,20 @@ export default function AdminAudit() {
           dataSource={events.data ?? []}
           pagination={false}
           columns={[
-            { title: "时间", dataIndex: "time" },
-            { title: "用户", dataIndex: "user" },
+            {
+              title: "时间",
+              dataIndex: "occurredAt",
+              render: (v: string) => (v ? new Date(v).toLocaleString() : "-"),
+            },
+            { title: "用户", dataIndex: "user", render: (v) => v ?? "system" },
             { title: "操作", dataIndex: "action" },
             { title: "Trace ID", dataIndex: "traceId", render: (v) => <Tag>{v}</Tag> },
-            { title: "签名", dataIndex: "signature", render: (v) => <span style={{ color: "#52c41a" }}>{v}</span> },
+            {
+              title: "签名",
+              dataIndex: "signature",
+              render: (v: string | null) =>
+                v ? <span style={{ color: "#52c41a" }}>{v.slice(0, 16)}…</span> : "—",
+            },
           ]}
         />
       )}
