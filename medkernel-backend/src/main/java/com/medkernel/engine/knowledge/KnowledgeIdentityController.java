@@ -1,0 +1,76 @@
+package com.medkernel.engine.knowledge;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.medkernel.shared.api.ApiResult;
+import com.medkernel.shared.api.PageRequest;
+import com.medkernel.shared.api.PageResponse;
+import com.medkernel.shared.datascope.DataScope;
+
+/**
+ * MedKernel v1.0 GA · 知识身份只读 API（GA-ENG-API-03）。
+ *
+ * <p>对应详细规范 §1797-1806 / §S37 "床旁知识查阅"。
+ * 临床医生通过本接口拉取当前权威版本；审核人通过 lineage 看历史时间轴。
+ *
+ * <p>访问控制：
+ * <ul>
+ *   <li>类级 {@link DataScope}({@code requireTenant=true})：所有方法都需要租户上下文</li>
+ *   <li>方法级 {@code @PreAuthorize("@perm.has('knowledge.read')")}：所有临床/审核角色默认拥有</li>
+ * </ul>
+ */
+@RestController
+@RequestMapping("/api/v1/engine/knowledge/identities")
+@DataScope(requireTenant = true)
+public class KnowledgeIdentityController {
+
+    private final KnowledgeIdentityService service;
+
+    public KnowledgeIdentityController(KnowledgeIdentityService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    @PreAuthorize("@perm.has('knowledge.read')")
+    public ApiResult<PageResponse<KnowledgeIdentity>> list(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) KnowledgeDomain domain,
+            @RequestParam(required = false) String specialtyId,
+            @RequestParam(required = false) KnowledgeIdentityStatus status,
+            @RequestParam(required = false) String keyword) {
+        PageRequest req = new PageRequest(page, size, sort);
+        KnowledgeIdentityFilter filter = new KnowledgeIdentityFilter(domain, specialtyId, status, keyword);
+        return ApiResult.ok(service.page(req, filter));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("@perm.has('knowledge.read')")
+    public ApiResult<KnowledgeIdentity> get(@PathVariable Long id) {
+        return ApiResult.ok(service.get(id));
+    }
+
+    @GetMapping("/by-code/{identityCode}")
+    @PreAuthorize("@perm.has('knowledge.read')")
+    public ApiResult<KnowledgeIdentity> getByCode(@PathVariable String identityCode) {
+        return ApiResult.ok(service.getByCode(identityCode));
+    }
+
+    @GetMapping("/{id}/active")
+    @PreAuthorize("@perm.has('knowledge.read')")
+    public ApiResult<KnowledgeAssetVersion> getActiveVersion(@PathVariable Long id) {
+        return ApiResult.ok(service.getActiveVersion(id));
+    }
+
+    @GetMapping("/{id}/lineage")
+    @PreAuthorize("@perm.has('knowledge.read')")
+    public ApiResult<KnowledgeLineage> getLineage(@PathVariable Long id) {
+        return ApiResult.ok(service.getLineage(id));
+    }
+}

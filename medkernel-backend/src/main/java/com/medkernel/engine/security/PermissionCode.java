@@ -29,10 +29,13 @@ public enum PermissionCode {
     PACKAGE_PUBLISH("package.publish", Risk.HIGH, "灰度 / 全量发布配置包"),
     PACKAGE_ROLLBACK("package.rollback", Risk.HIGH, "回滚配置包"),
 
-    // ─── 知识资产（GA-ENG-KNOW-01/02）──────────────────────────
+    // ─── 知识资产（GA-ENG-API-03 / GA-ENG-KNOW-01/02）─────────
     KNOWLEDGE_READ("knowledge.read", Risk.LOW, "查看知识资产 / 来源 / 候选"),
+    KNOWLEDGE_WRITE("knowledge.write", Risk.MEDIUM, "新增 / 修改知识候选草稿与来源登记"),
     KNOWLEDGE_REVIEW("knowledge.review", Risk.MEDIUM, "审核 AI 候选知识"),
     KNOWLEDGE_PUBLISH("knowledge.publish", Risk.HIGH, "激活新版知识并失效旧版"),
+    KNOWLEDGE_WITHDRAW("knowledge.withdraw", Risk.HIGH, "紧急撤回已发布知识版本"),
+    KNOWLEDGE_EXPORT("knowledge.export", Risk.MEDIUM, "异步导出知识资产 / 引用 / 历史"),
 
     // ─── 字典（GA-ENG-TERM-01）─────────────────────────────────
     TERM_READ("term.read", Risk.LOW, "查看标准字典 / 院内映射"),

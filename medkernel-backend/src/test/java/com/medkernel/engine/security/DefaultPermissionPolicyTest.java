@@ -53,8 +53,31 @@ class DefaultPermissionPolicyTest {
         var perms = DefaultPermissionPolicy.permissionsOf(RoleCode.MEDICAL_AFFAIRS);
         assertThat(perms).contains(
             PermissionCode.KNOWLEDGE_REVIEW, PermissionCode.KNOWLEDGE_PUBLISH,
+            PermissionCode.KNOWLEDGE_WITHDRAW, PermissionCode.KNOWLEDGE_EXPORT,
             PermissionCode.PATHWAY_PUBLISH, PermissionCode.RULE_PUBLISH);
         assertThat(perms).doesNotContain(PermissionCode.SYSTEM_MANAGE);
+    }
+
+    @Test
+    void doctorCannotWithdrawOrPublishKnowledge() {
+        var perms = DefaultPermissionPolicy.permissionsOf(RoleCode.DOCTOR);
+        assertThat(perms)
+            .contains(PermissionCode.KNOWLEDGE_READ)
+            .doesNotContain(
+                PermissionCode.KNOWLEDGE_PUBLISH,
+                PermissionCode.KNOWLEDGE_WITHDRAW,
+                PermissionCode.KNOWLEDGE_REVIEW);
+    }
+
+    @Test
+    void auditComplianceCanExportKnowledgeButNotWrite() {
+        var perms = DefaultPermissionPolicy.permissionsOf(RoleCode.AUDIT_COMPLIANCE);
+        assertThat(perms)
+            .contains(PermissionCode.KNOWLEDGE_READ, PermissionCode.KNOWLEDGE_EXPORT)
+            .doesNotContain(
+                PermissionCode.KNOWLEDGE_WRITE,
+                PermissionCode.KNOWLEDGE_PUBLISH,
+                PermissionCode.KNOWLEDGE_WITHDRAW);
     }
 
     @Test
