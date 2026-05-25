@@ -1,0 +1,29 @@
+schema: spec-driven
+
+context: |
+  MedKernel is the group medical intelligence hub for hospital networks, district hospitals,
+  community health centers, and specialty teams. The repository is a brownfield Java + React
+  monorepo with Spring Boot backend services, a React 18 + Ant Design frontend, deployment
+  scripts, and a documentation-led product definition.
+  Primary authority documents live in:
+  - README.md
+  - docs/CONSTITUTION.md
+  - docs/MEDKERNEL_FOUNDATION_AND_SERVICES.md
+  - docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md
+  - docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md
+  - docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md
+  - docs/backlog.md
+
+rules:
+  proposal:
+    - Keep proposals aligned with the current v1.0 GA 0 "0 business engine full capability" direction.
+    - Do not replace the existing backend, frontend, or deployment stack unless explicitly requested.
+    - Call out affected docs, APIs, data tables, migrations, and tests before implementation.
+  specs:
+    - Describe current deployed behavior in clear requirements and concrete scenarios.
+    - Keep specs domain-focused and narrowly scoped.
+    - Prefer tenant-scoped, auditable, reversible behavior with explicit fallbacks.
+  design:
+    - Explain architecture, data flow, error handling, and verification.
+  tasks:
+    - Break work into small executable steps with validation checkpoints.
