@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { menuSections } from "./menu";
+import { routeMetas } from "./routes";
 
 describe("menu config", () => {
   it("has exactly 6 sections (5 visible + 1 hidden advanced)", () => {
@@ -26,6 +27,16 @@ describe("menu config", () => {
     menuSections.forEach((s) => {
       s.items.forEach((it) => {
         expect(it.path).toMatch(/^\//);
+      });
+    });
+  });
+
+  it("derives every menu item from route metadata", () => {
+    const routePaths = new Set(routeMetas.map((route) => route.path));
+
+    menuSections.forEach((section) => {
+      section.items.forEach((item) => {
+        expect(routePaths.has(item.path)).toBe(true);
       });
     });
   });

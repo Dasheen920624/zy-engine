@@ -1,6 +1,7 @@
-import { Card, Form, Input, Button, Result, Space, Tag, Spin } from "antd";
+import { Card, Form, Input, Button, Result, Space, Tag } from "antd";
 import { PageShell } from "@/shared/ui/PageShell";
 import { useRuleValidate, type RuleHit, type RuleValidateInput } from "@/shared/api/hooks";
+import { PageState } from "@/shared/ui/PageState";
 
 const SEVERITY_COLOR: Record<string, string> = {
   blocker: "red",
@@ -35,12 +36,15 @@ export default function RuleValidate() {
             <Input.TextArea rows={3} />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={validate.isPending}>运行规则校验</Button>
+            <Button type="primary" htmlType="submit" loading={validate.isPending}>
+              运行规则校验
+            </Button>
           </Form.Item>
         </Form>
       </Card>
 
-      {validate.isPending && <Spin />}
+      {validate.isPending && <PageState state="loading" title="正在运行规则校验" />}
+      {validate.isError && <PageState state="error" onRetry={() => form.submit()} />}
       {validate.isSuccess && (
         <Result
           status={validate.data.hitCount > 0 ? "warning" : "success"}
@@ -50,10 +54,14 @@ export default function RuleValidate() {
             <Space direction="vertical" size="small" style={{ width: "100%" }}>
               {validate.data.hits.map((h: RuleHit) => (
                 <Card size="small" key={h.ruleId}>
-                  <Tag color={SEVERITY_COLOR[h.severity] ?? "default"}>{h.severity.toUpperCase()}</Tag>
-                  <strong style={{ marginLeft: 8 }}>{h.ruleId} · {h.ruleName}</strong>
-                  <p style={{ marginTop: 4, marginBottom: 0 }}>来源：{h.source}</p>
-                  <p style={{ marginTop: 4, marginBottom: 0 }}>建议：{h.suggestion}</p>
+                  <Tag color={SEVERITY_COLOR[h.severity] ?? "default"}>
+                    {h.severity.toUpperCase()}
+                  </Tag>
+                  <strong>
+                    {h.ruleId} · {h.ruleName}
+                  </strong>
+                  <p>来源：{h.source}</p>
+                  <p>建议：{h.suggestion}</p>
                 </Card>
               ))}
             </Space>

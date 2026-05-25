@@ -7,7 +7,7 @@ import { useThemeStore } from "@/shared/lib/themeStore";
  * 主题切换：默认 / 老年医生模式 / 暗黑 / 护眼 / 跟随系统。
  * 与产品宪法的设计 token 和产品体验固定规范保持一致。
  */
-export function ThemeSwitcher() {
+export function ThemeSwitcher({ compact = false }: { compact?: boolean }) {
   const { mode, setMode } = useThemeStore();
 
   const items: MenuProps["items"] = [
@@ -38,7 +38,7 @@ export function ThemeSwitcher() {
     >
       <Tooltip title="主题模式">
         <Button type="text" icon={<BgColorsOutlined />}>
-          {labelMap[mode]}
+          {compact ? null : labelMap[mode]}
         </Button>
       </Tooltip>
     </Dropdown>

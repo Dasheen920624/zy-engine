@@ -8,7 +8,12 @@ const MOCK = [
   { id: "4", time: "昨日", title: "AI 知识审核：5 条新规则待您审核", level: "info" },
 ];
 
-const LEVEL: Record<string, string> = { info: "blue", warning: "orange", success: "green", danger: "red" };
+const LEVEL: Record<string, string> = {
+  info: "blue",
+  warning: "orange",
+  success: "green",
+  danger: "red",
+};
 
 export default function Notifications() {
   return (

@@ -1,7 +1,8 @@
-import { Table, Tag, Button, Space, Typography, Card, Spin, message } from "antd";
+import { Table, Tag, Button, Typography, Alert, message } from "antd";
 import { SafetyCertificateOutlined, ExportOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
 import { useAuditEvents, useAuditSnapshot } from "@/shared/api/hooks";
+import { PageState } from "@/shared/ui/PageState";
 
 export default function AdminAudit() {
   const events = useAuditEvents();
@@ -25,21 +26,31 @@ export default function AdminAudit() {
         </Button>
       }
     >
-      <Card style={{ background: "#e6f7ff" }}>
-        <Space>
-          <SafetyCertificateOutlined style={{ color: "#1565c0", fontSize: 18 }} />
-          <Typography.Text>
-            等保 2.0 三级 + 个保法审计留痕 + 国密 SM2/SM3 验签 + TSA 国家可信时间戳
-          </Typography.Text>
-        </Space>
-      </Card>
-      {events.isLoading ? (
-        <Spin />
-      ) : (
+      <Alert
+        type="info"
+        showIcon
+        icon={<SafetyCertificateOutlined />}
+        message="审计链已启用"
+        description="等保 2.0 三级 + 个保法审计留痕 + 国密 SM2/SM3 验签 + TSA 国家可信时间戳"
+      />
+      <PageState
+        state={
+          events.isLoading
+            ? "loading"
+            : events.isError
+              ? "error"
+              : (events.data?.length ?? 0) === 0
+                ? "empty"
+                : "ready"
+        }
+        title="暂无审计事件"
+        onRetry={() => void events.refetch()}
+      >
         <Table
           rowKey="id"
           dataSource={events.data ?? []}
-          pagination={false}
+          scroll={{ x: "max-content" }}
+          pagination={{ pageSize: 20, showSizeChanger: true }}
           columns={[
             {
               title: "时间",
@@ -53,11 +64,11 @@ export default function AdminAudit() {
               title: "签名",
               dataIndex: "signature",
               render: (v: string | null) =>
-                v ? <span style={{ color: "#52c41a" }}>{v.slice(0, 16)}…</span> : "—",
+                v ? <Typography.Text type="success">{v.slice(0, 16)}…</Typography.Text> : "—",
             },
           ]}
         />
-      )}
+      </PageState>
     </PageShell>
   );
 }

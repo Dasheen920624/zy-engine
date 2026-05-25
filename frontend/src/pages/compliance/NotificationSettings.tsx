@@ -29,7 +29,10 @@ export default function NotificationSettings() {
         <Form layout="vertical">
           <Form.Item label="免打扰时段（默认夜班医生静默）">
             <Space>
-              <TimePicker.RangePicker defaultValue={[dayjs("22:00", "HH:mm"), dayjs("07:00", "HH:mm")]} format="HH:mm" />
+              <TimePicker.RangePicker
+                defaultValue={[dayjs("22:00", "HH:mm"), dayjs("07:00", "HH:mm")]}
+                format="HH:mm"
+              />
             </Space>
           </Form.Item>
           <Form.Item label="哪类提醒仍然在免打扰时段通过">

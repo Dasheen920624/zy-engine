@@ -64,7 +64,10 @@ export function StepFlow({ currentStep, panelByStep = {}, status = "process" }: 
         status={status}
         items={SEVEN_STEPS.map((s) => ({ title: s.title, description: s.description }))}
       />
-      <Card title={currentMeta.title} extra={<Text type="secondary">{currentMeta.description}</Text>}>
+      <Card
+        title={currentMeta.title}
+        extra={<Text type="secondary">{currentMeta.description}</Text>}
+      >
         {currentPanel ?? (
           <Text type="secondary">
             （此步骤待 GA-TENANT-01 / GA-CLINICAL-01 等业务域任务接入内容）

@@ -1,6 +1,7 @@
 import { Card, Steps, Button, Space, Typography } from "antd";
-import { CheckCircleOutlined, RocketOutlined } from "@ant-design/icons";
+import { RocketOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
+import { StatusBadge } from "@/shared/ui/StatusBadge";
 
 const { Text } = Typography;
 
@@ -32,16 +33,20 @@ export default function ImplementationGuide() {
       }
     >
       <Card>
-        <Steps direction="vertical" current={3} items={steps.map((s) => ({
-          title: s.title,
-          status: s.status,
-          description: (
-            <Space>
-              <Text type="secondary">{s.owner}</Text>
-              {s.status === "finish" && <CheckCircleOutlined style={{ color: "#52c41a" }} />}
-            </Space>
-          ),
-        }))} />
+        <Steps
+          direction="vertical"
+          current={3}
+          items={steps.map((s) => ({
+            title: s.title,
+            status: s.status,
+            description: (
+              <Space>
+                <Text type="secondary">{s.owner}</Text>
+                {s.status === "finish" && <StatusBadge machine="config" status="active" />}
+              </Space>
+            ),
+          }))}
+        />
       </Card>
     </PageShell>
   );

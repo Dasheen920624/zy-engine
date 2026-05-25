@@ -15,7 +15,7 @@ import { useLocation } from "react-router-dom";
  *
  * 当前实装级别：骨架 + 本地下载 mock 文件。GA-COMPLIANCE-01 业务域实装时接后端 API。
  */
-export function AuditSnapshotButton() {
+export function AuditSnapshotButton({ compact = false }: { compact?: boolean }) {
   const location = useLocation();
 
   function handleClick() {
@@ -45,7 +45,7 @@ export function AuditSnapshotButton() {
   return (
     <Tooltip title="导出当前页审计快照（含路径 / traceId / 用户 / 上下文）">
       <Button type="text" icon={<ExportOutlined />} onClick={handleClick}>
-        审计快照
+        {compact ? null : "审计快照"}
       </Button>
     </Tooltip>
   );

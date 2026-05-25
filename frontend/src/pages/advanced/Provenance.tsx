@@ -1,13 +1,12 @@
-import { Card, Input, Timeline, Tag, Space } from "antd";
+import { Card, Input, Timeline, Tag, Space, theme as antdTheme } from "antd";
 import { SearchOutlined, BookOutlined, FileTextOutlined, RobotOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
 
 export default function Provenance() {
+  const { token } = antdTheme.useToken();
+
   return (
-    <PageShell
-      title="来源追溯"
-      description="任何提醒可追溯到指南 / 文献 / 知识库哪一条"
-    >
+    <PageShell title="来源追溯" description="任何提醒可追溯到指南 / 文献 / 知识库哪一条">
       <Card>
         <Input.Search
           placeholder="搜规则 ID / 提醒 ID / 知识点关键词"
@@ -18,7 +17,7 @@ export default function Provenance() {
         <Timeline
           items={[
             {
-              dot: <BookOutlined style={{ color: "#1565c0" }} />,
+              dot: <BookOutlined style={{ color: token.colorPrimary }} />,
               children: (
                 <Space direction="vertical" size="small">
                   <strong>《2023 中国抗菌药物临床应用管理办法》</strong>
@@ -28,7 +27,7 @@ export default function Provenance() {
               ),
             },
             {
-              dot: <FileTextOutlined style={{ color: "#1565c0" }} />,
+              dot: <FileTextOutlined style={{ color: token.colorPrimary }} />,
               children: (
                 <Space direction="vertical" size="small">
                   <strong>抽取规则：R-AB-024 · 头孢曲松皮试缺失</strong>
@@ -38,7 +37,7 @@ export default function Provenance() {
               ),
             },
             {
-              dot: <RobotOutlined style={{ color: "#52c41a" }} />,
+              dot: <RobotOutlined style={{ color: token.colorSuccess }} />,
               children: (
                 <Space direction="vertical" size="small">
                   <strong>触发提醒 · 张** 病例</strong>

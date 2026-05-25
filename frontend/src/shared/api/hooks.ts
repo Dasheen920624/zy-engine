@@ -14,7 +14,15 @@ export function useMpiPatients(q?: string) {
     queryKey: ["mpi", "patients", q ?? ""],
     queryFn: async () => {
       const { data } = await apiClient.get("/clinical/mpi/patients", { params: { q } });
-      return data as Array<{ mpiId: string; maskedName: string; gender: string; age: number; idLast4: string; mergedCount: number; status: string }>;
+      return data as Array<{
+        mpiId: string;
+        maskedName: string;
+        gender: string;
+        age: number;
+        idLast4: string;
+        mergedCount: number;
+        status: string;
+      }>;
     },
   });
 }
@@ -22,7 +30,8 @@ export function useMpiPatients(q?: string) {
 export function useMpiStats() {
   return useQuery({
     queryKey: ["mpi", "stats"],
-    queryFn: async () => (await apiClient.get("/clinical/mpi/stats")).data as Record<string, number>,
+    queryFn: async () =>
+      (await apiClient.get("/clinical/mpi/stats")).data as Record<string, number>,
   });
 }
 
@@ -33,7 +42,14 @@ export function usePathwayTemplates() {
   return useQuery({
     queryKey: ["pathway", "templates"],
     queryFn: async () =>
-      (await apiClient.get("/tenant/pathways")).data as Array<{ id: string; name: string; disease: string; department: string; nodes: number; status: string }>,
+      (await apiClient.get("/tenant/pathways")).data as Array<{
+        id: string;
+        name: string;
+        disease: string;
+        department: string;
+        nodes: number;
+        status: string;
+      }>,
   });
 }
 
@@ -52,7 +68,14 @@ export function useRules() {
   return useQuery({
     queryKey: ["rules"],
     queryFn: async () =>
-      (await apiClient.get("/tenant/rules")).data as Array<{ id: string; name: string; category: string; severity: string; hits: number; status: string }>,
+      (await apiClient.get("/tenant/rules")).data as Array<{
+        id: string;
+        name: string;
+        category: string;
+        severity: string;
+        hits: number;
+        status: string;
+      }>,
   });
 }
 
@@ -89,15 +112,34 @@ export function useCdssAlerts() {
   return useQuery({
     queryKey: ["cdss", "alerts"],
     queryFn: async () =>
-      (await apiClient.get("/clinical/cdss/alerts")).data as Array<{ id: string; text: string; source: string; adoptionRate: number; status: string; doctor: string }>,
+      (await apiClient.get("/clinical/cdss/alerts")).data as Array<{
+        id: string;
+        text: string;
+        source: string;
+        adoptionRate: number;
+        status: string;
+        doctor: string;
+      }>,
   });
 }
 
 export function useCdssDecide() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, decision, reason }: { id: string; decision: "adopt" | "reject"; reason?: string }) =>
-      (await apiClient.post(`/clinical/cdss/alerts/${id}/${decision}`, null, { params: { reason } })).data,
+    mutationFn: async ({
+      id,
+      decision,
+      reason,
+    }: {
+      id: string;
+      decision: "adopt" | "reject";
+      reason?: string;
+    }) =>
+      (
+        await apiClient.post(`/clinical/cdss/alerts/${id}/${decision}`, null, {
+          params: { reason },
+        })
+      ).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cdss", "alerts"] }),
   });
 }
@@ -142,8 +184,9 @@ export function useAuditEvents() {
 export function useAuditSnapshot() {
   return useMutation({
     mutationFn: async (reason: string) => {
-      const resp = await apiClient.post<AuditSnapshotEnvelope>(
-        "/compliance/audit/snapshot", null, { params: { reason } });
+      const resp = await apiClient.post<AuditSnapshotEnvelope>("/compliance/audit/snapshot", null, {
+        params: { reason },
+      });
       return resp.data.data;
     },
   });
@@ -156,7 +199,12 @@ export function useLlmProviders() {
   return useQuery({
     queryKey: ["llm", "providers"],
     queryFn: async () =>
-      (await apiClient.get("/advanced/llm/providers")).data as Array<{ id: string; name: string; local: boolean; healthy: boolean }>,
+      (await apiClient.get("/advanced/llm/providers")).data as Array<{
+        id: string;
+        name: string;
+        local: boolean;
+        healthy: boolean;
+      }>,
   });
 }
 
@@ -166,8 +214,7 @@ export function useLlmProviders() {
 export function useSystemRuntime() {
   return useQuery({
     queryKey: ["system", "runtime"],
-    queryFn: async () =>
-      (await apiClient.get("/system/runtime")).data as Record<string, unknown>,
+    queryFn: async () => (await apiClient.get("/system/runtime")).data as Record<string, unknown>,
     refetchInterval: 30_000,
   });
 }
@@ -180,7 +227,11 @@ export function useDrgRulesets() {
     queryKey: ["drg", "rulesets"],
     queryFn: async () =>
       (await apiClient.get("/quality/insurance/drg/rulesets")).data as Array<{
-        version: string; effectiveFrom: string; groupCount: number; source: string; status: string;
+        version: string;
+        effectiveFrom: string;
+        groupCount: number;
+        source: string;
+        status: string;
       }>,
   });
 }
@@ -217,7 +268,8 @@ export interface LlmExplain {
 export function useLlmExplain(decisionId?: string) {
   return useQuery({
     queryKey: ["llm", "explain", decisionId ?? ""],
-    queryFn: async () => (await apiClient.get<LlmExplain>(`/advanced/llm/explain/${decisionId}`)).data,
+    queryFn: async () =>
+      (await apiClient.get<LlmExplain>(`/advanced/llm/explain/${decisionId}`)).data,
     enabled: !!decisionId,
   });
 }
@@ -228,7 +280,8 @@ export function useLlmExplain(decisionId?: string) {
 export function useDomesticSnapshot() {
   return useQuery({
     queryKey: ["domestic", "snapshot"],
-    queryFn: async () => (await apiClient.get("/advanced/domestic/snapshot")).data as Record<string, unknown>,
+    queryFn: async () =>
+      (await apiClient.get("/advanced/domestic/snapshot")).data as Record<string, unknown>,
     refetchInterval: 60_000,
   });
 }

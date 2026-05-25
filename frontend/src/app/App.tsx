@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppRouter } from "./router";
 import { useThemeStore } from "@/shared/lib/themeStore";
+import { theme as medkernelTheme } from "@/shared/config/theme";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -15,15 +16,7 @@ export default function App() {
 
   const themeConfig = useMemo(() => {
     const base = {
-      token: {
-        colorPrimary: "#1565c0",
-        colorInfo: "#1565c0",
-        colorSuccess: "#52c41a",
-        colorWarning: "#faad14",
-        colorError: "#ff4d4f",
-        borderRadius: 6,
-        fontSize: 14,
-      },
+      token: medkernelTheme.token,
     };
 
     if (mode === "elder") {
@@ -38,7 +31,11 @@ export default function App() {
     if (mode === "eye") {
       return {
         ...base,
-        token: { ...base.token, colorBgLayout: "#f5f1e8", colorBgContainer: "#fdfaf2" },
+        token: {
+          ...base.token,
+          colorBgLayout: "var(--mk-bg-eye-layout)",
+          colorBgContainer: "var(--mk-bg-eye-container)",
+        },
       };
     }
     if (mode === "system") {
