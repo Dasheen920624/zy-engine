@@ -122,6 +122,7 @@ public final class DefaultPermissionPolicy {
             KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW,
             PATHWAY_READ, PATHWAY_WRITE,
             RULE_READ, RULE_WRITE,
+            TERM_READ, TERM_WRITE,
             RECOMMENDATION_READ));
 
         // 临床医生：看提醒、采纳/拒绝、查看路径与规则
