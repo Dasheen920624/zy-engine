@@ -79,6 +79,21 @@ medkernel/
 具体服务端口、备份和服务器迁移步骤见
 [deploy/docker/README.md](deploy/docker/README.md)。
 
+### 本地一键启动
+
+只需要 B0 本地研发路径时，可以直接启动 H2 后端和 Vite 前端：
+
+```powershell
+.\scripts\start-local.ps1
+```
+
+脚本会用 JDK 21 打包并启动后端，按需安装前端依赖并启动 Vite；若 18080 / 5173 已被监听，则会复用现有进程。日志位置：
+
+- `medkernel-backend/target/backend-dev.out.log`
+- `medkernel-backend/target/backend-dev.err.log`
+- `frontend/frontend-dev.out.log`
+- `frontend/frontend-dev.err.log`
+
 ### 后端
 
 ```bash
