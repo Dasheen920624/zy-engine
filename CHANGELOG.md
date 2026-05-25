@@ -8,6 +8,27 @@
 
 ## [Unreleased]
 
+### Added (2026-05-25) · GA-ENG-BASE-02 Phase 1 — 权限模型 + @DataScope 切面
+
+让每个未来 Controller "出生即安全"：基于 PR #64 的 ROLE_* 基建，新增声明式权限和数据范围校验。
+
+- **engine/security/**：
+  - `RoleCode` 枚举（13 个标准角色，对应宪法 §5.2）：platform-admin / group-admin / hospital-admin / it-ops / medical-affairs / qa-manager / insurance-manager / dept-head / specialist / doctor / nurse / audit-compliance / implementation-engineer。`code()` 给 JWT claim，`authority()` 给 Spring Security
+  - `PermissionCode` 枚举（28 项，按域分组）：org.\* / tenant.\* / package.\* / knowledge.\* / term.\* / rule.\* / pathway.\* / recommendation.\* / evaluation.\* / audit.\* / system.\*。每项带 Risk 等级（LOW/MEDIUM/HIGH），配合"低风险可批量、高风险逐条确认"门禁
+  - `DefaultPermissionPolicy`：代码内默认 RoleCode → PermissionCode 映射。设计原则：最小授权 + 分权审核 + 审计仅读 + 平台/集团兜底
+  - `PermissionEvaluator`（bean 名 `perm`）：读 SecurityContextHolder 中的 ROLE_\*，对照 DefaultPermissionPolicy。SpEL 直接写 `@PreAuthorize("@perm.has('rule.publish')")`，另支持 `hasAny` / `hasAll` / 强类型 `has(PermissionCode)`
+- **shared/datascope/**：
+  - `@DataScope(requireTenant=true, requireAtLeast=OrgLevel.HOSPITAL)` 注解，可放方法或类
+  - `DataScopeAspect`：方法级注解覆盖类级；缺租户抛 TENANT_CONTEXT_MISSING (400)；不满足层级抛 DATA_SCOPE_DENIED (403)
+- **shared/security/SecurityConfig**：`@EnableMethodSecurity(prePostEnabled=true)` 启用方法级安全
+- **engine/org/OrgUnitController** 改造为范例：类级 `@DataScope(requireTenant=true)` + 方法级 `@PreAuthorize("@perm.has('org.read')")`，后续所有引擎 Controller 按此模板
+- **pom.xml**：新增 `spring-boot-starter-aop` 用于 @Aspect 支持
+- **测试**：25 项新测试全部通过。
+  - `DefaultPermissionPolicyTest` (8)：13 角色 × 28 权限映射边界 + 审计仅读不变量
+  - `PermissionEvaluatorTest` (8)：无认证 / 单角色 / 多角色并集 / hasAny / hasAll / 未知权限
+  - `DataScopeAspectTest` (5)：requireTenant 缺失 / 满足 / 层级 / 方法级覆盖类级
+  - `OrgUnitControllerSecurityTest` (4) 端到端 @SpringBootTest：DOCTOR 通过 @PreAuthorize / GUEST 403 / NURSE 通过 / PLATFORM_ADMIN 也需 tenant（数据范围 ≠ 权限）
+
 ### Added (2026-05-25) · GA-ENG-BASE-01 完整化 — JWT → OrgScope + 组织单元 API
 
 - **shared/context/JwtClaimsResolver**：约定 JWT claim 命名（`sub` / `tenant_id` / `group_id` / `hospital_id` / `campus_id` / `site_id` / `department_id` / `ward_id` / `specialty_id` / `roles`）；roles 支持 List/String/逗号串三种形态

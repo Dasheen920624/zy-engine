@@ -48,6 +48,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- AOP: 用于 @DataScope 切面、未来审计/限流切面 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <!-- Persistence: Spring Data JDBC + Hikari + Flyway 5 方言 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
