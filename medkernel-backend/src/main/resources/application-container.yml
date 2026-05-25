@@ -1,0 +1,31 @@
+# Container profile - persistent PostgreSQL deployment managed by deploy/docker.
+# Activate with dev,container so local JWT decoding remains available while PostgreSQL replaces H2.
+spring:
+  datasource:
+    url: ${MEDKERNEL_DB_URL:jdbc:postgresql://postgres:5432/medkernel}
+    driver-class-name: org.postgresql.Driver
+    username: ${MEDKERNEL_DB_USERNAME:medkernel}
+    password: ${MEDKERNEL_DB_PASSWORD}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/postgres
+  h2:
+    console:
+      enabled: false
+  neo4j:
+    uri: ${MEDKERNEL_NEO4J_URI:bolt://neo4j:7687}
+    authentication:
+      username: ${MEDKERNEL_NEO4J_USERNAME:neo4j}
+      password: ${MEDKERNEL_NEO4J_PASSWORD}
+
+management:
+  health:
+    neo4j:
+      enabled: ${MEDKERNEL_NEO4J_HEALTH_ENABLED:false}
+
+medkernel:
+  runtime:
+    graph-enabled: ${MEDKERNEL_GRAPH_ENABLED:false}
+    neo4j-uri: ${MEDKERNEL_NEO4J_URI:bolt://neo4j:7687}
+    dify-enabled: ${MEDKERNEL_DIFY_ENABLED:false}
+    dify-api-url: ${MEDKERNEL_DIFY_API_URL:http://host.docker.internal:8090}

@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+required=(
+  "deploy/docker/.env.example"
+  "deploy/docker/compose.yml"
+  "deploy/docker/compose.monitoring.yml"
+  "deploy/docker/monitoring/prometheus.yml"
+  "deploy/docker/backend/Dockerfile"
+  "deploy/docker/frontend/Dockerfile"
+  "deploy/docker/frontend/nginx.conf"
+  "deploy/docker/scripts/common.sh"
+  "deploy/docker/scripts/bootstrap-runtime.sh"
+  "deploy/docker/scripts/up.sh"
+  "deploy/docker/scripts/down.sh"
+  "deploy/docker/scripts/healthcheck.sh"
+  "deploy/docker/scripts/backup.sh"
+  "deploy/docker/scripts/restore.sh"
+  "deploy/docker/scripts/rotate-dify-initial-secrets.sh"
+  "deploy/docker/dify/compose.lock.yml"
+  "deploy/docker/dify/.env.override.example"
+  "deploy/docker/dify/README.md"
+  "deploy/docker/README.md"
+  "medkernel-backend/src/main/resources/application-container.yml"
+)
+
+for path in "${required[@]}"; do
+  test -f "$ROOT/$path" || {
+    printf 'missing required deployment file: %s\n' "$path" >&2
+    exit 1
+  }
+done
+
+grep -q 'classpath:db/migration/postgres' "$ROOT/medkernel-backend/src/main/resources/application-container.yml"
+grep -q 'postgres:16.14-bookworm' "$ROOT/deploy/docker/compose.yml"
+grep -q 'neo4j:5.23.0-community' "$ROOT/deploy/docker/compose.yml"
+grep -q 'MEDKERNEL_RUNTIME_ROOT' "$ROOT/deploy/docker/compose.yml"
+grep -q 'SPRING_NEO4J_URI: bolt://neo4j:7687' "$ROOT/deploy/docker/compose.yml"
+! grep -q '^      NEO4J_PASSWORD:' "$ROOT/deploy/docker/compose.yml"
+grep -q 'MEDKERNEL_NEO4J_PASSWORD' "$ROOT/medkernel-backend/src/main/resources/application-container.yml"
+grep -q 'MEDKERNEL_NEO4J_HEALTH_ENABLED:false' "$ROOT/medkernel-backend/src/main/resources/application-container.yml"
+grep -q 'v1.14.0' "$ROOT/deploy/docker/scripts/bootstrap-runtime.sh"
+grep -q '^DIFY_GIT_REF=1.14.0$' "$ROOT/deploy/docker/.env.example"
+grep -q 'DIFY_GIT_REF' "$ROOT/deploy/docker/scripts/bootstrap-runtime.sh"
+grep -q 'configure_new_dify_secrets' "$ROOT/deploy/docker/scripts/bootstrap-runtime.sh"
+grep -q 'ALTER ROLE' "$ROOT/deploy/docker/scripts/rotate-dify-initial-secrets.sh"
+grep -q -- '--confirm-unconfigured' "$ROOT/deploy/docker/scripts/rotate-dify-initial-secrets.sh"
+grep -q 'DIFY_LOCK_COMPOSE_FILE' "$ROOT/deploy/docker/scripts/common.sh"
+grep -q 'nginx@sha256:' "$ROOT/deploy/docker/dify/compose.lock.yml"
+grep -q 'ubuntu/squid@sha256:' "$ROOT/deploy/docker/dify/compose.lock.yml"
+! grep -q ':latest' "$ROOT/deploy/docker/dify/compose.lock.yml"
+grep -q -- '--mount=type=cache,target=/root/.m2' "$ROOT/deploy/docker/backend/Dockerfile"
+! grep -q 'mvn -B -q' "$ROOT/deploy/docker/backend/Dockerfile"
+grep -q 'maven.test.skip=true' "$ROOT/deploy/docker/backend/Dockerfile"
+grep -A4 'location = /healthz' "$ROOT/deploy/docker/frontend/nginx.conf" | grep -q 'proxy_set_header Host \$host;'
+grep -q 'pg_dump' "$ROOT/deploy/docker/scripts/backup.sh"
+grep -q 'pg_restore' "$ROOT/deploy/docker/scripts/restore.sh"
+grep -q 'backend:18080' "$ROOT/deploy/docker/monitoring/prometheus.yml"
+grep -q '/opt/medkernel/dashboards:ro' "$ROOT/deploy/docker/compose.monitoring.yml"
+grep -q 'path: /opt/medkernel/dashboards' "$ROOT/deploy/monitoring/grafana/provisioning/dashboards/medkernel.yml"
+! grep -q ':/etc/grafana/provisioning/dashboards/medkernel:ro' "$ROOT/deploy/docker/compose.monitoring.yml"
+grep -q 'dify_compose exec -T api curl -fsS http://localhost:5001/health' "$ROOT/deploy/docker/scripts/healthcheck.sh"
+grep -q 'DIFY_REQUIRED_SERVICES=' "$ROOT/deploy/docker/scripts/healthcheck.sh"
+grep -q 'DIFY_HEALTHY_SERVICES=' "$ROOT/deploy/docker/scripts/healthcheck.sh"
+grep -q 'dify_compose ps --services --status running' "$ROOT/deploy/docker/scripts/healthcheck.sh"
+grep -q 'docker inspect --format' "$ROOT/deploy/docker/scripts/healthcheck.sh"
+grep -q 'MEDKERNEL_DIFY_API_URL=http://host.docker.internal:8090' "$ROOT/deploy/docker/.env.example"
+grep -q 'MEDKERNEL_DIFY_API_URL:-http://host.docker.internal:8090' "$ROOT/deploy/docker/compose.yml"
+! grep -R -q 'host.docker.internal:5001' "$ROOT/deploy/docker" "$ROOT/medkernel-backend/src/main/resources/application-container.yml"
+
+printf 'deployment asset contract passed\n'

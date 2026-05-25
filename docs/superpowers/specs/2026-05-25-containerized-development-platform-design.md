@@ -182,10 +182,13 @@ This design pins the initial development deployment to:
 - Docker Desktop for Mac ARM `4.74.0`, as listed in Docker's ARM release feed on 2026-05-25.
 - PostgreSQL `16`, matching the repository's PostgreSQL deployment profile.
 - Neo4j Community `5.23`, matching the backend driver and product documentation.
-- Dify `v1.14.0`, shown as the current official latest release on 2026-05-25.
+- Dify `v1.14.0`, shown as the current official latest release on 2026-05-25. Its official
+  checkout tag is `1.14.0`; the prefixed label remains the readable runtime directory name.
 
-Version upgrades must be separate reviewed changes with backup and restore checks before data
-volumes are reused.
+The official Dify Compose topology is kept upstream, while a committed override locks the
+validated default service images by digest, including upstream helper services that otherwise use
+mutable tags. Version or topology upgrades must be separate reviewed changes with refreshed
+digests and backup/restore checks before data volumes are reused.
 
 ## Official References
 

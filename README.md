@@ -59,6 +59,26 @@ medkernel/
 
 ## 启动
 
+### 完整开发平台（Docker）
+
+需要持久 PostgreSQL、Neo4j、监控或 Dify 时，使用容器化开发平台。运行数据默认保留在
+`/Users/zhikunzheng/work/medkernel/runtime/`，不会提交到仓库：
+
+```bash
+./deploy/docker/scripts/up.sh core
+./deploy/docker/scripts/healthcheck.sh core
+```
+
+完整模式（附加 Prometheus、Grafana 和官方 Dify `v1.14.0`）：
+
+```bash
+./deploy/docker/scripts/up.sh full
+./deploy/docker/scripts/healthcheck.sh full
+```
+
+具体服务端口、备份和服务器迁移步骤见
+[deploy/docker/README.md](deploy/docker/README.md)。
+
 ### 后端
 
 ```bash

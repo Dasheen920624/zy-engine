@@ -1,0 +1,101 @@
+name: medkernel-dev
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:16.14-bookworm}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${MEDKERNEL_DB_NAME:-medkernel}
+      POSTGRES_USER: ${MEDKERNEL_DB_USERNAME:-medkernel}
+      POSTGRES_PASSWORD: ${MEDKERNEL_DB_PASSWORD:?set MEDKERNEL_DB_PASSWORD}
+    ports:
+      - "${MEDKERNEL_POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - ${MEDKERNEL_RUNTIME_ROOT:?set MEDKERNEL_RUNTIME_ROOT}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MEDKERNEL_DB_USERNAME:-medkernel} -d ${MEDKERNEL_DB_NAME:-medkernel}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - medkernel
+
+  neo4j:
+    image: ${NEO4J_IMAGE:-neo4j:5.23.0-community}
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${MEDKERNEL_NEO4J_PASSWORD:?set MEDKERNEL_NEO4J_PASSWORD}
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1G
+      NEO4J_server_memory_pagecache_size: 512m
+    ports:
+      - "${MEDKERNEL_NEO4J_BROWSER_PORT:-7474}:7474"
+      - "${MEDKERNEL_NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - ${MEDKERNEL_RUNTIME_ROOT:?set MEDKERNEL_RUNTIME_ROOT}/data/neo4j/data:/data
+      - ${MEDKERNEL_RUNTIME_ROOT:?set MEDKERNEL_RUNTIME_ROOT}/data/neo4j/logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"$${NEO4J_AUTH#neo4j/}\" 'RETURN 1;' >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    networks:
+      - medkernel
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: dev,container
+      MEDKERNEL_DB_URL: jdbc:postgresql://postgres:5432/${MEDKERNEL_DB_NAME:-medkernel}
+      MEDKERNEL_DB_USERNAME: ${MEDKERNEL_DB_USERNAME:-medkernel}
+      MEDKERNEL_DB_PASSWORD: ${MEDKERNEL_DB_PASSWORD:?set MEDKERNEL_DB_PASSWORD}
+      MEDKERNEL_GRAPH_ENABLED: ${MEDKERNEL_GRAPH_ENABLED:-false}
+      MEDKERNEL_NEO4J_URI: bolt://neo4j:7687
+      MEDKERNEL_NEO4J_PASSWORD: ${MEDKERNEL_NEO4J_PASSWORD:?set MEDKERNEL_NEO4J_PASSWORD}
+      MEDKERNEL_NEO4J_HEALTH_ENABLED: ${MEDKERNEL_NEO4J_HEALTH_ENABLED:-false}
+      SPRING_NEO4J_URI: bolt://neo4j:7687
+      SPRING_NEO4J_AUTHENTICATION_USERNAME: neo4j
+      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${MEDKERNEL_NEO4J_PASSWORD:?set MEDKERNEL_NEO4J_PASSWORD}
+      MEDKERNEL_DIFY_ENABLED: ${MEDKERNEL_DIFY_ENABLED:-false}
+      MEDKERNEL_DIFY_API_URL: ${MEDKERNEL_DIFY_API_URL:-http://host.docker.internal:8090}
+      SERVER_PORT: 18080
+    ports:
+      - "${MEDKERNEL_BACKEND_PORT:-18080}:18080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:18080/medkernel/actuator/health >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
+    networks:
+      - medkernel
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${MEDKERNEL_FRONTEND_PORT:-8088}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+    networks:
+      - medkernel
+
+networks:
+  medkernel:
+    name: medkernel-dev-network

@@ -30,6 +30,9 @@ official Dify release under `${MEDKERNEL_RUNTIME_ROOT}/dify/v1.14.0`. This prese
 Dify upgrade mechanics and prevents its internal PostgreSQL, Redis, and vector storage from
 being confused with MedKernel's authoritative database. A combined copied Compose file was
 rejected because it would fork a rapidly changing external platform.
+The displayed release is `v1.14.0`, and its reproducible official checkout tag is `1.14.0`.
+The validated default Dify service images are applied through a small committed digest-lock
+override so mutable helper tags in the upstream Compose file cannot drift between deployments.
 
 ### Persistent External Runtime Root
 

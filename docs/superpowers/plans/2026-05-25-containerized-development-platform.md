@@ -52,6 +52,8 @@ grep -q 'postgres:16.14-bookworm' "$ROOT/deploy/docker/compose.yml"
 grep -q 'neo4j:5.23.0-community' "$ROOT/deploy/docker/compose.yml"
 grep -q 'MEDKERNEL_RUNTIME_ROOT' "$ROOT/deploy/docker/compose.yml"
 grep -q 'v1.14.0' "$ROOT/deploy/docker/scripts/bootstrap-runtime.sh"
+grep -q '^DIFY_GIT_REF=1.14.0$' "$ROOT/deploy/docker/.env.example"
+grep -q 'DIFY_GIT_REF' "$ROOT/deploy/docker/scripts/bootstrap-runtime.sh"
 grep -q 'pg_dump' "$ROOT/deploy/docker/scripts/backup.sh"
 grep -q 'pg_restore' "$ROOT/deploy/docker/scripts/restore.sh"
 printf 'deployment asset contract passed\n'
@@ -195,12 +197,14 @@ Implement `bootstrap-runtime.sh` to:
 ```bash
 RUNTIME_ROOT="${MEDKERNEL_RUNTIME_ROOT:-/Users/zhikunzheng/work/medkernel/runtime}"
 DIFY_VERSION="${DIFY_VERSION:-v1.14.0}"
+DIFY_GIT_REF="${DIFY_GIT_REF:-1.14.0}"
 mkdir -p "$RUNTIME_ROOT"/{env,data/postgres,data/neo4j/data,data/neo4j/logs,data/prometheus,data/grafana,backups,dify}
 ```
 
 It copies `.env.example` into `$RUNTIME_ROOT/env/medkernel.env` only when absent, generates
-development passwords when placeholders remain, and clones
-`https://github.com/langgenius/dify.git --branch "$DIFY_VERSION"` into
+development passwords when placeholders remain, and clones the displayed release `v1.14.0`
+using its actual upstream tag
+`https://github.com/langgenius/dify.git --branch "$DIFY_GIT_REF"` into
 `$RUNTIME_ROOT/dify/$DIFY_VERSION`.
 
 Implement `up.sh core|full` and `down.sh core|full` so `core` controls the MedKernel Compose

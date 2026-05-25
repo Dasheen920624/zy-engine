@@ -4,11 +4,16 @@
 
 > 完整流程与版本约定见 [VERSIONING.md](../VERSIONING.md) 与 [docs/engineering/09_内网部署与版本管理.md](../docs/engineering/09_内网部署与版本管理.md)。
 
+开发环境需要一套可持续保留的数据服务时，请使用
+[docker/README.md](docker/README.md)：它提供 PostgreSQL、Neo4j、Prometheus/Grafana
+以及独立官方 Dify 栈的 Docker 部署，运行数据不进入仓库。
+
 ## 1. 目录结构
 
 ```
 deploy/
 ├── README.md
+├── docker/                     # 可迁移的容器化开发平台（PostgreSQL / Neo4j / Dify）
 ├── manifest.template.json      # 发布包清单模板
 ├── scripts/
 │   ├── build-release.sh        # 构建发布包（在 dev/CI 机器上跑）

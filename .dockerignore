@@ -1,0 +1,11 @@
+.git
+.github
+.codex
+.worktrees
+**/target
+**/node_modules
+frontend/dist
+frontend/coverage
+runtime
+*.log
+.DS_Store
