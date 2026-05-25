@@ -16,6 +16,7 @@
 - [x] 3.1 Add runtime bootstrap logic that prepares local secrets, clones the official Dify `v1.14.0` release using Git tag `1.14.0`, and locks validated default images by digest under the external runtime root.
 - [x] 3.2 Add `core` and `full` start/stop/health scripts, keeping the official Dify Compose project separate.
 - [x] 3.3 Add PostgreSQL backup/restore operations and operator documentation for local and later-server deployment.
+- [x] 3.4 Remove the previous offline/systemd/nginx deployment files so Docker is the only active deployment entrypoint.
 
 ## 4. Runtime Installation And Acceptance
 

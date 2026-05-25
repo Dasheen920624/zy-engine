@@ -52,7 +52,7 @@ medkernel/
 ├─ medkernel-backend/    ← Spring Boot 3 + JDK 21 + Jakarta EE
 ├─ frontend/             ← React 18 + Antd 5 + FSD（app/pages/widgets/features/entities/shared）
 ├─ docs/                 ← 文档中心（引擎总览 + 宪法 + 产品体验规范 + 引擎上线方案 + 详细规范 + 任务台账）
-└─ deploy/               ← 部署脚本 + 监控配置（Grafana / Prometheus / Nginx / systemd）
+└─ deploy/               ← Docker 部署平台 + 监控配置（PostgreSQL / Neo4j / Dify / Grafana / Prometheus）
 ```
 
 ---

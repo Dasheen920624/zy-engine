@@ -41,6 +41,13 @@ Compose binds data, local environment files, Dify checkout, and backups below
 `/Users/zhikunzheng/work/medkernel/runtime`, but scripts accept another value for Linux hosts.
 This keeps secrets and database state out of Git while leaving repository assets portable.
 
+### Legacy Deployment Removal
+
+The previous offline package scripts, systemd unit, Nginx examples, platform profiles, and
+standalone Prometheus configuration are removed from the active `deploy/` tree. Keeping both
+deployment surfaces would make future server rollout ambiguous; historical references remain in
+archived documentation only.
+
 ### Container Spring Profile And Static Frontend Gateway
 
 The backend receives a dedicated `container` profile that connects to PostgreSQL and enables

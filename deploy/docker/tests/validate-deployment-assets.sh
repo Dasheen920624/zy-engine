@@ -24,10 +24,26 @@ required=(
   "deploy/docker/README.md"
   "medkernel-backend/src/main/resources/application-container.yml"
 )
+legacy_removed=(
+  "deploy/manifest.template.json"
+  "deploy/monitoring/README.md"
+  "deploy/monitoring/prometheus/prometheus-medkernel.yml"
+  "deploy/nginx"
+  "deploy/profiles"
+  "deploy/scripts"
+  "deploy/systemd"
+)
 
 for path in "${required[@]}"; do
   test -f "$ROOT/$path" || {
     printf 'missing required deployment file: %s\n' "$path" >&2
+    exit 1
+  }
+done
+
+for path in "${legacy_removed[@]}"; do
+  test ! -e "$ROOT/$path" || {
+    printf 'legacy deployment asset should be removed: %s\n' "$path" >&2
     exit 1
   }
 done
