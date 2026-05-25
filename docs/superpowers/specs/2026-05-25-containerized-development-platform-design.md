@@ -30,7 +30,7 @@ Use two adjacent Compose projects with one managed entry point:
 
 1. The repository owns the **MedKernel stack** under `deploy/docker/`.
 2. A setup script installs a pinned checkout of the **official Dify stack** under the external
-   runtime root at `/Users/zhikunzheng/个人/郑志坤/medkernel/runtime/dify/v1.14.0/`.
+   runtime root at `/Users/zhikunzheng/work/medkernel/runtime/dify/v1.14.0/`.
 3. Wrapper scripts bring up either MedKernel core services or the complete platform, while
    preserving separate volumes, credentials, upgrade boundaries, and backup procedures.
 
@@ -81,7 +81,7 @@ deploy/docker/
 Machine-local runtime state outside Git:
 
 ```text
-/Users/zhikunzheng/个人/郑志坤/medkernel/runtime/
+/Users/zhikunzheng/work/medkernel/runtime/
 |-- env/                         # local secret-bearing .env files
 |-- data/
 |   |-- medkernel-postgres/
