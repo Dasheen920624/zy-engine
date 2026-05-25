@@ -1,0 +1,170 @@
+package com.medkernel.engine.security;
+
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+
+import static com.medkernel.engine.security.PermissionCode.AUDIT_EXPORT;
+import static com.medkernel.engine.security.PermissionCode.AUDIT_READ;
+import static com.medkernel.engine.security.PermissionCode.EVALUATION_PUBLISH;
+import static com.medkernel.engine.security.PermissionCode.EVALUATION_READ;
+import static com.medkernel.engine.security.PermissionCode.EVALUATION_WRITE;
+import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_PUBLISH;
+import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_READ;
+import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_REVIEW;
+import static com.medkernel.engine.security.PermissionCode.ORG_PUBLISH;
+import static com.medkernel.engine.security.PermissionCode.ORG_READ;
+import static com.medkernel.engine.security.PermissionCode.ORG_WRITE;
+import static com.medkernel.engine.security.PermissionCode.PACKAGE_PUBLISH;
+import static com.medkernel.engine.security.PermissionCode.PACKAGE_READ;
+import static com.medkernel.engine.security.PermissionCode.PACKAGE_ROLLBACK;
+import static com.medkernel.engine.security.PermissionCode.PATHWAY_PUBLISH;
+import static com.medkernel.engine.security.PermissionCode.PATHWAY_READ;
+import static com.medkernel.engine.security.PermissionCode.PATHWAY_WRITE;
+import static com.medkernel.engine.security.PermissionCode.RECOMMENDATION_ACCEPT;
+import static com.medkernel.engine.security.PermissionCode.RECOMMENDATION_READ;
+import static com.medkernel.engine.security.PermissionCode.RULE_PUBLISH;
+import static com.medkernel.engine.security.PermissionCode.RULE_READ;
+import static com.medkernel.engine.security.PermissionCode.RULE_WRITE;
+import static com.medkernel.engine.security.PermissionCode.SYSTEM_MANAGE;
+import static com.medkernel.engine.security.PermissionCode.SYSTEM_READ;
+import static com.medkernel.engine.security.PermissionCode.TENANT_READ;
+import static com.medkernel.engine.security.PermissionCode.TENANT_WRITE;
+import static com.medkernel.engine.security.PermissionCode.TERM_PUBLISH;
+import static com.medkernel.engine.security.PermissionCode.TERM_READ;
+import static com.medkernel.engine.security.PermissionCode.TERM_WRITE;
+
+/**
+ * MedKernel v1.0 GA · 默认角色 → 权限映射。
+ *
+ * <p>这是"代码侧默认权限策略"，作为 GA-ENG-BASE-02 Phase 1 的底线。
+ * Phase 2 实施时将引入 {@code role_permission} 表，允许医院在默认策略基础上做加减，
+ * 但任何医院不得授予未在 {@link PermissionCode} 登记的权限。
+ *
+ * <p>设计原则：
+ * <ol>
+ *   <li><b>最小授权</b>：临床医生只看本人病例和提醒，不能改规则；护理只看护理资产</li>
+ *   <li><b>分权审核</b>：发布类（{@code *.publish}）严格限定给医务处 / 质控办 / 医院管理员</li>
+ *   <li><b>审计独立</b>：合规审计仅有读 + 导出，不允许业务写</li>
+ *   <li><b>平台 / 集团兜底</b>：平台和集团管理员拥有全部权限，便于一线兜底</li>
+ * </ol>
+ */
+public final class DefaultPermissionPolicy {
+
+    private static final Map<RoleCode, Set<PermissionCode>> POLICY;
+
+    static {
+        EnumMap<RoleCode, Set<PermissionCode>> map = new EnumMap<>(RoleCode.class);
+
+        // 平台 / 集团管理员：全部权限
+        map.put(RoleCode.PLATFORM_ADMIN, EnumSet.allOf(PermissionCode.class));
+        map.put(RoleCode.GROUP_ADMIN, EnumSet.allOf(PermissionCode.class));
+
+        // 医院管理员：除平台运维外的全部权限
+        EnumSet<PermissionCode> hospitalAdmin = EnumSet.allOf(PermissionCode.class);
+        hospitalAdmin.remove(SYSTEM_MANAGE);
+        map.put(RoleCode.HOSPITAL_ADMIN, hospitalAdmin);
+
+        // 信息科：基础设施读写 + 运维 + 字典 + 配置包
+        map.put(RoleCode.IT_OPS, EnumSet.of(
+            ORG_READ, ORG_WRITE,
+            TENANT_READ, TENANT_WRITE,
+            PACKAGE_READ, PACKAGE_PUBLISH, PACKAGE_ROLLBACK,
+            TERM_READ, TERM_WRITE, TERM_PUBLISH,
+            SYSTEM_READ, SYSTEM_MANAGE,
+            AUDIT_READ));
+
+        // 医务处：知识/规则/路径审核与发布
+        map.put(RoleCode.MEDICAL_AFFAIRS, EnumSet.of(
+            ORG_READ,
+            KNOWLEDGE_READ, KNOWLEDGE_REVIEW, KNOWLEDGE_PUBLISH,
+            RULE_READ, RULE_WRITE, RULE_PUBLISH,
+            PATHWAY_READ, PATHWAY_WRITE, PATHWAY_PUBLISH,
+            TERM_READ,
+            EVALUATION_READ,
+            RECOMMENDATION_READ,
+            AUDIT_READ, AUDIT_EXPORT));
+
+        // 质控办：评估指标审核发布 + 质控发现
+        map.put(RoleCode.QA_MANAGER, EnumSet.of(
+            ORG_READ,
+            EVALUATION_READ, EVALUATION_WRITE, EVALUATION_PUBLISH,
+            KNOWLEDGE_READ,
+            RULE_READ,
+            PATHWAY_READ,
+            RECOMMENDATION_READ,
+            AUDIT_READ, AUDIT_EXPORT));
+
+        // 医保办：医保规则维护（属于规则一类）+ 评估
+        map.put(RoleCode.INSURANCE_MANAGER, EnumSet.of(
+            ORG_READ,
+            RULE_READ, RULE_WRITE,
+            EVALUATION_READ,
+            KNOWLEDGE_READ,
+            AUDIT_READ));
+
+        // 科主任：本科室路径/规则审核 + 评估查看
+        map.put(RoleCode.DEPT_HEAD, EnumSet.of(
+            ORG_READ,
+            PATHWAY_READ, PATHWAY_WRITE,
+            RULE_READ, RULE_WRITE,
+            KNOWLEDGE_READ, KNOWLEDGE_REVIEW,
+            EVALUATION_READ,
+            RECOMMENDATION_READ));
+
+        // 专科专家：知识/路径审核
+        map.put(RoleCode.SPECIALIST, EnumSet.of(
+            ORG_READ,
+            KNOWLEDGE_READ, KNOWLEDGE_REVIEW,
+            PATHWAY_READ, PATHWAY_WRITE,
+            RULE_READ, RULE_WRITE,
+            RECOMMENDATION_READ));
+
+        // 临床医生：看提醒、采纳/拒绝、查看路径与规则
+        map.put(RoleCode.DOCTOR, EnumSet.of(
+            ORG_READ,
+            RECOMMENDATION_READ, RECOMMENDATION_ACCEPT,
+            PATHWAY_READ,
+            RULE_READ,
+            KNOWLEDGE_READ));
+
+        // 护理人员：护理决策与提醒
+        map.put(RoleCode.NURSE, EnumSet.of(
+            ORG_READ,
+            RECOMMENDATION_READ, RECOMMENDATION_ACCEPT,
+            PATHWAY_READ,
+            KNOWLEDGE_READ));
+
+        // 合规审计：只读 + 导出，禁所有写
+        map.put(RoleCode.AUDIT_COMPLIANCE, EnumSet.of(
+            ORG_READ,
+            AUDIT_READ, AUDIT_EXPORT,
+            KNOWLEDGE_READ,
+            RULE_READ,
+            PATHWAY_READ,
+            EVALUATION_READ));
+
+        // 实施工程师：试点准备阶段的接入与配置
+        map.put(RoleCode.IMPLEMENTATION_ENGINEER, EnumSet.of(
+            ORG_READ, ORG_WRITE,
+            TENANT_READ,
+            PACKAGE_READ, PACKAGE_PUBLISH,
+            TERM_READ, TERM_WRITE,
+            SYSTEM_READ,
+            AUDIT_READ));
+
+        POLICY = Map.copyOf(map);
+    }
+
+    private DefaultPermissionPolicy() {
+    }
+
+    public static Set<PermissionCode> permissionsOf(RoleCode role) {
+        return POLICY.getOrDefault(role, EnumSet.noneOf(PermissionCode.class));
+    }
+
+    public static boolean has(RoleCode role, PermissionCode permission) {
+        return permissionsOf(role).contains(permission);
+    }
+}
