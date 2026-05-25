@@ -8,15 +8,15 @@
 
 ## 技术栈
 
-| 类别 | 选型 | 备注 |
-|---|---|---|
-| 框架 | React 18 + TypeScript 5 | 严格模式 |
-| 构建 | Vite 5 | dev / build / preview |
-| UI 库 | Ant Design 5 + @ant-design/icons | 中文 locale + brand 主题 |
-| 路由 | react-router-dom 6 | 嵌套路由 |
-| 数据请求 | axios + TanStack Query v5 | 自动 traceId + ApiError |
-| Mock | MSW 2 | 浏览器 + Node 双侧 |
-| 测试 | Vitest + @testing-library/react + jsdom | TDD |
+| 类别     | 选型                                    | 备注                     |
+| -------- | --------------------------------------- | ------------------------ |
+| 框架     | React 18 + TypeScript 5                 | 严格模式                 |
+| 构建     | Vite 5                                  | dev / build / preview    |
+| UI 库    | Ant Design 5 + @ant-design/icons        | 中文 locale + brand 主题 |
+| 路由     | react-router-dom 6                      | 嵌套路由                 |
+| 数据请求 | axios + TanStack Query v5               | 自动 traceId + ApiError  |
+| Mock     | MSW 2                                   | 浏览器 + Node 双侧       |
+| 测试     | Vitest + @testing-library/react + jsdom | TDD                      |
 
 ## 快速开始
 
@@ -120,7 +120,9 @@ frontend/
 所有后端接口返回 `ApiResult<T>`：
 
 ```ts
-{ success, code, message, data, trace_id }
+{
+  success, code, message, data, trace_id;
+}
 ```
 
 `client.ts` 拦截器会：

@@ -64,6 +64,8 @@
     "node": ">=20.10.0"
   },
   "msw": {
-    "workerDirectory": ["public"]
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

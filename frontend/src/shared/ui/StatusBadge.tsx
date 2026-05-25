@@ -6,7 +6,13 @@ import type { CSSProperties } from "react";
  *
  * 资产类、变更类、待办类、告警类全平台统一这 4 套，禁止自创。
  */
-export type ConfigStatus = "draft" | "pending_review" | "published" | "active" | "deprecated" | "archived";
+export type ConfigStatus =
+  | "draft"
+  | "pending_review"
+  | "published"
+  | "active"
+  | "deprecated"
+  | "archived";
 export type ChangeStatus = "pending" | "canary" | "rolled_out" | "rolled_back";
 export type TodoStatus = "unread" | "in_progress" | "done" | "escalated";
 export type AlertStatus = "new" | "assigned" | "remediating" | "closed" | "waived";
@@ -49,7 +55,12 @@ const ALERT_MAP: Record<AlertStatus, StatusMeta> = {
   waived: { label: "已豁免", color: "default" },
 };
 
-const ALL_MAPS = { config: CONFIG_MAP, change: CHANGE_MAP, todo: TODO_MAP, alert: ALERT_MAP } as const;
+const ALL_MAPS = {
+  config: CONFIG_MAP,
+  change: CHANGE_MAP,
+  todo: TODO_MAP,
+  alert: ALERT_MAP,
+} as const;
 
 export type StatusMachine = keyof typeof ALL_MAPS;
 

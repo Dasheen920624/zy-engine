@@ -1,4 +1,4 @@
-import { Card, Form, Input, Button, Typography, Space, Divider } from "antd";
+import { Card, Form, Input, Button, Typography, Space, Divider, theme as antdTheme } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -17,10 +17,10 @@ const { Title, Text, Link } = Typography;
 export default function Login() {
   const [showSso, setShowSso] = useState(false);
   const navigate = useNavigate();
+  const { token } = antdTheme.useToken();
 
-  function handleSubmit(values: { username: string; password: string }) {
+  function handleSubmit(_values: { username: string; password: string }) {
     // 骨架版：不真实鉴权。GA-CORE-02 后端 OAuth2 接通后实装。
-    console.info("login mock", values.username);
     navigate("/dashboard");
   }
 
@@ -31,13 +31,13 @@ export default function Login() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#f5f7fa",
+        background: token.colorBgLayout,
       }}
     >
       <Card style={{ width: 420 }} bordered={false}>
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
           <Space direction="vertical" size={0}>
-            <Title level={3} style={{ marginBottom: 0, color: "#1565c0" }}>
+            <Title level={3} style={{ marginBottom: 0, color: token.colorPrimary }}>
               集团医疗智能中枢
             </Title>
             <Text type="secondary">MedKernel · v1.0 GA</Text>

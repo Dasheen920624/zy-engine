@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.0 · 2026-05-24
+> 版本：4.4 · 2026-05-25
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -37,7 +37,7 @@
 | GA-ENG-BASE-03 API 契约：ApiResult、ProblemDetail、分页、错误码、DTO 校验、幂等、traceId | claude | done |
 | GA-ENG-BASE-04 审计上下文：写操作、审核、发布、运行、反馈、导出、回滚统一留痕 | claude | done |
 | GA-ENG-BASE-05 数据迁移：5 方言表族、审计字段、状态字段、版本字段、索引和约束门禁 | claude | in_progress |
-| GA-ENG-BASE-06 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流 | - | pending |
+| GA-ENG-BASE-06 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流 | codex | done |
 | GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | - | pending |
 | GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | - | pending |
 | GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | - | pending |
@@ -131,6 +131,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.4 | 2026-05-25 | Codex | GA-ENG-BASE-06 完成：5+1 菜单与路由元数据统一、PageShell/PageState/MetricGrid 体验底座、六态与状态机 Badge、页面分页与移动端表格滚动、桌面/移动布局验证 |
 | 4.3 | 2026-05-25 | Claude | GA-ENG-BASE-02 Phase 1：PermissionCode/RoleCode 枚举 + DefaultPermissionPolicy + PermissionEvaluator (`@perm.has(...)` SpEL) + @DataScope 切面（requireTenant / requireAtLeast）+ OrgUnitController 范例改造 + @EnableMethodSecurity；Phase 2 引入 role_permission DB 表后续 PR |
 | 4.2 | 2026-05-25 | Claude | GA-ENG-BASE-01 完成（JwtClaimsResolver + TenantContextEnricherFilter + OrgUnit 实体/Repository/Service/Controller + SecurityConfig 集成；roles claim → ROLE_* 权限）。GA-ENG-BASE-02 仍 pending |
 | 4.1 | 2026-05-25 | Claude | GA-ENG-BASE-03 完成（API 契约骨架）；GA-ENG-BASE-01/04/05 进入 in_progress（仅交付 traceId/orgScope/audit 上下文 + org_unit/audit_event 5 方言 DDL；JWT→OrgScope/userId、权限、审计落库后续 PR） |

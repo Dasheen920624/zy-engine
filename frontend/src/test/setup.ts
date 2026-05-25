@@ -27,3 +27,40 @@ if (typeof window !== "undefined" && typeof window.ResizeObserver === "undefined
     disconnect() {}
   };
 }
+
+// Antd 5 的 CSS-in-JS 在 jsdom/nwsapi 下偶尔会查询浏览器可接受、
+// 但 nwsapi 不接受的复杂选择器。测试环境返回空集合即可；真实浏览器不走这里。
+if (typeof window !== "undefined") {
+  const originalGetComputedStyle = window.getComputedStyle;
+  window.getComputedStyle = (elt: Element, _pseudoElt?: string | null) =>
+    originalGetComputedStyle(elt);
+
+  const isSelectorSyntaxError = (error: unknown) =>
+    error instanceof SyntaxError ||
+    (error instanceof DOMException && error.name === "SyntaxError") ||
+    (error instanceof Error && error.name === "SyntaxError");
+
+  const originalQuerySelectorAll = Element.prototype.querySelectorAll;
+  Element.prototype.querySelectorAll = function safeQuerySelectorAll(selectors: string) {
+    try {
+      return originalQuerySelectorAll.call(this, selectors);
+    } catch (error) {
+      if (isSelectorSyntaxError(error)) {
+        return document.createDocumentFragment().querySelectorAll("*");
+      }
+      throw error;
+    }
+  };
+
+  const originalMatches = Element.prototype.matches;
+  Element.prototype.matches = function safeMatches(selectors: string) {
+    try {
+      return originalMatches.call(this, selectors);
+    } catch (error) {
+      if (isSelectorSyntaxError(error)) {
+        return false;
+      }
+      throw error;
+    }
+  };
+}

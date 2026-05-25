@@ -1,26 +1,49 @@
-import { Card, Tag, Space, Progress, Descriptions, Typography, Spin, Alert } from "antd";
+import {
+  Card,
+  Tag,
+  Space,
+  Progress,
+  Descriptions,
+  Typography,
+  Alert,
+  theme as antdTheme,
+} from "antd";
 import { PageShell } from "@/shared/ui/PageShell";
 import { useDomesticSnapshot } from "@/shared/api/hooks";
+import { PageState } from "@/shared/ui/PageState";
 
 const LEVEL: Record<string, string> = { core: "blue", alt: "cyan", open: "default" };
-const LEVEL_LABEL: Record<string, string> = { core: "国产化核心", alt: "国产化备选", open: "开源通用" };
+const LEVEL_LABEL: Record<string, string> = {
+  core: "国产化核心",
+  alt: "国产化备选",
+  open: "开源通用",
+};
 
 export default function DomesticCheck() {
   const snap = useDomesticSnapshot();
+  const { token } = antdTheme.useToken();
 
   if (snap.isLoading) {
     return (
       <PageShell title="国产化自检" description="实时检测当前 OS / JDK / DB / 中间件">
-        <Spin />
+        <PageState state="loading" />
       </PageShell>
     );
   }
 
   const data = snap.data as Record<string, unknown>;
-  const os = data?.os as { name: string; version: string; arch: string; domesticLevel: string } | undefined;
-  const jdk = data?.jdk as { vendor: string; version: string; vmName: string; domesticLevel: string } | undefined;
-  const middleware = data?.middleware as Array<{ name: string; version: string; domesticLevel: string }> | undefined;
-  const cryptoMeta = data?.crypto as { provider: string; supports: string[]; domesticLevel: string } | undefined;
+  const os = data?.os as
+    | { name: string; version: string; arch: string; domesticLevel: string }
+    | undefined;
+  const jdk = data?.jdk as
+    | { vendor: string; version: string; vmName: string; domesticLevel: string }
+    | undefined;
+  const middleware = data?.middleware as
+    | Array<{ name: string; version: string; domesticLevel: string }>
+    | undefined;
+  const cryptoMeta = data?.crypto as
+    | { provider: string; supports: string[]; domesticLevel: string }
+    | undefined;
   const score = data?.score as number | undefined;
 
   return (
@@ -29,7 +52,10 @@ export default function DomesticCheck() {
       description="实时检测当前 OS / JDK / DB / 中间件 / 国密 Provider 的国产化等级"
     >
       <Card title="本机国产化得分">
-        <Progress percent={score ?? 0} strokeColor={(score ?? 0) >= 85 ? "#52c41a" : "#faad14"} />
+        <Progress
+          percent={score ?? 0}
+          strokeColor={(score ?? 0) >= 85 ? token.colorSuccess : token.colorWarning}
+        />
         <Typography.Text style={{ marginTop: 8, display: "block" }}>
           基于实时 JVM/OS 探测 · 信通院评测前自查就绪
         </Typography.Text>
@@ -41,7 +67,9 @@ export default function DomesticCheck() {
           <Descriptions.Item label="版本">{os?.version}</Descriptions.Item>
           <Descriptions.Item label="架构">{os?.arch}</Descriptions.Item>
           <Descriptions.Item label="国产化等级">
-            <Tag color={LEVEL[os?.domesticLevel ?? "open"]}>{LEVEL_LABEL[os?.domesticLevel ?? "open"]}</Tag>
+            <Tag color={LEVEL[os?.domesticLevel ?? "open"]}>
+              {LEVEL_LABEL[os?.domesticLevel ?? "open"]}
+            </Tag>
           </Descriptions.Item>
         </Descriptions>
       </Card>
@@ -52,7 +80,9 @@ export default function DomesticCheck() {
           <Descriptions.Item label="版本">{jdk?.version}</Descriptions.Item>
           <Descriptions.Item label="JVM">{jdk?.vmName}</Descriptions.Item>
           <Descriptions.Item label="国产化等级">
-            <Tag color={LEVEL[jdk?.domesticLevel ?? "open"]}>{LEVEL_LABEL[jdk?.domesticLevel ?? "open"]}</Tag>
+            <Tag color={LEVEL[jdk?.domesticLevel ?? "open"]}>
+              {LEVEL_LABEL[jdk?.domesticLevel ?? "open"]}
+            </Tag>
           </Descriptions.Item>
         </Descriptions>
       </Card>
@@ -61,10 +91,18 @@ export default function DomesticCheck() {
         <Descriptions column={2} size="small">
           <Descriptions.Item label="提供方">{cryptoMeta?.provider}</Descriptions.Item>
           <Descriptions.Item label="支持算法">
-            <Space>{cryptoMeta?.supports.map((a) => <Tag key={a} color="purple">{a}</Tag>)}</Space>
+            <Space>
+              {cryptoMeta?.supports.map((a) => (
+                <Tag key={a} color="purple">
+                  {a}
+                </Tag>
+              ))}
+            </Space>
           </Descriptions.Item>
           <Descriptions.Item label="等级">
-            <Tag color={LEVEL[cryptoMeta?.domesticLevel ?? "open"]}>{LEVEL_LABEL[cryptoMeta?.domesticLevel ?? "open"]}</Tag>
+            <Tag color={LEVEL[cryptoMeta?.domesticLevel ?? "open"]}>
+              {LEVEL_LABEL[cryptoMeta?.domesticLevel ?? "open"]}
+            </Tag>
           </Descriptions.Item>
         </Descriptions>
       </Card>

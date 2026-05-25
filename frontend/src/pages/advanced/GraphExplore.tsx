@@ -1,4 +1,4 @@
-import { Card, Input, Space, Tag, Empty, Alert } from "antd";
+import { Card, Input, Space, Tag, Empty, Alert, Typography } from "antd";
 import { PageShell } from "@/shared/ui/PageShell";
 
 export default function GraphExplore() {
@@ -25,7 +25,7 @@ export default function GraphExplore() {
             description={
               <Space direction="vertical">
                 <span>图谱可视化由 GA-ADVANCED-01 W4 业务深化时接 X6 + Neo4j 5.23</span>
-                <span style={{ color: "#999" }}>当前为高级工具骨架</span>
+                <Typography.Text type="secondary">当前为高级工具骨架</Typography.Text>
               </Space>
             }
           />

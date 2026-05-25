@@ -1,9 +1,10 @@
-import { Table, Button, Tag, Spin, message } from "antd";
+import { Table, Button, Tag, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
 import { StatusBadge, type ConfigStatus } from "@/shared/ui/StatusBadge";
 import { useColumnManager } from "@/shared/ui/ColumnManager";
 import { usePathwayTemplates, usePublishPathway } from "@/shared/api/hooks";
+import { PageState } from "@/shared/ui/PageState";
 
 interface PathwayCol {
   key: string;
@@ -23,9 +24,25 @@ const ALL_COLUMNS: PathwayCol[] = [
 export default function PathwayTemplates() {
   const list = usePathwayTemplates();
   const publish = usePublishPathway();
-  const { visibleColumns, columnManager } = useColumnManager<PathwayCol>("pathway-templates", ALL_COLUMNS);
+  const { visibleColumns, columnManager } = useColumnManager<PathwayCol>(
+    "pathway-templates",
+    ALL_COLUMNS,
+  );
 
-  const allRender: Record<string, (v: unknown, r: { id: string; name: string; disease: string; department: string; nodes: number; status: string }) => React.ReactNode> = {
+  const allRender: Record<
+    string,
+    (
+      v: unknown,
+      r: {
+        id: string;
+        name: string;
+        disease: string;
+        department: string;
+        nodes: number;
+        status: string;
+      },
+    ) => React.ReactNode
+  > = {
     name: (_, r) => r.name,
     disease: (_, r) => <Tag color="blue">{r.disease}</Tag>,
     department: (_, r) => r.department,
@@ -38,7 +55,8 @@ export default function PathwayTemplates() {
         loading={publish.isPending}
         onClick={() =>
           publish.mutate(r.id, {
-            onSuccess: (d) => message.success(`已进入${d.stage === "canary" ? "灰度" : "全量"}（${d.rollout}）`),
+            onSuccess: (d) =>
+              message.success(`已进入${d.stage === "canary" ? "灰度" : "全量"}（${d.rollout}）`),
           })
         }
       >
@@ -51,23 +69,38 @@ export default function PathwayTemplates() {
     <PageShell
       title="路径配置"
       description="按专病维度的路径模板。普通模式表单+时间线，专家模式才打开 X6 节点画布"
-      primary={<Button type="primary" icon={<PlusOutlined />}>新建路径</Button>}
+      primary={
+        <Button type="primary" icon={<PlusOutlined />}>
+          新建路径
+        </Button>
+      }
       extras={columnManager}
     >
-      {list.isLoading ? (
-        <Spin />
-      ) : (
+      <PageState
+        state={
+          list.isLoading
+            ? "loading"
+            : list.isError
+              ? "error"
+              : (list.data?.length ?? 0) === 0
+                ? "empty"
+                : "ready"
+        }
+        title="暂无路径模板"
+        onRetry={() => void list.refetch()}
+      >
         <Table
           rowKey="id"
           dataSource={list.data ?? []}
-          pagination={false}
+          scroll={{ x: "max-content" }}
+          pagination={{ pageSize: 20, showSizeChanger: true }}
           columns={visibleColumns.map((c) => ({
             title: c.title,
             key: c.key,
             render: allRender[c.key],
           }))}
         />
-      )}
+      </PageState>
     </PageShell>
   );
 }

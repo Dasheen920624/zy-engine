@@ -24,7 +24,9 @@ export default function IdentityBinding() {
                 <Space style={{ width: "100%", justifyContent: "space-between" }}>
                   <strong>{p.name}</strong>
                   {p.enabled ? (
-                    <Tag icon={<CheckCircleFilled />} color="green">已启用</Tag>
+                    <Tag icon={<CheckCircleFilled />} color="green">
+                      已启用
+                    </Tag>
                   ) : (
                     <Tag icon={<CloseCircleFilled />}>未启用</Tag>
                   )}
@@ -32,7 +34,9 @@ export default function IdentityBinding() {
                 <Typography.Text type="secondary">{p.note}</Typography.Text>
                 <Space>
                   <span>绑定用户数：{p.users}</span>
-                  <Button type="link" size="small">{p.enabled ? "查看配置" : "启用"}</Button>
+                  <Button type="link" size="small">
+                    {p.enabled ? "查看配置" : "启用"}
+                  </Button>
                 </Space>
               </Space>
             </Card>

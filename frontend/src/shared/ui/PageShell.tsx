@@ -27,7 +27,7 @@ export function PageShell({ title, description, primary, extras, children }: Pag
       <Card
         bordered={false}
         style={{ background: "transparent", boxShadow: "none" }}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
       >
         <Space style={{ width: "100%", justifyContent: "space-between" }} align="start">
           <Space direction="vertical" size={0}>

@@ -16,7 +16,13 @@ const STORAGE_KEY = "medkernel.theme.mode";
 function readInitial(): ThemeMode {
   if (typeof window === "undefined") return "default";
   const saved = window.localStorage.getItem(STORAGE_KEY);
-  if (saved === "default" || saved === "elder" || saved === "dark" || saved === "eye" || saved === "system") {
+  if (
+    saved === "default" ||
+    saved === "elder" ||
+    saved === "dark" ||
+    saved === "eye" ||
+    saved === "system"
+  ) {
     return saved;
   }
   return "default";
