@@ -2023,4 +2023,76 @@ flowchart LR
 
 ---
 
+## 附录 E6-A · W3-W7 旧实现 URL 路径表（参考用）
+
+> 此附录是 GA-ENG-BASE-09 净化时从旧 Controller 提取的设计精华，**仅作为未来 E6 业务服务包装的设计起点参考**。
+> 这些 URL 在 BASE-09 后已从代码中删除，业务包装阶段会按引擎能力重新设计。
+
+| 旧 URL 路径 | HTTP | 旧职能 | 建议未来对接的引擎能力 |
+|---|---|---|---|
+| `/api/v1/advanced/llm/chat` | POST | 通用 LLM chat | GA-ENG-LLM-01 模型能力网关 |
+| `/api/v1/advanced/llm/explain` | POST | LLM 解释 | GA-ENG-LLM-01 |
+| `/api/v1/advanced/llm/versions` | GET | LLM 版本快照 | GA-ENG-LLM-01 |
+| `/api/v1/advanced/chatbot/*` | POST | 合规 chatbot | GA-ENG-LLM-01 + GA-SVC-COMPLIANCE-02 |
+| `/api/v1/advanced/academic/export` | POST | 学术导出 | GA-SVC-DOMAIN-02 科研真实世界 |
+| `/api/v1/advanced/domestic-check` | GET/POST | 国产化自检 | GA-ENG-BASE-07（已合并） |
+| `/api/v1/quality/insurance/drg/rulesets` | GET | DRG 规则集 | GA-SVC-QUALITY-02 病案医保 |
+| `/api/v1/quality/insurance/drg/sync` | POST | DRG 同步 | GA-SVC-QUALITY-02 |
+| `/api/v1/quality/variance/*` | GET/POST | 路径变异 | GA-ENG-PATH-01 路径引擎 |
+| `/api/v1/quality/ncis/*` | GET/POST | NCIS 上报 | GA-SVC-DOMAIN-02 院感公卫 |
+| `/api/v1/quality/medicalrecord/homepage` | GET/POST | 病历首页 | GA-SVC-QUALITY-02 |
+| `/api/v1/clinical/mpi/patients` | GET | MPI 患者主索引 | GA-SVC-CLINICAL-01 |
+| `/api/v1/clinical/mpi/stats` | GET | MPI 统计 | GA-SVC-CLINICAL-01 |
+| `/api/v1/clinical/mpi/federation/*` | GET/POST | MPI 联邦 | GA-SVC-CLINICAL-01 |
+| `/api/v1/clinical/cdss/alerts` | GET | CDSS 提醒列表 | GA-ENG-CDSS-01 推荐引擎 |
+| `/api/v1/clinical/cdss/alerts/{id}/{decision}` | POST | CDSS 决策回流 | GA-ENG-CDSS-01 |
+| `/api/v1/clinical/udi-check/*` | GET/POST | UDI 校验 | GA-SVC-CLINICAL-03 |
+| `/api/v1/clinical/publichealth/report` | POST | 公卫上报 | GA-SVC-DOMAIN-02 院感公卫 |
+| `/api/v1/tenant/rules/*` | GET/POST | 规则管理 | GA-ENG-RULE-01 + GA-ENG-API-05 |
+| `/api/v1/tenant/pathways` | GET | 路径模板 | GA-ENG-PATH-01 + GA-ENG-API-06 |
+| `/api/v1/tenant/pathways/{id}/publish` | POST | 路径发布 | GA-ENG-PKG-01 |
+| `/api/v1/tenant/hrp/interop/*` | POST | HRP 互操作 | GA-SVC-PILOT-02 |
+| `/api/v1/platform/branding/*` | GET/POST | 品牌定制 | GA-SVC-PILOT-01 |
+| `/api/v1/platform/success/*` | GET/POST | 客户成功 | GA-SVC-PILOT-01 |
+| `/api/v1/platform/license/*` | GET/POST | 离线许可 | GA-SVC-COMPLIANCE-02 |
+| `/api/v1/platform/emergency/*` | GET/POST | 应急预案 | GA-SVC-COMPLIANCE-02 |
+| `/api/v1/compliance/tenant-wall` | GET/POST | 租户墙 | GA-SVC-COMPLIANCE-01 |
+| `/api/v1/compliance/dr/*` | GET/POST | 灾备 | GA-SVC-COMPLIANCE-02 |
+| `/api/v1/compliance/signature/*` | POST | 医师签名 | GA-SVC-CLINICAL-02 |
+| `/api/v1/compliance/data-export/*` | POST | 数据出境评估 | GA-SVC-COMPLIANCE-02 |
+| `/api/v1/compliance/dlm/*` | GET/POST | 数据生命周期 | GA-SVC-COMPLIANCE-02 |
+| `/api/v1/compliance/waf/*` | GET/POST | WAF 配置 | GA-SVC-COMPLIANCE-02 |
+| `/api/v1/compliance/tsa/*` | POST | 可信时间戳 | GA-SVC-COMPLIANCE-02 |
+| `/api/v1/compliance/masking/*` | GET/POST | 脱敏配置 | GA-SVC-COMPLIANCE-01 |
+
+> **保留**：`/api/v1/compliance/audit/*` 系列接口属于 BASE-04 审计链合法产物，不在此清单内、不删除。
+
+---
+
+## 附录 E6-B · W3-W7 旧 DTO 字段表（参考用）
+
+| 旧 DTO | 关键字段 | 业务含义 | 未来对接 |
+|---|---|---|---|
+| `CdssAlert` | id, patientLabel, ruleSource, adoptionRate, status, owner | CDSS 提醒卡 | GA-ENG-CDSS-01 |
+| `PathwayTemplate` | id, name, disease, department, nodes, status | 路径模板 | GA-ENG-PATH-01 |
+| `DrgRuleset` | version, releaseDate, ruleCount, source, status | DRG 月更版本 | GA-SVC-QUALITY-02 |
+| `MpiPatient` | mpiId, maskedName, gender, age, idLast4, mergedCount, status | 主索引患者 | GA-SVC-CLINICAL-01 |
+| `Rule` | id, name, dsl, riskLevel, status | 规则定义 | GA-ENG-RULE-01 |
+| `LlmRequest` | prompt, temperature, providerHint, scenarioCode | LLM 调用 | GA-ENG-LLM-01 |
+| `LlmResponse` | text, providerId, tokens, latencyMs, fallback | LLM 响应 | GA-ENG-LLM-01 |
+
+## 附录 E6-C · W3-W7 旧状态机迁移（参考用）
+
+| 状态机 | 旧状态值 | 转移规则 | 未来引擎 |
+|---|---|---|---|
+| CDSS 提醒 | `pending → adopting → closed` 或 `pending → remediating → closed` | 提醒由 CDSS 触发；医师采纳/不采纳后留痕 | GA-ENG-CDSS-01 |
+| 路径模板 | `draft → pending_review → published → active → archived` | 路径设计 → 审核 → 发布 → 运行 → 归档 | GA-ENG-PATH-01 + 7 步流 |
+| DRG 规则集 | `staged → active → archived` | 月更预发布 → 生效 → 归档 | GA-SVC-QUALITY-02 |
+| MPI 患者 | `active → merged_into` | 重复主索引并入主记录 | GA-SVC-CLINICAL-01 |
+| 规则 | `draft → testing → approved → published → retired` | 规则全生命周期 | GA-ENG-RULE-01 + 7 步流 |
+
+> 以上三份附录仅作为 **E6 业务包装阶段的设计起点参考**。BASE-09 净化后这些类型在代码中已被删除；E6 阶段会基于引擎能力、按当前 ApiResult/ProblemDetail/@DataScope/审计链规范重新设计。
+
+---
+
 **End of MedKernel Business Scenario Detail Spec.**

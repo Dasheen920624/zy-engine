@@ -40,7 +40,7 @@
 | GA-ENG-BASE-06 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流 | codex | done |
 | GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | codex | done |
 | GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | - | pending |
-| GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | - | pending |
+| GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | claude | in_progress |
 | GA-ENG-BASE-10 前端视觉债净化：硬编码颜色、内联样式、console、localStorage 敏感写入和 axios 直连规则全部归零 | codex | done |
 
 ---
@@ -51,8 +51,8 @@
 |---|---|---|
 | GA-ENG-API-01 标准上下文 API：患者、就诊、诊断、医嘱、报告、组织、包版本快照 | - | pending |
 | GA-ENG-API-02 临床事件 API：同步、异步、批量、回放、重试、死信、回调 | - | pending |
-| GA-ENG-API-03 知识资产 API：来源、解析、引用、版本、审核、替换、历史重放、分页、筛选、搜索、异步导出 | - | pending |
-| GA-ENG-API-04 字典映射 API：标准字典、院内字典、候选映射、冲突、发布 | - | pending |
+| GA-ENG-API-03 知识资产 API：来源、解析、引用、版本、审核、替换、历史重放、分页、筛选、搜索、异步导出 | claude | done |
+| GA-ENG-API-04 字典映射 API：标准字典、院内字典、候选映射、冲突、发布 | codex | done |
 | GA-ENG-API-05 规则引擎 API：定义、测试、影响分析、发布、执行、解释 | - | pending |
 | GA-ENG-API-06 路径引擎 API：模板、专病包、患者路径、节点推进、变异、关键时钟 | - | pending |
 | GA-ENG-API-07 推荐/CDSS API：触发、推荐卡、来源解释、医师反馈、疲劳治理输入 | - | pending |
@@ -69,9 +69,9 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-KNOW-01 知识资产引擎：来源登记、解析、hash、引用锚点、可信分级 | - | pending |
-| GA-ENG-KNOW-02 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离 | - | pending |
-| GA-ENG-TERM-01 字典映射引擎：未映射发现、候选推荐、人工确认、冲突处理、映射包发布 | - | pending |
+| GA-ENG-KNOW-01 知识资产引擎：来源登记、解析、hash、引用锚点、可信分级 | claude | partial |
+| GA-ENG-KNOW-02 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离 | claude | partial |
+| GA-ENG-TERM-01 字典映射引擎：未映射发现、候选推荐、人工确认、冲突处理、映射包发布 | codex | partial |
 | GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释 | - | pending |
 | GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真 | - | pending |
 | GA-ENG-CDSS-01 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | - | pending |
@@ -131,6 +131,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.10 | 2026-05-26 | Claude | GA-ENG-BASE-09 in_progress：架构师审计 + 三个 PR 顺序计划落地。同步对齐 git 实际进度：GA-ENG-API-03/04 标 done（commit ddfb950 / cb39796），GA-ENG-KNOW-01/02 与 GA-ENG-TERM-01 标 partial |
 | 4.9 | 2026-05-26 | Codex | GA-ENG-BASE-07 完成：运行底座合同接口、`govcloud` 国产化 profile、备份恢复 SHA-256 摘要校验、前端 Provider 状态真实快照和完整验证收口 |
 | 4.8 | 2026-05-26 | Codex | GA-ENG-BASE-05 完成：五方言 `V1` 至 `V6` 迁移序列、表族、索引、业务约束、租户/审计/状态/版本字段合同门禁及完整 Flyway smoke 收口 |
 | 4.7 | 2026-05-26 | Codex | GA-ENG-BASE-02 完成：角色权限覆盖、范围隔离的用户角色分配、当前用户权限画像接口、受控审计快照入口及菜单/页面/动作/数据范围闭环 |
