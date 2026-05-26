@@ -89,7 +89,7 @@ export function ExperienceFilterBar({
       {filters.map((filter) => renderFilter?.(filter) ?? renderDefaultFilter(filter))}
       {advanced}
       {onSaveView && (
-        <Button icon={<SaveOutlined />} onClick={onSaveView}>
+        <Button aria-label="保存视图" icon={<SaveOutlined />} onClick={onSaveView}>
           保存视图
         </Button>
       )}

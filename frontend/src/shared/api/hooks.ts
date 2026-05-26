@@ -206,6 +206,12 @@ export interface PageResponse<T> {
   total: number;
   hasNext: boolean;
   totalEstimated: boolean;
+  traceId?: string;
+  partial?: {
+    successCount: number;
+    failureCount: number;
+    failures: Array<{ key: string; reason: string; retryable: boolean }>;
+  };
 }
 
 export interface TerminologyMappingsParams {
