@@ -133,6 +133,32 @@ jobs:
           path: frontend/coverage/
           if-no-files-found: warn
 
+  # GA-ENG-BASE-09 · 前端 ESLint 门禁（视觉债 / mock / 旧命名归零的硬门禁）
+  frontend-lint:
+    name: frontend-lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install
+        working-directory: frontend
+        run: npm install --no-audit --no-fund --no-package-lock
+
+      - name: ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Prettier format check
+        working-directory: frontend
+        run: npm run format:check
+
   # GA-OPS-03 · 国产化 JDK 矩阵（多发行版兼容性 smoke）
   # 选用 Temurin / Zulu / Dragonwell 三个 GA 阶段必须验证的 OpenJDK 21 发行版。
   # KAE-JDK / LoongJDK 等纯国产发行版没有公开 GitHub Action distribution，
