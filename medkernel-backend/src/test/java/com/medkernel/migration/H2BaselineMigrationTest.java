@@ -1,4 +1,4 @@
-package com.medkernel.platform.migration;
+package com.medkernel.migration;
 
 import javax.sql.DataSource;
 

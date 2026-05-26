@@ -1,4 +1,4 @@
-package com.medkernel.platform.migration;
+package com.medkernel.migration;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
