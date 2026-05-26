@@ -52,10 +52,10 @@ export default function AdminUsers() {
         </Button>
       }
     >
-      <Space style={{ marginBottom: 12 }}>
+      <Space className="mk-filter-row">
         <Input.Search
           placeholder="搜姓名 / 工号"
-          style={{ width: 280 }}
+          className="mk-search-sm"
           prefix={<SearchOutlined />}
         />
       </Space>

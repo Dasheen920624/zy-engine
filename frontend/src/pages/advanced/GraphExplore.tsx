@@ -13,8 +13,8 @@ export default function GraphExplore() {
         message="高级工具 · 仅架构师 / 实施工程师 / 路径专家可见"
         description="客户主路径不展示节点 / 边 / Cypher 等技术细节。图谱降级由 Provider 状态自动管理。"
       />
-      <Card style={{ marginTop: 16 }}>
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+      <Card className="mk-card-gap-top">
+        <Space direction="vertical" size="middle" className="mk-full-width">
           <Input.Search placeholder="搜实体（如：胸痛 / 阿司匹林 / I21.0）" defaultValue="胸痛" />
           <Space>
             <Tag color="blue">实体</Tag>

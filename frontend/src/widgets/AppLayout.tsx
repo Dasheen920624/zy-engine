@@ -1,16 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  Breadcrumb,
-  Drawer,
-  Grid,
-  Layout,
-  Menu,
-  theme as antdTheme,
-  Typography,
-  Space,
-  Button,
-  Tooltip,
-} from "antd";
+import { Breadcrumb, Drawer, Grid, Layout, Menu, Typography, Space, Button, Tooltip } from "antd";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -40,7 +29,6 @@ export function AppLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { token } = antdTheme.useToken();
   const screens = Grid.useBreakpoint();
   const isDesktop = screens.md ?? (typeof window === "undefined" ? true : window.innerWidth >= 768);
   const currentRoute = findRouteByPath(location.pathname);
@@ -68,6 +56,16 @@ export function AppLayout() {
   );
 
   const advancedItems = useMemo(() => menuSections.find((s) => s.hidden)?.items ?? [], []);
+  let mainLayoutClassName = "mk-layout-main mk-layout-main-mobile";
+  if (isDesktop) {
+    mainLayoutClassName = collapsed
+      ? "mk-layout-main mk-layout-main-collapsed"
+      : "mk-layout-main mk-layout-main-expanded";
+  }
+  const headerClassName = isDesktop ? "mk-app-header" : "mk-app-header mk-app-header-mobile";
+  const routeTitleClassName = isDesktop
+    ? "mk-route-title mk-route-title-desktop"
+    : "mk-route-title mk-route-title-mobile";
 
   const handleMenuClick: MenuProps["onClick"] = (info) => {
     if (info.key.startsWith("/")) {
@@ -76,24 +74,9 @@ export function AppLayout() {
     }
   };
 
-  const siderWidth = collapsed ? 80 : 240;
   const renderNavigation = (isCollapsed: boolean) => (
     <>
-      <div
-        style={{
-          height: 56,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: token.colorPrimary,
-          fontWeight: 600,
-          fontSize: isCollapsed ? 14 : 16,
-          position: "sticky",
-          top: 0,
-          background: token.colorBgContainer,
-          zIndex: 1,
-        }}
-      >
+      <div className={isCollapsed ? "mk-nav-brand mk-nav-brand-collapsed" : "mk-nav-brand"}>
         {isCollapsed ? "MK" : "集团医疗智能中枢"}
       </div>
       <Menu
@@ -105,17 +88,11 @@ export function AppLayout() {
           .map((s) => s.key)}
         items={items}
         onClick={handleMenuClick}
-        style={{ borderRight: 0 }}
+        className="mk-menu-borderless"
       />
       {!isCollapsed && advancedItems.length > 0 && (
-        <div
-          style={{
-            padding: 12,
-            borderTop: `1px solid ${token.colorBorderSecondary}`,
-            marginTop: 16,
-          }}
-        >
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <div className="mk-advanced-menu-wrap">
+          <Typography.Text type="secondary" className="mk-text-xs">
             高级工具 ⊕
           </Typography.Text>
           <Menu
@@ -124,7 +101,7 @@ export function AppLayout() {
             selectedKeys={[location.pathname]}
             items={advancedItems.map((it) => ({ key: it.path, label: it.label }))}
             onClick={handleMenuClick}
-            style={{ borderRight: 0, marginTop: 8 }}
+            className="mk-advanced-menu"
           />
         </div>
       )}
@@ -132,7 +109,7 @@ export function AppLayout() {
   );
 
   return (
-    <Layout style={{ minHeight: "100vh" }} hasSider={isDesktop}>
+    <Layout className="mk-layout-shell" hasSider={isDesktop}>
       {isDesktop && (
         <Sider
           collapsible
@@ -140,17 +117,7 @@ export function AppLayout() {
           onCollapse={setCollapsed}
           trigger={null}
           width={240}
-          style={{
-            background: token.colorBgContainer,
-            position: "fixed",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            height: "100vh",
-            overflow: "auto",
-            zIndex: 20,
-            borderRight: `1px solid ${token.colorBorderSecondary}`,
-          }}
+          className="mk-sider-root"
         >
           {renderNavigation(collapsed)}
         </Sider>
@@ -161,27 +128,13 @@ export function AppLayout() {
         open={!isDesktop && mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         width={300}
-        styles={{ body: { padding: 0 } }}
+        rootClassName="mk-drawer-no-body-padding"
       >
         {renderNavigation(false)}
       </Drawer>
-      <Layout style={{ marginLeft: isDesktop ? siderWidth : 0, transition: "margin-left 0.2s" }}>
-        <Header
-          style={{
-            padding: isDesktop ? "0 16px" : "0 10px",
-            background: token.colorBgContainer,
-            borderBottom: `1px solid ${token.colorBorderSecondary}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 8,
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-            width: "100%",
-          }}
-        >
-          <Space style={{ minWidth: 0 }}>
+      <Layout className={mainLayoutClassName}>
+        <Header className={headerClassName}>
+          <Space className="mk-min-0">
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -189,8 +142,8 @@ export function AppLayout() {
                 isDesktop ? setCollapsed(!collapsed) : setMobileMenuOpen((open) => !open)
               }
             />
-            <Space direction="vertical" size={0} style={{ minWidth: 0 }}>
-              <Typography.Text strong ellipsis style={{ maxWidth: isDesktop ? 320 : 132 }}>
+            <Space direction="vertical" size={0} className="mk-min-0">
+              <Typography.Text strong ellipsis className={routeTitleClassName}>
                 {currentRoute?.title ?? "未找到页面"}
               </Typography.Text>
               <Breadcrumb
@@ -216,7 +169,7 @@ export function AppLayout() {
             )}
           </Space>
         </Header>
-        <Content style={{ padding: 24, background: token.colorBgLayout }}>
+        <Content className="mk-app-content">
           <Outlet />
         </Content>
       </Layout>

@@ -18,11 +18,11 @@ export default function RuleValidate() {
       title="规则校验"
       description="对单患者 / 单医嘱立刻试运行规则，看是否命中、为什么命中、有哪些建议"
     >
-      <Card title="试运行输入" style={{ marginBottom: 16 }}>
+      <Card title="试运行输入" className="mk-card-gap-bottom">
         <Form<RuleValidateInput>
           form={form}
           layout="vertical"
-          style={{ maxWidth: 600 }}
+          className="mk-form-md"
           initialValues={{
             patientMpi: "MPI-000123456",
             orderText: "开立医嘱：\n  - 头孢曲松 1g qd ivgtt\n  - 阿司匹林 100mg qd po",
@@ -51,7 +51,7 @@ export default function RuleValidate() {
           title={`命中 ${validate.data.hitCount} 条规则`}
           subTitle="点击规则查看命中字段、来源、建议"
           extra={
-            <Space direction="vertical" size="small" style={{ width: "100%" }}>
+            <Space direction="vertical" size="small" className="mk-full-width">
               {validate.data.hits.map((h: RuleHit) => (
                 <Card size="small" key={h.ruleId}>
                   <Tag color={SEVERITY_COLOR[h.severity] ?? "default"}>

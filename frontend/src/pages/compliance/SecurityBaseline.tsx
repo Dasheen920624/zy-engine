@@ -58,7 +58,7 @@ export default function SecurityBaseline() {
       description="等保 2.0 三级 + 商密评测 + 个保法 自查清单，状态一目了然"
     >
       <Card title="本院当前安全得分">
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space direction="vertical" size="middle" className="mk-full-width">
           <Progress percent={88} strokeColor={token.colorSuccess} />
           <Typography.Text>
             5/7 项已满足证据；2 项等待外部评测（等保 + 商密，预计 W9 完成）。

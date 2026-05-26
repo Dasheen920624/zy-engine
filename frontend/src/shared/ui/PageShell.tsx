@@ -23,15 +23,11 @@ interface PageShellProps {
 
 export function PageShell({ title, description, primary, extras, children }: PageShellProps) {
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <Card
-        bordered={false}
-        style={{ background: "transparent", boxShadow: "none" }}
-        styles={{ body: { padding: 0 } }}
-      >
-        <Space style={{ width: "100%", justifyContent: "space-between" }} align="start">
+    <Space direction="vertical" size="large" className="mk-full-width">
+      <Card bordered={false} className="mk-card-transparent mk-card-body-flush">
+        <Space className="mk-flex-between" align="start">
           <Space direction="vertical" size={0}>
-            <Title level={4} style={{ margin: 0 }}>
+            <Title level={4} className="mk-title-tight">
               {title}
             </Title>
             {description && <Text type="secondary">{description}</Text>}

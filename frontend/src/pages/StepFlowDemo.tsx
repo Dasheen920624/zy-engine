@@ -14,9 +14,9 @@ export default function StepFlowDemo() {
   const [current, setCurrent] = useState<StepKey>("impact_preview");
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <Space direction="vertical" size="large" className="mk-full-width">
       <Card title="配置包中心 · 7 步流演示">
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space direction="vertical" size="middle" className="mk-full-width">
           <Space>
             <Text>跳到任意步骤：</Text>
             <Radio.Group value={current} onChange={(e) => setCurrent(e.target.value)}>

@@ -13,7 +13,7 @@ export default function TenantOnboarding() {
       primary={<Button type="primary">提交开通</Button>}
     >
       <Card title="基本信息">
-        <Form layout="vertical" style={{ maxWidth: 600 }}>
+        <Form layout="vertical" className="mk-form-md">
           <Form.Item label="医院名称" required>
             <Input placeholder="如：北京协和医院" />
           </Form.Item>
@@ -36,7 +36,7 @@ export default function TenantOnboarding() {
         </Form>
       </Card>
       <Card title="已开通租户" extra={<StatusBadge machine="config" status="active" />}>
-        <Space direction="vertical" style={{ width: "100%" }}>
+        <Space direction="vertical" className="mk-full-width">
           <Space>
             <strong>北京协和医院 · 总院</strong>
             <StatusBadge machine="config" status="active" />

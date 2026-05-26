@@ -109,9 +109,8 @@ export default tseslint.config(
       "medkernel/no-hardcoded-color": "error",
       "medkernel/require-source-info-for-medical": "warn",
       "medkernel/forbid-deprecated-naming": "error",
-      // 存量 inline style 渐进式抽取，先 warn 不阻断 CI；
-      // CI 跑数量监控（scripts/check-inline-style-count.ps1）实现"只减不增"。
-      "medkernel/no-inline-style": "warn",
+      // inline style 已归零；新代码必须使用 CSS Modules 或统一 mk-* 样式类。
+      "medkernel/no-inline-style": "error",
     },
   },
   {

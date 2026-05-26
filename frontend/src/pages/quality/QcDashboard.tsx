@@ -52,7 +52,7 @@ export default function QcDashboard() {
         ]}
       />
       <Card title="科室质控得分（满分 100）">
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space direction="vertical" size="middle" className="mk-full-width">
           {DEPTS.map((d) => (
             <Row key={d.name} align="middle">
               <Col span={4}>
@@ -70,11 +70,11 @@ export default function QcDashboard() {
                   }
                 />
               </Col>
-              <Col span={2} style={{ textAlign: "right" }}>
+              <Col span={2} className="mk-align-right">
                 {d.trend === "up" ? (
-                  <ArrowUpOutlined style={{ color: token.colorSuccess }} />
+                  <ArrowUpOutlined className="mk-icon-success" />
                 ) : (
-                  <ArrowDownOutlined style={{ color: token.colorError }} />
+                  <ArrowDownOutlined className="mk-icon-danger" />
                 )}
               </Col>
             </Row>

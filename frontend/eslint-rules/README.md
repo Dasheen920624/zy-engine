@@ -7,7 +7,7 @@
 | 规则名 | 类别 | 严重度 | 说明 |
 |---|---|:---:|---|
 | `no-hardcoded-color.js` | 视觉 | error | 禁止硬编码颜色（必须用 token） |
-| `no-inline-style.js` | 视觉 | warn | 存量内联样式只减不增，后续逐步抽取到 CSS Modules |
+| `no-inline-style.js` | 视觉 | error | 禁止 JSX 内联样式；必须抽取到 CSS Modules 或统一 `mk-*` 样式类 |
 | `require-source-info-for-medical.js` | 业务 | warn | 含医学语义的组件必须有 `<SourceInfo>` |
 | `forbid-deprecated-naming.js` | 命名 | error | 禁用重启前品牌、路径和环境变量标识 |
 
@@ -40,7 +40,7 @@ export default [
       'medkernel/no-hardcoded-color': 'error',
       'medkernel/require-source-info-for-medical': 'warn',
       'medkernel/forbid-deprecated-naming': 'error',
-      'medkernel/no-inline-style': 'warn',
+      'medkernel/no-inline-style': 'error',
     },
   },
 ];

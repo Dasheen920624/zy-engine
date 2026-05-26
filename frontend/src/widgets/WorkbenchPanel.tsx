@@ -31,7 +31,7 @@ export function WorkbenchPanel() {
 
   return (
     <PageState state="ready">
-      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <Space direction="vertical" size="large" className="mk-full-width">
         {/* 1. 院级生命周期面板 */}
         <TenantLifecyclePanel />
 

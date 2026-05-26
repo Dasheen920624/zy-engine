@@ -2,7 +2,7 @@
 #
 # 统计 frontend/src 下 `style={{` 出现次数（即 JSX 内联 style 对象数）。
 # 当数量 > baseline（保存在本文件 $script:Baseline 常量）时退出码 1，CI FAIL。
-# 实现「inline style 只减不增」的渐进收口策略。
+# 当前 baseline 固定为 0，实现「inline style 不得新增」的硬门禁。
 #
 # 触发时机：
 #   - scripts/verify-pr.ps1 在每次 PR 前调用
@@ -12,7 +12,7 @@
 #   抽取完毕后跑 ./scripts/check-inline-style-count.ps1 -UpdateBaseline
 #   会把新值写回本文件（仅本地，需手工 commit）。
 #
-# 当前目标：内联 `style={{}}` 只减不增，逐页迁移到 CSS Modules 和设计 token。
+# 当前目标：内联 `style={{}}` 归零。新增样式必须使用 CSS Modules、统一 `mk-*` 样式类和设计 token。
 
 param(
     [switch]$UpdateBaseline,
@@ -22,7 +22,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # 当前基线
-$script:Baseline = 11
+$script:Baseline = 0
 
 # 根路径推断（脚本在 scripts/ 下，仓库根在上一级）
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -70,7 +70,7 @@ if ($UpdateBaseline) {
 if ($total -gt $script:Baseline) {
     Write-Host ""
     Write-Host "❌ FAIL：inline style 数量上升（$total > baseline $($script:Baseline)）。" -ForegroundColor Red
-    Write-Host "   前端视觉债原则：『只减不增』。" -ForegroundColor Red
+    Write-Host "   前端视觉债原则：『归零后不得新增』。" -ForegroundColor Red
     Write-Host "   请把新增的 style={{}} 抽取到同名 .module.css，或使用 var(--mk-*) className。" -ForegroundColor Red
     Write-Host "   详见 docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md 和 frontend/README.md。" -ForegroundColor Red
     exit 1
@@ -79,6 +79,6 @@ if ($total -gt $script:Baseline) {
     Write-Host "   请记得跑 ./scripts/check-inline-style-count.ps1 -UpdateBaseline 把 baseline 下调。" -ForegroundColor Yellow
     exit 0
 } else {
-    Write-Host "✅ PASS：inline style 数量持平（$total == $($script:Baseline)）。" -ForegroundColor Green
+    Write-Host "✅ PASS：inline style 已归零（$total == $($script:Baseline)）。" -ForegroundColor Green
     exit 0
 }

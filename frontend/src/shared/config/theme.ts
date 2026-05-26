@@ -14,3 +14,8 @@ export const theme: ThemeConfig = {
     fontSize: 14,
   },
 };
+
+export const eyeModeToken: ThemeConfig["token"] = {
+  colorBgLayout: "#f5f1e8",
+  colorBgContainer: "#fdfaf2",
+};
