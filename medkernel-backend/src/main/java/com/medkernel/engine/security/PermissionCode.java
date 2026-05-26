@@ -65,6 +65,10 @@ public enum PermissionCode {
     AUDIT_READ("audit.read", Risk.LOW, "查看审计日志"),
     AUDIT_EXPORT("audit.export", Risk.MEDIUM, "导出审计快照 / 证据包"),
 
+    // ─── 标准上下文（GA-ENG-API-01）────────────────────────────
+    CONTEXT_READ("context.read", Risk.LOW, "查看标准上下文 snapshot"),
+    CONTEXT_WRITE("context.write", Risk.MEDIUM, "创建标准上下文 snapshot"),
+
     // ─── 系统运维（GA-ENG-BASE-07）─────────────────────────────
     SYSTEM_READ("system.read", Risk.LOW, "查看系统状态 / Provider"),
     SYSTEM_MANAGE("system.manage", Risk.HIGH, "运维操作（重启、密钥轮换、降级开关）");
