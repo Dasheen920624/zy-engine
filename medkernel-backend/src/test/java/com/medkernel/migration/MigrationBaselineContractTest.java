@@ -32,7 +32,8 @@ class MigrationBaselineContractTest {
         "V3__knowledge_asset_baseline.sql",
         "V4__terminology_mapping_baseline.sql",
         "V5__audit_chain_baseline.sql",
-        "V6__security_permission_baseline.sql"
+        "V6__security_permission_baseline.sql",
+        "V7__clinical_context_baseline.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -40,7 +41,8 @@ class MigrationBaselineContractTest {
         "knowledge_supersession", "knowledge_export_job", "standard_term", "local_term",
         "term_mapping", "mapping_candidate", "mapping_conflict", "term_mapping_package",
         "term_mapping_package_item", "term_mapping_package_release", "audit_chain_head",
-        "role_permission", "user_role_assignment"
+        "role_permission", "user_role_assignment",
+        "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -59,7 +61,11 @@ class MigrationBaselineContractTest {
         "idx_mapping_candidate_tenant_status", "idx_mapping_conflict_tenant_status",
         "idx_term_pkg_tenant_status", "idx_term_pkg_scope", "idx_term_pkg_item_package",
         "idx_term_pkg_release_package", "idx_role_permission_tenant_role",
-        "idx_user_role_assignment_user"
+        "idx_user_role_assignment_user",
+        "idx_context_snapshot_tenant_patient", "idx_context_snapshot_tenant_enc",
+        "idx_context_snapshot_status", "idx_canonical_resource_snapshot",
+        "idx_canonical_resource_tenant_type", "idx_clinical_event_tenant_received",
+        "idx_clinical_event_snapshot", "idx_context_idempotency_expires"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -78,14 +84,19 @@ class MigrationBaselineContractTest {
         "uk_term_mapping_package", "ck_term_mapping_package_status",
         "ck_term_pkg_release_event", "ck_term_pkg_release_mode",
         "uk_role_permission", "ck_role_permission_effect",
-        "uk_user_role_assignment", "ck_user_role_assignment_active"
+        "uk_user_role_assignment", "ck_user_role_assignment_active",
+        "uk_context_snapshot_id", "ck_context_snapshot_status", "ck_context_snapshot_quality",
+        "uk_canonical_resource_id", "ck_canonical_resource_type", "ck_canonical_resource_quality",
+        "uk_clinical_event_id", "ck_clinical_event_type", "ck_clinical_event_status",
+        "uk_context_idempotency_tenant_key"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
         "knowledge_identity", "knowledge_asset_version", "citation", "knowledge_supersession",
         "knowledge_export_job", "standard_term", "local_term", "term_mapping", "mapping_candidate",
         "mapping_conflict", "term_mapping_package", "term_mapping_package_item",
-        "term_mapping_package_release", "audit_chain_head", "role_permission", "user_role_assignment"
+        "term_mapping_package_release", "audit_chain_head", "role_permission", "user_role_assignment",
+        "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -111,7 +122,9 @@ class MigrationBaselineContractTest {
         Map.entry("term_mapping", Set.of("status")),
         Map.entry("mapping_candidate", Set.of("status")),
         Map.entry("mapping_conflict", Set.of("status")),
-        Map.entry("term_mapping_package", Set.of("package_version", "status"))
+        Map.entry("term_mapping_package", Set.of("package_version", "status")),
+        Map.entry("context_snapshot", Set.of("status", "quality_status")),
+        Map.entry("clinical_event", Set.of("processing_status"))
     );
 
     private static final Pattern TABLE_PATTERN =

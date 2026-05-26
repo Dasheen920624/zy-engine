@@ -94,4 +94,41 @@ class DefaultPermissionPolicyTest {
             assertThat(PermissionCode.fromCode(perm.code())).contains(perm);
         }
     }
+
+    @Test
+    void clinicalRolesCanReadContextButNotWrite() {
+        for (RoleCode role : new RoleCode[]{
+            RoleCode.DOCTOR, RoleCode.NURSE, RoleCode.SPECIALIST, RoleCode.DEPT_HEAD}) {
+            var perms = DefaultPermissionPolicy.permissionsOf(role);
+            assertThat(perms)
+                .as("%s 应能读临床上下文", role)
+                .contains(PermissionCode.CONTEXT_READ);
+            assertThat(perms)
+                .as("%s 不应能写临床上下文", role)
+                .doesNotContain(PermissionCode.CONTEXT_WRITE);
+        }
+    }
+
+    @Test
+    void integrationRolesCanWriteContext() {
+        for (RoleCode role : new RoleCode[]{
+            RoleCode.IT_OPS, RoleCode.IMPLEMENTATION_ENGINEER}) {
+            var perms = DefaultPermissionPolicy.permissionsOf(role);
+            assertThat(perms)
+                .as("%s 数据接入角色应同时具备读写", role)
+                .contains(PermissionCode.CONTEXT_READ, PermissionCode.CONTEXT_WRITE);
+        }
+    }
+
+    @Test
+    void medicalAffairsAndQaCanReadContextOnly() {
+        for (RoleCode role : new RoleCode[]{
+            RoleCode.MEDICAL_AFFAIRS, RoleCode.QA_MANAGER, RoleCode.AUDIT_COMPLIANCE}) {
+            var perms = DefaultPermissionPolicy.permissionsOf(role);
+            assertThat(perms).contains(PermissionCode.CONTEXT_READ);
+            assertThat(perms)
+                .as("%s 仅读上下文，不应能写", role)
+                .doesNotContain(PermissionCode.CONTEXT_WRITE);
+        }
+    }
 }

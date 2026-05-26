@@ -62,6 +62,18 @@ public enum ErrorCode {
 
     /** 模型能力降级（B0 基线在用） */
     MODEL_DEGRADED("ENG-SYS-003", 503, "AI 模型不可用，已降级到无模型基线"),
+
+    /** 标准上下文 schema 校验失败 */
+    ENG_CONTEXT_001("ENG-CONTEXT-001", 400, "上下文 schema 校验失败"),
+
+    /** 引用的包版本不存在或未发布 */
+    ENG_CONTEXT_002("ENG-CONTEXT-002", 400, "包版本不存在"),
+
+    /** quality_status=INVALID，拒绝创建 snapshot */
+    ENG_CONTEXT_003("ENG-CONTEXT-003", 400, "标准上下文 quality_status=INVALID 被拒绝"),
+
+    /** 幂等键命中但 payload 摘要不一致 */
+    ENG_CONTEXT_004("ENG-CONTEXT-004", 409, "幂等键冲突且 payload 不一致"),
     ;
 
     private final String code;
