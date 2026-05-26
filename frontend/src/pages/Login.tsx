@@ -1,9 +1,16 @@
-import { Card, Form, Input, Button, Typography, Space, Divider, theme as antdTheme } from "antd";
+import { Card, Form, Input, Button, Typography, Divider } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import styles from "./Login.module.css";
 
-const { Title, Text, Link } = Typography;
+const { Title, Text } = Typography;
+
+const identitySignals = [
+  { label: "试点组织", value: "集团总院 · 信息科联调环境" },
+  { label: "安全审计", value: "安全审计已开启" },
+  { label: "身份策略", value: "MFA / 国密 / 国产 CA 按医院策略自动选择" },
+];
 
 /**
  * 默认登录路径 + MFA/SSO 折叠区。
@@ -17,7 +24,6 @@ const { Title, Text, Link } = Typography;
 export default function Login() {
   const [showSso, setShowSso] = useState(false);
   const navigate = useNavigate();
-  const { token } = antdTheme.useToken();
 
   function handleSubmit(_values: { username: string; password: string }) {
     // 骨架版：不真实鉴权。GA-CORE-02 后端 OAuth2 接通后实装。
@@ -25,25 +31,38 @@ export default function Login() {
   }
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: token.colorBgLayout,
-      }}
-    >
-      <Card style={{ width: 420 }} bordered={false}>
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          <Space direction="vertical" size={0}>
-            <Title level={3} style={{ marginBottom: 0, color: token.colorPrimary }}>
-              集团医疗智能中枢
-            </Title>
-            <Text type="secondary">MedKernel · v1.0 GA</Text>
-          </Space>
+    <main className={styles.page}>
+      <section className={styles.contextPanel} aria-label="登录上下文">
+        <Text className={styles.kicker}>MedKernel · v1.0 GA</Text>
+        <Title level={1} className={styles.brandTitle}>
+          集团医疗智能中枢
+        </Title>
+        <Text className={styles.primaryGoal}>当前任务：确认身份并进入工作台</Text>
 
-          <Form layout="vertical" onFinish={handleSubmit}>
+        <ul className={styles.signalList} aria-label="当前入口状态">
+          {identitySignals.map((signal) => (
+            <li key={signal.label} className={styles.signalItem}>
+              <span>{signal.label}</span>
+              <strong>{signal.value}</strong>
+            </li>
+          ))}
+        </ul>
+
+        <Text className={styles.safetyCopy}>
+          本入口只完成身份确认和工作台进入；临床建议、发布、回滚等高风险动作仍需按页面流程留痕。
+        </Text>
+      </section>
+
+      <Card className={styles.loginCard} bordered={false}>
+        <div className={styles.cardStack}>
+          <div className={styles.cardHeader}>
+            <Title level={2} className={styles.cardTitle}>
+              登录工作台
+            </Title>
+            <Text type="secondary">使用医院账号继续</Text>
+          </div>
+
+          <Form layout="vertical" requiredMark={false} onFinish={handleSubmit}>
             <Form.Item name="username" rules={[{ required: true, message: "请输入工号或账号" }]}>
               <Input prefix={<UserOutlined />} placeholder="工号 / 账号" size="large" />
             </Form.Item>
@@ -52,41 +71,54 @@ export default function Login() {
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit" block size="large">
-                登录
+                进入工作台
               </Button>
             </Form.Item>
           </Form>
 
-          {/* 折叠区：统一身份认证（按医院配置展示） */}
           <div>
-            <Divider style={{ margin: "8px 0" }}>
-              <Link onClick={() => setShowSso(!showSso)} style={{ fontSize: 12 }}>
+            <Divider className={styles.divider}>
+              <Button
+                type="link"
+                size="small"
+                className={styles.ssoToggle}
+                onClick={() => setShowSso(!showSso)}
+              >
                 {showSso ? "收起" : "院方统一身份认证"}
-              </Link>
+              </Button>
             </Divider>
             {showSso && (
-              <Space direction="vertical" size="small" style={{ width: "100%" }}>
+              <div className={styles.ssoStack}>
                 <Button block>用 CAS 登录</Button>
                 <Button block>用 OIDC 登录</Button>
                 <Button block>用 SAML 登录</Button>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  具体可用方式由医院信息中心配置。MFA / 国密 / 国产 CA 由系统按策略自动选择。
+                <Text type="secondary" className={styles.helperText}>
+                  统一身份由医院信息中心配置。MFA / 国密 / 国产 CA 由系统按策略自动选择。
                 </Text>
-              </Space>
+              </div>
             )}
           </div>
 
-          {/* 合规底线（与 §1 第 1 条对齐） */}
-          <Space direction="vertical" size={0} style={{ width: "100%", textAlign: "center" }}>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              <Link>用户协议</Link> · <Link>隐私政策</Link> · <Link>个人信息收集清单</Link>
+          <footer className={styles.complianceFooter}>
+            <Text type="secondary" className={styles.helperText}>
+              <Button type="link" size="small">
+                用户协议
+              </Button>
+              <span aria-hidden="true"> · </span>
+              <Button type="link" size="small">
+                隐私政策
+              </Button>
+              <span aria-hidden="true"> · </span>
+              <Button type="link" size="small">
+                个人信息收集清单
+              </Button>
             </Text>
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" className={styles.helperText}>
               ICP 备案号待填 · 公安备案号待填 · 等保 2.0 三级 · 商密评测预审中
             </Text>
-          </Space>
-        </Space>
+          </footer>
+        </div>
       </Card>
-    </div>
+    </main>
   );
 }
