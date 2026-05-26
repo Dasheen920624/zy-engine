@@ -1,12 +1,15 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ConfigProvider } from "antd";
 import { describe, expect, it } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import ConfigPackages from "./tenant/ConfigPackages";
 import WorkflowTodos from "./clinical/WorkflowTodos";
 import QcAlerts from "./quality/QcAlerts";
 import AdminUsers from "./compliance/AdminUsers";
 import GraphExplore from "./advanced/GraphExplore";
 import Dashboard from "./Dashboard";
+import Login from "./Login";
 
 function renderPage(page: React.ReactElement) {
   return render(<ConfigProvider>{page}</ConfigProvider>);
@@ -47,5 +50,25 @@ describe("page smoke coverage", () => {
     renderPage(<Dashboard />);
     expect(screen.getByText("租户生命周期")).toBeInTheDocument();
     expect(screen.getByText("本周建议动作")).toBeInTheDocument();
+  });
+
+  it("renders the login page as a focused identity entry", async () => {
+    render(
+      <ConfigProvider>
+        <MemoryRouter>
+          <Login />
+        </MemoryRouter>
+      </ConfigProvider>,
+    );
+
+    expect(screen.getByRole("heading", { name: "集团医疗智能中枢" })).toBeInTheDocument();
+    expect(screen.getByText("当前任务：确认身份并进入工作台")).toBeInTheDocument();
+    expect(screen.getByText("安全审计已开启")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "进入工作台" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "院方统一身份认证" }));
+
+    expect(screen.getByRole("button", { name: "用 CAS 登录" })).toBeInTheDocument();
+    expect(screen.getByText(/统一身份由医院信息中心配置/)).toBeInTheDocument();
   });
 });
