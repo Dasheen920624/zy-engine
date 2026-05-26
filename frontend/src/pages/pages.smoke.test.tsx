@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { ConfigProvider } from "antd";
 import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+
 import ConfigPackages from "./tenant/ConfigPackages";
 import WorkflowTodos from "./clinical/WorkflowTodos";
 import QcAlerts from "./quality/QcAlerts";
@@ -16,28 +17,28 @@ function renderPage(page: React.ReactElement) {
 }
 
 describe("page smoke coverage", () => {
-  it("renders a tenant configuration page", () => {
+  it("renders the tenant config-packages placeholder", () => {
     renderPage(<ConfigPackages />);
     expect(screen.getByRole("heading", { name: "配置包中心" })).toBeInTheDocument();
-    expect(screen.getByText("胸痛 AMI 标准包")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /查看实施路线图/ })).toBeInTheDocument();
   });
 
-  it("renders a clinical list page", () => {
+  it("renders the clinical workflow-todos placeholder", () => {
     renderPage(<WorkflowTodos />);
     expect(screen.getByRole("heading", { name: "待办中心" })).toBeInTheDocument();
-    expect(screen.getByText(/规则发布审核/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /查看实施路线图/ })).toBeInTheDocument();
   });
 
-  it("renders a quality alert page", () => {
+  it("renders the quality qc-alerts placeholder", () => {
     renderPage(<QcAlerts />);
     expect(screen.getByRole("heading", { name: "质控预警" })).toBeInTheDocument();
-    expect(screen.getByText(/抗菌药使用率/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /查看实施路线图/ })).toBeInTheDocument();
   });
 
-  it("renders a compliance page", () => {
+  it("renders the compliance admin-users placeholder", () => {
     renderPage(<AdminUsers />);
     expect(screen.getByRole("heading", { name: "用户管理" })).toBeInTheDocument();
-    expect(screen.getByText("医务处主任")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /查看实施路线图/ })).toBeInTheDocument();
   });
 
   it("renders an advanced tool page with advanced-only messaging", () => {
@@ -46,7 +47,7 @@ describe("page smoke coverage", () => {
     expect(screen.getAllByText(/高级工具/).length).toBeGreaterThan(0);
   });
 
-  it("renders the dashboard workbench", () => {
+  it("renders the dashboard workbench with tenant-lifecycle placeholder", () => {
     renderPage(<Dashboard />);
     expect(screen.getByText("租户生命周期")).toBeInTheDocument();
     expect(screen.getByText("本周建议动作")).toBeInTheDocument();

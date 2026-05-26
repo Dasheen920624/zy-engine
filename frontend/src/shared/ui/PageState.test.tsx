@@ -35,6 +35,19 @@ describe("PageState", () => {
     expect(screen.getByText(/2 项需处理/)).toBeInTheDocument();
   });
 
+  it("renders disabled state with roadmap action", () => {
+    render(
+      <PageState
+        state="disabled"
+        description="本页依赖 GA-ENG-RULE-01，引擎完成后激活"
+        action={<Button>查看实施路线图</Button>}
+      />,
+    );
+    expect(screen.getByText("等待引擎能力上线")).toBeInTheDocument();
+    expect(screen.getByText(/GA-ENG-RULE-01/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "查看实施路线图" })).toBeInTheDocument();
+  });
+
   it("renders ready children", () => {
     render(
       <PageState state="ready">

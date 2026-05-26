@@ -1,95 +1,127 @@
-import { Table, Button, Tag, Space } from "antd";
+import { useMemo, useState } from "react";
+
 import { ImportOutlined } from "@ant-design/icons";
+import { Button, Space, Table, Tag } from "antd";
+
 import { PageShell } from "@/shared/ui/PageShell";
-import { MetricGrid } from "@/shared/ui/MetricGrid";
 import { PageState } from "@/shared/ui/PageState";
+import { MetricGrid } from "@/shared/ui/MetricGrid";
+import { useTerminologyMappings, type TermMapping } from "@/shared/api/hooks";
 
-const MOCK = [
-  {
-    id: "t1",
-    local: "原发性高血压",
-    localCode: "I10.x01",
-    standard: "原发性高血压",
-    standardCode: "I10",
-    system: "ICD-10",
-    confidence: "已确认",
-  },
-  {
-    id: "t2",
-    local: "AMI（前壁）",
-    localCode: "I21.001",
-    standard: "ST 段抬高型心梗（前壁）",
-    standardCode: "I21.0",
-    system: "ICD-10",
-    confidence: "已确认",
-  },
-  {
-    id: "t3",
-    local: "脑梗塞",
-    localCode: "ZX-001",
-    standard: "脑梗死",
-    standardCode: "I63.9",
-    system: "ICD-10",
-    confidence: "待确认",
-  },
-  {
-    id: "t4",
-    local: "甲流",
-    localCode: "X-FLU-A",
-    standard: "流行性感冒甲型",
-    standardCode: "J10",
-    system: "ICD-10",
-    confidence: "未匹配",
-  },
-];
+const STATUS_COLOR: Record<TermMapping["status"], string> = {
+  CONFIRMED: "green",
+  DRAFT: "orange",
+  SUPERSEDED: "blue",
+  ROLLED_BACK: "red",
+};
 
-const STATUS_COLOR: Record<string, string> = { 已确认: "green", 待确认: "orange", 未匹配: "red" };
+const STATUS_LABEL: Record<TermMapping["status"], string> = {
+  CONFIRMED: "已确认",
+  DRAFT: "草稿",
+  SUPERSEDED: "已替换",
+  ROLLED_BACK: "已回滚",
+};
+
+const RISK_COLOR: Record<TermMapping["riskLevel"], string> = {
+  HIGH: "red",
+  MEDIUM: "orange",
+  LOW: "blue",
+};
+
+const PAGE_SIZE = 20;
 
 export default function TerminologyMapping() {
+  const [page, setPage] = useState(1);
+
+  const query = useTerminologyMappings({ page, size: PAGE_SIZE });
+  const items = useMemo(() => query.data?.items ?? [], [query.data]);
+
+  let pageState: "loading" | "error" | "empty" | "ready" = "ready";
+  if (query.isLoading) pageState = "loading";
+  else if (query.isError) pageState = "error";
+  else if (items.length === 0) pageState = "empty";
+
   return (
     <PageShell
       title="字典映射"
       description="把医院码映射到 ICD-10 / ICD-11 / LOINC / SNOMED CT，AI 推荐 + 人工确认"
       primary={
-        <Button type="primary" icon={<ImportOutlined />}>
+        <Button type="primary" icon={<ImportOutlined />} disabled>
           导入医院字典
         </Button>
       }
     >
       <MetricGrid
         items={[
-          { key: "total", title: "总条目", value: 12345 },
-          { key: "confirmed", title: "已确认", value: 11203, tone: "success" },
-          { key: "pending", title: "待确认", value: 1078, tone: "warning" },
-          { key: "unmatched", title: "未匹配", value: 64, tone: "danger" },
+          { key: "total", title: "总条目", value: query.data?.total ?? 0 },
+          {
+            key: "confirmed",
+            title: "已确认",
+            value: items.filter((m) => m.status === "CONFIRMED").length,
+            tone: "success",
+          },
+          {
+            key: "draft",
+            title: "待确认",
+            value: items.filter((m) => m.status === "DRAFT").length,
+            tone: "warning",
+          },
+          {
+            key: "superseded",
+            title: "已替换 / 回滚",
+            value: items.filter((m) => m.status === "SUPERSEDED" || m.status === "ROLLED_BACK")
+              .length,
+            tone: "primary",
+          },
         ]}
       />
-      <PageState state={MOCK.length ? "ready" : "empty"} title="暂无待映射术语">
-        <Table
+      <PageState
+        state={pageState}
+        title={pageState === "empty" ? "暂无字典映射条目" : undefined}
+        description={
+          pageState === "empty" ? "可通过导入医院字典或在候选库中确认映射；引擎已就绪" : undefined
+        }
+        onRetry={query.refetch}
+      >
+        <Table<TermMapping>
           rowKey="id"
-          dataSource={MOCK}
+          dataSource={items}
           scroll={{ x: "max-content" }}
-          pagination={{ pageSize: 20, showSizeChanger: true }}
+          pagination={{
+            current: query.data?.page ?? page,
+            pageSize: query.data?.size ?? PAGE_SIZE,
+            total: query.data?.total ?? 0,
+            showSizeChanger: false,
+            onChange: (p) => setPage(p),
+          }}
           columns={[
-            { title: "医院术语", dataIndex: "local" },
-            { title: "医院码", dataIndex: "localCode" },
-            { title: "标准术语", dataIndex: "standard" },
-            { title: "标准码", dataIndex: "standardCode" },
-            { title: "标准库", dataIndex: "system", render: (v) => <Tag>{v}</Tag> },
+            { title: "院内编码 ID", dataIndex: "localTermId" },
+            { title: "标准编码 ID", dataIndex: "standardTermId" },
+            { title: "来源系统", dataIndex: "sourceSystem" },
+            { title: "类别", dataIndex: "category", render: (v) => <Tag>{v}</Tag> },
+            {
+              title: "风险等级",
+              dataIndex: "riskLevel",
+              render: (v: TermMapping["riskLevel"]) => <Tag color={RISK_COLOR[v]}>{v}</Tag>,
+            },
+            {
+              title: "置信度",
+              dataIndex: "confidence",
+              render: (v: number) => `${(v * 100).toFixed(1)}%`,
+            },
             {
               title: "状态",
-              dataIndex: "confidence",
-              render: (v: string) => <Tag color={STATUS_COLOR[v]}>{v}</Tag>,
+              dataIndex: "status",
+              render: (v: TermMapping["status"]) => (
+                <Tag color={STATUS_COLOR[v]}>{STATUS_LABEL[v]}</Tag>
+              ),
             },
             {
               title: "操作",
               render: () => (
                 <Space>
-                  <Button type="link" size="small">
-                    确认
-                  </Button>
-                  <Button type="link" size="small">
-                    修改
+                  <Button type="link" size="small" disabled>
+                    查看
                   </Button>
                 </Space>
               ),
