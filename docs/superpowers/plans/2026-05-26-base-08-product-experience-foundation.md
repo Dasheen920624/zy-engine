@@ -47,7 +47,7 @@
 - 新增：`frontend/src/shared/ui/experienceView.ts`
 - 新增：`frontend/src/shared/ui/experienceView.test.ts`
 
-- [ ] **步骤 1：写失败测试，验证分页适配、保存视图和导出快照**
+- [x] **步骤 1：写失败测试，验证分页适配、保存视图和导出快照**
 
   创建 `frontend/src/shared/ui/experienceView.test.ts`：
 
@@ -146,7 +146,7 @@
   });
   ```
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
   ```bash
   cd frontend
@@ -155,7 +155,7 @@
 
   预期：失败，原因是 `experienceView.ts` 和 `experienceTypes.ts` 尚不存在。
 
-- [ ] **步骤 3：实现 `experienceTypes.ts`**
+- [x] **步骤 3：实现 `experienceTypes.ts`**
 
   创建类型文件，至少包含：
 
@@ -285,7 +285,7 @@
   }
   ```
 
-- [ ] **步骤 4：实现 `experienceView.ts`**
+- [x] **步骤 4：实现 `experienceView.ts`**
 
   创建分页适配、敏感内容校验、视图存储和导出请求构建：
 
@@ -352,7 +352,7 @@
   }
   ```
 
-- [ ] **步骤 5：运行绿灯测试**
+- [x] **步骤 5：运行绿灯测试**
 
   ```bash
   cd frontend
@@ -361,7 +361,7 @@
 
   预期：全部通过。
 
-- [ ] **步骤 6：提交**
+- [x] **步骤 6：提交**
 
   ```bash
   git add frontend/src/shared/ui/experienceTypes.ts frontend/src/shared/ui/experienceView.ts frontend/src/shared/ui/experienceView.test.ts
@@ -374,7 +374,7 @@
 - 修改：`frontend/src/shared/config/routes.ts`
 - 修改：`frontend/src/shared/config/routes.test.ts`
 
-- [ ] **步骤 1：写失败测试，要求有菜单入口的认证路由必须有体验声明**
+- [x] **步骤 1：写失败测试，要求有菜单入口的认证路由必须有体验声明**
 
   在 `frontend/src/shared/config/routes.test.ts` 增加测试：
 
@@ -396,7 +396,7 @@
   });
   ```
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
   ```bash
   cd frontend
@@ -405,7 +405,7 @@
 
   预期：失败，原因是有 `menuKey` 的路由尚未声明 `experience`。
 
-- [ ] **步骤 3：扩展 `RouteMeta` 并引入类型**
+- [x] **步骤 3：扩展 `RouteMeta` 并引入类型**
 
   在 `frontend/src/shared/config/routes.ts` 引入类型：
 
@@ -419,7 +419,7 @@
   experience?: RouteExperience;
   ```
 
-- [ ] **步骤 4：为所有有 `menuKey` 的认证路由补体验声明**
+- [x] **步骤 4：为所有有 `menuKey` 的认证路由补体验声明**
 
   可使用本地 helper 减少重复，但每个声明必须完整：
 
@@ -478,7 +478,7 @@
   }
   ```
 
-- [ ] **步骤 5：运行绿灯测试**
+- [x] **步骤 5：运行绿灯测试**
 
   ```bash
   cd frontend
@@ -487,7 +487,7 @@
 
   预期：通过。
 
-- [ ] **步骤 6：提交**
+- [x] **步骤 6：提交**
 
   ```bash
   git add frontend/src/shared/config/routes.ts frontend/src/shared/config/routes.test.ts
@@ -500,7 +500,7 @@
 - 新增：`frontend/src/shared/ui/PageExperienceShell.tsx`
 - 新增：`frontend/src/shared/ui/PageExperienceShell.test.tsx`
 
-- [ ] **步骤 1：写失败测试**
+- [x] **步骤 1：写失败测试**
 
   创建测试，覆盖权限画像允许时显示专家开关、权限画像不允许时隐藏专家开关：
 
@@ -528,7 +528,7 @@
   expect(screen.queryByRole("switch", { name: "专家模式" })).not.toBeInTheDocument();
   ```
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
   ```bash
   cd frontend
@@ -537,7 +537,7 @@
 
   预期：失败，原因是组件不存在。
 
-- [ ] **步骤 3：实现组件**
+- [x] **步骤 3：实现组件**
 
   用 `PageShell` 包装，不写 JSX inline style。Props 至少包含：
 
@@ -555,7 +555,7 @@
 
   只有 `securityProfile.menuKeys` 包含 `advanced-tools`，或 `securityProfile.permissions` 包含 `advanced.read` / `system.debug` 等专家权限，且 `experience.expertContent.length > 0` 时显示专家模式开关。未取得权限画像时默认不显示专家入口。
 
-- [ ] **步骤 4：运行绿灯测试**
+- [x] **步骤 4：运行绿灯测试**
 
   ```bash
   cd frontend
@@ -564,7 +564,7 @@
 
   预期：通过。
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
   ```bash
   git add frontend/src/shared/ui/PageExperienceShell.tsx frontend/src/shared/ui/PageExperienceShell.test.tsx
@@ -577,7 +577,7 @@
 - 新增：`frontend/src/shared/ui/ExperienceFilterBar.tsx`
 - 新增：`frontend/src/shared/ui/ExperienceFilterBar.test.tsx`
 
-- [ ] **步骤 1：写失败测试**
+- [x] **步骤 1：写失败测试**
 
   测试覆盖：
   - 默认筛选超过 3 个时抛错。
@@ -585,7 +585,7 @@
   - `search` 使用中文占位文案。
   - 输入后触发 `onChange`。
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
   ```bash
   cd frontend
@@ -594,11 +594,11 @@
 
   预期：失败，原因是组件不存在。
 
-- [ ] **步骤 3：实现组件**
+- [x] **步骤 3：实现组件**
 
   使用 `Space`、`Select`、`Input.Search`、`DatePicker.RangePicker`。`renderFilter` 存在时优先使用自定义渲染；不直接调用外部 API。
 
-- [ ] **步骤 4：运行绿灯测试**
+- [x] **步骤 4：运行绿灯测试**
 
   ```bash
   cd frontend
@@ -607,7 +607,7 @@
 
   预期：通过。
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
   ```bash
   git add frontend/src/shared/ui/ExperienceFilterBar.tsx frontend/src/shared/ui/ExperienceFilterBar.test.tsx
@@ -620,7 +620,7 @@
 - 新增：`frontend/src/shared/ui/EvidenceDetailDrawer.tsx`
 - 新增：`frontend/src/shared/ui/EvidenceDetailDrawer.test.tsx`
 
-- [ ] **步骤 1：写失败测试**
+- [x] **步骤 1：写失败测试**
 
   测试覆盖：
   - 普通模式隐藏 `expertOnly` 字段。
@@ -628,7 +628,7 @@
   - 加载态显示“正在加载详情”。
   - 错误态显示“重试”按钮并触发 `onRetry`。
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
   ```bash
   cd frontend
@@ -637,11 +637,11 @@
 
   预期：失败，原因是组件不存在。
 
-- [ ] **步骤 3：实现组件**
+- [x] **步骤 3：实现组件**
 
   使用 `Drawer`、`Descriptions`、`Alert`、`Spin`、`Button`。打开详情不得刷新列表，组件只通过 props 渲染。
 
-- [ ] **步骤 4：运行绿灯测试**
+- [x] **步骤 4：运行绿灯测试**
 
   ```bash
   cd frontend
@@ -650,7 +650,7 @@
 
   预期：通过。
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
   ```bash
   git add frontend/src/shared/ui/EvidenceDetailDrawer.tsx frontend/src/shared/ui/EvidenceDetailDrawer.test.tsx
@@ -663,7 +663,7 @@
 - 新增：`frontend/src/shared/ui/AsyncExportAction.tsx`
 - 新增：`frontend/src/shared/ui/AsyncExportAction.test.tsx`
 
-- [ ] **步骤 1：写失败测试**
+- [x] **步骤 1：写失败测试**
 
   测试覆盖：
   - `enabled=false` 显示禁用原因，不调用 `onSubmit`。
@@ -674,7 +674,7 @@
   - 提交失败显示中文失败原因和重试入口。
   - 重试时复用原 `requestSnapshot` 和 `selectionSnapshot`。
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
   ```bash
   cd frontend
@@ -683,11 +683,11 @@
 
   预期：失败，原因是组件不存在。
 
-- [ ] **步骤 3：实现组件**
+- [x] **步骤 3：实现组件**
 
   使用 `Button`、`Modal`、`Alert`。组件接收完整 `AsyncExportActionProps`；提交时只调用传入的 `onSubmit`；当任务状态为 `running` 且存在 `onPoll` 时轮询一次或按测试可控条件查询状态；禁用态不伪造导出任务。`AsyncExportJob` 必须包含 `jobId`、`status`、`submittedAt`、`submittedBy`，并可带 `traceId`、`auditId`、`downloadUrl`、`failureReason`。
 
-- [ ] **步骤 4：运行绿灯测试**
+- [x] **步骤 4：运行绿灯测试**
 
   ```bash
   cd frontend
@@ -696,7 +696,7 @@
 
   预期：通过。
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
   ```bash
   git add frontend/src/shared/ui/AsyncExportAction.tsx frontend/src/shared/ui/AsyncExportAction.test.tsx
@@ -710,7 +710,7 @@
 - 新增：`frontend/src/shared/ui/ServerDataTable.test.tsx`
 - 修改：`frontend/src/app/index.css`（仅当需要新布局类）
 
-- [ ] **步骤 1：写失败测试**
+- [x] **步骤 1：写失败测试**
 
   测试覆盖：
   - 默认可见列超过 8 个时抛错。
@@ -720,7 +720,7 @@
   - 列管理变更时调用 `onViewSnapshotChange`，写入 `visibleColumnKeys`。
   - 当前页选择时生成 `selectionSnapshot` 所需的 `selectedRowKeys` 与 `rowCount`。
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
   ```bash
   cd frontend
@@ -729,7 +729,7 @@
 
   预期：失败，原因是组件不存在。
 
-- [ ] **步骤 3：实现组件**
+- [x] **步骤 3：实现组件**
 
   使用 Ant Design `Table`，复用现有 `useColumnManager` 或等价逻辑；不得前端全量分页。Props 至少包含：
 
@@ -750,7 +750,7 @@
   }
   ```
 
-- [ ] **步骤 4：运行绿灯测试**
+- [x] **步骤 4：运行绿灯测试**
 
   ```bash
   cd frontend
@@ -759,7 +759,7 @@
 
   预期：全部通过。
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
   ```bash
   git add frontend/src/shared/ui/ServerDataTable.tsx frontend/src/shared/ui/ServerDataTable.test.tsx frontend/src/app/index.css
@@ -773,7 +773,7 @@
 - 新增：`frontend/src/pages/tenant/TerminologyMapping.test.tsx`
 - 修改：`frontend/src/shared/api/hooks.ts`（只在类型或查询参数不足时修改）
 
-- [ ] **步骤 1：写失败测试，覆盖正常态、默认筛选、分页、详情和保存视图**
+- [x] **步骤 1：写失败测试，覆盖正常态、默认筛选、分页、详情和保存视图**
 
   用 `vi.mock("@/shared/api/hooks")` 模拟 `useTerminologyMappings`，断言：
   - 页面展示主目标“核查院内码与标准码的映射关系”。
@@ -787,7 +787,7 @@
   - 导出按钮为禁用态并说明接口未接入。
   - 页面按钮、链接、菜单中不出现“导入医院字典”“确认映射”“提交审核”“发布”“回滚”“批量处理”等写入型入口；允许状态筛选中出现“已确认”“已回滚”等只读状态文本。
 
-- [ ] **步骤 2：写失败测试，覆盖六态**
+- [x] **步骤 2：写失败测试，覆盖六态**
 
   同一测试文件继续覆盖：
   - `isLoading=true` 显示加载态。
@@ -797,7 +797,7 @@
   - `partial` 显示成功数、失败数、失败明细和重试入口。
   - 正常态显示表格和详情入口。
 
-- [ ] **步骤 3：运行红灯测试**
+- [x] **步骤 3：运行红灯测试**
 
   ```bash
   cd frontend
@@ -806,7 +806,7 @@
 
   预期：失败，原因是页面尚未接公共底座。
 
-- [ ] **步骤 4：改造页面**
+- [x] **步骤 4：改造页面**
 
   实现要点：
   - 从 `findRouteByPath("/terminology/mapping")` 读取体验声明。
@@ -820,7 +820,7 @@
   - 用 `AsyncExportAction` 展示禁用态，不伪造任务。
   - 不实现确认、发布、回滚、批量处理或业务 mock。
 
-- [ ] **步骤 5：运行页面绿灯测试**
+- [x] **步骤 5：运行页面绿灯测试**
 
   ```bash
   cd frontend
@@ -829,7 +829,7 @@
 
   预期：全部通过；仍调用 `/engine/terminology/mappings`，不新增 `/terminology/mappings` 业务包装路径。
 
-- [ ] **步骤 6：提交**
+- [x] **步骤 6：提交**
 
   ```bash
   git add frontend/src/pages/tenant/TerminologyMapping.tsx frontend/src/pages/tenant/TerminologyMapping.test.tsx frontend/src/shared/api/hooks.ts
@@ -844,21 +844,21 @@
 - 修改：`docs/backlog.md`
 - 修改：`docs/superpowers/plans/2026-05-26-base-08-product-experience-foundation.md`
 
-- [ ] **步骤 1：写内网 DB-only / 无外部依赖门禁测试**
+- [x] **步骤 1：写内网 DB-only / 无外部依赖门禁测试**
 
   在 `visualDebtGuard.test.ts` 增加静态检查：
   - 新增 `shared/ui` 和 `pages/tenant/TerminologyMapping.tsx` 不得直接调用 `fetch("http`、`axios.create` 或硬编码外部 URL。
   - 只允许通过 `apiClient` 或传入的 props 与后端交互。
   - 生产代码不得引用 Dify、模型 provider、图数据库 URL 作为前端直连目标。
 
-- [ ] **步骤 2：写外网 SaaS / 后端开关门禁测试**
+- [x] **步骤 2：写外网 SaaS / 后端开关门禁测试**
 
   同一文件增加检查：
   - 组件不得根据前端环境变量自行启停外部能力。
   - 导出、模型、Dify、图投影状态只展示后端返回或受控禁用态。
   - `medkernel.view.` 快照不得包含 `token`、`patient`、`idcard`、`identity`、`身份证`、`患者` 等敏感内容。
 
-- [ ] **步骤 3：运行红灯门禁测试**
+- [x] **步骤 3：运行红灯门禁测试**
 
   ```bash
   cd frontend
@@ -867,11 +867,11 @@
 
   预期：若门禁尚未实现则失败；若现有代码天然满足，至少新增断言应被执行。
 
-- [ ] **步骤 4：实现最小门禁修正**
+- [x] **步骤 4：实现最小门禁修正**
 
   如发现误伤，调整正则或允许列表；不得降低现有 inline style、浏览器存储和 `console` 门禁。
 
-- [ ] **步骤 5：更新前端 README**
+- [x] **步骤 5：更新前端 README**
 
   在 `frontend/README.md` 增加“产品体验底座接入规则”，写明：
   - 任何有菜单入口的认证路由必须配置 `experience`。
@@ -880,13 +880,13 @@
   - 异步导出必须使用 `AsyncExportAction`，暂无接口时禁用。
   - 样板页为“字典映射”，且仅只读核查。
 
-- [ ] **步骤 6：更新 backlog**
+- [x] **步骤 6：更新 backlog**
 
   在 `docs/backlog.md`：
   - 将 `GA-ENG-BASE-08` owner 改为 `codex`，status 改为 `done`。
   - 增加修订记录，说明公共体验声明、组件底座、字典映射样板页、内外网门禁和验证命令。
 
-- [ ] **步骤 7：运行完整前端验证**
+- [x] **步骤 7：运行完整前端验证**
 
   ```bash
   cd frontend
@@ -899,7 +899,7 @@
 
   预期：全部通过。若格式检查失败，运行 `npm run format` 后重新执行 `npm run format:check`。
 
-- [ ] **步骤 8：运行全仓检查**
+- [x] **步骤 8：运行全仓检查**
 
   ```bash
   git diff --check
@@ -908,7 +908,7 @@
 
   预期：无空白错误；只出现本任务相关修改。
 
-- [ ] **步骤 9：提交**
+- [x] **步骤 9：提交**
 
   ```bash
   git add frontend/src/test/visualDebtGuard.test.ts frontend/README.md docs/backlog.md docs/superpowers/plans/2026-05-26-base-08-product-experience-foundation.md
