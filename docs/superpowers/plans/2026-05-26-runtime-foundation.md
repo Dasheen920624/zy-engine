@@ -23,21 +23,21 @@
 - 修改：`medkernel-backend/src/main/resources/application-test.yml`
 - 修改：`medkernel-backend/src/main/resources/application-container.yml`
 
-- [ ] **步骤 1：编写失败的 API 测试**
+- [x] **步骤 1：编写失败的 API 测试**
 
 创建 Spring Boot MockMvc 测试，访问 `/api/v1/system/operations`，断言返回标准 `ApiResult` 包络，并包含 `data.featureFlags`、`data.dependencies`、`data.backup`、`data.domesticProfile`、激活 profile 和运行元数据。
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
 运行：`mvn -B -Dtest=RuntimeOperationsControllerTest test`
 
 预期：失败，原因是接口返回 404 或控制器不存在。
 
-- [ ] **步骤 3：实现最小运行合同**
+- [x] **步骤 3：实现最小运行合同**
 
 增加配置绑定、record DTO、服务和控制器。服务读取 `Environment`、`HealthEndpoint`、`MeterRegistry` 和 `RuntimeProperties`，且永不返回密钥。
 
-- [ ] **步骤 4：运行绿灯测试**
+- [x] **步骤 4：运行绿灯测试**
 
 运行：`mvn -B -Dtest=RuntimeOperationsControllerTest test`
 
