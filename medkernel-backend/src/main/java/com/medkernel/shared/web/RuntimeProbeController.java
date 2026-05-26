@@ -12,8 +12,6 @@ import com.medkernel.shared.api.ApiResult;
  * <p>访问 {@code /api/v1/system/runtime} 返回 JVM 是否在 Virtual Thread 中处理 HTTP 请求。
  * 配合 docs/CONSTITUTION.md 性能基线，验证 Spring Boot 3.3 默认开启的
  * {@code spring.threads.virtual.enabled=true} 真正生效。
- *
- * <p>GA-ENG-BASE-03 改造：返回值由 {@code Map<String, Object>} 统一为 {@link ApiResult} + Record DTO。
  */
 @RestController
 @RequestMapping("/api/v1/system")
