@@ -1,12 +1,50 @@
-import { useMemo, useState } from "react";
+import type { Key } from "react";
+import { useState } from "react";
 
-import { ImportOutlined } from "@ant-design/icons";
-import { Button, Space, Table, Tag } from "antd";
+import { Tag } from "antd";
 
-import { PageShell } from "@/shared/ui/PageShell";
-import { PageState } from "@/shared/ui/PageState";
-import { MetricGrid } from "@/shared/ui/MetricGrid";
-import { useTerminologyMappings, type TermMapping } from "@/shared/api/hooks";
+import { useSecurityProfile, useTerminologyMappings, type TermMapping } from "@/shared/api/hooks";
+import { findRouteByPath } from "@/shared/config/routes";
+import { AsyncExportAction } from "@/shared/ui/AsyncExportAction";
+import { EvidenceDetailDrawer, type EvidenceDetailSection } from "@/shared/ui/EvidenceDetailDrawer";
+import { ExperienceFilterBar } from "@/shared/ui/ExperienceFilterBar";
+import { PageExperienceShell } from "@/shared/ui/PageExperienceShell";
+import { PageState, type PageStateKind } from "@/shared/ui/PageState";
+import { ServerDataTable } from "@/shared/ui/ServerDataTable";
+import type {
+  ExperienceColumn,
+  ExperienceFilterValue,
+  ExperiencePageRequest,
+  ExperienceViewSnapshot,
+  RouteExperience,
+} from "@/shared/ui/experienceTypes";
+import {
+  buildAsyncExportRequest,
+  normalizePageResponse,
+  readExperienceView,
+  writeExperienceView,
+} from "@/shared/ui/experienceView";
+
+const VIEW_KEY = "terminology.mapping";
+const PAGE_SIZE = 20;
+const route = findRouteByPath("/terminology/mapping");
+
+if (!route?.experience) {
+  throw new Error("字典映射页面缺少体验声明");
+}
+
+const PAGE_META: { title: string; experience: RouteExperience } = {
+  title: route.title,
+  experience: route.experience,
+};
+
+const DEFAULT_REQUEST: ExperiencePageRequest = {
+  pageNumber: 1,
+  pageSize: PAGE_SIZE,
+  sortBy: "updatedAt",
+  sortOrder: "desc",
+  filters: {},
+};
 
 const STATUS_COLOR: Record<TermMapping["status"], string> = {
   CONFIRMED: "green",
@@ -28,107 +66,241 @@ const RISK_COLOR: Record<TermMapping["riskLevel"], string> = {
   LOW: "blue",
 };
 
-const PAGE_SIZE = 20;
+const RISK_LABEL: Record<TermMapping["riskLevel"], string> = {
+  HIGH: "高",
+  MEDIUM: "中",
+  LOW: "低",
+};
+
+const tableColumns: Array<ExperienceColumn<TermMapping>> = [
+  { key: "sourceSystem", title: "来源系统", dataIndex: "sourceSystem", always: true },
+  { key: "category", title: "类别", dataIndex: "category" },
+  {
+    key: "riskLevel",
+    title: "风险等级",
+    dataIndex: "riskLevel",
+    render: (value) => {
+      const risk = value as TermMapping["riskLevel"];
+      return <Tag color={RISK_COLOR[risk]}>{RISK_LABEL[risk]}</Tag>;
+    },
+  },
+  {
+    key: "confidence",
+    title: "置信度",
+    dataIndex: "confidence",
+    render: (value) => `${((value as number) * 100).toFixed(1)}%`,
+  },
+  {
+    key: "status",
+    title: "状态",
+    dataIndex: "status",
+    render: (value) => {
+      const status = value as TermMapping["status"];
+      return <Tag color={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Tag>;
+    },
+  },
+  { key: "updatedAt", title: "更新时间", dataIndex: "updatedAt" },
+];
+const DEFAULT_VISIBLE_COLUMNS = tableColumns.map((column) => column.key);
+
+function getFilterValue(
+  filters: readonly ExperienceFilterValue[],
+  key: string,
+): string | undefined {
+  const value = filters.find((filter) => filter.key === key)?.value;
+  return typeof value === "string" ? value : undefined;
+}
+
+function buildFilterRecord(filters: readonly ExperienceFilterValue[]): Record<string, unknown> {
+  return Object.fromEntries(
+    filters
+      .filter((filter) => filter.value !== undefined)
+      .map((filter) => [filter.key, filter.value]),
+  );
+}
+
+function detailSections(mapping?: TermMapping): EvidenceDetailSection[] {
+  if (!mapping) return [];
+
+  return [
+    {
+      key: "summary",
+      title: "映射摘要",
+      items: [
+        { label: "状态", value: STATUS_LABEL[mapping.status] },
+        { label: "风险等级", value: RISK_LABEL[mapping.riskLevel] },
+        { label: "置信度", value: `${(mapping.confidence * 100).toFixed(1)}%` },
+      ],
+    },
+    {
+      key: "source",
+      title: "来源与证据",
+      items: [
+        { label: "来源系统", value: mapping.sourceSystem },
+        { label: "类别", value: mapping.category },
+        { label: "证据", value: mapping.evidenceText ?? "暂无补充证据" },
+        { label: "确认人", value: mapping.confirmedBy ?? "尚未确认" },
+        { label: "确认时间", value: mapping.confirmedAt ?? "尚未确认" },
+      ],
+    },
+    {
+      key: "expert",
+      title: "技术字段",
+      items: [
+        { label: "映射 ID", value: mapping.id, expertOnly: true },
+        { label: "院内编码 ID", value: mapping.localTermId, expertOnly: true },
+        { label: "标准编码 ID", value: mapping.standardTermId, expertOnly: true },
+      ],
+    },
+  ];
+}
 
 export default function TerminologyMapping() {
-  const [page, setPage] = useState(1);
+  const [initialView] = useState(() => readExperienceView(VIEW_KEY));
+  const [filters, setFilters] = useState<ExperienceFilterValue[]>(() =>
+    initialView ? [...initialView.filters] : [],
+  );
+  const [request, setRequest] = useState<ExperiencePageRequest>(
+    () => initialView?.pageRequest ?? DEFAULT_REQUEST,
+  );
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<readonly string[]>(
+    () => initialView?.visibleColumnKeys ?? DEFAULT_VISIBLE_COLUMNS,
+  );
+  const [expertMode, setExpertMode] = useState(() => initialView?.expertMode ?? false);
+  const [selectionSnapshot, setSelectionSnapshot] = useState<{
+    selectedRowKeys: Key[];
+    rowCount: number;
+  }>();
+  const [selectedMapping, setSelectedMapping] = useState<TermMapping>();
 
-  const query = useTerminologyMappings({ page, size: PAGE_SIZE });
-  const items = useMemo(() => query.data?.items ?? [], [query.data]);
+  const security = useSecurityProfile();
+  const query = useTerminologyMappings({
+    page: request.pageNumber,
+    size: request.pageSize,
+    sort:
+      request.sortBy && request.sortOrder ? `${request.sortBy},${request.sortOrder}` : undefined,
+    status: getFilterValue(filters, "status") as TermMapping["status"] | undefined,
+    sourceSystem: getFilterValue(filters, "sourceSystem"),
+    keyword: getFilterValue(filters, "keyword"),
+  });
 
-  let pageState: "loading" | "error" | "empty" | "ready" = "ready";
-  if (query.isLoading) pageState = "loading";
+  function snapshot(
+    nextFilters = filters,
+    nextRequest = request,
+    nextColumns = visibleColumnKeys,
+    nextExpertMode = expertMode,
+  ): ExperienceViewSnapshot {
+    return {
+      viewKey: VIEW_KEY,
+      filters: nextFilters,
+      pageRequest: nextRequest,
+      visibleColumnKeys: nextColumns,
+      expertMode: nextExpertMode,
+      capturedAt: new Date().toISOString(),
+    };
+  }
+
+  function updateFilters(nextFilters: ExperienceFilterValue[]) {
+    const nextRequest = {
+      ...request,
+      pageNumber: 1,
+      filters: buildFilterRecord(nextFilters),
+    };
+    setFilters(nextFilters);
+    setRequest(nextRequest);
+  }
+
+  function updateRequest(nextRequest: ExperiencePageRequest) {
+    setRequest(nextRequest);
+  }
+
+  function updateExpertMode(enabled: boolean) {
+    setExpertMode(enabled);
+    writeExperienceView(VIEW_KEY, snapshot(filters, request, visibleColumnKeys, enabled));
+  }
+
+  function updateColumns(nextSnapshot: ExperienceViewSnapshot) {
+    setVisibleColumnKeys(nextSnapshot.visibleColumnKeys);
+    writeExperienceView(
+      VIEW_KEY,
+      snapshot(filters, request, nextSnapshot.visibleColumnKeys, expertMode),
+    );
+  }
+
+  const hasPermission = !security.data || security.data.menuKeys.includes("terminology-mapping");
+  const items = query.data?.items ?? [];
+  let pageState: PageStateKind = "ready";
+  if (!hasPermission) pageState = "forbidden";
+  else if (query.isLoading) pageState = "loading";
   else if (query.isError) pageState = "error";
   else if (items.length === 0) pageState = "empty";
 
+  const exportRequest = buildAsyncExportRequest({
+    resourceType: VIEW_KEY,
+    requestSnapshot: snapshot(),
+    selectedScope: "currentPage",
+    selectionSnapshot,
+    reason: "导出字典映射核查结果",
+  });
+
   return (
-    <PageShell
-      title="字典映射"
-      description="把医院码映射到 ICD-10 / ICD-11 / LOINC / SNOMED CT，AI 推荐 + 人工确认"
-      primary={
-        <Button type="primary" icon={<ImportOutlined />} disabled>
-          导入医院字典
-        </Button>
+    <PageExperienceShell
+      meta={PAGE_META}
+      securityProfile={security.data}
+      expertMode={expertMode}
+      onExpertModeChange={updateExpertMode}
+      extras={
+        <AsyncExportAction
+          enabled={false}
+          disabledReason="导出任务接口待引擎包发布任务接入"
+          permissionGranted={false}
+          request={exportRequest}
+        />
       }
     >
-      <MetricGrid
-        items={[
-          { key: "total", title: "总条目", value: query.data?.total ?? 0 },
-          {
-            key: "confirmed",
-            title: "已确认",
-            value: items.filter((m) => m.status === "CONFIRMED").length,
-            tone: "success",
-          },
-          {
-            key: "draft",
-            title: "待确认",
-            value: items.filter((m) => m.status === "DRAFT").length,
-            tone: "warning",
-          },
-          {
-            key: "superseded",
-            title: "已替换 / 回滚",
-            value: items.filter((m) => m.status === "SUPERSEDED" || m.status === "ROLLED_BACK")
-              .length,
-            tone: "primary",
-          },
-        ]}
+      <ExperienceFilterBar
+        filters={PAGE_META.experience.defaultFilters}
+        value={filters}
+        onChange={updateFilters}
+        onSaveView={() => writeExperienceView(VIEW_KEY, snapshot())}
       />
       <PageState
         state={pageState}
         title={pageState === "empty" ? "暂无字典映射条目" : undefined}
-        description={
-          pageState === "empty" ? "可通过导入医院字典或在候选库中确认映射；引擎已就绪" : undefined
-        }
+        description={pageState === "empty" ? "当前筛选范围内没有可核查的映射条目。" : undefined}
+        traceId={query.data?.traceId}
         onRetry={query.refetch}
       >
-        <Table<TermMapping>
-          rowKey="id"
-          dataSource={items}
-          scroll={{ x: "max-content" }}
-          pagination={{
-            current: query.data?.page ?? page,
-            pageSize: query.data?.size ?? PAGE_SIZE,
-            total: query.data?.total ?? 0,
-            showSizeChanger: false,
-            onChange: (p) => setPage(p),
-          }}
-          columns={[
-            { title: "院内编码 ID", dataIndex: "localTermId" },
-            { title: "标准编码 ID", dataIndex: "standardTermId" },
-            { title: "来源系统", dataIndex: "sourceSystem" },
-            { title: "类别", dataIndex: "category", render: (v) => <Tag>{v}</Tag> },
-            {
-              title: "风险等级",
-              dataIndex: "riskLevel",
-              render: (v: TermMapping["riskLevel"]) => <Tag color={RISK_COLOR[v]}>{v}</Tag>,
-            },
-            {
-              title: "置信度",
-              dataIndex: "confidence",
-              render: (v: number) => `${(v * 100).toFixed(1)}%`,
-            },
-            {
-              title: "状态",
-              dataIndex: "status",
-              render: (v: TermMapping["status"]) => (
-                <Tag color={STATUS_COLOR[v]}>{STATUS_LABEL[v]}</Tag>
-              ),
-            },
-            {
-              title: "操作",
-              render: () => (
-                <Space>
-                  <Button type="link" size="small" disabled>
-                    查看
-                  </Button>
-                </Space>
-              ),
-            },
-          ]}
-        />
+        {query.data && (
+          <ServerDataTable<TermMapping>
+            viewKey={VIEW_KEY}
+            rowKey="id"
+            columns={tableColumns}
+            query={normalizePageResponse(query.data)}
+            request={request}
+            loading={false}
+            partial={
+              query.data.partial
+                ? { ...query.data.partial, onRetryFailures: () => void query.refetch() }
+                : undefined
+            }
+            expertMode={expertMode}
+            initialVisibleColumnKeys={visibleColumnKeys}
+            onRequestChange={updateRequest}
+            onOpenDetail={setSelectedMapping}
+            onViewSnapshotChange={updateColumns}
+            onSelectionSnapshotChange={setSelectionSnapshot}
+          />
+        )}
       </PageState>
-    </PageShell>
+      <EvidenceDetailDrawer
+        open={!!selectedMapping}
+        title="字典映射详情"
+        expertMode={expertMode}
+        sections={detailSections(selectedMapping)}
+        traceId={query.data?.traceId}
+        onClose={() => setSelectedMapping(undefined)}
+      />
+    </PageExperienceShell>
   );
 }

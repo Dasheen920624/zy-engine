@@ -199,6 +199,15 @@ export function PatientList() {
 - `QueryClient` 默认 `staleTime: 30s`、`retry: 1`、`refetchOnWindowFocus: false`。
 - 看板/列表使用 `useQuery`；表单提交使用 `useMutation`。
 
+### 产品体验底座接入规则
+
+- 任何带菜单入口的认证路由必须在 `src/shared/config/routes.ts` 配置 `experience`，声明主目标、默认角色视图、最多 3 个默认筛选、专家内容、数据规模和导出策略。
+- 大规模列表必须使用 `ServerDataTable` 或提供等价的服务端分页、排序、列可见性快照与部分成功反馈能力，不得把全量数据加载到浏览器内分页。
+- 页面详情与证据统一进入 `EvidenceDetailDrawer`；普通视图不显示技术追踪字段，获授权的专家模式才可展开。
+- 异步导出入口必须使用 `AsyncExportAction`；接口、权限或审计闭环尚未接通时，应展示受控禁用态，不得伪造下载结果。
+- 保存视图必须经 `experienceView.ts` 校验后进入受控 UI 偏好存储，禁止写入 token、患者标识等敏感内容。
+- 当前真实样板页为“字典映射”，仅提供筛选、分页和证据详情的只读核查，不包含确认、发布、回滚或批量处理动作。
+
 ### MSW
 
 - 默认 **关闭**（`VITE_ENABLE_MSW=false`），调真实后端。

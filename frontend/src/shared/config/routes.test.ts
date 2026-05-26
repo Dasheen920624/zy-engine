@@ -22,6 +22,22 @@ describe("route metadata", () => {
       });
   });
 
+  it("requires experience metadata for authenticated menu routes", () => {
+    const menuRoutes = routeMetas.filter((route) => route.requireAuth && route.menuKey);
+
+    expect(menuRoutes.length).toBeGreaterThan(0);
+    menuRoutes.forEach((route) => {
+      expect(route.experience, `${route.path} 缺少 experience`).toBeDefined();
+      expect(route.experience?.primaryRole).toBeTruthy();
+      expect(route.experience?.goal).toBeTruthy();
+      expect(route.experience?.defaultView).toBeTruthy();
+      expect(route.experience?.evidence).toBeTruthy();
+      expect(route.experience?.interruptionLevel).toMatch(/^(none|info|weak|strong)$/);
+      expect(route.experience?.dataScale.exportStrategy).toMatch(/^(none|disabled|async)$/);
+      expect(route.experience?.defaultFilters.length ?? 0).toBeLessThanOrEqual(3);
+    });
+  });
+
   it("returns customer routes without hidden advanced tools", () => {
     expect(customerRouteMetas.some((route) => route.hidden)).toBe(false);
     expect(customerRouteMetas.map((route) => route.path)).toContain("/dashboard");

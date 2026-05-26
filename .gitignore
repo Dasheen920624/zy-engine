@@ -32,6 +32,7 @@ application-secret.yml
 Thumbs.db
 
 # AI tool workspaces (prevent accidental commits from other AI assistants)
+.superpowers/
 .workbuddy/
 .aider*
 .cursor/
