@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Button, Dropdown, Checkbox, Space, Divider, Input, message } from "antd";
 import { SettingOutlined, SaveOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
+import { readUiPreference, writeUiPreference } from "@/shared/lib/browserStorage";
 
 /**
  * 列管理 + 视图保存。
  *
  * 任何 Antd Table 接入此组件后获得：
  * - 显示/隐藏列（动态控制）
- * - 视图保存到 localStorage（按 viewKey 命名空间隔离）
+ * - 视图保存到受控 UI 偏好存储（按 viewKey 命名空间隔离）
  * - 视图分享（拷贝 URL 含 viewName）
  *
  * 使用方式：
@@ -30,7 +31,7 @@ export function useColumnManager<C extends ColumnDef>(viewKey: string, allColumn
   const defaultVisible = allColumns.map((c) => c.key);
   const [visible, setVisible] = useState<string[]>(() => {
     if (typeof window === "undefined") return defaultVisible;
-    const saved = window.localStorage.getItem(storageKey);
+    const saved = readUiPreference(storageKey);
     if (!saved) return defaultVisible;
     try {
       const parsed = JSON.parse(saved) as { visible?: string[] };
@@ -42,9 +43,7 @@ export function useColumnManager<C extends ColumnDef>(viewKey: string, allColumn
   const [viewName, setViewName] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(storageKey, JSON.stringify({ visible }));
-    }
+    writeUiPreference(storageKey, JSON.stringify({ visible }));
   }, [storageKey, visible]);
 
   const visibleColumns = allColumns.filter((c) => visible.includes(c.key) || c.always);

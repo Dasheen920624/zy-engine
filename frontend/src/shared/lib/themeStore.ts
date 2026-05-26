@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { readUiPreference, writeUiPreference } from "./browserStorage";
 
 /**
  * 全局主题模式 store（Zustand 5）。
@@ -15,7 +16,7 @@ const STORAGE_KEY = "medkernel.theme.mode";
 
 function readInitial(): ThemeMode {
   if (typeof window === "undefined") return "default";
-  const saved = window.localStorage.getItem(STORAGE_KEY);
+  const saved = readUiPreference(STORAGE_KEY);
   if (
     saved === "default" ||
     saved === "elder" ||
@@ -31,9 +32,7 @@ function readInitial(): ThemeMode {
 export const useThemeStore = create<ThemeState>((set) => ({
   mode: readInitial(),
   setMode: (mode) => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, mode);
-    }
+    writeUiPreference(STORAGE_KEY, mode);
     set({ mode });
   },
 }));

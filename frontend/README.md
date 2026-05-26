@@ -141,7 +141,7 @@ const providers = await get<SystemProviders>("/system/providers");
 ### 组织上下文
 
 - 通过 `useOrgContext()` hook 读取与修改。
-- 持久化到 `localStorage`。
+- 持久化到受控 UI 偏好存储；生产代码不得直接访问 `localStorage` / `sessionStorage`。
 - 任何请求都会自动把当前上下文加到 Header（Body 仍可覆盖）。
 - 切换上下文示例：
 
@@ -255,4 +255,6 @@ export function PatientList() {
 - 任何新页面需先说明角色、主目标、默认筛选、数据规模、六态、降级、证据入口和是否需要专家模式。
 - 任何新接口需在 `src/api/*` 单独文件封装，不在组件内直接 axios。
 - 真正权限必须由后端校验，前端只做体验控制（菜单禁用 / 按钮隐藏）。
-- 不在前端代码或 localStorage 存放 token / API Key / 数据库密码 / 患者完整隐私。
+- UI 偏好持久化必须通过 `src/shared/lib/browserStorage.ts`，且只允许批准的 UI key。
+- 不在前端代码或浏览器存储中存放 token / API Key / 数据库密码 / 患者完整隐私。
+- 生产代码禁止 `console.*`；需要用户可感知提示时用页面状态、消息组件或统一事件。

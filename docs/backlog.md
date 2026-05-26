@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.4 · 2026-05-25
+> 版本：4.5 · 2026-05-26
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -131,6 +131,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.5 | 2026-05-26 | Codex | GA-ENG-BASE-10 Phase 1：新增受控 UI 偏好存储封装，移除生产代码中的 token localStorage 读取和 console 输出，ESLint 阻断生产代码直接访问浏览器存储与 console |
 | 4.4 | 2026-05-25 | Codex | GA-ENG-BASE-06 完成：5+1 菜单与路由元数据统一、PageShell/PageState/MetricGrid 体验底座、六态与状态机 Badge、页面分页与移动端表格滚动、桌面/移动布局验证 |
 | 4.3 | 2026-05-25 | Claude | GA-ENG-BASE-02 Phase 1：PermissionCode/RoleCode 枚举 + DefaultPermissionPolicy + PermissionEvaluator (`@perm.has(...)` SpEL) + @DataScope 切面（requireTenant / requireAtLeast）+ OrgUnitController 范例改造 + @EnableMethodSecurity；Phase 2 引入 role_permission DB 表后续 PR |
 | 4.2 | 2026-05-25 | Claude | GA-ENG-BASE-01 完成（JwtClaimsResolver + TenantContextEnricherFilter + OrgUnit 实体/Repository/Service/Controller + SecurityConfig 集成；roles claim → ROLE_* 权限）。GA-ENG-BASE-02 仍 pending |

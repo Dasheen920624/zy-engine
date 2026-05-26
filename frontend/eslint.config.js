@@ -70,7 +70,7 @@ export default tseslint.config(
       ],
 
       // === 反模式（产品体验固定规范 §12）===
-      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-console": "error",
       "no-debugger": "error",
       "no-alert": "error",
       "no-eval": "error",
@@ -79,14 +79,9 @@ export default tseslint.config(
         "error",
         {
           selector:
-            "ImportDeclaration[source.value='axios']:not(:has(ImportSpecifier))",
+            "MemberExpression[object.name=/^(localStorage|sessionStorage)$/], MemberExpression[object.property.name=/^(localStorage|sessionStorage)$/]",
           message:
-            "禁止直接 import axios。请使用 @/shared/api/client 中的 get/post 封装。",
-        },
-        {
-          selector: "CallExpression[callee.object.name='localStorage'][callee.property.name='setItem']",
-          message:
-            "localStorage 写入需慎重。禁止存放 token / API Key / 患者完整隐私。",
+            "禁止在生产代码直接访问 localStorage/sessionStorage。UI 偏好请使用 @/shared/lib/browserStorage，敏感数据禁止写入浏览器存储。",
         },
       ],
       "no-restricted-imports": [
@@ -126,14 +121,20 @@ export default tseslint.config(
     },
     rules: {
       "no-console": "off",
+      "no-restricted-syntax": "off",
       "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
+    files: ["src/shared/lib/browserStorage.ts"],
+    rules: {
+      "no-restricted-syntax": "off",
     },
   },
   {
     files: ["src/shared/api/client.ts"],
     rules: {
       "no-restricted-imports": "off",
-      "no-restricted-syntax": "off",
     },
   },
 );
