@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class H2BaselineMigrationTest {
 
     @Test
-    void h2AppliesBaselineMigrationsThroughTerminologyMapping() {
+    void h2AppliesCompleteAuthoritativeBaselineMigrations() {
         DataSource ds = new HikariDataSource(hikari());
         Flyway flyway = Flyway.configure()
             .dataSource(ds)
@@ -28,11 +28,11 @@ class H2BaselineMigrationTest {
 
         var result = flyway.migrate();
         assertThat(result.success).as("H2 baseline migrations succeed").isTrue();
-        assertThat(result.migrationsExecuted).as("V1 + V2 + V3 + V4 应用").isGreaterThanOrEqualTo(4);
+        assertThat(result.migrationsExecuted).as("V1 至 V6 全部应用").isEqualTo(6);
 
         var applied = flyway.info().applied();
         assertThat(applied).extracting(info -> info.getVersion().getVersion())
-            .contains("1", "2", "3", "4");
+            .containsExactly("1", "2", "3", "4", "5", "6");
     }
 
     private HikariConfig hikari() {
