@@ -1,45 +1,30 @@
 ## Why
 
-MedKernel needs a stable, persistent development deployment that exercises its PostgreSQL-first
-runtime and can be reproduced on later servers. The repository currently provides offline
-installation assets but no Docker-based development platform, while local development still uses
-an in-memory H2 profile and cannot exercise Neo4j or optional Dify integration.
+MedKernel 需要稳定、可持久化、可迁移的 Docker 开发部署，用来验证 PostgreSQL 优先运行时，并为后续服务器部署提供基线。当前项目已完成容器化开发平台资产，因此本变更作为当前事实记录保留。
 
 ## What Changes
 
-- Add repository-owned Docker deployment assets for MedKernel PostgreSQL, backend, frontend
-  gateway, Neo4j projection, Prometheus, and Grafana.
-- Add a container runtime profile that connects the backend to PostgreSQL and applies the
-  existing PostgreSQL Flyway migrations on startup.
-- Add scripts and documentation for `core` and `full` startup modes, health verification,
-  PostgreSQL backup/restore, and deployment on another Docker-enabled server.
-- Pin and bootstrap the official Dify `v1.14.0` self-hosted Compose distribution under the
-  external runtime root without merging its internal database with MedKernel's database.
-- Establish `/Users/zhikunzheng/work/medkernel/runtime/` as the local persistent state root,
-  while keeping the deployment portable via `MEDKERNEL_RUNTIME_ROOT`.
+- 增加 `deploy/docker/` 下的 Compose、镜像构建、环境模板和操作脚本。
+- 新增后端 `container` profile，连接 PostgreSQL 并应用 Flyway 迁移。
+- 提供 `core` 和 `full` 两种启动模式。
+- 将 Dify 官方自托管 Compose 保留在外部 runtime 目录，并通过仓库内摘要锁定文件固定已验证镜像。
+- 增加 PostgreSQL 备份、恢复、健康检查和迁移说明。
+- 移除旧离线包、systemd、Nginx 和旧 profile 部署入口，让 Docker 成为当前唯一部署入口。
 
 ## Capabilities
 
 ### New Capabilities
 
-- `containerized-development-platform`: Persistent Docker development deployment, service
-  boundaries, operational scripts, and migration path for later servers.
+- `containerized-development-platform`：可持久化的 Docker 开发部署、服务健康检查、备份恢复和可选 Dify 集成。
 
 ### Modified Capabilities
 
-None. This change adds an operational capability without altering the existing product identity
-or change-planning requirements.
+- 部署入口统一收束到 Docker 平台。
 
 ## Impact
 
-- Affected documentation: `README.md`, `deploy/README.md`, Docker deployment documentation,
-  Superpowers design/plan files, and OpenSpec specifications.
-- Affected backend configuration: a new container-oriented Spring profile; existing API behavior
-  is unchanged.
-- Affected infrastructure: Docker Desktop on this Mac, PostgreSQL 16 persistent development
-  storage, Neo4j 5.23 optional projection, Prometheus/Grafana observability, and official Dify
-  `v1.14.0` self-hosted services.
-- Affected migrations: existing PostgreSQL Flyway migrations are executed in the new runtime;
-  no new application tables are introduced by this change.
-- Verification: deployment-file validation, backend/frontend builds, PostgreSQL migration
-  startup, endpoint health checks, Dify availability, degradation checks, and database backup.
+- 基础设施：Docker Desktop、本机 runtime 目录、PostgreSQL 16、Neo4j 5、Prometheus、Grafana、Dify。
+- 后端：新增容器 profile，不改变业务 API 行为。
+- 前端：新增容器网关构建与路由入口。
+- 数据：使用已有 PostgreSQL Flyway 迁移。
+- 验证：Compose 配置、后端/前端构建、迁移启动、健康检查、Dify 可用性、降级与备份。

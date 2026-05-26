@@ -1,22 +1,14 @@
 /**
- * ESLint 规则：禁用 zy-engine 时代的命名（已彻底重命名为 MedKernel）。
+ * ESLint 规则：禁用重启前品牌、路径和环境变量标识。
  *
- * 强制 ADR-0002 + 项目重命名决策。
+ * 防止旧标识重新进入当前 MedKernel 代码。
  *
  * 检测：
- *   - 标识符含 ZyEngine
- *   - 字符串含 'zy-engine' 'zyengine' '/zy-engine/' 'ZyEngine' 'ZY_HOME' 'ZY_USER' 'ZY_ENV_FILE' 'ZYENGINE_'
- *   - CSS 变量 --zy-*（已全部改为 --mk-*）
- *   - 注释里的旧命名
- *
- * 例外：
- *   - 本规则文件本身（要含 zy 关键字用于检测）
- *
- * 错误示例：
- *   const apiBase = '/zy-engine/api';
- *   import { ZyEngineConfig } from './config';
- *   color: var(--zy-primary);
- *   // TODO: 旧 zyengine 兼容
+ *   - 重启前品牌标识
+ *   - 重启前 API 路径
+ *   - 重启前环境变量
+ *   - 重启前 CSS 变量和类名前缀
+ *   - 注释中的旧标识
  *
  * 正确示例：
  *   const apiBase = '/medkernel/api';
@@ -72,13 +64,13 @@ export default {
   meta: {
     type: 'problem',
     docs: {
-      description: '禁用 zy-engine 时代的命名（已重命名为 MedKernel）',
+      description: '禁用重启前品牌、路径和环境变量标识',
       recommended: true,
     },
     messages: {
       deprecatedNaming:
         '禁用已废弃的命名 "{{match}}"。{{hint}}。' +
-        '项目已重命名为 MedKernel（2026-05-18），见 CHANGELOG.md。' +
+        '当前项目品牌为 MedKernel。' +
         '历史保留例外：CSS Token --mk-*（仅 tokens.css）。',
     },
     schema: [],

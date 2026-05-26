@@ -1,111 +1,88 @@
-# GA-ENG-BASE-06 Frontend Experience Foundation Design
+# 前端产品体验基础重构设计
 
-## Context
+日期：2026-05-25
+状态：当前设计
+关联任务：GA-ENG-BASE-06
 
-MedKernel v1.0 GA requires a stable frontend foundation before the engine-facing pages can safely scale. The current frontend already has many page shells and page stubs, but route metadata only covers login and dashboard, menus are maintained separately from route registration, breadcrumbs are not derived from a single source, and page state handling is inconsistent across pages.
+## 背景
 
-This change implements `GA-ENG-BASE-06` as a product-experience foundation and page-by-page cleanup pass. It aligns the existing frontend with the product constitution: 5 visible menu groups plus hidden advanced tools, left-side navigation, one page goal, one primary action, unified state machines, reusable seven-step configuration flow, and complete six-state presentation.
+MedKernel v1.0 GA 需要稳定的前端基础，才能支撑后续引擎页面逐步扩展。当前前端已有页面壳和部分占位页，但路由元数据、菜单、面包屑、权限、页面状态和配置流程还没有完全统一。
 
-## Goals
+## 目标
 
-- Make route metadata the single source of truth for navigation, breadcrumbs, page titles, menu placement, route registration, and permissions metadata.
-- Derive the 5+1 menu from route metadata so menu and route paths cannot drift.
-- Add a reusable six-state surface for loading, empty, error, forbidden, partial-success, and ready states.
-- Upgrade `PageShell`, `AppLayout`, and shared UI components so customer-facing pages follow the same information architecture.
-- Refactor existing pages one by one for consistent product experience, status badges, pagination, primary-action hierarchy, and evidence/degradation messaging.
-- Keep the scope frontend-only: no new backend behavior, no fake API completion claims, and no hard-coded single-disease business closure.
+- 让路由元数据成为导航、面包屑、页面标题、菜单归属、路由注册和权限信息的单一来源。
+- 固定 5 组客户可见主菜单，并把高级技术工具隐藏在高级入口中。
+- 提供统一页面壳，确保每页一个目标、一个主动作、清晰的辅助动作。
+- 提供统一六态组件：加载、空、错误、无权限、部分成功、就绪。
+- 提供可复用 7 步配置流，支撑知识、规则、路径、图谱、推荐、评估等复杂配置。
+- 逐页改造现有页面，统一筛选、分页、状态徽标、证据说明、降级提示和审计追踪。
 
-## Non-Goals
+## 非目标
 
-- Do not implement new `GA-ENG-API-*` backend endpoints.
-- Do not replace existing mock/static page data with fake production APIs.
-- Do not redesign the brand or build a marketing-style landing page.
-- Do not create new first-level menus or expose advanced technical views as customer main paths.
+- 不新增后端行为。
+- 不用前端假数据宣称业务闭环完成。
+- 不新增客户可见一级菜单。
+- 不在普通客户主路径暴露 JSON、DSL、trace、模型 prompt 或图谱边表。
 
-## Architecture
+## 方案
 
-### Route Metadata
+### 路由元数据
 
-`frontend/src/shared/config/routes.ts` becomes the canonical page registry. Each page route includes:
+在 `frontend/src/shared/config/routes.tsx` 中维护统一 route registry。每条路由至少包含：
 
-- `path`
-- `title`
-- `breadcrumb`
-- `sectionKey`
-- `menuKey`
-- `menuLabel`
-- `requireAuth`
-- `hidden`
-- optional `permissions`, `pageType`, and `stateMachine`
+- 路径。
+- 页面组件。
+- 标题和说明。
+- 菜单分组。
+- 面包屑。
+- 所需权限。
+- 是否为高级工具。
 
-`frontend/src/shared/config/menu.ts` derives menu sections from this registry and keeps the constitution ordering locked.
+`frontend/src/shared/config/menu.ts` 从 route registry 派生菜单，禁止另写一套菜单事实源。
 
-### Layout And Navigation
+### 页面壳
 
-`AppLayout` reads route metadata for:
+`PageShell` 负责标题、说明、面包屑、主动作、辅助动作和内容区边界。客户页面不嵌套多层卡片，不把说明性文案塞满界面。
 
-- selected menu item
-- default open menu section
-- header title
-- breadcrumbs
-- hidden advanced-tool entry
+### 六态组件
 
-The router still lazy-loads pages, but route definitions use the same metadata paths instead of parallel hand-maintained path lists.
+共享状态组件负责：
 
-### Six-State UI
+- 加载态：明确当前加载对象。
+- 空态：提供下一步动作。
+- 错误态：显示 traceId 和重试入口，不泄露敏感信息。
+- 无权限态：说明缺少权限，不暴露后台策略细节。
+- 部分成功态：说明哪些数据可用、哪些降级。
+- 就绪态：只渲染真实数据或明确的占位范围。
 
-Add a shared state component under `frontend/src/shared/ui/` that supports:
+### 七步配置流
 
-- loading
-- empty
-- error
-- forbidden
-- partial success
-- ready
+复杂配置默认复用七步流程：
 
-The component must provide consistent Chinese copy, retry/action slots, traceId display for errors, and non-sensitive forbidden messaging.
+1. 选择范围。
+2. 导入或选择来源。
+3. 识别候选。
+4. 风险校验。
+5. 人工审核。
+6. 灰度发布。
+7. 证据归档。
 
-### Page Cleanup
+## 逐页验收
 
-Refactor all existing pages by type:
+每个页面改造完成后至少验证：
 
-- Configuration pages: use `StepFlow`, `StatusBadge`, one primary action, and evidence/rollback language.
-- List pages: use consistent filters, table pagination, empty/error/loading states, and status badges.
-- Dashboard pages: focus on risk, progress, value, actions, and drill-down intent.
-- Advanced tools: keep technical details visible only inside advanced pages, with clear warning/degradation state.
-- Auth and not-found pages: keep them simple, branded, and action-oriented.
+- 路由、菜单、面包屑来自同一元数据。
+- 主动作唯一且醒目，辅助动作不抢焦点。
+- 表格、分页、筛选和状态徽标一致。
+- 空、错、加载、无权限、部分成功、就绪六态可覆盖。
+- 涉及医学建议、规则、知识或质控时，页面保留来源、审核、人工确认、降级和审计入口。
 
-## Testing Strategy
+## 风险
 
-- Route/menu unit tests:
-  - visible sections equal 5
-  - hidden advanced section exists
-  - every menu path has route metadata
-  - every authenticated page has title and breadcrumb
-  - no duplicate paths
-- Six-state unit tests:
-  - each state renders expected text and action affordance
-  - error state can show traceId
-  - ready state renders children
-- Component tests:
-  - `PageShell` renders title, description, breadcrumb-aware content area, primary action, extras.
-  - `AppLayout` can render menu labels from metadata.
-- Page smoke tests:
-  - representative pages from each section render without crashing.
-- Final verification:
-  - `npm run lint`
-  - `npm run format:check`
-  - `npm run typecheck`
-  - `npm test`
-  - `npm run build`
-  - browser verification on the local app for core routes.
+- 如果只改视觉不改状态模型，后续页面会继续分裂。
+- 如果菜单重新手写，权限和面包屑会再次漂移。
+- 如果高级技术细节暴露到普通主路径，会破坏产品体验和合规边界。
 
-## Acceptance Criteria
+## 完成定义
 
-- `docs/backlog.md` marks `GA-ENG-BASE-06` as done only after implementation and verification pass.
-- All current frontend pages are reachable through metadata-backed routes.
-- The customer-facing side menu remains exactly 5 visible groups; advanced tools stay hidden/secondary.
-- Header title and breadcrumbs come from route metadata, not raw path strings.
-- Existing pages consistently use shared shell/state/status/step components.
-- No new customer-facing JSON, DSL, trace, or model prompt exposure outside advanced tools.
-- Verification evidence is collected before commit, push, and PR.
+前端基础重构完成后，后续业务页面应只需要声明 route metadata、页面数据源、页面动作和状态映射，就能自然进入统一产品体验。

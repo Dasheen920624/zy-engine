@@ -1,12 +1,18 @@
 schema: spec-driven
 
 context: |
-  MedKernel is the group medical intelligence hub for hospital networks, district hospitals,
-  community health centers, and specialty teams. The repository is a brownfield Java + React
-  monorepo with Spring Boot backend services, a React 18 + Ant Design frontend, deployment
-  scripts, and a documentation-led product definition.
-  Primary authority documents live in:
+  MedKernel 是集团医疗智能中枢，服务集团医院、区县医院、社区卫生服务中心和专科协同团队。
+  本仓库是 Java + React 的既有单体仓库，包含 Spring Boot 后端、React 18 + Ant Design 前端、
+  Docker 部署资产和以文档驱动的产品定义。
+
+  当前所有有效文档必须使用简体中文书写。英文仅用于代码标识符、接口路径、命令、配置键、
+  第三方产品名、标准缩写和必要原文引用，并且需要中文解释。
+
+  主要权威文档：
   - README.md
+  - AGENTS.md
+  - docs/README.md
+  - docs/DOCUMENTATION_LANGUAGE_POLICY.md
   - docs/CONSTITUTION.md
   - docs/MEDKERNEL_FOUNDATION_AND_SERVICES.md
   - docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md
@@ -16,14 +22,18 @@ context: |
 
 rules:
   proposal:
-    - Keep proposals aligned with the current v1.0 GA 0 "0 business engine full capability" direction.
-    - Do not replace the existing backend, frontend, or deployment stack unless explicitly requested.
-    - Call out affected docs, APIs, data tables, migrations, and tests before implementation.
+    - 提案必须与 v1.0 GA 当前「0 业务引擎全能力上线」方向一致。
+    - 不得替换既有后端、前端或部署技术栈，除非用户明确要求。
+    - 实施前必须说明影响的文档、API、数据表、迁移脚本、测试和部署入口。
+    - 提案正文必须使用中文；保留英文代码名时必须解释业务含义。
   specs:
-    - Describe current deployed behavior in clear requirements and concrete scenarios.
-    - Keep specs domain-focused and narrowly scoped.
-    - Prefer tenant-scoped, auditable, reversible behavior with explicit fallbacks.
+    - 用清晰中文描述当前已部署行为、需求和具体场景。
+    - 规格必须聚焦领域，范围要窄，避免新建并行事实源。
+    - 优先描述租户隔离、可审计、可回滚、可降级的行为。
   design:
-    - Explain architecture, data flow, error handling, and verification.
+    - 用中文说明架构、数据流、错误处理、降级策略、验证方式和医疗安全边界。
+    - 设计不得引用历史归档、旧分支、旧任务锁或旧模板作为当前规则来源。
   tasks:
-    - Break work into small executable steps with validation checkpoints.
+    - 拆成可执行的小步骤，每步包含验证检查点。
+    - 功能完成后必须创建 PR，等待远端检查通过，并合并到 GitHub 远程 `main`。
+    - 不允许直接推送远程 `main` 或把未验证变更合入 `main`。

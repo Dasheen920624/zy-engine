@@ -1,9 +1,9 @@
 # MedKernel 集团医疗智能中枢实施落地方案
 
-> 版本：4.0 · 2026-05-24
+> 版本：4.1 · 2026-05-26
 > 状态：v1.0 GA 0 业务引擎全能力上线基线
 > 适用对象：产品、架构、前端、后端、AI 知识团队、QA、实施交付、试点医院项目组
-> 主线结论：保留现有代码骨架，恢复 v0.3 的完整业务范围，统一收束为“集团医疗智能中枢”。MedKernel 只做引擎核心、管理控制台、嵌入能力、API、知识包、配置包和审计证据，不做 HIS/EMR/LIS/PACS 替代品，也不做患者端完整运营系统。当前优先目标不是先按业务菜单拆分，而是按 0 业务模式把医疗智能引擎全能力端到端上线。
+> 主线结论：以项目重启节点后的代码骨架和当前权威文档为基础，把已确认的业务设计统一收束为“集团医疗智能中枢”。MedKernel 只做引擎核心、管理控制台、嵌入能力、API、知识包、配置包和审计证据，不做 HIS/EMR/LIS/PACS 替代品，也不做患者端完整运营系统。当前优先目标不是先按业务菜单拆分，而是按 0 业务模式把医疗智能引擎全能力端到端上线。
 
 ---
 
@@ -31,9 +31,9 @@
 | 最简洁 | 仍使用 5 组主菜单 + 1 个隐藏高级工具，不新增“知识工厂”等一级菜单 | 客户首屏不超过 5 个一级入口，默认页不暴露 JSON、DSL、图谱边表 |
 | 最易用 | 普通用户走向导、审核、发布；专家才进入规则、路径、图谱、映射细调 | 每个核心配置都复用 7 步流，默认 1 个主按钮、最多 3 个默认筛选 |
 | 世界级体验 | 全系统遵守产品体验固定规范，复杂能力渐进披露，大规模知识可分页、可筛选、可批量、可导出 | 不出现前端全量加载、低价值强提醒、无行动驾驶舱、不可追溯 AI 建议 |
-| 最完整 | v0.3 的知识、字典、说明书、指南、文献、规则、路径、图谱、推荐、评估、随访、护理、医技报告、中医药、集团化、用户体系、院内同步全部恢复 | A1-A9 全功能验收剧本、领域实现卡、知识包导出、院内同步、前台审核、人工调整、审计证据通过 |
+| 最完整 | 知识、字典、说明书、指南、文献、规则、路径、图谱、推荐、评估、随访、护理、医技报告、中医药、集团化、用户体系、院内同步全部进入当前版本能力范围 | A1-A9 全功能验收剧本、领域实现卡、知识包导出、院内同步、前台审核、人工调整、审计证据通过 |
 
-本文是给 AI 团队执行的落地方案。若与 [CONSTITUTION.md](CONSTITUTION.md) 冲突，以产品宪法为最高约束；页面、交互、分页、嵌入、可信解释和体验验收以 [产品体验固定规范](MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md) 为准；若旧 v0.3 文档与本文冲突，以本文的主线收束为准，但旧 v0.3 的业务范围不能丢。
+本文是给 AI 团队执行的落地方案。若与 [CONSTITUTION.md](CONSTITUTION.md) 冲突，以产品宪法为最高约束；页面、交互、分页、嵌入、可信解释和体验验收以 [产品体验固定规范](MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md) 为准。历史设计中仍有效的能力范围已经吸收到本文、产品宪法、产品体验规范和业务场景详细规范中，当前实施不得再引用旧归档目录作为事实源。
 
 为避免“大而散”，本方案先按 [基础底座与引擎服务能力总览](MEDKERNEL_FOUNDATION_AND_SERVICES.md) 阅读：基础底座负责稳定、复用、治理和降级；引擎服务能力负责先把知识、字典、规则、路径、推荐、评估、随访、包发布、嵌入、模型网关和证据链端到端上线；业务服务包装在引擎全能力验收后再拆。
 
@@ -43,25 +43,20 @@
 
 ### 1.1 权威输入
 
-本次重构必须从以下资料恢复业务范围：
+本次重构必须从以下当前资料确认业务范围和实现顺序：
 
 | 来源 | 用途 |
 |---|---|
 | [docs/MEDKERNEL_FOUNDATION_AND_SERVICES.md](MEDKERNEL_FOUNDATION_AND_SERVICES.md) | 基础底座与引擎服务能力总览，用于先理解整体方案结构 |
 | [docs/CONSTITUTION.md](CONSTITUTION.md) | 产品宪法：菜单、状态机、7 步流、合规、租户生命周期 |
 | [docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md](MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md) | 全系统产品与交互体验固定规范：角色、页面、分页、低打扰、可信解释、体验验收 |
+| [docs/DOCUMENTATION_LANGUAGE_POLICY.md](DOCUMENTATION_LANGUAGE_POLICY.md) | 当前文档与 AI 协作语言规则：文档主体使用简体中文，功能完成后 PR 合并远程 `main` |
 | [docs/backlog.md](backlog.md) | 当前任务台账 |
 | [docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md](MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md) | 唯一实现级详细规范：全业务场景、系统详细设计、可插拔大模型、最新知识、权威版本替换、API/嵌入、引擎、质控、评级、验收 |
-| [docs/archive/v0.3/01_产品事实源.md](archive/v0.3/01_产品事实源.md) | v0.3 产品能力和业务事实 |
-| [docs/archive/v0.3/02_场景剧本图.md](archive/v0.3/02_场景剧本图.md) | v0.3 业务剧本与验收链路 |
-| [docs/archive/v0.3/03_设计系统.md](archive/v0.3/03_设计系统.md) | v0.3 设计系统与交互细节 |
-| [docs/archive/v0.3/04_页面规格书.md](archive/v0.3/04_页面规格书.md) | v0.3 页面规格 |
-| [docs/archive/v0.3/05_AI实施手册.md](archive/v0.3/05_AI实施手册.md) | v0.3 AI 团队实施方式 |
-| [docs/archive/v0.3/engineering/AI医疗知识工厂与字典映射方案.md](archive/v0.3/engineering/AI医疗知识工厂与字典映射方案.md) | AI 知识工厂、字典映射、知识包核心方案 |
-| [docs/archive/v0.3/engineering/用户体系与身份联邦详细设计方案.md](archive/v0.3/engineering/用户体系与身份联邦详细设计方案.md) | 用户、角色、组织、身份联邦 |
-| [docs/archive/v0.3/engineering/DATA-001_主数据与数据质量治理设计.md](archive/v0.3/engineering/DATA-001_主数据与数据质量治理设计.md) | 主数据、数据质量、映射治理 |
-| [docs/archive/v0.3/engineering/05_架构总图与服务边界.md](archive/v0.3/engineering/05_架构总图与服务边界.md) | 原服务边界与架构思路 |
-| [docs/archive/v0.3/ai-dev-input/](archive/v0.3/ai-dev-input/) | 原 API、schema、DDL、样例、测试数据、AI 任务卡 |
+| [openspec/specs/medkernel/spec.md](../openspec/specs/medkernel/spec.md) | OpenSpec 当前产品能力规范 |
+| [openspec/changes/](../openspec/changes/) | OpenSpec 当前进行中的变更提案、设计和任务 |
+| [docs/superpowers/specs/](superpowers/specs/) | Superpowers 当前设计说明 |
+| [docs/superpowers/plans/](superpowers/plans/) | Superpowers 当前实施计划 |
 
 ### 1.2 现有代码骨架核查
 
@@ -72,7 +67,7 @@
 | 后端 | JDK 21、Spring Boot 3.3、Spring Security、Spring Data JDBC、Flyway、5 方言目录已存在；包结构已有 `tenant`、`clinical`、`quality`、`compliance`、`advanced`、`platform`、`shared` | 控制器仍有大量 `Map<String,Object>` 和示例数据；缺少统一 `ApiResult`、真实领域模型、AI 知识工厂、规则/路径/图谱/包发布核心表 |
 | 数据库 | `h2/postgres/oracle/dm/kingbase` 均有 `V1__init.sql` | 需要补全 5 方言一致的核心 DDL、索引、唯一约束、审计字段、迁移测试 |
 | 前端 | React 18、Antd 5、Vite、FSD 骨架存在；`AppRouter` 已接入 31 个页面和高级工具 | `routes.ts` 只有登录和工作台，必须变成路由、菜单、面包屑、权限的唯一元数据；页面多数仍是演示数据，需要接真实 API、六态、7 步流 |
-| 文档 | v0.3 已归档，v1.0 GA 有宪法和台账 | 根 README 与文档索引对“实施落地主线”的描述不够，需要以本文为执行入口 |
+| 文档 | 重启后的权威文档已收束到产品宪法、体验规范、实施方案、业务场景详细规范、OpenSpec 与 Superpowers | 根 README、文档索引、OpenSpec 和 AI 协作规则必须保持中文、远程 `main` 单主干和无历史包袱口径一致 |
 
 ### 1.3 当前最大风险
 

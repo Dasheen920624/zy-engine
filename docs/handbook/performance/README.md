@@ -11,7 +11,7 @@
 |---|---|---|
 | `k6-1000-concurrent.js` | GA-PERF-01 主压测（1000 并发 60min）| P95<300ms / P99<800ms / 错误率<0.1% |
 | `k6-llm-degradation.js` | LLM 降级链端到端 | 主备切换 P95<1.5s |
-| `baseline-report.md` | v0.3-final 历史基线（仅参考） | — |
+| `baseline-report.md` | 当前性能基线报告模板 | 待首次正式压测后填充 |
 | `SLO.md` | 服务等级目标定义 | — |
 | `load-test-plan.md` | 压测计划与场景设计 | — |
 

@@ -4,8 +4,7 @@
 单元、Nginx 反代样例、profile 模板和独立 Prometheus 配置已移除，避免和新的
 容器化开发/迁移平台同时存在造成误用。
 
-> 完整版本约定仍见 [VERSIONING.md](../VERSIONING.md)。历史离线部署方案已保存在
-> `docs/archive/` 中，仅作追溯，不再作为当前部署路径。
+> 完整版本约定仍见 [VERSIONING.md](../VERSIONING.md)。旧离线部署方案不再保留在当前工作树中；需要追溯时使用 Git 历史。
 
 ## 当前目录结构
 

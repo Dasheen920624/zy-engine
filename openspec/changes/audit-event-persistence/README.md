@@ -1,4 +1,3 @@
 # audit-event-persistence
 
-Persist `AuditEvent` to the `audit_event` table with a per-tenant SM3 hash chain, and
-serve real audit data through the compliance audit API (replacing the current mock).
+将 `AuditEventPublisher` 发布的审计事件持久化为带签名链的真实审计数据，并通过合规审计 API 提供查询，替换原先的示例数据。

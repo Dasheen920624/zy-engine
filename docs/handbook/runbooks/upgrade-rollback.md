@@ -1,7 +1,7 @@
 # MedKernel Docker 升级回滚 Runbook
 
 > 适用：当前 Docker 部署平台。旧离线包、systemd、Nginx 脚本部署入口已从
-> `deploy/` 移除，历史方案仅保留在 `docs/archive/` 中作追溯。
+> `deploy/` 移除，不再保留在当前工作树中；需要追溯时使用 Git 历史。
 
 ## 1. 升级前准备
 
