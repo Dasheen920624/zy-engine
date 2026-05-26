@@ -87,11 +87,13 @@ describe("SystemProviders", () => {
     expect(screen.getByText("知识图谱投影")).toBeInTheDocument();
     expect(screen.getByText("Dify 工作流")).toBeInTheDocument();
     expect(screen.getAllByText("备份恢复").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("SHA-256 摘要随备份文件生成，恢复前自动校验").length)
-      .toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("SHA-256 摘要随备份文件生成，恢复前自动校验").length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText(/麒麟 \/ 统信 \/ openEuler/).length).toBeGreaterThan(0);
-    expect(within(screen.getByTestId("runtime-dependencies")).getByText("关系数据库"))
-      .toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("runtime-dependencies")).getByText("关系数据库"),
+    ).toBeInTheDocument();
 
     expect(screen.queryByText("Oracle 23ai · 主库")).not.toBeInTheDocument();
     expect(screen.queryByText(/总院 PACS/)).not.toBeInTheDocument();

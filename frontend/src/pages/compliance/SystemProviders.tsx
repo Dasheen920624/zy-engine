@@ -1,4 +1,16 @@
-import { Alert, Card, Row, Col, Tag, Space, Typography, Table, Statistic, Button } from "antd";
+import {
+  Alert,
+  Card,
+  Row,
+  Col,
+  Tag,
+  Space,
+  Typography,
+  Table,
+  Statistic,
+  Button,
+  theme,
+} from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
 import { PageState } from "@/shared/ui/PageState";
@@ -31,6 +43,7 @@ const RISK_COLOR: Record<string, string> = {
 
 export default function SystemProviders() {
   const runtime = useRuntimeOperations();
+  const { token } = theme.useToken();
 
   if (runtime.isLoading) {
     return (
@@ -78,7 +91,9 @@ export default function SystemProviders() {
               <Statistic
                 title="整体健康"
                 value={STATUS_LABEL[data.healthStatus] ?? data.healthStatus}
-                valueStyle={{ color: data.healthStatus === "UP" ? "#237804" : "#ad4e00" }}
+                valueStyle={{
+                  color: data.healthStatus === "UP" ? token.colorSuccess : token.colorWarning,
+                }}
               />
             </Card>
           </Col>

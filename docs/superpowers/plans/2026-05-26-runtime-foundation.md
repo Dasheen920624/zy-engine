@@ -117,11 +117,11 @@ npm test -- pages.smoke.test.tsx
 - 修改：`docs/backlog.md`
 - 修改：`docs/superpowers/plans/2026-05-26-runtime-foundation.md`
 
-- [ ] **步骤 1：更新中文台账**
+- [x] **步骤 1：更新中文台账**
 
 将 `GA-ENG-BASE-07` 标记为 `done`，负责人改为 `codex`，并增加 `4.9` 修订记录。
 
-- [ ] **步骤 2：完整验证**
+- [x] **步骤 2：完整验证**
 
 运行：
 
