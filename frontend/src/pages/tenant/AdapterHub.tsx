@@ -55,8 +55,8 @@ export default function AdapterHub() {
           {MOCK.map((a) => (
             <Col xs={24} md={12} xl={8} key={a.id}>
               <Card>
-                <Space direction="vertical" size="small" style={{ width: "100%" }}>
-                  <Space style={{ justifyContent: "space-between", width: "100%" }}>
+                <Space direction="vertical" size="small" className="mk-full-width">
+                  <Space className="mk-flex-between">
                     <Tag color="blue">{a.system}</Tag>
                     <Tag color={STATUS_COLOR[a.status]}>{LABEL[a.status]}</Tag>
                   </Space>

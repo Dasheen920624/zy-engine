@@ -52,8 +52,8 @@ export default function SystemProviders() {
         {PROVIDERS.map((p) => (
           <Col span={8} key={p.name}>
             <Card>
-              <Space direction="vertical" size="small" style={{ width: "100%" }}>
-                <Space style={{ width: "100%", justifyContent: "space-between" }}>
+              <Space direction="vertical" size="small" className="mk-full-width">
+                <Space className="mk-flex-between">
                   <Tag>{p.category}</Tag>
                   <Tag color={TAG_COLOR[p.status]}>{LABEL[p.status]}</Tag>
                 </Space>

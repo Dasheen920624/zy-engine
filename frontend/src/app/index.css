@@ -1,6 +1,4 @@
 :root {
-  --mk-bg-eye-layout: #f5f1e8;
-  --mk-bg-eye-container: #fdfaf2;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", sans-serif;
   font-size: 14px;
@@ -15,4 +13,236 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+}
+
+.mk-full-width,
+.mk-stack-full {
+  width: 100%;
+}
+
+.mk-min-0 {
+  min-width: 0;
+}
+
+.mk-flex-between {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.mk-align-right {
+  text-align: right;
+}
+
+.mk-clickable {
+  cursor: pointer;
+}
+
+.mk-route-spinner {
+  display: block;
+  margin: 20vh auto;
+}
+
+.mk-title-tight {
+  margin: 0 !important;
+}
+
+.mk-text-xs {
+  font-size: 12px;
+}
+
+.mk-text-block-gap-top {
+  display: block;
+  margin-top: 8px;
+}
+
+.mk-gap-top-xs {
+  margin-top: 8px;
+}
+
+.mk-card-gap-top {
+  margin-top: 16px;
+}
+
+.mk-card-gap-bottom {
+  margin-bottom: 16px;
+}
+
+.mk-filter-row {
+  margin-bottom: 12px;
+}
+
+.mk-search-sm {
+  width: 280px;
+}
+
+.mk-search-md {
+  width: 360px;
+  margin-bottom: 12px;
+}
+
+.mk-form-md {
+  max-width: 600px;
+}
+
+.mk-select-xs {
+  width: 110px;
+}
+
+.mk-route-title {
+  display: block;
+}
+
+.mk-route-title-desktop {
+  max-width: 320px;
+}
+
+.mk-route-title-mobile {
+  max-width: 132px;
+}
+
+.mk-command-results {
+  margin-top: 12px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.mk-push-inline-start-auto {
+  margin-left: auto;
+}
+
+.mk-popover-compact {
+  max-width: 320px;
+}
+
+.mk-list-item-compact {
+  padding: 4px 0 !important;
+  border: 0 !important;
+}
+
+.mk-tag-muted-italic {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.mk-divider-tight {
+  margin: 8px 0 !important;
+}
+
+.mk-column-manager-panel {
+  width: 200px;
+}
+
+.mk-icon-primary {
+  color: var(--ant-color-primary);
+}
+
+.mk-icon-success {
+  color: var(--ant-color-success);
+}
+
+.mk-icon-danger {
+  color: var(--ant-color-error);
+}
+
+.mk-card-transparent {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.mk-card-body-flush .ant-card-body {
+  padding: 0;
+}
+
+.mk-layout-shell {
+  min-height: 100vh;
+}
+
+.mk-layout-main {
+  min-height: 100vh;
+  transition: margin-left 0.2s;
+}
+
+.mk-layout-main-expanded {
+  margin-left: 240px;
+}
+
+.mk-layout-main-collapsed {
+  margin-left: 80px;
+}
+
+.mk-layout-main-mobile {
+  margin-left: 0;
+}
+
+.mk-sider-root {
+  position: fixed !important;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  bottom: 0;
+  height: 100vh;
+  overflow: auto;
+  z-index: 20;
+  background: var(--ant-color-bg-container) !important;
+  border-inline-end: 1px solid var(--ant-color-border-secondary);
+}
+
+.mk-nav-brand {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ant-color-primary);
+  font-weight: 600;
+  font-size: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--ant-color-bg-container);
+  z-index: 1;
+}
+
+.mk-nav-brand-collapsed {
+  font-size: 14px;
+}
+
+.mk-menu-borderless,
+.mk-menu-borderless.ant-menu {
+  border-inline-end: 0 !important;
+}
+
+.mk-advanced-menu-wrap {
+  padding: 12px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  margin-top: 16px;
+}
+
+.mk-advanced-menu {
+  border-inline-end: 0 !important;
+  margin-top: 8px;
+}
+
+.mk-drawer-no-body-padding .ant-drawer-body {
+  padding: 0;
+}
+
+.mk-app-header {
+  padding: 0 16px;
+  background: var(--ant-color-bg-container);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+}
+
+.mk-app-header-mobile {
+  padding: 0 10px;
+}
+
+.mk-app-content {
+  padding: 24px;
+  background: var(--ant-color-bg-layout);
 }

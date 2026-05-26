@@ -45,7 +45,7 @@ export default function Mpi() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onSearch={(v) => setQ(v)}
-          style={{ width: 360, marginBottom: 12 }}
+          className="mk-search-md"
           prefix={<SearchOutlined />}
         />
         <PageState

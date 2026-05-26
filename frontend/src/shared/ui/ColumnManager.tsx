@@ -62,7 +62,7 @@ export function useColumnManager<C extends ColumnDef>(viewKey: string, allColumn
     {
       key: "columns",
       label: (
-        <Space direction="vertical" style={{ width: 200 }}>
+        <Space direction="vertical" className="mk-column-manager-panel">
           {allColumns.map((c) => (
             <Checkbox
               key={c.key}
@@ -73,7 +73,7 @@ export function useColumnManager<C extends ColumnDef>(viewKey: string, allColumn
               {c.title}
             </Checkbox>
           ))}
-          <Divider style={{ margin: "8px 0" }} />
+          <Divider className="mk-divider-tight" />
           <Input
             placeholder="视图名（可选）"
             value={viewName}

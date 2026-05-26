@@ -128,12 +128,12 @@ export default function AiReview() {
       >
         {explain.isLoading && <Typography.Text>加载中...</Typography.Text>}
         {explain.data && (
-          <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <Space direction="vertical" size="middle" className="mk-full-width">
             <Card size="small">
-              <Typography.Title level={5} style={{ margin: 0 }}>
+              <Typography.Title level={5} className="mk-title-tight">
                 {explain.data.shortAnswer}
               </Typography.Title>
-              <Space style={{ marginTop: 8 }}>
+              <Space className="mk-gap-top-xs">
                 <span>AI 置信度</span>
                 <Tag color={BAND[explain.data.confidenceBand]}>
                   {explain.data.confidenceBand} · {(explain.data.confidence * 100).toFixed(0)}%

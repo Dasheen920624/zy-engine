@@ -30,7 +30,7 @@ export default function DevConsole() {
         {LINKS.map((l) => (
           <Col span={8} key={l.name}>
             <Card>
-              <Space direction="vertical" size="small" style={{ width: "100%" }}>
+              <Space direction="vertical" size="small" className="mk-full-width">
                 <strong>{l.name}</strong>
                 <Typography.Text type="secondary">{l.desc}</Typography.Text>
                 <Button type="link" icon={<LinkOutlined />} href={l.url} target="_blank">

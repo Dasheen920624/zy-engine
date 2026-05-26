@@ -20,8 +20,8 @@ export default function IdentityBinding() {
         {PROVIDERS.map((p) => (
           <Col span={12} key={p.name}>
             <Card>
-              <Space direction="vertical" size="small" style={{ width: "100%" }}>
-                <Space style={{ width: "100%", justifyContent: "space-between" }}>
+              <Space direction="vertical" size="small" className="mk-full-width">
+                <Space className="mk-flex-between">
                   <strong>{p.name}</strong>
                   {p.enabled ? (
                     <Tag icon={<CheckCircleFilled />} color="green">

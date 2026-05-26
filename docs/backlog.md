@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.5 · 2026-05-26
+> 版本：4.6 · 2026-05-26
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -41,7 +41,7 @@
 | GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | - | pending |
 | GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | - | pending |
 | GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | - | pending |
-| GA-ENG-BASE-10 前端视觉债净化：硬编码颜色、内联样式、console、localStorage 敏感写入和 axios 直连规则全部归零 | codex | in_progress |
+| GA-ENG-BASE-10 前端视觉债净化：硬编码颜色、内联样式、console、localStorage 敏感写入和 axios 直连规则全部归零 | codex | done |
 
 ---
 
@@ -131,6 +131,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.6 | 2026-05-26 | Codex | GA-ENG-BASE-10 完成：inline style 归零、门禁 error、视觉债归零 |
 | 4.5 | 2026-05-26 | Codex | GA-ENG-BASE-10 Phase 1：新增受控 UI 偏好存储封装，移除生产代码中的 token localStorage 读取和 console 输出，ESLint 阻断生产代码直接访问浏览器存储与 console |
 | 4.4 | 2026-05-25 | Codex | GA-ENG-BASE-06 完成：5+1 菜单与路由元数据统一、PageShell/PageState/MetricGrid 体验底座、六态与状态机 Badge、页面分页与移动端表格滚动、桌面/移动布局验证 |
 | 4.3 | 2026-05-25 | Claude | GA-ENG-BASE-02 Phase 1：PermissionCode/RoleCode 枚举 + DefaultPermissionPolicy + PermissionEvaluator (`@perm.has(...)` SpEL) + @DataScope 切面（requireTenant / requireAtLeast）+ OrgUnitController 范例改造 + @EnableMethodSecurity；Phase 2 引入 role_permission DB 表后续 PR |

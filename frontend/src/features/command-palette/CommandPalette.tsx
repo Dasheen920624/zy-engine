@@ -79,12 +79,12 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       />
       <List
         size="small"
-        style={{ marginTop: 12, maxHeight: 360, overflowY: "auto" }}
+        className="mk-command-results"
         dataSource={filtered}
         locale={{ emptyText: "无匹配" }}
         renderItem={(item) => (
           <List.Item
-            style={{ cursor: "pointer" }}
+            className="mk-clickable"
             onClick={() => {
               navigate(item.path);
               onClose();
@@ -92,7 +92,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           >
             <Tag color="default">{item.group}</Tag>
             <Typography.Text>{item.label}</Typography.Text>
-            <Typography.Text type="secondary" style={{ marginLeft: "auto", fontSize: 12 }}>
+            <Typography.Text type="secondary" className="mk-push-inline-start-auto mk-text-xs">
               {item.path}
             </Typography.Text>
           </List.Item>

@@ -50,7 +50,7 @@ const DevConsole = lazy(() => import("@/pages/advanced/DevConsole"));
 
 export function AppRouter() {
   return (
-    <Suspense fallback={<Spin size="large" style={{ display: "block", margin: "20vh auto" }} />}>
+    <Suspense fallback={<Spin size="large" className="mk-route-spinner" />}>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route element={<AppLayout />}>

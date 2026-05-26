@@ -58,7 +58,7 @@ export function StepFlow({ currentStep, panelByStep = {}, status = "process" }: 
   const currentPanel = panelByStep[currentStep];
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <Space direction="vertical" size="large" className="mk-full-width">
       <Steps
         current={currentIdx}
         status={status}

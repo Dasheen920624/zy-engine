@@ -156,9 +156,9 @@ setOrg({ ...org, hospital_code: "HOSPITAL_BETA" });
 - 主题模式由 `src/shared/lib/themeStore.ts` 和 `ThemeSwitcher` 管理，支持默认、老年医生、暗黑、护眼和跟随系统。
 - 后期接租户配置时，只允许把后端主题包转换为统一 token，不在页面内写散落色值。
 
-### CSS Modules
+### CSS Modules 与样式门禁
 
-所有**静态样式**必须放进同名 `<Component>.module.css`（Vite 默认支持，无需额外配置）。JSX 内联 `style={{ ... }}` 已被 `medkernel/no-inline-style` ESLint 规则拦截，且 `scripts/check-inline-style-count.ps1` 守门「只减不增」（baseline 555，目标 ≤ 100）。
+所有**静态样式**必须放进同名 `<Component>.module.css`（Vite 默认支持，无需额外配置）或复用 `src/app/index.css` 中统一的 `mk-*` 样式类。JSX 内联 `style={{ ... }}` 已归零，并由 `medkernel/no-inline-style` ESLint error 与 `scripts/check-inline-style-count.ps1` baseline 0 双重阻断。
 
 **正确做法**：
 
@@ -188,17 +188,9 @@ export function PatientList() {
 }
 ```
 
-**强制 token**：颜色 / 字号 / 间距 / 圆角 / 阴影 / 字体一律走统一主题 token 或 CSS 变量，严禁页面内散落 hex 色值。唯一允许写品牌色的文件：`src/shared/config/theme.ts`。
+**强制 token**：颜色 / 字号 / 间距 / 圆角 / 阴影 / 字体一律走统一主题 token、Ant Design CSS 变量或 `mk-*` 类，严禁页面内散落 hex 色值。唯一允许写品牌色的文件：`src/shared/config/theme.ts`。
 
-**动态样式豁免**：仅当样式值依赖运行时变量（transform / motion / progress 宽度等），可保留 inline 并加 `// eslint-disable-next-line medkernel/no-inline-style` 说明理由。推荐用 CSS 变量注入：
-
-```tsx
-<div
-  className={styles.dial}
-  // eslint-disable-next-line medkernel/no-inline-style
-  style={{ "--dial-rotation": `${deg}deg` } as React.CSSProperties}
-/>
-```
+**动态样式处理**：运行时变量优先落到组件状态、Ant Design 组件属性或 CSS class 切换；确实需要动画变量时，应先新增清晰命名的 CSS 变量承载类，并在评审中说明原因，不得直接把对象写进 JSX `style`。
 
 **示范**：`src/pages/Login.tsx + Login.module.css`、`src/pages/Dashboard.tsx + Dashboard.module.css`。
 

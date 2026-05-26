@@ -39,7 +39,7 @@ export default function QcEvalResults() {
       }
     >
       <Card title="本月综合得分">
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space direction="vertical" size="middle" className="mk-full-width">
           <Progress
             percent={86}
             strokeColor={{ from: token.colorPrimary, to: token.colorSuccess }}

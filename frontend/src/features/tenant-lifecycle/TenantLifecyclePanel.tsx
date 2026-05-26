@@ -64,11 +64,11 @@ export function TenantLifecyclePanel() {
             { value: "病种", label: "按病种" },
             { value: "模块", label: "按模块" },
           ]}
-          style={{ width: 110 }}
+          className="mk-select-xs"
         />
       }
     >
-      <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+      <Space direction="vertical" size="middle" className="mk-full-width">
         {slices.map((s) => (
           <Row key={`${s.dim}-${s.name}`} align="middle" gutter={16}>
             <Col span={3}>
@@ -83,10 +83,10 @@ export function TenantLifecyclePanel() {
             </Col>
             <Col span={5}>
               <Space direction="vertical" size={0}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="mk-text-xs">
                   第 {s.day} 天
                 </Text>
-                <Text style={{ fontSize: 12 }}>{s.estimateRemaining}</Text>
+                <Text className="mk-text-xs">{s.estimateRemaining}</Text>
               </Space>
             </Col>
           </Row>

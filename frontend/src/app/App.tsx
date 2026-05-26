@@ -5,7 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppRouter } from "./router";
 import { useThemeStore } from "@/shared/lib/themeStore";
-import { theme as medkernelTheme } from "@/shared/config/theme";
+import { eyeModeToken, theme as medkernelTheme } from "@/shared/config/theme";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -17,6 +17,7 @@ export default function App() {
   const themeConfig = useMemo(() => {
     const base = {
       token: medkernelTheme.token,
+      cssVar: true,
     };
 
     if (mode === "elder") {
@@ -33,8 +34,7 @@ export default function App() {
         ...base,
         token: {
           ...base.token,
-          colorBgLayout: "var(--mk-bg-eye-layout)",
-          colorBgContainer: "var(--mk-bg-eye-container)",
+          ...eyeModeToken,
         },
       };
     }

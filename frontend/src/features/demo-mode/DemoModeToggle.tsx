@@ -29,7 +29,7 @@ export function DemoModeToggle() {
       <Tag
         icon={<ExperimentOutlined />}
         color={active ? "magenta" : "default"}
-        style={{ cursor: "pointer" }}
+        className="mk-clickable"
         onClick={toggle}
       >
         {active ? "演示中" : "演示模式"}

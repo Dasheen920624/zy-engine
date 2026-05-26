@@ -2,11 +2,11 @@
  * ESLint 规则：禁止 JSX 内联 style={{}}。
  *
  * 上下文：产品宪法和产品体验固定规范要求页面使用统一 token、CSS Modules 和组件外壳。
- * 存量 `style={{ ... }}` 是 UI 风格杂乱的核心来源。
- * 新代码必须把静态样式放进同名 `.module.css`（vite 默认支持 CSS Modules）。
+ * `style={{ ... }}` 是 UI 风格杂乱的核心来源。
+ * 新代码必须把静态样式放进同名 `.module.css` 或统一 `mk-*` 样式类。
  *
  * 触发位置：JSX 属性 style={...}
- * 错误等级：warn（存量太多，先 warn 让团队渐进式抽取；CI 跑 inline 数量统计监控收口）
+ * 错误等级：error（生产代码 inline style 已归零，后续不得新增）
  *
  * 豁免：
  *   1) 仅当 style 值是变量引用且名字含 dynamic / motion / transform，可以行尾 `// eslint-disable-next-line medkernel/no-inline-style`

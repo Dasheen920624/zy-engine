@@ -21,7 +21,7 @@ const MOCK_PERMS = {
 
 export function PermissionChip() {
   const content = (
-    <Space direction="vertical" size="middle" style={{ maxWidth: 320 }}>
+    <Space direction="vertical" size="middle" className="mk-popover-compact">
       <Text>
         当前角色：<Tag color="blue">{MOCK_PERMS.role}</Tag>
       </Text>
@@ -29,7 +29,7 @@ export function PermissionChip() {
       <PermSection title="可编辑" items={MOCK_PERMS.canEdit} color="processing" />
       <PermSection title="可发布" items={MOCK_PERMS.canPublish} color="success" />
       <PermSection title="不能做" items={MOCK_PERMS.cannotDo} color="default" italic />
-      <Text type="secondary" style={{ fontSize: 12 }}>
+      <Text type="secondary" className="mk-text-xs">
         权限由信息科主任在合规运维 → 用户管理配置。
       </Text>
     </Space>
@@ -37,7 +37,7 @@ export function PermissionChip() {
 
   return (
     <Popover content={content} trigger="click" placement="bottomRight" title="我的权限指纹">
-      <Tag icon={<SafetyOutlined />} color="blue" style={{ cursor: "pointer" }}>
+      <Tag icon={<SafetyOutlined />} color="blue" className="mk-clickable">
         {MOCK_PERMS.role}
       </Tag>
     </Popover>
@@ -57,15 +57,15 @@ function PermSection({
 }) {
   return (
     <div>
-      <Text strong style={{ fontSize: 12 }}>
+      <Text strong className="mk-text-xs">
         {title}
       </Text>
       <List
         size="small"
         dataSource={items}
         renderItem={(t) => (
-          <List.Item style={{ padding: "4px 0", border: 0 }}>
-            <Tag color={color} style={italic ? { fontStyle: "italic", opacity: 0.7 } : undefined}>
+          <List.Item className="mk-list-item-compact">
+            <Tag color={color} className={italic ? "mk-tag-muted-italic" : undefined}>
               {t}
             </Tag>
           </List.Item>

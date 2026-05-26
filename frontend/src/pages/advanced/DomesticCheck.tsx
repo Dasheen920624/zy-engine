@@ -56,7 +56,7 @@ export default function DomesticCheck() {
           percent={score ?? 0}
           strokeColor={(score ?? 0) >= 85 ? token.colorSuccess : token.colorWarning}
         />
-        <Typography.Text style={{ marginTop: 8, display: "block" }}>
+        <Typography.Text className="mk-text-block-gap-top">
           基于实时 JVM/OS 探测 · 信通院评测前自查就绪
         </Typography.Text>
       </Card>
