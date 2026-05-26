@@ -929,13 +929,13 @@
 
   预期：在 `codex/ga-eng-base-08-product-experience-implementation`，提交只包含本任务；已识别的误范围未跟踪草稿不进入提交。
 
-- [ ] **步骤 2：推送分支**
+- [x] **步骤 2：推送分支**
 
   ```bash
   git push -u origin codex/ga-eng-base-08-product-experience-implementation
   ```
 
-- [ ] **步骤 3：创建中文 PR**
+- [x] **步骤 3：创建中文 PR**
 
   PR 描述必须包含：
   - 变更范围：公共体验声明、公共组件、字典映射样板页、文档台账。
