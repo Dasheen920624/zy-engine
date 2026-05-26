@@ -7,6 +7,8 @@ import java.util.Set;
 
 import static com.medkernel.engine.security.PermissionCode.AUDIT_EXPORT;
 import static com.medkernel.engine.security.PermissionCode.AUDIT_READ;
+import static com.medkernel.engine.security.PermissionCode.CONTEXT_READ;
+import static com.medkernel.engine.security.PermissionCode.CONTEXT_WRITE;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_PUBLISH;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_READ;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_WRITE;
@@ -69,33 +71,36 @@ public final class DefaultPermissionPolicy {
         hospitalAdmin.remove(SYSTEM_MANAGE);
         map.put(RoleCode.HOSPITAL_ADMIN, hospitalAdmin);
 
-        // 信息科：基础设施读写 + 运维 + 字典 + 配置包
+        // 信息科：基础设施读写 + 运维 + 字典 + 配置包 + 临床上下文接入
         map.put(RoleCode.IT_OPS, EnumSet.of(
             ORG_READ, ORG_WRITE,
             TENANT_READ, TENANT_WRITE,
             PACKAGE_READ, PACKAGE_PUBLISH, PACKAGE_ROLLBACK,
             TERM_READ, TERM_WRITE, TERM_PUBLISH,
+            CONTEXT_READ, CONTEXT_WRITE,
             SYSTEM_READ, SYSTEM_MANAGE,
             AUDIT_READ));
 
-        // 医务处：知识/规则/路径审核与发布
+        // 医务处：知识/规则/路径审核与发布 + 上下文只读
         map.put(RoleCode.MEDICAL_AFFAIRS, EnumSet.of(
             ORG_READ,
             KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW, KNOWLEDGE_PUBLISH, KNOWLEDGE_WITHDRAW, KNOWLEDGE_EXPORT,
             RULE_READ, RULE_WRITE, RULE_PUBLISH,
             PATHWAY_READ, PATHWAY_WRITE, PATHWAY_PUBLISH,
             TERM_READ,
+            CONTEXT_READ,
             EVALUATION_READ,
             RECOMMENDATION_READ,
             AUDIT_READ, AUDIT_EXPORT));
 
-        // 质控办：评估指标审核发布 + 质控发现
+        // 质控办：评估指标审核发布 + 质控发现 + 上下文只读
         map.put(RoleCode.QA_MANAGER, EnumSet.of(
             ORG_READ,
             EVALUATION_READ, EVALUATION_WRITE, EVALUATION_PUBLISH,
             KNOWLEDGE_READ, KNOWLEDGE_EXPORT,
             RULE_READ,
             PATHWAY_READ,
+            CONTEXT_READ,
             RECOMMENDATION_READ,
             AUDIT_READ, AUDIT_EXPORT));
 
@@ -107,37 +112,41 @@ public final class DefaultPermissionPolicy {
             KNOWLEDGE_READ,
             AUDIT_READ));
 
-        // 科主任：本科室路径/规则审核 + 评估查看
+        // 科主任：本科室路径/规则审核 + 评估查看 + 上下文只读
         map.put(RoleCode.DEPT_HEAD, EnumSet.of(
             ORG_READ,
             PATHWAY_READ, PATHWAY_WRITE,
             RULE_READ, RULE_WRITE,
             KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW,
+            CONTEXT_READ,
             EVALUATION_READ,
             RECOMMENDATION_READ));
 
-        // 专科专家：知识/路径审核
+        // 专科专家：知识/路径审核 + 上下文只读
         map.put(RoleCode.SPECIALIST, EnumSet.of(
             ORG_READ,
             KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW,
             PATHWAY_READ, PATHWAY_WRITE,
             RULE_READ, RULE_WRITE,
             TERM_READ, TERM_WRITE,
+            CONTEXT_READ,
             RECOMMENDATION_READ));
 
-        // 临床医生：看提醒、采纳/拒绝、查看路径与规则
+        // 临床医生：看提醒、采纳/拒绝、查看路径与规则 + 临床上下文只读
         map.put(RoleCode.DOCTOR, EnumSet.of(
             ORG_READ,
             RECOMMENDATION_READ, RECOMMENDATION_ACCEPT,
             PATHWAY_READ,
             RULE_READ,
+            CONTEXT_READ,
             KNOWLEDGE_READ));
 
-        // 护理人员：护理决策与提醒
+        // 护理人员：护理决策与提醒 + 临床上下文只读
         map.put(RoleCode.NURSE, EnumSet.of(
             ORG_READ,
             RECOMMENDATION_READ, RECOMMENDATION_ACCEPT,
             PATHWAY_READ,
+            CONTEXT_READ,
             KNOWLEDGE_READ));
 
         // 合规审计：只读 + 导出，禁所有写
@@ -147,14 +156,16 @@ public final class DefaultPermissionPolicy {
             KNOWLEDGE_READ, KNOWLEDGE_EXPORT,
             RULE_READ,
             PATHWAY_READ,
+            CONTEXT_READ,
             EVALUATION_READ));
 
-        // 实施工程师：试点准备阶段的接入与配置
+        // 实施工程师：试点准备阶段的接入与配置 + 临床上下文接入
         map.put(RoleCode.IMPLEMENTATION_ENGINEER, EnumSet.of(
             ORG_READ, ORG_WRITE,
             TENANT_READ,
             PACKAGE_READ, PACKAGE_PUBLISH,
             TERM_READ, TERM_WRITE,
+            CONTEXT_READ, CONTEXT_WRITE,
             SYSTEM_READ,
             AUDIT_READ));
 
