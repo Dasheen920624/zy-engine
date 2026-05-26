@@ -129,33 +129,46 @@ public record CanonicalPatient(
 
 ## 4. 模块边界
 
+对齐现有 `engine/org`、`engine/knowledge`、`engine/terminology` 的扁平 package 风格，新增模块下不再分子包：
+
 ```
 com.medkernel.engine.context/
-├── api/                      ← REST controller
-│   ├── ContextSnapshotController.java
-│   └── dto/
-│       ├── ContextSnapshotRequest.java
-│       ├── ContextSnapshotResponse.java
-│       ├── ContextSnapshotSummary.java
-│       └── canonical/        ← 12 个 Record DTO
-├── domain/
-│   ├── ContextSnapshot.java          ← 聚合根
-│   ├── ContextSnapshotStatus.java
-│   ├── CanonicalResource.java
-│   ├── CanonicalResourceType.java
-│   ├── QualityStatus.java
-│   └── ClinicalEvent.java
-├── service/
-│   ├── ContextSnapshotService.java
-│   ├── ContextValidator.java         ← schema + 必填项检查
-│   ├── PackageVersionResolver.java   ← 验证包版本存在性
-│   └── MappingStatusEvaluator.java   ← 调用 terminology 模块
-└── infra/
-    ├── ContextSnapshotRepository.java
-    └── CanonicalResourceRepository.java
+├── ContextSnapshotController.java         ← REST 入口
+├── ContextSnapshotService.java            ← 业务编排
+├── ContextValidator.java                  ← schema + 必填项 + quality_status 计算
+├── PackageVersionResolver.java            ← 验证 knowledge/rule/pathway 包版本存在性
+├── MappingStatusEvaluator.java            ← 调字典映射端口
+├── TerminologyMappingPort.java            ← 端口接口（domain），避免循环依赖
+├── ContextSnapshot.java                   ← 聚合根
+├── ContextSnapshotStatus.java             ← 枚举
+├── CanonicalResource.java                 ← 12 类资源单元
+├── CanonicalResourceType.java             ← 枚举（12 类）
+├── QualityStatus.java                     ← 枚举（VALID/PARTIAL/INVALID）
+├── ClinicalEvent.java                     ← 触发事件聚合
+├── ContextSnapshotRequest.java            ← 顶层入参 DTO
+├── ContextSnapshotResponse.java           ← 创建/读单 DTO
+├── ContextSnapshotSummary.java            ← 列表条目 DTO
+├── ContextSnapshotFilter.java             ← 列表查询入参
+├── ContextSnapshotRepository.java         ← Spring Data JDBC 仓储
+├── CanonicalResourceRepository.java
+├── ClinicalEventRepository.java
+├── ContextIdempotencyKeyRepository.java
+└── canonical/                             ← 12 个 Record DTO，唯一允许的子包
+    ├── CanonicalPatient.java
+    ├── CanonicalEncounter.java
+    ├── CanonicalCondition.java
+    ├── CanonicalSymptom.java
+    ├── CanonicalObservation.java
+    ├── CanonicalDiagnosticReport.java
+    ├── CanonicalMedication.java
+    ├── CanonicalProcedure.java
+    ├── CanonicalDocument.java
+    ├── CanonicalCarePlan.java
+    ├── CanonicalFollowUp.java
+    └── CanonicalClaim.java
 ```
 
-- 不直连 terminology 内部：通过 `TerminologyMappingPort` 接口（domain）调 terminology 模块的公开服务，避免循环依赖
+- 不直连 terminology 内部：通过 `TerminologyMappingPort` 接口调字典映射服务，避免循环依赖。terminology 模块按需提供该端口的实现 bean。
 - 共享：复用 shared/audit、shared/api、shared/datascope、shared/trace
 
 ---
