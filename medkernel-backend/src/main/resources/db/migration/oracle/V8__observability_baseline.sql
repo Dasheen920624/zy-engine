@@ -16,8 +16,8 @@ CREATE TABLE state_transition_history (
     error_class     VARCHAR2(32)  NULL,
     error_message   VARCHAR2(512) NULL,
     retry_count     NUMBER(10)    NULL,
-    next_retry_at   TIMESTAMP     NULL,
-    occurred_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    next_retry_at   TIMESTAMP WITH TIME ZONE NULL,
+    occurred_at     TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP NOT NULL,
     CONSTRAINT ck_sth_error_class CHECK (error_class IS NULL OR error_class IN ('INPUT','AUTH','DATA','EXTERNAL','INTERNAL'))
 );
 

@@ -3,7 +3,7 @@
 -- 2. canonical_resource 加 trace_id（第二层 API-01 retrofit 用）
 
 CREATE TABLE state_transition_history (
-    id              NUMBER(19)    GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id              NUMBER(19)    IDENTITY PRIMARY KEY,
     entity_type     VARCHAR2(64)  NOT NULL,
     entity_id       VARCHAR2(128) NOT NULL,
     tenant_id       VARCHAR2(64)  NOT NULL,

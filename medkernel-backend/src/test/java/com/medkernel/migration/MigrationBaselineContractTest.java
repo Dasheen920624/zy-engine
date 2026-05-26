@@ -192,7 +192,7 @@ class MigrationBaselineContractTest {
     void v8ShouldDeclareObservabilityBaseline() {
         String h2 = readMigration("h2", "V8__observability_baseline.sql");
         assertThat(h2).contains("CREATE TABLE IF NOT EXISTS state_transition_history");
-        assertThat(h2).contains("ALTER TABLE canonical_resource ADD COLUMN");
+        assertThat(h2).contains("ALTER TABLE canonical_resource ADD COLUMN IF NOT EXISTS trace_id");
         assertThat(h2).contains("ck_sth_error_class");
         assertThat(h2).contains("idx_sth_entity");
         assertThat(h2).contains("idx_sth_trace");
