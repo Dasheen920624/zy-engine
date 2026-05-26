@@ -17,10 +17,12 @@ import java.util.Optional;
  *
  * <p>每个 ErrorCode 含 errorClass（INPUT/AUTH/DATA/EXTERNAL/INTERNAL）+ retryable，
  * 用于客户端决策与状态历史持久化分类。
+ *
+ * <p>code 一旦发布对客户端可见，禁止改名；只能新增或废弃（标记 @Deprecated 并保留）。
  */
 public enum ErrorCode {
 
-    OK("OK", 200, "操作成功", ErrorClass.INTERNAL, false),
+    OK("OK", 200, "操作成功", ErrorClass.INTERNAL, false), // OK 非错误，errorClass 占位
 
     BAD_REQUEST("ENG-API-001", 400, "请求参数无效", ErrorClass.INPUT, false),
     VALIDATION_FAILED("ENG-API-002", 400, "请求参数校验失败", ErrorClass.INPUT, false),

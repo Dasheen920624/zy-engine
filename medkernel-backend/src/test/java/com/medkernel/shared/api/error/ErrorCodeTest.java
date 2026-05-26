@@ -21,6 +21,8 @@ class ErrorCodeTest {
     void retryableExternalErrorsAreFlagged() {
         assertThat(ErrorCode.DOWNSTREAM_UNAVAILABLE.retryable()).isTrue();
         assertThat(ErrorCode.TOO_MANY_REQUESTS.retryable()).isTrue();
+        assertThat(ErrorCode.MODEL_DEGRADED.retryable()).isTrue();
+        assertThat(ErrorCode.MODEL_DEGRADED.errorClass()).isEqualTo(ErrorClass.EXTERNAL);
     }
 
     @Test
@@ -45,10 +47,21 @@ class ErrorCodeTest {
         assertThat(ErrorCode.fromCode("ENG-OBS-001")).hasValueSatisfying(code -> {
             assertThat(code.httpStatus()).isEqualTo(404);
             assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
         });
         assertThat(ErrorCode.fromCode("ENG-OBS-002")).hasValueSatisfying(code -> {
             assertThat(code.httpStatus()).isEqualTo(500);
             assertThat(code.errorClass()).isEqualTo(ErrorClass.INTERNAL);
+            assertThat(code.retryable()).isFalse();
         });
+    }
+
+    @Test
+    void fromCodeHandlesNullAndCaseAndTrim() {
+        assertThat(ErrorCode.fromCode(null)).isEmpty();
+        assertThat(ErrorCode.fromCode("")).isEmpty();
+        assertThat(ErrorCode.fromCode("eng-obs-001")).hasValue(ErrorCode.ENG_OBS_001);
+        assertThat(ErrorCode.fromCode("  ENG-OBS-001  ")).hasValue(ErrorCode.ENG_OBS_001);
+        assertThat(ErrorCode.fromCode("UNKNOWN")).isEmpty();
     }
 }
