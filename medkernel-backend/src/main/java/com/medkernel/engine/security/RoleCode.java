@@ -12,7 +12,7 @@ import java.util.Optional;
  * Spring Security GrantedAuthority 使用 {@link #authority()}（{@code ROLE_*} 大写下划线）。
  *
  * <p>角色 → 权限的默认映射见 {@link DefaultPermissionPolicy}；
- * 医院可后续通过 GA-ENG-BASE-02 Phase 2 的 DB 表覆盖默认。
+ * 医院可通过租户级角色权限覆盖表调整默认策略。
  */
 public enum RoleCode {
 

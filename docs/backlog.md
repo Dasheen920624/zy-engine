@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.6 · 2026-05-26
+> 版本：4.7 · 2026-05-26
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -33,7 +33,7 @@
 | id | owner | status |
 |---|---|---|
 | GA-ENG-BASE-01 组织与租户上下文：tenant/group/hospital/campus/site/department/user/role/package version | claude | done |
-| GA-ENG-BASE-02 身份权限：用户、角色、菜单权限、动作权限、数据范围、无权限响应 | claude | in_progress |
+| GA-ENG-BASE-02 身份权限：用户、角色、菜单权限、动作权限、数据范围、无权限响应 | codex | done |
 | GA-ENG-BASE-03 API 契约：ApiResult、ProblemDetail、分页、错误码、DTO 校验、幂等、traceId | claude | done |
 | GA-ENG-BASE-04 审计上下文：写操作、审核、发布、运行、反馈、导出、回滚统一留痕 | claude | done |
 | GA-ENG-BASE-05 数据迁移：5 方言表族、审计字段、状态字段、版本字段、索引和约束门禁 | claude | in_progress |
@@ -131,12 +131,13 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.7 | 2026-05-26 | Codex | GA-ENG-BASE-02 完成：角色权限覆盖、范围隔离的用户角色分配、当前用户权限画像接口、受控审计快照入口及菜单/页面/动作/数据范围闭环 |
 | 4.6 | 2026-05-26 | Codex | GA-ENG-BASE-10 完成：inline style 归零、门禁 error、视觉债归零 |
 | 4.5 | 2026-05-26 | Codex | GA-ENG-BASE-10 Phase 1：新增受控 UI 偏好存储封装，移除生产代码中的 token localStorage 读取和 console 输出，ESLint 阻断生产代码直接访问浏览器存储与 console |
 | 4.4 | 2026-05-25 | Codex | GA-ENG-BASE-06 完成：5+1 菜单与路由元数据统一、PageShell/PageState/MetricGrid 体验底座、六态与状态机 Badge、页面分页与移动端表格滚动、桌面/移动布局验证 |
-| 4.3 | 2026-05-25 | Claude | GA-ENG-BASE-02 Phase 1：PermissionCode/RoleCode 枚举 + DefaultPermissionPolicy + PermissionEvaluator (`@perm.has(...)` SpEL) + @DataScope 切面（requireTenant / requireAtLeast）+ OrgUnitController 范例改造 + @EnableMethodSecurity；Phase 2 引入 role_permission DB 表后续 PR |
+| 4.3 | 2026-05-25 | Claude | GA-ENG-BASE-02 基础：PermissionCode/RoleCode 枚举、默认权限策略、`@perm.has(...)` 动作授权、`@DataScope` 数据范围声明与组织接口接入 |
 | 4.2 | 2026-05-25 | Claude | GA-ENG-BASE-01 完成（JwtClaimsResolver + TenantContextEnricherFilter + OrgUnit 实体/Repository/Service/Controller + SecurityConfig 集成；roles claim → ROLE_* 权限）。GA-ENG-BASE-02 仍 pending |
-| 4.1 | 2026-05-25 | Claude | GA-ENG-BASE-03 完成（API 契约骨架）；GA-ENG-BASE-01/04/05 进入 in_progress（仅交付 traceId/orgScope/audit 上下文 + org_unit/audit_event 5 方言 DDL；JWT→OrgScope/userId、权限、审计落库后续 PR） |
+| 4.1 | 2026-05-25 | Claude | GA-ENG-BASE-03 API 契约骨架完成；组织与审计上下文及 `org_unit`、`audit_event` 五方言迁移基础落位 |
 | 4.0 | 2026-05-24 | Codex | 最终收束：增加代码净化门禁，细化 E6 业务医疗服务包，明确 AI 团队交付顺序 |
 | 3.1 | 2026-05-24 | Codex | 增加全系统产品与交互体验固定规范及分页、低打扰、可信解释验收任务 |
 | 3.0 | 2026-05-24 | 用户决策 + Codex | 台账重排为“0 业务引擎全能力上线”，业务划分后置 |

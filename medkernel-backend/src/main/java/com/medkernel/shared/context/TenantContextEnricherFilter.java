@@ -1,7 +1,6 @@
 package com.medkernel.shared.context;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -56,14 +55,9 @@ public class TenantContextEnricherFilter extends OncePerRequestFilter {
         Jwt jwt = jwtAuth.getToken();
         OrgScope org = JwtClaimsResolver.resolveOrgScope(jwt);
         String userId = JwtClaimsResolver.resolveUserId(jwt);
-        Collection<String> roles = JwtClaimsResolver.resolveRoles(jwt);
 
         RequestContext.Snapshot existing = RequestContext.snapshot();
         RequestContext.restore(new RequestContext.Snapshot(existing.traceId(), org, userId));
-        // roles 暂未挂到 snapshot；Spring Security Authentication.getAuthorities() 是权威源
-        // 后续 GA-ENG-BASE-02 实施数据范围切面时可以从这里读取
-        @SuppressWarnings("unused")
-        Collection<String> rolesForFutureUse = roles;
         return true;
     }
 }

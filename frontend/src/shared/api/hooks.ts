@@ -7,6 +7,51 @@ import { apiClient } from "./client";
  */
 
 // ──────────────────────────────────────────
+// 身份安全 · 当前用户权限画像
+// ──────────────────────────────────────────
+export interface SecurityProfile {
+  userId: string;
+  roles: Array<{
+    code: string;
+    displayName: string;
+    source: string;
+    scopeLevel: string | null;
+    scopeCode: string | null;
+  }>;
+  permissions: Array<{
+    code: string;
+    displayName: string;
+    risk: "LOW" | "MEDIUM" | "HIGH" | string;
+  }>;
+  menuKeys: string[];
+  dataScope: {
+    tenantId: string | null;
+    groupId: string | null;
+    hospitalId: string | null;
+    campusId: string | null;
+    siteId: string | null;
+    departmentId: string | null;
+    wardId: string | null;
+    specialtyId: string | null;
+  };
+}
+
+type SecurityProfileEnvelope = {
+  data: SecurityProfile;
+};
+
+export function useSecurityProfile() {
+  return useQuery({
+    queryKey: ["security", "me"],
+    queryFn: async () => {
+      const response = await apiClient.get<SecurityProfileEnvelope>("/security/me");
+      return response.data.data;
+    },
+    retry: false,
+  });
+}
+
+// ──────────────────────────────────────────
 // 临床运行 · MPI 患者主索引
 // ──────────────────────────────────────────
 export function useMpiPatients(q?: string) {

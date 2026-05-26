@@ -1,11 +1,28 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { ConfigProvider } from "antd";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./AppLayout";
 
 const originalInnerWidth = window.innerWidth;
 const originalMatchMedia = window.matchMedia;
+const securityProfileState = vi.hoisted(() => ({
+  value: {
+    data: undefined as
+      | {
+          menuKeys: string[];
+          roles: Array<{ code: string; displayName: string }>;
+          permissions: Array<{ code: string; displayName: string; risk: string }>;
+          dataScope: Record<string, string | null>;
+        }
+      | undefined,
+  },
+}));
+
+vi.mock("@/shared/api/hooks", () => ({
+  useSecurityProfile: () => securityProfileState.value,
+  useAuditSnapshot: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 
 function mockViewport(width: number) {
   Object.defineProperty(window, "innerWidth", {
@@ -49,12 +66,31 @@ function renderLayout(initialPath = "/terminology/mapping") {
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/terminology/mapping" element={<div>字典映射内容</div>} />
+            <Route path="/qc/dashboard" element={<div>质控驾驶舱内容</div>} />
           </Route>
         </Routes>
       </MemoryRouter>
     </ConfigProvider>,
   );
 }
+
+beforeEach(() => {
+  securityProfileState.value = {
+    data: {
+      menuKeys: [
+        "workbench",
+        "pilot-setup",
+        "clinical-run",
+        "quality-improve",
+        "compliance-ops",
+        "advanced-tools",
+      ],
+      roles: [],
+      permissions: [],
+      dataScope: {},
+    },
+  };
+});
 
 afterEach(() => {
   Object.defineProperty(window, "innerWidth", {
@@ -89,5 +125,56 @@ describe("AppLayout", () => {
     fireEvent.click(screen.getAllByRole("button")[0]);
 
     expect(screen.getAllByText("试点准备").length).toBeGreaterThan(0);
+  });
+
+  it("filters primary menus by security profile menu keys", () => {
+    securityProfileState.value = {
+      data: {
+        menuKeys: ["quality-improve"],
+        roles: [],
+        permissions: [],
+        dataScope: {},
+      },
+    };
+    mockViewport(1280);
+    renderLayout("/qc/dashboard");
+
+    expect(screen.queryByText("试点准备")).toBeNull();
+    expect(screen.getAllByText("质控改进").length).toBeGreaterThan(0);
+    expect(screen.getByText("质控驾驶舱内容")).toBeInTheDocument();
+  });
+
+  it("does not display a hard-coded identity beside the effective permission profile", () => {
+    mockViewport(1280);
+    renderLayout();
+
+    expect(screen.queryByText("医务处 · 张三")).toBeNull();
+  });
+
+  it("keeps protected menus hidden while the security profile is unavailable", () => {
+    securityProfileState.value = { data: undefined };
+    mockViewport(1280);
+    renderLayout();
+
+    const navigation = document.querySelector(".ant-menu");
+    expect(navigation).not.toBeNull();
+    expect(within(navigation as HTMLElement).queryByText("试点准备")).toBeNull();
+    expect(screen.getAllByText("工作台").length).toBeGreaterThan(0);
+  });
+
+  it("blocks direct entry to a page outside the granted menu scope", () => {
+    securityProfileState.value = {
+      data: {
+        menuKeys: ["clinical-run"],
+        roles: [],
+        permissions: [],
+        dataScope: {},
+      },
+    };
+    mockViewport(1280);
+    renderLayout();
+
+    expect(screen.queryByText("字典映射内容")).toBeNull();
+    expect(screen.getByText("当前权限不足")).toBeInTheDocument();
   });
 });
