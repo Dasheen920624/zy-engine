@@ -85,23 +85,22 @@ mvn -B -Dtest=RuntimeConfigurationContractTest test
 - 新增：`frontend/src/pages/compliance/SystemProviders.test.tsx`
 - 修改：`frontend/src/shared/api/hooks.ts`
 - 修改：`frontend/src/pages/compliance/SystemProviders.tsx`
-- 修改：`frontend/src/pages/pages.smoke.test.tsx`
 
-- [ ] **步骤 1：编写失败的页面测试**
+- [x] **步骤 1：编写失败的页面测试**
 
 模拟 `useRuntimeOperations`，断言页面渲染运行快照、Feature Flag、依赖状态和备份摘要策略；同时断言旧静态 Provider 名称不再出现。
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
 运行：`npm test -- SystemProviders.test.tsx`
 
 预期：失败，原因是 hook 和真实渲染尚不存在。
 
-- [ ] **步骤 3：实现 hook 与页面**
+- [x] **步骤 3：实现 hook 与页面**
 
 增加类型化 `RuntimeOperationsSnapshot` 接口和 `useRuntimeOperations`；用紧凑指标、依赖表、Feature Flag 表和备份就绪面板替换静态 Provider 卡片。
 
-- [ ] **步骤 4：运行前端绿灯测试**
+- [x] **步骤 4：运行前端绿灯测试**
 
 运行：
 

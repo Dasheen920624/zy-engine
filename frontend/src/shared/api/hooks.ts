@@ -256,6 +256,69 @@ export function useLlmProviders() {
 // ──────────────────────────────────────────
 // 系统 · Health probe
 // ──────────────────────────────────────────
+export interface RuntimeFeatureFlag {
+  key: string;
+  displayName: string;
+  enabled: boolean;
+  risk: "LOW" | "MEDIUM" | "HIGH" | string;
+  owner: string;
+  description: string;
+}
+
+export interface RuntimeDependencyStatus {
+  key: string;
+  displayName: string;
+  status: "UP" | "DEGRADED" | "DISABLED" | string;
+  detail: string;
+}
+
+export interface RuntimeBackupReadiness {
+  enabled: boolean;
+  rpo: string;
+  rto: string;
+  backupScript: string;
+  restoreScript: string;
+  checksumPolicy: string;
+}
+
+export interface RuntimeDomesticProfile {
+  targetOs: string;
+  targetJdk: string;
+  databaseVendors: string[];
+  cryptoAlgorithms: string[];
+  evidence: string;
+}
+
+export interface RuntimeOperationsSnapshot {
+  serviceName: string;
+  environment: string;
+  deploymentMode: string;
+  databaseDialect: string;
+  migrationLocation: string;
+  activeProfiles: string[];
+  healthStatus: "UP" | "DOWN" | "OUT_OF_SERVICE" | "UNKNOWN" | string;
+  featureFlags: RuntimeFeatureFlag[];
+  dependencies: RuntimeDependencyStatus[];
+  backup: RuntimeBackupReadiness;
+  domesticProfile: RuntimeDomesticProfile;
+  generatedAt: string;
+}
+
+type RuntimeOperationsEnvelope = {
+  data: RuntimeOperationsSnapshot;
+};
+
+export function useRuntimeOperations() {
+  return useQuery({
+    queryKey: ["system", "operations"],
+    queryFn: async () => {
+      const response = await apiClient.get<RuntimeOperationsEnvelope>("/system/operations");
+      return response.data.data;
+    },
+    refetchInterval: 30_000,
+  });
+}
+
 export function useSystemRuntime() {
   return useQuery({
     queryKey: ["system", "runtime"],
