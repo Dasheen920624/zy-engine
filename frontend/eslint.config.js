@@ -12,6 +12,7 @@ import noHardcodedColor from "./eslint-rules/no-hardcoded-color.js";
 import requireSourceInfo from "./eslint-rules/require-source-info-for-medical.js";
 import forbidDeprecatedNaming from "./eslint-rules/forbid-deprecated-naming.js";
 import noInlineStyle from "./eslint-rules/no-inline-style.js";
+import noPageMock from "./eslint-rules/no-page-mock.js";
 
 export default tseslint.config(
   {
@@ -38,6 +39,7 @@ export default tseslint.config(
           "require-source-info-for-medical": requireSourceInfo,
           "forbid-deprecated-naming": forbidDeprecatedNaming,
           "no-inline-style": noInlineStyle,
+          "no-page-mock": noPageMock,
         },
       },
     },
@@ -111,6 +113,8 @@ export default tseslint.config(
       "medkernel/forbid-deprecated-naming": "error",
       // inline style 已归零；新代码必须使用 CSS Modules 或统一 mk-* 样式类。
       "medkernel/no-inline-style": "error",
+      // GA-ENG-BASE-09：业务页 / 功能组件不得新增 MOCK/DEPTS/ITEMS/LINKS/PROVIDERS 等内联硬编码数组常量。
+      "medkernel/no-page-mock": "error",
     },
   },
   {

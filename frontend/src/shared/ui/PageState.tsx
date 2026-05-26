@@ -3,7 +3,14 @@ import type { ReactNode } from "react";
 
 const { Text } = Typography;
 
-export type PageStateKind = "loading" | "empty" | "error" | "forbidden" | "partial" | "ready";
+export type PageStateKind =
+  | "loading"
+  | "empty"
+  | "error"
+  | "forbidden"
+  | "partial"
+  | "disabled"
+  | "ready";
 
 interface PageStateProps {
   state: PageStateKind;
@@ -23,6 +30,16 @@ const DEFAULT_TITLE: Record<Exclude<PageStateKind, "ready">, string> = {
   error: "页面暂时不可用",
   forbidden: "当前权限不足",
   partial: "部分处理完成",
+  disabled: "等待引擎能力上线",
+};
+
+const RESULT_STATUS: Record<Exclude<PageStateKind, "ready">, "info" | "error" | "403"> = {
+  loading: "info",
+  empty: "info",
+  error: "error",
+  forbidden: "403",
+  partial: "info",
+  disabled: "info",
 };
 
 const DEFAULT_DESCRIPTION: Record<Exclude<PageStateKind, "ready">, ReactNode> = {
@@ -31,6 +48,7 @@ const DEFAULT_DESCRIPTION: Record<Exclude<PageStateKind, "ready">, ReactNode> = 
   error: "请稍后重试；如果持续失败，请带 traceId 联系信息科。",
   forbidden: "该页面包含受控数据，请联系信息科主任调整角色或数据范围。",
   partial: "部分项目已完成，其余项目需要查看原因后重试或转人工处理。",
+  disabled: "本页依赖底层引擎能力，引擎完成后自动激活。",
 };
 
 export function PageState({
@@ -72,7 +90,7 @@ export function PageState({
 
   return (
     <Result
-      status={state === "error" ? "error" : state === "forbidden" ? "403" : "info"}
+      status={RESULT_STATUS[state] ?? "info"}
       title={title ?? DEFAULT_TITLE[state]}
       subTitle={
         <>
