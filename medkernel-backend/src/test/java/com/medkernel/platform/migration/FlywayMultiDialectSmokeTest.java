@@ -17,13 +17,13 @@ import org.testcontainers.utility.DockerImageName;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * GA-CORE-03 / W1-G2 闸门：5 方言 Flyway 10 smoke。
+ * 五方言 Flyway 完整基线运行门禁。
  *
- * <p>验证 Flyway 10.20.1 能正确发现并应用 V1__init.sql：
+ * <p>验证 Flyway 能正确发现并应用当前全部权威迁移：
  * <ul>
  *   <li>postgres + oracle 通过 Testcontainers 起真实容器跑（@Tag("docker")，CI 默认跑）
  *   <li>h2 通过内嵌进程跑（无 docker 依赖，CI 永远跑）
- *   <li>dm / kingbase 在 CI 跑不动（无公开 docker image），由 GA-OPS-03 国产化矩阵在内网 CI 跑
+ *   <li>达梦、金仓在普通 CI 无公开镜像，由国产化环境矩阵执行运行烟测，静态合同测试负责结构门禁
  * </ul>
  */
 @Testcontainers(disabledWithoutDocker = true)
@@ -85,11 +85,12 @@ class FlywayMultiDialectSmokeTest {
 
         var result = flyway.migrate();
         assertThat(result.success).as("%s migrate success", vendorName).isTrue();
-        assertThat(result.migrationsExecuted).as("%s migrations executed", vendorName).isGreaterThanOrEqualTo(1);
+        assertThat(result.migrationsExecuted).as("%s 六个基线迁移执行", vendorName).isEqualTo(6);
 
         MigrationInfo[] applied = flyway.info().applied();
-        assertThat(applied).as("%s applied at least 1 migration", vendorName).isNotEmpty();
-        assertThat(applied[0].getVersion().getVersion()).isEqualTo("1");
+        assertThat(applied).extracting(info -> info.getVersion().getVersion())
+            .as("%s 完整迁移版本序列", vendorName)
+            .containsExactly("1", "2", "3", "4", "5", "6");
     }
 
     private DataSource buildHikari(String jdbcUrl, String username, String password, String driver) {
