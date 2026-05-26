@@ -54,21 +54,21 @@
 - 修改：`docs/handbook/runbooks/backup-restore.md`
 - 修改：`docs/handbook/runbooks/upgrade-rollback.md`
 
-- [ ] **步骤 1：编写失败的配置合同测试**
+- [x] **步骤 1：编写失败的配置合同测试**
 
 创建文件级合同测试，断言 `application-govcloud.yml` 存在，现有 profile 文件含 `medkernel.runtime` 键，备份脚本写入 `.sha256`，恢复脚本校验 `.sha256`，部署资产验证脚本也检查这些规则。
 
-- [ ] **步骤 2：运行红灯测试**
+- [x] **步骤 2：运行红灯测试**
 
 运行：`mvn -B -Dtest=RuntimeConfigurationContractTest test`
 
 预期：失败，原因是 `application-govcloud.yml` 和摘要校验规则尚不存在。
 
-- [ ] **步骤 3：增加 profile 与摘要校验**
+- [x] **步骤 3：增加 profile 与摘要校验**
 
 增加 `application-govcloud.yml`，声明达梦/金仓可配置数据库方言和 `medkernel.runtime.domestic-profile` 目标。更新备份/恢复脚本，加入可移植 SHA-256 辅助函数，并更新中文运行手册。
 
-- [ ] **步骤 4：运行绿灯测试和部署资产合同**
+- [x] **步骤 4：运行绿灯测试和部署资产合同**
 
 运行：
 

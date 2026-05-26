@@ -1,5 +1,5 @@
 # MedKernel v1.0 GA · 默认 application.yml
-# 详细 profile 详见 application-{dev,test,demo,prod,govcloud}.yml
+# 详细 profile 详见 application-{dev,test,container,govcloud}.yml
 spring:
   application:
     name: medkernel

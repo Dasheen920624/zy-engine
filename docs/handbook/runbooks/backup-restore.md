@@ -7,6 +7,9 @@
 
 ## 1. 备份策略
 
+当前 Docker 部署平台使用 `./deploy/docker/scripts/backup.sh` 生成 PostgreSQL 自定义格式备份。
+脚本会同步生成同名 `.sha256` 摘要文件；任何恢复动作必须先通过摘要校验，避免损坏备份覆盖当前数据库。
+
 | 数据 | 保留周期 | 频率 | 介质 | 加密 |
 |---|---|---|---|---|
 | 电子病历主库 | 30 年 | 每日全量 + 每 5 min 增量 | 异地灾备站 + 国密 SM4 加密磁带 | SM4 + KMS |
@@ -21,6 +24,16 @@
 ## 2. 恢复演练步骤
 
 ### A · 数据库恢复（Oracle 23ai · 主流程）
+
+当前未上线阶段的标准 Docker 恢复入口如下：
+
+```bash
+./deploy/docker/scripts/backup.sh
+./deploy/docker/scripts/restore.sh /path/to/medkernel-YYYYMMDD-HHMMSS.dump
+```
+
+`restore.sh` 会查找 `/path/to/medkernel-YYYYMMDD-HHMMSS.dump.sha256` 并在恢复前校验。
+缺少摘要文件或摘要不匹配时必须停止恢复。
 
 ```bash
 # 1. 切流量到只读副本（不停服）

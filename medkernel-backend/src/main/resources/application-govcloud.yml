@@ -1,0 +1,55 @@
+# govcloud profile — 医院内网国产化部署入口。
+# 闭源数据库驱动由院方 Maven 仓库或运行镜像提供，本仓库只声明运行配置合同。
+spring:
+  datasource:
+    url: ${MEDKERNEL_GOV_DB_URL:jdbc:dm://dm:5236/MEDKERNEL}
+    driver-class-name: ${MEDKERNEL_GOV_DB_DRIVER:dm.jdbc.driver.DmDriver}
+    username: ${MEDKERNEL_GOV_DB_USERNAME:MEDKERNEL}
+    password: ${MEDKERNEL_GOV_DB_PASSWORD}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/${MEDKERNEL_GOV_DATABASE_DIALECT:dm}
+  h2:
+    console:
+      enabled: false
+
+management:
+  health:
+    neo4j:
+      enabled: ${MEDKERNEL_NEO4J_HEALTH_ENABLED:false}
+
+security:
+  bypass: false
+
+medkernel:
+  runtime:
+    environment: govcloud
+    deployment-mode: govcloud
+    database-dialect: ${MEDKERNEL_GOV_DATABASE_DIALECT:dm}
+    migration-location: classpath:db/migration/${MEDKERNEL_GOV_DATABASE_DIALECT:dm}
+    feature-flags:
+      audit-persistence:
+        enabled: true
+      external-provider:
+        enabled: ${MEDKERNEL_EXTERNAL_PROVIDER_ENABLED:true}
+      domestic-crypto:
+        enabled: true
+      graph-projection:
+        enabled: ${MEDKERNEL_GRAPH_ENABLED:false}
+      dify-workflow:
+        enabled: ${MEDKERNEL_DIFY_ENABLED:false}
+    backup:
+      enabled: ${MEDKERNEL_BACKUP_ENABLED:true}
+      rpo: ${MEDKERNEL_BACKUP_RPO:1 小时}
+      rto: ${MEDKERNEL_BACKUP_RTO:4 小时}
+    domestic-profile:
+      target-os: 麒麟 / 统信 / openEuler
+      target-jdk: KAE-JDK 21 / BiSheng JDK 21
+      database-vendors:
+        - 达梦
+        - 人大金仓
+      crypto-algorithms:
+        - SM2
+        - SM3
+        - SM4
+      evidence: 国产化自检、五方言迁移合同、备份恢复摘要、国密算法 smoke
