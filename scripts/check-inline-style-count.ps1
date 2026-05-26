@@ -1,4 +1,4 @@
-# check-inline-style-count.ps1 — v0.3-final 风格统一守门
+# check-inline-style-count.ps1 — 前端内联样式收敛守门
 #
 # 统计 frontend/src 下 `style={{` 出现次数（即 JSX 内联 style 对象数）。
 # 当数量 > baseline（保存在本文件 $script:Baseline 常量）时退出码 1，CI FAIL。
@@ -12,10 +12,7 @@
 #   抽取完毕后跑 ./scripts/check-inline-style-count.ps1 -UpdateBaseline
 #   会把新值写回本文件（仅本地，需手工 commit）。
 #
-# v0.3-final baseline 演进：
-#   582 - PR-FINAL-05 初始扫描值（2026-05-21）
-#   555 - PR-FINAL-04 Login + Dashboard 抽取（2026-05-21，-27）
-# v0.3-final 目标: ≤ 100（PR-FINAL-19 抽取剩余 ~430 处至 CSS Modules）
+# 当前目标：内联 `style={{}}` 只减不增，逐页迁移到 CSS Modules 和设计 token。
 
 param(
     [switch]$UpdateBaseline,
@@ -24,7 +21,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# v0.3-final baseline（2026-05-21 PR-FINAL-04 抽取后）
+# 当前基线
 $script:Baseline = 11
 
 # 根路径推断（脚本在 scripts/ 下，仓库根在上一级）
@@ -73,9 +70,9 @@ if ($UpdateBaseline) {
 if ($total -gt $script:Baseline) {
     Write-Host ""
     Write-Host "❌ FAIL：inline style 数量上升（$total > baseline $($script:Baseline)）。" -ForegroundColor Red
-    Write-Host "   v0.3-final 风格统一原则：『只减不增』。" -ForegroundColor Red
+    Write-Host "   前端视觉债原则：『只减不增』。" -ForegroundColor Red
     Write-Host "   请把新增的 style={{}} 抽取到同名 .module.css，或使用 var(--mk-*) className。" -ForegroundColor Red
-    Write-Host "   详见 docs/AI_TEAM_PR_BACKLOG_V0.3_FINAL.md §UI 风格规范。" -ForegroundColor Red
+    Write-Host "   详见 docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md 和 frontend/README.md。" -ForegroundColor Red
     exit 1
 } elseif ($total -lt $script:Baseline) {
     Write-Host "✅ PASS：inline style 减少 $($script:Baseline - $total) 处（$total < $($script:Baseline)）。" -ForegroundColor Green

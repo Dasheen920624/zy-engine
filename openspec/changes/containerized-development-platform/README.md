@@ -1,3 +1,3 @@
 # containerized-development-platform
 
-Add a portable Docker development deployment for MedKernel core services and pinned official Dify integration.
+为 MedKernel 核心服务和固定版本 Dify 集成增加可移植的 Docker 开发部署平台。

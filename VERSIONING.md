@@ -19,20 +19,19 @@ MAJOR.MINOR.PATCH[-prerelease][+build]
 | `-rc.N` / `-beta.N` | 预发布 | UAT 阶段 |
 | `+gitShortHash` | 构建标识 | CI 自动注入 |
 
-> 详细发布流程见 [docs/engineering/09_内网部署与版本管理.md](docs/engineering/09_内网部署与版本管理.md)。
+> 当前部署与回滚流程见 [docs/handbook/runbooks/upgrade-rollback.md](docs/handbook/runbooks/upgrade-rollback.md)。
 
 ## 2. 分支约定
 
 ```
-main                       稳定发布分支，永远可发布；仅接受 develop → main PR
-develop                    日常集成分支；AI 小变更可直接 push，大变更先开任务分支
-ai/<TASK-ID>/<slug>        AI 任务分支，基于 origin/develop 创建，完成后 PR 或 push → develop
-feature/<TASK-ID>/<slug>   高风险/大型任务分支，完成后 PR → develop
+main                       远程唯一稳定发布分支，永远可发布；所有任务最终通过 PR 合并到 origin/main
+codex/<TASK-ID>-<slug>     Codex 默认开发分支，基于 origin/main 创建
+feature/<TASK-ID>-<slug>   通用功能分支，基于 origin/main 创建
+hotfix/<TASK-ID>-<slug>    紧急修复分支，基于 origin/main 创建，仍需 PR 与检查
 release/X.Y                长期支持分支（重大版本进入维护期后）
-hotfix/X.Y.Z               紧急修复分支（从 main 或 release/X.Y 分出，修完回合）
 ```
 
-**禁用**：AI 直接 push `main`、feature 分支与 `develop` 长期分叉、绕过 CI 把未验收变更合入 `main`。完整规则以 [docs/engineering/分支策略与发布管理.md](docs/engineering/分支策略与发布管理.md) 为准。
+**禁用**：AI 直接 push 到远程 `main`、绕过 CI 合并、长期保留偏离 `origin/main` 的开发分支、把未验收变更合入远程 `main`。标准路径是：基于 `origin/main` 创建短分支 → 提交 → 推送 → 创建 PR → 等远端检查通过 → 合并 PR 到远程 `main` → 确认 `origin/main` 包含合并提交。
 
 ## 3. 打 tag 流程
 
@@ -48,9 +47,9 @@ git add CHANGELOG.md
 git commit -m "标注 v1.2.3 CHANGELOG"
 
 # 3) 同步 pom.xml 与 frontend/package.json 版本号
-# 后端：sed -i 's|<version>.*</version>|<version>1.2.3</version>|' medkernel-mvp/pom.xml
+# 后端：sed -i 's|<version>.*</version>|<version>1.2.3</version>|' medkernel-backend/pom.xml
 # 前端：npm version 1.2.3 --no-git-tag-version --prefix frontend
-git add medkernel-mvp/pom.xml frontend/package.json
+git add medkernel-backend/pom.xml frontend/package.json
 git commit -m "升版 v1.2.3"
 
 # 4) 打 annotated tag
@@ -75,9 +74,9 @@ git push origin main --tags
 
 每次 MAJOR 升级必须：
 
-- 在 [09_内网部署与版本管理.md](docs/engineering/09_内网部署与版本管理.md) §6 补"升级注意事项"
+- 在 [upgrade-rollback.md](docs/handbook/runbooks/upgrade-rollback.md) 中补充升级与回滚注意事项
 - 给客户/医院信息科发"破坏性变更通知" ≥ 2 周前
-- 提供等长支持窗口（旧 MAJOR 至少再支持 6 个月）
+- 提供等长支持窗口（上一 MAJOR 至少再支持 6 个月）
 
 ### 4.2 MINOR（兼容新增）
 
@@ -121,9 +120,9 @@ medkernel:
 {
   "version": "1.2.3",
   "git_hash": "a1b2c3d",
-  "build_time": "2026-05-17T08:30:00+08:00",
-  "spring_boot": "2.7.18",
-  "jdk": "1.8.0_402"
+  "build_time": "2026-05-26T08:30:00+08:00",
+  "spring_boot": "3.3.x",
+  "jdk": "21"
 }
 ```
 
@@ -154,7 +153,7 @@ define: {
 {
   "version": "1.2.3",
   "git_hash": "a1b2c3d",
-  "build_time": "2026-05-17T08:30:00+08:00",
+  "build_time": "2026-05-26T08:30:00+08:00",
   "build_host": "ci-builder-1",
   "components": {
     "backend": { "jar": "lib/medkernel.jar", "sha256": "..." },
@@ -196,20 +195,21 @@ define: {
 ### Security
 - 安全相关
 
-## [1.2.3] - 2026-05-17
+## [1.2.3] - 2026-05-26
 
 ### Added
 - FE-003 演示与规则校验工作台落地
 ...
 ```
 
-## 7. 与 main / develop 协作的注意
+## 7. 与远程 main 协作的注意
 
-2026-05-19 起采用 `main + develop` 双线：
+2026-05-26 起采用 `origin/main` 单线主干：
 
-- AI 日常任务基于 `origin/develop` 开工，完成后推送 `develop` 或先开 `ai/<TASK-ID>/<slug>` / `feature/<TASK-ID>/<slug>`。
-- `main` 只接受用户 approve 且 CI PASS 的 `develop → main` PR。
-- 如果 GitHub 提示 `develop → main` 不能合并，先检查 `origin/main` 是否为 `origin/develop` 祖先、PR checks 是否通过、`guard-rules` 是否正确以 `origin/main` 为 diff base。
+- AI 日常任务基于 `origin/main` 开工，默认创建 `codex/<TASK-ID>-<slug>` 短分支。
+- 功能、修复或文档治理完成后必须创建 PR，目标分支一律为 `main`。
+- PR 远端检查通过后，直接在 GitHub 合并到远程 `main`；合并后必须确认 `origin/main` 包含合并提交。
+- 如果 GitHub 提示 PR 不能合并，先同步 `origin/main`、解决冲突并重新推送，再等待检查通过。
 
 但 **打 tag 必须由人执行**（不允许 AI 自动 tag），因为：
 
@@ -221,6 +221,7 @@ AI 完成一组功能后建议：
 
 - 在最终回复中提示"建议下一次 tag：vX.Y.Z（理由：xxx）"。
 - 不自行 `git tag`。
+- 在最终回复中说明 PR 链接、合并提交和远程 `main` 验证结果。
 
 ## 8. 演进
 

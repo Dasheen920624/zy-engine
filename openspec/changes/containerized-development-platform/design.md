@@ -1,99 +1,51 @@
-## Context
+# 容器化开发平台设计
 
-The existing repository has offline deployment scripts and monitoring assets but no Docker
-Compose platform for day-to-day development. The backend's local profile currently uses
-in-memory H2 with Flyway disabled. The product architecture requires a relational database as
-the business authority and treats Neo4j and Dify as optional projection or workflow services.
-The selected local persistent state root is `/Users/zhikunzheng/work/medkernel/runtime/`.
+## 背景
 
-## Goals / Non-Goals
+项目需要一套可复现、可持久化的 Docker 开发平台，用于本机长期开发和后续服务器迁移。旧部署入口已清理，当前只保留 Docker 平台作为有效部署路径。
 
-**Goals:**
+## 目标
 
-- Run MedKernel against persistent PostgreSQL 16 with its existing PostgreSQL Flyway migrations.
-- Expose a browser-accessible frontend/backend deployment and optional Neo4j 5.23 projection.
-- Preserve Dify's official `v1.14.0` Compose ownership while providing a single managed full-mode entry point.
-- Retain deployment assets, health checks, and PostgreSQL backup/restore operations for use on later servers.
+- MedKernel 使用 PostgreSQL 作为权威业务数据库。
+- 通过 Compose 启动后端、前端网关、PostgreSQL、可选 Neo4j 和监控。
+- 完整模式启动固定版本 Dify，但保持 Dify 的数据库和服务拓扑独立。
+- 所有运行数据、密钥、Dify 官方副本和备份保存在仓库外。
+- 提供健康检查、备份和恢复操作。
 
-**Non-Goals:**
+## 非目标
 
-- Making Neo4j or Dify an authoritative MedKernel store.
-- Implementing application-level graph synchronization or Dify workflow bindings that are not yet in the backend.
-- Building a production HA or hospital air-gapped distribution in this development change.
+- 不构建生产高可用部署。
+- 不实现医院内网离线安装包。
+- 不实现应用级图投影或 Dify 工作流绑定。
 
-## Decisions
+## 关键决策
 
-### Separate MedKernel And Dify Compose Projects
+### Dify 保持官方拓扑
 
-`deploy/docker/` owns MedKernel's services and wrapper scripts; a bootstrap script clones the
-official Dify release under `${MEDKERNEL_RUNTIME_ROOT}/dify/v1.14.0`. This preserves upstream
-Dify upgrade mechanics and prevents its internal PostgreSQL, Redis, and vector storage from
-being confused with MedKernel's authoritative database. A combined copied Compose file was
-rejected because it would fork a rapidly changing external platform.
-The displayed release is `v1.14.0`, and its reproducible official checkout tag is `1.14.0`.
-The validated default Dify service images are applied through a small committed digest-lock
-override so mutable helper tags in the upstream Compose file cannot drift between deployments.
+Dify 官方 Compose 工程放在外部 runtime 目录，仓库只提交摘要锁定覆盖文件。这样可以降低升级风险，也避免混淆 MedKernel 权威数据库和 Dify 内部数据库。
 
-### Persistent External Runtime Root
+### runtime 根目录
 
-Compose binds data, local environment files, Dify checkout, and backups below
-`${MEDKERNEL_RUNTIME_ROOT}`. The provided local default is
-`/Users/zhikunzheng/work/medkernel/runtime`, but scripts accept another value for Linux hosts.
-This keeps secrets and database state out of Git while leaving repository assets portable.
+默认本机路径为 `/Users/zhikunzheng/work/medkernel/runtime/`。目标服务器可以通过 `MEDKERNEL_RUNTIME_ROOT` 指定自己的路径，仓库内 Compose 不写死主机私有路径。
 
-### Legacy Deployment Removal
+### 部署入口收束
 
-The previous offline package scripts, systemd unit, Nginx examples, platform profiles, and
-standalone Prometheus configuration are removed from the active `deploy/` tree. Keeping both
-deployment surfaces would make future server rollout ambiguous; historical references remain in
-archived documentation only.
+旧离线包、systemd、Nginx 样例和旧 profile 容易造成未来交付歧义，因此不再作为当前部署入口。
 
-### Container Spring Profile And Static Frontend Gateway
+## 风险与缓解
 
-The backend receives a dedicated `container` profile that connects to PostgreSQL and enables
-Flyway migrations from `db/migration/postgres`. A multi-stage backend image builds the Spring
-Boot JAR, while a multi-stage frontend image builds Vite assets and serves them through Nginx,
-proxying `/medkernel/` to the backend container.
+| 风险 | 缓解 |
+|---|---|
+| Dify 可变镜像标签漂移 | 使用 `compose.lock.yml` 锁定已验证摘要 |
+| 密钥误提交 | 只提交模板，真实 `.env` 写入 runtime 目录 |
+| 可选服务失败影响核心服务 | core 模式不依赖 Dify；Neo4j 和 Dify 故障不迁移业务数据 |
+| 后续服务器路径不同 | 使用 `MEDKERNEL_RUNTIME_ROOT` 外部化 |
 
-### Core And Full Modes
+## 验证路线
 
-Core mode starts PostgreSQL, Neo4j, backend, and frontend, with optional monitoring Compose
-assets. Full mode also starts the pinned official Dify stack. Core mode explicitly demonstrates
-that Dify is not required; full mode satisfies workflow development and initial acceptance.
-
-### Verification And Recovery
-
-Deployment validation begins with a repository script test that checks required files,
-configuration contracts, and safe secret handling. Runtime verification checks Compose health,
-backend endpoints, frontend routing, Dify availability in full mode, and DB-only degradation.
-PostgreSQL `pg_dump`/`pg_restore` operations preserve the authoritative data state separately
-from reconstructible Neo4j data and Dify-owned data.
-
-## Risks / Trade-offs
-
-- [Risk] Full Dify plus application and monitoring services may strain a 16 GiB Mac.
-  -> [Mitigation] Provide core mode for regular work and full mode for integration checks.
-- [Risk] Dify's Compose layout changes in later releases.
-  -> [Mitigation] Pin `v1.14.0` and handle upgrades through a separately reviewed change.
-- [Risk] Optional services could appear to be active before backend integrations exist.
-  -> [Mitigation] Document endpoints as available infrastructure only and verify DB-backed core behavior separately.
-- [Risk] Local secret-bearing runtime files can be lost or copied insecurely.
-  -> [Mitigation] Keep templates in Git, generate local values under the runtime root, and document backup boundaries.
-
-## Migration Plan
-
-1. Install Docker Desktop for Apple Silicon and verify Docker Compose meets the Dify minimum.
-2. Add deployment assets, profile configuration, validation checks, and documentation in the repository.
-3. Bootstrap `${MEDKERNEL_RUNTIME_ROOT}` and the pinned Dify checkout without committing secrets or data.
-4. Start core mode and verify PostgreSQL migrations plus application endpoints.
-5. Start full mode and verify official Dify availability and monitoring services.
-6. Create and locate a PostgreSQL backup artifact.
-
-Rollback consists of stopping both Compose projects and retaining `${MEDKERNEL_RUNTIME_ROOT}`
-until the PostgreSQL backup is verified. Removing optional Neo4j or Dify state never substitutes
-for restoring the authoritative PostgreSQL data.
-
-## Open Questions
-
-No blocking questions remain for the development deployment. Application-level graph projection
-and Dify workflow integration will be proposed separately when their backend contracts exist.
+1. 验证 Compose 配置解析。
+2. 启动 core 模式，检查 PostgreSQL、后端、前端网关和 Neo4j。
+3. 执行健康检查。
+4. 启动 full 模式，检查 Dify Web/API。
+5. 停止 Dify，确认 MedKernel 核心能力仍可用。
+6. 生成 PostgreSQL 备份，并确认恢复命令路径清晰。

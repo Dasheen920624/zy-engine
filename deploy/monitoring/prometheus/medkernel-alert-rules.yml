@@ -20,7 +20,7 @@ groups:
           service: medkernel-mvp
         annotations:
           summary: MedKernel API P95 latency is above 1s
-          description: API latency is above the v0.3-final warning threshold for 5 minutes.
+          description: API 延迟连续 5 分钟高于当前告警阈值。
 
       - alert: MedKernelApiP95LatencyCritical
         expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="medkernel-mvp"}[2m])) by (le)) > 3

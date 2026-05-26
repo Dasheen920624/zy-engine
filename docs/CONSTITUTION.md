@@ -4,6 +4,7 @@
 > 状态：v1.0 GA 必须遵守的最高准则
 > 适用对象：所有 AI 团队成员、产品、架构、实施、客户
 > 凌驾：本文是 v1.0 GA 阶段所有文档中**优先级最高**的；任何其它文档与本文冲突，以本文为准
+> 项目口径：项目尚未上线，按全新项目运作；不保留历史归档、旧分支策略、旧任务锁或旧模板。
 
 ---
 
@@ -60,6 +61,7 @@
 | 14 | 任何 AI 知识生成先识别新旧与重复；待审新版只供审核和替换提醒，现行已审版继续执行；新版审核生效后旧版退出新临床决策 | 反复审核旧知识；未审新版参与临床；新版上线后实时推荐仍混用被替代知识 |
 | 15 | 引擎核心必须覆盖护理、医技报告、床旁权威知识和中医药等全医疗专业领域；每个领域有实现卡、审核、降级和验收计划 | 只做医生推荐；把专业领域留成空名称；遗漏护理、报告或说明书查阅闭环 |
 | 16 | 全系统产品与交互体验必须遵守 [产品体验固定规范](MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md)：一页一目标、低打扰、服务端分页、可信解释、六态、证据和降级门禁 | 大列表前端全量加载；默认筛选超过 3 个；临床提醒遮挡主流程；驾驶舱指标不能下钻 |
+| 17 | 当前有效文档必须使用简体中文；功能完成后必须 PR 合并到 GitHub 远程 `main` | 英文主体文档；只开 PR 不合并；本地 main 合并但远程 main 未更新 |
 
 ---
 
@@ -223,12 +225,12 @@
 
 ## 9. 文档规则（v1.0 GA 简化版）
 
-| 旧（已废） | 新 |
+| 规则 | 要求 |
 |---|---|
-| 5 份金本位（01-05）| 1 份 `docs/CONSTITUTION.md`（本文）|
-| `docs/engineering/` 35+ 文档 | `docs/handbook/*.md`，按需，≤ 10 份 |
-| `docs/engineering/adr/` | `docs/adr/`，重大架构决策才写 |
-| 独立文档登记流程 | 废除：文档与代码改动**同 PR** 即可 |
+| 中文优先 | 当前有效文档、PR 描述、Issue 模板、计划和运行手册必须用简体中文 |
+| 单一事实源 | 产品约束进本文；体验规则进产品体验固定规范；实现细节进唯一详细规范；任务进 backlog |
+| 不留历史包袱 | 不保留历史归档目录、旧任务锁、旧协作模板、旧分支策略或旧计划入口 |
+| 同 PR 维护 | 文档与代码改动同 PR；功能完成后合并到 GitHub 远程 `main` |
 
 ### 9.1 docs/ 顶层目录（v1.0 GA 标准）
 
@@ -239,6 +241,7 @@ docs/
 ├─ MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md ← 全系统产品与交互体验固定规范
 ├─ MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md ← 0 业务引擎全能力上线计划
 ├─ MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md ← 唯一实现级详细规范
+├─ DOCUMENTATION_LANGUAGE_POLICY.md ← 文档语言与 AI 协作规范
 ├─ backlog.md                 ← 单一任务台账（当前只登记引擎全能力上线任务）
 ├─ handbook/                  ← 实施手册（按需）
 │   ├─ implementation.md      # 实施工程师手册
@@ -249,7 +252,7 @@ docs/
 ├─ legal/                     ← 合同/SLA/隐私/DPA/License
 ├─ release/                   ← 发布证据
 │   └─ v1.0.0-ga-evidence.md
-└─ archive/v0.3/              ← 旧 5 套命名 + 金本位 + ai-dev-input 归档
+└─ README.md                  ← 文档中心导航
 ```
 
 ---
@@ -299,10 +302,8 @@ docs/
 | 产品体验 | [MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md](MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md) | 全系统角色体验、页面交互、大规模分页、临床低打扰、可信解释和体验验收 | 权威 |
 | 实施路线 | [MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md](MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md) | 0 业务引擎全能力上线计划、架构原则、阶段节奏和任务拆分 | 权威 |
 | 实现细节 | [MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md](MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md) | S0-S40、全医疗专业领域、护理/报告/床旁知识/中医药、系统详细设计、可插拔大模型、权威版本替换、AI 标准化知识工厂、API/嵌入、质控、评级、验收 | **唯一实现级权威** |
+| 文档语言 | [DOCUMENTATION_LANGUAGE_POLICY.md](DOCUMENTATION_LANGUAGE_POLICY.md) | 中文文档、AI 协作和远程 main 合并要求 | 权威 |
 | 任务执行 | [backlog.md](backlog.md) | AI 团队任务领取、状态和当前引擎全能力上线实施 | 权威 |
-| 历史归档 | `archive/v0.3/` | 旧产品、旧计划和旧协作体系 | 只读历史参考 |
-
-旧 IA、旧页面模板、旧组件清单和旧计划均不再作为当前事实源；需要查历史时只进入 `archive/v0.3/`。
 
 ---
 

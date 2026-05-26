@@ -8,7 +8,7 @@
 |---|---|:---:|---|
 | `no-hardcoded-color.js` | 视觉 | error | 禁止硬编码颜色（必须用 token） |
 | `require-source-info-for-medical.js` | 业务 | warn | 含医学语义的组件必须有 `<SourceInfo>` |
-| `forbid-deprecated-naming.js` | 命名 | error | 禁用 `ZyEngine*` `zy-engine` 等历史标识 |
+| `forbid-deprecated-naming.js` | 命名 | error | 禁用重启前品牌、路径和环境变量标识 |
 
 ## 集成方式
 

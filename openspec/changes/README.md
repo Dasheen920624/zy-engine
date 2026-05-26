@@ -1,12 +1,10 @@
-# Changes
+# 变更目录
 
-This directory stores proposed OpenSpec changes.
+本目录保存 OpenSpec 变更提案。每个变更使用独立目录，至少包含以下材料：
 
-Each change should live in its own folder, with planning artifacts such as:
+- `proposal.md`：说明为什么要做、做什么、影响范围。
+- `design.md`：说明架构、数据流、风险、回滚和验证。
+- `tasks.md`：拆分可执行任务和检查点。
+- `specs/`：保存能力规格增量。
 
-- `proposal.md`
-- `design.md`
-- `tasks.md`
-- `specs/`
-
-Completed changes are archived by moving them into an archive folder so the project keeps an audit trail of what changed and why.
+已完成的变更应在合并远程 `main` 后从当前变更目录移除，避免未上线项目积累历史包袱。需要追溯时使用 Git 历史。当前有效变更文档必须使用中文。

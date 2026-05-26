@@ -1,48 +1,57 @@
 # MedKernel
 
-## Purpose
+## 目的
 
-Define the stable product identity, repository boundaries, documentation authority, and
-change-planning expectations for the MedKernel group medical intelligence hub.
+定义 MedKernel 集团医疗智能中枢的稳定产品身份、仓库边界、文档权威顺序、中文文档要求和变更规划要求。
 
 ## Requirements
 
-### Requirement: Product Identity
-The system SHALL present MedKernel as the group medical intelligence hub for healthcare networks.
+### Requirement: 产品身份
 
-#### Scenario: New contributor orientation
-- **GIVEN** a contributor opens the repository
-- **WHEN** they read the root README or this spec
-- **THEN** they can identify the product name, the broad mission, and the main documentation sources.
+系统 SHALL 将 MedKernel 呈现为面向医疗集团和多级医疗网络的集团医疗智能中枢。
 
-### Requirement: Two-Layer Model
-The system SHALL be understood as a two-layer platform consisting of a foundation layer and an engine-services layer.
+#### Scenario: 新贡献者接手
 
-#### Scenario: Architecture review
-- **GIVEN** a reviewer is trying to understand the platform
-- **WHEN** they inspect the project documentation
-- **THEN** they can distinguish shared platform capabilities from engine capabilities such as knowledge, dictionaries, rules, paths, recommendations, assessments, follow-up, publishing, embedding, and model gateway support.
+- **GIVEN** 贡献者打开仓库
+- **WHEN** 阅读根目录 README、`AGENTS.md` 或本规格
+- **THEN** 能识别产品名称、业务使命、当前权威文档和中文协作要求。
 
-### Requirement: Repository Boundaries
-The system SHALL keep implementation separated into backend, frontend, docs, and deployment areas.
+### Requirement: 两层模型
 
-#### Scenario: Code navigation
-- **GIVEN** a developer is looking for the implementation of a feature
-- **WHEN** they inspect the repository structure
-- **THEN** they can find backend services under `medkernel-backend/`, the UI under `frontend/`, operational assets under `deploy/`, and canonical written guidance under `docs/`.
+系统 SHALL 按「基础底座 + 引擎服务能力」两层理解。
 
-### Requirement: Documentation Authority
-The system SHALL treat the existing product and implementation documents as the authoritative source for behavior, constraints, and rollout order.
+#### Scenario: 架构评审
 
-#### Scenario: Change planning
-- **GIVEN** a new change is being planned
-- **WHEN** the team checks the project context
-- **THEN** they can use the linked documents to confirm scope, constraints, and current execution order before editing code.
+- **GIVEN** 评审人需要理解平台结构
+- **WHEN** 查看项目文档
+- **THEN** 能区分组织、权限、审计、部署等共享底座能力，以及知识、字典、规则、路径、推荐、评估、随访、发布、嵌入和模型网关等引擎能力。
 
-### Requirement: Auditable Change Flow
-The system SHALL record proposed work as change folders under `openspec/changes/` and keep current behavior in `openspec/specs/`.
+### Requirement: 仓库边界
 
-#### Scenario: Preparing a feature
-- **GIVEN** a new change request
-- **WHEN** the team starts OpenSpec planning
-- **THEN** they create a change folder containing proposal, design, tasks, and delta specs before implementation starts.
+系统 SHALL 将实现边界划分为后端、前端、文档和部署四类区域。
+
+#### Scenario: 代码导航
+
+- **GIVEN** 开发者查找某个功能实现
+- **WHEN** 查看仓库结构
+- **THEN** 能在 `medkernel-backend/` 找到后端服务，在 `frontend/` 找到界面，在 `deploy/` 找到部署资产，在 `docs/` 找到当前权威文档。
+
+### Requirement: 文档权威
+
+系统 SHALL 以当前产品、实施和任务文档作为行为、约束、上线顺序和中文协作规则的权威来源。
+
+#### Scenario: 规划变更
+
+- **GIVEN** 团队准备规划新变更
+- **WHEN** 查看项目上下文
+- **THEN** 能通过权威文档确认范围、约束、当前执行顺序、中文书写要求和远程 `main` 合并门禁。
+
+### Requirement: 可审计变更流
+
+系统 SHALL 将拟议工作记录在 `openspec/changes/` 目录，并将当前稳定行为保存在 `openspec/specs/`。
+
+#### Scenario: 准备功能
+
+- **GIVEN** 出现新的变更请求
+- **WHEN** 团队开始 OpenSpec 规划
+- **THEN** 应创建包含提案、设计、任务和规格增量的变更目录，并用中文描述实施与验证要求。

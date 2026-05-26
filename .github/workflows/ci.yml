@@ -95,7 +95,7 @@ jobs:
         run: |
           files=$(git ls-files medkernel-backend frontend/src 2>/dev/null)
           if [ -n "$files" ] && echo "$files" | xargs grep -lE "PR-V[23]-[A-Z]+|PR-FINAL-[0-9]+|DOC-V2-[A-Z]+" 2>/dev/null; then
-            echo "::error::代码区不允许引用 PR-V2-XXX / PR-V3-XXX / PR-FINAL-NN / DOC-V2-XXX 旧任务命名"
+            echo "::error::代码区不允许引用重启前旧任务命名"
             exit 1
           fi
           echo "✓ 代码区无旧任务命名残留"

@@ -1,56 +1,61 @@
 ## ADDED Requirements
 
-### Requirement: Persistent MedKernel Core Deployment
-The project SHALL provide a Docker Compose development deployment that runs MedKernel with a
-persistent PostgreSQL 16 business database, backend application, frontend gateway, and optional
-Neo4j 5.23 projection service.
+### Requirement: 持久化 MedKernel 核心部署
 
-#### Scenario: Start core development deployment
-- **WHEN** a developer starts the core Docker deployment with a configured runtime root
-- **THEN** PostgreSQL, Neo4j, the backend, and the frontend gateway become healthy or reachable
-- **AND** PostgreSQL data is retained under the external runtime root across container recreation
+项目 SHALL 提供 Docker Compose 开发部署，运行 MedKernel、PostgreSQL 16 业务数据库、后端应用、前端网关和可选 Neo4j 投影服务。
 
-### Requirement: Authoritative Data Boundary
-The deployment SHALL keep MedKernel's PostgreSQL database authoritative and SHALL NOT use Neo4j
-or Dify internal storage as the authoritative store for MedKernel business records.
+#### Scenario: 启动核心开发部署
 
-#### Scenario: Optional projection service is unavailable
-- **WHEN** Neo4j is stopped while PostgreSQL and the MedKernel application remain running
-- **THEN** the MedKernel health and ping paths remain reachable through the PostgreSQL-backed core deployment
+- **WHEN** 开发者在配置 runtime 根目录后启动 core 模式
+- **THEN** PostgreSQL、Neo4j、后端和前端网关变为健康或可访问
+- **AND** PostgreSQL 数据在容器重建后仍保存在外部 runtime 根目录下
 
-#### Scenario: Optional workflow service is unavailable
-- **WHEN** Dify is not started or is stopped
-- **THEN** the MedKernel core deployment remains available without moving business data into Dify storage
+### Requirement: 权威数据边界
 
-### Requirement: Pinned Official Dify Integration
-The project SHALL provide a managed full-development startup path that installs and runs the
-official Dify self-hosted Docker Compose distribution at pinned version `v1.14.0` in a separate
-runtime directory.
+部署 SHALL 保持 MedKernel PostgreSQL 为业务记录权威存储，不得把 Neo4j 或 Dify 内部存储作为 MedKernel 业务主库。
 
-#### Scenario: Start full development deployment
-- **WHEN** a developer starts the full mode on a Docker Compose compatible host
-- **THEN** MedKernel services and the pinned official Dify service set start from separate Compose projects
-- **AND** the Dify web entry point becomes reachable for workflow development
+#### Scenario: 可选图服务不可用
 
-### Requirement: Portable Runtime State And Secrets
-The deployment SHALL keep persistent data and secret-bearing environment files outside Git using
-`MEDKERNEL_RUNTIME_ROOT`, defaulting on the development Mac to
-`/Users/zhikunzheng/work/medkernel/runtime`.
+- **WHEN** Neo4j 停止，而 PostgreSQL 和 MedKernel 应用仍在运行
+- **THEN** MedKernel 健康检查和 ping 路径仍可访问
 
-#### Scenario: Deploy to another server
-- **WHEN** an operator copies the committed deployment assets to another Docker-enabled server
-- **AND** sets `MEDKERNEL_RUNTIME_ROOT` and local secrets for that host
-- **THEN** the deployment starts without editing repository-owned Compose definitions for host paths
+#### Scenario: 可选工作流服务不可用
 
-### Requirement: Backup And Health Verification
-The deployment SHALL provide operational checks and PostgreSQL backup/restore commands that
-validate the running core platform and preserve authoritative business data.
+- **WHEN** Dify 未启动或已停止
+- **THEN** MedKernel 核心部署仍可用
+- **AND** 业务数据不会迁移到 Dify 内部存储
 
-#### Scenario: Verify healthy deployment
-- **WHEN** an operator runs the supplied health verification after startup
-- **THEN** it checks container state, PostgreSQL readiness, Flyway-applied backend availability, and browser-facing endpoints
+### Requirement: 固定版本 Dify 集成
 
-#### Scenario: Back up authoritative database
-- **WHEN** an operator runs the supplied PostgreSQL backup operation
-- **THEN** a timestamped database backup is written under the external runtime root
-- **AND** the documented restore operation can target that backup artifact
+项目 SHALL 提供完整模式启动路径，在独立 runtime 目录中安装并运行固定版本 `v1.14.0` 的 Dify 官方自托管 Docker Compose 分发。
+
+#### Scenario: 启动完整开发部署
+
+- **WHEN** 开发者在兼容 Docker Compose 的主机上启动 full 模式
+- **THEN** MedKernel 服务和固定版本 Dify 服务集分别从独立 Compose 项目启动
+- **AND** Dify Web 入口可用于工作流开发
+
+### Requirement: 可移植运行状态与密钥
+
+部署 SHALL 通过 `MEDKERNEL_RUNTIME_ROOT` 把持久化数据和包含密钥的环境文件放在 Git 外部，本机默认路径为 `/Users/zhikunzheng/work/medkernel/runtime`。
+
+#### Scenario: 部署到另一台服务器
+
+- **WHEN** 运维人员把仓库内部署资产复制到另一台支持 Docker 的服务器
+- **AND** 设置该主机的 `MEDKERNEL_RUNTIME_ROOT` 和本地密钥
+- **THEN** 不需要编辑仓库内 Compose 文件中的主机路径也能启动部署
+
+### Requirement: 备份与健康验证
+
+部署 SHALL 提供运行检查和 PostgreSQL 备份/恢复命令，以验证核心平台并保护权威业务数据。
+
+#### Scenario: 验证健康部署
+
+- **WHEN** 运维人员在启动后运行健康检查
+- **THEN** 检查容器状态、PostgreSQL 就绪、后端 Flyway 后可用性和浏览器入口
+
+#### Scenario: 备份权威数据库
+
+- **WHEN** 运维人员运行 PostgreSQL 备份操作
+- **THEN** 外部 runtime 根目录下生成带时间戳的数据库备份
+- **AND** 文档说明的恢复操作可以指向该备份文件

@@ -1,56 +1,39 @@
-# Terminology Mapping API Implementation Plan
+# 术语映射 API 实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+日期：2026-05-25
+状态：已完成实施，保留为当前设计追溯
+关联任务：GA-ENG-API-04
 
-**Goal:** Build GA-ENG-API-04 terminology mapping backend APIs with publish and rollback lifecycle.
+## 目标
 
-**Architecture:** Add a focused `engine.terminology` package that mirrors the knowledge API baseline: tenant-scoped repositories, a service layer with mapping and package state transitions, and one controller returning `ApiResult` envelopes. Add V4 migrations for all five database dialects.
+实现术语映射后端能力，覆盖租户隔离、本地术语检索、候选确认、冲突处理、术语包发布和回滚。
 
-**Tech Stack:** Java 21, Spring Boot 3.3, Spring Data JDBC, Spring Security method authorization, Flyway SQL migrations, JUnit 5, Mockito, MockMvc.
+## 技术路径
 
----
+- 新增 `engine.terminology` 包。
+- 使用 Spring Data JDBC 仓储和服务层状态机。
+- 控制器统一返回 `ApiResult`。
+- 所有查询和写入都强制带租户上下文。
+- 迁移覆盖当前支持的数据库方言。
 
-### Task 1: Service Contract And Tests
+## 任务清单
 
-**Files:**
-- Create: `medkernel-backend/src/test/java/com/medkernel/engine/terminology/TerminologyServiceTest.java`
-- Create later: `medkernel-backend/src/main/java/com/medkernel/engine/terminology/*.java`
+- [x] 新增 `TerminologyServiceTest`。
+- [x] 覆盖本地术语分页查询、租户缺失拒绝、候选确认、冲突解决、全量发布和回滚。
+- [x] 实现术语记录、仓储和服务方法。
+- [x] 新增 `TerminologyControllerSecurityTest`。
+- [x] 实现术语映射控制器，校验读取、写入和发布权限。
+- [x] 增加术语映射迁移。
+- [x] 运行后端测试；完整测试曾受本机 Docker/Testcontainers 环境影响，需要在远端 CI 再确认。
 
-- [x] Write tests for paged local term lookup, tenant-missing rejection, candidate confirmation, conflict resolution, package full publish, and package rollback.
-- [x] Run `mvn -Dtest=TerminologyServiceTest test` and verify the tests fail because the package does not exist.
-- [x] Implement the minimal terminology records, repositories, and service methods needed to pass those tests, including package status transitions and release events.
-- [x] Re-run `mvn -Dtest=TerminologyServiceTest test` and verify green.
+## 验收重点
 
-### Task 2: Controller Security
+- 不允许跨租户读取或写入术语映射数据。
+- 高风险发布和回滚必须有权限与审计。
+- 发布后的包不可变。
+- 全量发布会替换同作用域旧全量包。
+- 回滚会保留原因、操作者和目标版本。
 
-**Files:**
-- Create: `medkernel-backend/src/test/java/com/medkernel/engine/terminology/TerminologyControllerSecurityTest.java`
-- Create: `medkernel-backend/src/main/java/com/medkernel/engine/terminology/TerminologyController.java`
+## 后续注意
 
-- [x] Write MockMvc tests proving `ROLE_DOCTOR` can reach read endpoints but fails data scope without tenant, `ROLE_GUEST` is forbidden, `ROLE_SPECIALIST` can reach confirmation but still needs tenant, and `ROLE_IT_OPS` can reach publish/rollback but still needs tenant.
-- [x] Run `mvn -Dtest=TerminologyControllerSecurityTest test` and verify failure.
-- [x] Implement the controller using `ApiResult`, `PageRequest`, `@DataScope`, and `@PreAuthorize`.
-- [x] Re-run the controller test and verify green.
-
-### Task 3: Migrations
-
-**Files:**
-- Create: `medkernel-backend/src/main/resources/db/migration/h2/V4__terminology_mapping_baseline.sql`
-- Create: `medkernel-backend/src/main/resources/db/migration/postgres/V4__terminology_mapping_baseline.sql`
-- Create: `medkernel-backend/src/main/resources/db/migration/oracle/V4__terminology_mapping_baseline.sql`
-- Create: `medkernel-backend/src/main/resources/db/migration/dm/V4__terminology_mapping_baseline.sql`
-- Create: `medkernel-backend/src/main/resources/db/migration/kingbase/V4__terminology_mapping_baseline.sql`
-- Modify: `medkernel-backend/src/test/java/com/medkernel/platform/migration/H2BaselineMigrationTest.java`
-
-- [x] Add five-dialect V4 migrations for `standard_term`, `local_term`, `term_mapping`, `mapping_candidate`, `mapping_conflict`, `term_mapping_package`, `term_mapping_package_item`, and `term_mapping_package_release`.
-- [x] Update the H2 migration smoke assertion to include version `4`.
-- [x] Run `mvn -Dtest=H2BaselineMigrationTest test` and verify green.
-
-### Task 4: Verification
-
-**Files:**
-- No new files unless tests expose a focused defect.
-
-- [x] Run `mvn -Dtest=TerminologyServiceTest,TerminologyControllerSecurityTest,H2BaselineMigrationTest,DefaultPermissionPolicyTest test`.
-- [x] Run `mvn test` if targeted tests pass within available time. Result: blocked by missing Docker/Testcontainers environment before completing the full suite.
-- [x] Run `git diff --check`.
+通用知识包导出、跨院同步和前端术语治理页面不在本任务内，需要后续任务继续推进。

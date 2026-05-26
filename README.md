@@ -125,6 +125,7 @@ npm run dev
 | [docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md](docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md) | 产品体验固定规范：全系统交互、分页、低打扰、可信解释和验收门禁 |
 | [docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md](docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md) | 实施落地方案：当前按 0 业务引擎全能力上线，验收后再拆业务服务 |
 | [docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md](docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md) | 唯一实现级详细规范：S0-S40、独立专病路径、护理/报告/床旁知识/中医药、AI 工厂、引擎与评级 |
+| [docs/DOCUMENTATION_LANGUAGE_POLICY.md](docs/DOCUMENTATION_LANGUAGE_POLICY.md) | 文档语言与 AI 协作规范：当前有效文档必须中文书写，功能完成后 PR 合并到远程 main |
 | [docs/CONSTITUTION.md](docs/CONSTITUTION.md) | 产品宪法：16 条硬约束 / 5 菜单 / 4 状态机 / 7 步流 / 6 阶段租户生命周期 |
 | [docs/backlog.md](docs/backlog.md) | 单一任务台账：当前只登记基础底座与引擎全能力上线任务 |
 | [docs/README.md](docs/README.md) | 文档中心导航 |
@@ -144,16 +145,14 @@ npm run dev
 
 ---
 
-## v0.3 历史
+## 项目运行口径
 
-v0.3-final 已发布并归档。需要查询历史：
+本项目尚未正式上线，按全新项目运作：
 
-```bash
-git checkout legacy/v0.3-main-20260524     # v0.3-final main
-git checkout legacy/v0.3-develop-20260524  # v0.3-final develop（含 567 commit）
-```
-
-旧文档全部归档在 [docs/archive/v0.3/](docs/archive/v0.3/)。
+- 当前工作树只保留 v1.0 GA 需要的权威文档、代码、部署资产和任务台账。
+- 不保留历史归档目录、旧任务锁、旧分支策略或旧模板。
+- 所有新增和修改文档使用简体中文。
+- 所有功能完成后通过 PR 合并到 GitHub 远程 `main`。
 
 ---
 
