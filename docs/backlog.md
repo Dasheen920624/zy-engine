@@ -49,6 +49,7 @@
 
 | id | owner | status |
 |---|---|---|
+| GA-ENG-OBS-01 引擎可观测性骨干：StateTransitionRecorder / PayloadStoragePort / ErrorCode 增强 / DiagnoseResponse / MDC / TraceIdPropagator / V8 五方言迁移 | claude | done |
 | GA-ENG-API-01 标准上下文 API：患者、就诊、诊断、医嘱、报告、组织、包版本快照 | claude | done |
 | GA-ENG-API-02 临床事件 API：同步、异步、批量、回放、重试、死信、回调 | - | pending |
 | GA-ENG-API-03 知识资产 API：来源、解析、引用、版本、审核、替换、历史重放、分页、筛选、搜索、异步导出 | claude | done |
@@ -131,6 +132,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.15 | 2026-05-27 | Claude | GA-ENG-OBS-01 完成：V8 五方言迁移（state_transition_history 表 + canonical_resource ADD trace_id）+ ErrorCode 加 ErrorClass(INPUT/AUTH/DATA/EXTERNAL/INTERNAL) + retryable + ENG-OBS-001/002 + StateTransitionRecorder（同事务写历史、RuntimeException 兜底、DataAccessException 向上抛）+ PayloadStoragePort 接口 + InMemoryPayloadStorage 默认实现（@ConditionalOnMissingBean，第三层 DbPayloadStorage 自动让位）+ DiagnoseResponse + Assembler + MdcEnrichmentFilter + TraceIdPropagator + AsyncTaskExecutorConfig。后端 252 测试 / 前端 79 测试 / lint/typecheck/build 四步全绿 |
 | 4.14 | 2026-05-26 | Claude | GA-ENG-API-01 完成：V7 五方言迁移（context_snapshot/canonical_resource/clinical_event/context_idempotency_key）+ 12 个 Canonical Record DTO + ContextValidator / PackageVersionResolver / TerminologyMappingPort（@ConditionalOnMissingBean noop）+ ContextSnapshotService（含幂等、按 patient/encounter 翻页倒序）+ Controller 三接口（POST/GET by ID/GET 列表）+ PermissionCode 追加 context.read/context.write + ErrorCode 追加 ENG-CONTEXT-001..004 + DefaultPermissionPolicy 接入临床/接入/审核三类角色 + 审计 action=CREATE/resource_type=context_snapshot。后端 223 测试 / 前端 79 测试 / lint/typecheck/build 四步全绿 |
 | 4.13 | 2026-05-26 | Claude | E0/E1 全面核查闭环：BASE-01..10 全部真 done（182 后端测试 + 79 前端测试 + 5 方言迁移通过）。补齐 docs/README.md 声明但缺失的辅助目录骨架（handbook/implementation.md、handbook/operations.md、handbook/user-guides/、handbook/training/、adr/、legal/、release/、release/v1.0.0-ga-evidence.md 占位骨架），目录结构与文档声明完全一致。E2 首单选定 GA-ENG-API-01 标准上下文 API |
 | 4.12 | 2026-05-26 | Codex | GA-ENG-BASE-08 完成：新增路由体验声明、公共分页/筛选/详情/导出/视图组件底座，以字典映射作为真实接口只读样板页，补充外部连接与视图敏感内容门禁；验证执行 `npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`、`npm run build` |
