@@ -79,7 +79,7 @@ public class SecurityConfig {
      * JWT roles claim → ROLE_* 权限。
      *
      * <p>例：claim {@code roles=["doctor","qa-manager"]} → 权限 {@code ROLE_DOCTOR}、{@code ROLE_QA_MANAGER}。
-     * 业务代码可用 {@code @PreAuthorize("hasRole('DOCTOR')")} 控制访问（GA-ENG-BASE-02 引入数据范围切面时统一规范）。
+     * 业务动作授权由 {@code @PreAuthorize("@perm.has(...)")} 使用有效权限画像统一判断。
      *
      * <p>不暴露为 Spring Bean —— 一旦作为 {@link Converter} bean 暴露，Spring MVC 的
      * {@code mvcConversionService} 会尝试将其注册为通用类型转换器，因泛型擦除丢失类型信息而启动失败。

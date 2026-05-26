@@ -10,6 +10,8 @@ import type { MenuProps } from "antd";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { menuSections } from "@/shared/config/menu";
 import { findRouteByPath, getRouteBreadcrumb } from "@/shared/config/routes";
+import { useSecurityProfile } from "@/shared/api/hooks";
+import { PageState } from "@/shared/ui/PageState";
 import { PermissionChip } from "@/features/permission-chip/PermissionChip";
 import { CommandPalette } from "@/features/command-palette/CommandPalette";
 import { AuditSnapshotButton } from "@/features/audit-snapshot/AuditSnapshotButton";
@@ -33,29 +35,47 @@ export function AppLayout() {
   const isDesktop = screens.md ?? (typeof window === "undefined" ? true : window.innerWidth >= 768);
   const currentRoute = findRouteByPath(location.pathname);
   const breadcrumb = getRouteBreadcrumb(location.pathname);
+  const securityProfile = useSecurityProfile();
+  const allowedMenuKeys = securityProfile.data?.menuKeys;
+  const canViewCurrentRoute =
+    !currentRoute?.sectionKey ||
+    currentRoute.sectionKey === "workbench" ||
+    Boolean(allowedMenuKeys?.includes(currentRoute.sectionKey));
 
-  const items: MenuProps["items"] = useMemo(
+  const visibleMenuSections = useMemo(
     () =>
       menuSections
         .filter((s) => !s.hidden)
-        .map((section) => {
-          if (section.key === "workbench") {
-            return section.items.map((it) => ({
-              key: it.path,
-              label: it.label,
-              icon: <ToolOutlined />,
-            }))[0];
-          }
-          return {
-            key: section.key,
-            label: section.label,
-            children: section.items.map((it) => ({ key: it.path, label: it.label })),
-          };
-        }),
-    [],
+        .filter((s) => s.key === "workbench" || allowedMenuKeys?.includes(s.key)),
+    [allowedMenuKeys],
   );
 
-  const advancedItems = useMemo(() => menuSections.find((s) => s.hidden)?.items ?? [], []);
+  const items: MenuProps["items"] = useMemo(
+    () =>
+      visibleMenuSections.map((section) => {
+        if (section.key === "workbench") {
+          return section.items.map((it) => ({
+            key: it.path,
+            label: it.label,
+            icon: <ToolOutlined />,
+          }))[0];
+        }
+        return {
+          key: section.key,
+          label: section.label,
+          children: section.items.map((it) => ({ key: it.path, label: it.label })),
+        };
+      }),
+    [visibleMenuSections],
+  );
+
+  const advancedItems = useMemo(
+    () =>
+      allowedMenuKeys?.includes("advanced-tools")
+        ? (menuSections.find((s) => s.hidden)?.items ?? [])
+        : [],
+    [allowedMenuKeys],
+  );
   let mainLayoutClassName = "mk-layout-main mk-layout-main-mobile";
   if (isDesktop) {
     mainLayoutClassName = collapsed
@@ -74,6 +94,28 @@ export function AppLayout() {
     }
   };
 
+  const renderContent = () => {
+    if (canViewCurrentRoute) {
+      return <Outlet />;
+    }
+    if (!securityProfile.data) {
+      return securityProfile.isError ? (
+        <PageState
+          state="error"
+          title="暂时无法核验权限"
+          description="当前无法获取授权信息，请稍后重试或联系信息科。"
+        />
+      ) : (
+        <PageState
+          state="loading"
+          title="正在核验权限"
+          description="正在确认当前角色与数据范围。"
+        />
+      );
+    }
+    return <PageState state="forbidden" />;
+  };
+
   const renderNavigation = (isCollapsed: boolean) => (
     <>
       <div className={isCollapsed ? "mk-nav-brand mk-nav-brand-collapsed" : "mk-nav-brand"}>
@@ -83,9 +125,7 @@ export function AppLayout() {
         mode="inline"
         theme="light"
         selectedKeys={[location.pathname]}
-        defaultOpenKeys={menuSections
-          .filter((s) => !s.hidden && s.items.length > 1)
-          .map((s) => s.key)}
+        defaultOpenKeys={visibleMenuSections.filter((s) => s.items.length > 1).map((s) => s.key)}
         items={items}
         onClick={handleMenuClick}
         className="mk-menu-borderless"
@@ -161,17 +201,10 @@ export function AppLayout() {
             </Tooltip>
             <AuditSnapshotButton compact={!isDesktop} />
             <ThemeSwitcher compact={!isDesktop} />
-            {isDesktop && (
-              <>
-                <PermissionChip />
-                <Typography.Text type="secondary">医务处 · 张三</Typography.Text>
-              </>
-            )}
+            {isDesktop && <PermissionChip />}
           </Space>
         </Header>
-        <Content className="mk-app-content">
-          <Outlet />
-        </Content>
+        <Content className="mk-app-content">{renderContent()}</Content>
       </Layout>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </Layout>

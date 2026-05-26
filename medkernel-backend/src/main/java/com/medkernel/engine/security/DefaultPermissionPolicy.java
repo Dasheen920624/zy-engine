@@ -41,8 +41,8 @@ import static com.medkernel.engine.security.PermissionCode.TERM_WRITE;
 /**
  * MedKernel v1.0 GA · 默认角色 → 权限映射。
  *
- * <p>这是"代码侧默认权限策略"，作为 GA-ENG-BASE-02 Phase 1 的底线。
- * Phase 2 实施时将引入 {@code role_permission} 表，允许医院在默认策略基础上做加减，
+ * <p>这是代码侧默认权限策略，作为角色授权基线。
+ * 当前租户可通过 {@code role_permission} 表在默认策略基础上做加减，
  * 但任何医院不得授予未在 {@link PermissionCode} 登记的权限。
  *
  * <p>设计原则：

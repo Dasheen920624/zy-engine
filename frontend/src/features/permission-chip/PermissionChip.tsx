@@ -1,5 +1,6 @@
 import { Tag, Popover, Typography, Space, List } from "antd";
 import { SafetyOutlined } from "@ant-design/icons";
+import { useSecurityProfile, type SecurityProfile } from "@/shared/api/hooks";
 
 const { Text } = Typography;
 
@@ -8,53 +9,89 @@ const { Text } = Typography;
  *
  * 任何页面右上角显示当前用户"能改什么 / 能看什么"，减少 90% 客户工单。
  *
- * 当前实装：骨架，从 mock 角色读权限。
- * GA-COMPLIANCE-01 实装后从 /api/v1/security/permissions 读真实权限。
  */
-const MOCK_PERMS = {
-  role: "医务处主任",
-  canView: ["全院质控指标", "AI 提醒治理", "审计日志"],
-  canEdit: ["质控规则", "提醒阈值", "整改派单"],
-  canPublish: ["医保规则月更", "评估指标库"],
-  cannotDo: ["国密密钥轮换", "Provider 配置", "数据库连接"],
-};
-
 export function PermissionChip() {
+  const { data: profile, isError } = useSecurityProfile();
+  let role = "权限读取中";
+  if (profile) {
+    role = profile.roles.map((item) => item.displayName).join(" / ") || "未分配角色";
+  } else if (isError) {
+    role = "权限读取失败";
+  }
+
   const content = (
     <Space direction="vertical" size="middle" className="mk-popover-compact">
       <Text>
-        当前角色：<Tag color="blue">{MOCK_PERMS.role}</Tag>
+        当前角色：<Tag color="blue">{role}</Tag>
       </Text>
-      <PermSection title="可查看" items={MOCK_PERMS.canView} color="default" />
-      <PermSection title="可编辑" items={MOCK_PERMS.canEdit} color="processing" />
-      <PermSection title="可发布" items={MOCK_PERMS.canPublish} color="success" />
-      <PermSection title="不能做" items={MOCK_PERMS.cannotDo} color="default" italic />
-      <Text type="secondary" className="mk-text-xs">
-        权限由信息科主任在合规运维 → 用户管理配置。
-      </Text>
+      {profile ? (
+        <PermissionDetails profile={profile} />
+      ) : (
+        <Text type="secondary" className="mk-text-xs">
+          {isError ? "暂时无法读取授权信息。" : "正在读取授权信息..."}
+        </Text>
+      )}
     </Space>
   );
 
   return (
     <Popover content={content} trigger="click" placement="bottomRight" title="我的权限指纹">
       <Tag icon={<SafetyOutlined />} color="blue" className="mk-clickable">
-        {MOCK_PERMS.role}
+        {role}
       </Tag>
     </Popover>
   );
 }
 
-function PermSection({
-  title,
-  items,
-  color,
-  italic = false,
-}: {
-  title: string;
-  items: string[];
-  color: string;
-  italic?: boolean;
-}) {
+function PermissionDetails({ profile }: { profile: SecurityProfile }) {
+  const readable = profile.permissions.filter((permission) => permission.risk === "LOW");
+  const changeable = profile.permissions.filter((permission) => permission.risk === "MEDIUM");
+  const highRisk = profile.permissions.filter((permission) => permission.risk === "HIGH");
+
+  return (
+    <>
+      {readable.length > 0 && (
+        <PermSection
+          title="可查看"
+          items={readable.map((item) => item.displayName)}
+          color="default"
+        />
+      )}
+      {changeable.length > 0 && (
+        <PermSection
+          title="可变更"
+          items={changeable.map((item) => item.displayName)}
+          color="processing"
+        />
+      )}
+      {highRisk.length > 0 && (
+        <PermSection
+          title="高风险操作"
+          items={highRisk.map((item) => item.displayName)}
+          color="warning"
+        />
+      )}
+      <Text type="secondary" className="mk-text-xs">
+        数据范围：{formatDataScope(profile.dataScope)}；权限由合规运维统一配置。
+      </Text>
+    </>
+  );
+}
+
+function formatDataScope(dataScope: SecurityProfile["dataScope"]) {
+  if (dataScope.departmentId) {
+    return `科室 ${dataScope.departmentId}`;
+  }
+  if (dataScope.hospitalId) {
+    return `医院 ${dataScope.hospitalId}`;
+  }
+  if (dataScope.tenantId) {
+    return `租户 ${dataScope.tenantId}`;
+  }
+  return "当前组织";
+}
+
+function PermSection({ title, items, color }: { title: string; items: string[]; color: string }) {
   return (
     <div>
       <Text strong className="mk-text-xs">
@@ -65,9 +102,7 @@ function PermSection({
         dataSource={items}
         renderItem={(t) => (
           <List.Item className="mk-list-item-compact">
-            <Tag color={color} className={italic ? "mk-tag-muted-italic" : undefined}>
-              {t}
-            </Tag>
+            <Tag color={color}>{t}</Tag>
           </List.Item>
         )}
       />
