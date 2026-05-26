@@ -7,8 +7,11 @@
 | 规则名 | 类别 | 严重度 | 说明 |
 |---|---|:---:|---|
 | `no-hardcoded-color.js` | 视觉 | error | 禁止硬编码颜色（必须用 token） |
+| `no-inline-style.js` | 视觉 | warn | 存量内联样式只减不增，后续逐步抽取到 CSS Modules |
 | `require-source-info-for-medical.js` | 业务 | warn | 含医学语义的组件必须有 `<SourceInfo>` |
 | `forbid-deprecated-naming.js` | 命名 | error | 禁用重启前品牌、路径和环境变量标识 |
+
+内置 ESLint 规则还会阻断生产代码中的直接 `console.*`、直接 `localStorage/sessionStorage` 访问，以及组件内 axios 直连。
 
 ## 集成方式
 
@@ -18,6 +21,7 @@
 import noHardcodedColor from './eslint-rules/no-hardcoded-color.js';
 import requireSourceInfo from './eslint-rules/require-source-info-for-medical.js';
 import forbidDeprecatedNaming from './eslint-rules/forbid-deprecated-naming.js';
+import noInlineStyle from './eslint-rules/no-inline-style.js';
 
 export default [
   // ... 其它配置
@@ -28,6 +32,7 @@ export default [
           'no-hardcoded-color': noHardcodedColor,
           'require-source-info-for-medical': requireSourceInfo,
           'forbid-deprecated-naming': forbidDeprecatedNaming,
+          'no-inline-style': noInlineStyle,
         },
       },
     },
@@ -35,6 +40,7 @@ export default [
       'medkernel/no-hardcoded-color': 'error',
       'medkernel/require-source-info-for-medical': 'warn',
       'medkernel/forbid-deprecated-naming': 'error',
+      'medkernel/no-inline-style': 'warn',
     },
   },
 ];

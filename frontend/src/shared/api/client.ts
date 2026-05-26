@@ -15,10 +15,6 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = window.localStorage.getItem("medkernel.token");
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   // 自动加 trace-id（与后端 OpenTelemetry 链路对齐）
   if (config.headers) {
     config.headers["X-Trace-Id"] = crypto.randomUUID();
@@ -30,8 +26,7 @@ apiClient.interceptors.response.use(
   (resp) => resp,
   (err) => {
     if (err.response?.status === 401) {
-      // 401 跳登录（dev profile bypass 后此分支不会触发）
-      console.warn("auth required");
+      window.dispatchEvent(new CustomEvent("medkernel:auth-required"));
     }
     return Promise.reject(err);
   },
