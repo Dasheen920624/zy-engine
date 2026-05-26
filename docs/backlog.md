@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.12 · 2026-05-26
+> 版本：4.13 · 2026-05-26
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -131,6 +131,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.13 | 2026-05-26 | Claude | E0/E1 全面核查闭环：BASE-01..10 全部真 done（182 后端测试 + 79 前端测试 + 5 方言迁移通过）。补齐 docs/README.md 声明但缺失的辅助目录骨架（handbook/implementation.md、handbook/operations.md、handbook/user-guides/、handbook/training/、adr/、legal/、release/、release/v1.0.0-ga-evidence.md 占位骨架），目录结构与文档声明完全一致。E2 首单选定 GA-ENG-API-01 标准上下文 API |
 | 4.12 | 2026-05-26 | Codex | GA-ENG-BASE-08 完成：新增路由体验声明、公共分页/筛选/详情/导出/视图组件底座，以字典映射作为真实接口只读样板页，补充外部连接与视图敏感内容门禁；验证执行 `npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`、`npm run build` |
 | 4.11 | 2026-05-26 | Claude | GA-ENG-BASE-09 完成：三 PR 顺序合并（#80 门禁、#81 后端净化删 58 个旧 Java 文件、#82 前端净化 22 业务页改占位卡 + TerminologyMapping 真接入 + medkernel/no-page-mock ESLint 门禁 + RoadmapLink 组件）。BusinessMetrics 保留 W1-G6 constitutional helpers；五方言 V1..V6 无旧业务表无需 V7 drop；platform/migration → migration 顶层包重定位 |
 | 4.10 | 2026-05-26 | Claude | GA-ENG-BASE-09 in_progress：架构师审计 + 三个 PR 顺序计划落地。同步对齐 git 实际进度：GA-ENG-API-03/04 标 done（commit ddfb950 / cb39796），GA-ENG-KNOW-01/02 与 GA-ENG-TERM-01 标 partial |
