@@ -1,69 +1,207 @@
-import { Card, Row, Col, Tag, Space, Typography } from "antd";
+import {
+  Alert,
+  Card,
+  Row,
+  Col,
+  Tag,
+  Space,
+  Typography,
+  Table,
+  Statistic,
+  Button,
+  theme,
+} from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
+import { PageState } from "@/shared/ui/PageState";
+import { useRuntimeOperations } from "@/shared/api/hooks";
+import type { RuntimeDependencyStatus, RuntimeFeatureFlag } from "@/shared/api/hooks";
 
-type ProvStatus = "ok" | "warn" | "degraded";
+const STATUS_LABEL: Record<string, string> = {
+  UP: "正常",
+  DEGRADED: "降级",
+  DISABLED: "关闭",
+  DOWN: "异常",
+  OUT_OF_SERVICE: "停服",
+  UNKNOWN: "未知",
+};
 
-const PROVIDERS: { category: string; name: string; status: ProvStatus; detail: string }[] = [
-  {
-    category: "数据库",
-    name: "Oracle 23ai · 主库",
-    status: "ok",
-    detail: "QPS 1.2k · P95 18ms · 连接池 12/40",
-  },
-  {
-    category: "数据库",
-    name: "Oracle 23ai · DG 备库",
-    status: "ok",
-    detail: "RPO < 5s · 应用滞后 3s",
-  },
-  { category: "知识图谱", name: "Neo4j 5.23", status: "ok", detail: "1.2 亿节点 · 8.4 亿关系" },
-  {
-    category: "大模型",
-    name: "Ollama · 通义 Q2.5-7b（本地）",
-    status: "ok",
-    detail: "P95 1.2s · 平均 token/s 142",
-  },
-  {
-    category: "大模型",
-    name: "OpenAI 兼容 · 文心 4.0（外部）",
-    status: "warn",
-    detail: "限流 80% · 启用降级到 Ollama",
-  },
-  {
-    category: "外部系统",
-    name: "总院 PACS（东软 7）",
-    status: "degraded",
-    detail: "心跳失败 5 分钟 · 已派单",
-  },
-  { category: "缓存", name: "Redis 7.2 · 主从", status: "ok", detail: "命中率 96.4%" },
-  { category: "可信时间戳", name: "TSA · BJCA", status: "ok", detail: "今日签发 12834 次" },
-];
+const STATUS_COLOR: Record<string, string> = {
+  UP: "success",
+  DEGRADED: "warning",
+  DISABLED: "default",
+  DOWN: "error",
+  OUT_OF_SERVICE: "error",
+  UNKNOWN: "default",
+};
 
-const LABEL: Record<ProvStatus, string> = { ok: "正常", warn: "限流中", degraded: "降级" };
-const TAG_COLOR: Record<ProvStatus, string> = { ok: "success", warn: "warning", degraded: "error" };
+const RISK_COLOR: Record<string, string> = {
+  LOW: "success",
+  MEDIUM: "warning",
+  HIGH: "error",
+};
 
 export default function SystemProviders() {
+  const runtime = useRuntimeOperations();
+  const { token } = theme.useToken();
+
+  if (runtime.isLoading) {
+    return (
+      <PageShell title="Provider 状态" description="正在读取运行底座合同">
+        <PageState state="loading" />
+      </PageShell>
+    );
+  }
+
+  if (runtime.isError) {
+    return (
+      <PageShell title="Provider 状态" description="运行底座合同读取失败">
+        <PageState
+          state="error"
+          title="暂时无法读取运行状态"
+          description="请稍后重试，或让信息科检查后端 /api/v1/system/operations 接口。"
+          action={
+            <Button icon={<ReloadOutlined />} onClick={() => runtime.refetch()}>
+              重试
+            </Button>
+          }
+        />
+      </PageShell>
+    );
+  }
+
+  const data = runtime.data;
+  if (!data) {
+    return (
+      <PageShell title="Provider 状态" description="运行底座合同暂无数据">
+        <PageState state="empty" />
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell
       title="Provider 状态"
-      description="数据库 / 模型 / 图谱 / 外部系统 / 缓存 / 时间戳 健康一屏看完"
+      description="运行配置 / Feature Flag / 依赖健康 / 备份恢复 / 国产化 profile"
     >
-      <Row gutter={[16, 16]}>
-        {PROVIDERS.map((p) => (
-          <Col span={8} key={p.name}>
+      <Space direction="vertical" size="large" className="mk-full-width">
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} lg={6}>
             <Card>
+              <Statistic
+                title="整体健康"
+                value={STATUS_LABEL[data.healthStatus] ?? data.healthStatus}
+                valueStyle={{
+                  color: data.healthStatus === "UP" ? token.colorSuccess : token.colorWarning,
+                }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic title="部署模式" value={data.deploymentMode} />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic title="数据库方言" value={data.databaseDialect} />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic title="备份状态" value={data.backup.enabled ? "已启用" : "未启用"} />
+            </Card>
+          </Col>
+        </Row>
+
+        <Alert
+          type={data.healthStatus === "UP" ? "success" : "warning"}
+          showIcon
+          message={`当前 profile：${data.activeProfiles.join(" / ") || "default"}`}
+          description={`迁移路径：${data.migrationLocation}；国产化目标：${data.domesticProfile.targetOs}`}
+        />
+
+        <Card title="依赖健康" data-testid="runtime-dependencies">
+          <Table<RuntimeDependencyStatus>
+            rowKey="key"
+            dataSource={data.dependencies}
+            pagination={false}
+            scroll={{ x: "max-content" }}
+            columns={[
+              { title: "依赖", dataIndex: "displayName" },
+              {
+                title: "状态",
+                dataIndex: "status",
+                render: (status) => (
+                  <Tag color={STATUS_COLOR[status] ?? "default"}>
+                    {STATUS_LABEL[status] ?? status}
+                  </Tag>
+                ),
+              },
+              { title: "说明", dataIndex: "detail" },
+            ]}
+          />
+        </Card>
+
+        <Card title="Feature Flag">
+          <Table<RuntimeFeatureFlag>
+            rowKey="key"
+            dataSource={data.featureFlags}
+            pagination={false}
+            scroll={{ x: "max-content" }}
+            columns={[
+              { title: "能力", dataIndex: "displayName" },
+              {
+                title: "状态",
+                dataIndex: "enabled",
+                render: (enabled) => (
+                  <Tag color={enabled ? "success" : "default"}>{enabled ? "开启" : "关闭"}</Tag>
+                ),
+              },
+              {
+                title: "风险",
+                dataIndex: "risk",
+                render: (risk) => <Tag color={RISK_COLOR[risk] ?? "default"}>{risk}</Tag>,
+              },
+              { title: "负责人", dataIndex: "owner" },
+              { title: "说明", dataIndex: "description" },
+            ]}
+          />
+        </Card>
+
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={12}>
+            <Card title="备份恢复">
               <Space direction="vertical" size="small" className="mk-full-width">
-                <Space className="mk-flex-between">
-                  <Tag>{p.category}</Tag>
-                  <Tag color={TAG_COLOR[p.status]}>{LABEL[p.status]}</Tag>
-                </Space>
-                <strong>{p.name}</strong>
-                <Typography.Text type="secondary">{p.detail}</Typography.Text>
+                <Typography.Text>RPO：{data.backup.rpo}</Typography.Text>
+                <Typography.Text>RTO：{data.backup.rto}</Typography.Text>
+                <Typography.Text>备份脚本：{data.backup.backupScript}</Typography.Text>
+                <Typography.Text>恢复脚本：{data.backup.restoreScript}</Typography.Text>
+                <Typography.Text>{data.backup.checksumPolicy}</Typography.Text>
               </Space>
             </Card>
           </Col>
-        ))}
-      </Row>
+          <Col xs={24} lg={12}>
+            <Card title="国产化 profile">
+              <Space direction="vertical" size="small" className="mk-full-width">
+                <Typography.Text>目标操作系统：{data.domesticProfile.targetOs}</Typography.Text>
+                <Typography.Text>目标 JDK：{data.domesticProfile.targetJdk}</Typography.Text>
+                <Space wrap>
+                  {data.domesticProfile.databaseVendors.map((vendor) => (
+                    <Tag key={vendor}>{vendor}</Tag>
+                  ))}
+                  {data.domesticProfile.cryptoAlgorithms.map((algorithm) => (
+                    <Tag key={algorithm} color="blue">
+                      {algorithm}
+                    </Tag>
+                  ))}
+                </Space>
+                <Typography.Text type="secondary">{data.domesticProfile.evidence}</Typography.Text>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
+      </Space>
     </PageShell>
   );
 }

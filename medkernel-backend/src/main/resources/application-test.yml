@@ -13,3 +13,10 @@ management:
   health:
     neo4j:
       enabled: false
+
+medkernel:
+  runtime:
+    environment: test
+    deployment-mode: ci
+    database-dialect: h2
+    migration-location: classpath:db/migration/h2

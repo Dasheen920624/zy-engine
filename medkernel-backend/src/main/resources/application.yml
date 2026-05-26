@@ -1,5 +1,5 @@
 # MedKernel v1.0 GA · 默认 application.yml
-# 详细 profile 详见 application-{dev,test,demo,prod,govcloud}.yml
+# 详细 profile 详见 application-{dev,test,container,govcloud}.yml
 spring:
   application:
     name: medkernel
@@ -11,7 +11,7 @@ spring:
     virtual:
       enabled: true     # Spring Boot 3.2+ Virtual Threads 默认开启
   flyway:
-    enabled: false      # Phase-1 骨架不连真 DB；GA-CORE-03 实装时切 true
+    enabled: false      # 默认由具体 profile 打开迁移
 
 server:
   port: ${SERVER_PORT:18080}
@@ -47,3 +47,59 @@ logging:
   level:
     root: INFO
     com.medkernel: DEBUG
+
+medkernel:
+  runtime:
+    environment: ${MEDKERNEL_RUNTIME_ENV:dev}
+    deployment-mode: ${MEDKERNEL_DEPLOYMENT_MODE:local}
+    database-dialect: ${MEDKERNEL_DATABASE_DIALECT:h2}
+    migration-location: ${MEDKERNEL_MIGRATION_LOCATION:classpath:db/migration/h2}
+    feature-flags:
+      graph-projection:
+        display-name: 知识图谱投影
+        enabled: ${MEDKERNEL_GRAPH_ENABLED:false}
+        risk: MEDIUM
+        owner: 信息科 / 架构组
+        description: 控制 Neo4j 图谱投影和图谱查询能力是否参与运行。
+      dify-workflow:
+        display-name: Dify 工作流
+        enabled: ${MEDKERNEL_DIFY_ENABLED:false}
+        risk: MEDIUM
+        owner: AI 平台组
+        description: 控制 Dify 工作流接入，关闭时系统保持本地基础能力。
+      audit-persistence:
+        display-name: 审计持久化
+        enabled: ${MEDKERNEL_AUDIT_PERSISTENCE_ENABLED:true}
+        risk: HIGH
+        owner: 合规审计
+        description: 控制审计事件落库与审计链写入，生产环境必须开启。
+      external-provider:
+        display-name: 外部 Provider 接入
+        enabled: ${MEDKERNEL_EXTERNAL_PROVIDER_ENABLED:false}
+        risk: HIGH
+        owner: 信息科 / 集成组
+        description: 控制外部 HIS、EMR、模型和时间戳 Provider 接入。
+      domestic-crypto:
+        display-name: 国密增强
+        enabled: ${MEDKERNEL_DOMESTIC_CRYPTO_ENABLED:true}
+        risk: HIGH
+        owner: 安全组
+        description: 控制 SM2、SM3、SM4 等国密算法能力是否纳入运行验收。
+    backup:
+      enabled: ${MEDKERNEL_BACKUP_ENABLED:false}
+      rpo: ${MEDKERNEL_BACKUP_RPO:未启用}
+      rto: ${MEDKERNEL_BACKUP_RTO:未启用}
+      backup-script: ./deploy/docker/scripts/backup.sh
+      restore-script: ./deploy/docker/scripts/restore.sh
+      checksum-policy: SHA-256 摘要随备份文件生成，恢复前自动校验
+    domestic-profile:
+      target-os: 麒麟 / 统信 / openEuler
+      target-jdk: KAE-JDK 21 / BiSheng JDK 21
+      database-vendors:
+        - 达梦
+        - 人大金仓
+      crypto-algorithms:
+        - SM2
+        - SM3
+        - SM4
+      evidence: 国产化自检、五方言迁移合同、国密算法 smoke

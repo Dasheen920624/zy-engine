@@ -46,6 +46,38 @@ require_docker() {
   docker info >/dev/null 2>&1 || fail "Docker Desktop is not running"
 }
 
+checksum_file() {
+  local file="$1"
+  local dir
+  local base
+  dir="$(cd "$(dirname "$file")" && pwd)"
+  base="$(basename "$file")"
+  if command -v sha256sum >/dev/null 2>&1; then
+    (cd "$dir" && sha256sum "$base")
+  elif command -v shasum >/dev/null 2>&1; then
+    (cd "$dir" && shasum -a 256 "$base")
+  else
+    fail "sha256sum or shasum is required to create backup checksum"
+  fi
+}
+
+verify_checksum() {
+  local file="$1"
+  local checksum="$file.sha256"
+  local dir
+  local checksum_base
+  test -f "$checksum" || fail "backup checksum file does not exist: $checksum"
+  dir="$(cd "$(dirname "$checksum")" && pwd)"
+  checksum_base="$(basename "$checksum")"
+  if command -v sha256sum >/dev/null 2>&1; then
+    (cd "$dir" && sha256sum -c "$checksum_base")
+  elif command -v shasum >/dev/null 2>&1; then
+    (cd "$dir" && shasum -a 256 -c "$checksum_base")
+  else
+    fail "sha256sum or shasum is required to verify backup checksum"
+  fi
+}
+
 core_compose() {
   docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
 }

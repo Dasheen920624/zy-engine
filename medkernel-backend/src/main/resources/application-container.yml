@@ -25,6 +25,14 @@ management:
 
 medkernel:
   runtime:
+    environment: ${MEDKERNEL_RUNTIME_ENV:container}
+    deployment-mode: ${MEDKERNEL_DEPLOYMENT_MODE:docker-core}
+    database-dialect: postgres
+    migration-location: classpath:db/migration/postgres
+    backup:
+      enabled: ${MEDKERNEL_BACKUP_ENABLED:true}
+      rpo: ${MEDKERNEL_BACKUP_RPO:24 小时}
+      rto: ${MEDKERNEL_BACKUP_RTO:4 小时}
     graph-enabled: ${MEDKERNEL_GRAPH_ENABLED:false}
     neo4j-uri: ${MEDKERNEL_NEO4J_URI:bolt://neo4j:7687}
     dify-enabled: ${MEDKERNEL_DIFY_ENABLED:false}

@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.8 · 2026-05-26
+> 版本：4.9 · 2026-05-26
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -38,7 +38,7 @@
 | GA-ENG-BASE-04 审计上下文：写操作、审核、发布、运行、反馈、导出、回滚统一留痕 | claude | done |
 | GA-ENG-BASE-05 数据迁移：5 方言表族、审计字段、状态字段、版本字段、索引和约束门禁 | codex | done |
 | GA-ENG-BASE-06 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流 | codex | done |
-| GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | - | pending |
+| GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | codex | done |
 | GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | - | pending |
 | GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | - | pending |
 | GA-ENG-BASE-10 前端视觉债净化：硬编码颜色、内联样式、console、localStorage 敏感写入和 axios 直连规则全部归零 | codex | done |
@@ -131,6 +131,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.9 | 2026-05-26 | Codex | GA-ENG-BASE-07 完成：运行底座合同接口、`govcloud` 国产化 profile、备份恢复 SHA-256 摘要校验、前端 Provider 状态真实快照和完整验证收口 |
 | 4.8 | 2026-05-26 | Codex | GA-ENG-BASE-05 完成：五方言 `V1` 至 `V6` 迁移序列、表族、索引、业务约束、租户/审计/状态/版本字段合同门禁及完整 Flyway smoke 收口 |
 | 4.7 | 2026-05-26 | Codex | GA-ENG-BASE-02 完成：角色权限覆盖、范围隔离的用户角色分配、当前用户权限画像接口、受控审计快照入口及菜单/页面/动作/数据范围闭环 |
 | 4.6 | 2026-05-26 | Codex | GA-ENG-BASE-10 完成：inline style 归零、门禁 error、视觉债归零 |
