@@ -920,19 +920,19 @@
 **文件：**
 - 不新增文件；只处理 git 与 GitHub。
 
-- [ ] **步骤 1：确认分支与提交**
+- [x] **步骤 1：确认分支与提交**
 
   ```bash
   git status --short --branch
   git log --oneline origin/main..HEAD
   ```
 
-  预期：在 `codex/ga-eng-base-08-product-experience`，工作区干净，提交只包含本任务。
+  预期：在 `codex/ga-eng-base-08-product-experience-implementation`，提交只包含本任务；已识别的误范围未跟踪草稿不进入提交。
 
 - [ ] **步骤 2：推送分支**
 
   ```bash
-  git push -u origin codex/ga-eng-base-08-product-experience
+  git push -u origin codex/ga-eng-base-08-product-experience-implementation
   ```
 
 - [ ] **步骤 3：创建中文 PR**
