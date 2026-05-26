@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEventPublisher;
 import com.medkernel.engine.context.canonical.CanonicalCarePlan;
 import com.medkernel.engine.context.canonical.CanonicalClaim;
 import com.medkernel.engine.context.canonical.CanonicalCondition;
@@ -51,6 +53,7 @@ public class ContextSnapshotService {
     private final ContextValidator validator;
     private final PackageVersionResolver versions;
     private final TerminologyMappingPort mapping;
+    private final AuditEventPublisher auditPublisher;
     private final ObjectMapper json;
 
     public ContextSnapshotService(ContextSnapshotRepository snapshots,
@@ -59,6 +62,7 @@ public class ContextSnapshotService {
                                   ContextValidator validator,
                                   PackageVersionResolver versions,
                                   TerminologyMappingPort mapping,
+                                  AuditEventPublisher auditPublisher,
                                   ObjectMapper json) {
         this.snapshots = snapshots;
         this.resources = resources;
@@ -66,6 +70,7 @@ public class ContextSnapshotService {
         this.validator = validator;
         this.versions = versions;
         this.mapping = mapping;
+        this.auditPublisher = auditPublisher;
         this.json = json;
     }
 
@@ -117,6 +122,9 @@ public class ContextSnapshotService {
                 digest(req), now.plusSeconds(IDEMPOTENCY_TTL_SECONDS), now
             ));
         }
+
+        auditPublisher.publish(AuditAction.CREATE, "context_snapshot", saved.snapshotId(),
+            "创建标准上下文 quality=" + quality + " patient=" + req.patientId());
 
         return new ContextSnapshotResponse(saved.snapshotId(), ContextSnapshotStatus.ACTIVE,
             quality, missing, mappingStatus, now, traceId);

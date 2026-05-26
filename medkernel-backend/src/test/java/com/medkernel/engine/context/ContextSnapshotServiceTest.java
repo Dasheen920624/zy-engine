@@ -28,6 +28,8 @@ import com.medkernel.shared.api.PageRequest;
 import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
+import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEventPublisher;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
 
@@ -39,6 +41,7 @@ class ContextSnapshotServiceTest {
     private ContextValidator validator;
     private PackageVersionResolver versions;
     private TerminologyMappingPort mapping;
+    private AuditEventPublisher auditPublisher;
     private ContextSnapshotService service;
 
     @BeforeEach
@@ -49,11 +52,12 @@ class ContextSnapshotServiceTest {
         validator = new ContextValidator();
         versions = new PackageVersionResolver();
         mapping = mock(TerminologyMappingPort.class);
+        auditPublisher = mock(AuditEventPublisher.class);
         when(mapping.evaluate(anyString(), any())).thenReturn(Map.of());
         ObjectMapper json = new ObjectMapper();
         json.findAndRegisterModules();
         service = new ContextSnapshotService(snapshots, resources, idemRepo,
-            validator, versions, mapping, json);
+            validator, versions, mapping, auditPublisher, json);
 
         when(snapshots.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(resources.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -79,6 +83,19 @@ class ContextSnapshotServiceTest {
         // 1 patient + 1 encounter
         verify(resources, times(2)).save(any());
         verify(idemRepo, never()).save(any());
+        verify(auditPublisher, times(1)).publish(
+            eq(AuditAction.CREATE), eq("context_snapshot"), anyString(), anyString());
+    }
+
+    @Test
+    void shouldNotEmitAuditWhenRejectedByInvalidQuality() {
+        var resourcesDto = new ContextSnapshotResources(null,
+            List.of(), List.of(), List.of(), List.of(), List.of(),
+            List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+        var req = new ContextSnapshotRequest("MPI-1", null, "ORG-1",
+            "kpv-1", "rpv-1", "ppv-1", resourcesDto);
+        assertThatThrownBy(() -> service.create(req, null)).isInstanceOf(ApiException.class);
+        verify(auditPublisher, never()).publish(any(AuditAction.class), anyString(), anyString(), anyString());
     }
 
     @Test
