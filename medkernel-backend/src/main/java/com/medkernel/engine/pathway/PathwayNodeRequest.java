@@ -6,6 +6,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * 创建路径节点的请求片段。
+ *
+ * <p>用于在创建模板时定义临床步骤、节点类型、排序、责任角色、依赖、时间窗和节点配置。
+ */
 public record PathwayNodeRequest(
     @NotBlank String nodeCode,
     @NotBlank String name,

@@ -6,6 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 患者路径运行实例。
+ *
+ * <p>保存患者、就诊、模板、当前节点、运行状态、入径时间、完成/退出时间和最后事件 ID。
+ */
 @Table("patient_pathway")
 public record PatientPathway(
     @Id Long id,

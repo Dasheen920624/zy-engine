@@ -9,9 +9,23 @@ import org.springframework.stereotype.Component;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 
+/**
+ * 路径确定性推进器。
+ *
+ * <p>根据路径图、当前节点、推进事件和可选目标节点选择下一节点或终态，只做流程判断，
+ * 不读取数据库、不写审计、不生成医疗诊断或医嘱。
+ */
 @Component
 public class PathwayProgressor {
 
+    /**
+     * 计算一次路径推进决策。
+     *
+     * <p>规则：退出事件直接进入 {@code EXITED}；无继续节点的变异停留在当前节点并进入
+     * {@code VARIANCE}；普通完成事件优先使用请求目标节点，否则选择优先级最高的出边。
+     *
+     * @throws ApiException 当命令不完整、当前节点不存在或目标节点不可达时抛出 {@code ENG-PATHWAY-006}
+     */
     public PathwayProgressDecision advance(PathwayProgressCommand command) {
         if (command == null || command.graph() == null || isBlank(command.currentNodeCode())
                 || command.eventType() == null) {

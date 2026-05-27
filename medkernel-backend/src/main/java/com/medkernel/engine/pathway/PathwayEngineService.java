@@ -28,6 +28,19 @@ import com.medkernel.shared.observability.StateTransitionRecorder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 路径引擎应用服务（GA-ENG-API-06 专病包 + 路径模板 + 患者路径实例 + 确定性推进）。
+ *
+ * <p>聚合专病包、专病画像、路径模板、节点、边、患者路径、变异、关键时钟和指标绑定九类数据，
+ * 承担：
+ * <ul>
+ *   <li>专病路径资产的草稿创建、模板发布门禁和版本化查询；</li>
+ *   <li>基于已发布模板创建患者路径实例并初始化节点关键时钟；</li>
+ *   <li>按确定性推进器处理完成、变异和退出事件，并保存审计事实；</li>
+ *   <li>输出仿真轨迹和诊断解释，支撑后续路径画布与临床嵌入式提醒。</li>
+ * </ul>
+ * 所有读写均按当前租户隔离，写动作发布审计事件并记录状态迁移。
+ */
 @Service
 public class PathwayEngineService {
 
@@ -50,6 +63,9 @@ public class PathwayEngineService {
     private final DiagnoseResponseAssembler diagnoseAssembler;
     private final ObjectMapper json;
 
+    /**
+     * 注入路径引擎闭环所需仓库、推进器、审计发布器、状态记录器、诊断装配器和 JSON 工具。
+     */
     public PathwayEngineService(SpecialtyPackageRepository packages,
                                 SpecialtyProfileRepository profiles,
                                 PathwayTemplateRepository templates,
@@ -80,6 +96,11 @@ public class PathwayEngineService {
         this.json = json;
     }
 
+    /**
+     * 创建专病包草稿，并保存请求中携带的专病画像。
+     *
+     * <p>成功后记录 {@code CREATE_SPECIALTY_PACKAGE} 状态迁移和创建审计事件。
+     */
     @Transactional
     public SpecialtyPackageResponse createPackage(SpecialtyPackageCreateRequest request) {
         String tenantId = requireCurrentTenant();
@@ -107,6 +128,11 @@ public class PathwayEngineService {
         return new SpecialtyPackageResponse(packageId, SpecialtyPackageStatus.DRAFT, traceId);
     }
 
+    /**
+     * 创建路径模板草稿，并一次性持久化模板节点、路径边和专病指标绑定。
+     *
+     * <p>前置：关联专病包必须存在于当前租户；失败抛出 {@code ENG-PATHWAY-007}。
+     */
     @Transactional
     public PathwayTemplateDetailResponse createTemplate(PathwayTemplateCreateRequest request) {
         String tenantId = requireCurrentTenant();
@@ -152,6 +178,11 @@ public class PathwayEngineService {
         return new PathwayTemplateDetailResponse(template, savedNodes, savedEdges, savedBindings, traceId);
     }
 
+    /**
+     * 对路径模板执行发布门禁并将草稿发布为 {@code PUBLISHED}。
+     *
+     * <p>门禁校验起始节点、终止节点、节点编码唯一性、边端点存在性和时间窗合法性。
+     */
     @Transactional
     public PathwayTemplatePublishResponse publishTemplate(String templateId) {
         String tenantId = requireCurrentTenant();
@@ -174,6 +205,11 @@ public class PathwayEngineService {
             templateId, PathwayTemplateStatus.PUBLISHED, RequestContext.currentTraceId());
     }
 
+    /**
+     * 分页查询当前租户下的专病包。
+     *
+     * <p>当调用方未传分页参数时使用 {@link PageRequest#defaults()}，结果按更新时间倒序返回。
+     */
     @Transactional(readOnly = true)
     public PageResponse<SpecialtyPackage> listPackages(PageRequest page) {
         PageRequest safePage = page == null ? PageRequest.defaults() : page;
@@ -184,6 +220,11 @@ public class PathwayEngineService {
         return PageResponse.of(rows, safePage, total);
     }
 
+    /**
+     * 按状态、病种和专病包过滤分页查询路径模板。
+     *
+     * <p>过滤条件为 {@code null} 时不进入 SQL；分页总数与行集分别由仓库 count/page 查询提供。
+     */
     @Transactional(readOnly = true)
     public PageResponse<PathwayTemplate> listTemplates(PathwayTemplateFilter filter, PageRequest page) {
         PageRequest safePage = page == null ? PageRequest.defaults() : page;
@@ -198,6 +239,11 @@ public class PathwayEngineService {
         return PageResponse.of(rows, safePage, total);
     }
 
+    /**
+     * 装配路径模板详情。
+     *
+     * <p>返回模板主表、按顺序排列的节点、按优先级排列的边和按节点排列的指标绑定。
+     */
     @Transactional(readOnly = true)
     public PathwayTemplateDetailResponse templateDetail(String templateId) {
         String tenantId = requireCurrentTenant();
@@ -210,6 +256,11 @@ public class PathwayEngineService {
             RequestContext.currentTraceId());
     }
 
+    /**
+     * 为患者创建路径实例并进入模板起始节点或请求指定起点。
+     *
+     * <p>仅允许基于 {@code PUBLISHED} 模板入径；成功后创建首个 {@link ClinicalClock} 关键时钟。
+     */
     @Transactional
     public PatientPathwayDetailResponse enterPatientPathway(PatientPathwayEnterRequest request) {
         String tenantId = requireCurrentTenant();
@@ -238,6 +289,11 @@ public class PathwayEngineService {
         return new PatientPathwayDetailResponse(runtime, List.of(), List.of(startClock), traceId);
     }
 
+    /**
+     * 查看患者路径实例详情。
+     *
+     * <p>返回路径运行时状态、按创建时间排列的变异记录和按启动时间排列的关键时钟。
+     */
     @Transactional(readOnly = true)
     public PatientPathwayDetailResponse patientDetail(String patientPathwayId) {
         String tenantId = requireCurrentTenant();
@@ -249,6 +305,11 @@ public class PathwayEngineService {
             RequestContext.currentTraceId());
     }
 
+    /**
+     * 查询指定患者路径实例的关键时钟。
+     *
+     * <p>先校验患者路径属于当前租户，再按启动时间返回节点时钟事实。
+     */
     @Transactional(readOnly = true)
     public List<ClinicalClock> clocks(String patientPathwayId) {
         String tenantId = requireCurrentTenant();
@@ -256,6 +317,11 @@ public class PathwayEngineService {
         return clocks.findByPatientPathwayIdAndTenantIdOrderByStartedAtAsc(patientPathwayId, tenantId);
     }
 
+    /**
+     * 基于模板图和可选目标节点序列仿真路径推进。
+     *
+     * <p>仿真只返回节点轨迹与最终状态，不创建患者路径、不写变异、不创建关键时钟。
+     */
     @Transactional(readOnly = true)
     public PathwaySimulationResponse simulate(String templateId, PathwaySimulateRequest request) {
         String tenantId = requireCurrentTenant();
@@ -283,6 +349,12 @@ public class PathwayEngineService {
         return new PathwaySimulationResponse(templateId, trajectory, finalStatus, RequestContext.currentTraceId());
     }
 
+    /**
+     * 推进患者路径节点，或登记变异、退出路径。
+     *
+     * <p>方法会校验运行时状态、调用确定性推进器、保存变异事实、关闭当前时钟、创建下一节点时钟，
+     * 并同步患者路径状态、审计事件和状态迁移。
+     */
     @Transactional
     public PathwayAdvanceResponse advance(PathwayAdvanceRequest request) {
         String tenantId = requireCurrentTenant();
@@ -326,6 +398,11 @@ public class PathwayEngineService {
             decision.status(), varianceId, traceId);
     }
 
+    /**
+     * 生成患者路径实例的诊断解释响应。
+     *
+     * <p>诊断响应包含路径实例当前状态、模板引用、内联证据摘要和 traceId，用于排查路径推进结果。
+     */
     @Transactional(readOnly = true)
     public DiagnoseResponse diagnose(String patientPathwayId) {
         String tenantId = requireCurrentTenant();

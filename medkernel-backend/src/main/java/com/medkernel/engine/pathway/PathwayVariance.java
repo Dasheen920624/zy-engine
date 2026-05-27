@@ -6,6 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 患者路径变异记录。
+ *
+ * <p>记录执行偏离的节点、类型、原因、处置动作和可选继续节点，作为人工确认和审计事实。
+ */
 @Table("pathway_variance")
 public record PathwayVariance(
     @Id Long id,
