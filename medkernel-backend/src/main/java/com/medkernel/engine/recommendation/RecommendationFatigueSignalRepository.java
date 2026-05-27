@@ -6,6 +6,9 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 疲劳治理信号持久化仓库，提供按卡/触发关联查询及按 fatigueKey / 信号类型分页。
+ */
 @Repository
 public interface RecommendationFatigueSignalRepository extends ListCrudRepository<RecommendationFatigueSignal, Long> {
 
@@ -13,6 +16,7 @@ public interface RecommendationFatigueSignalRepository extends ListCrudRepositor
 
     List<RecommendationFatigueSignal> findByTriggerIdAndTenantIdOrderByCreatedAtAsc(String triggerId, String tenantId);
 
+    /** 按 fatigueKey 与信号类型过滤当前租户的疲劳治理信号，返回 limit+1 条用于估算游标分页。 */
     @Query("""
         SELECT *
         FROM recommendation_fatigue_signal

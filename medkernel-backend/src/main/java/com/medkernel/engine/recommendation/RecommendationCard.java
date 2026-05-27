@@ -6,6 +6,16 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * GA-ENG-API-07 推荐卡片实体（CDSS 辅助建议与风险提醒的载体）。
+ *
+ * <p>状态机由 {@link RecommendationCardStatus} 定义；
+ * 高风险/红线卡必须 {@code requiresPhysicianConfirmation=true}，
+ * 强打断卡必须高风险，由 {@link RecommendationEngineService#trigger} 校验。
+ * 业务键 card_id 在租户内唯一；关联触发 {@link RecommendationTrigger}，
+ * 来源 {@link RecommendationSource} 与反馈 {@link RecommendationFeedback} 通过 card_id 反查。
+ * AI 候选必须 {@code aiGenerated=true}，不能伪装为人工规则结论。
+ */
 @Table("recommendation_card")
 public record RecommendationCard(
     @Id Long id,

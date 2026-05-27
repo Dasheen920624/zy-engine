@@ -19,6 +19,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * GA-ENG-API-07 推荐/CDSS API（触发、推荐卡查询、卡详情、来源解释、医师反馈、疲劳治理信号、诊断）。
+ *
+ * <p>所有接口要求请求上下文携带租户（{@link DataScope#requireTenant}）。
+ * 触发与来源解释属于受控写入（{@code recommendation.write}），
+ * 列表与详情属于读（{@code recommendation.read}），
+ * 医师反馈使用专属权限 {@code recommendation.accept}；
+ * 不提供绕过权限或租户隔离的调试接口。
+ */
 @RestController
 @RequestMapping("/api/v1/engine/recommendations")
 @DataScope(requireTenant = true)
@@ -30,6 +39,9 @@ public class RecommendationEngineController {
         this.service = service;
     }
 
+    /**
+     * 接收推荐触发并可携带候选推荐卡入参，返回 triggerId 与本次落库卡数。
+     */
     @PostMapping("/triggers")
     @PreAuthorize("@perm.has('recommendation.write')")
     public ResponseEntity<ApiResult<RecommendationTriggerResponse>> trigger(
@@ -38,6 +50,9 @@ public class RecommendationEngineController {
             .body(ApiResult.ok(service.trigger(request)));
     }
 
+    /**
+     * 分页查询当前租户的推荐卡，支持按 status / riskLevel / scenarioCode / patientId 过滤。
+     */
     @GetMapping("/cards")
     @PreAuthorize("@perm.has('recommendation.read')")
     public ApiResult<PageResponse<RecommendationCard>> cards(
@@ -53,18 +68,27 @@ public class RecommendationEngineController {
             new PageRequest(page, size, sort)));
     }
 
+    /**
+     * 查询推荐卡详情，聚合来源、反馈和疲劳治理信号。
+     */
     @GetMapping("/cards/{cardId}")
     @PreAuthorize("@perm.has('recommendation.read')")
     public ApiResult<RecommendationCardDetailResponse> cardDetail(@PathVariable String cardId) {
         return ApiResult.ok(service.cardDetail(cardId));
     }
 
+    /**
+     * 查询推荐卡的来源解释列表（证据链，按创建时间升序）。
+     */
     @GetMapping("/cards/{cardId}/sources")
     @PreAuthorize("@perm.has('recommendation.read')")
     public ApiResult<List<RecommendationSource>> sources(@PathVariable String cardId) {
         return ApiResult.ok(service.sources(cardId));
     }
 
+    /**
+     * 提交医师反馈并推进推荐卡状态；终止态卡或已过期卡禁止再反馈（{@code ENG_REC_004}）。
+     */
     @PostMapping("/cards/{cardId}/feedback")
     @PreAuthorize("@perm.has('recommendation.accept')")
     public ApiResult<RecommendationFeedbackResponse> feedback(
@@ -73,6 +97,9 @@ public class RecommendationEngineController {
         return ApiResult.ok(service.feedback(cardId, request));
     }
 
+    /**
+     * 分页查询疲劳治理信号，支持按 fatigueKey / signalType 过滤。
+     */
     @GetMapping("/fatigue-signals")
     @PreAuthorize("@perm.has('recommendation.read')")
     public ApiResult<PageResponse<RecommendationFatigueSignal>> fatigueSignals(
@@ -86,6 +113,9 @@ public class RecommendationEngineController {
             new PageRequest(page, size, sort)));
     }
 
+    /**
+     * 输出推荐触发诊断响应（聚合触发、推荐卡、反馈、疲劳信号），不存在抛 {@code ENG_REC_002}。
+     */
     @GetMapping("/triggers/{triggerId}/diagnose")
     @PreAuthorize("@perm.has('recommendation.read')")
     public ApiResult<DiagnoseResponse> diagnose(@PathVariable String triggerId) {

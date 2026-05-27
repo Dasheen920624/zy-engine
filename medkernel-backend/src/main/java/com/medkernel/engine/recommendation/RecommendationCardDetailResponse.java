@@ -2,6 +2,9 @@ package com.medkernel.engine.recommendation;
 
 import java.util.List;
 
+/**
+ * 推荐卡详情出参：聚合推荐卡 + 来源解释 + 反馈记录 + 疲劳治理信号，字段语义见 API spec。
+ */
 public record RecommendationCardDetailResponse(
     RecommendationCard card,
     List<RecommendationSource> sources,
