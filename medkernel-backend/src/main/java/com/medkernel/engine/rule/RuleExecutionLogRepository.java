@@ -7,11 +7,22 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 规则执行日志持久化仓库（GA-ENG-API-05）。
+ *
+ * <p>按 {@code execution_id} 装载单次执行用于诊断，按 {@code rule_id} 分页拉取命中历史。
+ */
 @Repository
 public interface RuleExecutionLogRepository extends ListCrudRepository<RuleExecutionLog, Long> {
 
+    /**
+     * 按执行业务 ID 与租户 ID 查询单次规则执行日志，用于可解释诊断响应装配。
+     */
     Optional<RuleExecutionLog> findByExecutionIdAndTenantId(String executionId, String tenantId);
 
+    /**
+     * 按规则倒序分页查询执行日志，按 {@code executed_at} 倒序，配合命中统计与回放。
+     */
     @Query("""
         SELECT * FROM rule_execution_log
         WHERE tenant_id = :tenantId AND rule_id = :ruleId

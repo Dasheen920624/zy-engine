@@ -6,6 +6,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 规则执行日志实体（GA-ENG-API-05 真实执行与仿真执行的事实记录）。
+ *
+ * <p>{@code execution_id} 全局唯一；仅保存输入 SHA-256 摘要与解释快照，不落患者完整上下文，
+ * 通过 {@link com.medkernel.shared.observability.DiagnoseResponseAssembler} 还原可解释诊断。
+ */
 @Table("rule_execution_log")
 public record RuleExecutionLog(
     @Id Long id,

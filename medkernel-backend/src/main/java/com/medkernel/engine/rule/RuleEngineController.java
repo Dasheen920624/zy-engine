@@ -19,6 +19,13 @@ import com.medkernel.shared.observability.DiagnoseResponse;
 
 import jakarta.validation.Valid;
 
+/**
+ * 规则引擎 REST 入口（GA-ENG-API-05 {@code /api/v1/engine/rules}）。
+ *
+ * <p>承担规则定义、版本、测试用例、仿真、发布、真实执行与诊断的 HTTP 合同；
+ * 权限由 {@code @PreAuthorize} 强校验 {@code rule.read}/{@code rule.write}/{@code rule.publish}，
+ * 租户隔离由类级 {@link DataScope}{@code (requireTenant=true)} 兜底。
+ */
 @RestController
 @RequestMapping("/api/v1/engine/rules")
 @DataScope(requireTenant = true)
@@ -26,10 +33,19 @@ public class RuleEngineController {
 
     private final RuleEngineService service;
 
+    /**
+     * 注入规则引擎应用服务，控制器仅负责 HTTP 合同和权限入口编排。
+     */
     public RuleEngineController(RuleEngineService service) {
         this.service = service;
     }
 
+    /**
+     * 创建规则定义并生成初始草稿版本。
+     *
+     * <p>权限：{@code rule.write}；DSL 必须可解析且包含 trigger/when/then/explain，否则抛
+     * {@link com.medkernel.shared.api.error.ApiException} 错误码 {@code ENG-RULE-001}。
+     */
     @PostMapping
     @PreAuthorize("@perm.has('rule.write')")
     public ResponseEntity<ApiResult<RuleCreateResponse>> create(@RequestBody @Valid RuleCreateRequest request) {
@@ -37,6 +53,11 @@ public class RuleEngineController {
             .body(ApiResult.ok(service.createRule(request)));
     }
 
+    /**
+     * 按状态、类型、风险级别分页查询规则定义。
+     *
+     * <p>权限：{@code rule.read}；过滤参数全部可选，{@code null} 表示不过滤。
+     */
     @GetMapping
     @PreAuthorize("@perm.has('rule.read')")
     public ApiResult<PageResponse<RuleDefinition>> list(
@@ -51,12 +72,22 @@ public class RuleEngineController {
             new PageRequest(page, size, sort)));
     }
 
+    /**
+     * 查看指定规则的定义、当前版本及测试用例覆盖情况。
+     *
+     * <p>权限：{@code rule.read}；规则不存在抛错误码 {@code ENG-RULE-002}。
+     */
     @GetMapping("/{ruleId}")
     @PreAuthorize("@perm.has('rule.read')")
     public ApiResult<RuleDetailResponse> detail(@PathVariable String ruleId) {
         return ApiResult.ok(service.detail(ruleId));
     }
 
+    /**
+     * 新增规则测试用例（仅草稿状态可加）。
+     *
+     * <p>权限：{@code rule.write}；规则状态不为 {@code DRAFT} 时抛错误码 {@code ENG-RULE-006}。
+     */
     @PostMapping("/{ruleId}/test-cases")
     @PreAuthorize("@perm.has('rule.write')")
     public ResponseEntity<ApiResult<RuleTestCaseResponse>> addTestCase(
@@ -66,6 +97,11 @@ public class RuleEngineController {
             .body(ApiResult.ok(service.addTestCase(ruleId, request)));
     }
 
+    /**
+     * 用指定上下文仿真执行该规则的当前版本。
+     *
+     * <p>权限：{@code rule.write}；仿真同样写 {@code rule_execution_log}，便于回放与诊断。
+     */
     @PostMapping("/{ruleId}/simulate")
     @PreAuthorize("@perm.has('rule.write')")
     public ApiResult<RuleEvaluationItem> simulate(
@@ -74,18 +110,34 @@ public class RuleEngineController {
         return ApiResult.ok(service.simulate(ruleId, request));
     }
 
+    /**
+     * 执行规则发布门禁并把规则推进到 {@code PUBLISHED}。
+     *
+     * <p>权限：{@code rule.publish}；要求阳性/阴性/边界/冲突四类测试用例齐备且全部 PASS，
+     * 否则抛错误码 {@code ENG-RULE-004}。
+     */
     @PostMapping("/{ruleId}/publish")
     @PreAuthorize("@perm.has('rule.publish')")
     public ApiResult<RulePublishResponse> publish(@PathVariable String ruleId) {
         return ApiResult.ok(service.publish(ruleId));
     }
 
+    /**
+     * 按触发点和上下文执行所有匹配的已发布规则。
+     *
+     * <p>权限：{@code rule.read}；返回命中明细、最高严重度与 traceId，供临床嵌入提示消费。
+     */
     @PostMapping("/evaluate")
     @PreAuthorize("@perm.has('rule.read')")
     public ApiResult<RuleEvaluateResponse> evaluate(@RequestBody @Valid RuleEvaluateRequest request) {
         return ApiResult.ok(service.evaluate(request));
     }
 
+    /**
+     * 查看一次规则执行的可解释诊断响应（输入摘要、解释快照、状态历史等）。
+     *
+     * <p>权限：{@code rule.read}；执行记录不存在抛错误码 {@code ENG-RULE-002}。
+     */
     @GetMapping("/executions/{executionId}/diagnose")
     @PreAuthorize("@perm.has('rule.read')")
     public ApiResult<DiagnoseResponse> diagnose(@PathVariable String executionId) {

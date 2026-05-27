@@ -13,15 +13,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 
+/**
+ * 规则 JSON DSL 确定性执行器（GA-ENG-API-05 § 7）。
+ *
+ * <p>负责把 {@code when} 条件树（all/any/leaf）按上下文求值，命中后解析 {@code then} 动作并计算最高严重度。
+ * 仅覆盖 exists/equals/not_equals/contains/gt/gte/lt/lte/in/not_in 十种确定性算子，
+ * 缺失字段不抛内部异常，而是产生未命中以便仿真和发布门禁能精准定位失败原因。
+ */
 @Component
 public class RuleDslEvaluator {
 
     private final ObjectMapper json;
 
+    /**
+     * 注入 JSON 处理器，用于缺省上下文、缺失节点与 DSL 条件树解析。
+     */
     public RuleDslEvaluator(ObjectMapper json) {
         this.json = json;
     }
 
+    /**
+     * 对指定 DSL 和上下文执行一次确定性求值。
+     *
+     * <p>DSL 必须为 JSON 对象且至少包含 {@code when} 条件；条件未命中返回空动作集，
+     * 命中则解析 {@code then} 动作并计算最高严重度。校验失败抛
+     * {@link com.medkernel.shared.api.error.ApiException} 错误码 {@code ENG-RULE-001}。
+     */
     public RuleDslEvaluation evaluate(JsonNode dsl, JsonNode context) {
         if (dsl == null || !dsl.isObject()) {
             throw invalid("规则 DSL 必须是 JSON 对象");

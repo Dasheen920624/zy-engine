@@ -7,13 +7,27 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 规则定义持久化仓库（GA-ENG-API-05）。
+ *
+ * <p>承担按租户 + 业务键查询、已发布列表加载与分页过滤计数，均强制带租户隔离。
+ */
 @Repository
 public interface RuleDefinitionRepository extends ListCrudRepository<RuleDefinition, Long> {
 
+    /**
+     * 按规则业务 ID 与租户 ID 查询单条规则定义，用于详情、仿真、发布等单规则入口。
+     */
     Optional<RuleDefinition> findByRuleIdAndTenantId(String ruleId, String tenantId);
 
+    /**
+     * 按租户和规则编码查询规则定义，用于创建前的同租户唯一性校验。
+     */
     Optional<RuleDefinition> findByTenantIdAndRuleCode(String tenantId, String ruleCode);
 
+    /**
+     * 按租户查询所有处于 {@code PUBLISHED} 状态的规则定义，按更新时间倒序，用于 evaluate 候选筛选。
+     */
     @Query("""
         SELECT * FROM rule_definition
         WHERE tenant_id = :tenantId AND status = 'PUBLISHED'
@@ -21,6 +35,9 @@ public interface RuleDefinitionRepository extends ListCrudRepository<RuleDefinit
         """)
     List<RuleDefinition> findPublishedByTenantId(String tenantId);
 
+    /**
+     * 按状态、类型、风险级别可选过滤的规则定义分页查询；过滤条件为 {@code null} 时跳过。
+     */
     @Query("""
         SELECT * FROM rule_definition
         WHERE tenant_id = :tenantId
@@ -33,6 +50,9 @@ public interface RuleDefinitionRepository extends ListCrudRepository<RuleDefinit
     List<RuleDefinition> pageByFilter(String tenantId, String status, String ruleType,
                                       String riskLevel, int offset, int limit);
 
+    /**
+     * 与 {@link #pageByFilter} 同口径的总数查询，用于分页响应的 total 字段。
+     */
     @Query("""
         SELECT COUNT(*) FROM rule_definition
         WHERE tenant_id = :tenantId
