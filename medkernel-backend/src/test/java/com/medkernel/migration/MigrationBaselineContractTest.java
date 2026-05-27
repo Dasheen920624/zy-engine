@@ -37,7 +37,8 @@ class MigrationBaselineContractTest {
         "V8__observability_baseline.sql",
         "V9__audit_event_outcome.sql",
         "V10__clinical_event_api.sql",
-        "V11__rule_engine_api.sql"
+        "V11__rule_engine_api.sql",
+        "V12__pathway_engine_api.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -48,7 +49,10 @@ class MigrationBaselineContractTest {
         "role_permission", "user_role_assignment",
         "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key",
         "state_transition_history", "clinical_event_payload", "clinical_event_outbox",
-        "rule_definition", "rule_version", "rule_test_case", "rule_execution_log"
+        "rule_definition", "rule_version", "rule_test_case", "rule_execution_log",
+        "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
+        "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
+        "specialty_metric_binding"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -80,7 +84,15 @@ class MigrationBaselineContractTest {
         "idx_rule_definition_tenant_status", "idx_rule_definition_type_risk",
         "idx_rule_version_rule_status", "idx_rule_test_case_version_type",
         "idx_rule_execution_tenant_time", "idx_rule_execution_rule_time",
-        "idx_rule_execution_trigger"
+        "idx_rule_execution_trigger",
+        "idx_specialty_package_tenant_status", "idx_specialty_package_disease",
+        "idx_specialty_profile_package", "idx_pathway_template_tenant_status",
+        "idx_pathway_template_package", "idx_pathway_template_disease",
+        "idx_pathway_node_template_order", "idx_pathway_edge_template_from",
+        "idx_pathway_edge_template_to", "idx_patient_pathway_patient",
+        "idx_patient_pathway_template_status", "idx_pathway_variance_pathway_time",
+        "idx_clinical_clock_pathway", "idx_clinical_clock_due",
+        "idx_specialty_metric_package", "idx_specialty_metric_template"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -112,7 +124,16 @@ class MigrationBaselineContractTest {
         "ck_rule_definition_mode", "ck_rule_definition_risk", "ck_rule_definition_status",
         "uk_rule_version_rule_no", "ck_rule_version_status",
         "uk_rule_test_case_id", "ck_rule_test_case_type", "ck_rule_test_case_status",
-        "uk_rule_execution_id", "ck_rule_execution_status", "ck_rule_execution_severity"
+        "uk_rule_execution_id", "ck_rule_execution_status", "ck_rule_execution_severity",
+        "uk_specialty_package_tenant_code", "ck_specialty_package_status",
+        "uk_specialty_profile_package_code", "uk_pathway_template_tenant_code",
+        "ck_pathway_template_level", "ck_pathway_template_status",
+        "uk_pathway_node_template_code", "ck_pathway_node_type", "ck_pathway_node_terminal",
+        "uk_pathway_edge_template_code", "ck_pathway_edge_type",
+        "uk_patient_pathway_id", "ck_patient_pathway_status",
+        "uk_pathway_variance_id", "ck_pathway_variance_type",
+        "uk_clinical_clock_id", "ck_clinical_clock_status",
+        "uk_specialty_metric_binding", "ck_specialty_metric_required"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -122,13 +143,19 @@ class MigrationBaselineContractTest {
         "term_mapping_package_release", "audit_chain_head", "role_permission", "user_role_assignment",
         "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key",
         "state_transition_history", "clinical_event_payload", "clinical_event_outbox",
-        "rule_definition", "rule_version", "rule_test_case", "rule_execution_log"
+        "rule_definition", "rule_version", "rule_test_case", "rule_execution_log",
+        "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
+        "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
+        "specialty_metric_binding"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
         "standard_term", "local_term", "term_mapping", "mapping_candidate", "mapping_conflict",
         "term_mapping_package", "role_permission", "user_role_assignment",
-        "rule_definition", "rule_version", "rule_test_case"
+        "rule_definition", "rule_version", "rule_test_case",
+        "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
+        "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
+        "specialty_metric_binding"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
@@ -136,7 +163,9 @@ class MigrationBaselineContractTest {
         "knowledge_export_job", Set.of("requested_by", "created_at", "started_at", "completed_at", "expires_at"),
         "term_mapping_package_release", Set.of("created_at", "created_by"),
         "audit_chain_head", Set.of("last_signature", "updated_at"),
-        "rule_execution_log", Set.of("actor_user_id", "executed_at", "created_at")
+        "rule_execution_log", Set.of("actor_user_id", "executed_at", "created_at"),
+        "specialty_package", Set.of("published_at", "published_by"),
+        "patient_pathway", Set.of("entered_at", "completed_at", "exited_at")
     );
     private static final Map<String, Set<String>> LIFECYCLE_FIELDS = Map.ofEntries(
         Map.entry("org_unit", Set.of("status")),
@@ -157,7 +186,14 @@ class MigrationBaselineContractTest {
         Map.entry("rule_definition", Set.of("status", "risk_level")),
         Map.entry("rule_version", Set.of("version_no", "status")),
         Map.entry("rule_test_case", Set.of("case_type", "last_status")),
-        Map.entry("rule_execution_log", Set.of("status", "severity"))
+        Map.entry("rule_execution_log", Set.of("status", "severity")),
+        Map.entry("specialty_package", Set.of("package_version", "status")),
+        Map.entry("pathway_template", Set.of("template_version", "status")),
+        Map.entry("pathway_node", Set.of("node_type")),
+        Map.entry("pathway_edge", Set.of("edge_type")),
+        Map.entry("patient_pathway", Set.of("status")),
+        Map.entry("pathway_variance", Set.of("variance_type")),
+        Map.entry("clinical_clock", Set.of("status"))
     );
 
     private static final Pattern TABLE_PATTERN =
@@ -300,6 +336,36 @@ class MigrationBaselineContractTest {
         for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
             assertThat(migrationPathFor(dialect, "V11__rule_engine_api.sql"))
                 .as("dialect %s must ship V11", dialect)
+                .exists();
+        }
+    }
+
+    @Test
+    void v12ShouldDeclarePathwayEngineApiTablesAndColumns() {
+        String h2 = readMigration("h2", "V12__pathway_engine_api.sql");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS specialty_package");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS specialty_profile");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS pathway_template");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS pathway_node");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS pathway_edge");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS patient_pathway");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS pathway_variance");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS clinical_clock");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS specialty_metric_binding");
+        assertThat(h2).contains("entry_criteria_json");
+        assertThat(h2).contains("condition_json");
+        assertThat(h2).contains("current_node_code");
+        assertThat(h2).contains("metric_code");
+        assertThat(h2).contains("ck_pathway_node_type");
+        assertThat(h2).contains("ck_patient_pathway_status");
+        assertThat(h2).contains("idx_clinical_clock_due");
+    }
+
+    @Test
+    void v12ShouldExistInAllFiveDialects() {
+        for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
+            assertThat(migrationPathFor(dialect, "V12__pathway_engine_api.sql"))
+                .as("dialect %s must ship V12", dialect)
                 .exists();
         }
     }
