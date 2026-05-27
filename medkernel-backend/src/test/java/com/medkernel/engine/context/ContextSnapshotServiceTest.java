@@ -31,7 +31,9 @@ import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEvent;
 import com.medkernel.shared.audit.AuditEventPublisher;
+import com.medkernel.shared.audit.IsolatedAuditPublisher;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
 import com.medkernel.shared.observability.StateTransitionRecorder;
@@ -45,6 +47,7 @@ class ContextSnapshotServiceTest {
     private PackageVersionPort versions;
     private TerminologyMappingPort mapping;
     private AuditEventPublisher auditPublisher;
+    private IsolatedAuditPublisher isolatedAudit;
     private StateTransitionRecorder recorder;
     private ContextSnapshotService service;
 
@@ -57,12 +60,13 @@ class ContextSnapshotServiceTest {
         versions = new LenientPackageVersionAdapter();
         mapping = mock(TerminologyMappingPort.class);
         auditPublisher = mock(AuditEventPublisher.class);
+        isolatedAudit = mock(IsolatedAuditPublisher.class);
         recorder = mock(StateTransitionRecorder.class);
         when(mapping.evaluate(anyString(), any())).thenReturn(Map.of());
         ObjectMapper json = new ObjectMapper();
         json.findAndRegisterModules();
         service = new ContextSnapshotService(snapshots, resources, idemRepo,
-            validator, versions, mapping, auditPublisher, recorder, json);
+            validator, versions, mapping, auditPublisher, isolatedAudit, recorder, json);
 
         when(snapshots.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(resources.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -93,14 +97,20 @@ class ContextSnapshotServiceTest {
     }
 
     @Test
-    void shouldNotEmitAuditWhenRejectedByInvalidQuality() {
+    void shouldEmitFailureAuditOnInvalidQualityWithoutCreateAudit() {
         var resourcesDto = new ContextSnapshotResources(null,
             List.of(), List.of(), List.of(), List.of(), List.of(),
             List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
         var req = new ContextSnapshotRequest("MPI-1", null, "ORG-1",
             "kpv-1", "rpv-1", "ppv-1", resourcesDto);
         assertThatThrownBy(() -> service.create(req, null)).isInstanceOf(ApiException.class);
+        // 成功审计：从未被发布
         verify(auditPublisher, never()).publish(any(AuditAction.class), anyString(), anyString(), anyString());
+        // 失败审计：恰好一次，含 outcome=FAILED 与 errorCode
+        ArgumentCaptor<AuditEvent> evCap = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(isolatedAudit, times(1)).publishInNewTx(evCap.capture());
+        assertThat(evCap.getValue().outcome()).isEqualTo(AuditEvent.OUTCOME_FAILED);
+        assertThat(evCap.getValue().errorCode()).isEqualTo(ErrorCode.ENG_CONTEXT_003.code());
     }
 
     @Test
@@ -241,6 +251,24 @@ class ContextSnapshotServiceTest {
         PageResponse<ContextSnapshotSummary> page = service.list(filter, PageRequest.defaults());
         assertThat(page.items()).isEmpty();
         assertThat(page.total()).isZero();
+    }
+
+    @Test
+    void packageVersionMissingTriggersFailureAudit() {
+        var req = new ContextSnapshotRequest("MPI-1", null, "ORG-1",
+            "kpv-1", "", "ppv-1", validResources());  // rule 包版本空 → ENG-CONTEXT-002
+
+        assertThatThrownBy(() -> service.create(req, null))
+            .isInstanceOf(ApiException.class)
+            .extracting("errorCode").isEqualTo(ErrorCode.ENG_CONTEXT_002);
+
+        ArgumentCaptor<AuditEvent> evCap = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(isolatedAudit, times(1)).publishInNewTx(evCap.capture());
+        AuditEvent ev = evCap.getValue();
+        assertThat(ev.outcome()).isEqualTo(AuditEvent.OUTCOME_FAILED);
+        assertThat(ev.errorCode()).isEqualTo(ErrorCode.ENG_CONTEXT_002.code());
+        assertThat(ev.action()).isEqualTo(AuditAction.EXECUTE);
+        assertThat(ev.resourceType()).isEqualTo("context_snapshot");
     }
 
     @Test

@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEvent;
 import com.medkernel.shared.audit.AuditEventPublisher;
+import com.medkernel.shared.audit.IsolatedAuditPublisher;
 import com.medkernel.shared.observability.StateTransitionRecorder;
 import com.medkernel.engine.context.canonical.CanonicalCarePlan;
 import com.medkernel.engine.context.canonical.CanonicalClaim;
@@ -55,6 +57,7 @@ public class ContextSnapshotService {
     private final PackageVersionPort versions;
     private final TerminologyMappingPort mapping;
     private final AuditEventPublisher auditPublisher;
+    private final IsolatedAuditPublisher isolatedAudit;
     private final StateTransitionRecorder transitions;
     private final ObjectMapper json;
 
@@ -65,6 +68,7 @@ public class ContextSnapshotService {
                                   PackageVersionPort versions,
                                   TerminologyMappingPort mapping,
                                   AuditEventPublisher auditPublisher,
+                                  IsolatedAuditPublisher isolatedAudit,
                                   StateTransitionRecorder transitions,
                                   ObjectMapper json) {
         this.snapshots = snapshots;
@@ -74,6 +78,7 @@ public class ContextSnapshotService {
         this.versions = versions;
         this.mapping = mapping;
         this.auditPublisher = auditPublisher;
+        this.isolatedAudit = isolatedAudit;
         this.transitions = transitions;
         this.json = json;
     }
@@ -101,6 +106,8 @@ public class ContextSnapshotService {
         List<MissingFieldEntry> missing = validator.findMissingFields(req.resources());
         QualityStatus quality = validator.computeQuality(req.resources());
         if (quality == QualityStatus.INVALID) {
+            publishFailureAudit(ErrorCode.ENG_CONTEXT_003,
+                "INVALID quality 拒绝创建 patient=" + req.patientId());
             throw new ApiException(ErrorCode.ENG_CONTEXT_003, "INVALID quality 拒绝创建");
         }
 
@@ -189,6 +196,7 @@ public class ContextSnapshotService {
         if (!versions.exists(tenantId, "knowledge", req.knowledgePackageVersion())
             || !versions.exists(tenantId, "rule", req.rulePackageVersion())
             || !versions.exists(tenantId, "pathway", req.pathwayPackageVersion())) {
+            publishFailureAudit(ErrorCode.ENG_CONTEXT_002, "包版本不存在 patient=" + req.patientId());
             throw new ApiException(ErrorCode.ENG_CONTEXT_002, "包版本不存在");
         }
     }
@@ -282,5 +290,10 @@ public class ContextSnapshotService {
 
     private String digest(ContextSnapshotRequest req) {
         return Integer.toHexString(req.hashCode());
+    }
+
+    private void publishFailureAudit(ErrorCode code, String summary) {
+        isolatedAudit.publishInNewTx(AuditEvent.failure(
+            AuditAction.EXECUTE, "context_snapshot", null, code.code(), summary));
     }
 }
