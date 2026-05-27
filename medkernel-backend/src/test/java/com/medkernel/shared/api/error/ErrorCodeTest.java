@@ -98,4 +98,38 @@ class ErrorCodeTest {
             assertThat(code.retryable()).isFalse();
         });
     }
+
+    @Test
+    void ruleEngineErrorCodesAreRegistered() {
+        assertThat(ErrorCode.fromCode("ENG-RULE-001")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(400);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INPUT);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-RULE-002")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(404);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-RULE-003")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(404);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-RULE-004")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-RULE-005")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(500);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INTERNAL);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-RULE-006")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+    }
 }
