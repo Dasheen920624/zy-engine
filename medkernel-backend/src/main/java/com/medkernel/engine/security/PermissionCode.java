@@ -83,7 +83,9 @@ public enum PermissionCode {
     EVALUATION_REMEDIATE("evaluation.remediate", Risk.MEDIUM, "提交质控问题整改证据"),
     EVALUATION_REVIEW("evaluation.review", Risk.HIGH, "复核质控整改并关闭问题"),
     FOLLOWUP_READ("followup.read", Risk.LOW, "查看随访计划与任务列表"),
-    FOLLOWUP_WRITE("followup.write", Risk.MEDIUM, "智能生成随访计划、触发任务、提交问卷与回传异常事件");
+    FOLLOWUP_WRITE("followup.write", Risk.MEDIUM, "智能生成随访计划、触发任务、提交问卷与回传异常事件"),
+    EMBED_READ("embed.read", Risk.LOW, "验证和查看嵌入上下文"),
+    EMBED_WRITE("embed.write", Risk.MEDIUM, "生成嵌入启动令牌和记录反馈");
 
     private final String code;
     private final Risk risk;
