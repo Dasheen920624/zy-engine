@@ -16,6 +16,13 @@ public interface RuleDefinitionRepository extends ListCrudRepository<RuleDefinit
 
     @Query("""
         SELECT * FROM rule_definition
+        WHERE tenant_id = :tenantId AND status = 'PUBLISHED'
+        ORDER BY updated_at DESC, id DESC
+        """)
+    List<RuleDefinition> findPublishedByTenantId(String tenantId);
+
+    @Query("""
+        SELECT * FROM rule_definition
         WHERE tenant_id = :tenantId
           AND (:status IS NULL OR status = :status)
           AND (:ruleType IS NULL OR rule_type = :ruleType)
