@@ -6,6 +6,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 术语映射冲突记录（一对多 / 多对一 / 跨体系不一致 / 同名异义等场景）。
+ *
+ * <p>冲突由系统在产生候选或确认映射时检测出，并以独立条目保留供人工处置；
+ * 状态字段 {@link MappingConflictStatus} 反映流转（OPEN/RESOLVED/IGNORED），
+ * 冲突类型见 {@link MappingConflictType}。
+ */
 @Table("mapping_conflict")
 public record MappingConflict(
     @Id Long id,

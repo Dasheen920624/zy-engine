@@ -6,6 +6,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 本地术语→标准术语映射候选项（待人工或规则确认）。
+ *
+ * <p>由规则引擎、AI、手工录入或批量导入产生（{@link MappingCandidateSource}），
+ * 经审核后由 {@link TerminologyService#confirmCandidate} 升级为正式 {@link TermMapping}；
+ * 状态字段 {@link MappingCandidateStatus} 反映审核流转（PENDING/CONFIRMED/REJECTED/EXPIRED）。
+ */
 @Table("mapping_candidate")
 public record MappingCandidate(
     @Id Long id,
