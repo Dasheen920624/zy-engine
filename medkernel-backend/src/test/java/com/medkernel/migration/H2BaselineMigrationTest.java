@@ -28,11 +28,11 @@ class H2BaselineMigrationTest {
 
         var result = flyway.migrate();
         assertThat(result.success).as("H2 baseline migrations succeed").isTrue();
-        assertThat(result.migrationsExecuted).as("V1 至 V11 全部应用").isEqualTo(11);
+        assertThat(result.migrationsExecuted).as("V1 至 V12 全部应用").isEqualTo(12);
 
         var applied = flyway.info().applied();
         assertThat(applied).extracting(info -> info.getVersion().getVersion())
-            .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
+            .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
     }
 
     private HikariConfig hikari() {
