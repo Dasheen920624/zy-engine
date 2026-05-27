@@ -51,22 +51,62 @@ class TraceIdPropagatorTest {
             "trace-x", OrgScope.tenant("tenant-A"), "tester"));
 
         AtomicReference<String> insideTask = new AtomicReference<>();
+        AtomicReference<String> beforeTask = new AtomicReference<>("sentinel");
+        AtomicReference<String> afterTask = new AtomicReference<>("sentinel");
+        AtomicReference<String> afterMdc = new AtomicReference<>("sentinel");
+        AtomicReference<Throwable> threadFailure = new AtomicReference<>();
 
         Runnable task = TraceIdPropagator.wrap(() -> {
             insideTask.set(RequestContext.currentTraceId());
         });
 
-        // 在另一个线程执行；该线程开始时无 context；wrap 应注入；结束时清理
+        // 在另一个线程执行；该线程开始时无 context；wrap 应注入；结束时彻底清理（不残留随机 traceId）
         Thread t = new Thread(() -> {
-            assertThat(RequestContext.currentTraceId()).isNull();  // 任务前
+            beforeTask.set(RequestContext.currentTraceId());
             task.run();
-            assertThat(RequestContext.currentTraceId()).isNull();  // 任务后清理
-            assertThat(MDC.get(MdcEnrichmentFilter.MDC_TRACE_ID)).isNull();
+            afterTask.set(RequestContext.currentTraceId());
+            afterMdc.set(MDC.get(MdcEnrichmentFilter.MDC_TRACE_ID));
         });
+        t.setUncaughtExceptionHandler((thread, ex) -> threadFailure.set(ex));
         t.start();
         t.join();
 
+        assertThat(threadFailure.get()).as("子线程不应抛异常").isNull();
         assertThat(insideTask.get()).isEqualTo("trace-x");
+        assertThat(beforeTask.get()).as("任务前子线程 RequestContext 应为空").isNull();
+        assertThat(afterTask.get()).as("任务后子线程 RequestContext 应彻底清理，不残留 wrap 内 fallback 的随机 traceId").isNull();
+        assertThat(afterMdc.get()).as("任务后子线程 MDC traceId 应彻底清理").isNull();
+    }
+
+    @Test
+    void wrapPreservesPreExistingContextInThread() throws Exception {
+        RequestContext.restore(new RequestContext.Snapshot(
+            "trace-outer", OrgScope.tenant("tenant-A"), "tester"));
+
+        AtomicReference<String> insideTask = new AtomicReference<>();
+        AtomicReference<String> afterTask = new AtomicReference<>("sentinel");
+        AtomicReference<String> afterMdc = new AtomicReference<>("sentinel");
+        AtomicReference<Throwable> threadFailure = new AtomicReference<>();
+
+        Runnable task = TraceIdPropagator.wrap(() -> insideTask.set(RequestContext.currentTraceId()));
+
+        Thread t = new Thread(() -> {
+            // 子线程预先有 trace-pre
+            RequestContext.restore(new RequestContext.Snapshot(
+                "trace-pre", OrgScope.tenant("tenant-B"), "preuser"));
+            MDC.put(MdcEnrichmentFilter.MDC_TRACE_ID, "trace-pre");
+            task.run();
+            afterTask.set(RequestContext.currentTraceId());
+            afterMdc.set(MDC.get(MdcEnrichmentFilter.MDC_TRACE_ID));
+        });
+        t.setUncaughtExceptionHandler((thread, ex) -> threadFailure.set(ex));
+        t.start();
+        t.join();
+
+        assertThat(threadFailure.get()).isNull();
+        assertThat(insideTask.get()).isEqualTo("trace-outer");
+        assertThat(afterTask.get()).as("子线程原有 trace-pre 应被精确恢复").isEqualTo("trace-pre");
+        assertThat(afterMdc.get()).as("子线程原有 MDC trace-pre 应被精确恢复").isEqualTo("trace-pre");
     }
 
     @Test

@@ -23,20 +23,25 @@ public final class TraceIdPropagator {
 
     /**
      * 包装 Runnable，自动复制当前线程的 RequestContext + MDC 到任务执行线程，
-     * 任务结束清理执行线程的状态。
+     * 任务结束精确恢复执行线程的原状态（含 ThreadLocal 未设置时彻底清理，
+     * 避免线程池 worker 被随机 traceId 污染下一次任务）。
      */
     public static Runnable wrap(Runnable task) {
         RequestContext.Snapshot snapshot = RequestContext.snapshot();
         Map<String, String> mdc = MDC.getCopyOfContextMap();
         return () -> {
-            RequestContext.Snapshot prev = RequestContext.snapshot();
+            RequestContext.Snapshot prev = RequestContext.peekSnapshot();
             Map<String, String> prevMdc = MDC.getCopyOfContextMap();
             try {
                 RequestContext.restore(snapshot);
                 setMdc(mdc);
                 task.run();
             } finally {
-                RequestContext.restore(prev);
+                if (prev == null) {
+                    RequestContext.clear();
+                } else {
+                    RequestContext.restore(prev);
+                }
                 setMdc(prevMdc);
             }
         };
@@ -47,14 +52,18 @@ public final class TraceIdPropagator {
         RequestContext.Snapshot snapshot = RequestContext.snapshot();
         Map<String, String> mdc = MDC.getCopyOfContextMap();
         return () -> {
-            RequestContext.Snapshot prev = RequestContext.snapshot();
+            RequestContext.Snapshot prev = RequestContext.peekSnapshot();
             Map<String, String> prevMdc = MDC.getCopyOfContextMap();
             try {
                 RequestContext.restore(snapshot);
                 setMdc(mdc);
                 return task.call();
             } finally {
-                RequestContext.restore(prev);
+                if (prev == null) {
+                    RequestContext.clear();
+                } else {
+                    RequestContext.restore(prev);
+                }
                 setMdc(prevMdc);
             }
         };

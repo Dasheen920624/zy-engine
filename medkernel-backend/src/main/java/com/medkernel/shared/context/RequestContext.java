@@ -61,6 +61,19 @@ public final class RequestContext {
         return s != null ? s : new Snapshot(generateTraceId(), OrgScope.empty(), null);
     }
 
+    /**
+     * 返回当前线程的真实 ThreadLocal 快照；ThreadLocal 未设置时返回 null（区别于
+     * {@link #snapshot()} 在缺失时会生成新 traceId 的 fallback 行为）。
+     *
+     * <p>跨线程传播工具（如 {@code TraceIdPropagator.wrap}）需要在 finally 阶段
+     * 区分"原本无 context"与"原本有 context"，前者需要 {@link #clear()}，后者需要
+     * {@link #restore(Snapshot)}；用 {@link #snapshot()} 会让前者退化为后者并污染
+     * 执行线程下一次任务。
+     */
+    public static Snapshot peekSnapshot() {
+        return CURRENT.get();
+    }
+
     public static void restore(Snapshot snapshot) {
         if (snapshot == null) {
             clear();
