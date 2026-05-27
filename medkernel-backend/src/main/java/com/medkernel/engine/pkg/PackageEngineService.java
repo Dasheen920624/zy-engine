@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 知识包发布同步核心应用服务。
@@ -31,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>提供资产打包、差异比对、发布灰度校验、多物理通道投影以及快速一键回滚的完整应用层实现。
  */
 @Service
-@Transactional
 public class PackageEngineService {
 
     private static final Logger log = LoggerFactory.getLogger(PackageEngineService.class);
@@ -48,6 +48,7 @@ public class PackageEngineService {
 
     private final PackageSyncPort syncPort;
     private final AuditEventPublisher auditPublisher;
+    private final TransactionTemplate transactionTemplate;
 
     public PackageEngineService(
             KnowledgePackageRepository packageRepository,
@@ -59,7 +60,8 @@ public class PackageEngineService {
             PathwayTemplateRepository pathwayRepository,
             EvaluationIndicatorRepository evaluationRepository,
             PackageSyncPort syncPort,
-            AuditEventPublisher auditPublisher) {
+            AuditEventPublisher auditPublisher,
+            TransactionTemplate transactionTemplate) {
         this.packageRepository = packageRepository;
         this.itemRepository = itemRepository;
         this.planRepository = planRepository;
@@ -70,11 +72,13 @@ public class PackageEngineService {
         this.evaluationRepository = evaluationRepository;
         this.syncPort = syncPort;
         this.auditPublisher = auditPublisher;
+        this.transactionTemplate = transactionTemplate;
     }
 
     /**
      * 创建知识包草稿。
      */
+    @Transactional
     public PackageResponse createPackage(PackageCreateRequest request) {
         String tenantId = currentTenantId();
         String traceId = RequestContext.currentTraceId();
@@ -112,6 +116,7 @@ public class PackageEngineService {
     /**
      * 获取当前租户下的知识包列表。
      */
+    @Transactional(readOnly = true)
     public PageResponse<KnowledgePackage> listPackages(PageRequest page) {
         String tenantId = currentTenantId();
         int offset = page.offset();
@@ -125,6 +130,7 @@ public class PackageEngineService {
     /**
      * 获取包详细信息以及包含的子资产列表。
      */
+    @Transactional(readOnly = true)
     public PackageDetailResponse packageDetail(String packageId) {
         String tenantId = currentTenantId();
         KnowledgePackage pack = packageRepository.findByPackageIdAndTenantId(packageId, tenantId)
@@ -137,6 +143,7 @@ public class PackageEngineService {
     /**
      * 向知识包草稿中添加一个子资产条目。
      */
+    @Transactional
     public PackageItemResponse addPackageItem(String packageId, PackageItemRequest request) {
         String tenantId = currentTenantId();
         String traceId = RequestContext.currentTraceId();
@@ -183,6 +190,7 @@ public class PackageEngineService {
     /**
      * 计算两个包版本之间的资产差异与变动影响分析。
      */
+    @Transactional(readOnly = true)
     public PackageDiffResponse calculateDiff(String packageId, String basePackageId) {
         String tenantId = currentTenantId();
 
@@ -259,7 +267,7 @@ public class PackageEngineService {
             throw new ApiException(ErrorCode.ENG_PACKAGE_003, "灰度发布时必须指定有效的作用域范围和具体过滤值");
         }
 
-        // 创建发布计划
+        // 创建发布计划（独立小事务中写库）
         ReleasePlan plan = new ReleasePlan(
             null,
             UUID.randomUUID().toString(),
@@ -276,7 +284,7 @@ public class PackageEngineService {
             actor,
             traceId
         );
-        ReleasePlan savedPlan = planRepository.save(plan);
+        ReleasePlan savedPlan = transactionTemplate.execute(status -> planRepository.save(plan));
 
         List<SyncLogResponse> logs = new ArrayList<>();
         boolean anySuccess = false;
@@ -286,78 +294,105 @@ public class PackageEngineService {
             SyncTarget target = targetRepository.findByTargetIdAndTenantId(targetId, tenantId)
                 .orElseThrow(() -> new ApiException(ErrorCode.ENG_PACKAGE_001, "同步通道目标不存在: " + targetId));
 
-            SyncLog syncLog = new SyncLog(
-                null,
-                UUID.randomUUID().toString(),
-                tenantId,
-                savedPlan.planId(),
-                targetId,
-                SyncLogStatus.RUNNING,
-                null, null, 0, null,
-                Instant.now(), actor, Instant.now(), actor, traceId
-            );
-            SyncLog savedLog = logRepository.save(syncLog);
+            // 小事务1：插入同步初始 RUNNING 日志
+            SyncLog savedLog = transactionTemplate.execute(status -> {
+                SyncLog syncLog = new SyncLog(
+                    null,
+                    UUID.randomUUID().toString(),
+                    tenantId,
+                    savedPlan.planId(),
+                    targetId,
+                    SyncLogStatus.RUNNING,
+                    null, null, 0, null,
+                    Instant.now(), actor, Instant.now(), actor, traceId
+                );
+                return logRepository.save(syncLog);
+            });
+
+            String evidence = null;
+            Exception syncError = null;
 
             try {
-                // 执行物理投影同步
-                String evidence = syncPort.sync(tenantId, savedPlan, target);
-                
-                SyncLog successLog = new SyncLog(
-                    savedLog.id(),
-                    savedLog.logId(),
-                    tenantId,
-                    savedPlan.planId(),
-                    targetId,
-                    SyncLogStatus.SUCCESS,
-                    null, null, 0, evidence,
-                    savedLog.createdAt(), savedLog.createdBy(), Instant.now(), actor, traceId
-                );
-                logRepository.save(successLog);
-                logs.add(SyncLogResponse.from(successLog));
-                anySuccess = true;
+                // 事务外部安全执行：物理投影同步（包含长 IO）
+                evidence = syncPort.sync(tenantId, savedPlan, target);
             } catch (Exception e) {
                 log.error("物理同步失败, targetId: {}", targetId, e);
-                allSuccess = false;
-                
-                SyncLog failedLog = new SyncLog(
-                    savedLog.id(),
-                    savedLog.logId(),
-                    tenantId,
-                    savedPlan.planId(),
-                    targetId,
-                    SyncLogStatus.FAILED,
-                    "ENG-PACKAGE-005",
-                    e.getMessage(),
-                    0, null,
-                    savedLog.createdAt(), savedLog.createdBy(), Instant.now(), actor, traceId
-                );
-                logRepository.save(failedLog);
-                logs.add(SyncLogResponse.from(failedLog));
+                syncError = e;
             }
+
+            final String finalEvidence = evidence;
+            final Exception finalError = syncError;
+
+            // 小事务2：更新同步成功或失败状态日志
+            SyncLog updatedLog = transactionTemplate.execute(status -> {
+                if (finalError == null) {
+                    SyncLog successLog = new SyncLog(
+                        savedLog.id(),
+                        savedLog.logId(),
+                        tenantId,
+                        savedPlan.planId(),
+                        targetId,
+                        SyncLogStatus.SUCCESS,
+                        null, null, 0, finalEvidence,
+                        savedLog.createdAt(), savedLog.createdBy(), Instant.now(), actor, traceId
+                    );
+                    return logRepository.save(successLog);
+                } else {
+                    SyncLog failedLog = new SyncLog(
+                        savedLog.id(),
+                        savedLog.logId(),
+                        tenantId,
+                        savedPlan.planId(),
+                        targetId,
+                        SyncLogStatus.FAILED,
+                        "ENG-PACKAGE-005",
+                        finalError.getMessage(),
+                        0, null,
+                        savedLog.createdAt(), savedLog.createdBy(), Instant.now(), actor, traceId
+                    );
+                    return logRepository.save(failedLog);
+                }
+            });
+
+            if (syncError == null) {
+                anySuccess = true;
+            } else {
+                allSuccess = false;
+            }
+            logs.add(SyncLogResponse.from(updatedLog));
         }
 
-        ReleasePlanStatus finalStatus = allSuccess ? ReleasePlanStatus.SUCCESS : 
+        final ReleasePlanStatus finalStatus = allSuccess ? ReleasePlanStatus.SUCCESS : 
             (anySuccess ? ReleasePlanStatus.EXECUTING : ReleasePlanStatus.FAILED);
-        planRepository.save(savedPlan.withStatus(finalStatus));
+        final boolean finalAllSuccess = allSuccess;
 
-        // 如果全量发布成功，原子激活包状态并隔离失效旧版本包
-        if (request.strategy() == ReleaseStrategy.FULL && allSuccess) {
-            // 原子切换：失效既有 ACTIVE 包
-            List<KnowledgePackage> activePacks = packageRepository.findByTenantIdOrderByUpdatedAtDesc(tenantId).stream()
-                .filter(p -> p.status() == KnowledgePackageStatus.ACTIVE)
-                .toList();
-            for (KnowledgePackage active : activePacks) {
-                packageRepository.save(active.withStatus(KnowledgePackageStatus.OFFLINE));
+        // 小事务3：最终原子包状态激活与旧版本隔离切换
+        transactionTemplate.executeWithoutResult(status -> {
+            planRepository.save(savedPlan.withStatus(finalStatus));
+
+            if (request.strategy() == ReleaseStrategy.FULL && finalAllSuccess) {
+                // 原子切换：仅失效相同 packageCode 的 ACTIVE 知识包，不污染其他病种包
+                List<KnowledgePackage> activePacks = packageRepository.findByTenantIdOrderByUpdatedAtDesc(tenantId).stream()
+                    .filter(p -> p.status() == KnowledgePackageStatus.ACTIVE && p.packageCode().equals(pack.packageCode()))
+                    .toList();
+                for (KnowledgePackage active : activePacks) {
+                    packageRepository.save(active.withStatus(KnowledgePackageStatus.OFFLINE));
+                }
+                // 激活当前包
+                packageRepository.save(pack.withStatus(KnowledgePackageStatus.ACTIVE));
+            } else {
+                // 灰度发布仅更新包状态为已发布，不覆盖现有 active
+                if (pack.status() == KnowledgePackageStatus.DRAFT) {
+                    packageRepository.save(pack.withStatus(KnowledgePackageStatus.PUBLISHED));
+                }
             }
-            // 激活当前包
-            packageRepository.save(pack.withStatus(KnowledgePackageStatus.ACTIVE));
+        });
+
+        // 事务外部：发布审计事实日志，确保子事务安全
+        if (request.strategy() == ReleaseStrategy.FULL && allSuccess) {
             auditPublisher.publish(AuditAction.PUBLISH, "knowledge_package", packageId, 
                 "知识包发布并同步全量成功: " + pack.name() + " (" + pack.packageVersion() + ")");
         } else {
-            // 灰度发布仅更新包状态为已发布，不覆盖现有 active
-            if (pack.status() == KnowledgePackageStatus.DRAFT) {
-                packageRepository.save(pack.withStatus(KnowledgePackageStatus.PUBLISHED));
-            }
             auditPublisher.publish(AuditAction.PUBLISH, "knowledge_package", packageId, 
                 "知识包灰度发布计划执行完成, 状态为: " + finalStatus);
         }
@@ -368,6 +403,7 @@ public class PackageEngineService {
     /**
      * 一键快速回滚包版本到指定历史点。
      */
+    @Transactional
     public PackageResponse rollbackPackage(String packageId, String targetPackageId) {
         String tenantId = currentTenantId();
         String traceId = RequestContext.currentTraceId();
