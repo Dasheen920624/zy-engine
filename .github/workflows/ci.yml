@@ -194,3 +194,26 @@ jobs:
       - name: Smoke test
         working-directory: medkernel-backend
         run: mvn -B -q test
+
+  # GA-ENG-DOC-01 · 引擎层中文 Javadoc / SQL COMMENT 软门禁
+  # 设计文档：docs/superpowers/specs/2026-05-27-engine-comment-language-design.md
+  # 新增 .java / .sql 文件缺中文注释 → fail；修改既有文件缺口 → 仅 step summary warn。
+  comment-language-check:
+    name: comment-language-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 需要完整历史以便 git merge-base origin/main
+
+      - name: Run self-test
+        run: scripts/check-comment-zh.sh --self-test
+
+      - name: Run diff check (new files fail, modified files warn)
+        run: scripts/check-comment-zh.sh
+
+      - name: Print full coverage summary
+        if: always()
+        run: scripts/check-comment-zh.sh --mode=full
