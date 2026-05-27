@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -19,7 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -73,7 +74,6 @@ class FollowupEngineControllerTest {
         """;
 
     @Test
-    @WithMockUser(authorities = {"ROLE_MEDICAL_AFFAIRS"})
     void generatePlan_ReturnsOkWithPlanDetail() throws Exception {
         FollowupPlanDetailResponse mockResponse = new FollowupPlanDetailResponse(
             "PLAN-001", "tenant-1", "P1001", "E2001", "I21.900",
@@ -86,6 +86,11 @@ class FollowupEngineControllerTest {
         when(service.generatePlan(any(FollowupPlanGenerateRequest.class))).thenReturn(mockResponse);
 
         mockMvc.perform(post("/api/v1/engine/followup/plans/generate")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("medical-affairs")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_MEDICAL_AFFAIRS")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(GENERATE_BODY))
             .andExpect(status().isOk())
@@ -98,7 +103,6 @@ class FollowupEngineControllerTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_MEDICAL_AFFAIRS"})
     void generatePlan_MissingPatientId_ReturnsBadRequest() throws Exception {
         String bodyMissingPatientId = """
             {
@@ -108,13 +112,17 @@ class FollowupEngineControllerTest {
             """;
 
         mockMvc.perform(post("/api/v1/engine/followup/plans/generate")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("medical-affairs")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_MEDICAL_AFFAIRS")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyMissingPatientId))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_MEDICAL_AFFAIRS"})
     void generatePlan_MissingTaskTypes_ReturnsBadRequest() throws Exception {
         String bodyMissingTaskTypes = """
             {
@@ -124,15 +132,24 @@ class FollowupEngineControllerTest {
             """;
 
         mockMvc.perform(post("/api/v1/engine/followup/plans/generate")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("medical-affairs")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_MEDICAL_AFFAIRS")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyMissingTaskTypes))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_DOCTOR"})
     void generatePlan_DoctorLacksWritePermission_ReturnsForbidden() throws Exception {
         mockMvc.perform(post("/api/v1/engine/followup/plans/generate")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("doctor")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_DOCTOR")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(GENERATE_BODY))
             .andExpect(status().isForbidden());
@@ -141,7 +158,6 @@ class FollowupEngineControllerTest {
     // ── 2. GET /plans/{planId} ─────────────────────────────────────────
 
     @Test
-    @WithMockUser(authorities = {"ROLE_DOCTOR"})
     void getPlanDetail_ReturnsOkWithPlanDetail() throws Exception {
         FollowupPlanDetailResponse mockResponse = new FollowupPlanDetailResponse(
             "PLAN-001", "tenant-1", "P1001", "E2001", "I21.900",
@@ -152,7 +168,12 @@ class FollowupEngineControllerTest {
         );
         when(service.getPlanDetail("PLAN-001")).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/v1/engine/followup/plans/PLAN-001"))
+        mockMvc.perform(get("/api/v1/engine/followup/plans/PLAN-001")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("doctor")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_DOCTOR"))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.planId").value("PLAN-001"))
             .andExpect(jsonPath("$.data.patientId").value("P1001"))
@@ -168,9 +189,13 @@ class FollowupEngineControllerTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_GUEST_INVALID"})
     void getPlanDetail_WithUnrecognizedRole_ReturnsForbidden() throws Exception {
-        mockMvc.perform(get("/api/v1/engine/followup/plans/PLAN-001"))
+        mockMvc.perform(get("/api/v1/engine/followup/plans/PLAN-001")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("guest-invalid")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_GUEST_INVALID"))))
             .andExpect(status().isForbidden());
     }
 
@@ -186,11 +211,15 @@ class FollowupEngineControllerTest {
         """;
 
     @Test
-    @WithMockUser(authorities = {"ROLE_MEDICAL_AFFAIRS"})
     void submitQuestionnaire_ReturnsOk() throws Exception {
         doNothing().when(service).submitQuestionnaire(eq("TASK-001"), any(FollowupQuestionnaireSubmitRequest.class));
 
         mockMvc.perform(post("/api/v1/engine/followup/tasks/TASK-001/questionnaires")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("medical-affairs")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_MEDICAL_AFFAIRS")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(QUESTIONNAIRE_BODY))
             .andExpect(status().isOk());
@@ -199,7 +228,6 @@ class FollowupEngineControllerTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_MEDICAL_AFFAIRS"})
     void submitQuestionnaire_MissingFormData_ReturnsBadRequest() throws Exception {
         String bodyMissingFormData = """
             {
@@ -208,6 +236,11 @@ class FollowupEngineControllerTest {
             """;
 
         mockMvc.perform(post("/api/v1/engine/followup/tasks/TASK-001/questionnaires")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("medical-affairs")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_MEDICAL_AFFAIRS")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyMissingFormData))
             .andExpect(status().isBadRequest());
@@ -225,11 +258,15 @@ class FollowupEngineControllerTest {
         """;
 
     @Test
-    @WithMockUser(authorities = {"ROLE_MEDICAL_AFFAIRS"})
     void reportAbnormal_ReturnsOk() throws Exception {
         doNothing().when(service).reportAbnormal(any(FollowupAbnormalReportRequest.class));
 
         mockMvc.perform(post("/api/v1/engine/followup/events/report-abnormal")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("medical-affairs")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_MEDICAL_AFFAIRS")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ABNORMAL_BODY))
             .andExpect(status().isOk());
@@ -238,7 +275,6 @@ class FollowupEngineControllerTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"ROLE_MEDICAL_AFFAIRS"})
     void reportAbnormal_MissingPlanId_ReturnsBadRequest() throws Exception {
         String bodyMissingPlanId = """
             {
@@ -248,6 +284,11 @@ class FollowupEngineControllerTest {
             """;
 
         mockMvc.perform(post("/api/v1/engine/followup/events/report-abnormal")
+                .with(jwt().jwt(token -> token
+                    .subject("test-user")
+                    .claim("tenant_id", "tenant-1")
+                    .claim("roles", List.of("medical-affairs")))
+                    .authorities(new SimpleGrantedAuthority("ROLE_MEDICAL_AFFAIRS")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyMissingPlanId))
             .andExpect(status().isBadRequest());
