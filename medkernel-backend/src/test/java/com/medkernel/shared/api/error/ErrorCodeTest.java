@@ -171,4 +171,38 @@ class ErrorCodeTest {
             assertThat(code.retryable()).isFalse();
         });
     }
+
+    @Test
+    void recommendationErrorCodesAreRegistered() {
+        assertThat(ErrorCode.fromCode("ENG-REC-001")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(400);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INPUT);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-REC-002")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(404);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-REC-003")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(404);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-REC-004")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-REC-005")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(400);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INPUT);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-REC-006")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+    }
 }
