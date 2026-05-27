@@ -8,7 +8,6 @@ import {
   Form,
   Input,
   Select,
-  Space,
   Card,
   Descriptions,
   Badge,
@@ -22,7 +21,6 @@ import {
 import {
   PlusOutlined,
   PlayCircleOutlined,
-  SendOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -36,8 +34,8 @@ import {
   useAddTestCase,
   useSimulateRule,
   usePublishRule,
-  RuleDefinition,
 } from "@/shared/api/hooks";
+import type { RuleDefinition } from "@/shared/api/hooks";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -134,7 +132,7 @@ export default function RuleDefinitions() {
       try {
         JSON.parse(values.dslJson);
         JSON.parse(values.explanationJson);
-      } catch (err) {
+      } catch {
         message.error("DSL 或解释模板的 JSON 格式不合法，请检查！");
         return;
       }
@@ -166,7 +164,7 @@ export default function RuleDefinitions() {
       const values = await caseForm.validateFields();
       try {
         JSON.parse(values.inputPayload);
-      } catch (err) {
+      } catch {
         message.error("用例输入载荷 payload 的 JSON 格式不合法");
         return;
       }
@@ -193,7 +191,7 @@ export default function RuleDefinitions() {
     try {
       try {
         JSON.parse(simulatePayload);
-      } catch (err) {
+      } catch {
         message.error("仿真输入 payload 的 JSON 格式不合法");
         return;
       }
@@ -315,7 +313,7 @@ export default function RuleDefinitions() {
               allowClear
               value={statusFilter}
               onChange={setStatusFilter}
-              style={{ width: 140 }}
+              className="w-[140px]"
             >
               <Option value="DRAFT">草稿设计中</Option>
               <Option value="PUBLISHED">已上线运行</Option>
@@ -328,7 +326,7 @@ export default function RuleDefinitions() {
               allowClear
               value={typeFilter}
               onChange={setTypeFilter}
-              style={{ width: 150 }}
+              className="w-[150px]"
             >
               <Option value="DRUG_SAFETY">合理用药安全</Option>
               <Option value="INSURANCE_AUDIT">医保规范核查</Option>
@@ -341,7 +339,7 @@ export default function RuleDefinitions() {
               allowClear
               value={riskFilter}
               onChange={setRiskFilter}
-              style={{ width: 120 }}
+              className="w-[120px]"
             >
               <Option value="LOW">LOW (低度警示)</Option>
               <Option value="MEDIUM">MEDIUM (中度阻断)</Option>
@@ -423,7 +421,7 @@ export default function RuleDefinitions() {
               }
               type={detailData.definition.status === "PUBLISHED" ? "success" : "info"}
               showIcon
-              style={{ marginBottom: 24, borderRadius: 8 }}
+              className="mb-6 rounded-lg"
             />
 
             <Descriptions title="基本元数据" bordered column={2} className="mb-6">
@@ -613,8 +611,7 @@ export default function RuleDefinitions() {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center min-h-64 text-gray-400">
-                          {/* eslint-disable-next-line medkernel/no-inline-style -- 调整小图标大小 */}
-                          <PlayCircleOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+                          <PlayCircleOutlined className="text-[48px] mb-4" />
                           <span>在左侧填入上下文快照后，点击运行开始仿真</span>
                         </div>
                       )}

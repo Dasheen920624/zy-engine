@@ -12,7 +12,6 @@ import {
   message,
   Drawer,
   Timeline,
-  Badge,
 } from "antd";
 import {
   PlayCircleOutlined,
@@ -26,8 +25,8 @@ import { PageShell } from "@/shared/ui/PageShell";
 import {
   useEvaluateRules,
   useRuleExecutionDiagnose,
-  RuleEvaluationItem,
 } from "@/shared/api/hooks";
+import type { RuleEvaluationItem, RuleEvaluateResponse } from "@/shared/api/hooks";
 
 const { TextArea } = Input;
 
@@ -55,7 +54,7 @@ export default function RuleValidate() {
   const [triggerPoint, setTriggerPoint] = useState<string>("PRESCRIPTION_SUBMIT");
   
   // 匹配结果态
-  const [evaluateResponse, setEvaluateResponse] = useState<any | null>(null);
+  const [evaluateResponse, setEvaluateResponse] = useState<RuleEvaluateResponse | null>(null);
 
   // 诊断追踪详情态
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
@@ -73,7 +72,7 @@ export default function RuleValidate() {
     try {
       try {
         JSON.parse(contextJson);
-      } catch (err) {
+      } catch {
         message.error("临床上下文的 JSON 格式不合法，请检查！");
         return;
       }
@@ -86,8 +85,9 @@ export default function RuleValidate() {
 
       setEvaluateResponse(res);
       message.success("批量规则匹配评估成功！");
-    } catch (err: any) {
-      message.error(err.response?.data?.message || "批量规则评估失败");
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      message.error(error.response?.data?.message || "批量规则评估失败");
     }
   };
 
@@ -126,7 +126,7 @@ export default function RuleValidate() {
     {
       title: "诊断回溯",
       key: "action",
-      render: (record: RuleEvaluationItem) => {
+      render: (_record: RuleEvaluationItem) => {
         // 当命中且有执行 ID 时，支持诊断
         if (evaluateResponse?.executionId) {
           return (
@@ -224,7 +224,7 @@ export default function RuleValidate() {
                     </Descriptions.Item>
                     <Descriptions.Item label="命中规则总数">
                       <span className="font-semibold text-lg text-indigo-600">
-                        {evaluateResponse.items?.filter((i: any) => i.hit).length || 0} 条
+                        {evaluateResponse.items?.filter((i: RuleEvaluationItem) => i.hit).length || 0} 条
                       </span>
                     </Descriptions.Item>
                   </Descriptions>
@@ -232,7 +232,7 @@ export default function RuleValidate() {
 
                 <div className="text-sm font-semibold text-gray-800 mb-3">命中规则及合理性建议列表</div>
                 <Table
-                  dataSource={evaluateResponse.items?.filter((i: any) => i.hit) || []}
+                  dataSource={evaluateResponse.items?.filter((i: RuleEvaluationItem) => i.hit) || []}
                   columns={columns}
                   rowKey="ruleId"
                   pagination={false}
@@ -242,8 +242,7 @@ export default function RuleValidate() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-400">
-                {/* eslint-disable-next-line medkernel/no-inline-style -- 调整大图标尺寸 */}
-                <PlayCircleOutlined style={{ fontSize: 64, marginBottom: 16 }} />
+                <PlayCircleOutlined className="text-[64px] mb-4" />
                 <span className="text-gray-500 font-medium">请在左侧输入临床快照后，点击校验开始沙箱匹配</span>
               </div>
             )}
@@ -267,12 +266,11 @@ export default function RuleValidate() {
       >
         {diagnoseData && (
           <div>
-            {/* eslint-disable-next-line medkernel/no-inline-style -- 调整警示组件外边距和圆角 */}
             <Alert
               message="本诊断视图数据提取自引擎底座 StateTransitionRecorder。通过物理隔离事件和不参与哈希签名的元数据，为临床一线提供 100% 透明可信的决策审计链依据。"
               type="info"
               showIcon
-              style={{ marginBottom: 24, borderRadius: 8 }}
+              className="mb-6 rounded-lg"
             />
 
             <Descriptions title="求值快照元数据" bordered column={1} size="small" className="mb-6">
@@ -316,7 +314,7 @@ export default function RuleValidate() {
               className="rounded-xl border-gray-200"
             >
               <Timeline>
-                {diagnoseData.statusHistory?.map((h: any, idx: number) => (
+                {diagnoseData.statusHistory?.map((h, idx) => (
                   <Timeline.Item key={idx} color={h.status === "SIGNED" ? "green" : "blue"}>
                     <div className="flex justify-between items-center font-semibold text-gray-800 text-xs">
                       <span>状态: {h.status}</span>
