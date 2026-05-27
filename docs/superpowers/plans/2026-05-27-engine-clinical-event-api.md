@@ -22,19 +22,19 @@
 - Create: `medkernel-backend/src/main/resources/db/migration/kingbase/V10__clinical_event_api.sql`
 - Modify: `medkernel-backend/src/test/java/com/medkernel/migration/MigrationBaselineContractTest.java`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
   - 在迁移合同测试中加入 `clinical_event_payload`、`clinical_event_outbox`、新增索引和 `clinical_event` 新列断言。
 
-- [ ] **Step 2: 运行迁移合同测试确认失败**
+- [x] **Step 2: 运行迁移合同测试确认失败**
   - Run: `./mvnw -pl medkernel-backend -Dtest=MigrationBaselineContractTest test`
   - Expected: FAIL，提示 V10 表或列不存在。
 
-- [ ] **Step 3: 写最小迁移**
+- [x] **Step 3: 写最小迁移**
   - 新建 payload 旁路表、outbox 表。
   - 给 `clinical_event` 增加 `patient_id`、`encounter_id`、`package_version`、`error_code`、`error_class`、`retry_count`、`root_event_id`。
   - 给 payload/outbox 增加唯一约束和查询索引。
 
-- [ ] **Step 4: 运行迁移合同测试确认通过**
+- [x] **Step 4: 运行迁移合同测试确认通过**
   - Run: `./mvnw -pl medkernel-backend -Dtest=MigrationBaselineContractTest test`
   - Expected: PASS。
 
@@ -54,20 +54,20 @@
 - Test: `medkernel-backend/src/test/java/com/medkernel/engine/security/DefaultPermissionPolicyTest.java`
 - Test: `medkernel-backend/src/test/java/com/medkernel/shared/api/error/ErrorCodeTest.java`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
   - 断言 `event.read` 和 `event.write` 默认角色生效。
   - 断言 `ENG-EVENT-001..006` 的 HTTP 状态、分类和 retryable 正确。
 
-- [ ] **Step 2: 运行定向测试确认失败**
+- [x] **Step 2: 运行定向测试确认失败**
   - Run: `./mvnw -pl medkernel-backend -Dtest=DefaultPermissionPolicyTest,ErrorCodeTest test`
   - Expected: FAIL，提示权限码或错误码不存在。
 
-- [ ] **Step 3: 写最小实现**
+- [x] **Step 3: 写最小实现**
   - 扩展实体和 repository。
   - 加入 `SUPERSEDED` 状态。
   - 加入权限码、默认角色和错误码。
 
-- [ ] **Step 4: 运行定向测试确认通过**
+- [x] **Step 4: 运行定向测试确认通过**
   - Run: `./mvnw -pl medkernel-backend -Dtest=DefaultPermissionPolicyTest,ErrorCodeTest test`
   - Expected: PASS。
 
@@ -88,20 +88,20 @@
 - Create: `medkernel-backend/src/main/java/com/medkernel/engine/context/ClinicalEventService.java`
 - Test: `medkernel-backend/src/test/java/com/medkernel/engine/context/ClinicalEventServiceTest.java`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
   - 覆盖异步接收落三张表、同 eventId 同 digest 幂等返回、同 eventId 不同 digest 报 409、payload 超限报 400、诊断返回 payload 摘要、重放新建 root_event_id。
 
-- [ ] **Step 2: 运行服务测试确认失败**
+- [x] **Step 2: 运行服务测试确认失败**
   - Run: `./mvnw -pl medkernel-backend -Dtest=ClinicalEventServiceTest test`
   - Expected: FAIL，提示服务或 DTO 不存在。
 
-- [ ] **Step 3: 写最小实现**
+- [x] **Step 3: 写最小实现**
   - 从 `RequestContext` 读取 tenant/user/traceId。
   - payload 用 `ObjectMapper` 规范化后计算 SHA-256 digest。
   - 写入 `clinical_event`、`clinical_event_payload`、`clinical_event_outbox`。
   - 复用 `DiagnoseResponseAssembler` 组装诊断。
 
-- [ ] **Step 4: 运行服务测试确认通过**
+- [x] **Step 4: 运行服务测试确认通过**
   - Run: `./mvnw -pl medkernel-backend -Dtest=ClinicalEventServiceTest test`
   - Expected: PASS。
 
@@ -111,19 +111,19 @@
 - Create: `medkernel-backend/src/main/java/com/medkernel/engine/context/ClinicalEventController.java`
 - Test: `medkernel-backend/src/test/java/com/medkernel/engine/context/ClinicalEventControllerSecurityTest.java`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
   - 覆盖未认证 401/403、缺租户 400、`event.write` 可创建、`event.read` 可查询、无写权限不能 replay。
 
-- [ ] **Step 2: 运行 Controller 测试确认失败**
+- [x] **Step 2: 运行 Controller 测试确认失败**
   - Run: `./mvnw -pl medkernel-backend -Dtest=ClinicalEventControllerSecurityTest test`
   - Expected: FAIL。
 
-- [ ] **Step 3: 写最小实现**
+- [x] **Step 3: 写最小实现**
   - 添加 8 个 endpoint。
   - 同步接收等待 worker 处理结果，超时返回受理状态。
   - 所有响应通过现有 API 包装方式返回。
 
-- [ ] **Step 4: 运行 Controller 测试确认通过**
+- [x] **Step 4: 运行 Controller 测试确认通过**
   - Run: `./mvnw -pl medkernel-backend -Dtest=ClinicalEventControllerSecurityTest test`
   - Expected: PASS。
 
@@ -137,19 +137,19 @@
 - Create: `medkernel-backend/src/main/java/com/medkernel/engine/context/ClinicalEventOutboxWorker.java`
 - Test: `medkernel-backend/src/test/java/com/medkernel/engine/context/ClinicalEventOutboxWorkerTest.java`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
   - 覆盖 PENDING → CLAIMED → PROCESSED、处理失败后退避、超过最大重试 DEAD、成功时发 Spring 事件。
 
-- [ ] **Step 2: 运行 worker 测试确认失败**
+- [x] **Step 2: 运行 worker 测试确认失败**
   - Run: `./mvnw -pl medkernel-backend -Dtest=ClinicalEventOutboxWorkerTest test`
   - Expected: FAIL。
 
-- [ ] **Step 3: 写最小实现**
+- [x] **Step 3: 写最小实现**
   - 用 repository 查询待处理任务并标记 CLAIMED。
   - 每条事件单事务处理，失败隔离。
   - 写状态历史、审计和 outbox 状态。
 
-- [ ] **Step 4: 运行 worker 测试确认通过**
+- [x] **Step 4: 运行 worker 测试确认通过**
   - Run: `./mvnw -pl medkernel-backend -Dtest=ClinicalEventOutboxWorkerTest test`
   - Expected: PASS。
 
@@ -161,23 +161,22 @@
 - Modify: `docs/backlog.md`
 - Modify: `docs/release/v1.0.0-ga-evidence.md`
 
-- [ ] **Step 1: 更新中文文档**
+- [x] **Step 1: 更新中文文档**
   - 将 `GA-ENG-API-02` 标为 done。
   - 修订记录写清 V10 迁移、事件 API、outbox、payload、诊断和验证结果。
 
-- [ ] **Step 2: 后端全量验证**
+- [x] **Step 2: 后端全量验证**
   - Run: `./mvnw -pl medkernel-backend test`
   - Expected: PASS。
 
-- [ ] **Step 3: 前端门禁验证**
+- [x] **Step 3: 前端门禁验证**
   - Run: `cd frontend && npm run lint && npm run typecheck && npm test -- --run && npm run build`
   - Expected: PASS。
 
-- [ ] **Step 4: 最终状态检查**
+- [x] **Step 4: 最终状态检查**
   - Run: `git status --short`
   - Expected: 只包含本任务修改。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
   - Run: `git add docs medkernel-backend && git commit -m "feat: 完成临床事件 API"`
   - Expected: commit 成功。
-

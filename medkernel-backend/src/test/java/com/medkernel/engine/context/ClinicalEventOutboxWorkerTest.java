@@ -67,6 +67,8 @@ class ClinicalEventOutboxWorkerTest {
 
         verify(outbox).markFailed(eq(1L), eq("PENDING"), eq(2),
             eq(ErrorCode.ENG_EVENT_004.code()), any());
+        verify(processor).markFailed(eq("evt-1"), eq("tenant-A"),
+            eq(ErrorCode.ENG_EVENT_004), eq(2), eq(false), any());
     }
 
     @Test
@@ -81,6 +83,8 @@ class ClinicalEventOutboxWorkerTest {
 
         verify(outbox).markFailed(eq(1L), eq("DEAD"), eq(3),
             eq(ErrorCode.ENG_EVENT_005.code()), any());
+        verify(processor).markFailed(eq("evt-1"), eq("tenant-A"),
+            eq(ErrorCode.ENG_EVENT_005), eq(3), eq(true), any());
     }
 
     private ClinicalEventOutbox row(Long id, int retryCount) {

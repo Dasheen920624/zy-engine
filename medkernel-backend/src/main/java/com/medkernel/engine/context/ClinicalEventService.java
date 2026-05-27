@@ -40,6 +40,7 @@ public class ClinicalEventService {
     private final ClinicalEventRepository events;
     private final ClinicalEventPayloadRepository payloads;
     private final ClinicalEventOutboxRepository outbox;
+    private final ClinicalEventProcessor processor;
     private final AuditEventPublisher auditPublisher;
     private final StateTransitionRecorder transitions;
     private final DiagnoseResponseAssembler diagnoseAssembler;
@@ -49,6 +50,7 @@ public class ClinicalEventService {
     public ClinicalEventService(ClinicalEventRepository events,
                                 ClinicalEventPayloadRepository payloads,
                                 ClinicalEventOutboxRepository outbox,
+                                ClinicalEventProcessor processor,
                                 AuditEventPublisher auditPublisher,
                                 StateTransitionRecorder transitions,
                                 DiagnoseResponseAssembler diagnoseAssembler,
@@ -57,11 +59,29 @@ public class ClinicalEventService {
         this.events = events;
         this.payloads = payloads;
         this.outbox = outbox;
+        this.processor = processor;
         this.auditPublisher = auditPublisher;
         this.transitions = transitions;
         this.diagnoseAssembler = diagnoseAssembler;
         this.json = json;
         this.properties = properties;
+    }
+
+    @Transactional
+    public ClinicalEventAcceptedResponse receive(ClinicalEventRequest req) {
+        String tenantId = requireCurrentTenant();
+        boolean existingBeforeReceive = events.findByEventIdAndTenantId(req.eventId(), tenantId).isPresent();
+        ClinicalEventAcceptedResponse accepted = receiveAsync(req);
+        if (existingBeforeReceive || accepted.status() == ClinicalEventStatus.PROCESSED) {
+            return accepted;
+        }
+        processor.process(accepted.eventId(), tenantId);
+        outbox.findByEventIdAndTenantId(accepted.eventId(), tenantId)
+            .filter(row -> row.id() != null)
+            .ifPresent(row -> outbox.markProcessed(row.id(), Instant.now()));
+        return new ClinicalEventAcceptedResponse(
+            accepted.eventId(), ClinicalEventStatus.PROCESSED,
+            accepted.payloadDigest(), accepted.traceId(), accepted.acceptedAt());
     }
 
     @Transactional

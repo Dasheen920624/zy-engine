@@ -58,8 +58,11 @@ public class ClinicalEventOutboxWorker {
 
     private void markFailed(ClinicalEventOutbox row, ErrorCode errorCode) {
         int nextRetry = safeRetryCount(row) + 1;
-        String status = nextRetry >= properties.maxRetries() ? "DEAD" : "PENDING";
-        outbox.markFailed(row.id(), status, nextRetry, errorCode.code(), nextAttemptAt(nextRetry));
+        boolean dead = nextRetry >= properties.maxRetries();
+        String status = dead ? "DEAD" : "PENDING";
+        Instant nextAttemptAt = nextAttemptAt(nextRetry);
+        processor.markFailed(row.eventId(), row.tenantId(), errorCode, nextRetry, dead, nextAttemptAt);
+        outbox.markFailed(row.id(), status, nextRetry, errorCode.code(), nextAttemptAt);
     }
 
     private Instant nextAttemptAt(int retryCount) {

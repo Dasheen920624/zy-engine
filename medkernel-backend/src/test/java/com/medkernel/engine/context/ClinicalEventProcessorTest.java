@@ -1,5 +1,6 @@
 package com.medkernel.engine.context;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -18,8 +19,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEvent;
 import com.medkernel.shared.audit.AuditEventPublisher;
 import com.medkernel.shared.observability.StateTransitionRecorder;
+import com.medkernel.shared.observability.TransitionError;
 
 class ClinicalEventProcessorTest {
 
@@ -72,6 +75,34 @@ class ClinicalEventProcessorTest {
             .isInstanceOf(ApiException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.ENG_OBS_001);
+    }
+
+    @Test
+    void markFailedStoresErrorStatusTransitionAndAudit() {
+        Instant nextRetryAt = Instant.parse("2026-05-27T01:01:00Z");
+        when(events.findByEventIdAndTenantId("evt-1", "tenant-A"))
+            .thenReturn(Optional.of(event(ClinicalEventStatus.MAPPED)));
+
+        processor.markFailed("evt-1", "tenant-A", ErrorCode.ENG_EVENT_004, 2, false, nextRetryAt);
+
+        ArgumentCaptor<ClinicalEvent> eventCap = ArgumentCaptor.forClass(ClinicalEvent.class);
+        verify(events).save(eventCap.capture());
+        assertThat(eventCap.getValue().processingStatus()).isEqualTo(ClinicalEventStatus.FAILED);
+        assertThat(eventCap.getValue().errorCode()).isEqualTo(ErrorCode.ENG_EVENT_004.code());
+        assertThat(eventCap.getValue().errorClass()).isEqualTo(ErrorCode.ENG_EVENT_004.errorClass().name());
+        assertThat(eventCap.getValue().retryCount()).isEqualTo(2);
+
+        ArgumentCaptor<TransitionError> errorCap = ArgumentCaptor.forClass(TransitionError.class);
+        verify(transitions).record(eq("clinical_event"), eq("evt-1"),
+            eq("MAPPED"), eq("FAILED"), eq("PROCESS_FAILED"), errorCap.capture());
+        assertThat(errorCap.getValue().errorCode()).isEqualTo(ErrorCode.ENG_EVENT_004.code());
+        assertThat(errorCap.getValue().retryCount()).isEqualTo(2);
+        assertThat(errorCap.getValue().nextRetryAt()).isEqualTo(nextRetryAt);
+
+        ArgumentCaptor<AuditEvent> auditCap = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(auditPublisher).publish(auditCap.capture());
+        assertThat(auditCap.getValue().outcome()).isEqualTo(AuditEvent.OUTCOME_FAILED);
+        assertThat(auditCap.getValue().errorCode()).isEqualTo(ErrorCode.ENG_EVENT_004.code());
     }
 
     private ClinicalEvent event(ClinicalEventStatus status) {

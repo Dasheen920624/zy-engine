@@ -39,6 +39,7 @@ class ClinicalEventServiceTest {
     private ClinicalEventRepository events;
     private ClinicalEventPayloadRepository payloads;
     private ClinicalEventOutboxRepository outbox;
+    private ClinicalEventProcessor processor;
     private AuditEventPublisher auditPublisher;
     private StateTransitionRecorder transitions;
     private DiagnoseResponseAssembler diagnoseAssembler;
@@ -50,6 +51,7 @@ class ClinicalEventServiceTest {
         events = mock(ClinicalEventRepository.class);
         payloads = mock(ClinicalEventPayloadRepository.class);
         outbox = mock(ClinicalEventOutboxRepository.class);
+        processor = mock(ClinicalEventProcessor.class);
         auditPublisher = mock(AuditEventPublisher.class);
         transitions = mock(StateTransitionRecorder.class);
         diagnoseAssembler = mock(DiagnoseResponseAssembler.class);
@@ -57,7 +59,7 @@ class ClinicalEventServiceTest {
         json.findAndRegisterModules();
 
         service = new ClinicalEventService(
-            events, payloads, outbox, auditPublisher, transitions, diagnoseAssembler, json,
+            events, payloads, outbox, processor, auditPublisher, transitions, diagnoseAssembler, json,
             new ClinicalEventProperties(1024, Duration.ofMillis(50), 10, 3, List.of(1L, 5L, 30L)));
 
         when(events.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -71,6 +73,21 @@ class ClinicalEventServiceTest {
     @AfterEach
     void clear() {
         RequestContext.clear();
+    }
+
+    @Test
+    void receiveProcessesBeforeReturningAndClosesOutbox() {
+        when(events.findByEventIdAndTenantId("evt-1", "tenant-A")).thenReturn(Optional.empty());
+        when(outbox.findByEventIdAndTenantId("evt-1", "tenant-A")).thenReturn(Optional.of(
+            new ClinicalEventOutbox(42L, "evt-1", "tenant-A", "trace-event", "tester",
+                "PENDING", null, null, Instant.now(), 0, null, Instant.now(), null)));
+
+        ClinicalEventAcceptedResponse resp = service.receive(sampleRequest("evt-1"));
+
+        assertThat(resp.eventId()).isEqualTo("evt-1");
+        assertThat(resp.status()).isEqualTo(ClinicalEventStatus.PROCESSED);
+        verify(processor).process("evt-1", "tenant-A");
+        verify(outbox).markProcessed(eq(42L), any());
     }
 
     @Test
@@ -134,7 +151,7 @@ class ClinicalEventServiceTest {
     @Test
     void receiveAsyncRejectsOversizedPayload() {
         service = new ClinicalEventService(
-            events, payloads, outbox, auditPublisher, transitions, diagnoseAssembler, json,
+            events, payloads, outbox, processor, auditPublisher, transitions, diagnoseAssembler, json,
             new ClinicalEventProperties(10, Duration.ofMillis(50), 10, 3, List.of(1L)));
 
         assertThatThrownBy(() -> service.receiveAsync(sampleRequest("evt-big")))

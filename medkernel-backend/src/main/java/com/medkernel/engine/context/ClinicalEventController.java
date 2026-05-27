@@ -38,7 +38,7 @@ public class ClinicalEventController {
     public ResponseEntity<ApiResult<ClinicalEventAcceptedResponse>> receive(
             @RequestBody @Valid ClinicalEventRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResult.ok(service.receiveAsync(request)));
+            .body(ApiResult.ok(service.receive(request)));
     }
 
     @PostMapping("/async")
