@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medkernel.engine.context.canonical.CanonicalEncounter;
@@ -32,6 +34,7 @@ import com.medkernel.shared.audit.AuditAction;
 import com.medkernel.shared.audit.AuditEventPublisher;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
+import com.medkernel.shared.observability.StateTransitionRecorder;
 
 class ContextSnapshotServiceTest {
 
@@ -42,6 +45,7 @@ class ContextSnapshotServiceTest {
     private PackageVersionPort versions;
     private TerminologyMappingPort mapping;
     private AuditEventPublisher auditPublisher;
+    private StateTransitionRecorder recorder;
     private ContextSnapshotService service;
 
     @BeforeEach
@@ -53,11 +57,12 @@ class ContextSnapshotServiceTest {
         versions = new LenientPackageVersionAdapter();
         mapping = mock(TerminologyMappingPort.class);
         auditPublisher = mock(AuditEventPublisher.class);
+        recorder = mock(StateTransitionRecorder.class);
         when(mapping.evaluate(anyString(), any())).thenReturn(Map.of());
         ObjectMapper json = new ObjectMapper();
         json.findAndRegisterModules();
         service = new ContextSnapshotService(snapshots, resources, idemRepo,
-            validator, versions, mapping, auditPublisher, json);
+            validator, versions, mapping, auditPublisher, recorder, json);
 
         when(snapshots.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(resources.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -236,6 +241,21 @@ class ContextSnapshotServiceTest {
         PageResponse<ContextSnapshotSummary> page = service.list(filter, PageRequest.defaults());
         assertThat(page.items()).isEmpty();
         assertThat(page.total()).isZero();
+    }
+
+    @Test
+    void createWritesInitialStateTransition() {
+        service.create(sampleRequest(), null);
+
+        ArgumentCaptor<String> entityType = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> toStatus = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> reason = ArgumentCaptor.forClass(String.class);
+        verify(recorder).record(entityType.capture(), anyString(), isNull(),
+            toStatus.capture(), reason.capture(), isNull());
+
+        assertThat(entityType.getValue()).isEqualTo("context_snapshot");
+        assertThat(toStatus.getValue()).isEqualTo("ACTIVE");
+        assertThat(reason.getValue()).isEqualTo("INITIAL_CREATE");
     }
 
     private ContextSnapshotRequest sampleRequest() {

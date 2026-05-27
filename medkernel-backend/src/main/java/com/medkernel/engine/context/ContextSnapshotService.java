@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medkernel.shared.audit.AuditAction;
 import com.medkernel.shared.audit.AuditEventPublisher;
+import com.medkernel.shared.observability.StateTransitionRecorder;
 import com.medkernel.engine.context.canonical.CanonicalCarePlan;
 import com.medkernel.engine.context.canonical.CanonicalClaim;
 import com.medkernel.engine.context.canonical.CanonicalCondition;
@@ -54,6 +55,7 @@ public class ContextSnapshotService {
     private final PackageVersionPort versions;
     private final TerminologyMappingPort mapping;
     private final AuditEventPublisher auditPublisher;
+    private final StateTransitionRecorder transitions;
     private final ObjectMapper json;
 
     public ContextSnapshotService(ContextSnapshotRepository snapshots,
@@ -63,6 +65,7 @@ public class ContextSnapshotService {
                                   PackageVersionPort versions,
                                   TerminologyMappingPort mapping,
                                   AuditEventPublisher auditPublisher,
+                                  StateTransitionRecorder transitions,
                                   ObjectMapper json) {
         this.snapshots = snapshots;
         this.resources = resources;
@@ -71,6 +74,7 @@ public class ContextSnapshotService {
         this.versions = versions;
         this.mapping = mapping;
         this.auditPublisher = auditPublisher;
+        this.transitions = transitions;
         this.json = json;
     }
 
@@ -125,6 +129,9 @@ public class ContextSnapshotService {
 
         auditPublisher.publish(AuditAction.CREATE, "context_snapshot", saved.snapshotId(),
             "创建标准上下文 quality=" + quality + " patient=" + req.patientId());
+
+        transitions.record("context_snapshot", saved.snapshotId(),
+            null, ContextSnapshotStatus.ACTIVE.name(), "INITIAL_CREATE", null);
 
         return new ContextSnapshotResponse(saved.snapshotId(), ContextSnapshotStatus.ACTIVE,
             quality, missing, mappingStatus, now, traceId);
