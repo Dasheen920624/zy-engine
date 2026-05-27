@@ -51,6 +51,7 @@ import static com.medkernel.engine.security.PermissionCode.EMBED_READ;
 import static com.medkernel.engine.security.PermissionCode.EMBED_WRITE;
 import static com.medkernel.engine.security.PermissionCode.LLM_READ;
 import static com.medkernel.engine.security.PermissionCode.LLM_WRITE;
+import static com.medkernel.engine.security.PermissionCode.LIST_EXPORT;
 
 /**
  * MedKernel v1.0 GA · 默认角色 → 权限映射。
@@ -97,7 +98,8 @@ public final class DefaultPermissionPolicy {
             AUDIT_READ,
             FOLLOWUP_READ, FOLLOWUP_WRITE,
             EMBED_READ, EMBED_WRITE,
-            LLM_READ, LLM_WRITE));
+            LLM_READ, LLM_WRITE,
+            LIST_EXPORT));
 
         // 医务处：知识/规则/路径审核与发布 + 上下文只读
         map.put(RoleCode.MEDICAL_AFFAIRS, EnumSet.of(
@@ -112,7 +114,8 @@ public final class DefaultPermissionPolicy {
             AUDIT_READ, AUDIT_EXPORT,
             FOLLOWUP_READ, FOLLOWUP_WRITE,
             EMBED_READ, EMBED_WRITE,
-            LLM_READ, LLM_WRITE));
+            LLM_READ, LLM_WRITE,
+            LIST_EXPORT));
 
         // 质控办：评估指标审核发布 + 质控发现 + 上下文只读
         map.put(RoleCode.QA_MANAGER, EnumSet.of(
@@ -126,7 +129,7 @@ public final class DefaultPermissionPolicy {
             RECOMMENDATION_READ,
             AUDIT_READ, AUDIT_EXPORT,
             FOLLOWUP_READ, EMBED_READ,
-            LLM_READ));
+            LLM_READ, LIST_EXPORT));
 
         // 医保办：医保规则维护（属于规则一类）+ 评估
         map.put(RoleCode.INSURANCE_MANAGER, EnumSet.of(
@@ -190,7 +193,7 @@ public final class DefaultPermissionPolicy {
             PATHWAY_READ,
             CONTEXT_READ, EVENT_READ,
             EVALUATION_READ,
-            FOLLOWUP_READ));
+            FOLLOWUP_READ, LIST_EXPORT));
 
         // 实施工程师：试点准备阶段的接入与配置 + 临床上下文接入
         map.put(RoleCode.IMPLEMENTATION_ENGINEER, EnumSet.of(
@@ -204,7 +207,8 @@ public final class DefaultPermissionPolicy {
             AUDIT_READ,
             FOLLOWUP_READ, FOLLOWUP_WRITE,
             EMBED_READ, EMBED_WRITE,
-            LLM_READ, LLM_WRITE));
+            LLM_READ, LLM_WRITE,
+            LIST_EXPORT));
 
         POLICY = Map.copyOf(map);
     }
