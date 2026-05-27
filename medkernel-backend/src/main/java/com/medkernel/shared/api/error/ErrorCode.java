@@ -56,6 +56,13 @@ public enum ErrorCode {
     ENG_EVENT_004("ENG-EVENT-004", 503, "payload 存储不可用", ErrorClass.EXTERNAL, true),
     ENG_EVENT_005("ENG-EVENT-005", 500, "事件处理失败已进入死信", ErrorClass.INTERNAL, false),
     ENG_EVENT_006("ENG-EVENT-006", 400, "当前状态不允许重放", ErrorClass.INPUT, false),
+
+    ENG_RULE_001("ENG-RULE-001", 400, "规则 DSL 校验失败", ErrorClass.INPUT, false),
+    ENG_RULE_002("ENG-RULE-002", 404, "规则不存在", ErrorClass.DATA, false),
+    ENG_RULE_003("ENG-RULE-003", 404, "规则版本不存在", ErrorClass.DATA, false),
+    ENG_RULE_004("ENG-RULE-004", 409, "发布门禁失败", ErrorClass.DATA, false),
+    ENG_RULE_005("ENG-RULE-005", 500, "规则执行失败", ErrorClass.INTERNAL, false),
+    ENG_RULE_006("ENG-RULE-006", 409, "当前规则状态不允许该操作", ErrorClass.DATA, false),
     ;
 
     private final String code;

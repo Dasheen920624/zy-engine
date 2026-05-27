@@ -36,7 +36,8 @@ class MigrationBaselineContractTest {
         "V7__clinical_context_baseline.sql",
         "V8__observability_baseline.sql",
         "V9__audit_event_outcome.sql",
-        "V10__clinical_event_api.sql"
+        "V10__clinical_event_api.sql",
+        "V11__rule_engine_api.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -46,7 +47,8 @@ class MigrationBaselineContractTest {
         "term_mapping_package_item", "term_mapping_package_release", "audit_chain_head",
         "role_permission", "user_role_assignment",
         "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key",
-        "state_transition_history", "clinical_event_payload", "clinical_event_outbox"
+        "state_transition_history", "clinical_event_payload", "clinical_event_outbox",
+        "rule_definition", "rule_version", "rule_test_case", "rule_execution_log"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -74,7 +76,11 @@ class MigrationBaselineContractTest {
         "idx_canonical_resource_trace",
         "idx_audit_event_outcome",
         "idx_cep_tenant_time", "idx_outbox_pending", "idx_outbox_tenant",
-        "idx_clinical_event_patient", "idx_clinical_event_encounter"
+        "idx_clinical_event_patient", "idx_clinical_event_encounter",
+        "idx_rule_definition_tenant_status", "idx_rule_definition_type_risk",
+        "idx_rule_version_rule_status", "idx_rule_test_case_version_type",
+        "idx_rule_execution_tenant_time", "idx_rule_execution_rule_time",
+        "idx_rule_execution_trigger"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -101,7 +107,12 @@ class MigrationBaselineContractTest {
         "ck_sth_error_class",
         "ck_audit_event_outcome",
         "uk_event_payload", "ck_storage_type",
-        "uk_outbox_event_id", "ck_outbox_status"
+        "uk_outbox_event_id", "ck_outbox_status",
+        "uk_rule_definition_tenant_code", "ck_rule_definition_type",
+        "ck_rule_definition_mode", "ck_rule_definition_risk", "ck_rule_definition_status",
+        "uk_rule_version_rule_no", "ck_rule_version_status",
+        "uk_rule_test_case_id", "ck_rule_test_case_type", "ck_rule_test_case_status",
+        "uk_rule_execution_id", "ck_rule_execution_status", "ck_rule_execution_severity"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -110,19 +121,22 @@ class MigrationBaselineContractTest {
         "mapping_conflict", "term_mapping_package", "term_mapping_package_item",
         "term_mapping_package_release", "audit_chain_head", "role_permission", "user_role_assignment",
         "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key",
-        "state_transition_history", "clinical_event_payload", "clinical_event_outbox"
+        "state_transition_history", "clinical_event_payload", "clinical_event_outbox",
+        "rule_definition", "rule_version", "rule_test_case", "rule_execution_log"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
         "standard_term", "local_term", "term_mapping", "mapping_candidate", "mapping_conflict",
-        "term_mapping_package", "role_permission", "user_role_assignment"
+        "term_mapping_package", "role_permission", "user_role_assignment",
+        "rule_definition", "rule_version", "rule_test_case"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
         "knowledge_supersession", Set.of("transitioned_at", "transitioned_by"),
         "knowledge_export_job", Set.of("requested_by", "created_at", "started_at", "completed_at", "expires_at"),
         "term_mapping_package_release", Set.of("created_at", "created_by"),
-        "audit_chain_head", Set.of("last_signature", "updated_at")
+        "audit_chain_head", Set.of("last_signature", "updated_at"),
+        "rule_execution_log", Set.of("actor_user_id", "executed_at", "created_at")
     );
     private static final Map<String, Set<String>> LIFECYCLE_FIELDS = Map.ofEntries(
         Map.entry("org_unit", Set.of("status")),
@@ -139,7 +153,11 @@ class MigrationBaselineContractTest {
         Map.entry("term_mapping_package", Set.of("package_version", "status")),
         Map.entry("context_snapshot", Set.of("status", "quality_status")),
         Map.entry("clinical_event", Set.of("processing_status")),
-        Map.entry("clinical_event_outbox", Set.of("claim_status"))
+        Map.entry("clinical_event_outbox", Set.of("claim_status")),
+        Map.entry("rule_definition", Set.of("status", "risk_level")),
+        Map.entry("rule_version", Set.of("version_no", "status")),
+        Map.entry("rule_test_case", Set.of("case_type", "last_status")),
+        Map.entry("rule_execution_log", Set.of("status", "severity"))
     );
 
     private static final Pattern TABLE_PATTERN =
@@ -257,6 +275,31 @@ class MigrationBaselineContractTest {
         for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
             assertThat(migrationPathFor(dialect, "V10__clinical_event_api.sql"))
                 .as("dialect %s must ship V10", dialect)
+                .exists();
+        }
+    }
+
+    @Test
+    void v11ShouldDeclareRuleEngineApiTablesAndColumns() {
+        String h2 = readMigration("h2", "V11__rule_engine_api.sql");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS rule_definition");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS rule_version");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS rule_test_case");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS rule_execution_log");
+        assertThat(h2).contains("dsl_json");
+        assertThat(h2).contains("explanation_json");
+        assertThat(h2).contains("input_digest");
+        assertThat(h2).contains("uk_rule_definition_tenant_code");
+        assertThat(h2).contains("ck_rule_definition_status");
+        assertThat(h2).contains("ck_rule_test_case_type");
+        assertThat(h2).contains("idx_rule_execution_trigger");
+    }
+
+    @Test
+    void v11ShouldExistInAllFiveDialects() {
+        for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
+            assertThat(migrationPathFor(dialect, "V11__rule_engine_api.sql"))
+                .as("dialect %s must ship V11", dialect)
                 .exists();
         }
     }
