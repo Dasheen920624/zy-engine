@@ -49,8 +49,9 @@ public class AuditEventRepository {
                 event_id, trace_id, occurred_at, actor_user_id, action,
                 resource_type, resource_id, summary, payload_digest,
                 tenant_id, hospital_id, department_id,
-                prev_event_id, prev_signature, signature, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                prev_event_id, prev_signature, signature, status,
+                outcome, error_code
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             record.eventId(),
             record.traceId(),
@@ -67,7 +68,9 @@ public class AuditEventRepository {
             record.prevEventId(),
             record.prevSignature(),
             record.signature(),
-            record.status()
+            record.status(),
+            record.outcome(),
+            record.errorCode()
         );
     }
 
@@ -115,7 +118,8 @@ public class AuditEventRepository {
             SELECT id, event_id, trace_id, occurred_at, actor_user_id, action,
                    resource_type, resource_id, summary, payload_digest,
                    tenant_id, hospital_id, department_id,
-                   prev_event_id, prev_signature, signature, status, created_at
+                   prev_event_id, prev_signature, signature, status,
+                   outcome, error_code, created_at
               FROM audit_event
              WHERE tenant_id = ?
             """);
@@ -167,7 +171,8 @@ public class AuditEventRepository {
             SELECT id, event_id, trace_id, occurred_at, actor_user_id, action,
                    resource_type, resource_id, summary, payload_digest,
                    tenant_id, hospital_id, department_id,
-                   prev_event_id, prev_signature, signature, status, created_at
+                   prev_event_id, prev_signature, signature, status,
+                   outcome, error_code, created_at
               FROM audit_event
              WHERE tenant_id = ? AND event_id = ?
             """,
@@ -195,6 +200,8 @@ public class AuditEventRepository {
             rs.getString("prev_signature"),
             rs.getString("signature"),
             rs.getString("status"),
+            rs.getString("outcome"),
+            rs.getString("error_code"),
             toInstant(rs.getTimestamp("created_at"))
         );
     }

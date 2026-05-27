@@ -131,7 +131,8 @@ class AuditChainWriterTest {
                 "DELETE", // tampered action
                 r.resourceType(), r.resourceId(), r.summary(), r.payloadDigest(),
                 r.tenantId(), r.hospitalId(), r.departmentId(),
-                r.prevEventId(), r.prevSignature(), r.signature(), r.status(), r.createdAt()
+                r.prevEventId(), r.prevSignature(), r.signature(), r.status(),
+                r.outcome(), r.errorCode(), r.createdAt()
             );
             assertThat(writer.verify(tampered)).isFalse();
         });
