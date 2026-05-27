@@ -6,6 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 患者路径节点的关键时钟事实。
+ *
+ * <p>记录节点开始、到期、完成、状态和可选质控指标关联，用于路径执行时效追踪。
+ */
 @Table("clinical_clock")
 public record ClinicalClock(
     @Id Long id,

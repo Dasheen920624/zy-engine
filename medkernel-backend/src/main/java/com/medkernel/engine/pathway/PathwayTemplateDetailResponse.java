@@ -2,6 +2,11 @@ package com.medkernel.engine.pathway;
 
 import java.util.List;
 
+/**
+ * 路径模板详情响应。
+ *
+ * <p>聚合模板主数据、节点、边、指标绑定和 traceId，用于模板查看、发布校验和仿真准备。
+ */
 public record PathwayTemplateDetailResponse(
     PathwayTemplate template,
     List<PathwayNode> nodes,
@@ -10,6 +15,9 @@ public record PathwayTemplateDetailResponse(
     String traceId
 ) {
 
+    /**
+     * 创建不可变详情响应，并将空节点、边和指标绑定归一为空列表。
+     */
     public PathwayTemplateDetailResponse {
         nodes = nodes == null ? List.of() : List.copyOf(nodes);
         edges = edges == null ? List.of() : List.copyOf(edges);

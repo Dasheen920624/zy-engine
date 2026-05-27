@@ -7,14 +7,28 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 路径模板仓库。
+ *
+ * <p>保存专病路径模板主数据，支持按状态、病种和专病包进行租户内分页检索。
+ */
 @Repository
 public interface PathwayTemplateRepository extends ListCrudRepository<PathwayTemplate, Long> {
 
+    /**
+     * 按模板业务 ID 和租户查询路径模板。
+     */
     Optional<PathwayTemplate> findByTemplateIdAndTenantId(String templateId, String tenantId);
 
+    /**
+     * 按租户、模板编码和版本查询模板，用于版本唯一性判断。
+     */
     Optional<PathwayTemplate> findByTenantIdAndTemplateCodeAndTemplateVersion(
         String tenantId, String templateCode, Integer templateVersion);
 
+    /**
+     * 按可选状态、病种和专病包分页查询路径模板。
+     */
     @Query("""
         SELECT * FROM pathway_template
         WHERE tenant_id = :tenantId
@@ -27,6 +41,9 @@ public interface PathwayTemplateRepository extends ListCrudRepository<PathwayTem
     List<PathwayTemplate> pageByFilter(String tenantId, String status, String diseaseCode,
                                        String packageId, int offset, int limit);
 
+    /**
+     * 统计可选过滤条件下的路径模板总数。
+     */
     @Query("""
         SELECT COUNT(*) FROM pathway_template
         WHERE tenant_id = :tenantId

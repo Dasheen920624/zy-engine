@@ -6,6 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 专病包主数据。
+ *
+ * <p>保存病种、专病包编码、版本、状态、来源、说明和发布信息，是路径模板的资产归属。
+ */
 @Table("specialty_package")
 public record SpecialtyPackage(
     @Id Long id,

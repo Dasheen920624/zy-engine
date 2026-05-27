@@ -9,6 +9,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * 创建路径模板请求。
+ *
+ * <p>一次性携带模板主数据、节点、边和指标绑定，保存为可发布前校验的草稿资产。
+ */
 public record PathwayTemplateCreateRequest(
     @NotBlank String packageId,
     @NotBlank String templateCode,
