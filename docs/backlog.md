@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.22 · 2026-05-27
+> 版本：4.23 · 2026-05-27
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -62,7 +62,7 @@
 | GA-ENG-API-09 随访 API：计划、任务、问卷、异常回院、结果回流 | codex | done |
 | GA-ENG-API-10 包发布 API：知识包、配置包、校验、灰度、全量、同步、回滚 | codex | done |
 | GA-ENG-API-11 嵌入 API：launch token、iframe/SDK/纯 API、回调、降级 | codex | done |
-| GA-ENG-API-12 模型能力网关 API：能力代码、路由、脱敏、结构化输出、审计、B0 降级 | - | pending |
+| GA-ENG-API-12 模型能力网关 API：能力代码、路由、脱敏、结构化输出、审计、B0 降级 | codex | in_progress |
 | GA-ENG-API-13 大规模列表 API：统一分页/游标、排序、过滤、total estimate、批量任务、导出任务、traceId | - | pending |
 
 ---
