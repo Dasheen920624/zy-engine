@@ -6,6 +6,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 本地术语→标准术语的正式映射条目（候选确认后落库的主映射）。
+ *
+ * <p>租户隔离；同 (tenant_id, local_term_id, standard_term_id) 仅保留一条；
+ * 状态字段 {@link TermMappingStatus} 反映生命周期（DRAFT/CONFIRMED/SUPERSEDED/ROLLED_BACK），
+ * 仅 CONFIRMED 状态参与 {@link TermMappingPackage} 构包。
+ */
 @Table("term_mapping")
 public record TermMapping(
     @Id Long id,

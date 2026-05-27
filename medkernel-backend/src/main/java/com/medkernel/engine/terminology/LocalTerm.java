@@ -6,6 +6,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 院内本地术语字典条目（HIS/LIS/PACS 等来源系统采集到的原始词条）。
+ *
+ * <p>租户隔离；业务键 (tenant_id, source_system, local_code, category) 唯一。
+ * 与 {@link StandardTerm} 通过 {@link TermMapping} 建立映射关系，
+ * 状态字段 {@link LocalTermStatus} 反映映射完成度（UNMAPPED / MAPPED / DISABLED）。
+ */
 @Table("local_term")
 public record LocalTerm(
     @Id Long id,
