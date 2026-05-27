@@ -1,0 +1,115 @@
+package com.medkernel.engine.pkg;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.medkernel.shared.context.RequestContext;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("dev")
+class PackageEngineControllerSecurityTest {
+
+    private static final String CREATE_BODY = """
+        {
+          "packageCode": "PKG.COPD",
+          "packageVersion": "1.0.0",
+          "name": "慢阻肺专病包",
+          "description": "慢阻肺资产包"
+        }
+        """;
+
+    private static final String ITEM_BODY = """
+        {
+          "assetType": "RULE",
+          "assetId": "rule-1",
+          "assetVersion": "1"
+        }
+        """;
+
+    private static final String SYNC_BODY = """
+        {
+          "targetOrgUnitId": "org-hosp-1",
+          "strategy": "GRAYSCALE",
+          "scopeType": "DEPARTMENT",
+          "scopeValue": "dept-1",
+          "targetIds": ["target-dify-1"]
+        }
+        """;
+
+    @Autowired
+    MockMvc mvc;
+
+    @MockBean
+    PackageEngineService service;
+
+    @AfterEach
+    void clearAll() {
+        RequestContext.clear();
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_IT_OPS")
+    void authorizedUserButDataScopeRejectsMissingTenant() throws Exception {
+        mvc.perform(post("/api/v1/engine/packages")
+                .contentType("application/json")
+                .content(CREATE_BODY))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("ENG-BASE-001"));
+
+        mvc.perform(get("/api/v1/engine/packages"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("ENG-BASE-001"));
+
+        mvc.perform(get("/api/v1/engine/packages/pkg-1"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("ENG-BASE-001"));
+
+        mvc.perform(post("/api/v1/engine/packages/pkg-1/items")
+                .contentType("application/json")
+                .content(ITEM_BODY))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("ENG-BASE-001"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_DOCTOR")
+    void doctorCannotPublishOrRollbackPackage() throws Exception {
+        mvc.perform(post("/api/v1/engine/packages")
+                .contentType("application/json")
+                .content(CREATE_BODY))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(post("/api/v1/engine/packages/pkg-1/items")
+                .contentType("application/json")
+                .content(ITEM_BODY))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(post("/api/v1/engine/packages/pkg-1/sync")
+                .contentType("application/json")
+                .content(SYNC_BODY))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(post("/api/v1/engine/packages/pkg-1/rollback?targetPackageId=pkg-2"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_GUEST")
+    void guestCannotReadPackages() throws Exception {
+        mvc.perform(get("/api/v1/engine/packages"))
+            .andExpect(status().isForbidden());
+    }
+}
