@@ -35,7 +35,8 @@ class MigrationBaselineContractTest {
         "V6__security_permission_baseline.sql",
         "V7__clinical_context_baseline.sql",
         "V8__observability_baseline.sql",
-        "V9__audit_event_outcome.sql"
+        "V9__audit_event_outcome.sql",
+        "V10__clinical_event_api.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -45,7 +46,7 @@ class MigrationBaselineContractTest {
         "term_mapping_package_item", "term_mapping_package_release", "audit_chain_head",
         "role_permission", "user_role_assignment",
         "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key",
-        "state_transition_history"
+        "state_transition_history", "clinical_event_payload", "clinical_event_outbox"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -71,7 +72,9 @@ class MigrationBaselineContractTest {
         "idx_clinical_event_snapshot", "idx_context_idempotency_expires",
         "idx_sth_entity", "idx_sth_tenant_time", "idx_sth_trace", "idx_sth_failed",
         "idx_canonical_resource_trace",
-        "idx_audit_event_outcome"
+        "idx_audit_event_outcome",
+        "idx_cep_tenant_time", "idx_outbox_pending", "idx_outbox_tenant",
+        "idx_clinical_event_patient", "idx_clinical_event_encounter"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -96,7 +99,9 @@ class MigrationBaselineContractTest {
         "uk_clinical_event_id", "ck_clinical_event_type", "ck_clinical_event_status",
         "uk_context_idempotency_tenant_key",
         "ck_sth_error_class",
-        "ck_audit_event_outcome"
+        "ck_audit_event_outcome",
+        "uk_event_payload", "ck_storage_type",
+        "uk_outbox_event_id", "ck_outbox_status"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -105,7 +110,7 @@ class MigrationBaselineContractTest {
         "mapping_conflict", "term_mapping_package", "term_mapping_package_item",
         "term_mapping_package_release", "audit_chain_head", "role_permission", "user_role_assignment",
         "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key",
-        "state_transition_history"
+        "state_transition_history", "clinical_event_payload", "clinical_event_outbox"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -133,7 +138,8 @@ class MigrationBaselineContractTest {
         Map.entry("mapping_conflict", Set.of("status")),
         Map.entry("term_mapping_package", Set.of("package_version", "status")),
         Map.entry("context_snapshot", Set.of("status", "quality_status")),
-        Map.entry("clinical_event", Set.of("processing_status"))
+        Map.entry("clinical_event", Set.of("processing_status")),
+        Map.entry("clinical_event_outbox", Set.of("claim_status"))
     );
 
     private static final Pattern TABLE_PATTERN =
@@ -229,13 +235,44 @@ class MigrationBaselineContractTest {
         }
     }
 
+    @Test
+    void v10ShouldDeclareClinicalEventApiTablesAndColumns() {
+        String h2 = readMigration("h2", "V10__clinical_event_api.sql");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS clinical_event_payload");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS clinical_event_outbox");
+        assertThat(h2).contains("ALTER TABLE clinical_event ADD COLUMN IF NOT EXISTS patient_id");
+        assertThat(h2).contains("ALTER TABLE clinical_event ADD COLUMN IF NOT EXISTS encounter_id");
+        assertThat(h2).contains("ALTER TABLE clinical_event ADD COLUMN IF NOT EXISTS package_version");
+        assertThat(h2).contains("ALTER TABLE clinical_event ADD COLUMN IF NOT EXISTS error_code");
+        assertThat(h2).contains("ALTER TABLE clinical_event ADD COLUMN IF NOT EXISTS error_class");
+        assertThat(h2).contains("ALTER TABLE clinical_event ADD COLUMN IF NOT EXISTS retry_count");
+        assertThat(h2).contains("ALTER TABLE clinical_event ADD COLUMN IF NOT EXISTS root_event_id");
+        assertThat(h2).contains("uk_event_payload");
+        assertThat(h2).contains("uk_outbox_event_id");
+        assertThat(h2).contains("idx_outbox_pending");
+    }
+
+    @Test
+    void v10ShouldExistInAllFiveDialects() {
+        for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
+            assertThat(migrationPathFor(dialect, "V10__clinical_event_api.sql"))
+                .as("dialect %s must ship V10", dialect)
+                .exists();
+        }
+    }
+
     private List<String> migrationFiles(String dialect) throws IOException {
         try (var files = Files.list(migrationPath(dialect))) {
             return files.map(path -> path.getFileName().toString())
                 .filter(name -> name.endsWith(".sql"))
-                .sorted()
+                .sorted((left, right) -> Integer.compare(migrationVersion(left), migrationVersion(right)))
                 .toList();
         }
+    }
+
+    private int migrationVersion(String filename) {
+        int separator = filename.indexOf("__");
+        return Integer.parseInt(filename.substring(1, separator));
     }
 
     private String combinedDdl(String dialect) throws IOException {

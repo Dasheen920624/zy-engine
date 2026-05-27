@@ -9,6 +9,8 @@ import static com.medkernel.engine.security.PermissionCode.AUDIT_EXPORT;
 import static com.medkernel.engine.security.PermissionCode.AUDIT_READ;
 import static com.medkernel.engine.security.PermissionCode.CONTEXT_READ;
 import static com.medkernel.engine.security.PermissionCode.CONTEXT_WRITE;
+import static com.medkernel.engine.security.PermissionCode.EVENT_READ;
+import static com.medkernel.engine.security.PermissionCode.EVENT_WRITE;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_PUBLISH;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_READ;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_WRITE;
@@ -78,6 +80,7 @@ public final class DefaultPermissionPolicy {
             PACKAGE_READ, PACKAGE_PUBLISH, PACKAGE_ROLLBACK,
             TERM_READ, TERM_WRITE, TERM_PUBLISH,
             CONTEXT_READ, CONTEXT_WRITE,
+            EVENT_READ, EVENT_WRITE,
             SYSTEM_READ, SYSTEM_MANAGE,
             AUDIT_READ));
 
@@ -88,7 +91,7 @@ public final class DefaultPermissionPolicy {
             RULE_READ, RULE_WRITE, RULE_PUBLISH,
             PATHWAY_READ, PATHWAY_WRITE, PATHWAY_PUBLISH,
             TERM_READ,
-            CONTEXT_READ,
+            CONTEXT_READ, EVENT_READ,
             EVALUATION_READ,
             RECOMMENDATION_READ,
             AUDIT_READ, AUDIT_EXPORT));
@@ -100,7 +103,7 @@ public final class DefaultPermissionPolicy {
             KNOWLEDGE_READ, KNOWLEDGE_EXPORT,
             RULE_READ,
             PATHWAY_READ,
-            CONTEXT_READ,
+            CONTEXT_READ, EVENT_READ,
             RECOMMENDATION_READ,
             AUDIT_READ, AUDIT_EXPORT));
 
@@ -118,7 +121,7 @@ public final class DefaultPermissionPolicy {
             PATHWAY_READ, PATHWAY_WRITE,
             RULE_READ, RULE_WRITE,
             KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW,
-            CONTEXT_READ,
+            CONTEXT_READ, EVENT_READ,
             EVALUATION_READ,
             RECOMMENDATION_READ));
 
@@ -129,7 +132,7 @@ public final class DefaultPermissionPolicy {
             PATHWAY_READ, PATHWAY_WRITE,
             RULE_READ, RULE_WRITE,
             TERM_READ, TERM_WRITE,
-            CONTEXT_READ,
+            CONTEXT_READ, EVENT_READ,
             RECOMMENDATION_READ));
 
         // 临床医生：看提醒、采纳/拒绝、查看路径与规则 + 临床上下文只读
@@ -138,7 +141,7 @@ public final class DefaultPermissionPolicy {
             RECOMMENDATION_READ, RECOMMENDATION_ACCEPT,
             PATHWAY_READ,
             RULE_READ,
-            CONTEXT_READ,
+            CONTEXT_READ, EVENT_READ,
             KNOWLEDGE_READ));
 
         // 护理人员：护理决策与提醒 + 临床上下文只读
@@ -146,7 +149,7 @@ public final class DefaultPermissionPolicy {
             ORG_READ,
             RECOMMENDATION_READ, RECOMMENDATION_ACCEPT,
             PATHWAY_READ,
-            CONTEXT_READ,
+            CONTEXT_READ, EVENT_READ,
             KNOWLEDGE_READ));
 
         // 合规审计：只读 + 导出，禁所有写
@@ -156,7 +159,7 @@ public final class DefaultPermissionPolicy {
             KNOWLEDGE_READ, KNOWLEDGE_EXPORT,
             RULE_READ,
             PATHWAY_READ,
-            CONTEXT_READ,
+            CONTEXT_READ, EVENT_READ,
             EVALUATION_READ));
 
         // 实施工程师：试点准备阶段的接入与配置 + 临床上下文接入
@@ -166,6 +169,7 @@ public final class DefaultPermissionPolicy {
             PACKAGE_READ, PACKAGE_PUBLISH,
             TERM_READ, TERM_WRITE,
             CONTEXT_READ, CONTEXT_WRITE,
+            EVENT_READ, EVENT_WRITE,
             SYSTEM_READ,
             AUDIT_READ));
 

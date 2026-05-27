@@ -2,6 +2,7 @@ package com.medkernel.engine.context;
 
 import java.util.Optional;
 
+import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,4 +10,28 @@ import org.springframework.stereotype.Repository;
 public interface ClinicalEventRepository extends ListCrudRepository<ClinicalEvent, Long> {
 
     Optional<ClinicalEvent> findByEventIdAndTenantId(String eventId, String tenantId);
+
+    @Query("""
+        SELECT * FROM clinical_event
+        WHERE tenant_id = :tenantId
+          AND (:patientId IS NULL OR patient_id = :patientId)
+          AND (:encounterId IS NULL OR encounter_id = :encounterId)
+          AND (:status IS NULL OR processing_status = :status)
+          AND (:eventType IS NULL OR event_type = :eventType)
+        ORDER BY received_at DESC
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+        """)
+    java.util.List<ClinicalEvent> pageByFilter(String tenantId, String patientId, String encounterId,
+                                               String status, String eventType, int offset, int limit);
+
+    @Query("""
+        SELECT COUNT(*) FROM clinical_event
+        WHERE tenant_id = :tenantId
+          AND (:patientId IS NULL OR patient_id = :patientId)
+          AND (:encounterId IS NULL OR encounter_id = :encounterId)
+          AND (:status IS NULL OR processing_status = :status)
+          AND (:eventType IS NULL OR event_type = :eventType)
+        """)
+    long countByFilter(String tenantId, String patientId, String encounterId,
+                       String status, String eventType);
 }

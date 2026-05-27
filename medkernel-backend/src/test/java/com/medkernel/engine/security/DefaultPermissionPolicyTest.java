@@ -131,4 +131,38 @@ class DefaultPermissionPolicyTest {
                 .doesNotContain(PermissionCode.CONTEXT_WRITE);
         }
     }
+
+    @Test
+    void clinicalAndGovernanceRolesCanReadClinicalEvents() {
+        for (RoleCode role : new RoleCode[]{
+            RoleCode.DOCTOR, RoleCode.NURSE, RoleCode.SPECIALIST, RoleCode.DEPT_HEAD,
+            RoleCode.MEDICAL_AFFAIRS, RoleCode.QA_MANAGER, RoleCode.AUDIT_COMPLIANCE,
+            RoleCode.IT_OPS, RoleCode.IMPLEMENTATION_ENGINEER}) {
+            assertThat(DefaultPermissionPolicy.permissionsOf(role))
+                .as("%s 应能查看临床事件诊断信息", role)
+                .contains(PermissionCode.EVENT_READ);
+        }
+    }
+
+    @Test
+    void integrationAndAdminRolesCanWriteClinicalEvents() {
+        for (RoleCode role : new RoleCode[]{
+            RoleCode.IT_OPS, RoleCode.IMPLEMENTATION_ENGINEER,
+            RoleCode.HOSPITAL_ADMIN, RoleCode.GROUP_ADMIN, RoleCode.PLATFORM_ADMIN}) {
+            assertThat(DefaultPermissionPolicy.permissionsOf(role))
+                .as("%s 应能写入临床事件", role)
+                .contains(PermissionCode.EVENT_READ, PermissionCode.EVENT_WRITE);
+        }
+    }
+
+    @Test
+    void clinicalRolesCannotWriteClinicalEvents() {
+        for (RoleCode role : new RoleCode[]{
+            RoleCode.DOCTOR, RoleCode.NURSE, RoleCode.SPECIALIST, RoleCode.DEPT_HEAD,
+            RoleCode.MEDICAL_AFFAIRS, RoleCode.QA_MANAGER, RoleCode.AUDIT_COMPLIANCE}) {
+            assertThat(DefaultPermissionPolicy.permissionsOf(role))
+                .as("%s 不应能写入临床事件", role)
+                .doesNotContain(PermissionCode.EVENT_WRITE);
+        }
+    }
 }

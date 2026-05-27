@@ -10,5 +10,6 @@ public enum ClinicalEventStatus {
     RECEIVED,
     MAPPED,
     PROCESSED,
-    FAILED
+    FAILED,
+    SUPERSEDED
 }
