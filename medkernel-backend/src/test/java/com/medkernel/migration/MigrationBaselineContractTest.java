@@ -33,7 +33,8 @@ class MigrationBaselineContractTest {
         "V4__terminology_mapping_baseline.sql",
         "V5__audit_chain_baseline.sql",
         "V6__security_permission_baseline.sql",
-        "V7__clinical_context_baseline.sql"
+        "V7__clinical_context_baseline.sql",
+        "V8__observability_baseline.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -42,7 +43,8 @@ class MigrationBaselineContractTest {
         "term_mapping", "mapping_candidate", "mapping_conflict", "term_mapping_package",
         "term_mapping_package_item", "term_mapping_package_release", "audit_chain_head",
         "role_permission", "user_role_assignment",
-        "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key"
+        "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key",
+        "state_transition_history"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -65,7 +67,9 @@ class MigrationBaselineContractTest {
         "idx_context_snapshot_tenant_patient", "idx_context_snapshot_tenant_enc",
         "idx_context_snapshot_status", "idx_canonical_resource_snapshot",
         "idx_canonical_resource_tenant_type", "idx_clinical_event_tenant_received",
-        "idx_clinical_event_snapshot", "idx_context_idempotency_expires"
+        "idx_clinical_event_snapshot", "idx_context_idempotency_expires",
+        "idx_sth_entity", "idx_sth_tenant_time", "idx_sth_trace", "idx_sth_failed",
+        "idx_canonical_resource_trace"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -88,7 +92,8 @@ class MigrationBaselineContractTest {
         "uk_context_snapshot_id", "ck_context_snapshot_status", "ck_context_snapshot_quality",
         "uk_canonical_resource_id", "ck_canonical_resource_type", "ck_canonical_resource_quality",
         "uk_clinical_event_id", "ck_clinical_event_type", "ck_clinical_event_status",
-        "uk_context_idempotency_tenant_key"
+        "uk_context_idempotency_tenant_key",
+        "ck_sth_error_class"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -96,7 +101,8 @@ class MigrationBaselineContractTest {
         "knowledge_export_job", "standard_term", "local_term", "term_mapping", "mapping_candidate",
         "mapping_conflict", "term_mapping_package", "term_mapping_package_item",
         "term_mapping_package_release", "audit_chain_head", "role_permission", "user_role_assignment",
-        "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key"
+        "context_snapshot", "canonical_resource", "clinical_event", "context_idempotency_key",
+        "state_transition_history"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -182,6 +188,25 @@ class MigrationBaselineContractTest {
         }
     }
 
+    @Test
+    void v8ShouldDeclareObservabilityBaseline() {
+        String h2 = readMigration("h2", "V8__observability_baseline.sql");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS state_transition_history");
+        assertThat(h2).contains("ALTER TABLE canonical_resource ADD COLUMN IF NOT EXISTS trace_id");
+        assertThat(h2).contains("ck_sth_error_class");
+        assertThat(h2).contains("idx_sth_entity");
+        assertThat(h2).contains("idx_sth_trace");
+    }
+
+    @Test
+    void v8ShouldExistInAllFiveDialects() {
+        for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
+            assertThat(migrationPathFor(dialect, "V8__observability_baseline.sql"))
+                .as("dialect %s must ship V8", dialect)
+                .exists();
+        }
+    }
+
     private List<String> migrationFiles(String dialect) throws IOException {
         try (var files = Files.list(migrationPath(dialect))) {
             return files.map(path -> path.getFileName().toString())
@@ -225,5 +250,17 @@ class MigrationBaselineContractTest {
             blocks.put(matcher.group(1).toLowerCase(Locale.ROOT), matcher.group(2));
         }
         return blocks;
+    }
+
+    private String readMigration(String dialect, String filename) {
+        try {
+            return Files.readString(migrationPathFor(dialect, filename));
+        } catch (IOException e) {
+            throw new IllegalStateException("无法读取迁移文件: " + dialect + "/" + filename, e);
+        }
+    }
+
+    private Path migrationPathFor(String dialect, String filename) {
+        return migrationPath(dialect).resolve(filename);
     }
 }

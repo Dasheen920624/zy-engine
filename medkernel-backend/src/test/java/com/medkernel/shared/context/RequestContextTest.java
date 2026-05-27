@@ -52,6 +52,20 @@ class RequestContextTest {
     }
 
     @Test
+    void peekSnapshotReturnsNullWhenThreadLocalEmpty() {
+        // peekSnapshot 与 snapshot() 的关键差别：未设置时返回 null（不生成 fallback）
+        assertThat(RequestContext.peekSnapshot()).isNull();
+        assertThat(RequestContext.snapshot()).isNotNull();  // snapshot() 会 fallback 生成新 UUID
+    }
+
+    @Test
+    void peekSnapshotReturnsActualSnapshotWhenSet() {
+        RequestContext.Snapshot s = new RequestContext.Snapshot("trace-peek", OrgScope.tenant("t-9"), "u-9");
+        RequestContext.restore(s);
+        assertThat(RequestContext.peekSnapshot()).isSameAs(s);
+    }
+
+    @Test
     void emptyOrgScopeHasNoTenant() {
         OrgScope empty = OrgScope.empty();
         assertThat(empty.hasTenant()).isFalse();

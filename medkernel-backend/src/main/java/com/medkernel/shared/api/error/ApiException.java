@@ -38,6 +38,14 @@ public class ApiException extends RuntimeException {
         return errorCode;
     }
 
+    public ErrorCode.ErrorClass errorClass() {
+        return errorCode.errorClass();
+    }
+
+    public boolean retryable() {
+        return errorCode.retryable();
+    }
+
     public List<ApiError> fieldErrors() {
         return fieldErrors;
     }
