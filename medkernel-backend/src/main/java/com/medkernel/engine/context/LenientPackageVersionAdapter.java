@@ -2,7 +2,6 @@ package com.medkernel.engine.context;
 
 import java.util.Optional;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,9 +9,10 @@ import org.springframework.stereotype.Component;
  *
  * <p>沿用旧 PackageVersionResolver "非空即合法" 行为；当 API-10 引入真实
  * KnowledgePackageVersionAdapter 时通过 {@code @Primary} 自动覆盖本默认实现。
+ * （未使用 {@code @ConditionalOnMissingBean(PackageVersionPort.class)} 因为它放
+ * 在自身实现类上会被 Spring 自我排除，导致 bean 不注册。）
  */
 @Component
-@ConditionalOnMissingBean(PackageVersionPort.class)
 public class LenientPackageVersionAdapter implements PackageVersionPort {
 
     @Override
