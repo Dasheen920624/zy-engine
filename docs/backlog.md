@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.17 · 2026-05-27
+> 版本：4.18 · 2026-05-27
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -57,7 +57,7 @@
 | GA-ENG-API-04 字典映射 API：标准字典、院内字典、候选映射、冲突、发布 | codex | done |
 | GA-ENG-API-05 规则引擎 API：定义、测试、影响分析、发布、执行、解释 | codex | done |
 | GA-ENG-API-06 路径引擎 API：模板、专病包、患者路径、节点推进、变异、关键时钟 | codex | done |
-| GA-ENG-API-07 推荐/CDSS API：触发、推荐卡、来源解释、医师反馈、疲劳治理输入 | - | pending |
+| GA-ENG-API-07 推荐/CDSS API：触发、推荐卡、来源解释、医师反馈、疲劳治理输入 | codex | done |
 | GA-ENG-API-08 评估质控 API：指标、运行、结果、问题、整改、复核 | - | pending |
 | GA-ENG-API-09 随访 API：计划、任务、问卷、异常回院、结果回流 | - | pending |
 | GA-ENG-API-10 包发布 API：知识包、配置包、校验、灰度、全量、同步、回滚 | - | pending |
@@ -133,6 +133,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.18 | 2026-05-27 | Codex | GA-ENG-API-07 完成：新增 V13 五方言迁移（`recommendation_trigger`、`recommendation_card`、`recommendation_source`、`recommendation_feedback`、`recommendation_fatigue_signal`）；新增推荐/CDSS 触发、推荐卡、来源解释、医师反馈、疲劳治理输入和诊断 API；补齐 `recommendation.write` 权限并保持医生反馈使用 `recommendation.accept`；推荐卡强制来源解释，高风险/红线推荐强制医师确认，不自动写医嘱、诊断或病历。后端完整测试 372 个通过、0 失败，3 个 Docker 依赖多方言烟测因本机 Docker 不可用按既有机制跳过 |
 | 4.17 | 2026-05-27 | Codex | GA-ENG-API-02 完成：V10 五方言迁移扩展 `clinical_event` 并新增 `clinical_event_payload`、`clinical_event_outbox`；新增临床事件同步/异步/批量接收、详情、payload、诊断、重放接口；接入 `event.read` / `event.write` 权限、`ENG-EVENT-001..006` 错误码、状态历史、审计和 outbox worker 重试/死信链路。后端 302 测试通过、3 个 Docker 依赖多方言冒烟测试跳过；前端 79 测试通过，`npm run verify` 与 `npm run build` 通过 |
 | 4.16 | 2026-05-27 | Claude | GA-ENG-API-01b 完成：V9 五方言迁移（audit_event +outcome +error_code）+ AuditEvent.failure 工厂 + IsolatedAuditPublisher（PROPAGATION_REQUIRES_NEW 子事务保失败 audit 不丢）+ CanonicalResource +traceId 字段 + Repository findByTraceIdOrderBySeqNoAsc + PackageVersionPort 抽象 + LenientPackageVersionAdapter 默认实现（替代 PackageVersionResolver）+ ContextSnapshotService 接入 StateTransitionRecorder（INITIAL_CREATE → ACTIVE）+ 失败路径发 outcome=FAILED audit（ENG-CONTEXT-002 / ENG-CONTEXT-003）+ GET /snapshots/{id}/diagnose 端点（@perm.has('context.read')）+ 端到端验收测试（spec §6.2）。后端 275 测试 / 前端 79 测试 / lint/typecheck/build 四步全绿 |
 | 4.15 | 2026-05-27 | Claude | GA-ENG-OBS-01 完成：V8 五方言迁移（state_transition_history 表 + canonical_resource ADD trace_id）+ ErrorCode 加 ErrorClass(INPUT/AUTH/DATA/EXTERNAL/INTERNAL) + retryable + ENG-OBS-001/002 + StateTransitionRecorder（同事务写历史、RuntimeException 兜底、DataAccessException 向上抛）+ PayloadStoragePort 接口 + InMemoryPayloadStorage 默认实现（@ConditionalOnMissingBean，第三层 DbPayloadStorage 自动让位）+ DiagnoseResponse + Assembler + MdcEnrichmentFilter + TraceIdPropagator + AsyncTaskExecutorConfig。后端 252 测试 / 前端 79 测试 / lint/typecheck/build 四步全绿 |
