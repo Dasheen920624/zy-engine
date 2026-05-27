@@ -15,11 +15,18 @@ public record ClinicalEvent(
     @Column("event_id") String eventId,
     @Column("tenant_id") String tenantId,
     @Column("event_type") ClinicalEventType eventType,
+    @Column("patient_id") String patientId,
+    @Column("encounter_id") String encounterId,
     @Column("source_system") String sourceSystem,
+    @Column("package_version") String packageVersion,
     @Column("payload_digest") String payloadDigest,
     @Column("occurred_at") Instant occurredAt,
     @Column("received_at") Instant receivedAt,
     @Column("snapshot_id") String snapshotId,
     @Column("processing_status") ClinicalEventStatus processingStatus,
+    @Column("error_code") String errorCode,
+    @Column("error_class") String errorClass,
+    @Column("retry_count") Integer retryCount,
+    @Column("root_event_id") String rootEventId,
     @Column("trace_id") String traceId
 ) {}

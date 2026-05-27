@@ -69,6 +69,10 @@ public enum PermissionCode {
     CONTEXT_READ("context.read", Risk.LOW, "查看标准上下文 snapshot"),
     CONTEXT_WRITE("context.write", Risk.MEDIUM, "创建标准上下文 snapshot"),
 
+    // ─── 临床事件（GA-ENG-API-02）──────────────────────────────
+    EVENT_READ("event.read", Risk.LOW, "查看临床事件"),
+    EVENT_WRITE("event.write", Risk.MEDIUM, "创建 / 重放临床事件"),
+
     // ─── 系统运维（GA-ENG-BASE-07）─────────────────────────────
     SYSTEM_READ("system.read", Risk.LOW, "查看系统状态 / Provider"),
     SYSTEM_MANAGE("system.manage", Risk.HIGH, "运维操作（重启、密钥轮换、降级开关）");

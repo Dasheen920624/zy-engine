@@ -49,6 +49,13 @@ public enum ErrorCode {
 
     ENG_OBS_001("ENG-OBS-001", 404, "payload 不存在或已归档", ErrorClass.DATA, false),
     ENG_OBS_002("ENG-OBS-002", 500, "状态历史写入失败", ErrorClass.INTERNAL, false),
+
+    ENG_EVENT_001("ENG-EVENT-001", 400, "事件 schema 校验失败", ErrorClass.INPUT, false),
+    ENG_EVENT_002("ENG-EVENT-002", 409, "事件 ID 已存在且 payload 不一致", ErrorClass.INPUT, false),
+    ENG_EVENT_003("ENG-EVENT-003", 404, "临床事件不存在", ErrorClass.DATA, false),
+    ENG_EVENT_004("ENG-EVENT-004", 503, "payload 存储不可用", ErrorClass.EXTERNAL, true),
+    ENG_EVENT_005("ENG-EVENT-005", 500, "事件处理失败已进入死信", ErrorClass.INTERNAL, false),
+    ENG_EVENT_006("ENG-EVENT-006", 400, "当前状态不允许重放", ErrorClass.INPUT, false),
     ;
 
     private final String code;

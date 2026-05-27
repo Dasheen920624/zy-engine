@@ -64,4 +64,38 @@ class ErrorCodeTest {
         assertThat(ErrorCode.fromCode("  ENG-OBS-001  ")).hasValue(ErrorCode.ENG_OBS_001);
         assertThat(ErrorCode.fromCode("UNKNOWN")).isEmpty();
     }
+
+    @Test
+    void clinicalEventErrorCodesAreRegistered() {
+        assertThat(ErrorCode.fromCode("ENG-EVENT-001")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(400);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INPUT);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVENT-002")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INPUT);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVENT-003")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(404);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVENT-004")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(503);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.EXTERNAL);
+            assertThat(code.retryable()).isTrue();
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVENT-005")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(500);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INTERNAL);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVENT-006")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(400);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INPUT);
+            assertThat(code.retryable()).isFalse();
+        });
+    }
 }
