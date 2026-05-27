@@ -99,6 +99,19 @@ class EffectivePermissionServiceTest {
             .doesNotContain("pilot-setup", "advanced-tools");
     }
 
+    @Test
+    void evaluationExecutionPermissionExposesQualityImprovementNavigation() {
+        when(userRoleAssignmentRepository.findActiveByTenantIdAndUserId("t-1", "doctor-1"))
+            .thenReturn(List.of());
+        when(rolePermissionRepository.findByTenantIdAndRoleCodes(eq("t-1"), anyCollection()))
+            .thenReturn(List.of());
+
+        var profile = service.resolve(auth(RoleCode.IT_OPS), OrgScope.tenant("t-1"), "doctor-1");
+
+        assertThat(profile.permissionCodes()).contains(PermissionCode.EVALUATION_EXECUTE.code());
+        assertThat(profile.menuKeys()).contains("quality-improve");
+    }
+
     private UsernamePasswordAuthenticationToken auth(RoleCode role) {
         return new UsernamePasswordAuthenticationToken(
             "doctor-1",

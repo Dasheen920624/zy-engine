@@ -1,0 +1,36 @@
+package com.medkernel.engine.evaluation;
+
+import java.time.Instant;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table("evaluation_indicator")
+public record EvaluationIndicator(
+    @Id Long id,
+    @Column("indicator_id") String indicatorId,
+    @Column("tenant_id") String tenantId,
+    @Column("indicator_code") String indicatorCode,
+    @Column("version_no") int versionNo,
+    String name,
+    @Column("subject_type") EvaluationSubjectType subjectType,
+    @Column("denominator_definition") String denominatorDefinition,
+    @Column("numerator_definition") String numeratorDefinition,
+    @Column("exclusion_definition") String exclusionDefinition,
+    @Column("scoring_definition") String scoringDefinition,
+    @Column("time_window") String timeWindow,
+    @Column("organization_scope") String organizationScope,
+    @Column("responsible_department_id") String responsibleDepartmentId,
+    @Column("source_ref") String sourceRef,
+    @Column("package_version") String packageVersion,
+    EvaluationIndicatorStatus status,
+    @Column("published_at") Instant publishedAt,
+    @Column("published_by") String publishedBy,
+    @Column("activated_at") Instant activatedAt,
+    @Column("created_at") Instant createdAt,
+    @Column("created_by") String createdBy,
+    @Column("updated_at") Instant updatedAt,
+    @Column("updated_by") String updatedBy,
+    @Column("trace_id") String traceId
+) {}

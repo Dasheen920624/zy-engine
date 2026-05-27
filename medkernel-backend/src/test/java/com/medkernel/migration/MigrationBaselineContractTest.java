@@ -39,7 +39,8 @@ class MigrationBaselineContractTest {
         "V10__clinical_event_api.sql",
         "V11__rule_engine_api.sql",
         "V12__pathway_engine_api.sql",
-        "V13__recommendation_cdss_api.sql"
+        "V13__recommendation_cdss_api.sql",
+        "V14__evaluation_quality_api.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -54,7 +55,9 @@ class MigrationBaselineContractTest {
         "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
         "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
         "specialty_metric_binding", "recommendation_trigger", "recommendation_card",
-        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal"
+        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal",
+        "evaluation_indicator", "evaluation_run", "evaluation_result", "quality_finding",
+        "rectification_task", "rectification_review", "evaluation_idempotency_key"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -99,7 +102,13 @@ class MigrationBaselineContractTest {
         "idx_rec_trigger_scenario", "idx_rec_card_trigger", "idx_rec_card_tenant_status",
         "idx_rec_card_risk", "idx_rec_card_fatigue", "idx_rec_source_card",
         "idx_rec_feedback_card_time", "idx_rec_fatigue_card", "idx_rec_fatigue_key",
-        "idx_rec_fatigue_tenant_time"
+        "idx_rec_fatigue_tenant_time",
+        "idx_eval_indicator_tenant_status", "idx_eval_indicator_code_status",
+        "idx_eval_run_tenant_time", "idx_eval_run_context",
+        "idx_eval_result_run", "idx_eval_result_indicator",
+        "idx_quality_finding_status", "idx_quality_finding_department",
+        "idx_rect_task_finding", "idx_rect_task_department_status",
+        "idx_rect_review_finding", "idx_eval_idempotency_resource"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -146,7 +155,17 @@ class MigrationBaselineContractTest {
         "ck_rec_card_risk", "ck_rec_card_interrupt", "ck_rec_card_status",
         "ck_rec_card_physician_confirmation", "ck_rec_card_ai_generated",
         "uk_rec_source_id", "ck_rec_source_type", "uk_rec_feedback_id",
-        "ck_rec_feedback_type", "uk_rec_fatigue_id", "ck_rec_fatigue_signal"
+        "ck_rec_feedback_type", "uk_rec_fatigue_id", "ck_rec_fatigue_signal",
+        "uk_eval_indicator_id", "uk_eval_indicator_tenant_version",
+        "ck_eval_indicator_subject", "ck_eval_indicator_status",
+        "uk_eval_run_id", "uk_eval_run_tenant_code", "ck_eval_run_type", "ck_eval_run_status",
+        "uk_eval_result_id", "ck_eval_result_subject", "ck_eval_result_level",
+        "uk_quality_finding_id", "uk_quality_finding_result_code",
+        "ck_quality_finding_severity", "ck_quality_finding_status",
+        "uk_rect_task_id", "uk_rect_task_finding", "ck_rect_task_status",
+        "uk_rect_review_id", "ck_rect_review_decision",
+        "uk_eval_idempotency_operation_key", "ck_eval_idempotency_operation",
+        "ck_eval_idempotency_finding_status", "ck_eval_idempotency_task_status"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -160,7 +179,9 @@ class MigrationBaselineContractTest {
         "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
         "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
         "specialty_metric_binding", "recommendation_trigger", "recommendation_card",
-        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal"
+        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal",
+        "evaluation_indicator", "evaluation_run", "evaluation_result", "quality_finding",
+        "rectification_task", "rectification_review", "evaluation_idempotency_key"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -170,7 +191,9 @@ class MigrationBaselineContractTest {
         "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
         "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
         "specialty_metric_binding", "recommendation_trigger", "recommendation_card",
-        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal"
+        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal",
+        "evaluation_indicator", "evaluation_run", "evaluation_result", "quality_finding",
+        "rectification_task", "rectification_review"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
@@ -213,7 +236,13 @@ class MigrationBaselineContractTest {
         Map.entry("recommendation_card", Set.of("card_type", "risk_level", "interrupt_level", "status")),
         Map.entry("recommendation_source", Set.of("source_type")),
         Map.entry("recommendation_feedback", Set.of("feedback_type")),
-        Map.entry("recommendation_fatigue_signal", Set.of("signal_type"))
+        Map.entry("recommendation_fatigue_signal", Set.of("signal_type")),
+        Map.entry("evaluation_indicator", Set.of("version_no", "subject_type", "status")),
+        Map.entry("evaluation_run", Set.of("run_type", "status")),
+        Map.entry("evaluation_result", Set.of("subject_type", "result_level")),
+        Map.entry("quality_finding", Set.of("severity", "status")),
+        Map.entry("rectification_task", Set.of("status")),
+        Map.entry("rectification_review", Set.of("decision"))
     );
 
     private static final Pattern TABLE_PATTERN =
@@ -415,6 +444,57 @@ class MigrationBaselineContractTest {
             assertThat(migrationPathFor(dialect, "V13__recommendation_cdss_api.sql"))
                 .as("dialect %s must ship V13", dialect)
                 .exists();
+        }
+    }
+
+    @Test
+    void v14ShouldDeclareEvaluationQualityApiTablesAndColumns() {
+        String h2 = readMigration("h2", "V14__evaluation_quality_api.sql");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS evaluation_indicator");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS evaluation_run");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS evaluation_result");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS quality_finding");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS rectification_task");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS rectification_review");
+        assertThat(h2).contains("denominator_definition");
+        assertThat(h2).contains("numerator_definition");
+        assertThat(h2).contains("evidence_summary");
+        assertThat(h2).contains("responsible_department_id");
+        assertThat(h2).contains("assignee_user_id");
+        assertThat(h2).contains("comment");
+        assertThat(h2).contains("ck_eval_indicator_status");
+        assertThat(h2).contains("ck_quality_finding_severity");
+        assertThat(h2).contains("idx_rect_task_department_status");
+    }
+
+    @Test
+    void v14ShouldExistInAllFiveDialects() {
+        for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
+            assertThat(migrationPathFor(dialect, "V14__evaluation_quality_api.sql"))
+                .as("dialect %s must ship V14", dialect)
+                .exists();
+        }
+    }
+
+    @Test
+    void v14RectificationLookupIndexMustNotDuplicateUniqueFindingKey() {
+        for (String dialect : DIALECTS) {
+            String ddl = readMigration(dialect, "V14__evaluation_quality_api.sql");
+            assertThat(ddl)
+                .as("%s 整改任务查询索引必须覆盖状态，避免与唯一键重复", dialect)
+                .containsPattern("idx_rect_task_finding\\s+ON\\s+rectification_task\\s*"
+                    + "\\(tenant_id,\\s*finding_id,\\s*status\\)");
+        }
+    }
+
+    @Test
+    void v14ReviewCommentColumnMustAvoidOracleReservedKeyword() {
+        for (String dialect : DIALECTS) {
+            String ddl = readMigration(dialect, "V14__evaluation_quality_api.sql");
+            assertThat(ddl)
+                .as("%s 复核意见列必须避开 Oracle 保留字", dialect)
+                .contains("review_comment")
+                .doesNotContainPattern("(?m)^\\s*comment\\s+VARCHAR");
         }
     }
 

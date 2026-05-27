@@ -11,8 +11,11 @@ import static com.medkernel.engine.security.PermissionCode.CONTEXT_READ;
 import static com.medkernel.engine.security.PermissionCode.CONTEXT_WRITE;
 import static com.medkernel.engine.security.PermissionCode.EVENT_READ;
 import static com.medkernel.engine.security.PermissionCode.EVENT_WRITE;
+import static com.medkernel.engine.security.PermissionCode.EVALUATION_EXECUTE;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_PUBLISH;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_READ;
+import static com.medkernel.engine.security.PermissionCode.EVALUATION_REMEDIATE;
+import static com.medkernel.engine.security.PermissionCode.EVALUATION_REVIEW;
 import static com.medkernel.engine.security.PermissionCode.EVALUATION_WRITE;
 import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_EXPORT;
 import static com.medkernel.engine.security.PermissionCode.KNOWLEDGE_PUBLISH;
@@ -83,6 +86,7 @@ public final class DefaultPermissionPolicy {
             CONTEXT_READ, CONTEXT_WRITE,
             EVENT_READ, EVENT_WRITE,
             RECOMMENDATION_READ, RECOMMENDATION_WRITE,
+            EVALUATION_EXECUTE,
             SYSTEM_READ, SYSTEM_MANAGE,
             AUDIT_READ));
 
@@ -101,7 +105,8 @@ public final class DefaultPermissionPolicy {
         // 质控办：评估指标审核发布 + 质控发现 + 上下文只读
         map.put(RoleCode.QA_MANAGER, EnumSet.of(
             ORG_READ,
-            EVALUATION_READ, EVALUATION_WRITE, EVALUATION_PUBLISH,
+            EVALUATION_READ, EVALUATION_WRITE, EVALUATION_PUBLISH, EVALUATION_EXECUTE,
+            EVALUATION_REMEDIATE, EVALUATION_REVIEW,
             KNOWLEDGE_READ, KNOWLEDGE_EXPORT,
             RULE_READ,
             PATHWAY_READ,
@@ -124,7 +129,7 @@ public final class DefaultPermissionPolicy {
             RULE_READ, RULE_WRITE,
             KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW,
             CONTEXT_READ, EVENT_READ,
-            EVALUATION_READ,
+            EVALUATION_READ, EVALUATION_REMEDIATE,
             RECOMMENDATION_READ));
 
         // 专科专家：知识/路径审核 + 上下文只读
