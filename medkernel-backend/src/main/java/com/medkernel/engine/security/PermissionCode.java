@@ -75,7 +75,10 @@ public enum PermissionCode {
 
     // ─── 系统运维（GA-ENG-BASE-07）─────────────────────────────
     SYSTEM_READ("system.read", Risk.LOW, "查看系统状态 / Provider"),
-    SYSTEM_MANAGE("system.manage", Risk.HIGH, "运维操作（重启、密钥轮换、降级开关）");
+    SYSTEM_MANAGE("system.manage", Risk.HIGH, "运维操作（重启、密钥轮换、降级开关）"),
+
+    // ─── 追加权限（保持已发布枚举顺序稳定）──────────────────────────
+    RECOMMENDATION_WRITE("recommendation.write", Risk.MEDIUM, "创建推荐触发和候选提醒事实");
 
     private final String code;
     private final Risk risk;
