@@ -95,7 +95,9 @@ export default function RuleDefinitions() {
   const [caseForm] = Form.useForm();
 
   // 仿真运行态
-  const [simulatePayload, setSimulatePayload] = useState<string>('{\n  "patient": {\n    "age": 70\n  },\n  "prescription": {\n    "drug_code": "DRUG-001"\n  }\n}');
+  const [simulatePayload, setSimulatePayload] = useState<string>(
+    '{\n  "patient": {\n    "age": 70\n  },\n  "prescription": {\n    "drug_code": "DRUG-001"\n  }\n}',
+  );
   const [simulateResult, setSimulateResult] = useState<any | null>(null);
 
   // 载入定义数据
@@ -219,7 +221,8 @@ export default function RuleDefinitions() {
       // 包含测试用例不全等业务拒绝信息
       Modal.error({
         title: "规则发布门禁拒绝",
-        content: err.response?.data?.message || "发布门禁校验未通过，请检查测试用例是否齐全且全部 PASS。",
+        content:
+          err.response?.data?.message || "发布门禁校验未通过，请检查测试用例是否齐全且全部 PASS。",
       });
     }
   };
@@ -425,7 +428,9 @@ export default function RuleDefinitions() {
             />
 
             <Descriptions title="基本元数据" bordered column={2} className="mb-6">
-              <Descriptions.Item label="规则编码">{detailData.definition.ruleCode}</Descriptions.Item>
+              <Descriptions.Item label="规则编码">
+                {detailData.definition.ruleCode}
+              </Descriptions.Item>
               <Descriptions.Item label="名称">{detailData.definition.name}</Descriptions.Item>
               <Descriptions.Item label="类型">{detailData.definition.ruleType}</Descriptions.Item>
               <Descriptions.Item label="风险级别">
@@ -439,7 +444,9 @@ export default function RuleDefinitions() {
                   text={detailData.definition.status}
                 />
               </Descriptions.Item>
-              <Descriptions.Item label="当前版本">{detailData.version?.versionNo || 0} 版</Descriptions.Item>
+              <Descriptions.Item label="当前版本">
+                {detailData.version?.versionNo || 0} 版
+              </Descriptions.Item>
             </Descriptions>
 
             <Tabs defaultActiveKey="dsl">
@@ -462,7 +469,11 @@ export default function RuleDefinitions() {
                   <Col span={12}>
                     <Card title="临床可信解释模板" className="h-full">
                       <pre className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-xs font-mono">
-                        {JSON.stringify(JSON.parse(detailData.version?.explanationJson || "{}"), null, 2)}
+                        {JSON.stringify(
+                          JSON.parse(detailData.version?.explanationJson || "{}"),
+                          null,
+                          2,
+                        )}
                       </pre>
                     </Card>
                   </Col>
@@ -487,7 +498,8 @@ export default function RuleDefinitions() {
                       icon={<PlusOutlined />}
                       onClick={() => {
                         caseForm.setFieldsValue({
-                          inputPayload: '{\n  "patient": {\n    "age": 70\n  },\n  "prescription": {\n    "drug_code": "DRUG-001"\n  }\n}',
+                          inputPayload:
+                            '{\n  "patient": {\n    "age": 70\n  },\n  "prescription": {\n    "drug_code": "DRUG-001"\n  }\n}',
                           expectedHit: true,
                           expectedSeverity: "HIGH",
                           expectedActionCode: "STRONG_REMINDER",
@@ -604,7 +616,9 @@ export default function RuleDefinitions() {
                               </>
                             )}
                           </Descriptions>
-                          <div className="text-xs font-semibold text-gray-700 mb-2">详细决策动作说明:</div>
+                          <div className="text-xs font-semibold text-gray-700 mb-2">
+                            详细决策动作说明:
+                          </div>
                           <div className="text-xs text-gray-600 bg-white p-3 rounded border border-gray-200 font-mono mb-4">
                             {simulateResult.explanation || "未命中，无动作输出。"}
                           </div>
@@ -744,7 +758,11 @@ export default function RuleDefinitions() {
           </Form.Item>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="expectedSeverity" label="期望动作严重度" rules={[{ required: true }]}>
+              <Form.Item
+                name="expectedSeverity"
+                label="期望动作严重度"
+                rules={[{ required: true }]}
+              >
                 <Select>
                   <Option value="LOW">LOW</Option>
                   <Option value="MEDIUM">MEDIUM</Option>

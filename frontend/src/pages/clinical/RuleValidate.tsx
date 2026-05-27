@@ -22,10 +22,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
-import {
-  useEvaluateRules,
-  useRuleExecutionDiagnose,
-} from "@/shared/api/hooks";
+import { useEvaluateRules, useRuleExecutionDiagnose } from "@/shared/api/hooks";
 import type { RuleEvaluationItem, RuleEvaluateResponse } from "@/shared/api/hooks";
 
 const { TextArea } = Input;
@@ -52,7 +49,7 @@ const DEFAULT_CLINICAL_CONTEXT = `{
 export default function RuleValidate() {
   const [contextJson, setContextJson] = useState<string>(DEFAULT_CLINICAL_CONTEXT);
   const [triggerPoint, setTriggerPoint] = useState<string>("PRESCRIPTION_SUBMIT");
-  
+
   // 匹配结果态
   const [evaluateResponse, setEvaluateResponse] = useState<RuleEvaluateResponse | null>(null);
 
@@ -64,7 +61,7 @@ export default function RuleValidate() {
 
   // 诊断 API hook
   const { data: diagnoseData, isLoading: diagnoseLoading } = useRuleExecutionDiagnose(
-    selectedExecutionId || ""
+    selectedExecutionId || "",
   );
 
   // 执行全规则评估
@@ -163,7 +160,9 @@ export default function RuleValidate() {
             className="shadow-sm rounded-2xl border-gray-100"
           >
             <div className="mb-4">
-              <div className="text-xs font-semibold text-gray-700 mb-1">触发时点 (Trigger Point)</div>
+              <div className="text-xs font-semibold text-gray-700 mb-1">
+                触发时点 (Trigger Point)
+              </div>
               <Input
                 placeholder="例如: PRESCRIPTION_SUBMIT"
                 value={triggerPoint}
@@ -171,7 +170,7 @@ export default function RuleValidate() {
                 className="font-mono text-sm"
               />
             </div>
-            
+
             <div>
               <div className="text-xs font-semibold text-gray-700 mb-1">
                 患者、就诊与处方 Payload JSON 快照
@@ -212,10 +211,14 @@ export default function RuleValidate() {
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 flex flex-wrap gap-6 items-center">
                   <Descriptions size="small" column={2} className="flex-1">
                     <Descriptions.Item label="链路 TraceId">
-                      <span className="font-mono text-xs text-gray-500">{evaluateResponse.traceId}</span>
+                      <span className="font-mono text-xs text-gray-500">
+                        {evaluateResponse.traceId}
+                      </span>
                     </Descriptions.Item>
                     <Descriptions.Item label="求值 ExecutionId">
-                      <span className="font-mono text-xs text-indigo-500">{evaluateResponse.executionId}</span>
+                      <span className="font-mono text-xs text-indigo-500">
+                        {evaluateResponse.executionId}
+                      </span>
                     </Descriptions.Item>
                     <Descriptions.Item label="最高严重警示">
                       <Tag color={evaluateResponse.highestSeverity === "HIGH" ? "red" : "orange"}>
@@ -224,15 +227,21 @@ export default function RuleValidate() {
                     </Descriptions.Item>
                     <Descriptions.Item label="命中规则总数">
                       <span className="font-semibold text-lg text-indigo-600">
-                        {evaluateResponse.items?.filter((i: RuleEvaluationItem) => i.hit).length || 0} 条
+                        {evaluateResponse.items?.filter((i: RuleEvaluationItem) => i.hit).length ||
+                          0}{" "}
+                        条
                       </span>
                     </Descriptions.Item>
                   </Descriptions>
                 </div>
 
-                <div className="text-sm font-semibold text-gray-800 mb-3">命中规则及合理性建议列表</div>
+                <div className="text-sm font-semibold text-gray-800 mb-3">
+                  命中规则及合理性建议列表
+                </div>
                 <Table
-                  dataSource={evaluateResponse.items?.filter((i: RuleEvaluationItem) => i.hit) || []}
+                  dataSource={
+                    evaluateResponse.items?.filter((i: RuleEvaluationItem) => i.hit) || []
+                  }
                   columns={columns}
                   rowKey="ruleId"
                   pagination={false}
@@ -243,7 +252,9 @@ export default function RuleValidate() {
             ) : (
               <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-400">
                 <PlayCircleOutlined className="text-[64px] mb-4" />
-                <span className="text-gray-500 font-medium">请在左侧输入临床快照后，点击校验开始沙箱匹配</span>
+                <span className="text-gray-500 font-medium">
+                  请在左侧输入临床快照后，点击校验开始沙箱匹配
+                </span>
               </div>
             )}
           </Card>
@@ -318,7 +329,9 @@ export default function RuleValidate() {
                   <Timeline.Item key={idx} color={h.status === "SIGNED" ? "green" : "blue"}>
                     <div className="flex justify-between items-center font-semibold text-gray-800 text-xs">
                       <span>状态: {h.status}</span>
-                      <span className="text-gray-400 font-normal">{new Date(h.changedAt).toLocaleString()}</span>
+                      <span className="text-gray-400 font-normal">
+                        {new Date(h.changedAt).toLocaleString()}
+                      </span>
                     </div>
                     <div className="text-gray-600 text-xs mt-1">
                       <span>操作人: </span>

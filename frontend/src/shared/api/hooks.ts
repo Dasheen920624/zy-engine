@@ -425,7 +425,11 @@ export function usePublishRule() {
 
 export function useEvaluateRules() {
   return useMutation({
-    mutationFn: async (payload: { triggerPoint: string; patientId?: string; payloadJson: string }) => {
+    mutationFn: async (payload: {
+      triggerPoint: string;
+      patientId?: string;
+      payloadJson: string;
+    }) => {
       const { data } = await apiClient.post<{ data: RuleEvaluateResponse }>(
         "/engine/rules/evaluate",
         payload,
