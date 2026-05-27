@@ -70,6 +70,15 @@ class PathwayProgressorTest {
             .isEqualTo(ErrorCode.ENG_PATHWAY_006);
     }
 
+    @Test
+    void rejectsExplicitTargetWhenCurrentNodeHasNoOutgoingEdge() {
+        assertThatThrownBy(() -> progressor.advance(new PathwayProgressCommand(
+            graph(), "FOLLOWUP", PathwayAdvanceEventType.COMPLETE, "ASSESS")))
+            .isInstanceOf(ApiException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.ENG_PATHWAY_006);
+    }
+
     private PathwayGraph graph() {
         String tenantId = "tenant-A";
         String templateId = "pt-" + tenantId;

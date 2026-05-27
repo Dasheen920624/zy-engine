@@ -32,6 +32,11 @@ public class PathwayProgressor {
                 .comparing((PathwayEdge edge) -> edge.priority() == null ? 0 : edge.priority())
                 .thenComparing(PathwayEdge::edgeId))
             .toList();
+        if (!isBlank(command.requestedNextNodeCode()) && outgoing.isEmpty()) {
+            throw new ApiException(
+                ErrorCode.ENG_PATHWAY_006,
+                "当前节点没有可达出边，不能指定目标节点: " + command.requestedNextNodeCode());
+        }
         if (outgoing.isEmpty() || Boolean.TRUE.equals(current.terminalFlag())) {
             return new PathwayProgressDecision(current.nodeCode(), null, PatientPathwayStatus.COMPLETED, null);
         }

@@ -178,12 +178,10 @@ public class PathwayEngineService {
     public PageResponse<SpecialtyPackage> listPackages(PageRequest page) {
         PageRequest safePage = page == null ? PageRequest.defaults() : page;
         String tenantId = requireCurrentTenant();
-        List<SpecialtyPackage> all = packages.findByTenantIdOrderByUpdatedAtDesc(tenantId);
-        List<SpecialtyPackage> rows = all.stream()
-            .skip(safePage.offset())
-            .limit(safePage.safeSize())
-            .toList();
-        return PageResponse.of(rows, safePage, all.size());
+        long total = packages.countByTenantId(tenantId);
+        List<SpecialtyPackage> rows = total == 0 ? List.of()
+            : packages.pageByTenantId(tenantId, safePage.offset(), safePage.safeSize());
+        return PageResponse.of(rows, safePage, total);
     }
 
     @Transactional(readOnly = true)
