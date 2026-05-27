@@ -236,3 +236,215 @@ export function useTerminologyMappings(params?: TerminologyMappingsParams) {
     },
   });
 }
+
+// ──────────────────────────────────────────
+// 规则引擎 · GA-ENG-API-05 & GA-ENG-RULE-01
+// ──────────────────────────────────────────
+export interface RuleDefinition {
+  id: number;
+  ruleId: string;
+  tenantId: string;
+  ruleCode: string;
+  name: string;
+  ruleType: "DRUG_SAFETY" | "INSURANCE_AUDIT" | "CLINICAL_QUALITY" | string;
+  authoringMode: "DSL" | "VISUAL" | string;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH";
+  status: "DRAFT" | "PUBLISHED" | "OFFLINE" | "ARCHIVED" | string;
+  activeVersionId: string | null;
+  packageVersion?: string | null;
+  applicableOrgUnitId?: string | null;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+}
+
+export interface RuleVersion {
+  id: number;
+  versionId: string;
+  ruleId: string;
+  versionNo: number;
+  sourceRef: string;
+  changeSummary: string;
+  dslJson: string;
+  explanationJson: string;
+  status: "DRAFT" | "PUBLISHED" | string;
+  publishedAt?: string | null;
+  publishedBy?: string | null;
+  createdAt: string;
+}
+
+export interface RuleTestCase {
+  id: number;
+  caseId: string;
+  ruleId: string;
+  versionId: string;
+  caseType: "POSITIVE" | "NEGATIVE" | "BOUNDARY" | "CONFLICT" | string;
+  inputPayload: string;
+  expectedHit: boolean;
+  expectedSeverity: "LOW" | "MEDIUM" | "HIGH" | string;
+  expectedActionCode: string;
+  lastHit?: boolean | null;
+  lastStatus?: "PASS" | "FAIL" | "PENDING" | string;
+  lastMessage?: string | null;
+  lastRunAt?: string | null;
+  createdAt: string;
+}
+
+export interface RuleDetailResponse {
+  definition: RuleDefinition;
+  version: RuleVersion;
+  testCases: RuleTestCase[];
+}
+
+export interface RuleEvaluationItem {
+  ruleId: string;
+  ruleCode: string;
+  ruleName: string;
+  hit: boolean;
+  severity: "LOW" | "MEDIUM" | "HIGH" | string;
+  actionCode: string;
+  explanation: string;
+}
+
+export interface RuleEvaluateResponse {
+  traceId: string;
+  executionId: string;
+  highestSeverity: "LOW" | "MEDIUM" | "HIGH" | string;
+  items: RuleEvaluationItem[];
+}
+
+export interface DiagnoseResponse {
+  executionId: string;
+  traceId: string;
+  ruleId: string;
+  inputPayloadSummary: string;
+  explanationSnapshot: string;
+  confidenceScore?: number;
+  riskLevel?: "LOW" | "MEDIUM" | "HIGH";
+  statusHistory: Array<{
+    status: string;
+    changedAt: string;
+    changedBy: string;
+    summary: string;
+  }>;
+}
+
+export interface RuleFilterParams {
+  status?: string;
+  ruleType?: string;
+  riskLevel?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export function useRuleDefinitions(params?: RuleFilterParams) {
+  return useQuery({
+    queryKey: ["rules", "definitions", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<RuleDefinition> }>(
+        "/engine/rules",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useRuleDetail(ruleId: string) {
+  return useQuery({
+    queryKey: ["rules", "detail", ruleId],
+    queryFn: async () => {
+      if (!ruleId) return null;
+      const { data } = await apiClient.get<{ data: RuleDetailResponse }>(`/engine/rules/${ruleId}`);
+      return data.data;
+    },
+    enabled: !!ruleId,
+  });
+}
+
+export function useCreateRule() {
+  return useMutation({
+    mutationFn: async (payload: {
+      ruleCode: string;
+      name: string;
+      ruleType: string;
+      authoringMode: string;
+      riskLevel: string;
+      sourceRef: string;
+      changeSummary: string;
+      dslJson: string;
+      explanationJson: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: { ruleId: string } }>("/engine/rules", payload);
+      return data.data;
+    },
+  });
+}
+
+export function useAddTestCase(ruleId: string) {
+  return useMutation({
+    mutationFn: async (payload: {
+      caseType: string;
+      inputPayload: string;
+      expectedHit: boolean;
+      expectedSeverity: string;
+      expectedActionCode: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: RuleTestCase }>(
+        `/engine/rules/${ruleId}/test-cases`,
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useSimulateRule(ruleId: string) {
+  return useMutation({
+    mutationFn: async (payload: { inputPayload: string }) => {
+      const { data } = await apiClient.post<{ data: RuleEvaluationItem }>(
+        `/engine/rules/${ruleId}/simulate`,
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function usePublishRule() {
+  return useMutation({
+    mutationFn: async (ruleId: string) => {
+      const { data } = await apiClient.post<{ data: { versionId: string } }>(
+        `/engine/rules/${ruleId}/publish`,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useEvaluateRules() {
+  return useMutation({
+    mutationFn: async (payload: { triggerPoint: string; patientId?: string; payloadJson: string }) => {
+      const { data } = await apiClient.post<{ data: RuleEvaluateResponse }>(
+        "/engine/rules/evaluate",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useRuleExecutionDiagnose(executionId: string) {
+  return useQuery({
+    queryKey: ["rules", "diagnose", executionId],
+    queryFn: async () => {
+      if (!executionId) return null;
+      const { data } = await apiClient.get<{ data: DiagnoseResponse }>(
+        `/engine/rules/executions/${executionId}/diagnose`,
+      );
+      return data.data;
+    },
+    enabled: !!executionId,
+  });
+}

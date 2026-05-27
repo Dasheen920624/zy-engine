@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.24 · 2026-05-27
+> 版本：4.25 · 2026-05-28
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -63,7 +63,7 @@
 | GA-ENG-API-10 包发布 API：知识包、配置包、校验、灰度、全量、同步、回滚 | codex | done |
 | GA-ENG-API-11 嵌入 API：launch token、iframe/SDK/纯 API、回调、降级 | codex | done |
 | GA-ENG-API-12 模型能力网关 API：能力代码、路由、脱敏、结构化输出、审计、B0 降级 | codex | done |
-| GA-ENG-API-13 大规模列表 API：统一分页/游标、排序、过滤、total estimate、批量任务、导出任务、traceId | codex | in_progress |
+| GA-ENG-API-13 大规模列表 API：统一分页/游标、排序、过滤、total estimate、批量任务、导出任务、traceId | codex | done |
 
 ---
 
@@ -74,7 +74,7 @@
 | GA-ENG-KNOW-01 知识资产引擎：来源登记、解析、hash、引用锚点、可信分级 | claude | partial |
 | GA-ENG-KNOW-02 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离 | claude | partial |
 | GA-ENG-TERM-01 字典映射引擎：未映射发现、候选推荐、人工确认、冲突处理、映射包发布 | codex | partial |
-| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释 | - | pending |
+| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释 | codex | in_progress |
 | GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真 | - | pending |
 | GA-ENG-CDSS-01 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | - | pending |
 | GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | - | pending |
@@ -133,6 +133,8 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.25 | 2026-05-28 | Codex | GA-ENG-API-13 完成：新增 V19 五方言 DDL 迁移文件（包含 `large_list_export_job` 表）；实现包含游标分页参数解析（Base64 主键索引物理过滤）、总数近似估算（Total Estimate LIMIT 10001 限流）、Exporter 线程分批异步 CSV 文件导出与物理下载，以及集成 `@DataScope(requireTenant = true)` 类级隔离与高隔离物理子事务审计留痕等核心功能；跑通 100% 单元/集成测试及五方言静态门禁。 |
+| 4.24 | 2026-05-27 | Codex | 领单 GA-ENG-API-13 大规模列表 API，并在特性分支上处于开发状态。 |
 | 4.23 | 2026-05-27 | Codex | GA-ENG-API-12 完成：新增 V18 五方言 DDL 迁移文件（包含 `model_capability_task`、`model_capability_policy` 两张核心表）；实现包含路由管理、敏感正则脱敏、期望结构 JSON Schema 校验、B0 级确定性基线降级回退及 IsolatedAuditPublisher 强子事务调用审计记录等核心功能的统一模型能力网关 API；跑通 100% 单元测试及物理迁移合同测试。 |
 | 4.22 | 2026-05-27 | Codex | GA-ENG-API-11 完成：新增 V17 五方言 DDL 迁移文件（包含 `embed_launch_token`、`embed_origin_whitelist` 表）；实现包含 launch token 生成及 60 秒有效期校验、一次性原子消费物理锁定、Origin 域名租户白名单拦截、双向通信交互反馈及 IsolatedAuditPublisher 强子事务审计留痕等核心功能的嵌入 API；跑通 100% 单元测试及迁移合同测试。 |
 | 4.21 | 2026-05-27 | Codex | GA-ENG-API-09 完成：新增 V16 五方言 DDL 迁移文件（包含 `followup_plan`、`followup_task`、`followup_questionnaire`、`followup_event` 表）；实现随访计划智能生成、任务分发、问卷回传、异常回院及结果回流 API，引入 `followup.read` / `followup.write` 动作权限、`ENG-FOLLOW-001..005` 错误码；跑通 100% 单元测试、多租户隔离加固与迁移烟测。 |
