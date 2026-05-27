@@ -109,6 +109,10 @@ public enum ErrorCode {
     ENG_LLM_003("ENG-LLM-003", 504, "调用模型接口超时", ErrorClass.EXTERNAL, true),
     ENG_LLM_004("ENG-LLM-004", 404, "模型调用任务不存在", ErrorClass.DATA, false),
     ENG_LLM_005("ENG-LLM-005", 400, "数据包含敏感字段且未配置脱敏策略", ErrorClass.INPUT, false),
+    ENG_LIST_001("ENG-LIST-001", 400, "非法的列表资源类型或排序字段", ErrorClass.INPUT, false),
+    ENG_LIST_002("ENG-LIST-002", 404, "异步导出任务不存在", ErrorClass.DATA, false),
+    ENG_LIST_003("ENG-LIST-003", 409, "导出任务尚未完成，无法提供下载", ErrorClass.DATA, false),
+    ENG_LIST_004("ENG-LIST-004", 500, "文件导出物理 IO 失败", ErrorClass.INTERNAL, false)
     ;
 
     private final String code;

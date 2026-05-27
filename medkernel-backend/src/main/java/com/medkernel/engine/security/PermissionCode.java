@@ -87,7 +87,8 @@ public enum PermissionCode {
     EMBED_READ("embed.read", Risk.LOW, "验证和查看嵌入上下文"),
     EMBED_WRITE("embed.write", Risk.MEDIUM, "生成嵌入启动令牌和记录反馈"),
     LLM_READ("llm.read", Risk.LOW, "查看模型能力状态和调用记录"),
-    LLM_WRITE("llm.write", Risk.MEDIUM, "管理配置路由策略和提交模型任务");
+    LLM_WRITE("llm.write", Risk.MEDIUM, "管理配置路由策略和提交模型任务"),
+    LIST_EXPORT("list.export", Risk.MEDIUM, "创建和下载大规模列表异步导出文件");
 
     private final String code;
     private final Risk risk;
