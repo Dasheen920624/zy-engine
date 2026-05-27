@@ -1,0 +1,98 @@
+package com.medkernel.engine.embed;
+
+import java.util.List;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.medkernel.shared.api.ApiResult;
+import com.medkernel.shared.datascope.DataScope;
+import jakarta.validation.Valid;
+
+/**
+ * 页面嵌入引擎接口控制器 (GA-ENG-API-11)。
+ *
+ * <p>提供外部工作站集成所需的令牌生成、单次交换校验、用户交互闭环反馈以及安全域名白名单管理的 REST API 服务。
+ * 全线受 {@link DataScope} 拦截以保护多租户物理隔离。
+ */
+@RestController
+@RequestMapping("/api/v1/engine/embed")
+@DataScope(requireTenant = true)
+public class EmbedEngineController {
+
+    private final EmbedEngineService service;
+
+    public EmbedEngineController(EmbedEngineService service) {
+        this.service = service;
+    }
+
+    /**
+     * 生成一次性页面嵌入启动令牌。
+     *
+     * @param request 令牌申请请求信息
+     * @return 启动令牌及嵌入链接响应
+     */
+    @PostMapping("/launch-tokens")
+    @PreAuthorize("@perm.has('embed.write')")
+    public ApiResult<EmbedLaunchTokenResponse> generateToken(@Valid @RequestBody EmbedLaunchTokenRequest request) {
+        return ApiResult.ok(service.generateToken(request));
+    }
+
+    /**
+     * 使用启动令牌兑换获取嵌入会话临床上下文，并物理标记令牌为已使用。
+     *
+     * @param token 启动令牌
+     * @param originHeader 请求头中的 Origin 属性，用以作白名单过滤
+     * @return 会话及关联的临床上下文
+     */
+    @GetMapping("/launch")
+    @PreAuthorize("@perm.has('embed.read')")
+    public ApiResult<EmbedLaunchContextResponse> validateAndExchange(
+            @RequestParam String token,
+            @RequestHeader(value = "Origin", required = false) String originHeader) {
+        return ApiResult.ok(service.validateAndExchange(token, originHeader));
+    }
+
+    /**
+     * 回传记录医师在工作站嵌入页面的交互采纳与拒绝反馈，保证合规审计。
+     *
+     * @param request 反馈请求参数
+     * @return 空响应
+     */
+    @PostMapping("/feedback")
+    @PreAuthorize("@perm.has('embed.write')")
+    public ApiResult<Void> feedback(@Valid @RequestBody EmbedFeedbackRequest request) {
+        service.feedback(request);
+        return ApiResult.empty();
+    }
+
+    /**
+     * 为当前租户添加允许嵌入 Origin 白名单域名。
+     *
+     * @param request 域名 Origin 配置请求
+     * @return 空响应
+     */
+    @PostMapping("/origins")
+    @PreAuthorize("@perm.has('embed.write')")
+    public ApiResult<Void> addOrigin(@Valid @RequestBody EmbedOriginRequest request) {
+        service.addOrigin(request);
+        return ApiResult.empty();
+    }
+
+    /**
+     * 获取当前租户下配置的所有 Origin 白名单域名列表。
+     *
+     * @return Origin域名白名单列表
+     */
+    @GetMapping("/origins")
+    @PreAuthorize("@perm.has('embed.read')")
+    public ApiResult<List<String>> getOrigins() {
+        return ApiResult.ok(service.getOrigins());
+    }
+}

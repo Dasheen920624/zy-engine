@@ -99,6 +99,11 @@ public enum ErrorCode {
     ENG_FOLLOW_003("ENG-FOLLOW-003", 404, "随访任务不存在", ErrorClass.DATA, false),
     ENG_FOLLOW_004("ENG-FOLLOW-004", 409, "当前随访状态不允许该操作", ErrorClass.DATA, false),
     ENG_FOLLOW_005("ENG-FOLLOW-005", 500, "随访异常事件上报失败", ErrorClass.INTERNAL, false),
+
+    ENG_EMBED_001("ENG-EMBED-001", 400, "启动令牌无效或已过期", ErrorClass.INPUT, false),
+    ENG_EMBED_002("ENG-EMBED-002", 400, "非法的 Origin 域名", ErrorClass.INPUT, false),
+    ENG_EMBED_003("ENG-EMBED-003", 409, "启动令牌已被使用", ErrorClass.DATA, false),
+    ENG_EMBED_004("ENG-EMBED-004", 404, "启动令牌不存在", ErrorClass.DATA, false),
     ;
 
     private final String code;
