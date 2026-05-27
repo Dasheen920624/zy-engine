@@ -57,7 +57,7 @@ class MigrationBaselineContractTest {
         "specialty_metric_binding", "recommendation_trigger", "recommendation_card",
         "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal",
         "evaluation_indicator", "evaluation_run", "evaluation_result", "quality_finding",
-        "rectification_task", "rectification_review"
+        "rectification_task", "rectification_review", "evaluation_idempotency_key"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -108,7 +108,7 @@ class MigrationBaselineContractTest {
         "idx_eval_result_run", "idx_eval_result_indicator",
         "idx_quality_finding_status", "idx_quality_finding_department",
         "idx_rect_task_finding", "idx_rect_task_department_status",
-        "idx_rect_review_finding"
+        "idx_rect_review_finding", "idx_eval_idempotency_resource"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -163,7 +163,9 @@ class MigrationBaselineContractTest {
         "uk_quality_finding_id", "uk_quality_finding_result_code",
         "ck_quality_finding_severity", "ck_quality_finding_status",
         "uk_rect_task_id", "uk_rect_task_finding", "ck_rect_task_status",
-        "uk_rect_review_id", "ck_rect_review_decision"
+        "uk_rect_review_id", "ck_rect_review_decision",
+        "uk_eval_idempotency_operation_key", "ck_eval_idempotency_operation",
+        "ck_eval_idempotency_finding_status", "ck_eval_idempotency_task_status"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -179,7 +181,7 @@ class MigrationBaselineContractTest {
         "specialty_metric_binding", "recommendation_trigger", "recommendation_card",
         "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal",
         "evaluation_indicator", "evaluation_run", "evaluation_result", "quality_finding",
-        "rectification_task", "rectification_review"
+        "rectification_task", "rectification_review", "evaluation_idempotency_key"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",

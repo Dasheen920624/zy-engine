@@ -26,7 +26,7 @@
 
 - [ ] **Step 1：写入失败迁移合同测试**
   - 将权威迁移序列扩展到 `V14__evaluation_quality_api.sql`。
-  - 断言六张表：`evaluation_indicator`、`evaluation_run`、`evaluation_result`、`quality_finding`、`rectification_task`、`rectification_review`。
+  - 断言七张表：`evaluation_indicator`、`evaluation_run`、`evaluation_result`、`quality_finding`、`rectification_task`、`rectification_review`、`evaluation_idempotency_key`。
   - 断言租户字段、审计字段、状态字段、业务唯一约束和常用查询索引。
   - 运行：`mvn -f medkernel-backend/pom.xml -Dtest=MigrationBaselineContractTest,H2BaselineMigrationTest test`
   - 预期：失败，指出 `V14` 或新表缺失。
@@ -38,6 +38,7 @@
   - `quality_finding`：问题级别和闭环状态；约束级别为 `P0/P1/P2/P3`、状态为 `NEW/ASSIGNED/REMEDIATING/CLOSED/WAIVED`。
   - `rectification_task`：整改状态、责任、时限和提交证据；约束状态为 `ASSIGNED/SUBMITTED/RETURNED/CLOSED/WAIVED`。
   - `rectification_review`：追加式结论；约束结论为 `APPROVED/RETURNED/WAIVED`。
+  - `evaluation_idempotency_key`：整改与复核的 `Idempotency-Key` 请求摘要及首次响应引用；同动作同键唯一。
 
 - [ ] **Step 3：验证迁移合同转绿**
   - 运行：`mvn -f medkernel-backend/pom.xml -Dtest=MigrationBaselineContractTest,H2BaselineMigrationTest test`
@@ -55,6 +56,7 @@
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/QualityFinding.java`
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/RectificationTask.java`
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/RectificationReview.java`
+- 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/EvaluationIdempotencyKey.java`
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/*Status.java` 与业务枚举文件
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/*Repository.java`
 - 修改：`medkernel-backend/src/main/java/com/medkernel/shared/api/error/ErrorCode.java`
@@ -65,8 +67,8 @@
 - 新建：`medkernel-backend/src/test/java/com/medkernel/engine/evaluation/EvaluationRepositoryTest.java`
 
 - [ ] **Step 1：写失败仓储与编码测试**
-  - 保存并按租户读取六类记录。
-  - 校验新增 `ENG_EVAL_001` 至 `ENG_EVAL_007` 可 roundtrip。
+  - 保存并按租户读取闭环领域记录。
+  - 校验新增 `ENG_EVAL_001` 至 `ENG_EVAL_008` 可 roundtrip。
   - 校验 `evaluation.execute/remediate/review` 默认授权：质控办全闭环、信息科仅运行写入、科主任仅整改、医生不获整改/复核。
   - 运行：`mvn -f medkernel-backend/pom.xml -Dtest=EvaluationRepositoryTest,ErrorCodeTest,DefaultPermissionPolicyTest test`
   - 预期：失败，提示新记录、表或枚举缺失。
@@ -76,7 +78,7 @@
   - Repository 提供租户隔离查询、状态筛选、分页查询、同编码激活版本查询及问题关联明细查询。
 
 - [ ] **Step 3：实现错误码与权限编码**
-  - 追加错误码 `ENG-EVAL-001..007`。
+  - 追加错误码 `ENG-EVAL-001..008`。
   - 追加权限 `evaluation.execute`、`evaluation.remediate`、`evaluation.review`，不改动已发布权限顺序含义。
   - 更新默认权限策略的职责分离映射。
 
@@ -94,7 +96,6 @@
 **文件：**
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/EvaluationIndicatorCreateRequest.java`
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/EvaluationIndicatorFilter.java`
-- 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/EvaluationIndicatorResponse.java`
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/EvaluationEngineService.java`
 - 新建：`medkernel-backend/src/main/java/com/medkernel/engine/evaluation/EvaluationEngineController.java`
 - 新建：`medkernel-backend/src/test/java/com/medkernel/engine/evaluation/EvaluationEngineServiceTest.java`
@@ -182,6 +183,7 @@
   - 复核 `APPROVED` 关闭任务和问题并写不可覆写记录。
   - 复核 `RETURNED` 将任务退回并保持问题待整改。
   - `P0` 问题请求 `WAIVED` 返回 `ENG-EVAL-007`，其他豁免必须填写理由。
+  - 携带相同 `Idempotency-Key` 的同内容整改或复核请求重放首次结果；同键异文返回 `ENG-EVAL-008`。
   - 运行诊断返回结果、问题、整改关联与运行 `traceId`。
 
 - [ ] **Step 2：运行红灯测试**
@@ -190,6 +192,7 @@
 
 - [ ] **Step 3：实现整改、复核和诊断**
   - 实现 `POST /findings/{findingId}/rectification` 与 `POST /findings/{findingId}/review`。
+  - 两个闭环写入接口接收可选 `Idempotency-Key`，在 `evaluation_idempotency_key` 中记录首次响应引用与请求摘要。
   - 实现 `GET /runs/{runId}/diagnose`，复用 `DiagnoseResponseAssembler`。
   - 写入 `AuditAction.UPDATE/REVIEW` 和 `StateTransitionRecorder`。
 

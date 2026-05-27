@@ -1,10 +1,15 @@
 package com.medkernel.engine.evaluation;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.medkernel.shared.api.PageRequest;
@@ -34,6 +39,7 @@ public class EvaluationEngineService {
     private final QualityFindingRepository findings;
     private final RectificationTaskRepository tasks;
     private final RectificationReviewRepository reviews;
+    private final EvaluationIdempotencyKeyRepository idempotencyKeys;
     private final AuditEventPublisher auditPublisher;
     private final StateTransitionRecorder transitions;
     private final DiagnoseResponseAssembler diagnoseAssembler;
@@ -45,6 +51,7 @@ public class EvaluationEngineService {
             QualityFindingRepository findings,
             RectificationTaskRepository tasks,
             RectificationReviewRepository reviews,
+            EvaluationIdempotencyKeyRepository idempotencyKeys,
             AuditEventPublisher auditPublisher,
             StateTransitionRecorder transitions,
             DiagnoseResponseAssembler diagnoseAssembler) {
@@ -54,6 +61,7 @@ public class EvaluationEngineService {
         this.findings = findings;
         this.tasks = tasks;
         this.reviews = reviews;
+        this.idempotencyKeys = idempotencyKeys;
         this.auditPublisher = auditPublisher;
         this.transitions = transitions;
         this.diagnoseAssembler = diagnoseAssembler;
@@ -247,8 +255,22 @@ public class EvaluationEngineService {
 
     @Transactional
     public RectificationResponse submitRectification(String findingId, RectificationSubmitRequest request) {
+        return submitRectification(findingId, request, null);
+    }
+
+    @Transactional
+    public RectificationResponse submitRectification(
+            String findingId, RectificationSubmitRequest request, String idempotencyKey) {
         if (request == null || !hasText(request.rectificationSummary()) || !hasText(request.evidenceRef())) {
             throw new ApiException(ErrorCode.ENG_EVAL_001);
+        }
+        String requestDigest = digestValues(request.rectificationSummary(), request.evidenceRef());
+        Optional<EvaluationIdempotencyKey> replay = findIdempotencyReplay(
+            EvaluationIdempotencyOperation.RECTIFICATION_SUBMIT, findingId, requestDigest, idempotencyKey);
+        if (replay.isPresent()) {
+            EvaluationIdempotencyKey key = replay.get();
+            return new RectificationResponse(
+                key.taskId(), key.findingStatus(), key.taskStatus(), key.traceId());
         }
         QualityFinding finding = findFinding(findingId);
         RectificationTask task = findTask(findingId);
@@ -269,13 +291,32 @@ public class EvaluationEngineService {
         transitions.record(FINDING_ENTITY, findingId, finding.status().name(), remediating.status().name(),
             "责任科室提交整改", null);
         auditPublisher.publish(AuditAction.UPDATE, FINDING_ENTITY, findingId, "提交质控整改 " + task.taskId());
-        return new RectificationResponse(task.taskId(), remediating.status(), submitted.status(), traceId());
+        String traceId = traceId();
+        saveIdempotencyKey(
+            idempotencyKey, EvaluationIdempotencyOperation.RECTIFICATION_SUBMIT, findingId,
+            task.taskId(), null, requestDigest, remediating.status(), submitted.status(), traceId, now, actor);
+        return new RectificationResponse(task.taskId(), remediating.status(), submitted.status(), traceId);
     }
 
     @Transactional
     public RectificationReviewResponse reviewRectification(String findingId, RectificationReviewRequest request) {
+        return reviewRectification(findingId, request, null);
+    }
+
+    @Transactional
+    public RectificationReviewResponse reviewRectification(
+            String findingId, RectificationReviewRequest request, String idempotencyKey) {
         if (request == null || request.decision() == null) {
             throw new ApiException(ErrorCode.ENG_EVAL_001);
+        }
+        String requestDigest = digestValues(
+            request.decision().name(), request.comment(), request.evidenceRef());
+        Optional<EvaluationIdempotencyKey> replay = findIdempotencyReplay(
+            EvaluationIdempotencyOperation.RECTIFICATION_REVIEW, findingId, requestDigest, idempotencyKey);
+        if (replay.isPresent()) {
+            EvaluationIdempotencyKey key = replay.get();
+            return new RectificationReviewResponse(
+                key.reviewId(), key.findingStatus(), key.taskStatus(), key.traceId());
         }
         QualityFinding finding = findFinding(findingId);
         RectificationTask task = findTask(findingId);
@@ -321,7 +362,12 @@ public class EvaluationEngineService {
             "复核整改任务 " + request.decision(), null);
         auditPublisher.publish(AuditAction.REVIEW, FINDING_ENTITY, findingId,
             "复核质控整改 " + request.decision());
-        return new RectificationReviewResponse(reviewId, reviewedFinding.status(), reviewedTask.status(), traceId());
+        String traceId = traceId();
+        saveIdempotencyKey(
+            idempotencyKey, EvaluationIdempotencyOperation.RECTIFICATION_REVIEW, findingId,
+            task.taskId(), reviewId, requestDigest, reviewedFinding.status(), reviewedTask.status(),
+            traceId, now, actor);
+        return new RectificationReviewResponse(reviewId, reviewedFinding.status(), reviewedTask.status(), traceId);
     }
 
     @Transactional(readOnly = true)
@@ -428,6 +474,54 @@ public class EvaluationEngineService {
     private RectificationTask findTask(String findingId) {
         return tasks.findByFindingIdAndTenantId(findingId, tenantId())
             .orElseThrow(() -> new ApiException(ErrorCode.ENG_EVAL_005));
+    }
+
+    private Optional<EvaluationIdempotencyKey> findIdempotencyReplay(
+            EvaluationIdempotencyOperation operation, String findingId,
+            String requestDigest, String idempotencyKey) {
+        if (!hasText(idempotencyKey)) {
+            return Optional.empty();
+        }
+        if (idempotencyKey.length() > 128) {
+            throw new ApiException(ErrorCode.ENG_EVAL_001, "幂等键长度超过 128");
+        }
+        Optional<EvaluationIdempotencyKey> existing =
+            idempotencyKeys.findByTenantIdAndOperationTypeAndIdempotencyKey(
+                tenantId(), operation, idempotencyKey);
+        if (existing.isPresent()
+                && (!existing.get().findingId().equals(findingId)
+                || !existing.get().requestDigest().equals(requestDigest))) {
+            throw new ApiException(ErrorCode.ENG_EVAL_008);
+        }
+        return existing;
+    }
+
+    private void saveIdempotencyKey(
+            String idempotencyKey, EvaluationIdempotencyOperation operation, String findingId,
+            String taskId, String reviewId, String requestDigest,
+            QualityFindingStatus findingStatus, RectificationTaskStatus taskStatus,
+            String traceId, Instant now, String actor) {
+        if (!hasText(idempotencyKey)) {
+            return;
+        }
+        idempotencyKeys.save(new EvaluationIdempotencyKey(
+            null, tenantId(), idempotencyKey, operation, findingId, taskId, reviewId,
+            requestDigest, findingStatus, taskStatus, now, actor, traceId));
+    }
+
+    private String digestValues(String... values) {
+        StringBuilder content = new StringBuilder();
+        for (String value : values) {
+            String normalized = value == null ? "" : value;
+            content.append(normalized.length()).append(':').append(normalized);
+        }
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                .digest(content.toString().getBytes(StandardCharsets.UTF_8));
+            return "sha256:" + HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("JDK 缺少 SHA-256 摘要算法", exception);
+        }
     }
 
     private void requireStatus(EvaluationIndicator indicator, EvaluationIndicatorStatus required) {

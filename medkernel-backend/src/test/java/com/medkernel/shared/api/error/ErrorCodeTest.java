@@ -237,5 +237,10 @@ class ErrorCodeTest {
             assertThat(code.httpStatus()).isEqualTo(409);
             assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
         });
+        assertThat(ErrorCode.fromCode("ENG-EVAL-008")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+            assertThat(code.retryable()).isFalse();
+        });
     }
 }

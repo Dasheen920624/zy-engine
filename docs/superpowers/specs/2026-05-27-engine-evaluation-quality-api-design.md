@@ -10,12 +10,13 @@
 2. 一次运行可携带多条结果与质控问题，每条结果必须保留指标版本、来源证据摘要和上下文引用。
 3. `P0` 安全红线与 `P1` 高风险问题必须在入库时同时生成有责任科室、有时限的整改任务。
 4. 整改提交后只能由有复核权限的人员关闭或豁免；复核结论追加留痕，不覆写历史意见。
-5. 所有写动作记录审计事件与状态历史，并携带租户和 `traceId`。
+5. 整改提交与复核支持 `Idempotency-Key`，网络重试不得重复生成闭环事实，同键异文必须拒绝。
+6. 所有写动作记录审计事件与状态历史，并携带租户和 `traceId`。
 
 ## 2. 目标
 
 - 提供评估指标、运行结果、质控问题、整改和复核的 API 最小闭环。
-- 建立五方言 `V14` 表族：`evaluation_indicator`、`evaluation_run`、`evaluation_result`、`quality_finding`、`rectification_task`、`rectification_review`。
+- 建立五方言 `V14` 表族：`evaluation_indicator`、`evaluation_run`、`evaluation_result`、`quality_finding`、`rectification_task`、`rectification_review`、`evaluation_idempotency_key`。
 - 复用统一 `ApiResult`、`PageResponse`、错误码、租户数据范围、审计、状态历史和诊断响应。
 - 复用已有 `evaluation.read`、`evaluation.write`、`evaluation.publish` 权限，并追加运行、整改和复核的职责分离权限。
 - 使问题、整改和复核事实可被后续证据链、业务包装和电子病历评级验收复用。
@@ -119,6 +120,7 @@
 - `APPROVED` 必须包含复核说明或证据引用。
 - `WAIVED` 必须包含豁免理由，`P0` 问题不得经普通复核接口豁免。
 - 关闭或豁免后的任务不允许再次提交整改；历史复核记录始终可读。
+- 整改和复核请求可携带 `Idempotency-Key`；同租户、同动作、同键重放首次响应，同键异文返回冲突。
 
 ### 4.5 医疗安全
 
@@ -158,6 +160,8 @@
 | `POST /api/v1/engine/evaluations/findings/{findingId}/rectification` | `evaluation.remediate` | 提交整改说明和整改证据 |
 | `POST /api/v1/engine/evaluations/findings/{findingId}/review` | `evaluation.review` | 提交复核结论，关闭、退回或豁免 |
 
+两个闭环写入接口均支持可选请求头 `Idempotency-Key`；提供该键时，重试只重放首次成功结果，不重复写整改或复核事实。
+
 ## 6. 数据模型
 
 ### 6.1 `evaluation_indicator`
@@ -196,6 +200,12 @@
 
 关键字段：`review_id`、`tenant_id`、`finding_id`、`task_id`、`decision`、`comment`、`evidence_ref`、`reviewer_id`、`reviewed_at`、`trace_id`。
 
+### 6.7 `evaluation_idempotency_key`
+
+闭环幂等记录表，保存整改或复核动作的请求摘要及首次响应引用，用于在网络重试时重放既有结果并阻断同键异文。
+
+关键字段：`tenant_id`、`idem_key`、`operation_type`、`finding_id`、`task_id`、`review_id`、`request_digest`、`finding_status`、`task_status`、`trace_id`。
+
 ## 7. 首版服务规则
 
 1. 创建指标只产生 `DRAFT` 版本；提交、发布和激活按状态顺序流转。
@@ -208,6 +218,7 @@
 8. 复核只能处理已提交整改；`P0` 问题不得通过常规 `WAIVED` 结论关闭。
 9. 运行诊断返回结果、问题和整改任务关联标识，并保留该运行的 `traceId`。
 10. 所有读写均按租户隔离，写动作均发布审计事件并记录状态变化。
+11. 整改与复核在提供 `Idempotency-Key` 时持久化请求摘要和首次响应状态；同键同内容重放，同键不同内容返回冲突。
 
 ## 8. 权限与角色
 
@@ -233,11 +244,12 @@
 | `ENG-EVAL-005` | 404 | 质控问题或整改任务不存在 |
 | `ENG-EVAL-006` | 400 | 高风险问题缺少责任、期限或证据 |
 | `ENG-EVAL-007` | 409 | 整改或复核状态不允许当前操作 |
+| `ENG-EVAL-008` | 409 | 整改或复核幂等键与请求内容冲突 |
 
 ## 10. 验收标准
 
-- H2、PostgreSQL、Oracle、达梦、人大金仓迁移均增加至 `V14`，`evaluation_indicator` 等六张表及约束合同一致。
-- 单元和集成测试覆盖指标状态流转、生效版本门禁、运行事实入库、`P0/P1` 自动派单、整改提交、复核关闭/退回/豁免限制、诊断和租户隔离。
+- H2、PostgreSQL、Oracle、达梦、人大金仓迁移均增加至 `V14`，`evaluation_indicator` 等七张表及约束合同一致。
+- 单元和集成测试覆盖指标状态流转、生效版本门禁、运行事实入库、`P0/P1` 自动派单、整改提交、复核关闭/退回/豁免限制、闭环幂等重放/冲突、诊断和租户隔离。
 - MockMvc 安全测试覆盖读取、配置、发布、运行、整改和复核权限分离。
 - 服务层仅持久化授权事实，不存在病例自动计算、模型调用或自动临床处置代码。
 - 完整后端测试通过；Docker 不可用时，既有容器依赖多方言冒烟按现行机制跳过。

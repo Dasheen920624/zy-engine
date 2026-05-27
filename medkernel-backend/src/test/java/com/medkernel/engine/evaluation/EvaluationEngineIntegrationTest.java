@@ -1,12 +1,15 @@
 package com.medkernel.engine.evaluation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
 import com.medkernel.shared.api.PageRequest;
+import com.medkernel.shared.api.error.ApiException;
+import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.audit.AuditEventPublisher;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
@@ -46,6 +49,7 @@ class EvaluationEngineIntegrationTest {
     @Autowired QualityFindingRepository findings;
     @Autowired RectificationTaskRepository tasks;
     @Autowired RectificationReviewRepository reviews;
+    @Autowired EvaluationIdempotencyKeyRepository idempotencyKeys;
 
     @MockBean AuditEventPublisher auditPublisher;
     @MockBean StateTransitionRecorder transitions;
@@ -60,6 +64,7 @@ class EvaluationEngineIntegrationTest {
     @AfterEach
     void wipe() {
         RequestContext.clear();
+        idempotencyKeys.deleteAll();
         reviews.deleteAll();
         tasks.deleteAll();
         findings.deleteAll();
@@ -69,7 +74,7 @@ class EvaluationEngineIntegrationTest {
     }
 
     @Test
-    void persistsIndicatorRunRectificationAndReviewWorkflow() {
+    void persistsIdempotentIndicatorRunRectificationAndReviewWorkflow() {
         EvaluationIndicator indicator = service.createIndicator(new EvaluationIndicatorCreateRequest(
             "IND.VTE.PROPHYLAXIS", 1, "静脉血栓预防完成率", EvaluationSubjectType.MEDICAL_RECORD,
             "符合住院风险分层病例", "完成预防评估病例", null, null,
@@ -101,11 +106,34 @@ class EvaluationEngineIntegrationTest {
             .extracting(EvaluationResult::resultLevel)
             .containsExactly(EvaluationResultLevel.NON_COMPLIANT);
 
-        service.submitRectification(
-            finding.findingId(), new RectificationSubmitRequest("补录风险评估记录", "proof-1"));
-        service.reviewRectification(
-            finding.findingId(), new RectificationReviewRequest(
-                RectificationReviewDecision.APPROVED, "证据充分，允许闭环", "review-proof-1"));
+        RectificationSubmitRequest rectification =
+            new RectificationSubmitRequest("补录风险评估记录", "proof-1");
+        RectificationResponse submitted = service.submitRectification(
+            finding.findingId(), rectification, "idem-rectification-1");
+        RectificationResponse submittedReplay = service.submitRectification(
+            finding.findingId(), rectification, "idem-rectification-1");
+        assertThat(submittedReplay).isEqualTo(submitted);
+        assertThatThrownBy(() -> service.submitRectification(
+                finding.findingId(), new RectificationSubmitRequest("更换整改内容", "proof-2"),
+                "idem-rectification-1"))
+            .isInstanceOf(ApiException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.ENG_EVAL_008);
+
+        RectificationReviewRequest review =
+            new RectificationReviewRequest(
+                RectificationReviewDecision.APPROVED, "证据充分，允许闭环", "review-proof-1");
+        RectificationReviewResponse approved = service.reviewRectification(
+            finding.findingId(), review, "idem-review-1");
+        RectificationReviewResponse approvedReplay = service.reviewRectification(
+            finding.findingId(), review, "idem-review-1");
+        assertThat(approvedReplay).isEqualTo(approved);
+        assertThatThrownBy(() -> service.reviewRectification(
+                finding.findingId(), new RectificationReviewRequest(
+                    RectificationReviewDecision.WAIVED, "更换复核结论", null), "idem-review-1"))
+            .isInstanceOf(ApiException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.ENG_EVAL_008);
 
         QualityFindingDetailResponse detail = service.findingDetail(finding.findingId());
         assertThat(detail.finding().status()).isEqualTo(QualityFindingStatus.CLOSED);

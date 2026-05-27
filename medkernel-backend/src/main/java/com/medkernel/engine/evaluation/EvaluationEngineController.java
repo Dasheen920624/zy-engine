@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -118,16 +119,18 @@ public class EvaluationEngineController {
     @PreAuthorize("@perm.has('evaluation.remediate')")
     public ApiResult<RectificationResponse> submitRectification(
             @PathVariable String findingId,
-            @RequestBody @Valid RectificationSubmitRequest request) {
-        return ApiResult.ok(service.submitRectification(findingId, request));
+            @RequestBody @Valid RectificationSubmitRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        return ApiResult.ok(service.submitRectification(findingId, request, idempotencyKey));
     }
 
     @PostMapping("/findings/{findingId}/review")
     @PreAuthorize("@perm.has('evaluation.review')")
     public ApiResult<RectificationReviewResponse> reviewRectification(
             @PathVariable String findingId,
-            @RequestBody @Valid RectificationReviewRequest request) {
-        return ApiResult.ok(service.reviewRectification(findingId, request));
+            @RequestBody @Valid RectificationReviewRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        return ApiResult.ok(service.reviewRectification(findingId, request, idempotencyKey));
     }
 
     @GetMapping("/runs/{runId}/diagnose")

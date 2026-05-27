@@ -169,3 +169,26 @@ CREATE TABLE rectification_review (
 );
 
 CREATE INDEX idx_rect_review_finding ON rectification_review (tenant_id, finding_id, reviewed_at);
+
+CREATE TABLE evaluation_idempotency_key (
+    id NUMBER(19) GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    tenant_id VARCHAR2(64 CHAR) NOT NULL,
+    idem_key VARCHAR2(128 CHAR) NOT NULL,
+    operation_type VARCHAR2(32 CHAR) NOT NULL,
+    finding_id VARCHAR2(64 CHAR) NOT NULL,
+    task_id VARCHAR2(64 CHAR) NOT NULL,
+    review_id VARCHAR2(64 CHAR),
+    request_digest VARCHAR2(128 CHAR) NOT NULL,
+    finding_status VARCHAR2(32 CHAR) NOT NULL,
+    task_status VARCHAR2(32 CHAR) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP NOT NULL,
+    created_by VARCHAR2(64 CHAR) NOT NULL,
+    trace_id VARCHAR2(64 CHAR),
+    CONSTRAINT uk_eval_idempotency_operation_key UNIQUE (tenant_id, operation_type, idem_key),
+    CONSTRAINT ck_eval_idempotency_operation CHECK (operation_type IN ('RECTIFICATION_SUBMIT', 'RECTIFICATION_REVIEW')),
+    CONSTRAINT ck_eval_idempotency_finding_status CHECK (finding_status IN ('NEW', 'ASSIGNED', 'REMEDIATING', 'CLOSED', 'WAIVED')),
+    CONSTRAINT ck_eval_idempotency_task_status CHECK (task_status IN ('ASSIGNED', 'SUBMITTED', 'RETURNED', 'CLOSED', 'WAIVED'))
+);
+
+CREATE INDEX idx_eval_idempotency_resource
+    ON evaluation_idempotency_key (tenant_id, finding_id, operation_type, created_at);

@@ -179,3 +179,26 @@ CREATE TABLE IF NOT EXISTS rectification_review (
 );
 
 CREATE INDEX IF NOT EXISTS idx_rect_review_finding ON rectification_review (tenant_id, finding_id, reviewed_at);
+
+CREATE TABLE IF NOT EXISTS evaluation_idempotency_key (
+    id             BIGINT       GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    tenant_id      VARCHAR(64)  NOT NULL,
+    idem_key       VARCHAR(128) NOT NULL,
+    operation_type VARCHAR(32)  NOT NULL,
+    finding_id     VARCHAR(64)  NOT NULL,
+    task_id        VARCHAR(64)  NOT NULL,
+    review_id      VARCHAR(64)  NULL,
+    request_digest VARCHAR(128) NOT NULL,
+    finding_status VARCHAR(32)  NOT NULL,
+    task_status    VARCHAR(32)  NOT NULL,
+    created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by     VARCHAR(64)  NOT NULL DEFAULT 'system',
+    trace_id       VARCHAR(128) NULL,
+    CONSTRAINT uk_eval_idempotency_operation_key UNIQUE (tenant_id, operation_type, idem_key),
+    CONSTRAINT ck_eval_idempotency_operation CHECK (operation_type IN ('RECTIFICATION_SUBMIT','RECTIFICATION_REVIEW')),
+    CONSTRAINT ck_eval_idempotency_finding_status CHECK (finding_status IN ('NEW','ASSIGNED','REMEDIATING','CLOSED','WAIVED')),
+    CONSTRAINT ck_eval_idempotency_task_status CHECK (task_status IN ('ASSIGNED','SUBMITTED','RETURNED','CLOSED','WAIVED'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_eval_idempotency_resource
+    ON evaluation_idempotency_key (tenant_id, finding_id, operation_type, created_at);

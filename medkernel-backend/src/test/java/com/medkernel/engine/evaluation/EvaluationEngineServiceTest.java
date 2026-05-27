@@ -37,6 +37,7 @@ class EvaluationEngineServiceTest {
     private QualityFindingRepository findings;
     private RectificationTaskRepository tasks;
     private RectificationReviewRepository reviews;
+    private EvaluationIdempotencyKeyRepository idempotencyKeys;
     private AuditEventPublisher auditPublisher;
     private StateTransitionRecorder transitions;
     private DiagnoseResponseAssembler diagnoseAssembler;
@@ -50,11 +51,12 @@ class EvaluationEngineServiceTest {
         findings = mock(QualityFindingRepository.class);
         tasks = mock(RectificationTaskRepository.class);
         reviews = mock(RectificationReviewRepository.class);
+        idempotencyKeys = mock(EvaluationIdempotencyKeyRepository.class);
         auditPublisher = mock(AuditEventPublisher.class);
         transitions = mock(StateTransitionRecorder.class);
         diagnoseAssembler = mock(DiagnoseResponseAssembler.class);
         service = new EvaluationEngineService(
-            indicators, runs, results, findings, tasks, reviews,
+            indicators, runs, results, findings, tasks, reviews, idempotencyKeys,
             auditPublisher, transitions, diagnoseAssembler);
 
         when(indicators.save(any())).thenAnswer(inv -> inv.getArgument(0));
