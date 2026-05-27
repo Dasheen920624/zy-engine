@@ -7,11 +7,17 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 映射候选项持久化仓库；按 tenant_id 隔离。
+ */
 @Repository
 public interface MappingCandidateRepository extends ListCrudRepository<MappingCandidate, Long> {
 
     Optional<MappingCandidate> findByTenantIdAndId(String tenantId, Long id);
 
+    /**
+     * 按租户 + 可选过滤条件（状态 / 风险等级 / 是否冲突）统计候选数量。
+     */
     @Query("""
         SELECT COUNT(*) FROM mapping_candidate
         WHERE tenant_id = :tenantId
@@ -21,6 +27,9 @@ public interface MappingCandidateRepository extends ListCrudRepository<MappingCa
         """)
     long countByFilter(String tenantId, String status, String riskLevel, Boolean conflictFlag);
 
+    /**
+     * 按租户 + 可选过滤条件分页查询候选（更新时间倒序），用于审核工作台。
+     */
     @Query("""
         SELECT * FROM mapping_candidate
         WHERE tenant_id = :tenantId

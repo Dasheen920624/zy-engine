@@ -6,6 +6,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 标准临床术语字典记录（ICD-10 / SNOMED CT / LOINC / RxNorm / ATC 等标准词条）。
+ *
+ * <p>当前仍按租户隔离存储，由术语包 {@link TermMappingPackage} 管理版本发布；
+ * 业务键 (tenant_id, standard_system, term_code, version_no) 唯一。
+ * 状态字段 {@link StandardTermStatus} 决定是否可被映射引用（ACTIVE 可用 / DISABLED 禁用）。
+ */
 @Table("standard_term")
 public record StandardTerm(
     @Id Long id,

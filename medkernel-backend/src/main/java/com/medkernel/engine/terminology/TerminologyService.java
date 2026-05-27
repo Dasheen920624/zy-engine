@@ -16,6 +16,13 @@ import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
 
+/**
+ * GA-ENG-API-04 术语映射应用服务：分页查询、候选确认、冲突处置、映射包构建/发布/回滚。
+ *
+ * <p>所有写操作都在 {@link Transactional} 事务内推进；
+ * 租户上下文从 {@link RequestContext#currentOrgScope()} 获取，缺失时直接抛
+ * {@link com.medkernel.shared.api.error.ApiException#tenantMissing}。
+ */
 @Service
 public class TerminologyService {
 
@@ -46,6 +53,9 @@ public class TerminologyService {
         this.packageReleaseRepository = packageReleaseRepository;
     }
 
+    /**
+     * 按租户 + 过滤条件分页查询标准术语。
+     */
     public PageResponse<StandardTerm> pageStandardTerms(PageRequest request, StandardTermFilter filter) {
         String tenantId = requireCurrentTenant();
         String category = name(filter.category());
@@ -60,6 +70,9 @@ public class TerminologyService {
         ), request, total);
     }
 
+    /**
+     * 按租户 + 过滤条件分页查询本地术语。
+     */
     public PageResponse<LocalTerm> pageLocalTerms(PageRequest request, LocalTermFilter filter) {
         String tenantId = requireCurrentTenant();
         String category = name(filter.category());
@@ -74,6 +87,9 @@ public class TerminologyService {
         ), request, total);
     }
 
+    /**
+     * 按租户 + 过滤条件分页查询正式术语映射。
+     */
     public PageResponse<TermMapping> pageMappings(PageRequest request, MappingFilter filter) {
         String tenantId = requireCurrentTenant();
         String category = name(filter.category());
@@ -88,6 +104,9 @@ public class TerminologyService {
         ), request, total);
     }
 
+    /**
+     * 按租户 + 过滤条件分页查询候选映射。
+     */
     public PageResponse<MappingCandidate> pageCandidates(PageRequest request, CandidateFilter filter) {
         String tenantId = requireCurrentTenant();
         String status = name(filter.status());
@@ -101,6 +120,9 @@ public class TerminologyService {
         ), request, total);
     }
 
+    /**
+     * 按租户 + 过滤条件分页查询映射冲突。
+     */
     public PageResponse<MappingConflict> pageConflicts(PageRequest request, ConflictFilter filter) {
         String tenantId = requireCurrentTenant();
         String status = name(filter.status());
@@ -115,6 +137,9 @@ public class TerminologyService {
         ), request, total);
     }
 
+    /**
+     * 按租户 + 过滤条件分页查询术语映射包。
+     */
     public PageResponse<TermMappingPackage> pagePackages(PageRequest request, PackageFilter filter) {
         String tenantId = requireCurrentTenant();
         String status = name(filter.status());
@@ -129,6 +154,12 @@ public class TerminologyService {
         ), request, total);
     }
 
+    /**
+     * 确认候选映射并升级为 CONFIRMED 状态的正式 {@link TermMapping}。
+     *
+     * <p>候选必须存在且为 PENDING；本地与标准术语分类不一致拒绝。
+     * 同 (localTermId, standardTermId) 已存在映射则原地更新，否则新增；最后把候选标记为 CONFIRMED。
+     */
     @Transactional
     public TermMapping confirmCandidate(Long candidateId, ConfirmMappingRequest request) {
         String tenantId = requireCurrentTenant();
@@ -163,6 +194,9 @@ public class TerminologyService {
         return saved;
     }
 
+    /**
+     * 处置指定冲突记录；冲突当前必须处于 OPEN 状态，处置后置为 RESOLVED。
+     */
     @Transactional
     public MappingConflict resolveConflict(Long conflictId, ResolveConflictRequest request) {
         String tenantId = requireCurrentTenant();
@@ -174,6 +208,11 @@ public class TerminologyService {
         return conflictRepository.save(conflict.resolved(request.resolutionNote(), currentUserId(), Instant.now()));
     }
 
+    /**
+     * 基于当前租户 + 范围内所有 CONFIRMED 映射构建一个新的 DRAFT 状态术语映射包。
+     *
+     * <p>范围内若无任何已确认映射则抛冲突错误；包条目逐条以快照形式落 {@code term_mapping_package_item}。
+     */
     @Transactional
     public TermMappingPackage buildPackage(BuildTerminologyPackageRequest request) {
         String tenantId = requireCurrentTenant();
@@ -198,6 +237,12 @@ public class TerminologyService {
         return saved;
     }
 
+    /**
+     * 把指定术语映射包升级为 GRAY 或 PUBLISHED；ROLLED_BACK / ARCHIVED 状态拒绝发布。
+     *
+     * <p>FULL 模式发布时把同 (packageCode + scope) 下旧 PUBLISHED/GRAY 包置为 SUPERSEDED；
+     * 同步写入一条 PUBLISH 发布事件流水。
+     */
     @Transactional
     public TermMappingPackage publishPackage(Long packageId, PublishTerminologyPackageRequest request) {
         String tenantId = requireCurrentTenant();
@@ -228,6 +273,12 @@ public class TerminologyService {
         return saved;
     }
 
+    /**
+     * 把当前 PUBLISHED/GRAY 的映射包回滚到指定历史版本，同时写一条 ROLLBACK 事件流水。
+     *
+     * <p>目标包必须与当前包同 (packageCode + scope)，且处于 PUBLISHED 或 SUPERSEDED 状态。
+     * 操作后当前包置 ROLLED_BACK，目标包重新置 PUBLISHED。
+     */
     @Transactional
     public TermMappingPackage rollbackPackage(Long packageId, RollbackTerminologyPackageRequest request) {
         String tenantId = requireCurrentTenant();

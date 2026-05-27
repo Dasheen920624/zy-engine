@@ -6,6 +6,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 术语映射包版本（含 DRAFT / GRAY / PUBLISHED / SUPERSEDED / ROLLED_BACK / ARCHIVED 生命周期）。
+ *
+ * <p>把已确认 {@link TermMapping} 按租户 + package_code + scope 打包发布到指定组织作用域；
+ * 业务键 (tenant_id, package_code, package_version, scope_level, scope_code) 唯一。
+ * 全量发布会把同作用域旧 PUBLISHED 包置为 SUPERSEDED；回滚把当前置 ROLLED_BACK 并重新激活目标包。
+ */
 @Table("term_mapping_package")
 public record TermMappingPackage(
     @Id Long id,
