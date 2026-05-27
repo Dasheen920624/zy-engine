@@ -165,4 +165,23 @@ class DefaultPermissionPolicyTest {
                 .doesNotContain(PermissionCode.EVENT_WRITE);
         }
     }
+
+    @Test
+    void evaluationClosedLoopHasSeparatedPermissions() {
+        assertThat(DefaultPermissionPolicy.permissionsOf(RoleCode.QA_MANAGER))
+            .contains(
+                PermissionCode.EVALUATION_EXECUTE,
+                PermissionCode.EVALUATION_REMEDIATE,
+                PermissionCode.EVALUATION_REVIEW);
+        assertThat(DefaultPermissionPolicy.permissionsOf(RoleCode.IT_OPS))
+            .contains(PermissionCode.EVALUATION_EXECUTE)
+            .doesNotContain(PermissionCode.EVALUATION_REVIEW);
+        assertThat(DefaultPermissionPolicy.permissionsOf(RoleCode.DEPT_HEAD))
+            .contains(PermissionCode.EVALUATION_REMEDIATE)
+            .doesNotContain(PermissionCode.EVALUATION_REVIEW);
+        assertThat(DefaultPermissionPolicy.permissionsOf(RoleCode.DOCTOR))
+            .doesNotContain(
+                PermissionCode.EVALUATION_REMEDIATE,
+                PermissionCode.EVALUATION_REVIEW);
+    }
 }

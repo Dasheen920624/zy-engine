@@ -78,6 +78,14 @@ public enum ErrorCode {
     ENG_REC_004("ENG-REC-004", 409, "推荐卡当前状态不允许反馈", ErrorClass.DATA, false),
     ENG_REC_005("ENG-REC-005", 400, "推荐来源解释不完整", ErrorClass.INPUT, false),
     ENG_REC_006("ENG-REC-006", 409, "高风险推荐缺少医师确认门禁", ErrorClass.DATA, false),
+
+    ENG_EVAL_001("ENG-EVAL-001", 400, "评估指标或运行请求校验失败", ErrorClass.INPUT, false),
+    ENG_EVAL_002("ENG-EVAL-002", 404, "评估指标不存在", ErrorClass.DATA, false),
+    ENG_EVAL_003("ENG-EVAL-003", 409, "当前指标状态不允许该操作", ErrorClass.DATA, false),
+    ENG_EVAL_004("ENG-EVAL-004", 409, "评估运行引用了未激活指标", ErrorClass.DATA, false),
+    ENG_EVAL_005("ENG-EVAL-005", 404, "质控问题或整改任务不存在", ErrorClass.DATA, false),
+    ENG_EVAL_006("ENG-EVAL-006", 400, "高风险质控问题缺少责任、期限或证据", ErrorClass.INPUT, false),
+    ENG_EVAL_007("ENG-EVAL-007", 409, "整改或复核状态冲突", ErrorClass.DATA, false),
     ;
 
     private final String code;

@@ -458,6 +458,8 @@ class MigrationBaselineContractTest {
         assertThat(h2).contains("numerator_definition");
         assertThat(h2).contains("evidence_summary");
         assertThat(h2).contains("responsible_department_id");
+        assertThat(h2).contains("assignee_user_id");
+        assertThat(h2).contains("comment");
         assertThat(h2).contains("ck_eval_indicator_status");
         assertThat(h2).contains("ck_quality_finding_severity");
         assertThat(h2).contains("idx_rect_task_department_status");

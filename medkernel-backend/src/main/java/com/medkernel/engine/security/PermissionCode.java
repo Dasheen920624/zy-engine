@@ -78,7 +78,10 @@ public enum PermissionCode {
     SYSTEM_MANAGE("system.manage", Risk.HIGH, "运维操作（重启、密钥轮换、降级开关）"),
 
     // ─── 追加权限（保持已发布枚举顺序稳定）──────────────────────────
-    RECOMMENDATION_WRITE("recommendation.write", Risk.MEDIUM, "创建推荐触发和候选提醒事实");
+    RECOMMENDATION_WRITE("recommendation.write", Risk.MEDIUM, "创建推荐触发和候选提醒事实"),
+    EVALUATION_EXECUTE("evaluation.execute", Risk.MEDIUM, "接收评估运行和结果事实"),
+    EVALUATION_REMEDIATE("evaluation.remediate", Risk.MEDIUM, "提交质控问题整改证据"),
+    EVALUATION_REVIEW("evaluation.review", Risk.HIGH, "复核质控整改并关闭问题");
 
     private final String code;
     private final Risk risk;

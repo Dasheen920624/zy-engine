@@ -205,4 +205,37 @@ class ErrorCodeTest {
             assertThat(code.retryable()).isFalse();
         });
     }
+
+    @Test
+    void evaluationQualityErrorCodesAreRegistered() {
+        assertThat(ErrorCode.fromCode("ENG-EVAL-001")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(400);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INPUT);
+            assertThat(code.retryable()).isFalse();
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVAL-002")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(404);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVAL-003")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVAL-004")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVAL-005")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(404);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVAL-006")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(400);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.INPUT);
+        });
+        assertThat(ErrorCode.fromCode("ENG-EVAL-007")).hasValueSatisfying(code -> {
+            assertThat(code.httpStatus()).isEqualTo(409);
+            assertThat(code.errorClass()).isEqualTo(ErrorClass.DATA);
+        });
+    }
 }
