@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS rectification_task (
     CONSTRAINT ck_rect_task_status CHECK (status IN ('ASSIGNED','SUBMITTED','RETURNED','CLOSED','WAIVED'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_rect_task_finding           ON rectification_task (tenant_id, finding_id);
+CREATE INDEX IF NOT EXISTS idx_rect_task_finding           ON rectification_task (tenant_id, finding_id, status);
 CREATE INDEX IF NOT EXISTS idx_rect_task_department_status ON rectification_task (tenant_id, responsible_department_id, status, due_at);
 
 CREATE TABLE IF NOT EXISTS rectification_review (

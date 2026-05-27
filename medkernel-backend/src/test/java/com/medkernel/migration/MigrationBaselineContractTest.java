@@ -476,6 +476,17 @@ class MigrationBaselineContractTest {
         }
     }
 
+    @Test
+    void v14RectificationLookupIndexMustNotDuplicateUniqueFindingKey() {
+        for (String dialect : DIALECTS) {
+            String ddl = readMigration(dialect, "V14__evaluation_quality_api.sql");
+            assertThat(ddl)
+                .as("%s 整改任务查询索引必须覆盖状态，避免与唯一键重复", dialect)
+                .containsPattern("idx_rect_task_finding\\s+ON\\s+rectification_task\\s*"
+                    + "\\(tenant_id,\\s*finding_id,\\s*status\\)");
+        }
+    }
+
     private List<String> migrationFiles(String dialect) throws IOException {
         try (var files = Files.list(migrationPath(dialect))) {
             return files.map(path -> path.getFileName().toString())
