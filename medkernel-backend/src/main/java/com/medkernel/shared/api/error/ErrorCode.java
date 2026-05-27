@@ -93,6 +93,12 @@ public enum ErrorCode {
     ENG_PACKAGE_003("ENG-PACKAGE-003", 400, "无效的发布灰度范围或发布策略", ErrorClass.INPUT, false),
     ENG_PACKAGE_004("ENG-PACKAGE-004", 409, "包发布门禁校验失败", ErrorClass.DATA, false),
     ENG_PACKAGE_005("ENG-PACKAGE-005", 500, "投影目标同步部分或全部失败", ErrorClass.EXTERNAL, true),
+    
+    ENG_FOLLOW_001("ENG-FOLLOW-001", 400, "随访计划生成请求无效", ErrorClass.INPUT, false),
+    ENG_FOLLOW_002("ENG-FOLLOW-002", 404, "随访计划不存在", ErrorClass.DATA, false),
+    ENG_FOLLOW_003("ENG-FOLLOW-003", 404, "随访任务不存在", ErrorClass.DATA, false),
+    ENG_FOLLOW_004("ENG-FOLLOW-004", 409, "当前随访状态不允许该操作", ErrorClass.DATA, false),
+    ENG_FOLLOW_005("ENG-FOLLOW-005", 500, "随访异常事件上报失败", ErrorClass.INTERNAL, false),
     ;
 
     private final String code;

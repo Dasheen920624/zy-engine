@@ -41,7 +41,8 @@ class MigrationBaselineContractTest {
         "V12__pathway_engine_api.sql",
         "V13__recommendation_cdss_api.sql",
         "V14__evaluation_quality_api.sql",
-        "V15__package_release_baseline.sql"
+        "V15__package_release_baseline.sql",
+        "V16__followup_engine_api.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -59,7 +60,8 @@ class MigrationBaselineContractTest {
         "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal",
         "evaluation_indicator", "evaluation_run", "evaluation_result", "quality_finding",
         "rectification_task", "rectification_review", "evaluation_idempotency_key",
-        "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log"
+        "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log",
+        "followup_plan", "followup_task", "followup_questionnaire", "followup_event"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -112,7 +114,11 @@ class MigrationBaselineContractTest {
         "idx_rect_task_finding", "idx_rect_task_department_status",
         "idx_rect_review_finding", "idx_eval_idempotency_resource",
         "idx_knowledge_pkg_tenant_status", "idx_package_item_pkg",
-        "idx_release_plan_pkg", "idx_sync_target_tenant", "idx_sync_log_plan"
+        "idx_release_plan_pkg", "idx_sync_target_tenant", "idx_sync_log_plan",
+        "idx_followup_plan_tenant_patient", "idx_followup_plan_status",
+        "idx_followup_task_tenant_plan", "idx_followup_task_due_date",
+        "idx_followup_questionnaire_task", "idx_followup_event_plan",
+        "idx_followup_event_type"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -174,7 +180,9 @@ class MigrationBaselineContractTest {
         "uk_package_item_id", "uk_package_item_tenant_asset", "ck_package_item_asset_type",
         "uk_release_plan_id", "ck_release_plan_strategy", "ck_release_plan_scope_type", "ck_release_plan_status",
         "uk_sync_target_id", "ck_sync_target_type", "ck_sync_target_status",
-        "uk_sync_log_id", "ck_sync_log_status"
+        "uk_sync_log_id", "ck_sync_log_status",
+        "uk_followup_plan_id", "uk_followup_task_id",
+        "uk_followup_questionnaire_id", "uk_followup_event_id"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -191,7 +199,8 @@ class MigrationBaselineContractTest {
         "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal",
         "evaluation_indicator", "evaluation_run", "evaluation_result", "quality_finding",
         "rectification_task", "rectification_review", "evaluation_idempotency_key",
-        "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log"
+        "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log",
+        "followup_plan", "followup_task", "followup_questionnaire", "followup_event"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -204,7 +213,8 @@ class MigrationBaselineContractTest {
         "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal",
         "evaluation_indicator", "evaluation_run", "evaluation_result", "quality_finding",
         "rectification_task", "rectification_review",
-        "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log"
+        "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log",
+        "followup_plan", "followup_task", "followup_questionnaire", "followup_event"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
@@ -258,7 +268,10 @@ class MigrationBaselineContractTest {
         Map.entry("package_item", Set.of("asset_type")),
         Map.entry("release_plan", Set.of("strategy", "scope_type", "status")),
         Map.entry("sync_target", Set.of("target_type", "status")),
-        Map.entry("sync_log", Set.of("status"))
+        Map.entry("sync_log", Set.of("status")),
+        Map.entry("followup_plan", Set.of("status")),
+        Map.entry("followup_task", Set.of("status")),
+        Map.entry("followup_questionnaire", Set.of("status"))
     );
 
     private static final Pattern TABLE_PATTERN =
