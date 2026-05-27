@@ -7,6 +7,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 评估结果实体。
+ *
+ * <p>保存一次评估运行中某个对象对指定指标版本的判定、得分、命中标记、证据摘要和责任科室。
+ */
 @Table("evaluation_result")
 public record EvaluationResult(
     @Id Long id,

@@ -25,6 +25,19 @@ import com.medkernel.shared.observability.StateTransitionRecorder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 评估质控应用服务（GA-ENG-API-08 指标配置 + 运行事实 + 问题整改闭环）。
+ *
+ * <p>聚合评估指标、运行、结果、质控问题、整改任务、复核记录与幂等键七类数据，承担：
+ * <ul>
+ *   <li>指标草稿创建、提交审核、发布、激活与旧版下线；</li>
+ *   <li>接收人工抽检、上游结果或批量导入的评估运行事实；</li>
+ *   <li>记录评估结果、质控问题和 P0/P1 等高风险问题的整改任务；</li>
+ *   <li>处理整改提交、复核关闭、退回和豁免，并支持 {@code Idempotency-Key} 幂等重放；</li>
+ *   <li>按运行 ID 装配可解释诊断响应。</li>
+ * </ul>
+ * 所有读写均按当前租户隔离，写动作发布审计事件并记录状态迁移。
+ */
 @Service
 public class EvaluationEngineService {
 
@@ -44,6 +57,9 @@ public class EvaluationEngineService {
     private final StateTransitionRecorder transitions;
     private final DiagnoseResponseAssembler diagnoseAssembler;
 
+    /**
+     * 注入评估质控闭环所需仓库、审计发布器、状态记录器与诊断装配器。
+     */
     public EvaluationEngineService(
             EvaluationIndicatorRepository indicators,
             EvaluationRunRepository runs,
@@ -67,6 +83,12 @@ public class EvaluationEngineService {
         this.diagnoseAssembler = diagnoseAssembler;
     }
 
+    /**
+     * 创建评估指标草稿版本。
+     *
+     * <p>前置：请求必须包含指标编码、版本号、名称、对象类型、分母、分子、时间窗、组织范围、
+     * 责任科室和来源引用；失败抛出 {@code ENG-EVAL-001}。
+     */
     @Transactional
     public EvaluationIndicator createIndicator(EvaluationIndicatorCreateRequest request) {
         validateIndicator(request);
@@ -86,6 +108,11 @@ public class EvaluationEngineService {
         return indicator;
     }
 
+    /**
+     * 按可选状态、对象类型和指标编码过滤分页查询指标版本。
+     *
+     * <p>过滤条件为 {@code null} 时不进入 SQL；分页总数与行集分别由仓库 count/page 查询提供。
+     */
     @Transactional(readOnly = true)
     public PageResponse<EvaluationIndicator> listIndicators(
             EvaluationIndicatorFilter filter, PageRequest pageRequest) {
@@ -101,11 +128,21 @@ public class EvaluationEngineService {
         return PageResponse.of(rows, req, total);
     }
 
+    /**
+     * 查看指定评估指标版本。
+     *
+     * <p>失败：指标不存在抛出 {@code ENG-EVAL-002}。
+     */
     @Transactional(readOnly = true)
     public EvaluationIndicator indicatorDetail(String indicatorId) {
         return findIndicator(indicatorId);
     }
 
+    /**
+     * 将指标从 {@code DRAFT} 推进到 {@code PENDING_REVIEW}。
+     *
+     * <p>状态不匹配时抛出 {@code ENG-EVAL-003}；成功后记录状态迁移和审核审计事件。
+     */
     @Transactional
     public EvaluationIndicator submitIndicator(String indicatorId) {
         EvaluationIndicator indicator = findIndicator(indicatorId);
@@ -119,6 +156,11 @@ public class EvaluationEngineService {
         return saved;
     }
 
+    /**
+     * 将待审核指标发布为 {@code PUBLISHED}。
+     *
+     * <p>仅 {@code PENDING_REVIEW} 可发布；发布时写入发布时间和发布人。
+     */
     @Transactional
     public EvaluationIndicator publishIndicator(String indicatorId) {
         EvaluationIndicator indicator = findIndicator(indicatorId);
@@ -133,6 +175,11 @@ public class EvaluationEngineService {
         return saved;
     }
 
+    /**
+     * 激活已发布指标，并将同租户同编码旧 {@code ACTIVE} 版本下线。
+     *
+     * <p>用于保证新评估运行只绑定当前生效指标版本，历史结果仍保留原版本快照。
+     */
     @Transactional
     public EvaluationIndicator activateIndicator(String indicatorId) {
         EvaluationIndicator indicator = findIndicator(indicatorId);
@@ -153,6 +200,12 @@ public class EvaluationEngineService {
         return active;
     }
 
+    /**
+     * 接收一次评估运行事实，持久化运行、结果、问题与必要整改任务。
+     *
+     * <p>前置：运行必须具备可追溯上下文或人工抽检来源；每条结果必须绑定当前租户的 {@code ACTIVE} 指标；
+     * P0/P1 问题必须带责任科室和整改期限，否则抛出 {@code ENG-EVAL-006}。
+     */
     @Transactional
     public EvaluationRunResponse run(EvaluationRunRequest request) {
         validateRun(request);
@@ -221,6 +274,9 @@ public class EvaluationEngineService {
             runId, savedRun.status(), request.results().size(), findingCount, taskCount, traceId);
     }
 
+    /**
+     * 按指标编码、结果等级和责任科室分页查询评估结果。
+     */
     @Transactional(readOnly = true)
     public PageResponse<EvaluationResult> listResults(EvaluationResultFilter filter, PageRequest pageRequest) {
         PageRequest req = pageRequest == null ? PageRequest.defaults() : pageRequest;
@@ -232,6 +288,9 @@ public class EvaluationEngineService {
         return PageResponse.of(rows, req, total);
     }
 
+    /**
+     * 按严重度、状态和责任科室分页查询质控问题。
+     */
     @Transactional(readOnly = true)
     public PageResponse<QualityFinding> listFindings(QualityFindingFilter filter, PageRequest pageRequest) {
         PageRequest req = pageRequest == null ? PageRequest.defaults() : pageRequest;
@@ -244,6 +303,11 @@ public class EvaluationEngineService {
         return PageResponse.of(rows, req, total);
     }
 
+    /**
+     * 查看质控问题、当前整改任务和全部复核历史。
+     *
+     * <p>失败：问题不存在抛出 {@code ENG-EVAL-005}。
+     */
     @Transactional(readOnly = true)
     public QualityFindingDetailResponse findingDetail(String findingId) {
         QualityFinding finding = findFinding(findingId);
@@ -253,11 +317,19 @@ public class EvaluationEngineService {
             reviews.findByFindingIdAndTenantIdOrderByReviewedAtAsc(findingId, tenantId()));
     }
 
+    /**
+     * 提交整改说明和证据引用，不启用幂等键。
+     */
     @Transactional
     public RectificationResponse submitRectification(String findingId, RectificationSubmitRequest request) {
         return submitRectification(findingId, request, null);
     }
 
+    /**
+     * 提交整改说明和证据引用，并按可选幂等键重放首次成功结果。
+     *
+     * <p>仅 {@code ASSIGNED}/{@code RETURNED} 整改任务可提交；同键异文抛出 {@code ENG-EVAL-008}。
+     */
     @Transactional
     public RectificationResponse submitRectification(
             String findingId, RectificationSubmitRequest request, String idempotencyKey) {
@@ -298,11 +370,19 @@ public class EvaluationEngineService {
         return new RectificationResponse(task.taskId(), remediating.status(), submitted.status(), traceId);
     }
 
+    /**
+     * 提交整改复核结论，不启用幂等键。
+     */
     @Transactional
     public RectificationReviewResponse reviewRectification(String findingId, RectificationReviewRequest request) {
         return reviewRectification(findingId, request, null);
     }
 
+    /**
+     * 提交整改复核结论，并按可选幂等键重放首次成功结果。
+     *
+     * <p>仅已提交整改且问题处于 {@code REMEDIATING} 时可复核；{@code P0} 问题不得通过普通复核豁免。
+     */
     @Transactional
     public RectificationReviewResponse reviewRectification(
             String findingId, RectificationReviewRequest request, String idempotencyKey) {
@@ -370,6 +450,11 @@ public class EvaluationEngineService {
         return new RectificationReviewResponse(reviewId, reviewedFinding.status(), reviewedTask.status(), traceId);
     }
 
+    /**
+     * 按运行 ID 装配可解释诊断响应。
+     *
+     * <p>诊断响应包含运行快照、关联结果 ID、问题 ID、整改任务 ID 与 traceId；运行不存在抛出 {@code ENG-EVAL-001}。
+     */
     @Transactional(readOnly = true)
     public DiagnoseResponse diagnose(String runId) {
         EvaluationRun run = runs.findByRunIdAndTenantId(runId, tenantId())
