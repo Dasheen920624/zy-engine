@@ -6,6 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 评估闭环幂等键实体。
+ *
+ * <p>保存整改提交或复核请求的幂等键、请求摘要和首次成功响应状态，用于网络重试时重放结果并拒绝同键异文。
+ */
 @Table("evaluation_idempotency_key")
 public record EvaluationIdempotencyKey(
     @Id Long id,

@@ -6,6 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 整改复核记录实体。
+ *
+ * <p>保存复核结论、复核意见、证据引用和复核人；记录追加留痕，不覆写历史复核意见。
+ */
 @Table("rectification_review")
 public record RectificationReview(
     @Id Long id,

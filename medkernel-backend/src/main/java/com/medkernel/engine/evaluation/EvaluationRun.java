@@ -6,6 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 评估运行实体。
+ *
+ * <p>表示一次人工抽检、上游结果或批量导入的受控事实入库批次，保存来源、上下文引用、输入摘要和运行状态。
+ */
 @Table("evaluation_run")
 public record EvaluationRun(
     @Id Long id,

@@ -6,6 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 质控问题实体。
+ *
+ * <p>保存评估结果中需要处置的问题事实、风险分级、证据摘要、责任科室、整改期限和闭环状态。
+ */
 @Table("quality_finding")
 public record QualityFinding(
     @Id Long id,
