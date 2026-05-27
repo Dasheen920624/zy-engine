@@ -55,7 +55,7 @@
 | GA-ENG-API-02 临床事件 API：同步、异步、批量、回放、重试、死信、回调 | codex | done |
 | GA-ENG-API-03 知识资产 API：来源、解析、引用、版本、审核、替换、历史重放、分页、筛选、搜索、异步导出 | claude | done |
 | GA-ENG-API-04 字典映射 API：标准字典、院内字典、候选映射、冲突、发布 | codex | done |
-| GA-ENG-API-05 规则引擎 API：定义、测试、影响分析、发布、执行、解释 | - | pending |
+| GA-ENG-API-05 规则引擎 API：定义、测试、影响分析、发布、执行、解释 | codex | done |
 | GA-ENG-API-06 路径引擎 API：模板、专病包、患者路径、节点推进、变异、关键时钟 | - | pending |
 | GA-ENG-API-07 推荐/CDSS API：触发、推荐卡、来源解释、医师反馈、疲劳治理输入 | - | pending |
 | GA-ENG-API-08 评估质控 API：指标、运行、结果、问题、整改、复核 | - | pending |

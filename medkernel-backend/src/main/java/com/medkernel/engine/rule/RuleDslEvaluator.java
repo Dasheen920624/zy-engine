@@ -83,10 +83,10 @@ public class RuleDslEvaluator {
             case "equals" -> exists(actual) && valuesEqual(actual, expected);
             case "not_equals" -> !exists(actual) || !valuesEqual(actual, expected);
             case "contains" -> contains(actual, expected);
-            case "gt" -> compare(actual, expected) > 0;
-            case "gte" -> compare(actual, expected) >= 0;
-            case "lt" -> compare(actual, expected) < 0;
-            case "lte" -> compare(actual, expected) <= 0;
+            case "gt" -> compare(actual, expected, "gt");
+            case "gte" -> compare(actual, expected, "gte");
+            case "lt" -> compare(actual, expected, "lt");
+            case "lte" -> compare(actual, expected, "lte");
             case "in" -> in(actual, expected);
             case "not_in" -> !in(actual, expected);
             default -> throw invalid("不支持的规则算子: " + operator);
@@ -180,13 +180,20 @@ public class RuleDslEvaluator {
         return false;
     }
 
-    private int compare(JsonNode actual, JsonNode expected) {
+    private boolean compare(JsonNode actual, JsonNode expected, String operator) {
         if (!exists(actual) || expected == null || !actual.isNumber() || !expected.isNumber()) {
-            return -1;
+            return false;
         }
         BigDecimal left = actual.decimalValue();
         BigDecimal right = expected.decimalValue();
-        return left.compareTo(right);
+        int compared = left.compareTo(right);
+        return switch (operator) {
+            case "gt" -> compared > 0;
+            case "gte" -> compared >= 0;
+            case "lt" -> compared < 0;
+            case "lte" -> compared <= 0;
+            default -> throw invalid("不支持的数值比较算子: " + operator);
+        };
     }
 
     private String requiredText(JsonNode node, String field) {

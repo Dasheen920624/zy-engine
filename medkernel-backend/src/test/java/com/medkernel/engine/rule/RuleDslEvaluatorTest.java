@@ -98,6 +98,23 @@ class RuleDslEvaluatorTest {
     }
 
     @Test
+    void missingNumericFieldDoesNotMatchLessThanComparison() throws Exception {
+        RuleDslEvaluation result = evaluator.evaluate(read("""
+            {
+              "trigger": "ORDER_SIGN",
+              "when": {"all": [{"fact": "patient.age", "operator": "lt", "value": 18}]},
+              "then": [{"actionCode": "PROMPT", "severity": "LOW", "message": "年龄提醒"}],
+              "explain": {"title": "年龄提醒", "reason": "年龄低于阈值"}
+            }
+            """), read("""
+            {"patient": {"gender": "F"}}
+            """));
+
+        assertThat(result.hit()).isFalse();
+        assertThat(result.actions()).isEmpty();
+    }
+
+    @Test
     void unsupportedOperatorIsRuleDslValidationError() throws Exception {
         JsonNode dsl = read("""
             {
