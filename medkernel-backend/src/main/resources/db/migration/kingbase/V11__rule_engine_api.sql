@@ -1,0 +1,113 @@
+-- MedKernel v1.0 GA · GA-ENG-API-05 规则引擎 API（人大金仓）
+
+CREATE TABLE IF NOT EXISTS rule_definition (
+    id                      BIGSERIAL PRIMARY KEY,
+    rule_id                 VARCHAR(64)  NOT NULL,
+    tenant_id               VARCHAR(64)  NOT NULL,
+    rule_code               VARCHAR(128) NOT NULL,
+    name                    VARCHAR(256) NOT NULL,
+    rule_type               VARCHAR(32)  NOT NULL,
+    authoring_mode          VARCHAR(32)  NOT NULL DEFAULT 'DSL',
+    risk_level              VARCHAR(16)  NOT NULL DEFAULT 'MEDIUM',
+    status                  VARCHAR(32)  NOT NULL DEFAULT 'DRAFT',
+    active_version_id       VARCHAR(64)  NULL,
+    package_version         VARCHAR(64)  NULL,
+    applicable_org_unit_id  VARCHAR(64)  NULL,
+    created_at              TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_by              VARCHAR(64)  NOT NULL DEFAULT 'system',
+    updated_at              TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_by              VARCHAR(64)  NOT NULL DEFAULT 'system',
+    trace_id                VARCHAR(128) NULL,
+    CONSTRAINT uk_rule_definition_tenant_code UNIQUE (tenant_id, rule_code),
+    CONSTRAINT ck_rule_definition_type CHECK (rule_type IN (
+        'DIAGNOSIS','ORDER','LAB','REPORT','DISCHARGE','FOLLOWUP',
+        'INSURANCE','QUALITY','RECORD','PATHWAY'
+    )),
+    CONSTRAINT ck_rule_definition_mode CHECK (authoring_mode IN ('TEMPLATE','VISUAL','DSL')),
+    CONSTRAINT ck_rule_definition_risk CHECK (risk_level IN ('LOW','MEDIUM','HIGH','CRITICAL')),
+    CONSTRAINT ck_rule_definition_status CHECK (status IN ('DRAFT','PUBLISHED','OFFLINE','ARCHIVED'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_rule_definition_tenant_status ON rule_definition (tenant_id, status, updated_at);
+CREATE INDEX IF NOT EXISTS idx_rule_definition_type_risk     ON rule_definition (tenant_id, rule_type, risk_level);
+
+CREATE TABLE IF NOT EXISTS rule_version (
+    id                  BIGSERIAL PRIMARY KEY,
+    version_id          VARCHAR(64)  NOT NULL,
+    tenant_id           VARCHAR(64)  NOT NULL,
+    rule_id             VARCHAR(64)  NOT NULL,
+    version_no          INT          NOT NULL,
+    source_ref          VARCHAR(512) NOT NULL,
+    change_summary      VARCHAR(512) NULL,
+    dsl_json            TEXT         NOT NULL,
+    explanation_json    TEXT         NULL,
+    status              VARCHAR(32)  NOT NULL DEFAULT 'DRAFT',
+    published_at        TIMESTAMPTZ  NULL,
+    published_by        VARCHAR(64)  NULL,
+    rollback_version_id VARCHAR(64)  NULL,
+    created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_by          VARCHAR(64)  NOT NULL DEFAULT 'system',
+    updated_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_by          VARCHAR(64)  NOT NULL DEFAULT 'system',
+    trace_id            VARCHAR(128) NULL,
+    CONSTRAINT uk_rule_version_rule_no UNIQUE (tenant_id, rule_id, version_no),
+    CONSTRAINT ck_rule_version_status CHECK (status IN ('DRAFT','PUBLISHED','OFFLINE','ARCHIVED'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_rule_version_rule_status ON rule_version (tenant_id, rule_id, status);
+
+CREATE TABLE IF NOT EXISTS rule_test_case (
+    id                   BIGSERIAL PRIMARY KEY,
+    case_id              VARCHAR(64)  NOT NULL,
+    tenant_id            VARCHAR(64)  NOT NULL,
+    rule_id              VARCHAR(64)  NOT NULL,
+    version_id           VARCHAR(64)  NOT NULL,
+    case_type            VARCHAR(32)  NOT NULL,
+    input_payload        TEXT         NOT NULL,
+    expected_hit         BOOLEAN      NOT NULL,
+    expected_severity    VARCHAR(16)  NULL,
+    expected_action_code VARCHAR(64)  NULL,
+    last_hit             BOOLEAN      NULL,
+    last_status          VARCHAR(32)  NULL,
+    last_message         VARCHAR(512) NULL,
+    last_run_at          TIMESTAMPTZ  NULL,
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_by           VARCHAR(64)  NOT NULL DEFAULT 'system',
+    updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_by           VARCHAR(64)  NOT NULL DEFAULT 'system',
+    trace_id             VARCHAR(128) NULL,
+    CONSTRAINT uk_rule_test_case_id UNIQUE (case_id),
+    CONSTRAINT ck_rule_test_case_type CHECK (case_type IN ('POSITIVE','NEGATIVE','BOUNDARY','CONFLICT')),
+    CONSTRAINT ck_rule_test_case_status CHECK (last_status IS NULL OR last_status IN ('NOT_RUN','PASS','FAIL','ERROR'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_rule_test_case_version_type ON rule_test_case (tenant_id, version_id, case_type);
+
+CREATE TABLE IF NOT EXISTS rule_execution_log (
+    id               BIGSERIAL PRIMARY KEY,
+    execution_id     VARCHAR(64)  NOT NULL,
+    tenant_id        VARCHAR(64)  NOT NULL,
+    rule_id          VARCHAR(64)  NOT NULL,
+    version_id       VARCHAR(64)  NOT NULL,
+    trigger_point    VARCHAR(64)  NOT NULL,
+    event_id         VARCHAR(64)  NULL,
+    actor_user_id    VARCHAR(64)  NULL,
+    input_digest     VARCHAR(128) NOT NULL,
+    hit              BOOLEAN      NOT NULL,
+    severity         VARCHAR(16)  NULL,
+    actions_json     TEXT         NULL,
+    explanation_json TEXT         NULL,
+    status           VARCHAR(32)  NOT NULL DEFAULT 'SUCCESS',
+    error_code       VARCHAR(64)  NULL,
+    error_class      VARCHAR(32)  NULL,
+    executed_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    trace_id         VARCHAR(128) NULL,
+    CONSTRAINT uk_rule_execution_id UNIQUE (execution_id),
+    CONSTRAINT ck_rule_execution_status CHECK (status IN ('SUCCESS','MISS','FAILED')),
+    CONSTRAINT ck_rule_execution_severity CHECK (severity IS NULL OR severity IN ('LOW','MEDIUM','HIGH','CRITICAL'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_rule_execution_tenant_time ON rule_execution_log (tenant_id, executed_at);
+CREATE INDEX IF NOT EXISTS idx_rule_execution_rule_time   ON rule_execution_log (tenant_id, rule_id, executed_at);
+CREATE INDEX IF NOT EXISTS idx_rule_execution_trigger     ON rule_execution_log (tenant_id, trigger_point, executed_at);

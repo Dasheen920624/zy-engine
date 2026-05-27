@@ -85,12 +85,12 @@ class FlywayMultiDialectSmokeTest {
 
         var result = flyway.migrate();
         assertThat(result.success).as("%s migrate success", vendorName).isTrue();
-        assertThat(result.migrationsExecuted).as("%s 十个基线迁移执行", vendorName).isEqualTo(10);
+        assertThat(result.migrationsExecuted).as("%s 十一个基线迁移执行", vendorName).isEqualTo(11);
 
         MigrationInfo[] applied = flyway.info().applied();
         assertThat(applied).extracting(info -> info.getVersion().getVersion())
             .as("%s 完整迁移版本序列", vendorName)
-            .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+            .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
     }
 
     private DataSource buildHikari(String jdbcUrl, String username, String password, String driver) {
