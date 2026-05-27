@@ -39,7 +39,7 @@ class ContextSnapshotServiceTest {
     private CanonicalResourceRepository resources;
     private ContextIdempotencyKeyRepository idemRepo;
     private ContextValidator validator;
-    private PackageVersionResolver versions;
+    private PackageVersionPort versions;
     private TerminologyMappingPort mapping;
     private AuditEventPublisher auditPublisher;
     private ContextSnapshotService service;
@@ -50,7 +50,7 @@ class ContextSnapshotServiceTest {
         resources = mock(CanonicalResourceRepository.class);
         idemRepo = mock(ContextIdempotencyKeyRepository.class);
         validator = new ContextValidator();
-        versions = new PackageVersionResolver();
+        versions = new LenientPackageVersionAdapter();
         mapping = mock(TerminologyMappingPort.class);
         auditPublisher = mock(AuditEventPublisher.class);
         when(mapping.evaluate(anyString(), any())).thenReturn(Map.of());

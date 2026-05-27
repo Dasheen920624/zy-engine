@@ -51,7 +51,7 @@ public class ContextSnapshotService {
     private final CanonicalResourceRepository resources;
     private final ContextIdempotencyKeyRepository idemRepo;
     private final ContextValidator validator;
-    private final PackageVersionResolver versions;
+    private final PackageVersionPort versions;
     private final TerminologyMappingPort mapping;
     private final AuditEventPublisher auditPublisher;
     private final ObjectMapper json;
@@ -60,7 +60,7 @@ public class ContextSnapshotService {
                                   CanonicalResourceRepository resources,
                                   ContextIdempotencyKeyRepository idemRepo,
                                   ContextValidator validator,
-                                  PackageVersionResolver versions,
+                                  PackageVersionPort versions,
                                   TerminologyMappingPort mapping,
                                   AuditEventPublisher auditPublisher,
                                   ObjectMapper json) {
