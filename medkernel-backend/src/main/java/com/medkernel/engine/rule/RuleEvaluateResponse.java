@@ -2,6 +2,9 @@ package com.medkernel.engine.rule;
 
 import java.util.List;
 
+/**
+ * 规则真实执行出参（GA-ENG-API-05）：汇总命中项、最高严重度与 traceId，供上游临床嵌入提示使用。
+ */
 public record RuleEvaluateResponse(
     String requestId,
     List<RuleEvaluationItem> items,

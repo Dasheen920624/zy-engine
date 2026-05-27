@@ -6,6 +6,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * 规则发布门禁测试用例实体（GA-ENG-API-05）。
+ *
+ * <p>记录用例输入快照、期望命中/严重度/动作码以及最近一次仿真结果；
+ * 发布要求阳性、阴性、边界、冲突四类用例齐备且全部 PASS，详见
+ * {@link RuleEngineService#publish}。
+ */
 @Table("rule_test_case")
 public record RuleTestCase(
     @Id Long id,

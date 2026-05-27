@@ -29,6 +29,20 @@ import com.medkernel.shared.observability.DiagnoseResponseAssembler;
 import com.medkernel.shared.observability.PayloadRef;
 import com.medkernel.shared.observability.StateTransitionRecorder;
 
+/**
+ * 规则引擎应用服务（GA-ENG-API-05 受控规则资产 + 确定性执行 + 可解释日志）。
+ *
+ * <p>聚合规则定义、版本、测试用例、执行日志四张表，承担：
+ * <ul>
+ *   <li>创建规则与初始草稿版本（DSL 校验失败抛 {@code ENG-RULE-001}）；</li>
+ *   <li>新增测试用例并校验状态（仅 {@code DRAFT} 可加）；</li>
+ *   <li>仿真执行：复用 {@link RuleDslEvaluator}，同步写 {@code rule_execution_log} 与状态历史；</li>
+ *   <li>发布门禁：要求阳性/阴性/边界/冲突四类用例齐备且全部 PASS，否则抛 {@code ENG-RULE-004}；</li>
+ *   <li>真实执行：按触发点匹配已发布规则集合，返回命中明细 + 最高严重度；</li>
+ *   <li>诊断：基于 {@code execution_id} 装配 {@link DiagnoseResponse}。</li>
+ * </ul>
+ * 所有写操作触发审计事件 {@link AuditEventPublisher} 与状态迁移记录 {@link StateTransitionRecorder}。
+ */
 @Service
 public class RuleEngineService {
 
@@ -48,6 +62,9 @@ public class RuleEngineService {
     private final DiagnoseResponseAssembler diagnoseAssembler;
     private final ObjectMapper json;
 
+    /**
+     * 注入规则引擎所需仓库、DSL 执行器、审计发布器、状态记录器与 JSON 处理器。
+     */
     public RuleEngineService(RuleDefinitionRepository definitions,
                              RuleVersionRepository versions,
                              RuleTestCaseRepository testCases,
@@ -68,6 +85,12 @@ public class RuleEngineService {
         this.json = json;
     }
 
+    /**
+     * 创建规则定义和初始草稿版本。
+     *
+     * <p>前置：当前请求必须携带租户上下文；DSL 必须包含 trigger/when/then/explain。
+     * 失败：DSL 校验失败抛 {@link ApiException} 错误码 {@code ENG-RULE-001}。
+     */
     @Transactional
     public RuleCreateResponse createRule(RuleCreateRequest request) {
         String tenantId = requireCurrentTenant();
@@ -96,6 +119,11 @@ public class RuleEngineService {
         return new RuleCreateResponse(ruleId, versionId, RuleDefinitionStatus.DRAFT, traceId);
     }
 
+    /**
+     * 装载规则当前版本与全部测试用例的聚合详情。
+     *
+     * <p>失败：规则不存在抛 {@code ENG-RULE-002}；版本不存在抛 {@code ENG-RULE-003}。
+     */
     @Transactional(readOnly = true)
     public RuleDetailResponse detail(String ruleId) {
         String tenantId = requireCurrentTenant();
@@ -105,6 +133,12 @@ public class RuleEngineService {
             rule, version, testCases.findByVersionIdAndTenantIdOrderByCreatedAtAsc(version.versionId(), tenantId));
     }
 
+    /**
+     * 按可选状态、类型、风险级别过滤分页查询规则定义。
+     *
+     * <p>过滤条件为 {@code null} 时不进入 SQL；总数与行集复用 {@link RuleDefinitionRepository#countByFilter}
+     * / {@link RuleDefinitionRepository#pageByFilter}。
+     */
     @Transactional(readOnly = true)
     public PageResponse<RuleDefinition> list(RuleFilter filter, PageRequest page) {
         String tenantId = requireCurrentTenant();
@@ -117,6 +151,12 @@ public class RuleEngineService {
         return PageResponse.of(rows, page, total);
     }
 
+    /**
+     * 为指定规则当前版本新增一条测试用例。
+     *
+     * <p>前置：规则必须处于 {@code DRAFT} 状态，否则抛 {@code ENG-RULE-006}；
+     * 失败：规则不存在抛 {@code ENG-RULE-002}。
+     */
     @Transactional
     public RuleTestCaseResponse addTestCase(String ruleId, RuleTestCaseRequest request) {
         String tenantId = requireCurrentTenant();
@@ -136,6 +176,12 @@ public class RuleEngineService {
         return new RuleTestCaseResponse(saved.caseId(), saved.caseType(), saved.lastStatus());
     }
 
+    /**
+     * 用指定上下文仿真执行规则当前版本，并写入执行日志与状态迁移。
+     *
+     * <p>触发点取自 DSL 的 {@code trigger}（缺省 {@code SIMULATE}）；
+     * 失败：规则/版本不存在抛 {@code ENG-RULE-002}/{@code ENG-RULE-003}。
+     */
     @Transactional
     public RuleEvaluationItem simulate(String ruleId, RuleSimulateRequest request) {
         String tenantId = requireCurrentTenant();
@@ -145,6 +191,12 @@ public class RuleEngineService {
         return evaluateAndLog(rule, version, request.context(), trigger, null);
     }
 
+    /**
+     * 执行规则发布门禁并把状态从 {@code DRAFT} 推进到 {@code PUBLISHED}。
+     *
+     * <p>门禁：阳性/阴性/边界/冲突四类用例必须齐备且全部 PASS，否则抛 {@code ENG-RULE-004}；
+     * 前置规则非草稿抛 {@code ENG-RULE-006}。
+     */
     @Transactional
     public RulePublishResponse publish(String ruleId) {
         String tenantId = requireCurrentTenant();
@@ -178,6 +230,12 @@ public class RuleEngineService {
             RequestContext.currentTraceId(), results);
     }
 
+    /**
+     * 按触发点和上下文执行候选已发布规则集合。
+     *
+     * <p>候选范围：请求未指定 {@code ruleIds} 时取全租户已发布规则，否则取指定规则；
+     * 仅 DSL 的 {@code trigger} 与请求 {@code triggerPoint} 匹配的版本参与评估。
+     */
     @Transactional
     public RuleEvaluateResponse evaluate(RuleEvaluateRequest request) {
         String tenantId = requireCurrentTenant();
@@ -199,6 +257,12 @@ public class RuleEngineService {
         return new RuleEvaluateResponse("eval-" + UUID.randomUUID(), items, highest, RequestContext.currentTraceId());
     }
 
+    /**
+     * 按执行 ID 装配可解释诊断响应。
+     *
+     * <p>失败：执行记录不存在抛 {@code ENG-RULE-002}；返回结构由
+     * {@link DiagnoseResponseAssembler} 统一组装（实体快照 + 状态历史 + 输入摘要 PayloadRef）。
+     */
     @Transactional(readOnly = true)
     public DiagnoseResponse diagnose(String executionId) {
         String tenantId = requireCurrentTenant();
