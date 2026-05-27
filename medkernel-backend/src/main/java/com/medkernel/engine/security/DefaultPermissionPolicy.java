@@ -45,6 +45,8 @@ import static com.medkernel.engine.security.PermissionCode.TENANT_WRITE;
 import static com.medkernel.engine.security.PermissionCode.TERM_PUBLISH;
 import static com.medkernel.engine.security.PermissionCode.TERM_READ;
 import static com.medkernel.engine.security.PermissionCode.TERM_WRITE;
+import static com.medkernel.engine.security.PermissionCode.FOLLOWUP_READ;
+import static com.medkernel.engine.security.PermissionCode.FOLLOWUP_WRITE;
 
 /**
  * MedKernel v1.0 GA · 默认角色 → 权限映射。
@@ -88,7 +90,8 @@ public final class DefaultPermissionPolicy {
             RECOMMENDATION_READ, RECOMMENDATION_WRITE,
             EVALUATION_EXECUTE,
             SYSTEM_READ, SYSTEM_MANAGE,
-            AUDIT_READ));
+            AUDIT_READ,
+            FOLLOWUP_READ, FOLLOWUP_WRITE));
 
         // 医务处：知识/规则/路径审核与发布 + 上下文只读
         map.put(RoleCode.MEDICAL_AFFAIRS, EnumSet.of(
@@ -100,7 +103,8 @@ public final class DefaultPermissionPolicy {
             CONTEXT_READ, EVENT_READ,
             EVALUATION_READ,
             RECOMMENDATION_READ, RECOMMENDATION_WRITE,
-            AUDIT_READ, AUDIT_EXPORT));
+            AUDIT_READ, AUDIT_EXPORT,
+            FOLLOWUP_READ, FOLLOWUP_WRITE));
 
         // 质控办：评估指标审核发布 + 质控发现 + 上下文只读
         map.put(RoleCode.QA_MANAGER, EnumSet.of(
@@ -112,7 +116,8 @@ public final class DefaultPermissionPolicy {
             PATHWAY_READ,
             CONTEXT_READ, EVENT_READ,
             RECOMMENDATION_READ,
-            AUDIT_READ, AUDIT_EXPORT));
+            AUDIT_READ, AUDIT_EXPORT,
+            FOLLOWUP_READ));
 
         // 医保办：医保规则维护（属于规则一类）+ 评估
         map.put(RoleCode.INSURANCE_MANAGER, EnumSet.of(
@@ -130,7 +135,8 @@ public final class DefaultPermissionPolicy {
             KNOWLEDGE_READ, KNOWLEDGE_WRITE, KNOWLEDGE_REVIEW,
             CONTEXT_READ, EVENT_READ,
             EVALUATION_READ, EVALUATION_REMEDIATE,
-            RECOMMENDATION_READ));
+            RECOMMENDATION_READ,
+            FOLLOWUP_READ));
 
         // 专科专家：知识/路径审核 + 上下文只读
         map.put(RoleCode.SPECIALIST, EnumSet.of(
@@ -140,7 +146,8 @@ public final class DefaultPermissionPolicy {
             RULE_READ, RULE_WRITE,
             TERM_READ, TERM_WRITE,
             CONTEXT_READ, EVENT_READ,
-            RECOMMENDATION_READ));
+            RECOMMENDATION_READ,
+            FOLLOWUP_READ));
 
         // 临床医生：看提醒、采纳/拒绝、查看路径与规则 + 临床上下文只读
         map.put(RoleCode.DOCTOR, EnumSet.of(
@@ -149,7 +156,8 @@ public final class DefaultPermissionPolicy {
             PATHWAY_READ,
             RULE_READ,
             CONTEXT_READ, EVENT_READ,
-            KNOWLEDGE_READ));
+            KNOWLEDGE_READ,
+            FOLLOWUP_READ));
 
         // 护理人员：护理决策与提醒 + 临床上下文只读
         map.put(RoleCode.NURSE, EnumSet.of(
@@ -157,7 +165,8 @@ public final class DefaultPermissionPolicy {
             RECOMMENDATION_READ, RECOMMENDATION_ACCEPT,
             PATHWAY_READ,
             CONTEXT_READ, EVENT_READ,
-            KNOWLEDGE_READ));
+            KNOWLEDGE_READ,
+            FOLLOWUP_READ));
 
         // 合规审计：只读 + 导出，禁所有写
         map.put(RoleCode.AUDIT_COMPLIANCE, EnumSet.of(
@@ -167,7 +176,8 @@ public final class DefaultPermissionPolicy {
             RULE_READ,
             PATHWAY_READ,
             CONTEXT_READ, EVENT_READ,
-            EVALUATION_READ));
+            EVALUATION_READ,
+            FOLLOWUP_READ));
 
         // 实施工程师：试点准备阶段的接入与配置 + 临床上下文接入
         map.put(RoleCode.IMPLEMENTATION_ENGINEER, EnumSet.of(
@@ -178,7 +188,8 @@ public final class DefaultPermissionPolicy {
             CONTEXT_READ, CONTEXT_WRITE,
             EVENT_READ, EVENT_WRITE,
             SYSTEM_READ,
-            AUDIT_READ));
+            AUDIT_READ,
+            FOLLOWUP_READ, FOLLOWUP_WRITE));
 
         POLICY = Map.copyOf(map);
     }
