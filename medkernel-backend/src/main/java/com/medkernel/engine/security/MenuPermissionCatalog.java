@@ -36,7 +36,10 @@ final class MenuPermissionCatalog {
         addIfAny(keys, permissions, "quality-improve",
             PermissionCode.EVALUATION_READ,
             PermissionCode.EVALUATION_WRITE,
-            PermissionCode.EVALUATION_PUBLISH);
+            PermissionCode.EVALUATION_PUBLISH,
+            PermissionCode.EVALUATION_EXECUTE,
+            PermissionCode.EVALUATION_REMEDIATE,
+            PermissionCode.EVALUATION_REVIEW);
         addIfAny(keys, permissions, "compliance-ops",
             PermissionCode.AUDIT_READ,
             PermissionCode.AUDIT_EXPORT,
