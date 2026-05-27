@@ -14,6 +14,8 @@ import java.util.UUID;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.medkernel.shared.api.PageRequest;
+import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.audit.AuditAction;
@@ -172,6 +174,44 @@ public class PathwayEngineService {
             templateId, PathwayTemplateStatus.PUBLISHED, RequestContext.currentTraceId());
     }
 
+    @Transactional(readOnly = true)
+    public PageResponse<SpecialtyPackage> listPackages(PageRequest page) {
+        PageRequest safePage = page == null ? PageRequest.defaults() : page;
+        String tenantId = requireCurrentTenant();
+        List<SpecialtyPackage> all = packages.findByTenantIdOrderByUpdatedAtDesc(tenantId);
+        List<SpecialtyPackage> rows = all.stream()
+            .skip(safePage.offset())
+            .limit(safePage.safeSize())
+            .toList();
+        return PageResponse.of(rows, safePage, all.size());
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<PathwayTemplate> listTemplates(PathwayTemplateFilter filter, PageRequest page) {
+        PageRequest safePage = page == null ? PageRequest.defaults() : page;
+        String tenantId = requireCurrentTenant();
+        String status = filter == null || filter.status() == null ? null : filter.status().name();
+        String diseaseCode = filter == null ? null : filter.diseaseCode();
+        String packageId = filter == null ? null : filter.packageId();
+        long total = templates.countByFilter(tenantId, status, diseaseCode, packageId);
+        List<PathwayTemplate> rows = total == 0 ? List.of()
+            : templates.pageByFilter(tenantId, status, diseaseCode, packageId,
+                safePage.offset(), safePage.safeSize());
+        return PageResponse.of(rows, safePage, total);
+    }
+
+    @Transactional(readOnly = true)
+    public PathwayTemplateDetailResponse templateDetail(String templateId) {
+        String tenantId = requireCurrentTenant();
+        PathwayTemplate template = findTemplate(templateId, tenantId);
+        return new PathwayTemplateDetailResponse(
+            template,
+            nodes.findByTemplateIdAndTenantIdOrderBySortOrderAsc(templateId, tenantId),
+            edges.findByTemplateIdAndTenantIdOrderByPriorityAsc(templateId, tenantId),
+            metricBindings.findByTemplateIdAndTenantIdOrderByNodeCodeAsc(templateId, tenantId),
+            RequestContext.currentTraceId());
+    }
+
     @Transactional
     public PatientPathwayDetailResponse enterPatientPathway(PatientPathwayEnterRequest request) {
         String tenantId = requireCurrentTenant();
@@ -198,6 +238,51 @@ public class PathwayEngineService {
         auditPublisher.publish(AuditAction.CREATE, PATIENT_PATHWAY_ENTITY, patientPathwayId,
             "患者入径 " + template.templateCode());
         return new PatientPathwayDetailResponse(runtime, List.of(), List.of(startClock), traceId);
+    }
+
+    @Transactional(readOnly = true)
+    public PatientPathwayDetailResponse patientDetail(String patientPathwayId) {
+        String tenantId = requireCurrentTenant();
+        PatientPathway runtime = findPatientPathway(patientPathwayId, tenantId);
+        return new PatientPathwayDetailResponse(
+            runtime,
+            variances.findByPatientPathwayIdAndTenantIdOrderByCreatedAtAsc(patientPathwayId, tenantId),
+            clocks.findByPatientPathwayIdAndTenantIdOrderByStartedAtAsc(patientPathwayId, tenantId),
+            RequestContext.currentTraceId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClinicalClock> clocks(String patientPathwayId) {
+        String tenantId = requireCurrentTenant();
+        findPatientPathway(patientPathwayId, tenantId);
+        return clocks.findByPatientPathwayIdAndTenantIdOrderByStartedAtAsc(patientPathwayId, tenantId);
+    }
+
+    @Transactional(readOnly = true)
+    public PathwaySimulationResponse simulate(String templateId, PathwaySimulateRequest request) {
+        String tenantId = requireCurrentTenant();
+        PathwayTemplate template = findTemplate(templateId, tenantId);
+        List<PathwayNode> graphNodes = nodes.findByTemplateIdAndTenantIdOrderBySortOrderAsc(templateId, tenantId);
+        List<PathwayEdge> graphEdges = edges.findByTemplateIdAndTenantIdOrderByPriorityAsc(templateId, tenantId);
+        String currentNode = request == null || isBlank(request.startNodeCode())
+            ? template.startNodeCode() : request.startNodeCode();
+        List<String> requestedTargets = request == null ? List.of() : request.requestedNextNodeCodes();
+        java.util.ArrayList<String> trajectory = new java.util.ArrayList<>();
+        trajectory.add(currentNode);
+        PatientPathwayStatus finalStatus = PatientPathwayStatus.NODE_EXECUTING;
+        for (int i = 0; i <= graphNodes.size(); i++) {
+            String requestedTarget = i < requestedTargets.size() ? requestedTargets.get(i) : null;
+            PathwayProgressDecision decision = progressor.advance(new PathwayProgressCommand(
+                new PathwayGraph(graphNodes, graphEdges), currentNode,
+                PathwayAdvanceEventType.COMPLETE, requestedTarget));
+            finalStatus = decision.status();
+            if (decision.nextNodeCode() == null) {
+                break;
+            }
+            currentNode = decision.nextNodeCode();
+            trajectory.add(currentNode);
+        }
+        return new PathwaySimulationResponse(templateId, trajectory, finalStatus, RequestContext.currentTraceId());
     }
 
     @Transactional
