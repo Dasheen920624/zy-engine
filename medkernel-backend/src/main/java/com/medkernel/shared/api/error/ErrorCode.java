@@ -71,6 +71,13 @@ public enum ErrorCode {
     ENG_PATHWAY_005("ENG-PATHWAY-005", 409, "当前路径状态不允许该操作", ErrorClass.DATA, false),
     ENG_PATHWAY_006("ENG-PATHWAY-006", 400, "路径推进事件不合法", ErrorClass.INPUT, false),
     ENG_PATHWAY_007("ENG-PATHWAY-007", 404, "专病包不存在", ErrorClass.DATA, false),
+
+    ENG_REC_001("ENG-REC-001", 400, "推荐触发请求校验失败", ErrorClass.INPUT, false),
+    ENG_REC_002("ENG-REC-002", 404, "推荐触发不存在", ErrorClass.DATA, false),
+    ENG_REC_003("ENG-REC-003", 404, "推荐卡不存在", ErrorClass.DATA, false),
+    ENG_REC_004("ENG-REC-004", 409, "推荐卡当前状态不允许反馈", ErrorClass.DATA, false),
+    ENG_REC_005("ENG-REC-005", 400, "推荐来源解释不完整", ErrorClass.INPUT, false),
+    ENG_REC_006("ENG-REC-006", 409, "高风险推荐缺少医师确认门禁", ErrorClass.DATA, false),
     ;
 
     private final String code;

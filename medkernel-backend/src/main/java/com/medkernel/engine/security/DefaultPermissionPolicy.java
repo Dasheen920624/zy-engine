@@ -31,6 +31,7 @@ import static com.medkernel.engine.security.PermissionCode.PATHWAY_READ;
 import static com.medkernel.engine.security.PermissionCode.PATHWAY_WRITE;
 import static com.medkernel.engine.security.PermissionCode.RECOMMENDATION_ACCEPT;
 import static com.medkernel.engine.security.PermissionCode.RECOMMENDATION_READ;
+import static com.medkernel.engine.security.PermissionCode.RECOMMENDATION_WRITE;
 import static com.medkernel.engine.security.PermissionCode.RULE_PUBLISH;
 import static com.medkernel.engine.security.PermissionCode.RULE_READ;
 import static com.medkernel.engine.security.PermissionCode.RULE_WRITE;
@@ -81,6 +82,7 @@ public final class DefaultPermissionPolicy {
             TERM_READ, TERM_WRITE, TERM_PUBLISH,
             CONTEXT_READ, CONTEXT_WRITE,
             EVENT_READ, EVENT_WRITE,
+            RECOMMENDATION_READ, RECOMMENDATION_WRITE,
             SYSTEM_READ, SYSTEM_MANAGE,
             AUDIT_READ));
 
@@ -93,7 +95,7 @@ public final class DefaultPermissionPolicy {
             TERM_READ,
             CONTEXT_READ, EVENT_READ,
             EVALUATION_READ,
-            RECOMMENDATION_READ,
+            RECOMMENDATION_READ, RECOMMENDATION_WRITE,
             AUDIT_READ, AUDIT_EXPORT));
 
         // 质控办：评估指标审核发布 + 质控发现 + 上下文只读

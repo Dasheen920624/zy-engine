@@ -38,7 +38,8 @@ class MigrationBaselineContractTest {
         "V9__audit_event_outcome.sql",
         "V10__clinical_event_api.sql",
         "V11__rule_engine_api.sql",
-        "V12__pathway_engine_api.sql"
+        "V12__pathway_engine_api.sql",
+        "V13__recommendation_cdss_api.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -52,7 +53,8 @@ class MigrationBaselineContractTest {
         "rule_definition", "rule_version", "rule_test_case", "rule_execution_log",
         "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
         "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
-        "specialty_metric_binding"
+        "specialty_metric_binding", "recommendation_trigger", "recommendation_card",
+        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -92,7 +94,12 @@ class MigrationBaselineContractTest {
         "idx_pathway_edge_template_to", "idx_patient_pathway_patient",
         "idx_patient_pathway_template_status", "idx_pathway_variance_pathway_time",
         "idx_clinical_clock_pathway", "idx_clinical_clock_due",
-        "idx_specialty_metric_package", "idx_specialty_metric_template"
+        "idx_specialty_metric_package", "idx_specialty_metric_template",
+        "idx_rec_trigger_tenant_time", "idx_rec_trigger_patient", "idx_rec_trigger_status",
+        "idx_rec_trigger_scenario", "idx_rec_card_trigger", "idx_rec_card_tenant_status",
+        "idx_rec_card_risk", "idx_rec_card_fatigue", "idx_rec_source_card",
+        "idx_rec_feedback_card_time", "idx_rec_fatigue_card", "idx_rec_fatigue_key",
+        "idx_rec_fatigue_tenant_time"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -133,7 +140,13 @@ class MigrationBaselineContractTest {
         "uk_patient_pathway_id", "ck_patient_pathway_status",
         "uk_pathway_variance_id", "ck_pathway_variance_type",
         "uk_clinical_clock_id", "ck_clinical_clock_status",
-        "uk_specialty_metric_binding", "ck_specialty_metric_required"
+        "uk_specialty_metric_binding", "ck_specialty_metric_required",
+        "uk_rec_trigger_id", "uk_rec_trigger_tenant_code", "ck_rec_trigger_status",
+        "uk_rec_card_id", "uk_rec_card_trigger_code", "ck_rec_card_type",
+        "ck_rec_card_risk", "ck_rec_card_interrupt", "ck_rec_card_status",
+        "ck_rec_card_physician_confirmation", "ck_rec_card_ai_generated",
+        "uk_rec_source_id", "ck_rec_source_type", "uk_rec_feedback_id",
+        "ck_rec_feedback_type", "uk_rec_fatigue_id", "ck_rec_fatigue_signal"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -146,7 +159,8 @@ class MigrationBaselineContractTest {
         "rule_definition", "rule_version", "rule_test_case", "rule_execution_log",
         "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
         "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
-        "specialty_metric_binding"
+        "specialty_metric_binding", "recommendation_trigger", "recommendation_card",
+        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -155,7 +169,8 @@ class MigrationBaselineContractTest {
         "rule_definition", "rule_version", "rule_test_case",
         "specialty_package", "specialty_profile", "pathway_template", "pathway_node",
         "pathway_edge", "patient_pathway", "pathway_variance", "clinical_clock",
-        "specialty_metric_binding"
+        "specialty_metric_binding", "recommendation_trigger", "recommendation_card",
+        "recommendation_source", "recommendation_feedback", "recommendation_fatigue_signal"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
@@ -193,7 +208,12 @@ class MigrationBaselineContractTest {
         Map.entry("pathway_edge", Set.of("edge_type")),
         Map.entry("patient_pathway", Set.of("status")),
         Map.entry("pathway_variance", Set.of("variance_type")),
-        Map.entry("clinical_clock", Set.of("status"))
+        Map.entry("clinical_clock", Set.of("status")),
+        Map.entry("recommendation_trigger", Set.of("status")),
+        Map.entry("recommendation_card", Set.of("card_type", "risk_level", "interrupt_level", "status")),
+        Map.entry("recommendation_source", Set.of("source_type")),
+        Map.entry("recommendation_feedback", Set.of("feedback_type")),
+        Map.entry("recommendation_fatigue_signal", Set.of("signal_type"))
     );
 
     private static final Pattern TABLE_PATTERN =
@@ -366,6 +386,34 @@ class MigrationBaselineContractTest {
         for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
             assertThat(migrationPathFor(dialect, "V12__pathway_engine_api.sql"))
                 .as("dialect %s must ship V12", dialect)
+                .exists();
+        }
+    }
+
+    @Test
+    void v13ShouldDeclareRecommendationCdssApiTablesAndColumns() {
+        String h2 = readMigration("h2", "V13__recommendation_cdss_api.sql");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS recommendation_trigger");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS recommendation_card");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS recommendation_source");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS recommendation_feedback");
+        assertThat(h2).contains("CREATE TABLE IF NOT EXISTS recommendation_fatigue_signal");
+        assertThat(h2).contains("input_digest");
+        assertThat(h2).contains("source_summary");
+        assertThat(h2).contains("explanation_json");
+        assertThat(h2).contains("requires_physician_confirmation");
+        assertThat(h2).contains("ai_generated");
+        assertThat(h2).contains("fatigue_key");
+        assertThat(h2).contains("ck_rec_card_risk");
+        assertThat(h2).contains("ck_rec_feedback_type");
+        assertThat(h2).contains("idx_rec_fatigue_key");
+    }
+
+    @Test
+    void v13ShouldExistInAllFiveDialects() {
+        for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
+            assertThat(migrationPathFor(dialect, "V13__recommendation_cdss_api.sql"))
+                .as("dialect %s must ship V13", dialect)
                 .exists();
         }
     }
