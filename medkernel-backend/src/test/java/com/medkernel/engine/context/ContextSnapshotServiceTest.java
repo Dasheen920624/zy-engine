@@ -13,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,8 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medkernel.engine.context.canonical.CanonicalEncounter;
-import com.medkernel.engine.context.canonical.CanonicalPatient;
 import com.medkernel.shared.api.PageRequest;
 import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.api.error.ApiException;
@@ -36,6 +33,7 @@ import com.medkernel.shared.audit.AuditEventPublisher;
 import com.medkernel.shared.audit.IsolatedAuditPublisher;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
+import com.medkernel.shared.observability.DiagnoseResponseAssembler;
 import com.medkernel.shared.observability.StateTransitionRecorder;
 
 class ContextSnapshotServiceTest {
@@ -49,6 +47,7 @@ class ContextSnapshotServiceTest {
     private AuditEventPublisher auditPublisher;
     private IsolatedAuditPublisher isolatedAudit;
     private StateTransitionRecorder recorder;
+    private DiagnoseResponseAssembler diagnoseAssembler;
     private ContextSnapshotService service;
 
     @BeforeEach
@@ -62,11 +61,13 @@ class ContextSnapshotServiceTest {
         auditPublisher = mock(AuditEventPublisher.class);
         isolatedAudit = mock(IsolatedAuditPublisher.class);
         recorder = mock(StateTransitionRecorder.class);
+        diagnoseAssembler = mock(DiagnoseResponseAssembler.class);
         when(mapping.evaluate(anyString(), any())).thenReturn(Map.of());
         ObjectMapper json = new ObjectMapper();
         json.findAndRegisterModules();
         service = new ContextSnapshotService(snapshots, resources, idemRepo,
-            validator, versions, mapping, auditPublisher, isolatedAudit, recorder, json);
+            validator, versions, mapping, auditPublisher, isolatedAudit, recorder,
+            diagnoseAssembler, json);
 
         when(snapshots.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(resources.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -287,20 +288,10 @@ class ContextSnapshotServiceTest {
     }
 
     private ContextSnapshotRequest sampleRequest() {
-        return new ContextSnapshotRequest("MPI-1", "ENC-1", "ORG-1",
-            "kpv-1", "rpv-1", "ppv-1", validResources());
+        return ContextSnapshotServiceFixtures.sampleRequest();
     }
 
     private ContextSnapshotResources validResources() {
-        var patient = new CanonicalPatient("MPI-1", "张三",
-            LocalDate.of(1980, 1, 1), "M",
-            List.of(), List.of(), "HIS", "rec-1", "v1",
-            Instant.now(), Instant.now(), QualityStatus.VALID);
-        var enc = new CanonicalEncounter("ENC-1", "IP", Instant.now(), null,
-            "DEPT-A", "DOC-A", null, "HIS", "rec-2", "v1",
-            Instant.now(), Instant.now(), QualityStatus.VALID);
-        return new ContextSnapshotResources(patient,
-            List.of(enc), List.of(), List.of(), List.of(), List.of(),
-            List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+        return ContextSnapshotServiceFixtures.validResources();
     }
 }
