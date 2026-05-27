@@ -23,5 +23,6 @@ public record CanonicalResource(
     @Column("event_time") Instant eventTime,
     @Column("received_time") Instant receivedTime,
     @Column("quality_status") QualityStatus qualityStatus,
-    @Column("seq_no") Integer seqNo
+    @Column("seq_no") Integer seqNo,
+    @Column("trace_id") String traceId
 ) {}

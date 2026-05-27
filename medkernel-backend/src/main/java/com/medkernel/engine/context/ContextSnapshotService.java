@@ -232,7 +232,8 @@ public class ContextSnapshotService {
         resources.save(new CanonicalResource(
             null, "res-" + UUID.randomUUID(), snapshotId, tenantId, type,
             writeJson(payload), null, null, null,
-            null, Instant.now(), quality == null ? QualityStatus.VALID : quality, seq
+            null, Instant.now(), quality == null ? QualityStatus.VALID : quality, seq,
+            RequestContext.currentTraceId()
         ));
         return seq + 1;
     }
