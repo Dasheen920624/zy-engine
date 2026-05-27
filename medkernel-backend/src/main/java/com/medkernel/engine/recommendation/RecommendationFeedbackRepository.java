@@ -5,6 +5,9 @@ import java.util.List;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 医师反馈持久化仓库，按推荐卡查询反馈事实流。
+ */
 @Repository
 public interface RecommendationFeedbackRepository extends ListCrudRepository<RecommendationFeedback, Long> {
 

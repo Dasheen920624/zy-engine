@@ -7,6 +7,9 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 推荐卡持久化仓库，提供卡 id 查询、触发关联查询和按筛选条件分页/计数。
+ */
 @Repository
 public interface RecommendationCardRepository extends ListCrudRepository<RecommendationCard, Long> {
 
@@ -14,6 +17,7 @@ public interface RecommendationCardRepository extends ListCrudRepository<Recomme
 
     List<RecommendationCard> findByTriggerIdAndTenantIdOrderByCreatedAtAsc(String triggerId, String tenantId);
 
+    /** 按状态/风险/场景/患者过滤当前租户的推荐卡总数。 */
     @Query("""
         SELECT COUNT(*)
         FROM recommendation_card c
@@ -26,6 +30,7 @@ public interface RecommendationCardRepository extends ListCrudRepository<Recomme
         """)
     long countByFilter(String tenantId, String status, String riskLevel, String scenarioCode, String patientId);
 
+    /** 按状态/风险/场景/患者过滤分页返回推荐卡，默认按 created_at 倒序。 */
     @Query("""
         SELECT c.*
         FROM recommendation_card c

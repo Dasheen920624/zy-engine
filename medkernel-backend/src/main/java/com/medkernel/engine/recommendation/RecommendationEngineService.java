@@ -19,6 +19,15 @@ import com.medkernel.shared.observability.StateTransitionRecorder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * GA-ENG-API-07 推荐/CDSS 服务（触发受控写入 + 推荐卡/来源/反馈/疲劳治理事实读写 + 诊断）。
+ *
+ * <p>负责推荐触发校验（高风险卡必须 {@code requiresPhysicianConfirmation=true}、强打断必须高风险、
+ * 每张卡至少一条来源）、推荐卡状态机推进（{@link RecommendationCardStatus}）、
+ * 反馈幂等记录、疲劳治理信号采集和审计/状态历史/诊断聚合。
+ * 不自动生成医嘱、诊断、病历或随访任务；
+ * 错误码 {@code ENG_REC_001..ENG_REC_006} 覆盖参数/未找到/反馈终止态/来源缺失/高风险未确认等场景。
+ */
 @Service
 public class RecommendationEngineService {
 
@@ -50,6 +59,15 @@ public class RecommendationEngineService {
         this.diagnoseAssembler = diagnoseAssembler;
     }
 
+    /**
+     * 接收推荐触发并把候选卡、来源、初始疲劳信号一并落库。
+     *
+     * <p>触发状态由候选卡数量决定（{@link RecommendationTriggerStatus#EVALUATED}/
+     * {@link RecommendationTriggerStatus#NO_CARD}）；
+     * 候选卡来源为空抛 {@code ENG_REC_005}，高风险未确认抛 {@code ENG_REC_006}，
+     * 强打断非高风险抛 {@code ENG_REC_001}；
+     * 同事务写状态历史 + EXECUTE 审计；返回 triggerId 与本次落库卡数。
+     */
     @Transactional
     public RecommendationTriggerResponse trigger(RecommendationTriggerRequest request) {
         validateCards(request.candidateCards());
@@ -83,6 +101,9 @@ public class RecommendationEngineService {
         return new RecommendationTriggerResponse(triggerId, status, request.candidateCards().size(), traceId);
     }
 
+    /**
+     * 分页查询当前租户的推荐卡，按 status / riskLevel / scenarioCode / patientId 过滤；空过滤返回全量。
+     */
     @Transactional(readOnly = true)
     public PageResponse<RecommendationCard> listCards(RecommendationCardFilter filter, PageRequest pageRequest) {
         PageRequest req = pageRequest == null ? PageRequest.defaults() : pageRequest;
@@ -95,6 +116,9 @@ public class RecommendationEngineService {
         return PageResponse.of(rows, req, total);
     }
 
+    /**
+     * 查询推荐卡详情（含来源、反馈、疲劳信号），卡不存在抛 {@code ENG_REC_003}。
+     */
     @Transactional(readOnly = true)
     public RecommendationCardDetailResponse cardDetail(String cardId) {
         RecommendationCard card = findCard(cardId);
@@ -106,12 +130,21 @@ public class RecommendationEngineService {
         );
     }
 
+    /**
+     * 查询推荐卡的来源解释列表，按 created_at 升序；卡不存在抛 {@code ENG_REC_003}。
+     */
     @Transactional(readOnly = true)
     public List<RecommendationSource> sources(String cardId) {
         findCard(cardId);
         return sources.findByCardIdAndTenantIdOrderByCreatedAtAsc(cardId, tenantId());
     }
 
+    /**
+     * 接收医师反馈，推进推荐卡状态并采集疲劳治理信号。
+     *
+     * <p>终止态卡或已过期卡抛 {@code ENG_REC_004}；卡不存在抛 {@code ENG_REC_003}；
+     * 同事务写状态历史 + FEEDBACK 审计；返回 feedbackId、cardId、推进后的卡状态和 traceId。
+     */
     @Transactional
     public RecommendationFeedbackResponse feedback(String cardId, RecommendationFeedbackRequest request) {
         RecommendationCard card = findCard(cardId);
@@ -139,6 +172,10 @@ public class RecommendationEngineService {
         return new RecommendationFeedbackResponse(feedbackId, cardId, nextStatus, traceId);
     }
 
+    /**
+     * 分页查询当前租户的疲劳治理信号，按 fatigueKey / signalType 过滤；
+     * 使用 limit+1 估算下一页可用性（{@code PageResponse.ofEstimated}）。
+     */
     @Transactional(readOnly = true)
     public PageResponse<RecommendationFatigueSignal> fatigueSignals(
             RecommendationFatigueSignalFilter filter, PageRequest pageRequest) {
@@ -154,6 +191,10 @@ public class RecommendationEngineService {
         return PageResponse.ofEstimated(rows, req, estimated, hasNext);
     }
 
+    /**
+     * 输出推荐触发诊断响应，聚合推荐卡、反馈和疲劳治理信号；
+     * 触发不存在抛 {@code ENG_REC_002}。
+     */
     @Transactional(readOnly = true)
     public DiagnoseResponse diagnose(String triggerId) {
         RecommendationTrigger trigger = triggers.findByTriggerIdAndTenantId(triggerId, tenantId())

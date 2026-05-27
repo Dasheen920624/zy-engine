@@ -6,6 +6,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * GA-ENG-API-07 疲劳治理信号事实实体（仅事实采集，不做自动屏蔽）。
+ *
+ * <p>信号类型 {@link RecommendationFatigueSignalType} 记录推荐卡的展示、查看、采纳、不采纳等事件；
+ * 通过 {@code fatigueKey}、患者、操作者、时间窗聚合，为后续疲劳治理引擎提供输入。
+ * 静默试运行（SILENT_RECORDED）不打扰医生但形成证据，可生成报告。
+ */
 @Table("recommendation_fatigue_signal")
 public record RecommendationFatigueSignal(
     @Id Long id,

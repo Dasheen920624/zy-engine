@@ -7,6 +7,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * 推荐卡候选入参（随触发请求一并提交）。字段含义见
+ * {@link RecommendationCard}；至少含一条 {@link RecommendationSourceRequest} 来源，
+ * 高风险卡必须 {@code requiresPhysicianConfirmation=true}，由
+ * {@link RecommendationEngineService#trigger} 强制校验。
+ */
 public record RecommendationCardRequest(
     @NotBlank String cardCode,
     @NotNull RecommendationCardType cardType,

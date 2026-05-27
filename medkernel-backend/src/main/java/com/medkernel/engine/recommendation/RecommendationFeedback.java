@@ -6,6 +6,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * GA-ENG-API-07 医师反馈事实实体（只记录医师处理动作，不写病历或医嘱）。
+ *
+ * <p>反馈类型 {@link RecommendationFeedbackType} 决定推荐卡 {@link RecommendationCardStatus} 推进；
+ * 记录操作者、操作角色、原因代码、原因说明和 traceId；不采纳/关闭/稍后处理建议填原因代码以便疲劳治理。
+ */
 @Table("recommendation_feedback")
 public record RecommendationFeedback(
     @Id Long id,
