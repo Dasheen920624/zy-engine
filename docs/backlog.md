@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.19 · 2026-05-27
+> 版本：4.22 · 2026-05-27
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -59,9 +59,9 @@
 | GA-ENG-API-06 路径引擎 API：模板、专病包、患者路径、节点推进、变异、关键时钟 | codex | done |
 | GA-ENG-API-07 推荐/CDSS API：触发、推荐卡、来源解释、医师反馈、疲劳治理输入 | codex | done |
 | GA-ENG-API-08 评估质控 API：指标、运行、结果、问题、整改、复核 | codex | done |
-| GA-ENG-API-09 随访 API：计划、任务、问卷、异常回院、结果回流 | - | pending |
+| GA-ENG-API-09 随访 API：计划、任务、问卷、异常回院、结果回流 | codex | done |
 | GA-ENG-API-10 包发布 API：知识包、配置包、校验、灰度、全量、同步、回滚 | codex | done |
-| GA-ENG-API-11 嵌入 API：launch token、iframe/SDK/纯 API、回调、降级 | - | pending |
+| GA-ENG-API-11 嵌入 API：launch token、iframe/SDK/纯 API、回调、降级 | codex | done |
 | GA-ENG-API-12 模型能力网关 API：能力代码、路由、脱敏、结构化输出、审计、B0 降级 | - | pending |
 | GA-ENG-API-13 大规模列表 API：统一分页/游标、排序、过滤、total estimate、批量任务、导出任务、traceId | - | pending |
 
@@ -133,7 +133,9 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
-| 4.20 | 2026-05-27 | Codex | GA-ENG-API-10 完成：新增 V15 五方言 DDL 迁移文件（包含 `knowledge_package`、`package_item`、`release_plan`、`sync_target`、`sync_log` 核心表）；实现包含资产打包、差异比对、灰度发布、全量发布、多物理通道投影与快速一键回滚等功能的领域服务与权限/数据范围保护的 REST API 控制器；跑通 100% 单元测试及迁移合同测试。 |
+| 4.22 | 2026-05-27 | Codex | GA-ENG-API-11 完成：新增 V17 五方言 DDL 迁移文件（包含 `embed_launch_token`、`embed_origin_whitelist` 表）；实现包含 launch token 生成及 60 秒有效期校验、一次性原子消费物理锁定、Origin 域名租户白名单拦截、双向通信交互反馈及 IsolatedAuditPublisher 强子事务审计留痕等核心功能的嵌入 API；跑通 100% 单元测试及迁移合同测试。 |
+| 4.21 | 2026-05-27 | Codex | GA-ENG-API-09 完成：新增 V16 五方言 DDL 迁移文件（包含 `followup_plan`、`followup_task`、`followup_questionnaire`、`followup_event` 表）；实现随访计划智能生成、任务分发、问卷回传、异常回院及结果回流 API，引入 `followup.read` / `followup.write` 动作权限、`ENG-FOLLOW-001..005` 错误码；跑通 100% 单元测试、多租户隔离加固与迁移烟测。 |
+| 4.20 | 2026-05-27 | Codex | GA-ENG-API-10 完成：新增 V15 五方言 DDL 迁移文件（包含 `knowledge_package`、`package_item` , `release_plan`、`sync_target` , `sync_log` 核心表）；实现包含资产打包、差异比对、灰度发布、全量发布、多物理通道投影与快速一键回滚等功能的领域服务与权限/数据范围保护 of REST API 控制器；跑通 100% 单元测试及迁移合同测试。 |
 | 4.19 | 2026-05-27 | Codex | GA-ENG-API-08 完成：新增 V14 五方言迁移（`evaluation_indicator`、`evaluation_run`、`evaluation_result`、`quality_finding`、`rectification_task`、`rectification_review`、`evaluation_idempotency_key`）；新增评估指标版本、运行结果、质控问题、整改、复核和诊断 API；补齐 `evaluation.execute`、`evaluation.remediate`、`evaluation.review` 权限分工。P0/P1 问题强制责任科室、期限、证据并生成整改任务，P0 不允许普通豁免，未激活指标或无可追溯来源的运行拒收，整改和复核支持幂等重试且阻断同键异文；五方言迁移合同阻断与唯一键重复的整改查询索引及 Oracle 保留字列名冲突。当前 API 仅接收受控事实，自动病例命中与指标计算仍由 GA-ENG-EVAL-01 后续承担。后端完整测试 396 个通过、0 失败，3 个 Docker 依赖多方言烟测因本机 Docker 不可用按既有机制跳过 |
 | 4.18 | 2026-05-27 | Codex | GA-ENG-API-07 完成：新增 V13 五方言迁移（`recommendation_trigger`、`recommendation_card`、`recommendation_source`、`recommendation_feedback`、`recommendation_fatigue_signal`）；新增推荐/CDSS 触发、推荐卡、来源解释、医师反馈、疲劳治理输入和诊断 API；补齐 `recommendation.write` 权限并保持医生反馈使用 `recommendation.accept`；推荐卡强制来源解释，高风险/红线推荐强制医师确认，不自动写医嘱、诊断或病历。后端完整测试 372 个通过、0 失败，3 个 Docker 依赖多方言烟测因本机 Docker 不可用按既有机制跳过 |
 | 4.17 | 2026-05-27 | Codex | GA-ENG-API-02 完成：V10 五方言迁移扩展 `clinical_event` 并新增 `clinical_event_payload`、`clinical_event_outbox`；新增临床事件同步/异步/批量接收、详情、payload、诊断、重放接口；接入 `event.read` / `event.write` 权限、`ENG-EVENT-001..006` 错误码、状态历史、审计和 outbox worker 重试/死信链路。后端 302 测试通过、3 个 Docker 依赖多方言冒烟测试跳过；前端 79 测试通过，`npm run verify` 与 `npm run build` 通过 |
