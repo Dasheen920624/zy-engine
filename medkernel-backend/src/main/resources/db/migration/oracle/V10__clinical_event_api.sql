@@ -37,6 +37,8 @@ CREATE TABLE clinical_event_outbox (
     id              NUMBER(19)    GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     event_id        VARCHAR2(64)  NOT NULL,
     tenant_id       VARCHAR2(64)  NOT NULL,
+    trace_id        VARCHAR2(128) NULL,
+    actor_user_id   VARCHAR2(64)  NULL,
     claim_status    VARCHAR2(16)  DEFAULT 'PENDING' NOT NULL,
     claimed_by      VARCHAR2(64)  NULL,
     claimed_at      TIMESTAMP WITH TIME ZONE NULL,

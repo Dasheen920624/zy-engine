@@ -97,7 +97,7 @@ public class ClinicalEventService {
             PayloadRef.STORAGE_INLINE, "application/json", digest, size, now, null
         ));
         outbox.save(new ClinicalEventOutbox(
-            null, req.eventId(), tenantId, "PENDING",
+            null, req.eventId(), tenantId, traceId, RequestContext.currentUserId().orElse(null), "PENDING",
             null, null, now, 0, null, now, null
         ));
 
@@ -195,7 +195,8 @@ public class ClinicalEventService {
             payload.sizeBytes(), now, null
         ));
         outbox.save(new ClinicalEventOutbox(
-            null, newEventId, tenantId, "PENDING",
+            null, newEventId, tenantId, RequestContext.currentTraceId(),
+            RequestContext.currentUserId().orElse(null), "PENDING",
             null, null, now, 0, null, now, null
         ));
         transitions.record(ENTITY_TYPE, source.eventId(),

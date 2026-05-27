@@ -14,6 +14,8 @@ public record ClinicalEventOutbox(
     @Id Long id,
     @Column("event_id") String eventId,
     @Column("tenant_id") String tenantId,
+    @Column("trace_id") String traceId,
+    @Column("actor_user_id") String actorUserId,
     @Column("claim_status") String claimStatus,
     @Column("claimed_by") String claimedBy,
     @Column("claimed_at") Instant claimedAt,

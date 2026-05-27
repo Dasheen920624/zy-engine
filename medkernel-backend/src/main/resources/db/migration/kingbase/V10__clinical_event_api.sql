@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS clinical_event_outbox (
     id              BIGSERIAL PRIMARY KEY,
     event_id        VARCHAR(64)  NOT NULL,
     tenant_id       VARCHAR(64)  NOT NULL,
+    trace_id        VARCHAR(128) NULL,
+    actor_user_id   VARCHAR(64)  NULL,
     claim_status    VARCHAR(16)  NOT NULL DEFAULT 'PENDING',
     claimed_by      VARCHAR(64)  NULL,
     claimed_at      TIMESTAMPTZ  NULL,
