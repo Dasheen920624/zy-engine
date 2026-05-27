@@ -34,7 +34,8 @@ class MigrationBaselineContractTest {
         "V5__audit_chain_baseline.sql",
         "V6__security_permission_baseline.sql",
         "V7__clinical_context_baseline.sql",
-        "V8__observability_baseline.sql"
+        "V8__observability_baseline.sql",
+        "V9__audit_event_outcome.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -69,7 +70,8 @@ class MigrationBaselineContractTest {
         "idx_canonical_resource_tenant_type", "idx_clinical_event_tenant_received",
         "idx_clinical_event_snapshot", "idx_context_idempotency_expires",
         "idx_sth_entity", "idx_sth_tenant_time", "idx_sth_trace", "idx_sth_failed",
-        "idx_canonical_resource_trace"
+        "idx_canonical_resource_trace",
+        "idx_audit_event_outcome"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -93,7 +95,8 @@ class MigrationBaselineContractTest {
         "uk_canonical_resource_id", "ck_canonical_resource_type", "ck_canonical_resource_quality",
         "uk_clinical_event_id", "ck_clinical_event_type", "ck_clinical_event_status",
         "uk_context_idempotency_tenant_key",
-        "ck_sth_error_class"
+        "ck_sth_error_class",
+        "ck_audit_event_outcome"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -203,6 +206,25 @@ class MigrationBaselineContractTest {
         for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
             assertThat(migrationPathFor(dialect, "V8__observability_baseline.sql"))
                 .as("dialect %s must ship V8", dialect)
+                .exists();
+        }
+    }
+
+    @Test
+    void v9ShouldExtendAuditEventWithOutcome() {
+        String h2 = readMigration("h2", "V9__audit_event_outcome.sql");
+        assertThat(h2).contains("ALTER TABLE audit_event ADD COLUMN");
+        assertThat(h2).contains("outcome");
+        assertThat(h2).contains("error_code");
+        assertThat(h2).contains("ck_audit_event_outcome");
+        assertThat(h2).contains("idx_audit_event_outcome");
+    }
+
+    @Test
+    void v9ShouldExistInAllFiveDialects() {
+        for (String dialect : List.of("postgres", "oracle", "dm", "kingbase", "h2")) {
+            assertThat(migrationPathFor(dialect, "V9__audit_event_outcome.sql"))
+                .as("dialect %s must ship V9", dialect)
                 .exists();
         }
     }

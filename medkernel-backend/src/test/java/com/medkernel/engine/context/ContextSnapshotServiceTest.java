@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -12,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,18 +20,21 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medkernel.engine.context.canonical.CanonicalEncounter;
-import com.medkernel.engine.context.canonical.CanonicalPatient;
 import com.medkernel.shared.api.PageRequest;
 import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEvent;
 import com.medkernel.shared.audit.AuditEventPublisher;
+import com.medkernel.shared.audit.IsolatedAuditPublisher;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
+import com.medkernel.shared.observability.DiagnoseResponseAssembler;
+import com.medkernel.shared.observability.StateTransitionRecorder;
 
 class ContextSnapshotServiceTest {
 
@@ -39,9 +42,12 @@ class ContextSnapshotServiceTest {
     private CanonicalResourceRepository resources;
     private ContextIdempotencyKeyRepository idemRepo;
     private ContextValidator validator;
-    private PackageVersionResolver versions;
+    private PackageVersionPort versions;
     private TerminologyMappingPort mapping;
     private AuditEventPublisher auditPublisher;
+    private IsolatedAuditPublisher isolatedAudit;
+    private StateTransitionRecorder recorder;
+    private DiagnoseResponseAssembler diagnoseAssembler;
     private ContextSnapshotService service;
 
     @BeforeEach
@@ -50,14 +56,18 @@ class ContextSnapshotServiceTest {
         resources = mock(CanonicalResourceRepository.class);
         idemRepo = mock(ContextIdempotencyKeyRepository.class);
         validator = new ContextValidator();
-        versions = new PackageVersionResolver();
+        versions = new LenientPackageVersionAdapter();
         mapping = mock(TerminologyMappingPort.class);
         auditPublisher = mock(AuditEventPublisher.class);
+        isolatedAudit = mock(IsolatedAuditPublisher.class);
+        recorder = mock(StateTransitionRecorder.class);
+        diagnoseAssembler = mock(DiagnoseResponseAssembler.class);
         when(mapping.evaluate(anyString(), any())).thenReturn(Map.of());
         ObjectMapper json = new ObjectMapper();
         json.findAndRegisterModules();
         service = new ContextSnapshotService(snapshots, resources, idemRepo,
-            validator, versions, mapping, auditPublisher, json);
+            validator, versions, mapping, auditPublisher, isolatedAudit, recorder,
+            diagnoseAssembler, json);
 
         when(snapshots.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(resources.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -88,14 +98,20 @@ class ContextSnapshotServiceTest {
     }
 
     @Test
-    void shouldNotEmitAuditWhenRejectedByInvalidQuality() {
+    void shouldEmitFailureAuditOnInvalidQualityWithoutCreateAudit() {
         var resourcesDto = new ContextSnapshotResources(null,
             List.of(), List.of(), List.of(), List.of(), List.of(),
             List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
         var req = new ContextSnapshotRequest("MPI-1", null, "ORG-1",
             "kpv-1", "rpv-1", "ppv-1", resourcesDto);
         assertThatThrownBy(() -> service.create(req, null)).isInstanceOf(ApiException.class);
+        // 成功审计：从未被发布
         verify(auditPublisher, never()).publish(any(AuditAction.class), anyString(), anyString(), anyString());
+        // 失败审计：恰好一次，含 outcome=FAILED 与 errorCode
+        ArgumentCaptor<AuditEvent> evCap = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(isolatedAudit, times(1)).publishInNewTx(evCap.capture());
+        assertThat(evCap.getValue().outcome()).isEqualTo(AuditEvent.OUTCOME_FAILED);
+        assertThat(evCap.getValue().errorCode()).isEqualTo(ErrorCode.ENG_CONTEXT_003.code());
     }
 
     @Test
@@ -238,21 +254,44 @@ class ContextSnapshotServiceTest {
         assertThat(page.total()).isZero();
     }
 
+    @Test
+    void packageVersionMissingTriggersFailureAudit() {
+        var req = new ContextSnapshotRequest("MPI-1", null, "ORG-1",
+            "kpv-1", "", "ppv-1", validResources());  // rule 包版本空 → ENG-CONTEXT-002
+
+        assertThatThrownBy(() -> service.create(req, null))
+            .isInstanceOf(ApiException.class)
+            .extracting("errorCode").isEqualTo(ErrorCode.ENG_CONTEXT_002);
+
+        ArgumentCaptor<AuditEvent> evCap = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(isolatedAudit, times(1)).publishInNewTx(evCap.capture());
+        AuditEvent ev = evCap.getValue();
+        assertThat(ev.outcome()).isEqualTo(AuditEvent.OUTCOME_FAILED);
+        assertThat(ev.errorCode()).isEqualTo(ErrorCode.ENG_CONTEXT_002.code());
+        assertThat(ev.action()).isEqualTo(AuditAction.EXECUTE);
+        assertThat(ev.resourceType()).isEqualTo("context_snapshot");
+    }
+
+    @Test
+    void createWritesInitialStateTransition() {
+        service.create(sampleRequest(), null);
+
+        ArgumentCaptor<String> entityType = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> toStatus = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> reason = ArgumentCaptor.forClass(String.class);
+        verify(recorder).record(entityType.capture(), anyString(), isNull(),
+            toStatus.capture(), reason.capture(), isNull());
+
+        assertThat(entityType.getValue()).isEqualTo("context_snapshot");
+        assertThat(toStatus.getValue()).isEqualTo("ACTIVE");
+        assertThat(reason.getValue()).isEqualTo("INITIAL_CREATE");
+    }
+
     private ContextSnapshotRequest sampleRequest() {
-        return new ContextSnapshotRequest("MPI-1", "ENC-1", "ORG-1",
-            "kpv-1", "rpv-1", "ppv-1", validResources());
+        return ContextSnapshotServiceFixtures.sampleRequest();
     }
 
     private ContextSnapshotResources validResources() {
-        var patient = new CanonicalPatient("MPI-1", "张三",
-            LocalDate.of(1980, 1, 1), "M",
-            List.of(), List.of(), "HIS", "rec-1", "v1",
-            Instant.now(), Instant.now(), QualityStatus.VALID);
-        var enc = new CanonicalEncounter("ENC-1", "IP", Instant.now(), null,
-            "DEPT-A", "DOC-A", null, "HIS", "rec-2", "v1",
-            Instant.now(), Instant.now(), QualityStatus.VALID);
-        return new ContextSnapshotResources(patient,
-            List.of(enc), List.of(), List.of(), List.of(), List.of(),
-            List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+        return ContextSnapshotServiceFixtures.validResources();
     }
 }

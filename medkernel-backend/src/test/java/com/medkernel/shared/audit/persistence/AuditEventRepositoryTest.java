@@ -207,6 +207,8 @@ class AuditEventRepositoryTest {
             prevSignature,
             signature,
             "SIGNED",
+            "SUCCESS",
+            null,
             null
         );
     }

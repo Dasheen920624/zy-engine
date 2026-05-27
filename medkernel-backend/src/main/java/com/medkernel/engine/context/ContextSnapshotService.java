@@ -13,7 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEvent;
 import com.medkernel.shared.audit.AuditEventPublisher;
+import com.medkernel.shared.audit.IsolatedAuditPublisher;
+import com.medkernel.shared.observability.DiagnoseResponse;
+import com.medkernel.shared.observability.DiagnoseResponseAssembler;
+import com.medkernel.shared.observability.StateTransitionRecorder;
 import com.medkernel.engine.context.canonical.CanonicalCarePlan;
 import com.medkernel.engine.context.canonical.CanonicalClaim;
 import com.medkernel.engine.context.canonical.CanonicalCondition;
@@ -51,18 +56,24 @@ public class ContextSnapshotService {
     private final CanonicalResourceRepository resources;
     private final ContextIdempotencyKeyRepository idemRepo;
     private final ContextValidator validator;
-    private final PackageVersionResolver versions;
+    private final PackageVersionPort versions;
     private final TerminologyMappingPort mapping;
     private final AuditEventPublisher auditPublisher;
+    private final IsolatedAuditPublisher isolatedAudit;
+    private final StateTransitionRecorder transitions;
+    private final DiagnoseResponseAssembler diagnoseAssembler;
     private final ObjectMapper json;
 
     public ContextSnapshotService(ContextSnapshotRepository snapshots,
                                   CanonicalResourceRepository resources,
                                   ContextIdempotencyKeyRepository idemRepo,
                                   ContextValidator validator,
-                                  PackageVersionResolver versions,
+                                  PackageVersionPort versions,
                                   TerminologyMappingPort mapping,
                                   AuditEventPublisher auditPublisher,
+                                  IsolatedAuditPublisher isolatedAudit,
+                                  StateTransitionRecorder transitions,
+                                  DiagnoseResponseAssembler diagnoseAssembler,
                                   ObjectMapper json) {
         this.snapshots = snapshots;
         this.resources = resources;
@@ -71,6 +82,9 @@ public class ContextSnapshotService {
         this.versions = versions;
         this.mapping = mapping;
         this.auditPublisher = auditPublisher;
+        this.isolatedAudit = isolatedAudit;
+        this.transitions = transitions;
+        this.diagnoseAssembler = diagnoseAssembler;
         this.json = json;
     }
 
@@ -97,6 +111,8 @@ public class ContextSnapshotService {
         List<MissingFieldEntry> missing = validator.findMissingFields(req.resources());
         QualityStatus quality = validator.computeQuality(req.resources());
         if (quality == QualityStatus.INVALID) {
+            publishFailureAudit(ErrorCode.ENG_CONTEXT_003,
+                "INVALID quality 拒绝创建 patient=" + req.patientId());
             throw new ApiException(ErrorCode.ENG_CONTEXT_003, "INVALID quality 拒绝创建");
         }
 
@@ -126,6 +142,9 @@ public class ContextSnapshotService {
         auditPublisher.publish(AuditAction.CREATE, "context_snapshot", saved.snapshotId(),
             "创建标准上下文 quality=" + quality + " patient=" + req.patientId());
 
+        transitions.record("context_snapshot", saved.snapshotId(),
+            null, ContextSnapshotStatus.ACTIVE.name(), "INITIAL_CREATE", null);
+
         return new ContextSnapshotResponse(saved.snapshotId(), ContextSnapshotStatus.ACTIVE,
             quality, missing, mappingStatus, now, traceId);
     }
@@ -137,6 +156,23 @@ public class ContextSnapshotService {
             .orElseThrow(() -> new ApiException(ErrorCode.ENG_CONTEXT_001,
                 "snapshot 不存在: " + snapshotId));
         return toResponse(snap, List.of(), Map.of());
+    }
+
+    @Transactional(readOnly = true)
+    public DiagnoseResponse diagnose(String snapshotId) {
+        String tenantId = requireCurrentTenant();
+        ContextSnapshot snap = snapshots.findBySnapshotIdAndTenantId(snapshotId, tenantId)
+            .orElseThrow(() -> new ApiException(ErrorCode.ENG_CONTEXT_001,
+                "snapshot 不存在: " + snapshotId));
+        return diagnoseAssembler.assemble(
+            "context_snapshot", snap.snapshotId(), snap.tenantId(),
+            snap.status() == null ? null : snap.status().name(),
+            snap,
+            List.of(),
+            Map.of(),
+            null,
+            snap.traceId()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -182,6 +218,7 @@ public class ContextSnapshotService {
         if (!versions.exists(tenantId, "knowledge", req.knowledgePackageVersion())
             || !versions.exists(tenantId, "rule", req.rulePackageVersion())
             || !versions.exists(tenantId, "pathway", req.pathwayPackageVersion())) {
+            publishFailureAudit(ErrorCode.ENG_CONTEXT_002, "包版本不存在 patient=" + req.patientId());
             throw new ApiException(ErrorCode.ENG_CONTEXT_002, "包版本不存在");
         }
     }
@@ -232,7 +269,8 @@ public class ContextSnapshotService {
         resources.save(new CanonicalResource(
             null, "res-" + UUID.randomUUID(), snapshotId, tenantId, type,
             writeJson(payload), null, null, null,
-            null, Instant.now(), quality == null ? QualityStatus.VALID : quality, seq
+            null, Instant.now(), quality == null ? QualityStatus.VALID : quality, seq,
+            RequestContext.currentTraceId()
         ));
         return seq + 1;
     }
@@ -274,5 +312,10 @@ public class ContextSnapshotService {
 
     private String digest(ContextSnapshotRequest req) {
         return Integer.toHexString(req.hashCode());
+    }
+
+    private void publishFailureAudit(ErrorCode code, String summary) {
+        isolatedAudit.publishInNewTx(AuditEvent.failure(
+            AuditAction.EXECUTE, "context_snapshot", null, code.code(), summary));
     }
 }

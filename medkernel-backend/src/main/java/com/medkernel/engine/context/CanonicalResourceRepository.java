@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface CanonicalResourceRepository extends ListCrudRepository<CanonicalResource, Long> {
 
     List<CanonicalResource> findBySnapshotIdOrderBySeqNoAsc(String snapshotId);
+
+    List<CanonicalResource> findByTraceIdOrderBySeqNoAsc(String traceId);
 }

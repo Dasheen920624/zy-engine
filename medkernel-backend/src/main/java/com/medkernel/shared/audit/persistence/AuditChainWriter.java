@@ -72,6 +72,8 @@ public class AuditChainWriter {
             prevSignature,
             signature,
             STATUS_SIGNED,
+            event.outcome() == null ? AuditEvent.OUTCOME_SUCCESS : event.outcome(),
+            event.errorCode(),
             null
         );
         repository.insertEvent(record);
@@ -99,7 +101,9 @@ public class AuditChainWriter {
                 null,
                 record.departmentId(),
                 null,
-                null)
+                null),
+            record.outcome(),
+            record.errorCode()
         );
         String canonical = canonicalize(reconstructed, record.tenantId());
         String prev = record.prevSignature() == null ? GENESIS : record.prevSignature();

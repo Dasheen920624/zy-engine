@@ -16,6 +16,7 @@ import com.medkernel.shared.api.ApiResult;
 import com.medkernel.shared.api.PageRequest;
 import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.datascope.DataScope;
+import com.medkernel.shared.observability.DiagnoseResponse;
 
 import jakarta.validation.Valid;
 
@@ -52,6 +53,12 @@ public class ContextSnapshotController {
     @PreAuthorize("@perm.has('context.read')")
     public ApiResult<ContextSnapshotResponse> findById(@PathVariable String snapshotId) {
         return ApiResult.ok(service.findById(snapshotId));
+    }
+
+    @GetMapping("/{snapshotId}/diagnose")
+    @PreAuthorize("@perm.has('context.read')")
+    public ApiResult<DiagnoseResponse> diagnose(@PathVariable String snapshotId) {
+        return ApiResult.ok(service.diagnose(snapshotId));
     }
 
     @GetMapping

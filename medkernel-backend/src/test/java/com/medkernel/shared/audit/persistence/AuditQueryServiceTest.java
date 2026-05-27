@@ -150,6 +150,6 @@ class AuditQueryServiceTest {
         return new AuditEventRecord(
             id, eventId, "trace", now, "user-1", "CREATE", "rule", "r-" + id,
             "summary", "digest", "t-1", null, null, null, "GENESIS",
-            "sig-" + id, "SIGNED", now);
+            "sig-" + id, "SIGNED", "SUCCESS", null, now);
     }
 }

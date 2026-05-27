@@ -147,4 +147,29 @@ class ContextSnapshotControllerSecurityTest {
                 .content(VALID_BODY))
             .andExpect(status().isForbidden());
     }
+
+    // ─── diagnose 端点权限矩阵 ───────────────────────────────
+
+    @Test
+    @WithMockUser(authorities = "ROLE_GUEST")
+    void diagnoseRequires403WithoutReadPerm() throws Exception {
+        mvc.perform(get("/api/v1/engine/context/snapshots/ctx-1/diagnose"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_DOCTOR")
+    void doctorCanReachDiagnoseButDataScopeFailsOnMissingTenant() throws Exception {
+        mvc.perform(get("/api/v1/engine/context/snapshots/ctx-1/diagnose"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("ENG-BASE-001"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_AUDIT_COMPLIANCE")
+    void auditComplianceCanReachDiagnoseButDataScopeFailsOnMissingTenant() throws Exception {
+        mvc.perform(get("/api/v1/engine/context/snapshots/ctx-1/diagnose"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("ENG-BASE-001"));
+    }
 }

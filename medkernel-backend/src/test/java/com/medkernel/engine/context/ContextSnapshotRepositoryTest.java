@@ -105,10 +105,10 @@ class ContextSnapshotRepositoryTest {
             ContextSnapshotStatus.ACTIVE, QualityStatus.VALID));
         resources.save(new CanonicalResource(null, "res-b", snapshotId, "tenant-A",
             CanonicalResourceType.MEDICATION, "{}", "HIS", "REC-2", "v1",
-            Instant.now(), Instant.now(), QualityStatus.PARTIAL, 1));
+            Instant.now(), Instant.now(), QualityStatus.PARTIAL, 1, null));
         resources.save(new CanonicalResource(null, "res-a", snapshotId, "tenant-A",
             CanonicalResourceType.PATIENT, "{}", "HIS", "REC-1", "v1",
-            Instant.now(), Instant.now(), QualityStatus.VALID, 0));
+            Instant.now(), Instant.now(), QualityStatus.VALID, 0, null));
 
         List<CanonicalResource> list = resources.findBySnapshotIdOrderBySeqNoAsc(snapshotId);
         assertThat(list).extracting(CanonicalResource::resourceType)
