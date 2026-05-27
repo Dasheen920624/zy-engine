@@ -165,7 +165,7 @@ CREATE TABLE IF NOT EXISTS rectification_review (
     finding_id  VARCHAR(64)   NOT NULL,
     task_id     VARCHAR(64)   NOT NULL,
     decision    VARCHAR(32)   NOT NULL,
-    comment     VARCHAR(2048) NULL,
+    review_comment VARCHAR(2048) NULL,
     evidence_ref VARCHAR(512) NULL,
     reviewer_id VARCHAR(64)   NOT NULL,
     reviewed_at TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,

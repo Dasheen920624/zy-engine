@@ -14,7 +14,7 @@ public record RectificationReview(
     @Column("finding_id") String findingId,
     @Column("task_id") String taskId,
     RectificationReviewDecision decision,
-    String comment,
+    @Column("review_comment") String comment,
     @Column("evidence_ref") String evidenceRef,
     @Column("reviewer_id") String reviewerId,
     @Column("reviewed_at") Instant reviewedAt,

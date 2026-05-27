@@ -487,6 +487,17 @@ class MigrationBaselineContractTest {
         }
     }
 
+    @Test
+    void v14ReviewCommentColumnMustAvoidOracleReservedKeyword() {
+        for (String dialect : DIALECTS) {
+            String ddl = readMigration(dialect, "V14__evaluation_quality_api.sql");
+            assertThat(ddl)
+                .as("%s 复核意见列必须避开 Oracle 保留字", dialect)
+                .contains("review_comment")
+                .doesNotContainPattern("(?m)^\\s*comment\\s+VARCHAR");
+        }
+    }
+
     private List<String> migrationFiles(String dialect) throws IOException {
         try (var files = Files.list(migrationPath(dialect))) {
             return files.map(path -> path.getFileName().toString())

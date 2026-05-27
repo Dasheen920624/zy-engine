@@ -155,7 +155,7 @@ CREATE TABLE rectification_review (
     finding_id VARCHAR2(64 CHAR) NOT NULL,
     task_id VARCHAR2(64 CHAR) NOT NULL,
     decision VARCHAR2(32 CHAR) NOT NULL,
-    comment VARCHAR2(2048 CHAR),
+    review_comment VARCHAR2(2048 CHAR),
     evidence_ref VARCHAR2(256 CHAR),
     reviewer_id VARCHAR2(64 CHAR) NOT NULL,
     reviewed_at TIMESTAMP WITH TIME ZONE NOT NULL,

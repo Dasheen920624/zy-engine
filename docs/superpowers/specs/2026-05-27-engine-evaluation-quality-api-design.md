@@ -198,7 +198,7 @@
 
 复核记录表，保存追加式复核结论。
 
-关键字段：`review_id`、`tenant_id`、`finding_id`、`task_id`、`decision`、`comment`、`evidence_ref`、`reviewer_id`、`reviewed_at`、`trace_id`。
+关键字段：`review_id`、`tenant_id`、`finding_id`、`task_id`、`decision`、`review_comment`、`evidence_ref`、`reviewer_id`、`reviewed_at`、`trace_id`。其中数据库列 `review_comment` 用于避开 Oracle 保留字，API 请求字段仍使用 `comment` 表示复核意见。
 
 ### 6.7 `evaluation_idempotency_key`
 
