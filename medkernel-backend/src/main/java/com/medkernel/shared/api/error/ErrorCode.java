@@ -87,6 +87,12 @@ public enum ErrorCode {
     ENG_EVAL_006("ENG-EVAL-006", 400, "高风险质控问题缺少责任、期限或证据", ErrorClass.INPUT, false),
     ENG_EVAL_007("ENG-EVAL-007", 409, "整改或复核状态冲突", ErrorClass.DATA, false),
     ENG_EVAL_008("ENG-EVAL-008", 409, "整改或复核幂等键与请求内容冲突", ErrorClass.DATA, false),
+
+    ENG_PACKAGE_001("ENG-PACKAGE-001", 404, "知识包或同步目标不存在", ErrorClass.DATA, false),
+    ENG_PACKAGE_002("ENG-PACKAGE-002", 400, "包资产状态不合法", ErrorClass.DATA, false),
+    ENG_PACKAGE_003("ENG-PACKAGE-003", 400, "无效的发布灰度范围或发布策略", ErrorClass.INPUT, false),
+    ENG_PACKAGE_004("ENG-PACKAGE-004", 409, "包发布门禁校验失败", ErrorClass.DATA, false),
+    ENG_PACKAGE_005("ENG-PACKAGE-005", 500, "投影目标同步部分或全部失败", ErrorClass.EXTERNAL, true),
     ;
 
     private final String code;
