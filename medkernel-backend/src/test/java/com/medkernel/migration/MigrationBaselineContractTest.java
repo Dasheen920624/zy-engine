@@ -43,7 +43,8 @@ class MigrationBaselineContractTest {
         "V14__evaluation_quality_api.sql",
         "V15__package_release_baseline.sql",
         "V16__followup_engine_api.sql",
-        "V17__embed_engine_api.sql"
+        "V17__embed_engine_api.sql",
+        "V18__model_gateway_api.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -63,7 +64,8 @@ class MigrationBaselineContractTest {
         "rectification_task", "rectification_review", "evaluation_idempotency_key",
         "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log",
         "followup_plan", "followup_task", "followup_questionnaire", "followup_event",
-        "embed_launch_token", "embed_origin_whitelist"
+        "embed_launch_token", "embed_origin_whitelist",
+        "model_capability_task", "model_capability_policy"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -120,7 +122,7 @@ class MigrationBaselineContractTest {
         "idx_followup_plan_tenant_patient", "idx_followup_plan_status",
         "idx_followup_task_tenant_plan", "idx_followup_task_due_date",
         "idx_followup_questionnaire_task", "idx_followup_event_plan",
-        "idx_followup_event_type", "idx_embed_token_tenant"
+        "idx_followup_event_type", "idx_embed_token_tenant", "idx_model_task_tenant"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -185,7 +187,8 @@ class MigrationBaselineContractTest {
         "uk_sync_log_id", "ck_sync_log_status",
         "uk_followup_plan_id", "uk_followup_task_id",
         "uk_followup_questionnaire_id", "uk_followup_event_id",
-        "uk_embed_launch_token", "uk_embed_origin_tenant"
+        "uk_embed_launch_token", "uk_embed_origin_tenant",
+        "uk_model_task_id", "uk_model_policy_tenant"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -204,7 +207,8 @@ class MigrationBaselineContractTest {
         "rectification_task", "rectification_review", "evaluation_idempotency_key",
         "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log",
         "followup_plan", "followup_task", "followup_questionnaire", "followup_event",
-        "embed_launch_token", "embed_origin_whitelist"
+        "embed_launch_token", "embed_origin_whitelist",
+        "model_capability_task", "model_capability_policy"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -219,7 +223,8 @@ class MigrationBaselineContractTest {
         "rectification_task", "rectification_review",
         "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log",
         "followup_plan", "followup_task", "followup_questionnaire", "followup_event",
-        "embed_launch_token", "embed_origin_whitelist"
+        "embed_launch_token", "embed_origin_whitelist",
+        "model_capability_task", "model_capability_policy"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
@@ -276,7 +281,9 @@ class MigrationBaselineContractTest {
         Map.entry("sync_log", Set.of("status")),
         Map.entry("followup_plan", Set.of("status")),
         Map.entry("followup_task", Set.of("status")),
-        Map.entry("followup_questionnaire", Set.of("status"))
+        Map.entry("followup_questionnaire", Set.of("status")),
+        Map.entry("model_capability_task", Set.of("model_mode", "status")),
+        Map.entry("model_capability_policy", Set.of("route_strategy"))
     );
 
     private static final Pattern TABLE_PATTERN =
