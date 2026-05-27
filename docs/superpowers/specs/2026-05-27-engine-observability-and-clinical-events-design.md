@@ -420,9 +420,11 @@ CREATE INDEX idx_canonical_resource_trace ON canonical_resource (trace_id);
 
 ## 7. 第三层：GA-ENG-API-02 临床事件 API（概述）
 
-### 7.1 V9 五方言迁移
+### 7.1 V10 五方言迁移
 
-`db/migration/{h2,postgres,oracle,dm,kingbase}/V9__clinical_event_payload_and_outbox.sql`：
+> 最新代码已将 `V9` 用于审计事件 `outcome/error_code` 字段，临床事件 API 实施时必须使用 `V10`。本节保留原设计结构，具体落地以 `2026-05-27-engine-clinical-event-api-design.md` 为准。
+
+`db/migration/{h2,postgres,oracle,dm,kingbase}/V10__clinical_event_api.sql`：
 
 ```sql
 -- 1. payload 旁路表（独立于 clinical_event 主表）
@@ -630,7 +632,7 @@ medkernel:
 
 ### 7.10 第三层验收
 
-- [ ] V9 五方言迁移合同测试 + H2 baseline 通过（V1..V9 全过）
+- [ ] V10 五方言迁移合同测试 + H2 baseline 通过（V1..V10 全过）
 - [ ] ClinicalEventService 单测：同步创建 / 异步 / 批量 / 同 event_id 幂等 / FAILED 写 history
 - [ ] OutboxWorker 单测（@DataJdbcTest H2）：PENDING → CLAIMED → PROCESSED；失败重试；DEAD 终态
 - [ ] OutboxWorker 多实例并发测试（postgres testcontainer）：SKIP LOCKED 不重复消费
@@ -652,9 +654,9 @@ medkernel:
 |---|---|---|---|
 | `state_transition_history` | 新建 | V8 | 第一层 |
 | `canonical_resource` | ADD trace_id | V8 | 第一层 |
-| `clinical_event_payload` | 新建（旁路） | V9 | 第三层 |
-| `clinical_event` | ADD error_code/error_class/retry_count/root_event_id | V9 | 第三层 |
-| `clinical_event_outbox` | 新建 | V9 | 第三层 |
+| `clinical_event_payload` | 新建（旁路） | V10 | 第三层 |
+| `clinical_event` | ADD error_code/error_class/retry_count/root_event_id | V10 | 第三层 |
+| `clinical_event_outbox` | 新建 | V10 | 第三层 |
 
 ---
 
