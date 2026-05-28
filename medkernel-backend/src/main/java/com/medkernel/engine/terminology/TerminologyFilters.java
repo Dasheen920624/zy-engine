@@ -1,6 +1,17 @@
 // 术语映射模块各分页 API 的 Filter 入参聚合（按各资源类型一对一匹配 Controller / Service 入参）。
 package com.medkernel.engine.terminology;
 
+/**
+ * 术语映射模块过滤条件（Terminology Filters）。
+ *
+ * <p>聚合了标准术语、本地术语、映射关系、候选、冲突及发布包的各种筛选条件，
+ * 支撑 GA-ENG-API-04 字典映射 API 的多条件分页检索。
+ */
+public final class TerminologyFilters {
+    private TerminologyFilters() {}
+}
+
+
 /** 标准术语分页过滤：标准体系 / 分类 / 状态 / 关键词（display_name 或 term_code 模糊）。 */
 record StandardTermFilter(String standardSystem, TermCategory category, StandardTermStatus status, String keyword) {
     static StandardTermFilter empty() {

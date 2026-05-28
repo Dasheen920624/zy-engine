@@ -6,6 +6,17 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
+ * 术语映射模块写操作请求对象（Terminology Requests）。
+ *
+ * <p>聚合了确认候选映射、冲突处置、映射包构建、发布及回滚等写操作的入参契约，
+ * 支撑 GA-ENG-API-04 字典映射 API 的输入模型定义与参数校验。
+ */
+public final class TerminologyRequests {
+    private TerminologyRequests() {}
+}
+
+
+/**
  * 确认候选映射请求体。
  *
  * <p>reviewNote 审核备注；evidenceOverride 可覆盖候选自带的证据文本，非空则取此值作为正式映射证据。

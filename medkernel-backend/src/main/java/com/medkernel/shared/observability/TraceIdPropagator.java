@@ -9,12 +9,12 @@ import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
 
 /**
- * MedKernel v1.0 GA · GA-ENG-OBS-01 跨异步线程的 traceId / RequestContext / MDC 传播工具。
+ * 跨异步线程的请求与可观测性上下文传播工具类（Trace ID Propagator）。
  *
- * <p>Spring @Async / @Scheduled / CompletableFuture 等场景下，调用 {@link #wrap(Runnable)}
- * 包装任务即可让 traceId 跨线程串联。
+ * <p>在后台异步任务执行场景下，提供包括链路追踪标识、请求组织上下文以及日志诊断映射上下文在内的多维属性跨线程传递包装。
+ * 任务结束时能够精确恢复工作线程的原有上下文状态，防范线程池中的工作线程产生上下文数据污染。
  *
- * <p>后台 worker（如 OutboxWorker）从 DB 读出 traceId 时用 {@link #restoreFromTrace} 恢复。
+ * <p>支撑 GA-ENG-OBS-01 引擎可观测性骨干的多线程调用链路追踪。
  */
 public final class TraceIdPropagator {
 

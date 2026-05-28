@@ -7,18 +7,20 @@ import java.util.List;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
- * MedKernel v1.0 GA · GA-ENG-BASE-01 JWT claim → {@link OrgScope} / userId / roles 解析。
+ * 身份凭证 Claims 属性解析工具类（JWT Claims Resolver）。
  *
- * <p>统一 claim 命名约定（OIDC 标准 + MedKernel 扩展）：
+ * <p>用于从 JWT 令牌中解析多租户组织域范围、用户标识及分配的角色集合。
+ *
+ * <p>统一声明的属性字段命名规范（符合 OIDC 标准及平台扩展）：
  * <ul>
- *   <li>{@code sub} → userId（OIDC 标准）</li>
- *   <li>{@code tenant_id} → tenantId（必填；缺则视为请求不合法）</li>
- *   <li>{@code group_id} / {@code hospital_id} / {@code campus_id} / {@code site_id} / {@code department_id} / {@code ward_id} / {@code specialty_id} → OrgScope 各级（按需）</li>
- *   <li>{@code roles} → 角色码列表（"platform-admin" / "group-admin" / "hospital-admin" / "doctor" / "nurse" / "qa-manager" 等）</li>
+ *   <li>{@code sub} 表示用户唯一标识 userId（OIDC 标准）</li>
+ *   <li>{@code tenant_id} 表示租户物理标识 tenantId（必填属性）</li>
+ *   <li>{@code group_id} / {@code hospital_id} / {@code campus_id} / {@code site_id} / {@code department_id} / {@code ward_id} / {@code specialty_id} 表示多租户组织作用域的各层级标识</li>
+ *   <li>{@code roles} 表示分配的角色编码列表</li>
  * </ul>
  *
- * <p>身份服务（OIDC / SAML / 国密 CA）签发 JWT 时必须按此约定填充 claim；本类不做反向兼容。
- * 缺失 claim 时返回 null 或空集合；上层（如 {@code TenantContextEnricherFilter}）按需决定是否阻断请求。
+ * <p>身份认证服务（OIDC / SAML / 国密 CA）签发 JWT 时必须按照本规则定义进行属性填充。
+ * 支撑 GA-ENG-BASE-01 组织与租户上下文引擎的身份与属性提取。
  */
 public final class JwtClaimsResolver {
 

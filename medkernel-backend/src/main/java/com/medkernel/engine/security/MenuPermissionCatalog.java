@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 后端给前端的菜单可见性收敛表。
+ * 后端提供给前端的菜单可见性收敛映射表（Menu Permission Catalog）。
  *
  * <p>这里只输出一级业务域 key；具体路由仍由前端路由元数据决定。
+ * 配合 GA-ENG-BASE-02 身份权限引擎进行菜单层级的可见性物理计算与隔离。
  */
-final class MenuPermissionCatalog {
+public final class MenuPermissionCatalog {
 
     private MenuPermissionCatalog() {
     }

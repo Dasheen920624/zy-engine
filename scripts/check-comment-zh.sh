@@ -31,7 +31,7 @@ javadoc_has_chinese() {
     /^[[:space:]]*\/\*\*/ { in_doc=1; doc=$0; next }
     in_doc && /\*\// { doc=doc"\n"$0; in_doc=0; pending=doc; next }
     in_doc { doc=doc"\n"$0; next }
-    /^[[:space:]]*(@[A-Za-z]+(\([^)]*\))?[[:space:]]*)*public[[:space:]]+(class|record|interface|enum|@interface)/ && !printed {
+    /^[[:space:]]*(@[A-Za-z]+(\([^)]*\))?[[:space:]]*)*public[[:space:]]+(final[[:space:]]+)?(class|record|interface|enum|@interface)/ && !printed {
       print pending; printed=1; exit
     }
   ' "$1" | perl "$CJK_HELPER" stream
