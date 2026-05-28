@@ -9,7 +9,7 @@
 
 ## 1. 目标与口径
 
-引擎不得直接消费院内系统原始字段。任何业务（规则、路径、推荐、评估、随访、嵌入、模型）的输入都必须先经过 **`POST /api/v1/engine/context/snapshot`** 将院内来源数据规范化为 **标准临床上下文（ContextSnapshot）**。本任务交付该接口的最小可用集，承担 E2 后续 API-02..07 的"数据入口"。
+引擎不得直接消费院内系统原始字段。任何业务（规则、路径、推荐、评估、随访、嵌入、模型）的输入都必须先经过 **`POST /api/v1/engine/context/snapshots`** 将院内来源数据规范化为 **标准临床上下文（ContextSnapshot）**。本任务交付该接口的最小可用集，承担 E2 后续 API-02..07 的"数据入口"。
 
 - **唯一权威**：snapshot 一经创建即不可变（CarePlan/FollowUp 等动态对象由后续状态机管理，本接口仅冻结某时点的资源集合）
 - **包版本快照**：每个 snapshot 关联当时生效的 `knowledge_package_version` / `rule_package_version` / `pathway_package_version`，保证后续可重放
