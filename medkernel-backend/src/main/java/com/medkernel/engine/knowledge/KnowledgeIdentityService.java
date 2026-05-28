@@ -208,6 +208,11 @@ public class KnowledgeIdentityService {
 
         String contentHash = sha256(request.textExcerpt());
 
+        Optional<SourceFragment> existingHashOpt = sourceFragmentRepository.findBySourceVersionIdAndContentHash(request.sourceVersionId(), contentHash);
+        if (existingHashOpt.isPresent()) {
+            throw new ApiException(ErrorCode.CONFLICT, "相同的文献片段内容已在当前版本中被注册，触发去重防线物理阻断");
+        }
+
         SourceFragment fragment = new SourceFragment(
             null,
             tenantId,
