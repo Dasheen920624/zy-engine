@@ -15,6 +15,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRoleAssignmentRepository extends ListCrudRepository<UserRoleAssignment, Long> {
 
+    List<UserRoleAssignment> findByTenantId(String tenantId);
+
     @Query("""
         SELECT * FROM user_role_assignment
         WHERE tenant_id = :tenantId

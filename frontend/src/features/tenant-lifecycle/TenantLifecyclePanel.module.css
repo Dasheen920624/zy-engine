@@ -14,6 +14,11 @@
   color: var(--ant-color-text-description);
 }
 
+.loaderContainer {
+  text-align: center;
+  padding: 40px 0;
+}
+
 .stageTag {
   border-radius: 12px;
   padding: 2px 10px;
@@ -98,7 +103,11 @@
 }
 
 .transitionBtn {
-  background: linear-gradient(135deg, var(--ant-color-primary) 0%, var(--ant-color-primary-active) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--ant-color-primary) 0%,
+    var(--ant-color-primary-active) 100%
+  );
   border: none;
   border-radius: 6px;
   height: 38px;

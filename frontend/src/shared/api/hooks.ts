@@ -2397,8 +2397,59 @@ export function useTransitionSuccessStage() {
     mutationFn: async (nextStage: string) => {
       const { data } = await apiClient.post<{ data: SuccessPlan }>(
         "/platform/success/lifecycle/transition",
-        { nextStage }
+        { nextStage },
       );
+      return data.data;
+    },
+  });
+}
+
+// ──────────────────────────────────────────
+// 组织单元 · 试点准备（GA-SVC-PILOT-01）
+// ──────────────────────────────────────────
+export interface OrgUnit {
+  id?: number;
+  parentId?: number | null;
+  tenantId?: string;
+  level: "TENANT" | "GROUP" | "HOSPITAL" | "CAMPUS" | "SITE" | "DEPARTMENT" | "WARD";
+  code: string;
+  name: string;
+  namePinyin?: string | null;
+  specialtyId?: string | null;
+  status?: "ACTIVE" | "SUSPENDED" | "ARCHIVED";
+  createdAt?: string;
+  createdBy?: string;
+}
+
+export function useOrgUnits(params?: { page?: number; size?: number; sort?: string }) {
+  return useQuery({
+    queryKey: ["tenant", "org-units", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<OrgUnit> }>("/tenant/org-units", {
+        params,
+      });
+      return data.data;
+    },
+  });
+}
+
+export function useOrgUnitsByLevel(level: string) {
+  return useQuery({
+    queryKey: ["tenant", "org-units", "by-level", level],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: OrgUnit[] }>("/tenant/org-units/by-level", {
+        params: { level },
+      });
+      return data.data;
+    },
+    enabled: !!level,
+  });
+}
+
+export function useCreateOrgUnit() {
+  return useMutation({
+    mutationFn: async (payload: Partial<OrgUnit>) => {
+      const { data } = await apiClient.post<{ data: OrgUnit }>("/tenant/org-units", payload);
       return data.data;
     },
   });
@@ -2431,13 +2482,15 @@ export interface MpiStatsResponse {
   genderCounts: Record<string, number>;
 }
 
-export function useMpiPatients(params: { keyword?: string; status?: string; page?: number; size?: number } = {}) {
+export function useMpiPatients(
+  params: { keyword?: string; status?: string; page?: number; size?: number } = {},
+) {
   return useQuery({
     queryKey: ["clinical", "mpi", "patients", params],
     queryFn: async () => {
       const { data } = await apiClient.get<{ data: { items: MpiPatient[]; total: number } }>(
         "/clinical/mpi/patients",
-        { params }
+        { params },
       );
       return data.data;
     },
@@ -2462,9 +2515,66 @@ export interface MergeMpiPayload {
 export function useMergeMpiPatients() {
   return useMutation({
     mutationFn: async (payload: MergeMpiPayload) => {
-      const { data } = await apiClient.post<{ data: void }>("/clinical/mpi/patients/merge", payload);
+      const { data } = await apiClient.post<{ data: void }>(
+        "/clinical/mpi/patients/merge",
+        payload,
+      );
       return data.data;
     },
   });
 }
 
+// ──────────────────────────────────────────
+// 身份安全服务包 · 用户角色分配（GA-SVC-COMPLIANCE-01）
+// ──────────────────────────────────────────
+export interface UserRoleAssignment {
+  id?: number;
+  tenantId?: string;
+  userId: string;
+  roleCode: string;
+  scopeLevel?: string;
+  scopeCode?: string;
+  activeFlag?: string;
+  createdAt?: string;
+  createdBy?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export function useUserRoleAssignments() {
+  return useQuery({
+    queryKey: ["compliance", "user-roles"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: UserRoleAssignment[] }>(
+        "/compliance/user-roles",
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useCreateUserRoleAssignment() {
+  return useMutation({
+    mutationFn: async (payload: {
+      userId: string;
+      roleCode: string;
+      scopeLevel: string;
+      scopeCode: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: UserRoleAssignment }>(
+        "/compliance/user-roles",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useDeleteUserRoleAssignment() {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await apiClient.delete<{ data: void }>(`/compliance/user-roles/${id}`);
+      return data.data;
+    },
+  });
+}

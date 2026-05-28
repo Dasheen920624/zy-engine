@@ -6,6 +6,8 @@ import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,6 +16,10 @@ import com.medkernel.shared.api.ApiResult;
 import com.medkernel.shared.api.PageRequest;
 import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.datascope.DataScope;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * MedKernel v1.0 GA · 试点准备菜单下的组织单元 API。
@@ -66,4 +72,48 @@ public class OrgUnitController {
     public ApiResult<Map<Long, List<OrgUnit>>> childrenMap() {
         return ApiResult.ok(service.childrenMapByCurrentTenant());
     }
+
+    /**
+     * 在当前租户下原子创建组织单元节点（医院/院区/科室/病区等）。
+     *
+     * @param dto 组织单元创建请求负载
+     * @return 统一返回格式包，包含已落库的实体
+     */
+    @PostMapping
+    @PreAuthorize("@perm.has('org.write')")
+    public ApiResult<OrgUnit> create(@Valid @RequestBody OrgUnitCreateDto dto) {
+        OrgUnit input = new OrgUnit(
+            null,
+            dto.parentId(),
+            null, // tenantId 由 RequestContext 隐式注入
+            dto.level(),
+            dto.code(),
+            dto.name(),
+            dto.namePinyin(),
+            dto.specialtyId(),
+            dto.status(),
+            null, null, null, null
+        );
+        return ApiResult.ok(service.createOrgUnit(input));
+    }
+
+    /**
+     * 组织单元创建传输对象。
+     */
+    public record OrgUnitCreateDto(
+        Long parentId,
+
+        @NotNull(message = "组织级别不能为空")
+        OrgLevel level,
+
+        @NotBlank(message = "组织编码不能为空")
+        String code,
+
+        @NotBlank(message = "组织名称不能为空")
+        String name,
+
+        String namePinyin,
+        String specialtyId,
+        OrgUnitStatus status
+    ) {}
 }

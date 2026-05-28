@@ -56,10 +56,10 @@ describe("page smoke coverage", () => {
     expect(screen.getByText(/页面嵌入式临床建议会话已安全隔离/)).toBeInTheDocument();
   });
 
-  it("renders the clinical workflow-todos placeholder", () => {
+  it("renders the clinical workflow-todos console", () => {
     renderPage(<WorkflowTodos />);
-    expect(screen.getByRole("heading", { name: "待办中心" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /查看实施路线图/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "工作流协同待办中心" })).toBeInTheDocument();
+    expect(screen.getByText(/高危红线挂起待办/)).toBeInTheDocument();
   });
 
   it("renders the quality qc-alerts placeholder", () => {
@@ -67,10 +67,10 @@ describe("page smoke coverage", () => {
     expect(screen.getByRole("heading", { name: "质控预警与整改工作台" })).toBeInTheDocument();
   });
 
-  it("renders the compliance admin-users placeholder", () => {
+  it("renders the compliance admin-users console", () => {
     renderPage(<AdminUsers />);
-    expect(screen.getByRole("heading", { name: "用户管理" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /查看实施路线图/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "用户与角色数据范围管理" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新增角色分配关系" })).toBeInTheDocument();
   });
 
   it("renders an advanced tool page with advanced-only messaging", () => {
@@ -95,7 +95,7 @@ describe("page smoke coverage", () => {
 
   it("renders the dashboard workbench with tenant-lifecycle placeholder", () => {
     renderPage(<Dashboard />);
-    expect(screen.getByText("租户生命周期")).toBeInTheDocument();
+    expect(screen.getByText(/租户.*生命周期/)).toBeInTheDocument();
     expect(screen.getByText("本周建议动作")).toBeInTheDocument();
   });
 

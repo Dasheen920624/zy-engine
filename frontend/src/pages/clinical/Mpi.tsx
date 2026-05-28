@@ -45,7 +45,11 @@ export default function Mpi() {
   const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
 
   // API 数据读取
-  const { data: patientData, isLoading: listLoading, refetch: refetchList } = useMpiPatients({
+  const {
+    data: patientData,
+    isLoading: listLoading,
+    refetch: refetchList,
+  } = useMpiPatients({
     keyword: filterKeyword || undefined,
     status: filterStatus || undefined,
     page,
@@ -78,15 +82,18 @@ export default function Mpi() {
   };
 
   // 打开合并弹窗
-  const showMergeModal = useCallback((record?: MpiPatient) => {
-    form.resetFields();
-    if (record) {
-      form.setFieldsValue({
-        sourceMpiId: record.mpiId,
-      });
-    }
-    setIsMergeModalVisible(true);
-  }, [form]);
+  const showMergeModal = useCallback(
+    (record?: MpiPatient) => {
+      form.resetFields();
+      if (record) {
+        form.setFieldsValue({
+          sourceMpiId: record.mpiId,
+        });
+      }
+      setIsMergeModalVisible(true);
+    },
+    [form],
+  );
 
   // 执行患者合并
   const handleMergeSubmit = async () => {
@@ -105,127 +112,129 @@ export default function Mpi() {
       message.success("患者主索引物理合并成功，已写入可观测性审计日志");
       setIsMergeModalVisible(false);
       form.resetFields();
-      
+
       // 刷新数据
       refetchList();
       refetchStats();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMsg = err?.response?.data?.message || err?.message || "合并失败，请检查主索引ID是否正确";
+      const errorMsg =
+        err?.response?.data?.message || err?.message || "合并失败，请检查主索引ID是否正确";
       message.error(`合并失败：${errorMsg}`);
     }
   };
 
   // 定义表格列
-  const columns = useMemo(() => [
-    {
-      title: "患者主索引 ID (MPI ID)",
-      dataIndex: "mpiId",
-      key: "mpiId",
-      render: (mpiId: string) => (
-        <span className={styles.mpiBadge}>{mpiId}</span>
-      ),
-    },
-    {
-      title: "脱敏姓名",
-      dataIndex: "maskedName",
-      key: "maskedName",
-      render: (name: string) => <Text strong>{name}</Text>,
-    },
-    {
-      title: "性别",
-      dataIndex: "gender",
-      key: "gender",
-      render: (gender: string) => {
-        if (gender === "M") {
-          return <Tag color="blue">男 (M)</Tag>;
-        } else if (gender === "F") {
-          return <Tag color="pink">女 (F)</Tag>;
-        } else {
-          return <Tag color="default">未知 (UNKNOWN)</Tag>;
-        }
+  const columns = useMemo(
+    () => [
+      {
+        title: "患者主索引 ID (MPI ID)",
+        dataIndex: "mpiId",
+        key: "mpiId",
+        render: (mpiId: string) => <span className={styles.mpiBadge}>{mpiId}</span>,
       },
-    },
-    {
-      title: "年龄",
-      dataIndex: "age",
-      key: "age",
-      render: (age: number) => <span>{age} 岁</span>,
-    },
-    {
-      title: "身份证后4位",
-      dataIndex: "idLast4",
-      key: "idLast4",
-      render: (last4: string) => <Text type="secondary">*** {last4}</Text>,
-    },
-    {
-      title: "已并入数",
-      dataIndex: "mergedCount",
-      key: "mergedCount",
-      render: (count: number) => {
-        if (count > 0) {
-          return (
-            <Tooltip title={`该主索引已物理收纳并入 ${count} 个历史主就诊人记录`}>
-              <Badge count={`+${count}`} className={styles.badgeSuccess} />
-            </Tooltip>
-          );
-        }
-        return <Text type="secondary">0</Text>;
+      {
+        title: "脱敏姓名",
+        dataIndex: "maskedName",
+        key: "maskedName",
+        render: (name: string) => <Text strong>{name}</Text>,
       },
-    },
-    {
-      title: "主索引状态",
-      dataIndex: "status",
-      key: "status",
-      render: (currStatus: string) => {
-        if (currStatus === "ACTIVE") {
-          return <Tag color="success">活跃 (ACTIVE)</Tag>;
-        }
-        return <Tag color="default">已合并 (MERGED_INTO)</Tag>;
+      {
+        title: "性别",
+        dataIndex: "gender",
+        key: "gender",
+        render: (gender: string) => {
+          if (gender === "M") {
+            return <Tag color="blue">男 (M)</Tag>;
+          } else if (gender === "F") {
+            return <Tag color="pink">女 (F)</Tag>;
+          } else {
+            return <Tag color="default">未知 (UNKNOWN)</Tag>;
+          }
+        },
       },
-    },
-    {
-      title: "合并指向 ID",
-      dataIndex: "mergedIntoMpiId",
-      key: "mergedIntoMpiId",
-      render: (targetId: string | null) => {
-        if (targetId) {
-          return (
-            <Tooltip title={`已被物理归并入目标患者主索引：${targetId}`}>
-              <Tag color="orange" icon={<MergeCellsOutlined />}>
-                {targetId}
-              </Tag>
-            </Tooltip>
-          );
-        }
-        return <Text type="secondary">-</Text>;
+      {
+        title: "年龄",
+        dataIndex: "age",
+        key: "age",
+        render: (age: number) => <span>{age} 岁</span>,
       },
-    },
-    {
-      title: "操作",
-      key: "action",
-      render: (_: unknown, record: MpiPatient) => (
-        <Space size="middle">
-          {record.status === "ACTIVE" ? (
-            <Button
-              type="primary"
-              size="small"
-              icon={<MergeCellsOutlined />}
-              onClick={() => showMergeModal(record)}
-            >
-              合并患者
-            </Button>
-          ) : (
-            <Tooltip title="已合并的患者主索引无法再次作为主导源进行合并">
-              <Button type="primary" size="small" disabled icon={<MergeCellsOutlined />}>
-                已归并
+      {
+        title: "身份证后4位",
+        dataIndex: "idLast4",
+        key: "idLast4",
+        render: (last4: string) => <Text type="secondary">*** {last4}</Text>,
+      },
+      {
+        title: "已并入数",
+        dataIndex: "mergedCount",
+        key: "mergedCount",
+        render: (count: number) => {
+          if (count > 0) {
+            return (
+              <Tooltip title={`该主索引已物理收纳并入 ${count} 个历史主就诊人记录`}>
+                <Badge count={`+${count}`} className={styles.badgeSuccess} />
+              </Tooltip>
+            );
+          }
+          return <Text type="secondary">0</Text>;
+        },
+      },
+      {
+        title: "主索引状态",
+        dataIndex: "status",
+        key: "status",
+        render: (currStatus: string) => {
+          if (currStatus === "ACTIVE") {
+            return <Tag color="success">活跃 (ACTIVE)</Tag>;
+          }
+          return <Tag color="default">已合并 (MERGED_INTO)</Tag>;
+        },
+      },
+      {
+        title: "合并指向 ID",
+        dataIndex: "mergedIntoMpiId",
+        key: "mergedIntoMpiId",
+        render: (targetId: string | null) => {
+          if (targetId) {
+            return (
+              <Tooltip title={`已被物理归并入目标患者主索引：${targetId}`}>
+                <Tag color="orange" icon={<MergeCellsOutlined />}>
+                  {targetId}
+                </Tag>
+              </Tooltip>
+            );
+          }
+          return <Text type="secondary">-</Text>;
+        },
+      },
+      {
+        title: "操作",
+        key: "action",
+        render: (_: unknown, record: MpiPatient) => (
+          <Space size="middle">
+            {record.status === "ACTIVE" ? (
+              <Button
+                type="primary"
+                size="small"
+                icon={<MergeCellsOutlined />}
+                onClick={() => showMergeModal(record)}
+              >
+                合并患者
               </Button>
-            </Tooltip>
-          )}
-        </Space>
-      ),
-    },
-  ], [showMergeModal]);
+            ) : (
+              <Tooltip title="已合并的患者主索引无法再次作为主导源进行合并">
+                <Button type="primary" size="small" disabled icon={<MergeCellsOutlined />}>
+                  已归并
+                </Button>
+              </Tooltip>
+            )}
+          </Space>
+        ),
+      },
+    ],
+    [showMergeModal],
+  );
 
   return (
     <PageShell
@@ -241,7 +250,7 @@ export default function Mpi() {
               <TeamOutlined className={styles.statIcon} />
             </div>
             <div className={styles.statValue}>
-              {statsLoading ? "..." : stats?.activeCount ?? 0}
+              {statsLoading ? "..." : (stats?.activeCount ?? 0)}
             </div>
             <div className={styles.statSubtext}>当前租户下正在独立运行的活跃患者数</div>
           </div>
@@ -252,7 +261,7 @@ export default function Mpi() {
               <MergeCellsOutlined className={`${styles.statIcon} ${styles.statIconSuccess}`} />
             </div>
             <div className={styles.statValue}>
-              {statsLoading ? "..." : stats?.mergedCount ?? 0}
+              {statsLoading ? "..." : (stats?.mergedCount ?? 0)}
             </div>
             <div className={styles.statSubtext}>因身份重合已被同事务归并的主索引数</div>
           </div>
@@ -280,7 +289,7 @@ export default function Mpi() {
                 : `男: ${stats?.genderCounts?.M ?? 0} | 女: ${stats?.genderCounts?.F ?? 0}`}
             </div>
             <div className={styles.statSubtext}>
-              未知性别/其他: {statsLoading ? "..." : stats?.genderCounts?.UNKNOWN ?? 0} 人
+              未知性别/其他: {statsLoading ? "..." : (stats?.genderCounts?.UNKNOWN ?? 0)} 人
             </div>
           </div>
         </div>
@@ -321,11 +330,7 @@ export default function Mpi() {
               <Button icon={<ReloadOutlined />} onClick={handleReset}>
                 重置
               </Button>
-              <Button
-                type="dashed"
-                icon={<MergeCellsOutlined />}
-                onClick={() => showMergeModal()}
-              >
+              <Button type="dashed" icon={<MergeCellsOutlined />} onClick={() => showMergeModal()}>
                 快速物理合并
               </Button>
             </Space>
@@ -379,7 +384,8 @@ export default function Mpi() {
             <div className={styles.warningText}>
               合并患者主索引为<strong>不可逆的最高级别</strong>就诊历史物理并入操作！合并后：
               <br />
-              1. <strong>源患者（被合并人）</strong>的所有就诊信息、临床决策树和随访记录将一并迁移或代理到目标患者名下。
+              1. <strong>源患者（被合并人）</strong>
+              的所有就诊信息、临床决策树和随访记录将一并迁移或代理到目标患者名下。
               <br />
               2. 源患者状态物理更改为 <strong>MERGED_INTO</strong>，该主索引将彻底失去主导控制活性。
               <br />

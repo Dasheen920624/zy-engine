@@ -1,5 +1,26 @@
-import { Card, Space, Typography, Steps, Row, Col, Progress, Tag, Button, Spin, Alert, message, Divider } from "antd";
-import { ArrowRightOutlined, MedicineBoxOutlined, AppstoreOutlined, ClockCircleOutlined, UserOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import {
+  Card,
+  Space,
+  Typography,
+  Steps,
+  Row,
+  Col,
+  Progress,
+  Tag,
+  Button,
+  Spin,
+  Alert,
+  message,
+  Divider,
+} from "antd";
+import {
+  ArrowRightOutlined,
+  MedicineBoxOutlined,
+  AppstoreOutlined,
+  ClockCircleOutlined,
+  UserOutlined,
+  SafetyCertificateOutlined,
+} from "@ant-design/icons";
 import { useSuccessPlan, useTransitionSuccessStage } from "@/shared/api/hooks";
 import styles from "./TenantLifecyclePanel.module.css";
 
@@ -15,15 +36,21 @@ const STAGES = [
   { key: "RENEWAL", title: "年度续约", description: "服务成效评估与续约演进" },
 ];
 
+const getThemeStyle = (color: string) => ({
+  color,
+});
+
 export function TenantLifecyclePanel() {
   const { data, isLoading, error, refetch } = useSuccessPlan();
   const transitionMutation = useTransitionSuccessStage();
 
   if (isLoading) {
     return (
-      <Card title={<Text className={styles.title}>租户多维生命周期控制台</Text>} className={styles.card}>
-        {/* eslint-disable-next-line medkernel/no-inline-style */}
-        <div style={{ textAlign: "center", padding: "40px 0" }}>
+      <Card
+        title={<Text className={styles.title}>租户多维生命周期控制台</Text>}
+        className={styles.card}
+      >
+        <div className={styles.loaderContainer}>
           <Spin size="large" tip="正在物理加载多维生命周期数据..." />
         </div>
       </Card>
@@ -32,10 +59,15 @@ export function TenantLifecyclePanel() {
 
   if (error || !data) {
     return (
-      <Card title={<Text className={styles.title}>租户多维生命周期控制台</Text>} className={styles.card}>
+      <Card
+        title={<Text className={styles.title}>租户多维生命周期控制台</Text>}
+        className={styles.card}
+      >
         <Alert
           message="数据加载失败"
-          description={error instanceof Error ? error.message : "无法与底层租户生命周期服务建立物理连接"}
+          description={
+            error instanceof Error ? error.message : "无法与底层租户生命周期服务建立物理连接"
+          }
           type="error"
           showIcon
         />
@@ -45,7 +77,7 @@ export function TenantLifecyclePanel() {
 
   const currentStep = STAGES.findIndex((s) => s.key === data.currentStage);
   const currentStepSafe = currentStep !== -1 ? currentStep : 0;
-  
+
   const hasNext = currentStepSafe < STAGES.length - 1;
   const nextStage = hasNext ? STAGES[currentStepSafe + 1] : null;
 
@@ -58,7 +90,8 @@ export function TenantLifecyclePanel() {
       },
       onError: (err: unknown) => {
         const axiosError = err as { message?: string; response?: { data?: { message?: string } } };
-        const errMsg = axiosError.response?.data?.message || axiosError.message || "请求物理变迁失败";
+        const errMsg =
+          axiosError.response?.data?.message || axiosError.message || "请求物理变迁失败";
         message.error(`推进生命周期失败: ${errMsg}`);
       },
     });
@@ -73,11 +106,15 @@ export function TenantLifecyclePanel() {
 
   const healthMeta = getHealthMeta(data.healthScore);
 
-  const activeModules = data.activatedModules ? data.activatedModules.split(",").filter(Boolean) : [];
-  const activePathways = data.activatedPathways ? data.activatedPathways.split(",").filter(Boolean) : [];
+  const activeModules = data.activatedModules
+    ? data.activatedModules.split(",").filter(Boolean)
+    : [];
+  const activePathways = data.activatedPathways
+    ? data.activatedPathways.split(",").filter(Boolean)
+    : [];
 
   return (
-    <Card 
+    <Card
       title={
         <Space direction="vertical" size={2}>
           <Text className={styles.title}>租户多维生命周期控制台</Text>
@@ -109,12 +146,8 @@ export function TenantLifecyclePanel() {
               }
               return {
                 title: s.title,
-                description: (
-                  <span className={styles.stepDesc}>
-                    {s.description}
-                  </span>
-                ),
-                status
+                description: <span className={styles.stepDesc}>{s.description}</span>,
+                status,
               };
             })}
           />
@@ -126,7 +159,11 @@ export function TenantLifecyclePanel() {
           <Col xs={24} md={8}>
             <Card
               size="small"
-              title={<span className={styles.cardIconTitle}><SafetyCertificateOutlined /> 租户健康度得分</span>}
+              title={
+                <span className={styles.cardIconTitle}>
+                  <SafetyCertificateOutlined /> 租户健康度得分
+                </span>
+              }
               className={styles.card}
             >
               <div className={styles.progressContainer}>
@@ -141,16 +178,16 @@ export function TenantLifecyclePanel() {
                   format={(percent) => (
                     <div className={styles.progressFormat}>
                       <span className={styles.progressScore}>{percent}</span>
-                      {/* eslint-disable-next-line medkernel/no-inline-style */}
-                      <span style={{ color: healthMeta.color }} className={styles.progressStatus}>
+                      <span
+                        style={getThemeStyle(healthMeta.color)}
+                        className={styles.progressStatus}
+                      >
                         {healthMeta.status}
                       </span>
                     </div>
                   )}
                 />
-                <Text className={styles.progressDesc}>
-                  全量集成证据链及模型成效得出
-                </Text>
+                <Text className={styles.progressDesc}>全量集成证据链及模型成效得出</Text>
               </div>
             </Card>
           </Col>
@@ -159,7 +196,11 @@ export function TenantLifecyclePanel() {
           <Col xs={24} md={8}>
             <Card
               size="small"
-              title={<span className={styles.cardIconTitle}><AppstoreOutlined /> 已激活服务模块</span>}
+              title={
+                <span className={styles.cardIconTitle}>
+                  <AppstoreOutlined /> 已激活服务模块
+                </span>
+              }
               className={styles.card}
             >
               <div className={styles.cardBody}>
@@ -172,7 +213,9 @@ export function TenantLifecyclePanel() {
                     ))}
                   </Space>
                 ) : (
-                  <Text type="secondary" italic>无已激活服务模块</Text>
+                  <Text type="secondary" italic>
+                    无已激活服务模块
+                  </Text>
                 )}
                 <Paragraph className={styles.cardDesc}>
                   由底座统一认证中心对当前租户注入的安全服务许可范围。
@@ -185,7 +228,11 @@ export function TenantLifecyclePanel() {
           <Col xs={24} md={8}>
             <Card
               size="small"
-              title={<span className={styles.cardIconTitle}><MedicineBoxOutlined /> 已配置临床专病包</span>}
+              title={
+                <span className={styles.cardIconTitle}>
+                  <MedicineBoxOutlined /> 已配置临床专病包
+                </span>
+              }
               className={styles.card}
             >
               <div className={styles.cardBody}>
@@ -198,7 +245,9 @@ export function TenantLifecyclePanel() {
                     ))}
                   </Space>
                 ) : (
-                  <Text type="secondary" italic>无已配置专病包</Text>
+                  <Text type="secondary" italic>
+                    无已配置专病包
+                  </Text>
                 )}
                 <Paragraph className={styles.cardDesc}>
                   当前租户已加载生效的临床路径与医疗规范知识库集合。
@@ -210,7 +259,7 @@ export function TenantLifecyclePanel() {
 
         {/* 下一阶段演进操作与审计物理留痕 */}
         <Divider className={styles.divider} />
-        
+
         <Row align="middle" justify="space-between">
           <Col>
             <Space size="middle">

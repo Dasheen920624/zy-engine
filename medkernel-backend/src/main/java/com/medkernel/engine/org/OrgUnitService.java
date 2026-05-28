@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.medkernel.shared.api.PageRequest;
 import com.medkernel.shared.api.PageResponse;
@@ -61,7 +62,7 @@ public class OrgUnitService {
     /**
      * 返回按 parentId → children 的扁平映射，供前端按需展开成树。
      *
-     * <p>不在服务端构建嵌套树，避免大组织在序列化阶段递归过深和分页缺失；
+     * <p>不在服务端构建嵌套树，避免大组织在序列化阶段递归过深 and 分页缺失；
      * 客户端按需在抽屉里只渲染当前节点的直接子节点（懒加载）。
      */
     public Map<Long, List<OrgUnit>> childrenMapByCurrentTenant() {
@@ -74,6 +75,46 @@ public class OrgUnitService {
             map.computeIfAbsent(parentKey, k -> new ArrayList<>()).add(unit);
         }
         return map;
+    }
+
+    /**
+     * 在当前租户下创建新的组织单元。
+     *
+     * @param input 组织单元输入数据
+     * @return 保存后的组织单元
+     */
+    @Transactional
+    public OrgUnit createOrgUnit(OrgUnit input) {
+        String tenantId = requireCurrentTenant();
+
+        // 物理唯一性校验
+        if (repository.findByTenantIdAndCode(tenantId, input.code()).isPresent()) {
+            throw new ApiException(ErrorCode.BAD_REQUEST, "同租户下组织单元 code 物理冲突: " + input.code());
+        }
+
+        OrgUnit toSave = new OrgUnit(
+            null,
+            input.parentId(),
+            tenantId,
+            input.level(),
+            input.code(),
+            input.name(),
+            input.namePinyin(),
+            input.specialtyId(),
+            input.status() == null ? OrgUnitStatus.ACTIVE : input.status(),
+            java.time.Instant.now(),
+            currentActor(),
+            java.time.Instant.now(),
+            currentActor()
+        );
+
+        return repository.save(toSave);
+    }
+
+    private String currentActor() {
+        return RequestContext.currentUserId()
+            .filter(s -> !s.isBlank())
+            .orElse("system");
     }
 
     private String requireCurrentTenant() {
