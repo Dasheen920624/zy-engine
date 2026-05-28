@@ -1,0 +1,285 @@
+package com.medkernel.engine.terminology;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.medkernel.compliance.evidence.dto.EvidenceCreateDto;
+import com.medkernel.compliance.evidence.dto.EvidenceResponse;
+import com.medkernel.compliance.evidence.dto.EvidenceVerifyResult;
+import com.medkernel.compliance.evidence.service.EvidenceService;
+import com.medkernel.engine.context.ContextSnapshotService;
+import com.medkernel.engine.context.ContextSnapshotRequest;
+import com.medkernel.engine.context.ContextSnapshotResources;
+import com.medkernel.engine.context.QualityStatus;
+import com.medkernel.engine.followup.FollowupEngineService;
+import com.medkernel.engine.followup.FollowupPlanGenerateRequest;
+import com.medkernel.engine.followup.FollowupPlanDetailResponse;
+import com.medkernel.engine.knowledge.KnowledgeIdentityService;
+import com.medkernel.engine.knowledge.FragmentCreateRequest;
+import com.medkernel.engine.knowledge.SourceFragment;
+import com.medkernel.engine.llm.ModelGatewayService;
+import com.medkernel.engine.llm.ModelTaskRequest;
+import com.medkernel.engine.llm.ModelTaskResponse;
+import com.medkernel.engine.recommendation.*;
+import com.medkernel.shared.api.error.ApiException;
+import com.medkernel.shared.context.OrgScope;
+import com.medkernel.shared.context.RequestContext;
+
+/**
+ * MedKernel 顶级引擎全能力端到端物理集成验证测试（E2E）。
+ *
+ * <p>本类特意设定于 com.medkernel.engine.terminology 包内，以物理穿透术语模块包私有枚举（TerminologyEnums）的访问壁垒。
+ * 覆盖知识物理去重、DP LCS 术语字典映射、诊断决策 CDSS 双向反馈、时序随访分发、网关安全自愈降级以及合规证据对账验签的全生命周期。
+ */
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+class EngineEndToEndIntegrationTest {
+
+    @Autowired
+    private KnowledgeIdentityService knowledgeService;
+
+    @Autowired
+    private TerminologyService terminologyService;
+
+    @Autowired
+    private ContextSnapshotService contextService;
+
+    @Autowired
+    private RecommendationEngineService recommendationService;
+
+    @Autowired
+    private FollowupEngineService followupService;
+
+    @Autowired
+    private ModelGatewayService modelGatewayService;
+
+    @Autowired
+    private EvidenceService evidenceService;
+
+    @Autowired
+    private com.medkernel.engine.knowledge.SourceDocumentRepository docRepo;
+
+    @Autowired
+    private com.medkernel.engine.knowledge.SourceVersionRepository verRepo;
+
+    @Autowired
+    private StandardTermRepository standardTermRepo;
+
+    @Autowired
+    private LocalTermRepository localTermRepo;
+
+    private final String tenantId = "tenant-hospital-01";
+    private final String doctorId = "DOC-STROKE-101";
+    private final String traceId = "tr-e2e-stroke-999";
+
+    @BeforeEach
+    void setUp() {
+        // 初始化当前线程的强多租户及角色动作授权上下文 (GA-ENG-BASE-01/02)
+        RequestContext.restore(new RequestContext.Snapshot(traceId, OrgScope.tenant(tenantId), doctorId));
+    }
+
+    @Test
+    void runFullEnginePhysicalWorkflow() {
+        System.out.println("====== [1. 知识指南片段物理 SHA-256 去重注册] ======");
+        String payload = "【卒中规范溶栓指南】对于急性缺血性卒中，溶栓前收缩压应控制在 < 185 mmHg 且舒张压 < 110 mmHg。";
+        
+        // 物理建立知识文档及版本数据环境
+        var doc = docRepo.save(new com.medkernel.engine.knowledge.SourceDocument(
+            null, tenantId, "DOC-STROKE-101",
+            com.medkernel.engine.knowledge.SourceType.GUIDELINE,
+            com.medkernel.engine.knowledge.SourceAuthorityLevel.CHINA_NATIONAL,
+            "急性缺血性脑卒中规范化溶栓指南 (2025版)", "卫健委", "None", "zh-CN",
+            Instant.now(), "system", Instant.now(), "system"
+        ));
+        var ver = verRepo.save(new com.medkernel.engine.knowledge.SourceVersion(
+            null, tenantId, doc.id(), "v1.0", Instant.now(), "hash-stroke-e2e", "http://docs/stroke-v1.pdf", "zh-CN",
+            Instant.now(), "system"
+        ));
+
+        FragmentCreateRequest fragmentReq = new FragmentCreateRequest(
+            ver.id(), "sec-4.2", "溶栓血压禁忌条文", payload
+        );
+        SourceFragment fragment = knowledgeService.createFragment(fragmentReq);
+        
+        assertNotNull(fragment.id(), "知识片段物理ID非空");
+        assertNotNull(fragment.contentHash(), "物理内容哈希已真实算得");
+        assertEquals(64, fragment.contentHash().length(), "哈希符合 SHA-256 64位十六进制编码规格");
+
+        // 验证物理排重阻断：相同片段内容第二次插入在不同锚点下触发哈希冲突防线物理阻断
+        assertThrows(ApiException.class, () -> {
+            knowledgeService.createFragment(new FragmentCreateRequest(
+                ver.id(), "sec-4.2-duplicate", "冲突条文", payload
+            ));
+        }, "相同数据重复录入触发哈希冲突防线物理阻断");
+
+
+        System.out.println("====== [2. 临床字典术语 DP 最长公共子序列 (LCS) 智能映射] ======");
+        // 建立测试字典环境，使用已打通的包私有枚举
+        StandardTerm standard = standardTermRepo.save(new StandardTerm(
+            null, tenantId, "ICD-10", "I63.900", TermCategory.DIAGNOSIS, "脑梗死", "nao geng si",
+            "2025", StandardTermStatus.ACTIVE, null, "诊断依据", Instant.now(), "system", Instant.now(), "system"
+        ));
+        LocalTerm local = localTermRepo.save(new LocalTerm(
+            null, tenantId, "HIS", "loc-stroke-99", TermCategory.DIAGNOSIS, "卒中脑梗", "cu zhong nao geng",
+            "DEPT-01", LocalTermStatus.UNMAPPED, Instant.now(), Instant.now(), Instant.now(), "system", Instant.now(), "system"
+        ));
+
+        // 自动触发智能候选推荐引擎计算 (calculateSimilarity)
+        // "卒中脑梗" 有 4 字，"脑梗死" 有 3 字，最长公共子序列是 "脑梗" (2字)，经典 LCS 相似度 = 2 * 2 / (4 + 3) = 0.57 >= 0.2
+        int count = terminologyService.autoRecommendCandidates("HIS");
+        assertEquals(1, count, "字典智能引擎发现并推荐了 1 个候选映射");
+
+        // 查到推荐的 candidate 并物理执行确认
+        var candidatesPage = terminologyService.pageCandidates(
+            new com.medkernel.shared.api.PageRequest(1, 10, null),
+            new CandidateFilter(MappingCandidateStatus.PENDING, null, null)
+        );
+        assertEquals(1, candidatesPage.total());
+        var candidate = candidatesPage.items().get(0);
+        
+        // 专家人工确认推荐映射
+        TermMapping mapping = terminologyService.confirmCandidate(
+            candidate.id(),
+            new ConfirmMappingRequest("专家组最终物理确认", "DOCTOR")
+        );
+        assertNotNull(mapping.id(), "已成功建立物理映射关系");
+        assertEquals("CONFIRMED", mapping.status().name());
+
+
+        System.out.println("====== [3. 患者就诊急诊事件 ContextSnapshot 同步] ======");
+        // 同步接收急诊疑似脑梗患者李建国（血压 185/105 mmHg）的主诉与检验快照
+        String patientPayload = "{\"patientName\":\"李建国\",\"systolicBP\":185,\"diastolicBP\":105,\"diagnosis\":\"脑卒中\"}";
+        ContextSnapshotRequest contextReq = new ContextSnapshotRequest(
+            "PAT-777", "enc-stroke-888", "ORG-1",
+            "kpv-1", "rpv-1", "ppv-1",
+            new ContextSnapshotResources(
+                new com.medkernel.engine.context.canonical.CanonicalPatient(
+                    "PAT-777", "李建国", java.time.LocalDate.of(1958, 5, 12), "M",
+                    List.of(), List.of(), "HIS", "pat-rec-id", "v1.0", Instant.now(), Instant.now(), QualityStatus.VALID
+                ),
+                List.of(
+                    new com.medkernel.engine.context.canonical.CanonicalEncounter(
+                        "enc-stroke-888", "EMERGENCY", Instant.now(), null,
+                        "DEPT-01", doctorId, null, "HIS", "enc-rec-id", "v1.0", Instant.now(), Instant.now(), QualityStatus.VALID
+                    )
+                ),
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of()
+            )
+        );
+        
+        // 物理存入就诊上下文
+        var snapshotResult = contextService.create(contextReq, "idempotency-key-stroke-888");
+        assertNotNull(snapshotResult.snapshotId(), "就诊快照同步保存成功");
+
+
+        System.out.println("====== [4. 规则引擎计算与 CDSS 溶栓禁忌决策卡触达] ======");
+        // 同步触发 CDSS 提醒生成（高风险红线卡片强制医师确认，且至少携带一条来源文献）
+        List<RecommendationSourceRequest> recSources = List.of(
+            new RecommendationSourceRequest(
+                RecommendationSourceType.KNOWLEDGE,
+                "guideline-stroke-v3", "v1.0",
+                "脑卒中溶栓临床指南", "§4.2", fragment.contentHash(), "脑卒中溶栓前收缩压控制在 < 185 mmHg"
+            )
+        );
+        List<RecommendationCardRequest> recCards = List.of(
+            new RecommendationCardRequest(
+                "CARD-STROKE-BLOCK",
+                RecommendationCardType.RISK,
+                "溶栓前高血压禁忌警报",
+                "患者当前收缩压 185 mmHg 已达溶栓高风险红线",
+                "立即控制血压或暂停溶栓",
+                RecommendationRiskLevel.CRITICAL,
+                RecommendationInterruptLevel.STRONG_INTERRUPTIVE,
+                true, // requiresPhysicianConfirmation
+                true, // aiGenerated
+                "脑卒中溶栓临床指南",
+                "{}", "fatigue-stroke-pressure", null,
+                recSources
+            )
+        );
+        RecommendationTriggerRequest triggerReq = new RecommendationTriggerRequest(
+            "TR-STROKE-101", "CDSS", "evt-id-123", snapshotResult.snapshotId(),
+            "PAT-777", "enc-stroke-888", "pathway-99", "EMERGENCY", "v1.0",
+            "input-digest-abc", Instant.now(), recCards
+        );
+
+        RecommendationTriggerResponse triggerResp = recommendationService.trigger(triggerReq);
+        assertNotNull(triggerResp.triggerId());
+        assertEquals("EVALUATED", triggerResp.status().name());
+
+        // 提取生成的推荐卡 ID
+        var cardsPage = recommendationService.listCards(
+            new RecommendationCardFilter(null, null, "EMERGENCY", "PAT-777"),
+            new com.medkernel.shared.api.PageRequest(1, 10, null)
+        );
+        assertEquals(1, cardsPage.total());
+        String cardId = cardsPage.items().get(0).cardId();
+
+        // 模拟医师在临床端进行双向反馈（医师拒绝该卡片，反馈闭环）
+        var feedbackReq = new RecommendationFeedbackRequest(
+            RecommendationFeedbackType.REJECT,
+            "REFUSE_DRUG", "由于患者存在脑溢血极端风险，暂停阿替普酶溶栓", "DOCTOR"
+        );
+        var feedbackResp = recommendationService.feedback(cardId, feedbackReq);
+        assertNotNull(feedbackResp.feedbackId());
+        assertEquals("REJECTED", feedbackResp.cardStatus().name());
+
+
+        System.out.println("====== [5. 出院事件触发智能随访时序问卷计划生成] ======");
+        // 出院事件，系统自动根据模板，为脑卒中患者分发 30 天时序随访任务
+        FollowupPlanGenerateRequest followupReq = new FollowupPlanGenerateRequest(
+            "PAT-777", "enc-stroke-888", "pathway-99", "I63.900", "HIGH", List.of("QUESTIONNAIRE", "EXAM")
+        );
+        FollowupPlanDetailResponse followupResp = followupService.generatePlan(followupReq);
+        assertNotNull(followupResp.planId());
+        assertEquals("ACTIVE", followupResp.status().name());
+        assertFalse(followupResp.tasks().isEmpty(), "智能时序随访第一期任务与问卷分发就绪");
+
+
+        System.out.println("====== [6. 大模型网关安全自愈降级 (B0 主链路验收)] ======");
+        // 验证大模型能力网关在外部服务发生故障（传 FORCE_FAIL_SCHEMA_ 且 expectedSchema 不符）时，
+        // 能够真实捕获异常并自愈平滑降级到 B0 确定性防线
+        ModelTaskRequest gateReq = new ModelTaskRequest(
+            "knowledge.extract", "FORCE_FAIL_SCHEMA_李建国的急性卒中用药指征",
+            "DEFAULT", "required: [entity]", 60
+        );
+        
+        ModelTaskResponse gateResp = modelGatewayService.submitTask(gateReq);
+        assertNotNull(gateResp.taskId());
+        assertEquals("DEGRADED", gateResp.status(), "推理受阻时任务状态转为 DEGRADED 降级运行状态");
+        assertEquals("B0", gateResp.modelMode(), "诚实退回到 B0 无模型基线");
+        assertTrue(gateResp.fallbackUsed(), "标记物理使用了 fallback 降级");
+        assertTrue(gateResp.fallbackReason().contains("缺失 Schema 指定"), "故障根因被诚实记录");
+
+
+        System.out.println("====== [7. 合规证据快照打包、物理验签与防篡改对账] ======");
+        // 合规证据打包，对上述全流程产生的数据快照打包为 ZIP 安全压缩证据包
+        String evidenceId = "evd-e2e-stroke-888";
+        EvidenceCreateDto evidenceDto = new EvidenceCreateDto(
+            evidenceId, traceId, "CDSS_DECISION", "EXECUTE",
+            "encounter", "enc-stroke-888",
+            "脑卒中急诊临床溶栓决策及医师双向反馈证据快照", patientPayload
+        );
+        
+        EvidenceResponse evidenceResp = evidenceService.createSnapshot(tenantId, evidenceDto);
+        assertNotNull(evidenceResp.evidenceId(), "证据快照物理创建入库成功");
+        assertNotNull(evidenceResp.payloadHash(), "快照自动计算了真实的 SHA-256 防伪签名");
+        
+        // 对账验签校验：验证数据未被篡改
+        EvidenceVerifyResult verifyResult = evidenceService.verifyEvidence(tenantId, evidenceId);
+        assertTrue(verifyResult.isValid(), "证据快照双向防伪哈希对账验签成功");
+        assertEquals(verifyResult.storedHash(), verifyResult.calculatedHash(), "哈希物理碰撞对账一致");
+
+        System.out.println("====== 🎉 [MedKernel v1.0 GA 顶级引擎全链路 E2E 物理验证通过！] ======");
+    }
+}

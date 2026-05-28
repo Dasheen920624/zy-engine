@@ -20,4 +20,6 @@ public interface SourceFragmentRepository extends ListCrudRepository<SourceFragm
     List<SourceFragment> findByTenantIdAndSourceVersionIdOrderByAnchorPathAsc(String tenantId, Long sourceVersionId);
 
     Optional<SourceFragment> findBySourceVersionIdAndAnchorPath(Long sourceVersionId, String anchorPath);
+
+    Optional<SourceFragment> findBySourceVersionIdAndContentHash(Long sourceVersionId, String contentHash);
 }
