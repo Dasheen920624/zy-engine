@@ -219,7 +219,7 @@ public class IntegrationService {
      * @throws ApiException 若 Webhook 配置不存在抛出 ENG_INTEG_003，签名计算错误抛出 INTERNAL_ERROR
      */
     @Transactional(readOnly = true)
-    public Map<String, Object> testWebhookSignature(String tenantId, WebhookTestDto dto) {
+    public WebhookTestResultDto testWebhookSignature(String tenantId, WebhookTestDto dto) {
         IntegrationWebhookConfig config = webhookRepository.findByWebhookIdAndTenantId(dto.webhookId(), tenantId)
             .orElseThrow(() -> new ApiException(ErrorCode.ENG_INTEG_003, "Webhook订阅不存在: " + dto.webhookId()));
 
@@ -236,16 +236,15 @@ public class IntegrationService {
             throw new ApiException(ErrorCode.INTERNAL_ERROR, "HMAC-SHA256 签名生成失败: " + e.getMessage());
         }
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("webhookId", dto.webhookId());
-        result.put("callbackUrl", config.callbackUrl());
-        result.put("secretKey", secretKey);
-        result.put("timestamp", timestamp);
-        result.put("payloadSigned", dataToSign);
-        result.put("signature", signature);
-        result.put("status", "SUCCESS");
-
-        return result;
+        return new WebhookTestResultDto(
+            dto.webhookId(),
+            config.callbackUrl(),
+            secretKey,
+            timestamp,
+            dataToSign,
+            signature,
+            "SUCCESS"
+        );
     }
 
     // ==========================================

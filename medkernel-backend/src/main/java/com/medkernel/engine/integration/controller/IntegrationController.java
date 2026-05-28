@@ -197,10 +197,10 @@ public class IntegrationController {
      * @return 包含推导签名结果及通断状态的键值对 Map 响应体
      */
     @PostMapping("/webhooks/test")
-    public ApiResult<Map<String, Object>> testWebhookSignature(@Validated @RequestBody WebhookTestDto dto) {
+    public ApiResult<WebhookTestResultDto> testWebhookSignature(@Validated @RequestBody WebhookTestDto dto) {
         String tenantId = RequestContext.currentOrgScope().tenantId();
         try {
-            Map<String, Object> testResult = integrationService.testWebhookSignature(tenantId, dto);
+            WebhookTestResultDto testResult = integrationService.testWebhookSignature(tenantId, dto);
             auditEventPublisher.publish(AuditEvent.of(
                 AuditAction.EXECUTE,
                 "integration_webhook",

@@ -94,10 +94,10 @@ class IntegrationServiceTest {
 
         // 签名生成与验证测试
         WebhookTestDto testDto = new WebhookTestDto("whk-1", "{\"patientId\":\"P-101\"}");
-        Map<String, Object> signResult = service.testWebhookSignature(tenantId, testDto);
-        assertEquals("SUCCESS", signResult.get("status"));
-        assertNotNull(signResult.get("signature"));
-        assertNotNull(signResult.get("timestamp"));
+        WebhookTestResultDto signResult = service.testWebhookSignature(tenantId, testDto);
+        assertEquals("SUCCESS", signResult.status());
+        assertNotNull(signResult.signature());
+        assertNotNull(signResult.timestamp());
     }
 
     @Test
