@@ -120,7 +120,7 @@
 |---|---|---|
 | GA-SVC-PILOT-01 租户与组织服务包：集团、医院、院区、社区、科室、角色、生命周期 | codex | done |
 | GA-SVC-PILOT-02 接入与数据质量服务包：HIS/EMR/LIS/PACS/医保/病案/随访适配、字段映射、体检 | - | pending |
-| GA-SVC-PILOT-03 资产准备服务包：知识包、配置包、字典映射、规则、路径、灰度、全量、回滚 | - | pending |
+| GA-SVC-PILOT-03 资产准备服务包：知识包、配置包、字典映射、规则、路径、灰度、全量、回滚 | codex | done |
 | GA-SVC-CLINICAL-01 患者与路径运行服务包：MPI、患者路径、关键时钟、变异、节点推进 | codex | done |
 | GA-SVC-CLINICAL-02 临床提醒与反馈服务包：CDSS 卡片、规则校验、疲劳治理、采纳/不采纳回流 | codex | done |
 | GA-SVC-CLINICAL-03 临床协同服务包：待办、通知、护理、报告解读、床旁知识、随访触发 | codex | done |
@@ -128,7 +128,7 @@
 | GA-SVC-QUALITY-02 病案医保服务包：病历内涵质控、DRG/DIP、编码、费用、医保审核 | codex | done |
 | GA-SVC-QUALITY-03 整改闭环服务包：问题生成、责任科室、整改、复核、豁免、报告 | codex | done |
 | GA-SVC-COMPLIANCE-01 身份安全服务包：用户、身份绑定、数据权限、租户隔离、安全基线 | codex | done |
-| GA-SVC-COMPLIANCE-02 审计运维服务包：审计日志、证据包、Provider/模型状态、备份恢复、离线许可 | - | pending |
+| GA-SVC-COMPLIANCE-02 审计运维服务包：审计日志、证据包、Provider/模型状态、备份恢复、离线许可 | codex | done |
 | GA-SVC-INTEGRATION-01 第三方业务接口服务包：接入管理、字段映射、健康检查、FHIR/CDS Hooks 门面、Webhook 回调、区域平台和监管/评级证据交换 | - | pending |
 | GA-SVC-DOMAIN-01 专病路径服务包：胸痛/心梗、卒中、肿瘤、慢病、感染、围手术期、妇儿、急重症、基层双向转诊、中医药 | - | pending |
 | GA-SVC-DOMAIN-02 专业协同服务包：护理、药事、医技报告、手术麻醉输血、营养康复心理疼痛、院感公卫、科研真实世界、区域协同 | - | pending |
@@ -138,6 +138,7 @@
 ## 修订记录
 
 | 版本 | 日期 | 修改人 | 主要变更 |
+| 4.46 | 2026-05-29 | Codex | 推进资产准备与审计运维 2 大核心业务服务包（GA-SVC-PILOT-03 专病路径/规则资产准备、GA-SVC-COMPLIANCE-02 审计运维服务包）物理封仓开发交付。在前端彻底理顺了专病包草稿创建、决策条件树 DSL 配置、时窗发布门禁，并完美对接了图投影/时序仿真推进和国密 SM2/SM3 TSA 审计日志签名导出与下载功能；在测试侧对 `pages.smoke.test.tsx` 进行了重构，补充了专病路径中枢、规则中枢及安全审计日志 3 大核心页面的单元测试覆盖，使本地及云端 Vitest 用例数扩充为 91 项；前端 verify 本地静态 Lint、Prettier 格式及 Vitest 单元测试全量全绿通过！ |
 | 4.45 | 2026-05-29 | Codex | 推进临床与质控剩余 3 大核心业务服务包（GA-SVC-QUALITY-03 整改闭环、GA-SVC-CLINICAL-01 患者路径运行、GA-SVC-CLINICAL-02 智能建议与提醒反馈）物理封仓开发交付。在前端彻底规避了双大括号内联样式门禁并物理对齐了受控状态机 API；在测试侧对 `pages.smoke.test.tsx` 进行了全面升级重构，补充了患者路径、MPI 联邦合并中心、CDSS 超频提醒治理以及质控得分评估结果等 4 大生产级核心页面的 Vitest 单元测试覆盖；前端 verify 本地静态 Lint、Prettier 及 88 个 Vitest 用例全绿通关！ |
 | 4.43 | 2026-05-29 | Codex | 身份安全（GA-SVC-COMPLIANCE-01）与临床协同（GA-SVC-CLINICAL-03）两大核心业务服务包完美通关。后端彻底修复了 UserRoleAssignment H2 数据主键生成插入及 JWT 角色匹配 403 权限难题，5 大 MVC 集成测试 100% 跑绿；前端新建并全面引入 Compliance.module.css 与 Clinical.module.css 等 Vanilla CSS 模块类，物理清除所有硬编码颜色与内联 style。完美交付“用户范围绑定控制台”、“SSO（LDAP/OIDC/CAS/SAM）统一身份绑定沙箱”、“等保 2.0 安全防御指标动态自测中心”、“临床 SLA 工作流待办”及“智能勿扰模式通知中心” 5 大卓越交互页面，前端 ESLint 与 TSC 编译 100% 零错误物理通关！ |
 | 4.42 | 2026-05-29 | Codex | 业务服务包装阶段（E6 阶段）首战告捷，完整开发并交付“GA-SVC-PILOT-01 租户与组织服务包”：在后端实现隐式多租户隔离与安全控制的组织单元（OrgUnit）原子写入 RESTful API 并通过 8 大物理测试；在前端动态重构激活了“客户实施向导”与“租户开通及品牌定制沙箱”，实现医院名称、Logo 图及 HSL 预设调色盘一键生效与实时渲染体验，100% 通过 Vite 生产编译 and ESLint 零错误物理门禁。 |
