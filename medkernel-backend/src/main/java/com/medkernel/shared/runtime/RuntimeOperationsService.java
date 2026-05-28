@@ -17,6 +17,11 @@ import com.medkernel.shared.runtime.RuntimeOperationsSnapshot.RuntimeFeatureFlag
 import com.medkernel.shared.runtime.RuntimeOperationsSnapshot.RuntimeJvmMetadata;
 import com.medkernel.shared.runtime.RuntimeOperationsSnapshot.RuntimeOsMetadata;
 
+/**
+ * 系统运维快照与国产化自检业务服务 (GA-ENG-AUDIT-01)。
+ *
+ * <p>提供当前系统运行事实信息的汇聚与转换服务。包括 JVM 元数据、操作系统信息、功能开关状态、外部系统依赖存活状态及备份容灾就绪情况。
+ */
 @Service
 public class RuntimeOperationsService {
 
@@ -29,6 +34,14 @@ public class RuntimeOperationsService {
     private final MeterRegistry meterRegistry;
     private final RuntimeProperties properties;
 
+    /**
+     * 构造函数。
+     *
+     * @param environment Spring 环境变量上下文
+     * @param healthEndpoint Spring Actuator 健康监测端点
+     * @param meterRegistry Micrometer 业务指标注册中心
+     * @param properties 运维配置属性
+     */
     public RuntimeOperationsService(Environment environment,
                                     HealthEndpoint healthEndpoint,
                                     MeterRegistry meterRegistry,
@@ -39,6 +52,11 @@ public class RuntimeOperationsService {
         this.properties = properties;
     }
 
+    /**
+     * 构建并返回当前系统的最新全量运维监控及国产化指标快照。
+     *
+     * @return 运维监控与国产化快照实体
+     */
     public RuntimeOperationsSnapshot snapshot() {
         String healthStatus = healthEndpoint.health().getStatus().getCode();
         return new RuntimeOperationsSnapshot(
