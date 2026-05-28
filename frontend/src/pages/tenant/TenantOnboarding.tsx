@@ -22,12 +22,7 @@ import {
   ExperimentOutlined,
 } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
-import {
-  useOrgUnits,
-  useCreateOrgUnit,
-  useBranding,
-  useUpdateBranding,
-} from "@/shared/api/hooks";
+import { useOrgUnits, useCreateOrgUnit, useBranding, useUpdateBranding } from "@/shared/api/hooks";
 import styles from "./Tenant.module.css";
 
 const { Option } = Select;
@@ -79,9 +74,11 @@ export default function TenantOnboarding() {
   }, [branding, brandForm]);
 
   // 4. 品牌实时预览状态
-  const watchHospitalName = Form.useWatch("hospitalName", brandForm) ?? branding?.hospitalName ?? "MedKernel 智能示范医院";
+  const watchHospitalName =
+    Form.useWatch("hospitalName", brandForm) ?? branding?.hospitalName ?? "MedKernel 智能示范医院";
   const watchLogoUrl = Form.useWatch("logoUrl", brandForm) ?? branding?.logoUrl ?? "";
-  const watchThemeColor = Form.useWatch("themeColor", brandForm) ?? branding?.themeColor ?? "var(--mk-theme-navy)";
+  const watchThemeColor =
+    Form.useWatch("themeColor", brandForm) ?? branding?.themeColor ?? "var(--mk-theme-navy)";
 
   // 获取预设调色盘
   const presetThemes = getPresetThemes();
@@ -329,11 +326,7 @@ export default function TenantOnboarding() {
                     </div>
                   </Form.Item>
 
-                  <Form.Item
-                    name="expertMode"
-                    label="全面开启专家模式"
-                    valuePropName="checked"
-                  >
+                  <Form.Item name="expertMode" label="全面开启专家模式" valuePropName="checked">
                     <Switch checkedChildren="专家版" unCheckedChildren="标准版" />
                   </Form.Item>
 
@@ -357,10 +350,7 @@ export default function TenantOnboarding() {
               </Title>
               <div className={styles.previewContainer}>
                 {/* 动态主题头部 */}
-                <div
-                  style={getThemeStyle(watchThemeColor)}
-                  className={styles.previewHeader}
-                >
+                <div style={getThemeStyle(watchThemeColor)} className={styles.previewHeader}>
                   {watchLogoUrl ? (
                     <img src={watchLogoUrl} className={styles.previewLogo} alt="Hospital Logo" />
                   ) : (
@@ -375,9 +365,7 @@ export default function TenantOnboarding() {
                   <div className={styles.previewPlaceholderBar} />
                   <div className={styles.previewPlaceholderBarShort} />
                   <div className={styles.previewPlaceholderBar} />
-                  <Tag color="success">
-                    {watchHospitalName} · 正常运行中
-                  </Tag>
+                  <Tag color="success">{watchHospitalName} · 正常运行中</Tag>
                 </div>
               </div>
             </div>

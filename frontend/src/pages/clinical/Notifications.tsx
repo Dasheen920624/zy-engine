@@ -12,7 +12,8 @@ function getInitialNotifications() {
       severity: "P1",
       time: "10分钟前",
       read: false,
-      content: "网关探测到 Ollama 物理局域网端点负载偏高，已平滑切换至备用国产化推理网关，确保 CDSS 临床提醒低延迟运行。",
+      content:
+        "网关探测到 Ollama 物理局域网端点负载偏高，已平滑切换至备用国产化推理网关，确保 CDSS 临床提醒低延迟运行。",
     },
     {
       id: 2,
@@ -21,7 +22,8 @@ function getInitialNotifications() {
       severity: "P0",
       time: "25分钟前",
       read: false,
-      content: "安全鉴权过滤器已物理阻断该跨域 iframe 免密消费请求，事件已自动存证至安全审计台账，TraceId: tr-892401。",
+      content:
+        "安全鉴权过滤器已物理阻断该跨域 iframe 免密消费请求，事件已自动存证至安全审计台账，TraceId: tr-892401。",
     },
     {
       id: 3,
@@ -48,7 +50,8 @@ function getInitialNotifications() {
       severity: "P3",
       time: "5小时前",
       read: true,
-      content: "全部流水数据块哈希自校验完毕，未发现由于物理断电或人为篡改导致的证据冲突，完整度良好。",
+      content:
+        "全部流水数据块哈希自校验完毕，未发现由于物理断电或人为篡改导致的证据冲突，完整度良好。",
     },
   ];
 }
@@ -116,7 +119,8 @@ export default function Notifications() {
       result = result.filter((item) => {
         if (minSeverity === "P0") return item.severity === "P0";
         if (minSeverity === "P1") return item.severity === "P0" || item.severity === "P1";
-        if (minSeverity === "P2") return item.severity === "P0" || item.severity === "P1" || item.severity === "P2";
+        if (minSeverity === "P2")
+          return item.severity === "P0" || item.severity === "P1" || item.severity === "P2";
         return true;
       });
     }
@@ -199,9 +203,7 @@ export default function Notifications() {
         {/* 通知列表 */}
         <div className={styles.card}>
           <div className={styles.flexBetween}>
-            <div className={styles.title}>
-              实时协作通知流 ({filtered.length} 条符合过滤)
-            </div>
+            <div className={styles.title}>实时协作通知流 ({filtered.length} 条符合过滤)</div>
           </div>
 
           <div className={styles.marginTop16}>
@@ -221,9 +223,7 @@ export default function Notifications() {
                       <div className={styles.notificationTitle}>{item.title}</div>
                       <span className={getSeverityBadge(item.severity)}>{item.severity}</span>
                     </div>
-                    <div className={styles.notificationDesc}>
-                      {item.content}
-                    </div>
+                    <div className={styles.notificationDesc}>{item.content}</div>
                     <div className={styles.notificationMeta}>
                       <span>发布时间：{item.time}</span>
                       {!item.read && (

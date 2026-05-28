@@ -59,19 +59,21 @@ export default function SecurityBaseline() {
   const triggerSelfCheck = () => {
     setChecking(true);
     setLastCheckTime("自检计算中...");
-    
+
     setTimeout(() => {
       setChecking(false);
       const now = new Date();
       setLastCheckTime(
-        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+          now.getDate(),
+        ).padStart(
           2,
-          "0"
+          "0",
         )} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
-          now.getSeconds()
-        ).padStart(2, "0")}`
+          now.getSeconds(),
+        ).padStart(2, "0")}`,
       );
-      
+
       setItems((prev) =>
         prev.map((item) => {
           if (item.id === 5) {
@@ -82,7 +84,7 @@ export default function SecurityBaseline() {
             };
           }
           return item;
-        })
+        }),
       );
       setMessage("全系统等保 2.0 安全基线指标自查完毕，已实时刷新合规评分。");
       setTimeout(() => setMessage(null), 3000);
@@ -117,22 +119,14 @@ export default function SecurityBaseline() {
       description="支撑 GA-SVC-COMPLIANCE-01。自动化评估等保 2.0 三级、商密评测（GM/T）以及个人信息保护法的审计基线状态。"
     >
       <div className={styles.container}>
-        {message && (
-          <div className={styles.alertSuccess}>
-            {message}
-          </div>
-        )}
+        {message && <div className={styles.alertSuccess}>{message}</div>}
 
         {/* 顶部评分与操作看板 */}
         <div className={styles.grid}>
           <div className={`${styles.card} ${styles.flexAlign}`}>
-            <div className={getScoreCircleClass()}>
-              {stats.score}分
-            </div>
+            <div className={getScoreCircleClass()}>{stats.score}分</div>
             <div>
-              <div className={styles.title}>
-                综合安全合规星级
-              </div>
+              <div className={styles.title}>综合安全合规星级</div>
               <div className={styles.description}>
                 满足等保三级基线标准指标占比：{stats.pass}/{items.length} 个
               </div>
@@ -140,28 +134,20 @@ export default function SecurityBaseline() {
           </div>
 
           <div className={styles.card}>
-            <div className={styles.description}>
-              红线缺失与高危缺陷提醒
-            </div>
+            <div className={styles.description}>红线缺失与高危缺陷提醒</div>
             <div className={`${styles.flexRow} ${styles.marginTop10}`}>
               <div>
-                <span className={styles.baselineStatusFail}>
-                  阻断性缺陷: {stats.fail}
-                </span>
+                <span className={styles.baselineStatusFail}>阻断性缺陷: {stats.fail}</span>
               </div>
               <div>
-                <span className={styles.baselineStatusWarn}>
-                  一般性风险: {stats.warn}
-                </span>
+                <span className={styles.baselineStatusWarn}>一般性风险: {stats.warn}</span>
               </div>
             </div>
           </div>
 
           <div className={`${styles.card} ${styles.flexColBetween}`}>
             <div>
-              <div className={styles.description}>
-                上一次物理深度自检扫描时间
-              </div>
+              <div className={styles.description}>上一次物理深度自检扫描时间</div>
               <div className={`${styles.fontWeight600} ${styles.fontMonospace}`}>
                 {lastCheckTime}
               </div>
@@ -184,9 +170,7 @@ export default function SecurityBaseline() {
               <div key={item.id} className={styles.baselineItem}>
                 <div className={styles.baselineInfo}>
                   <div className={styles.flexRow}>
-                    <span className={styles.scopeTag}>
-                      {item.category}
-                    </span>
+                    <span className={styles.scopeTag}>{item.category}</span>
                     <span className={styles.baselineTitle}>{item.title}</span>
                   </div>
                   <span className={styles.baselineDesc}>{item.desc}</span>
@@ -197,11 +181,15 @@ export default function SecurityBaseline() {
                       item.status === "PASS"
                         ? styles.baselineStatusPass
                         : item.status === "WARN"
-                        ? styles.baselineStatusWarn
-                        : styles.baselineStatusFail
+                          ? styles.baselineStatusWarn
+                          : styles.baselineStatusFail
                     }
                   >
-                    {item.status === "PASS" ? "物理合规 (PASS)" : item.status === "WARN" ? "存在隐患 (WARN)" : "阻断红线 (FAIL)"}
+                    {item.status === "PASS"
+                      ? "物理合规 (PASS)"
+                      : item.status === "WARN"
+                        ? "存在隐患 (WARN)"
+                        : "阻断红线 (FAIL)"}
                   </span>
                 </div>
               </div>

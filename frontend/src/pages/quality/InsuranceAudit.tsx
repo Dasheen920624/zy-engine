@@ -95,20 +95,20 @@ export default function InsuranceAudit() {
 
     setTimeout(() => {
       setSubmitting(false);
-      
+
       setViolations((prev) =>
         prev.map((v) =>
           v.id === activeViolation.id
             ? { ...v, status: actionType === "ACCEPT" ? "ACCEPTED" : "APPEALED" }
-            : v
-        )
+            : v,
+        ),
       );
 
       const actionText = actionType === "ACCEPT" ? "核准扣罚并自查" : "发起申诉并上传证据";
       setMessage(
         `[医保合规闭环] 病例 ${activeViolation.recordNo} 已成功进行“${actionText}”！操作已物理审计留痕，TraceId: tr-${Math.floor(
-          100000 + Math.random() * 900000
-        )}`
+          100000 + Math.random() * 900000,
+        )}`,
       );
       setActiveViolation(null);
       setTimeout(() => setMessage(null), 4000);
@@ -138,30 +138,20 @@ export default function InsuranceAudit() {
         <div className={styles.grid}>
           <div className={styles.card}>
             <div className={styles.description}>今日疑似违规病例拦截</div>
-            <div className={`${styles.title} ${styles.fontSize28}`}>
-              {stats.pendingCount} 个
-            </div>
+            <div className={`${styles.title} ${styles.fontSize28}`}>{stats.pendingCount} 个</div>
           </div>
           <div className={styles.card}>
             <div className={styles.description}>核准扣罚并反馈科室</div>
-            <div className={`${styles.title} ${styles.fontSize28}`}>
-              {stats.acceptCount} 个
-            </div>
+            <div className={`${styles.title} ${styles.fontSize28}`}>{stats.acceptCount} 个</div>
           </div>
           <div className={styles.card}>
             <div className={styles.description}>发起医保在线合规申诉</div>
-            <div className={`${styles.title} ${styles.fontSize28}`}>
-              {stats.appealCount} 个
-            </div>
+            <div className={`${styles.title} ${styles.fontSize28}`}>{stats.appealCount} 个</div>
           </div>
         </div>
 
         {/* 审计留痕通知 */}
-        {message && (
-          <div className={styles.alertSuccess}>
-            {message}
-          </div>
-        )}
+        {message && <div className={styles.alertSuccess}>{message}</div>}
 
         {/* 疑似违规病例处理台账 */}
         <div className={styles.card}>
@@ -188,11 +178,15 @@ export default function InsuranceAudit() {
                   {pendingList.map((item) => (
                     <tr key={item.id}>
                       <td className={styles.fontMonospace}>{item.recordNo}</td>
-                      <td className={styles.fontWeight600}>{item.patientName} ({item.gender}, {item.age}岁)</td>
+                      <td className={styles.fontWeight600}>
+                        {item.patientName} ({item.gender}, {item.age}岁)
+                      </td>
                       <td>{item.diagnosis}</td>
                       <td className={styles.violationText}>{item.violation}</td>
                       <td>{item.drgCode}</td>
-                      <td className={`${styles.fontMonospace} ${styles.fontWeight600} ${styles.textWarning}`}>
+                      <td
+                        className={`${styles.fontMonospace} ${styles.fontWeight600} ${styles.textWarning}`}
+                      >
                         {item.impact}
                       </td>
                       <td>
@@ -239,7 +233,9 @@ export default function InsuranceAudit() {
                   {processedList.map((item) => (
                     <tr key={item.id}>
                       <td className={styles.fontMonospace}>{item.recordNo}</td>
-                      <td>{item.patientName} ({item.gender}, {item.age}岁)</td>
+                      <td>
+                        {item.patientName} ({item.gender}, {item.age}岁)
+                      </td>
                       <td>{item.diagnosis}</td>
                       <td>{item.drgCode}</td>
                       <td className={styles.fontMonospace}>{item.impact}</td>
@@ -264,7 +260,8 @@ export default function InsuranceAudit() {
             <div className={styles.modalContent}>
               <div className={`${styles.flexBetween} ${styles.marginBottom20}`}>
                 <div className={styles.title}>
-                  {actionType === "ACCEPT" ? "确认并核准医保违规扣罚" : "发起医保合理补偿在线申诉"} #{activeViolation.recordNo}
+                  {actionType === "ACCEPT" ? "确认并核准医保违规扣罚" : "发起医保合理补偿在线申诉"}{" "}
+                  #{activeViolation.recordNo}
                 </div>
                 <button
                   onClick={handleCloseModal}
@@ -276,10 +273,12 @@ export default function InsuranceAudit() {
 
               <div className={styles.modalBodyText}>
                 <div className={styles.marginBottom8}>
-                  <strong>患者：</strong> {activeViolation.patientName} ({activeViolation.gender}, {activeViolation.age}岁)
+                  <strong>患者：</strong> {activeViolation.patientName} ({activeViolation.gender},{" "}
+                  {activeViolation.age}岁)
                 </div>
                 <div className={styles.marginBottom8}>
-                  <strong>预警原因：</strong> <span className={styles.textDanger}>{activeViolation.violation}</span>
+                  <strong>预警原因：</strong>{" "}
+                  <span className={styles.textDanger}>{activeViolation.violation}</span>
                 </div>
                 <div className={styles.marginBottom8}>
                   <strong>DRG入组：</strong> {activeViolation.drgCode}
@@ -292,7 +291,9 @@ export default function InsuranceAudit() {
               <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>
-                    {actionType === "ACCEPT" ? "核准理由与科室扣分备注" : "合理诊疗申诉理由与证据清单"}
+                    {actionType === "ACCEPT"
+                      ? "核准理由与科室扣分备注"
+                      : "合理诊疗申诉理由与证据清单"}
                   </label>
                   <textarea
                     value={reason}
@@ -308,18 +309,10 @@ export default function InsuranceAudit() {
                 </div>
 
                 <div className={styles.btnGroup}>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className={styles.btnPrimary}
-                  >
+                  <button type="submit" disabled={submitting} className={styles.btnPrimary}>
                     {submitting ? "正在物理提交至医保局审核总线..." : "签署并提交处理"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className={styles.btnSecondary}
-                  >
+                  <button type="button" onClick={handleCloseModal} className={styles.btnSecondary}>
                     取消
                   </button>
                 </div>

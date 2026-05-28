@@ -1,4 +1,16 @@
-import { Card, Steps, Button, Space, Typography, Row, Col, Statistic, Progress, Badge, message } from "antd";
+import {
+  Card,
+  Steps,
+  Button,
+  Space,
+  Typography,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Badge,
+  message,
+} from "antd";
 import {
   RocketOutlined,
   CheckCircleOutlined,
@@ -8,10 +20,7 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
-import {
-  useSuccessPlan,
-  useTransitionSuccessStage,
-} from "@/shared/api/hooks";
+import { useSuccessPlan, useTransitionSuccessStage } from "@/shared/api/hooks";
 import styles from "./Tenant.module.css";
 
 const { Text } = Typography;
@@ -137,7 +146,8 @@ export default function ImplementationGuide() {
   }
 
   // 严格遵守 eslint medkernel/no-hardcoded-color，在 JS 中全部改用 CSS 变量
-  const healthColor = (plan?.healthScore ?? 0) >= 80 ? "var(--ant-success-color)" : "var(--ant-warning-color)";
+  const healthColor =
+    (plan?.healthScore ?? 0) >= 80 ? "var(--ant-success-color)" : "var(--ant-warning-color)";
 
   return (
     <PageShell
@@ -221,7 +231,14 @@ export default function ImplementationGuide() {
         </Row>
 
         {/* 动态步骤卡片 */}
-        <Card title={<Space><DashboardOutlined /><span>交付全生命周期步骤推进</span></Space>}>
+        <Card
+          title={
+            <Space>
+              <DashboardOutlined />
+              <span>交付全生命周期步骤推进</span>
+            </Space>
+          }
+        >
           <Steps
             direction="vertical"
             current={getCurrentStepIndex()}
@@ -237,15 +254,15 @@ export default function ImplementationGuide() {
                         getStepStatus(s.stage, s.subStep) === "finish"
                           ? "success"
                           : getStepStatus(s.stage, s.subStep) === "process"
-                          ? "processing"
-                          : "default"
+                            ? "processing"
+                            : "default"
                       }
                       text={
                         getStepStatus(s.stage, s.subStep) === "finish"
                           ? "已完结"
                           : getStepStatus(s.stage, s.subStep) === "process"
-                          ? "演进中"
-                          : "未开始"
+                            ? "演进中"
+                            : "未开始"
                       }
                     />
                   </Space>

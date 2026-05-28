@@ -5,11 +5,51 @@ import styles from "./Clinical.module.css";
 // 规避 no-page-mock：通过函数动态提供待办初始数据
 function getInitialTodos() {
   return [
-    { id: 101, title: "审批：'胸痛中心急性心梗分型' 临床路径知识包发布申请", type: "APPROVAL", severity: "P0", department: "心内科", sla: "35 分钟", status: "PENDING" },
-    { id: 102, title: "整改：关于 '高风险红线抗菌药物滥用异常指标' 的科室自查整改要求", type: "REMEDIATION", severity: "P0", department: "呼吸内科", sla: "85 分钟", status: "PENDING" },
-    { id: 103, title: "发布：'国家临床专科2026年标准化字典包' 灰度发布部署", type: "PUBLISH", severity: "P1", department: "信息科", sla: "2 小时", status: "PENDING" },
-    { id: 104, title: "审批：'高血压合并糖尿病慢病管理路径' 关键节点推进修正案", type: "APPROVAL", severity: "P2", department: "内分泌科", sla: "5 小时", status: "PENDING" },
-    { id: 105, title: "回滚：'测试库-低浓度胰岛素临床安全调配规则' 一键快速物理回滚", type: "ROLLBACK", severity: "P1", department: "药剂科", sla: "1 小时", status: "PENDING" }
+    {
+      id: 101,
+      title: "审批：'胸痛中心急性心梗分型' 临床路径知识包发布申请",
+      type: "APPROVAL",
+      severity: "P0",
+      department: "心内科",
+      sla: "35 分钟",
+      status: "PENDING",
+    },
+    {
+      id: 102,
+      title: "整改：关于 '高风险红线抗菌药物滥用异常指标' 的科室自查整改要求",
+      type: "REMEDIATION",
+      severity: "P0",
+      department: "呼吸内科",
+      sla: "85 分钟",
+      status: "PENDING",
+    },
+    {
+      id: 103,
+      title: "发布：'国家临床专科2026年标准化字典包' 灰度发布部署",
+      type: "PUBLISH",
+      severity: "P1",
+      department: "信息科",
+      sla: "2 小时",
+      status: "PENDING",
+    },
+    {
+      id: 104,
+      title: "审批：'高血压合并糖尿病慢病管理路径' 关键节点推进修正案",
+      type: "APPROVAL",
+      severity: "P2",
+      department: "内分泌科",
+      sla: "5 小时",
+      status: "PENDING",
+    },
+    {
+      id: 105,
+      title: "回滚：'测试库-低浓度胰岛素临床安全调配规则' 一键快速物理回滚",
+      type: "ROLLBACK",
+      severity: "P1",
+      department: "药剂科",
+      sla: "1 小时",
+      status: "PENDING",
+    },
   ];
 }
 
@@ -74,15 +114,13 @@ export default function WorkflowTodos() {
 
     setTimeout(() => {
       setSubmitting(false);
-      
-      setTodos((prev) =>
-        prev.map((t) => (t.id === activeTodo.id ? { ...t, status: "DONE" } : t))
-      );
+
+      setTodos((prev) => prev.map((t) => (t.id === activeTodo.id ? { ...t, status: "DONE" } : t)));
 
       setMessage(
         `[SLA 安全闭环] 待办任务 #${activeTodo.id} 处理完毕！操作已物理审计上报，TraceId: tr-${Math.floor(
-          100000 + Math.random() * 900000
-        )}`
+          100000 + Math.random() * 900000,
+        )}`,
       );
       setActiveTodo(null);
       setTimeout(() => setMessage(null), 4000);
@@ -103,29 +141,26 @@ export default function WorkflowTodos() {
           <div className={styles.card}>
             <div className={styles.description}>P0/P1 高危红线挂起待办</div>
             <div className={`${styles.title} ${styles.fontSize28}`}>
-              {todos.filter((t) => t.status === "PENDING" && (t.severity === "P0" || t.severity === "P1")).length} 个
+              {
+                todos.filter(
+                  (t) => t.status === "PENDING" && (t.severity === "P0" || t.severity === "P1"),
+                ).length
+              }{" "}
+              个
             </div>
           </div>
           <div className={styles.card}>
             <div className={styles.description}>当前未办协同任务数</div>
-            <div className={`${styles.title} ${styles.fontSize28}`}>
-              {pendingTodos.length} 个
-            </div>
+            <div className={`${styles.title} ${styles.fontSize28}`}>{pendingTodos.length} 个</div>
           </div>
           <div className={styles.card}>
             <div className={styles.description}>今日已闭环待办审计留痕</div>
-            <div className={`${styles.title} ${styles.fontSize28}`}>
-              {doneTodos.length} 个
-            </div>
+            <div className={`${styles.title} ${styles.fontSize28}`}>{doneTodos.length} 个</div>
           </div>
         </div>
 
         {/* 审计反射提示 */}
-        {message && (
-          <div className={styles.alertSuccess}>
-            {message}
-          </div>
-        )}
+        {message && <div className={styles.alertSuccess}>{message}</div>}
 
         {/* 未办列表 */}
         <div className={styles.card}>
@@ -153,9 +188,7 @@ export default function WorkflowTodos() {
                     <tr key={todo.id}>
                       <td className={styles.fontMonospace}>#{todo.id}</td>
                       <td>
-                        <span className={getSeverityBadge(todo.severity)}>
-                          {todo.severity}
-                        </span>
+                        <span className={getSeverityBadge(todo.severity)}>{todo.severity}</span>
                       </td>
                       <td className={styles.fontWeight600}>{getTypeName(todo.type)}</td>
                       <td>{todo.title}</td>
@@ -164,10 +197,7 @@ export default function WorkflowTodos() {
                         ⏳ {todo.sla}
                       </td>
                       <td>
-                        <button
-                          onClick={() => handleOpenModal(todo)}
-                          className={styles.btnPrimary}
-                        >
+                        <button onClick={() => handleOpenModal(todo)} className={styles.btnPrimary}>
                           立即办理
                         </button>
                       </td>
@@ -200,9 +230,7 @@ export default function WorkflowTodos() {
                     <tr key={todo.id}>
                       <td className={styles.fontMonospace}>#{todo.id}</td>
                       <td>
-                        <span className={getSeverityBadge(todo.severity)}>
-                          {todo.severity}
-                        </span>
+                        <span className={getSeverityBadge(todo.severity)}>{todo.severity}</span>
                       </td>
                       <td>{getTypeName(todo.type)}</td>
                       <td>{todo.title}</td>
@@ -223,9 +251,7 @@ export default function WorkflowTodos() {
           <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
               <div className={`${styles.flexBetween} ${styles.marginBottom20}`}>
-                <div className={styles.title}>
-                  办理待办协作任务 #{activeTodo.id}
-                </div>
+                <div className={styles.title}>办理待办协作任务 #{activeTodo.id}</div>
                 <button
                   onClick={handleCloseModal}
                   className={`${styles.btnSecondary} ${styles.pad4px8px}`}
@@ -259,18 +285,10 @@ export default function WorkflowTodos() {
                 </div>
 
                 <div className={styles.btnGroup}>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className={styles.btnPrimary}
-                  >
+                  <button type="submit" disabled={submitting} className={styles.btnPrimary}>
                     {submitting ? "正在进行物理存证..." : "签署并提交保存"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className={styles.btnSecondary}
-                  >
+                  <button type="button" onClick={handleCloseModal} className={styles.btnSecondary}>
                     取消
                   </button>
                 </div>

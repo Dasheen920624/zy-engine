@@ -45,10 +45,34 @@ type ProviderCode = "LDAP" | "OIDC" | "CAS" | "SAML";
 export default function IdentityBinding() {
   const [selectedProvider, setSelectedProvider] = useState<ProviderCode>("LDAP");
   const [configs, setConfigs] = useState<Record<ProviderCode, BindingState>>({
-    LDAP: { enabled: true, serverUrl: "ldap://10.200.5.10:389", clientId: "cn=admin,dc=hospital,dc=org", clientSecret: "••••••••", extraField: "ou=users,dc=hospital,dc=org" },
-    OIDC: { enabled: false, serverUrl: "https://sso.hospital.com/oauth2", clientId: "medkernel_client_id", clientSecret: "", extraField: "openid profile email" },
-    CAS: { enabled: false, serverUrl: "https://cas.hospital-group.cn/cas", clientId: "", clientSecret: "", extraField: "/login" },
-    SAML: { enabled: false, serverUrl: "https://idp.hospital.org/saml2", clientId: "medkernel-sp-entity", clientSecret: "", extraField: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" },
+    LDAP: {
+      enabled: true,
+      serverUrl: "ldap://10.200.5.10:389",
+      clientId: "cn=admin,dc=hospital,dc=org",
+      clientSecret: "••••••••",
+      extraField: "ou=users,dc=hospital,dc=org",
+    },
+    OIDC: {
+      enabled: false,
+      serverUrl: "https://sso.hospital.com/oauth2",
+      clientId: "medkernel_client_id",
+      clientSecret: "",
+      extraField: "openid profile email",
+    },
+    CAS: {
+      enabled: false,
+      serverUrl: "https://cas.hospital-group.cn/cas",
+      clientId: "",
+      clientSecret: "",
+      extraField: "/login",
+    },
+    SAML: {
+      enabled: false,
+      serverUrl: "https://idp.hospital.org/saml2",
+      clientId: "medkernel-sp-entity",
+      clientSecret: "",
+      extraField: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+    },
   });
 
   const [testing, setTesting] = useState(false);
@@ -88,13 +112,16 @@ export default function IdentityBinding() {
 
     setTimeout(() => {
       setTesting(false);
-      const isSecure = config.serverUrl.startsWith("https://") || config.serverUrl.startsWith("ldaps://");
+      const isSecure =
+        config.serverUrl.startsWith("https://") || config.serverUrl.startsWith("ldaps://");
       const isLdap = selectedProvider === "LDAP";
 
       setTestResult({
         success: true,
         latency: Math.floor(25 + Math.random() * 30),
-        certStatus: isSecure ? "SSL 证书校验通过 (有效期剩余 274 天)" : "无 SSL 加密 (局域网明文传输已告警)",
+        certStatus: isSecure
+          ? "SSL 证书校验通过 (有效期剩余 274 天)"
+          : "无 SSL 加密 (局域网明文传输已告警)",
         details: isLdap
           ? `成功连接至域控，已识别 Schema，发现用户数: 1420 人`
           : `OIDC/SSO 元数据解析完毕，支持授权类型: authorization_code`,
@@ -116,11 +143,7 @@ export default function IdentityBinding() {
       description="支撑 GA-SVC-COMPLIANCE-01。配置医院级 CAS / LDAP / OIDC / SAML 单点登录服务，实现多身份源无感知漫游。"
     >
       <div className={styles.container}>
-        {message && (
-          <div className={styles.alertSuccess}>
-            {message}
-          </div>
-        )}
+        {message && <div className={styles.alertSuccess}>{message}</div>}
 
         <div className={styles.grid}>
           {/* 左侧列表：协议选择 */}
@@ -158,9 +181,7 @@ export default function IdentityBinding() {
           {/* 右侧表单：特定协议配置 */}
           <div className={styles.card}>
             <div className={styles.flexBetween}>
-              <div className={styles.title}>
-                {selectedProvider} 详细配置选项
-              </div>
+              <div className={styles.title}>{selectedProvider} 详细配置选项</div>
               <button
                 type="button"
                 onClick={handleToggle}
@@ -173,7 +194,9 @@ export default function IdentityBinding() {
             <form onSubmit={handleSave}>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
-                  {selectedProvider === "LDAP" ? "LDAP 服务器 URL" : "SSO 认证中心端点 (Issuer URL)"}
+                  {selectedProvider === "LDAP"
+                    ? "LDAP 服务器 URL"
+                    : "SSO 认证中心端点 (Issuer URL)"}
                 </label>
                 <input
                   type="text"
@@ -186,7 +209,9 @@ export default function IdentityBinding() {
 
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
-                  {selectedProvider === "LDAP" ? "系统绑定域账户 (Bind DN)" : "客户端唯一标识 (Client ID / Entity ID)"}
+                  {selectedProvider === "LDAP"
+                    ? "系统绑定域账户 (Bind DN)"
+                    : "客户端唯一标识 (Client ID / Entity ID)"}
                 </label>
                 <input
                   type="text"
@@ -199,7 +224,9 @@ export default function IdentityBinding() {
 
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
-                  {selectedProvider === "LDAP" ? "系统绑定域账户密码 (Bind Password)" : "客户端凭证密钥 (Client Secret)"}
+                  {selectedProvider === "LDAP"
+                    ? "系统绑定域账户密码 (Bind Password)"
+                    : "客户端凭证密钥 (Client Secret)"}
                 </label>
                 <input
                   type="password"
@@ -215,8 +242,8 @@ export default function IdentityBinding() {
                   {selectedProvider === "LDAP"
                     ? "用户搜索基准 (User Search Base)"
                     : selectedProvider === "OIDC"
-                    ? "作用域范围 (Scopes)"
-                    : "登录路径与属性映射"}
+                      ? "作用域范围 (Scopes)"
+                      : "登录路径与属性映射"}
                 </label>
                 <input
                   type="text"
@@ -229,7 +256,9 @@ export default function IdentityBinding() {
 
               {testResult && (
                 <div
-                  className={testResult.success ? styles.connectionTestPass : styles.connectionTestFail}
+                  className={
+                    testResult.success ? styles.connectionTestPass : styles.connectionTestFail
+                  }
                 >
                   <div className={styles.fontWeight600}>
                     {testResult.success ? "✅ 握手机制联通测试成功" : "❌ 联通性测试失败"}

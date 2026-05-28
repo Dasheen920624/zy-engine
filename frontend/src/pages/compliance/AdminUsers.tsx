@@ -3,7 +3,7 @@ import { PageShell } from "@/shared/ui/PageShell";
 import {
   useUserRoleAssignments,
   useCreateUserRoleAssignment,
-  useDeleteUserRoleAssignment
+  useDeleteUserRoleAssignment,
 } from "@/shared/api/hooks";
 import styles from "./Compliance.module.css";
 
@@ -22,7 +22,7 @@ function getRolesConfig() {
     { code: "doctor", name: "临床医生" },
     { code: "nurse", name: "护理人员" },
     { code: "audit-compliance", name: "合规审计" },
-    { code: "implementation-engineer", name: "实施工程师" }
+    { code: "implementation-engineer", name: "实施工程师" },
   ];
 }
 
@@ -31,7 +31,7 @@ function getScopeLevels() {
     { code: "TENANT", name: "租户级 (TENANT)" },
     { code: "HOSPITAL", name: "医院级 (HOSPITAL)" },
     { code: "CAMPUS", name: "院区级 (CAMPUS)" },
-    { code: "DEPARTMENT", name: "科室级 (DEPARTMENT)" }
+    { code: "DEPARTMENT", name: "科室级 (DEPARTMENT)" },
   ];
 }
 
@@ -136,9 +136,7 @@ export default function AdminUsers() {
 
         {/* 提示信息 */}
         {message && (
-          <div
-            className={message.type === "success" ? styles.alertSuccess : styles.alertError}
-          >
+          <div className={message.type === "success" ? styles.alertSuccess : styles.alertError}>
             {message.text}
           </div>
         )}
@@ -147,10 +145,7 @@ export default function AdminUsers() {
         <div className={styles.card}>
           <div className={styles.flexBetween}>
             <div className={styles.title}>用户角色与数据隔离范围配置</div>
-            <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className={styles.btnPrimary}
-            >
+            <button onClick={() => setShowAddForm(!showAddForm)} className={styles.btnPrimary}>
               {showAddForm ? "收起配置面板" : "新增角色分配关系"}
             </button>
           </div>
@@ -266,9 +261,7 @@ export default function AdminUsers() {
                       <td>{item.tenantId}</td>
                       <td className={styles.fontWeight600}>{item.userId}</td>
                       <td>
-                        <span className={styles.roleTag}>
-                          {getRoleName(item.roleCode)}
-                        </span>
+                        <span className={styles.roleTag}>{getRoleName(item.roleCode)}</span>
                       </td>
                       <td>
                         <span className={styles.scopeTag}>{item.scopeLevel}</span>
@@ -276,7 +269,9 @@ export default function AdminUsers() {
                       <td className={styles.fontMonospace}>{item.scopeCode}</td>
                       <td>
                         <span
-                          className={item.activeFlag === "Y" ? styles.badgeActive : styles.badgeInactive}
+                          className={
+                            item.activeFlag === "Y" ? styles.badgeActive : styles.badgeInactive
+                          }
                         >
                           {item.activeFlag === "Y" ? "激活运行中" : "已停用"}
                         </span>

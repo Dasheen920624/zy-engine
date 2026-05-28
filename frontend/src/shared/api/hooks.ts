@@ -2397,7 +2397,7 @@ export function useTransitionSuccessStage() {
     mutationFn: async (nextStage: string) => {
       const { data } = await apiClient.post<{ data: SuccessPlan }>(
         "/platform/success/lifecycle/transition",
-        { nextStage }
+        { nextStage },
       );
       return data.data;
     },
@@ -2425,7 +2425,9 @@ export function useOrgUnits(params?: { page?: number; size?: number; sort?: stri
   return useQuery({
     queryKey: ["tenant", "org-units", params ?? {}],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: PageResponse<OrgUnit> }>("/tenant/org-units", { params });
+      const { data } = await apiClient.get<{ data: PageResponse<OrgUnit> }>("/tenant/org-units", {
+        params,
+      });
       return data.data;
     },
   });
@@ -2480,13 +2482,15 @@ export interface MpiStatsResponse {
   genderCounts: Record<string, number>;
 }
 
-export function useMpiPatients(params: { keyword?: string; status?: string; page?: number; size?: number } = {}) {
+export function useMpiPatients(
+  params: { keyword?: string; status?: string; page?: number; size?: number } = {},
+) {
   return useQuery({
     queryKey: ["clinical", "mpi", "patients", params],
     queryFn: async () => {
       const { data } = await apiClient.get<{ data: { items: MpiPatient[]; total: number } }>(
         "/clinical/mpi/patients",
-        { params }
+        { params },
       );
       return data.data;
     },
@@ -2511,7 +2515,10 @@ export interface MergeMpiPayload {
 export function useMergeMpiPatients() {
   return useMutation({
     mutationFn: async (payload: MergeMpiPayload) => {
-      const { data } = await apiClient.post<{ data: void }>("/clinical/mpi/patients/merge", payload);
+      const { data } = await apiClient.post<{ data: void }>(
+        "/clinical/mpi/patients/merge",
+        payload,
+      );
       return data.data;
     },
   });
@@ -2538,7 +2545,9 @@ export function useUserRoleAssignments() {
   return useQuery({
     queryKey: ["compliance", "user-roles"],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: UserRoleAssignment[] }>("/compliance/user-roles");
+      const { data } = await apiClient.get<{ data: UserRoleAssignment[] }>(
+        "/compliance/user-roles",
+      );
       return data.data;
     },
   });
@@ -2546,8 +2555,16 @@ export function useUserRoleAssignments() {
 
 export function useCreateUserRoleAssignment() {
   return useMutation({
-    mutationFn: async (payload: { userId: string; roleCode: string; scopeLevel: string; scopeCode: string }) => {
-      const { data } = await apiClient.post<{ data: UserRoleAssignment }>("/compliance/user-roles", payload);
+    mutationFn: async (payload: {
+      userId: string;
+      roleCode: string;
+      scopeLevel: string;
+      scopeCode: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: UserRoleAssignment }>(
+        "/compliance/user-roles",
+        payload,
+      );
       return data.data;
     },
   });
@@ -2561,4 +2578,3 @@ export function useDeleteUserRoleAssignment() {
     },
   });
 }
-

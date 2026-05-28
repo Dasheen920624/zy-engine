@@ -41,7 +41,7 @@
 }
 
 .statCard::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -81,7 +81,13 @@
   color: var(--ant-color-text);
   line-height: 1.2;
   margin-bottom: 8px;
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    "Outfit",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 }
 
 .statSubtext {
@@ -199,6 +205,3 @@
 .badgeSuccess {
   background-color: var(--ant-color-success) !important;
 }
-
-
-
