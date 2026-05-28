@@ -10,8 +10,12 @@ import WorkflowTodos from "./clinical/WorkflowTodos";
 import QcAlerts from "./quality/QcAlerts";
 import AdminUsers from "./compliance/AdminUsers";
 import GraphExplore from "./advanced/GraphExplore";
+import AiWorkflows from "./advanced/AiWorkflows";
+import Provenance from "./advanced/Provenance";
 import Dashboard from "./Dashboard";
 import Login from "./Login";
+import AdapterHub from "./tenant/AdapterHub";
+import EmbedLaunch from "./clinical/EmbedLaunch";
 
 const testQueryClient = new QueryClient({
   defaultOptions: {
@@ -30,10 +34,26 @@ function renderPage(page: React.ReactElement) {
 }
 
 describe("page smoke coverage", () => {
-  it("renders the tenant config-packages placeholder", () => {
+  it("renders the tenant config-packages console", () => {
     renderPage(<ConfigPackages />);
     expect(screen.getByRole("heading", { name: "配置包中心" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /查看实施路线图/ })).toBeInTheDocument();
+    expect(screen.getByText(/一键创建知识配置包草稿/)).toBeInTheDocument();
+  });
+
+  it("renders the tenant adapter-hub console", () => {
+    renderPage(<AdapterHub />);
+    expect(screen.getByRole("heading", { name: "第三方对接总线与页面集成" })).toBeInTheDocument();
+    expect(screen.getByText(/Webhook 回调订阅安全自研沙箱/)).toBeInTheDocument();
+    expect(screen.getByText(/重试死信与接口存证队列/)).toBeInTheDocument();
+  });
+
+  it("renders the clinical embed-launch console in fallback isolation state", () => {
+    renderPage(
+      <MemoryRouter initialEntries={["/embed/launch"]}>
+        <EmbedLaunch />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(/页面嵌入式临床建议会话已安全隔离/)).toBeInTheDocument();
   });
 
   it("renders the clinical workflow-todos placeholder", () => {
@@ -57,6 +77,20 @@ describe("page smoke coverage", () => {
     renderPage(<GraphExplore />);
     expect(screen.getByRole("heading", { name: "图谱查询" })).toBeInTheDocument();
     expect(screen.getAllByText(/高级工具/).length).toBeGreaterThan(0);
+  });
+
+  it("renders the advanced ai-workflows engine workbench", () => {
+    renderPage(<AiWorkflows />);
+    expect(screen.getByRole("heading", { name: "大模型网关与 AI 工作流配置" })).toBeInTheDocument();
+    expect(screen.getByText(/混合路由去向策略/)).toBeInTheDocument();
+    expect(screen.getByText(/AI 推理脱敏与降级物理沙盒输入端/)).toBeInTheDocument();
+  });
+
+  it("renders the advanced provenance audit console", () => {
+    renderPage(<Provenance />);
+    expect(screen.getByRole("heading", { name: "来源与临床证据追溯" })).toBeInTheDocument();
+    expect(screen.getByText(/数字生命周期全景存证条目/)).toBeInTheDocument();
+    expect(screen.getByText(/Isolated 子事务合规日志流/)).toBeInTheDocument();
   });
 
   it("renders the dashboard workbench with tenant-lifecycle placeholder", () => {

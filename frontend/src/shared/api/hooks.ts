@@ -880,6 +880,15 @@ export interface RecommendationCard {
   createdAt?: string;
   createdBy?: string;
   traceId?: string;
+  // 嵌入与全屏决策终端可选扩展属性
+  cardCode?: string;
+  severity?: string;
+  recommendations?: Array<{
+    actionCode: string;
+    actionType: string;
+    description: string;
+  }>;
+  evidenceSummary?: string;
 }
 
 export interface RecommendationSource {
@@ -1551,6 +1560,770 @@ export function useReportFollowupAbnormal() {
         payload,
       );
       return data;
+    },
+  });
+}
+
+// ──────────────────────────────────────────
+// 智能包发布与同步引擎 (GA-ENG-PKG-01)
+// ──────────────────────────────────────────
+
+export interface SyncTarget {
+  id: number;
+  targetId: string;
+  tenantId: string;
+  targetName: string;
+  targetType: "DIFY" | "NEO4J" | "BUSINESS_DB" | string;
+  connectionConfig: string;
+  status: "ACTIVE" | "DISABLED" | string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface PackageCreateRequest {
+  packageCode: string;
+  packageVersion: string;
+  name: string;
+  description: string;
+}
+
+export interface PackageResponse {
+  packageId: string;
+  packageCode: string;
+  packageVersion: string;
+  name: string;
+  status: "DRAFT" | "PUBLISHED" | "ACTIVE" | "OFFLINE" | string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface KnowledgePackage {
+  id?: number;
+  packageId: string;
+  tenantId: string;
+  packageCode: string;
+  packageVersion: string;
+  name: string;
+  description: string;
+  status: "DRAFT" | "PUBLISHED" | "ACTIVE" | "OFFLINE" | string;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+  updatedBy: string;
+  traceId: string;
+}
+
+export interface PackageItem {
+  id?: number;
+  itemId: string;
+  tenantId: string;
+  packageId: string;
+  assetType: "RULE" | "PATHWAY" | "EVALUATION" | "TERMINOLOGY" | "KNOWLEDGE" | "FOLLOWUP" | string;
+  assetId: string;
+  assetVersion: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface PackageDetailResponse {
+  packageId: string;
+  packageCode: string;
+  packageVersion: string;
+  name: string;
+  description: string;
+  status: string;
+  items: PackageItem[];
+}
+
+export interface PackageItemRequest {
+  assetType: "RULE" | "PATHWAY" | "EVALUATION" | "TERMINOLOGY" | "KNOWLEDGE" | "FOLLOWUP" | string;
+  assetId: string;
+  assetVersion: string;
+}
+
+export interface PackageItemResponse {
+  itemId: string;
+  packageId: string;
+  assetType: string;
+  assetId: string;
+  assetVersion: string;
+}
+
+export interface PackageDiffResponse {
+  packageId: string;
+  baseVersion: string;
+  targetVersion: string;
+  addedCount: number;
+  updatedCount: number;
+  removedCount: number;
+  affectedDepartments: string[];
+}
+
+export interface PackageSyncRequest {
+  targetOrgUnitId: string;
+  strategy: "GRAYSCALE" | "FULL" | string;
+  scopeType: "ALL" | "CAMPUS" | "SITE" | "DEPARTMENT" | string;
+  scopeValue: string;
+  targetIds: string[];
+}
+
+export interface SyncLogResponse {
+  logId: string;
+  targetId: string;
+  status: "RUNNING" | "SUCCESS" | "FAILED" | string;
+  errorCode: string | null;
+  errorMessage: string | null;
+  retryCount: number;
+  syncEvidence: string | null;
+}
+
+export interface PackageSyncResponse {
+  planId: string;
+  packageId: string;
+  status: "EXECUTING" | "SUCCESS" | "FAILED" | string;
+  logs: SyncLogResponse[];
+}
+
+// 1. 动态获取激活同步通道目标列表
+export function useSyncTargets() {
+  return useQuery({
+    queryKey: ["packages", "sync-targets"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: SyncTarget[] }>("/engine/packages/sync-targets");
+      return data.data ?? [];
+    },
+  });
+}
+
+// 2. 创建知识包草稿
+export function useCreatePackage() {
+  return useMutation({
+    mutationFn: async (payload: PackageCreateRequest) => {
+      const { data } = await apiClient.post<{ data: PackageResponse }>("/engine/packages", payload);
+      return data.data;
+    },
+  });
+}
+
+// 3. 分页查询知识包列表
+export function usePackages(page = 0, size = 10) {
+  return useQuery({
+    queryKey: ["packages", "list", page, size],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{
+        data: { items: KnowledgePackage[]; totalCount: number };
+      }>("/engine/packages", { params: { page, size } });
+      return data.data ?? { items: [], totalCount: 0 };
+    },
+  });
+}
+
+// 4. 获取包详细条目
+export function usePackageDetail(packageId: string) {
+  return useQuery({
+    queryKey: ["packages", "detail", packageId],
+    queryFn: async () => {
+      if (!packageId) return null;
+      const { data } = await apiClient.get<{ data: PackageDetailResponse }>(
+        `/engine/packages/${packageId}`,
+      );
+      return data.data;
+    },
+    enabled: !!packageId,
+  });
+}
+
+// 5. 添加资产条目到草稿
+export function useAddPackageItem() {
+  return useMutation({
+    mutationFn: async (payload: { packageId: string; request: PackageItemRequest }) => {
+      const { data } = await apiClient.post<{ data: PackageItemResponse }>(
+        `/engine/packages/${payload.packageId}/items`,
+        payload.request,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 6. 计算变动差异与临床影响分析
+export function useCalculateDiff(packageId: string, basePackageId?: string) {
+  return useQuery({
+    queryKey: ["packages", "diff", packageId, basePackageId],
+    queryFn: async () => {
+      if (!packageId) return null;
+      const { data } = await apiClient.get<{ data: PackageDiffResponse }>(
+        `/engine/packages/${packageId}/diff`,
+        { params: { basePackageId } },
+      );
+      return data.data;
+    },
+    enabled: !!packageId,
+  });
+}
+
+// 7. 触发多通道物理投影同步发布
+export function useSyncPackage() {
+  return useMutation({
+    mutationFn: async (payload: { packageId: string; request: PackageSyncRequest }) => {
+      const { data } = await apiClient.post<{ data: PackageSyncResponse }>(
+        `/engine/packages/${payload.packageId}/sync`,
+        payload.request,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 8. 一键快速回滚在用包版本至历史点
+export function useRollbackPackage() {
+  return useMutation({
+    mutationFn: async (payload: { packageId: string; targetPackageId: string }) => {
+      const { data } = await apiClient.post<{ data: PackageResponse }>(
+        `/engine/packages/${payload.packageId}/rollback`,
+        null,
+        { params: { targetPackageId: payload.targetPackageId } },
+      );
+      return data.data;
+    },
+  });
+}
+
+// ──────────────────────────────────────────
+// 页面嵌入与安全白名单引擎 (GA-ENG-EMBED-01)
+// ──────────────────────────────────────────
+
+export interface EmbedLaunchTokenRequest {
+  userId: string;
+  roleCode: string;
+  patientId: string;
+  encounterId: string;
+  triggerPoint: string;
+  expireSeconds?: number;
+}
+
+export interface EmbedLaunchTokenResponse {
+  token: string;
+  expiredAt: string;
+  embedUrl: string;
+}
+
+export interface EmbedLaunchContextResponse {
+  userId: string;
+  roleCode: string;
+  tenantId: string;
+  patientId: string;
+  encounterId: string;
+  triggerPoint: string;
+  active: boolean;
+  traceId: string;
+}
+
+export interface EmbedFeedbackRequest {
+  token: string;
+  actionType: "ADOPT" | "REJECT" | string;
+  reason?: string;
+}
+
+export interface EmbedOriginRequest {
+  origin: string;
+}
+
+// 1. 生成嵌入一次性启动令牌
+export function useGenerateEmbedToken() {
+  return useMutation({
+    mutationFn: async (payload: EmbedLaunchTokenRequest) => {
+      const { data } = await apiClient.post<{ data: EmbedLaunchTokenResponse }>(
+        "/engine/embed/launch-tokens",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 2. 兑换启动令牌获取就诊上下文事实
+export function useEmbedLaunch(token: string) {
+  return useQuery({
+    queryKey: ["embed", "launch", token],
+    queryFn: async () => {
+      if (!token) return null;
+      const { data } = await apiClient.get<{ data: EmbedLaunchContextResponse }>(
+        "/engine/embed/launch",
+        { params: { token } },
+      );
+      return data.data;
+    },
+    enabled: !!token,
+    retry: false,
+  });
+}
+
+// 3. 回传记录医师的交互反馈审计
+export function useSubmitEmbedFeedback() {
+  return useMutation({
+    mutationFn: async (payload: EmbedFeedbackRequest) => {
+      await apiClient.post<void>("/engine/embed/feedback", payload);
+    },
+  });
+}
+
+// 4. 获取当前租户的安全 Origin 域名白名单列表
+export function useEmbedOrigins() {
+  return useQuery({
+    queryKey: ["embed", "origins"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: string[] }>("/engine/embed/origins");
+      return data.data ?? [];
+    },
+  });
+}
+
+// 5. 添加入侵安全防护跨域 Origin 域名白名单
+export function useAddEmbedOrigin() {
+  return useMutation({
+    mutationFn: async (payload: EmbedOriginRequest) => {
+      await apiClient.post<void>("/engine/embed/origins", payload);
+    },
+  });
+}
+
+// ─── 大模型能力网关相关的接口定义 (GA-ENG-API-12) ───
+export interface ModelCapabilityStatusResponse {
+  capabilityCode: string;
+  routeStrategy: "DISABLED" | "BASEPLAY" | "LOCAL_MODEL" | "EXTERNAL_MODEL" | string;
+  desensitizeStrategy: "DEFAULT" | "MASK_ALL" | "NONE" | string;
+  fallbackAvailable: boolean;
+  fallbackReason: string;
+}
+
+export interface ModelTaskRequest {
+  capabilityCode: string;
+  inputData: string;
+  desensitizeStrategy?: string;
+  expectedSchema?: string;
+  timeoutSeconds?: number;
+}
+
+export interface ModelTaskResponse {
+  taskId: string;
+  status: "SUCCESS" | "FAILED" | "DEGRADED" | string;
+  outputContent: string;
+  modelMode: string;
+  modelVersion: string;
+  promptVersion: string;
+  sourceCitations: string;
+  confidence: number;
+  riskLevel: string;
+  fallbackUsed: boolean;
+  fallbackReason: string;
+  timeCostMs: number;
+  traceId: string;
+}
+
+export interface ModelPolicyValidateRequest {
+  capabilityCode: string;
+  routeStrategy: string;
+  desensitizeStrategy?: string;
+  expectedSchema?: string;
+}
+
+export interface ModelPolicyValidateResponse {
+  valid: boolean;
+  message: string;
+  fallbackAvailable: boolean;
+}
+
+// 6. 扫描获取当前租户全部可用模型能力状态与降级指标
+export function useModelCapabilitiesStatus() {
+  return useQuery({
+    queryKey: ["model", "capabilities-status"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: ModelCapabilityStatusResponse[] }>(
+        "/model-capabilities/status",
+      );
+      return data.data ?? [];
+    },
+  });
+}
+
+// 7. 提交推理或抽取任务，由网关执行路由、数据脱敏与Schema检验
+export function useSubmitModelTask() {
+  return useMutation({
+    mutationFn: async (payload: ModelTaskRequest) => {
+      const { data } = await apiClient.post<{ data: ModelTaskResponse }>(
+        "/model-capabilities/tasks",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 8. 根据任务ID追溯大模型推理或降级回退任务的详情与审计凭证
+export function useModelTask(taskId: string) {
+  return useQuery({
+    queryKey: ["model", "task", taskId],
+    queryFn: async () => {
+      if (!taskId) return null;
+      const { data } = await apiClient.get<{ data: ModelTaskResponse }>(
+        `/model-capabilities/tasks/${taskId}`,
+      );
+      return data.data;
+    },
+    enabled: !!taskId,
+  });
+}
+
+// 9. 重试失败的任务或改为 B0 基线回退
+export function useRetryModelTask() {
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      const { data } = await apiClient.post<{ data: ModelTaskResponse }>(
+        `/model-capabilities/tasks/${taskId}/retry`,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 10. 发布前校验策略的合法性与可用降级判定
+export function useValidateModelPolicy() {
+  return useMutation({
+    mutationFn: async (payload: ModelPolicyValidateRequest) => {
+      const { data } = await apiClient.post<{ data: ModelPolicyValidateResponse }>(
+        "/model-capabilities/policies/validate",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// ──────────────────────────────────────────
+// 第三方对接总线 (GA-ENG-INTEG-01) 核心接口
+// ──────────────────────────────────────────
+
+export interface IntegrationAdapter {
+  id: number;
+  adapterId: string;
+  tenantId: string;
+  name: string;
+  protocolType: "HL7" | "FHIR" | "Webhook" | "REST" | "WebService" | string;
+  status: "ACTIVE" | "SUSPENDED" | string;
+  configJson: string;
+  healthStatus: "HEALTHY" | "UNHEALTHY" | string;
+  rttMs: number;
+  lastHeartbeatAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IntegrationWebhookConfig {
+  id: number;
+  webhookId: string;
+  tenantId: string;
+  name: string;
+  callbackUrl: string;
+  secretKey: string;
+  eventsSubscribed: string;
+  status: "ACTIVE" | "SUSPENDED" | string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IntegrationMessageLog {
+  id: number;
+  messageId: string;
+  tenantId: string;
+  traceId: string;
+  direction: "INBOUND" | "OUTBOUND" | string;
+  systemName: string;
+  protocolType: string;
+  payloadSummary: string;
+  payload: string;
+  status: "SUCCESS" | "FAILED" | "RETRYING" | "DEAD_LETTER" | string;
+  retryCount: number;
+  maxRetries: number;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdapterCreatePayload {
+  adapterId: string;
+  name: string;
+  protocolType: string;
+  configJson?: string;
+}
+
+export interface AdapterUpdatePayload {
+  name: string;
+  protocolType: string;
+  configJson: string;
+  status: string;
+}
+
+export interface WebhookCreatePayload {
+  webhookId: string;
+  name: string;
+  callbackUrl: string;
+  eventsSubscribed: string;
+}
+
+export interface WebhookTestPayload {
+  webhookId: string;
+  payload: string;
+}
+
+interface IntegrationEnvelope<T> {
+  success: boolean;
+  code: string;
+  data: T;
+}
+
+// 1. 获取适配器目录
+export function useIntegrationAdapters() {
+  return useQuery({
+    queryKey: ["integration", "adapters"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<IntegrationEnvelope<IntegrationAdapter[]>>(
+        "/api/v1/engine/integration/adapters",
+      );
+      return data.data ?? [];
+    },
+  });
+}
+
+// 2. 创建适配器
+export function useCreateAdapter() {
+  return useMutation({
+    mutationFn: async (payload: AdapterCreatePayload) => {
+      const { data } = await apiClient.post<IntegrationEnvelope<IntegrationAdapter>>(
+        "/api/v1/engine/integration/adapters",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 3. 更新适配器
+export function useUpdateAdapter() {
+  return useMutation({
+    mutationFn: async ({ adapterId, payload }: { adapterId: string; payload: AdapterUpdatePayload }) => {
+      const { data } = await apiClient.put<IntegrationEnvelope<IntegrationAdapter>>(
+        `/api/v1/engine/integration/adapters/${adapterId}`,
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 4. 自检测心跳自检体检
+export function usePingAdapter() {
+  return useMutation({
+    mutationFn: async (adapterId: string) => {
+      const { data } = await apiClient.post<IntegrationEnvelope<IntegrationAdapter>>(
+        `/api/v1/engine/integration/adapters/${adapterId}/ping`,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 5. 获取 Webhook 订阅配置
+export function useWebhooks() {
+  return useQuery({
+    queryKey: ["integration", "webhooks"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<IntegrationEnvelope<IntegrationWebhookConfig[]>>(
+        "/api/v1/engine/integration/webhooks",
+      );
+      return data.data ?? [];
+    },
+  });
+}
+
+// 6. 创建 Webhook
+export function useCreateWebhook() {
+  return useMutation({
+    mutationFn: async (payload: WebhookCreatePayload) => {
+      const { data } = await apiClient.post<IntegrationEnvelope<IntegrationWebhookConfig>>(
+        "/api/v1/engine/integration/webhooks",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 7. Webhook 签名生成与双向测试
+export function useTestWebhookSignature() {
+  return useMutation({
+    mutationFn: async (payload: WebhookTestPayload) => {
+      const { data } = await apiClient.post<IntegrationEnvelope<any>>(
+        "/api/v1/engine/integration/webhooks/test",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 8. 获取重试死信队列流日志 (服务端分页)
+export function useIntegrationLogs(page: number, size: number) {
+  return useQuery({
+    queryKey: ["integration", "logs", page, size],
+    queryFn: async () => {
+      const { data } = await apiClient.get<IntegrationEnvelope<{ items: IntegrationMessageLog[]; total: number }>>(
+        "/api/v1/engine/integration/logs",
+        {
+          params: { page, size },
+        },
+      );
+      return data.data ?? { items: [], total: 0 };
+    },
+  });
+}
+
+// 9. 触发一键重试消息发送
+export function useRetryMessage() {
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      const { data } = await apiClient.post<IntegrationEnvelope<IntegrationMessageLog>>(
+        `/api/v1/engine/integration/logs/${messageId}/retry`,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 10. 删除日志记录 (已解决 / 已补偿)
+export function useDeleteMessage() {
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      const { data } = await apiClient.delete<IntegrationEnvelope<void>>(
+        `/api/v1/engine/integration/logs/${messageId}`,
+      );
+      return data.data;
+    },
+  });
+}
+
+// ──────────────────────────────────────────
+// 合规可信证据链引擎 (GA-ENG-EVID-01) 核心接口
+// ──────────────────────────────────────────
+
+export interface EvidenceSnapshot {
+  id: number;
+  evidenceId: string;
+  tenantId: string;
+  traceId: string;
+  evidenceType: string;
+  action: string;
+  subjectType: string;
+  subjectId: string;
+  evidenceSummary: string;
+  payloadSnapshot: string;
+  payloadHash: string;
+  isValid: boolean;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface EvidenceVerifyResult {
+  evidenceId: string;
+  isValid: boolean;
+  calculatedHash: string;
+  storedHash: string;
+}
+
+export interface EvidenceCreatePayload {
+  evidenceId: string;
+  traceId?: string;
+  evidenceType: string;
+  action: string;
+  subjectType: string;
+  subjectId: string;
+  evidenceSummary: string;
+  payloadSnapshot: string;
+}
+
+export interface EvidenceExportResult {
+  archiveHash: string;
+  status: "COMPLETED" | "PROCESSING" | string;
+}
+
+// 1. 分页检索证据快照列表
+export function useEvidences(params: {
+  keyword?: string;
+  evidenceType?: string;
+  page?: number;
+  size?: number;
+}) {
+  return useQuery({
+    queryKey: ["evidence", "snapshots", params],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<EvidenceSnapshot> }>(
+        "/compliance/evidence/snapshots",
+        { params }
+      );
+      return data.data ?? { items: [], total: 0 };
+    },
+  });
+}
+
+// 2. 根据全局唯一证据 ID 查询快照详情
+export function useEvidenceById(evidenceId: string) {
+  return useQuery({
+    queryKey: ["evidence", "snapshot", evidenceId],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: EvidenceSnapshot }>(
+        `/compliance/evidence/snapshots/${evidenceId}`
+      );
+      return data.data;
+    },
+    enabled: !!evidenceId,
+  });
+}
+
+// 3. 创建证据快照
+export function useCreateEvidence() {
+  return useMutation({
+    mutationFn: async (payload: EvidenceCreatePayload) => {
+      const { data } = await apiClient.post<{ data: EvidenceSnapshot }>(
+        "/compliance/evidence/snapshots",
+        payload
+      );
+      return data.data;
+    },
+  });
+}
+
+// 4. 哈希防篡改验签
+export function useVerifyEvidence() {
+  return useMutation({
+    mutationFn: async (evidenceId: string) => {
+      const { data } = await apiClient.post<{ data: EvidenceVerifyResult }>(
+        `/compliance/evidence/snapshots/${evidenceId}/verify`
+      );
+      return data.data;
+    },
+  });
+}
+
+// 5. 异步打包导出证据链
+export function useExportEvidences() {
+  return useMutation({
+    mutationFn: async (evidenceType?: string) => {
+      const { data } = await apiClient.post<{ data: EvidenceExportResult }>(
+        "/compliance/evidence/snapshots/export",
+        null,
+        { params: { evidenceType } }
+      );
+      return data.data;
     },
   });
 }

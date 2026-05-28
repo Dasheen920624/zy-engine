@@ -478,7 +478,7 @@ export const routeMetas: RouteMeta[] = [
     menuKey: "provenance",
     menuLabel: "来源追溯",
     experience: readonlyExperience("高级实施人员", "追溯来源与运行证据", "最近来源", "large"),
-    hidden: true,
+    hidden: false,
     pageType: "advanced",
   },
   {
@@ -528,6 +528,14 @@ export const routeMetas: RouteMeta[] = [
     experience: readonlyExperience("开发人员", "核查受控调试信息", "最近诊断", "large"),
     hidden: true,
     pageType: "advanced",
+  },
+  {
+    path: "/embed/launch",
+    title: "临床嵌入式终端",
+    breadcrumb: ["临床运行", "临床嵌入式终端"],
+    requireAuth: false,
+    hidden: true,
+    pageType: "system",
   },
   {
     path: "*",

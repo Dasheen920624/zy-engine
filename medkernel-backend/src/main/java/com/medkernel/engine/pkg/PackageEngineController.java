@@ -125,4 +125,17 @@ public class PackageEngineController {
             @RequestParam String targetPackageId) {
         return ApiResult.ok(service.rollbackPackage(packageId, targetPackageId));
     }
+
+    /**
+     * 获取当前租户下的所有激活同步目标列表。
+     *
+     * <p>权限：{@code package.read}。
+     *
+     * @return 包含同步目标列表的统一返回包络对象
+     */
+    @GetMapping("/sync-targets")
+    @PreAuthorize("@perm.has('package.read')")
+    public ApiResult<List<SyncTarget>> listSyncTargets() {
+        return ApiResult.ok(service.listSyncTargets());
+    }
 }

@@ -358,4 +358,19 @@ class PackageEngineServiceTest {
             assertThat(p.packageId()).isEqualTo("pkg-stroke-v1");
         });
     }
+
+    @Test
+    void listSyncTargetsRetrievesActiveTargets() {
+        SyncTarget activeTarget = new SyncTarget(
+            1L, "target-active", "tenant-A", "激活通道", SyncTargetType.DIFY, "config",
+            SyncTargetStatus.ACTIVE, Instant.now(), "tester", Instant.now(), "tester", "trace"
+        );
+        when(targetRepository.findByTenantIdAndStatus("tenant-A", SyncTargetStatus.ACTIVE))
+            .thenReturn(List.of(activeTarget));
+
+        List<SyncTarget> results = service.listSyncTargets();
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).targetId()).isEqualTo("target-active");
+    }
 }

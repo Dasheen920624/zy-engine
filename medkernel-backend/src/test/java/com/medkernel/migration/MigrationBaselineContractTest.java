@@ -45,7 +45,9 @@ class MigrationBaselineContractTest {
         "V16__followup_engine_api.sql",
         "V17__embed_engine_api.sql",
         "V18__model_gateway_api.sql",
-        "V19__large_list_api.sql"
+        "V19__large_list_api.sql",
+        "V20__integration_engine_api.sql",
+        "V21__audit_evidence_api.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -67,7 +69,9 @@ class MigrationBaselineContractTest {
         "followup_plan", "followup_task", "followup_questionnaire", "followup_event",
         "embed_launch_token", "embed_origin_whitelist",
         "model_capability_task", "model_capability_policy",
-        "large_list_export_job"
+        "large_list_export_job",
+        "integration_adapter", "integration_webhook_config", "integration_message_log",
+        "evidence_snapshot"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -125,7 +129,9 @@ class MigrationBaselineContractTest {
         "idx_followup_task_tenant_plan", "idx_followup_task_due_date",
         "idx_followup_questionnaire_task", "idx_followup_event_plan",
         "idx_followup_event_type", "idx_embed_token_tenant", "idx_model_task_tenant",
-        "idx_large_list_job_tenant"
+        "idx_large_list_job_tenant",
+        "idx_integ_adapter_tenant", "idx_integ_webhook_tenant", "idx_integ_msg_tenant", "idx_integ_msg_trace",
+        "idx_evd_tenant", "idx_evd_trace"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -192,7 +198,11 @@ class MigrationBaselineContractTest {
         "uk_followup_questionnaire_id", "uk_followup_event_id",
         "uk_embed_launch_token", "uk_embed_origin_tenant",
         "uk_model_task_id", "uk_model_policy_tenant",
-        "uk_large_list_job"
+        "uk_large_list_job",
+        "uk_integration_adapter", "uk_integration_webhook", "uk_integration_message",
+        "ck_integration_adapter_status", "ck_integration_adapter_health",
+        "ck_integration_webhook_status", "ck_integration_message_dir", "ck_integration_message_status",
+        "uk_evidence_snapshot"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -211,9 +221,10 @@ class MigrationBaselineContractTest {
         "rectification_task", "rectification_review", "evaluation_idempotency_key",
         "knowledge_package", "package_item", "release_plan", "sync_target", "sync_log",
         "followup_plan", "followup_task", "followup_questionnaire", "followup_event",
-        "embed_launch_token", "embed_origin_whitelist",
         "model_capability_task", "model_capability_policy",
-        "large_list_export_job"
+        "large_list_export_job",
+        "integration_adapter", "integration_webhook_config", "integration_message_log",
+        "evidence_snapshot"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -230,7 +241,9 @@ class MigrationBaselineContractTest {
         "followup_plan", "followup_task", "followup_questionnaire", "followup_event",
         "embed_launch_token", "embed_origin_whitelist",
         "model_capability_task", "model_capability_policy",
-        "large_list_export_job"
+        "large_list_export_job",
+        "integration_adapter", "integration_webhook_config", "integration_message_log",
+        "evidence_snapshot"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
@@ -290,7 +303,10 @@ class MigrationBaselineContractTest {
         Map.entry("followup_questionnaire", Set.of("status")),
         Map.entry("model_capability_task", Set.of("model_mode", "status")),
         Map.entry("model_capability_policy", Set.of("route_strategy")),
-        Map.entry("large_list_export_job", Set.of("status"))
+        Map.entry("large_list_export_job", Set.of("status")),
+        Map.entry("integration_adapter", Set.of("status", "health_status")),
+        Map.entry("integration_webhook_config", Set.of("status")),
+        Map.entry("integration_message_log", Set.of("status", "direction"))
     );
 
     private static final Pattern TABLE_PATTERN =
