@@ -22,8 +22,9 @@ import com.medkernel.shared.context.RequestContext;
 /**
  * 模型能力网关核心领域服务实现类 (GA-ENG-API-12)。
  *
- * <p>统一管控外部大模型及混合模式调用，支持根据场景配置进行能力阻断、正则数据脱敏、期待结构Schema校验、
- * 以及外部超时/阻断故障时平滑走向B0（无模型确定性基线）的降级生存路径，并通过物理子事务强隔离记录审计日志。
+ * <p>统一管控模型能力调用：能力阻断、正则数据脱敏、期待结构 Schema 校验，并通过物理子事务强隔离记录审计日志。
+ * 当前未接入真实模型 provider（B1/B2 由 GA-ENG-LLM-02 接入），provider 缺位时所有非 DISABLED 能力一律
+ * 如实返回 B0（无模型确定性基线），禁止伪造 B2 模型名、置信度或来源引文。
  */
 @Service
 public class ModelGatewayService {
@@ -113,77 +114,26 @@ public class ModelGatewayService {
         String inputSummary = desensitizedInput.length() > 500 ? desensitizedInput.substring(0, 500) : desensitizedInput;
 
         // 4. 路由与推理逻辑
-        String outputContent = null;
+        // 当前系统未接入真实模型 provider（B1/B2 由 GA-ENG-LLM-02 接入）。provider 缺位时，
+        // 所有非 DISABLED 能力一律如实返回 B0 确定性基线，禁止伪造 B2 模型名、置信度或来源引文。
+        // DISABLED 已在上方阻断；真实 provider 接入后再在此处按策略路由 B1/B2 并填充真实元数据。
+        String outputContent = executeB0Fallback(req.capabilityCode());
         String modelMode = "B0";
-        String modelVersion = "Baseline";
-        String promptVersion = "v1.0";
+        String modelVersion = "B0-Deterministic-Baseline";
+        String promptVersion = "baseline";
         String sourceCitations = "[]";
-        Double confidence = 1.0;
+        Double confidence = null; // 无真实模型推理，模型置信度不适用
         String riskLevel = "LOW";
-        boolean fallbackUsed = false;
-        String fallbackReason = null;
-        String taskStatus = "SUCCESS";
+        boolean fallbackUsed = true;
+        String fallbackReason = "BASEPLAY".equalsIgnoreCase(policy.routeStrategy())
+            ? "策略显式指定 B0 无模型基线路径"
+            : "未接入真实模型 provider，返回 B0 确定性基线（B1/B2 由 GA-ENG-LLM-02 接入）";
+        String taskStatus = "DEGRADED";
 
-        // 模拟超时触发 (当传入的超时小于或等于 0，或输入包含 TIMEOUT 标志)
-        boolean isTimeoutTriggered = (req.timeoutSeconds() != null && req.timeoutSeconds() <= 0) 
-            || req.inputData().contains("FORCE_TIMEOUT");
-
-        // 模拟外部 Schema 损坏阻断 (当输入包含 FAIL_SCHEMA 标志)
-        boolean isSchemaFailTriggered = req.inputData().contains("FORCE_FAIL_SCHEMA");
-
-        try {
-            if ("BASEPLAY".equalsIgnoreCase(policy.routeStrategy())) {
-                // 物理降级 B0 确定性基线
-                outputContent = executeB0Fallback(req.capabilityCode());
-                modelMode = "B0";
-                fallbackUsed = true;
-                fallbackReason = "策略显式指定B0无模型基线路径";
-                taskStatus = "DEGRADED";
-            } else {
-                // 模拟大模型推理场景（B1/B2）
-                if (isTimeoutTriggered) {
-                    throw new ApiException(ErrorCode.ENG_LLM_003, "调用模型接口超时");
-                }
-
-                modelMode = "B2";
-                modelVersion = "MedKernel-Cognitive-LLM-v2";
-                promptVersion = "p-extract-v3";
-                sourceCitations = "[\"临床高血压指南 §3.2\"]";
-                confidence = 0.92;
-                riskLevel = "MEDIUM";
-
-                if (isSchemaFailTriggered) {
-                    outputContent = "高风险非法文本结果，未按JSON Schema生成";
-                } else {
-                    // 根据能力代码生成模拟的格式化 JSON
-                    outputContent = executeB0Fallback(req.capabilityCode());
-                }
-
-                // Schema 结构性强校验
-                String schemaConstraint = req.expectedSchema() != null ? req.expectedSchema() : policy.expectedSchema();
-                if (schemaConstraint != null && !schemaConstraint.isBlank()) {
-                    validateSchema(outputContent, schemaConstraint);
-                }
-            }
-        } catch (ApiException ex) {
-            // 超时或结构校验异常时，平滑走向 B0 物理降级生存路径
-            fallbackUsed = true;
-            fallbackReason = ex.getMessage();
-            taskStatus = "DEGRADED";
-            modelMode = "B0";
-            modelVersion = "Baseline-Fallback";
-            outputContent = executeB0Fallback(req.capabilityCode());
-            confidence = 1.0;
-            riskLevel = "LOW";
-        } catch (Exception ex) {
-            fallbackUsed = true;
-            fallbackReason = "未知外部依赖故障: " + ex.getMessage();
-            taskStatus = "DEGRADED";
-            modelMode = "B0";
-            modelVersion = "Baseline-Fallback";
-            outputContent = executeB0Fallback(req.capabilityCode());
-            confidence = 1.0;
-            riskLevel = "LOW";
+        // 对 B0 基线输出做结构核对（真实 provider 接入后同样适用于模型输出）
+        String schemaConstraint = req.expectedSchema() != null ? req.expectedSchema() : policy.expectedSchema();
+        if (schemaConstraint != null && !schemaConstraint.isBlank()) {
+            validateSchema(outputContent, schemaConstraint);
         }
 
         long timeCost = System.currentTimeMillis() - startTime;
@@ -290,10 +240,10 @@ public class ModelGatewayService {
             throw new ApiException(ErrorCode.TENANT_FORBIDDEN, "无权访问此任务");
         }
 
-        // 以相同的输入发起二次重试，并将路由降为 B0 确保必定通过
+        // 以原任务输入摘要重新发起一次提交（当前所有能力均走 B0 确定性基线）
         ModelTaskRequest retryReq = new ModelTaskRequest(
             task.capabilityCode(),
-            "FORCE_B0_FALLBACK_RETRY_" + task.inputSummary(),
+            task.inputSummary(),
             "DEFAULT",
             null,
             60

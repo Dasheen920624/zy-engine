@@ -103,7 +103,7 @@ class ModelGatewayServiceTest {
     }
 
     @Test
-    void submitTask_TimeoutForceFallback_ReturnsB0Fallback() {
+    void submitTask_externalModelRoute_desensitizesInputAndReturnsB0() {
         ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
             1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", null,
             Instant.now(), "system", Instant.now(), "system"
@@ -111,8 +111,8 @@ class ModelGatewayServiceTest {
         when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
             .thenReturn(Optional.of(modelPolicy));
 
-        // 手机号与敏感词脱敏
-        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "张医生的手机是13988888888, 强制超时FORCE_TIMEOUT", null, null, 60);
+        // 未接入真实 provider：EXTERNAL_MODEL 路由如实降为 B0；同时校验手机号脱敏写入摘要
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "张医生的手机是13988888888", null, null, 60);
 
         ModelTaskResponse resp = service.submitTask(req);
         assertNotNull(resp);
@@ -124,7 +124,7 @@ class ModelGatewayServiceTest {
     }
 
     @Test
-    void submitTask_SchemaConstraintFailFallback_ReturnsB0Fallback() {
+    void submitTask_externalModelWithSchema_returnsSchemaValidB0() {
         ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
             1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", "required: [entity]",
             Instant.now(), "system", Instant.now(), "system"
@@ -132,14 +132,15 @@ class ModelGatewayServiceTest {
         when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
             .thenReturn(Optional.of(modelPolicy));
 
-        // 强行输出不包含 entity 字段的文本以破坏 Schema 校验，触发 B0 Fallback 降级
-        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "FORCE_FAIL_SCHEMA", null, null, 60);
+        // B0 确定性基线输出本身满足 required: [entity]，结构核对通过
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取病历要素", null, null, 60);
 
         ModelTaskResponse resp = service.submitTask(req);
         assertNotNull(resp);
         assertEquals("DEGRADED", resp.status());
+        assertEquals("B0", resp.modelMode());
         assertTrue(resp.fallbackUsed());
-        assertTrue(resp.outputContent().contains("entity")); // Fallback 包含了 entity
+        assertTrue(resp.outputContent().contains("entity")); // B0 基线输出满足 required: [entity]
     }
 
     @Test
@@ -162,5 +163,24 @@ class ModelGatewayServiceTest {
         ModelPolicyValidateResponse resp = service.validatePolicy(req);
         assertNotNull(resp);
         assertTrue(resp.valid());
+    }
+
+    @Test
+    void submitTask_externalModelRoute_doesNotFabricateB2() {
+        // EXTERNAL_MODEL 路由但系统未接入真实模型 provider：必须如实标 B0，禁止伪造 B2 元数据与引文
+        ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
+            1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", null,
+            Instant.now(), "system", Instant.now(), "system"
+        );
+        when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
+            .thenReturn(Optional.of(modelPolicy));
+
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取高血压病历信息", null, null, 60);
+        ModelTaskResponse resp = service.submitTask(req);
+
+        assertEquals("B0", resp.modelMode());
+        assertNotEquals("MedKernel-Cognitive-LLM-v2", resp.modelVersion());
+        assertEquals("[]", resp.sourceCitations()); // 不得编造 "临床高血压指南 §3.2"
+        assertTrue(resp.fallbackUsed());
     }
 }
