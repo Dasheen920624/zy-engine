@@ -24,14 +24,14 @@ MAJOR.MINOR.PATCH[-prerelease][+build]
 ## 2. 分支约定
 
 ```
-main                       远程唯一稳定发布分支，永远可发布；所有任务最终通过 PR 合并到 origin/main
+main                       远程唯一长期分支与稳定发布分支，永远可发布；所有任务最终通过 PR 合并到 origin/main
 codex/<TASK-ID>-<slug>     Codex 默认开发分支，基于 origin/main 创建
 feature/<TASK-ID>-<slug>   通用功能分支，基于 origin/main 创建
 hotfix/<TASK-ID>-<slug>    紧急修复分支，基于 origin/main 创建，仍需 PR 与检查
 release/X.Y                长期支持分支（重大版本进入维护期后）
 ```
 
-**禁用**：AI 直接 push 到远程 `main`、绕过 CI 合并、长期保留偏离 `origin/main` 的开发分支、把未验收变更合入远程 `main`。标准路径是：基于 `origin/main` 创建短分支 → 提交 → 推送 → 创建 PR → 等远端检查通过 → 合并 PR 到远程 `main` → 确认 `origin/main` 包含合并提交。
+**禁用**：AI 直接 push 到远程 `main`、绕过 CI 合并、创建或保留 `develop` / `dev` 等第二主干、长期保留偏离 `origin/main` 的开发分支、把未验收变更合入远程 `main`。标准路径是：基于 `origin/main` 创建短分支 → 提交 → 推送 → 创建 PR → 等远端检查通过 → 合并 PR 到远程 `main` → 确认 `origin/main` 包含合并提交。
 
 ## 3. 打 tag 流程
 
@@ -208,6 +208,7 @@ define: {
 
 - AI 日常任务基于 `origin/main` 开工，默认创建 `codex/<TASK-ID>-<slug>` 短分支。
 - 功能、修复或文档治理完成后必须创建 PR，目标分支一律为 `main`。
+- 远程长期分支只允许 `main`；不创建、不同步、不保留 `develop`。
 - PR 远端检查通过后，直接在 GitHub 合并到远程 `main`；合并后必须确认 `origin/main` 包含合并提交。
 - 如果 GitHub 提示 PR 不能合并，先同步 `origin/main`、解决冲突并重新推送，再等待检查通过。
 
