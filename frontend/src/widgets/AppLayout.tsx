@@ -83,9 +83,9 @@ export function AppLayout() {
       : "mk-layout-main mk-layout-main-expanded";
   }
   const headerClassName = isDesktop ? "mk-app-header" : "mk-app-header mk-app-header-mobile";
-  const routeTitleClassName = isDesktop
-    ? "mk-route-title mk-route-title-desktop"
-    : "mk-route-title mk-route-title-mobile";
+  const breadcrumbItems = (isDesktop ? breadcrumb : breadcrumb.slice(-1)).map((title) => ({
+    title,
+  }));
 
   const handleMenuClick: MenuProps["onClick"] = (info) => {
     if (info.key.startsWith("/")) {
@@ -182,16 +182,7 @@ export function AppLayout() {
                 isDesktop ? setCollapsed(!collapsed) : setMobileMenuOpen((open) => !open)
               }
             />
-            <Space direction="vertical" size={0} className="mk-min-0">
-              <Typography.Text strong ellipsis className={routeTitleClassName}>
-                {currentRoute?.title ?? "未找到页面"}
-              </Typography.Text>
-              <Breadcrumb
-                items={(isDesktop ? breadcrumb : breadcrumb.slice(-1)).map((title) => ({
-                  title,
-                }))}
-              />
-            </Space>
+            <Breadcrumb className="mk-route-breadcrumb" items={breadcrumbItems} />
           </Space>
           <Space size={isDesktop ? "small" : 4}>
             <Tooltip title="命令面板 (Ctrl+K)">
