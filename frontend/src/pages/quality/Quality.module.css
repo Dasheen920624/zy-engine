@@ -1,0 +1,398 @@
+/* MedKernel v1.0 GA · 医疗质控与医保审核服务包 Vanilla CSS 样式 */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+.description {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+/* 布局与网格 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* 热力风险矩阵 */
+.heatmapGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.heatmapCell {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 85px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.heatmapCell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.cellPass {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #14532d;
+}
+
+.cellWarn {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+  color: #78350f;
+}
+
+.cellFail {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #7f1d1d;
+}
+
+.cellText {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.cellValue {
+  font-size: 20px;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+/* 进度条 */
+.progressWrap {
+  height: 8px;
+  background-color: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.barSuccess {
+  background-color: #10b981;
+}
+
+.barWarning {
+  background-color: #f59e0b;
+}
+
+.barDanger {
+  background-color: #ef4444;
+}
+
+/* 按钮样式 */
+.btnPrimary {
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnPrimary:hover {
+  background-color: #1e293b;
+}
+
+.btnDanger {
+  background-color: #ef4444;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.btnDanger:hover {
+  background-color: #dc2626;
+}
+
+.btnSecondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.btnSecondary:hover {
+  background-color: #e2e8f0;
+}
+
+/* 提示框 */
+.alertSuccess {
+  border: 1px solid #10b981;
+  background-color: #ecfdf5;
+  color: #065f46;
+  padding: 12px 24px;
+  border-radius: 12px;
+}
+
+/* 辅助排版与模态框 */
+.fontMonospace {
+  font-family: monospace;
+}
+
+.fontWeight600 {
+  font-weight: 600;
+}
+
+.fontSize28 {
+  font-size: 28px;
+}
+
+.flexBetween {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.formInput {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.formInput:focus {
+  border-color: #0f172a;
+}
+
+.btnGroup {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* 表格 */
+.tableWrap {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: 12px 16px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #475569;
+  font-size: 13px;
+}
+
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+  color: #334155;
+}
+
+/* 模态框 */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #f1f5f9;
+}
+
+/* 质控指标卡 */
+.indicatorCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+.indicatorCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+/* 低打扰辅助 */
+.flexAlignGap12 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.marginLeftAuto {
+  margin-left: auto;
+}
+
+.marginTop16 {
+  margin-top: 16px;
+}
+
+.marginBottom8 {
+  margin-bottom: 8px;
+}
+
+.marginBottom20 {
+  margin-bottom: 20px;
+}
+
+.pad4px8px {
+  padding: 4px 8px;
+}
+
+.modalBodyText {
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.opinionTextarea {
+  min-height: 80px;
+  font-family: sans-serif;
+}
+
+.padding6px12px {
+  padding: 6px 12px;
+}
+
+.textSuccess {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.textWarning {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.textDanger {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.indicatorCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.flexBaseline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.valueText {
+  font-size: 24px;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.unitText {
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.descText {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.descTextMargin {
+  margin-top: 12px;
+  margin-bottom: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.modalTableWrap {
+  max-height: 250px;
+  overflow-y: auto;
+  margin-top: 16px;
+}
+
+.violationText {
+  font-size: 12px;
+  color: #dc2626;
+  font-weight: 500;
+}

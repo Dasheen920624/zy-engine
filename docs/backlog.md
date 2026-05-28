@@ -124,8 +124,8 @@
 | GA-SVC-CLINICAL-01 患者与路径运行服务包：MPI、患者路径、关键时钟、变异、节点推进 | - | pending |
 | GA-SVC-CLINICAL-02 临床提醒与反馈服务包：CDSS 卡片、规则校验、疲劳治理、采纳/不采纳回流 | - | pending |
 | GA-SVC-CLINICAL-03 临床协同服务包：待办、通知、护理、报告解读、床旁知识、随访触发 | codex | done |
-| GA-SVC-QUALITY-01 质控驾驶舱服务包：院级指标、风险热力、价值指标、下钻和证据 | - | pending |
-| GA-SVC-QUALITY-02 病案医保服务包：病历内涵质控、DRG/DIP、编码、费用、医保审核 | - | pending |
+| GA-SVC-QUALITY-01 质控驾驶舱服务包：院级指标、风险热力、价值指标、下钻和证据 | codex | done |
+| GA-SVC-QUALITY-02 病案医保服务包：病历内涵质控、DRG/DIP、编码、费用、医保审核 | codex | done |
 | GA-SVC-QUALITY-03 整改闭环服务包：问题生成、责任科室、整改、复核、豁免、报告 | - | pending |
 | GA-SVC-COMPLIANCE-01 身份安全服务包：用户、身份绑定、数据权限、租户隔离、安全基线 | codex | done |
 | GA-SVC-COMPLIANCE-02 审计运维服务包：审计日志、证据包、Provider/模型状态、备份恢复、离线许可 | - | pending |
