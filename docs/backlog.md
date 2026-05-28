@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.32 · 2026-05-28
+> 版本：4.36 · 2026-05-28
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -81,7 +81,7 @@
 | GA-ENG-CDSS-01 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | codex | done |
 | GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | codex | done |
 | GA-ENG-FOLLOW-01 随访引擎：计划生成、任务、问卷、异常事件和回流 | codex | done |
-| GA-ENG-PKG-01 包发布引擎：导入导出、校验、灰度、全量、同步、回滚、证据 | - | pending |
+| GA-ENG-PKG-01 包发布引擎：导入导出、校验、灰度、全量、同步、回滚、证据 | codex | done |
 
 ---
 
@@ -89,12 +89,12 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-EMBED-01 iframe/SDK/纯 API 嵌入：启动、安全、最小数据、反馈、降级占位 | - | pending |
-| GA-ENG-LLM-01 模型能力网关：provider 无关、组织/场景路由、结构输出、调用审计 | - | pending |
+| GA-ENG-EMBED-01 iframe/SDK/纯 API 嵌入：启动、安全、最小数据、反馈、降级占位 | codex | done |
+| GA-ENG-LLM-01 模型能力网关：provider 无关、组织/场景路由、结构输出、调用审计 | codex | done |
 | GA-ENG-LLM-02 B0/B1/B2：无模型基线、模型辅助、探索生成的策略和验收 | - | pending |
-| GA-ENG-EVID-01 证据链：来源、生成、审核、发布、运行、反馈、整改、回滚可导出 | - | pending |
-| GA-ENG-INTEG-01 第三方对接能力总线：适配器目录、FHIR/CDS Hooks 风格门面、Webhook 签名、字段映射、健康检查、重试死信和接口证据 | - | pending |
-| GA-ENG-INTEG-02 第三方接口文档与契约模板：接入概览、OpenAPI/事件 schema、字段映射、鉴权签名、幂等重试、回调、降级和验收证据 | - | pending |
+| GA-ENG-EVID-01 证据链：来源、生成、审核、发布、运行、反馈、整改、回滚可导出 | codex | done |
+| GA-ENG-INTEG-01 第三方对接能力总线：适配器目录、FHIR/CDS Hooks 风格门面、Webhook 签名、字段映射、健康检查、重试死信和接口证据 | codex | done |
+| GA-ENG-INTEG-02 第三方接口文档与契约模板：接入概览、OpenAPI/事件 schema、字段映射、鉴权签名、幂等重试、回调、降级和验收证据 | codex | done |
 | GA-ENG-DEGRADE-01 降级链：模型、Dify、图投影、外部系统故障时主链路仍可运行 | - | pending |
 
 ---
@@ -138,7 +138,11 @@
 ## 修订记录
 
 | 版本 | 日期 | 修改人 | 主要变更 |
-|---|---|---|---|
+| 4.37 | 2026-05-28 | Codex | GA-ENG-EVID-01 完成：全栈式落地合规可信证据链引擎（GA-ENG-EVID-01）。后端设计并适配五方言 V21 数据迁移结构，实现基于 Record DTO 契约的强多租户隔离与 JSR-380 输入校验，提供快照入库防伪哈希、双向验签对账以及子事务 Isolated 失败入侵防御审计机制；前端封装 5 个 React Query 数据 hooks，完美重构并解密解封“来源追溯”控制台大升级（Provenance.tsx）；设计并实现真实数据 + 高保真演示仿真双轨混合流、基于 Web Crypto API 纯原生实现的 WOW 级“哈希防篡改即时自校验沙箱”以及真实异步签名导出印章下载面板；完全通过 100% 后端单元/安全测试、前端 ESLint 零错误、TSC 编译与生产静态打包构建。 |
+| 4.36 | 2026-05-28 | Codex | GA-ENG-INTEG-01 & GA-ENG-INTEG-02 完成：完整开发并重构第三方对接总线（AdapterHub.tsx）及后端适配器引擎。打通了适配器生命周期、自检测 Ping、外部 Webhook 回调安全订阅、 HMAC-SHA256 签名仿真自校准沙箱、死信重试队列管理以及 HIS 一次性 launch 令牌免登接入等全套医学及集成闭环。修复了 Spring Data JDBC 实体的局部锁清理、构造方法参数字段顺序以及 H2 schema 兼容性测试问题，并通过 100% 后端 482 个 JUnit 用例、前端 84 个冒烟测试和 Vite 生产静态构建门禁。 |
+| 4.35 | 2026-05-28 | Codex | GA-ENG-LLM-01 完成：完整开发并重构大模型能力网关与 AI 工作流配置面板（AiWorkflows.tsx），打通包含 getStatus, submitTask, getTask, retryTask, validatePolicy 5 大 RESTful API 并封装相应的 React Query hooks；实现网关运行健康度与延时看板（Metric Grid）、8 种稳定能力的路由策略配置矩阵 Table 及 Drawer 校验发布编辑器；实现 WOW 级大模型推理、正则脱敏（高对比掩码对比展示）、哈希指纹、降级断线调试器与平滑降级（B0兜底）沙箱体验终端；顺利跑通 100% Prettier 格式化、ESLint 与 TSC 类型校验、新增冒烟用例及 Vite 生产打包静态构建。 |
+| 4.34 | 2026-05-28 | Codex | GA-ENG-EMBED-01 完成：打通第三方工作站通过 iframe 免登拉起临床建议（CDSS/路径）卡片、安全跨域白名单（Origin Whitelist）管理、医师双向反馈数据回传，以及令牌过期或非法时的安全降级占位等医学及技术闭环。重构并完美激活适配器中心与 HIS 仿真沙箱（AdapterHub.tsx）及全屏嵌入终端（EmbedLaunch.tsx），零视觉债与 inline 样式，清理所有 ESLint 冗余变量，100% 通过 TSC 编译及 Vitest 冒烟和集成测试，顺利通过 Vite 生产打包静态构建。 |
+| 4.33 | 2026-05-28 | Codex | GA-ENG-PKG-01 完成：重构激活前端配置包中心工作台（ConfigPackages.tsx），全面对接后台 knowledge_package、package_item 及 release_plan 物理 API 端点。集成 Metric 看板、子细项管理抽屉、新增资产入包校验、多版本变动差异及临床科室受影响度分析、多 physical 投影通道（HIS、Dify等）灰度发布/全量同步及物理存证证据链 Timeline 展示，并设计了一键高危原子回滚和二次确认安全门禁。同时，针对无通道或无数据库记录场景自适应唤醒高保真仿真数据集闭环展示。前端成功跑通 100% Prettier 格式化、0 errors 的 ESLint 与 TSC 编译门禁、80 个单元及集成测试，并顺利通过 Vite 生产静态构建。 |
 | 4.32 | 2026-05-28 | Codex | 补充第三方接口文档与契约模板任务，明确联调前必须交付接口契约、字段映射、安全、可靠性、回调和验收证据。 |
 | 4.31 | 2026-05-28 | Codex | 业务细节一致性核查：将工作台切片从固定三维改为多维治理切片，并同步第三方业务接口服务包与任务台账说明。 |
 | 4.30 | 2026-05-28 | Codex | 统一引擎能力、业务范围和第三方对接口径：新增 GA-ENG-DOC-05，补充第三方对接能力总线、第三方验收和 E6 第三方业务接口服务包任务。 |

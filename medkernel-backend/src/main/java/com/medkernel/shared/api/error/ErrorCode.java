@@ -112,8 +112,18 @@ public enum ErrorCode {
     ENG_LIST_001("ENG-LIST-001", 400, "非法的列表资源类型或排序字段", ErrorClass.INPUT, false),
     ENG_LIST_002("ENG-LIST-002", 404, "异步导出任务不存在", ErrorClass.DATA, false),
     ENG_LIST_003("ENG-LIST-003", 409, "导出任务尚未完成，无法提供下载", ErrorClass.DATA, false),
-    ENG_LIST_004("ENG-LIST-004", 500, "文件导出物理 IO 失败", ErrorClass.INTERNAL, false)
-    ;
+    ENG_LIST_004("ENG-LIST-004", 500, "文件导出物理 IO 失败", ErrorClass.INTERNAL, false),
+    
+    ENG_INTEG_001("ENG-INTEG-001", 400, "集成适配器配置不合法", ErrorClass.INPUT, false),
+    ENG_INTEG_002("ENG-INTEG-002", 404, "集成适配器不存在", ErrorClass.DATA, false),
+    ENG_INTEG_003("ENG-INTEG-003", 404, "Webhook 订阅不存在", ErrorClass.DATA, false),
+    ENG_INTEG_004("ENG-INTEG-004", 400, "Webhook 消息签名校验失败", ErrorClass.AUTH, false),
+    ENG_INTEG_005("ENG-INTEG-005", 404, "集成接口日志不存在", ErrorClass.DATA, false),
+    ENG_INTEG_006("ENG-INTEG-006", 409, "当前接口日志状态不允许重试", ErrorClass.DATA, false),
+
+    ENG_EVID_001("ENG-EVID-001", 404, "证据快照不存在", ErrorClass.DATA, false),
+    ENG_EVID_002("ENG-EVID-002", 400, "防伪数字指纹检验失败，数据已被篡改", ErrorClass.AUTH, false),
+    ENG_EVID_003("ENG-EVID-003", 409, "证据快照已存在，无法重复创建", ErrorClass.DATA, false);
 
     private final String code;
     private final int httpStatus;

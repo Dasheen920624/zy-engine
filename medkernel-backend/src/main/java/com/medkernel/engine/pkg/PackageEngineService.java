@@ -431,6 +431,17 @@ public class PackageEngineService {
         return PackageResponse.from(savedTarget);
     }
 
+    /**
+     * 获取当前租户下状态为 ACTIVE 的所有同步目标列表。
+     *
+     * @return 状态为 ACTIVE 的同步目标实体列表
+     */
+    @Transactional(readOnly = true)
+    public List<SyncTarget> listSyncTargets() {
+        String tenantId = currentTenantId();
+        return targetRepository.findByTenantIdAndStatus(tenantId, SyncTargetStatus.ACTIVE);
+    }
+
     // ────────────────────────── 辅助支撑逻辑 ──────────────────────────
 
     private String currentTenantId() {

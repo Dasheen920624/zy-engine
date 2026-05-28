@@ -7,6 +7,7 @@ const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Login = lazy(() => import("@/pages/Login"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const StepFlowDemo = lazy(() => import("@/pages/StepFlowDemo"));
+const EmbedLaunch = lazy(() => import("@/pages/clinical/EmbedLaunch"));
 
 // 试点准备域
 const ImplementationGuide = lazy(() => import("@/pages/tenant/ImplementationGuide"));
@@ -54,6 +55,7 @@ export function AppRouter() {
     <Suspense fallback={<Spin size="large" className="mk-route-spinner" />}>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/embed/launch" element={<EmbedLaunch />} />
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
