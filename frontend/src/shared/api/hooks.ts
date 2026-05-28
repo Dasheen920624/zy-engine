@@ -2332,3 +2332,74 @@ export function useExportEvidences() {
     },
   });
 }
+
+// ──────────────────────────────────────────
+// 租户品牌个性化定制与生命周期管理 · GA-SVC-PILOT-01
+// ──────────────────────────────────────────
+export interface Branding {
+  id?: number;
+  tenantId: string;
+  hospitalName: string;
+  logoUrl: string;
+  themeColor: string;
+  expertMode: boolean;
+  customBrandingJson: string;
+  createdAt?: string;
+  createdBy?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface SuccessPlan {
+  id?: number;
+  tenantId: string;
+  currentStage: "PREPARATION" | "PILOT" | "ACCEPTANCE" | "PROMOTION" | "RUNNING" | "RENEWAL";
+  healthScore: number;
+  activatedModules: string;
+  activatedPathways: string;
+  createdAt?: string;
+  createdBy?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export function useBranding() {
+  return useQuery({
+    queryKey: ["platform", "branding"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: Branding }>("/platform/branding");
+      return data.data;
+    },
+  });
+}
+
+export function useUpdateBranding() {
+  return useMutation({
+    mutationFn: async (payload: Partial<Branding>) => {
+      const { data } = await apiClient.post<{ data: Branding }>("/platform/branding", payload);
+      return data.data;
+    },
+  });
+}
+
+export function useSuccessPlan() {
+  return useQuery({
+    queryKey: ["platform", "success", "lifecycle"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: SuccessPlan }>("/platform/success/lifecycle");
+      return data.data;
+    },
+  });
+}
+
+export function useTransitionSuccessStage() {
+  return useMutation({
+    mutationFn: async (nextStage: string) => {
+      const { data } = await apiClient.post<{ data: SuccessPlan }>(
+        "/platform/success/lifecycle/transition",
+        { nextStage }
+      );
+      return data.data;
+    },
+  });
+}
