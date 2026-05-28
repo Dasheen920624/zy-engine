@@ -1059,3 +1059,373 @@ export function useRecommendationTriggerDiagnose(triggerId: string) {
     enabled: !!triggerId,
   });
 }
+
+// ==================== 评估质控引擎相关的实体及 DTO 契约 ====================
+
+export type EvaluationIndicatorStatus =
+  | "DRAFT"
+  | "PENDING_REVIEW"
+  | "PUBLISHED"
+  | "ACTIVE"
+  | "OFFLINE"
+  | "ARCHIVED";
+
+export type EvaluationSubjectType =
+  | "PATIENT"
+  | "MEDICAL_RECORD"
+  | "DEPARTMENT"
+  | "DOCTOR"
+  | "DISEASE"
+  | "PATHWAY"
+  | "CLAIM"
+  | "FOLLOWUP";
+
+export type EvaluationResultLevel = "PASS" | "ATTENTION" | "NON_COMPLIANT" | "CRITICAL";
+
+export type QualityFindingSeverity = "P0" | "P1" | "P2" | "P3";
+
+export type QualityFindingStatus = "NEW" | "ASSIGNED" | "REMEDIATING" | "CLOSED" | "WAIVED";
+
+export type RectificationTaskStatus = "ASSIGNED" | "SUBMITTED" | "RETURNED" | "CLOSED" | "WAIVED";
+
+export type RectificationReviewDecision = "APPROVED" | "RETURNED" | "WAIVED";
+
+export interface EvaluationIndicator {
+  id?: number;
+  indicatorId: string;
+  tenantId: string;
+  indicatorCode: string;
+  versionNo: number;
+  name: string;
+  subjectType: EvaluationSubjectType;
+  denominatorDefinition?: string;
+  numeratorDefinition?: string;
+  exclusionDefinition?: string;
+  scoringDefinition?: string;
+  timeWindow: string;
+  organizationScope: string;
+  responsibleDepartmentId: string;
+  sourceRef: string;
+  packageVersion?: string;
+  status: EvaluationIndicatorStatus;
+  publishedAt?: string;
+  publishedBy?: string;
+  activatedAt?: string;
+  createdAt?: string;
+  createdBy?: string;
+  traceId?: string;
+}
+
+export interface EvaluationResult {
+  id?: number;
+  resultId: string;
+  tenantId: string;
+  runId: string;
+  indicatorId: string;
+  indicatorCode: string;
+  indicatorVersion: number;
+  subjectType: EvaluationSubjectType;
+  subjectRefId: string;
+  scoreValue?: number;
+  resultLevel: EvaluationResultLevel;
+  hitFlag: boolean;
+  evidenceSummary: string;
+  sourceRef?: string;
+  responsibleDepartmentId?: string;
+  createdAt?: string;
+}
+
+export interface QualityFinding {
+  id?: number;
+  findingId: string;
+  tenantId: string;
+  runId: string;
+  resultId: string;
+  indicatorId: string;
+  findingCode: string;
+  title: string;
+  description: string;
+  severity: QualityFindingSeverity;
+  status: QualityFindingStatus;
+  evidenceSummary: string;
+  responsibleDepartmentId?: string;
+  dueAt?: string;
+  createdAt?: string;
+}
+
+export interface RectificationTask {
+  id?: number;
+  taskId: string;
+  tenantId: string;
+  findingId: string;
+  responsibleDepartmentId: string;
+  assigneeUserId?: string;
+  status: RectificationTaskStatus;
+  dueAt: string;
+  rectificationSummary?: string;
+  evidenceRef?: string;
+  submittedAt?: string;
+  submittedBy?: string;
+  closedAt?: string;
+  createdAt?: string;
+}
+
+export interface RectificationReview {
+  id?: number;
+  reviewId: string;
+  tenantId: string;
+  findingId: string;
+  taskId: string;
+  decision: RectificationReviewDecision;
+  comments?: string;
+  evidenceRef?: string;
+  reviewedBy: string;
+  reviewedAt: string;
+}
+
+export interface QualityFindingDetailResponse {
+  finding: QualityFinding;
+  task?: RectificationTask;
+  reviews: RectificationReview[];
+}
+
+export interface EvaluationRunResponse {
+  runId: string;
+  status: string;
+  resultCount: number;
+  findingCount: number;
+  taskCount: number;
+  traceId: string;
+}
+
+export interface RectificationResponse {
+  taskId: string;
+  findingStatus: QualityFindingStatus;
+  taskStatus: RectificationTaskStatus;
+  traceId: string;
+}
+
+export interface RectificationReviewResponse {
+  reviewId: string;
+  findingStatus: QualityFindingStatus;
+  taskStatus: RectificationTaskStatus;
+  traceId: string;
+}
+
+// 1. Indicator Lifecycle Hooks
+export function useEvaluationIndicators(params?: {
+  status?: EvaluationIndicatorStatus;
+  subjectType?: EvaluationSubjectType;
+  indicatorCode?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}) {
+  return useQuery({
+    queryKey: ["evaluations", "indicators", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<EvaluationIndicator> }>(
+        "/engine/evaluations/indicators",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useCreateEvaluationIndicator() {
+  return useMutation({
+    mutationFn: async (payload: {
+      indicatorCode: string;
+      versionNo: number;
+      name: string;
+      subjectType: EvaluationSubjectType;
+      denominatorDefinition: string;
+      numeratorDefinition: string;
+      exclusionDefinition?: string;
+      scoringDefinition?: string;
+      timeWindow: string;
+      organizationScope: string;
+      responsibleDepartmentId: string;
+      sourceRef: string;
+      packageVersion?: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: EvaluationIndicator }>(
+        "/engine/evaluations/indicators",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useSubmitEvaluationIndicator() {
+  return useMutation({
+    mutationFn: async (indicatorId: string) => {
+      const { data } = await apiClient.post<{ data: EvaluationIndicator }>(
+        `/engine/evaluations/indicators/${indicatorId}/submit`,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function usePublishEvaluationIndicator() {
+  return useMutation({
+    mutationFn: async (indicatorId: string) => {
+      const { data } = await apiClient.post<{ data: EvaluationIndicator }>(
+        `/engine/evaluations/indicators/${indicatorId}/publish`,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useActivateEvaluationIndicator() {
+  return useMutation({
+    mutationFn: async (indicatorId: string) => {
+      const { data } = await apiClient.post<{ data: EvaluationIndicator }>(
+        `/engine/evaluations/indicators/${indicatorId}/activate`,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 2. Evaluation Results Hooks
+export function useEvaluationResults(params?: {
+  indicatorCode?: string;
+  resultLevel?: EvaluationResultLevel;
+  responsibleDepartmentId?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}) {
+  return useQuery({
+    queryKey: ["evaluations", "results", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<EvaluationResult> }>(
+        "/engine/evaluations/results",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+// 3. Quality Findings & PDCA Rectification Hooks
+export function useQualityFindings(params?: {
+  severity?: QualityFindingSeverity;
+  status?: QualityFindingStatus;
+  responsibleDepartmentId?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}) {
+  return useQuery({
+    queryKey: ["evaluations", "findings", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<QualityFinding> }>(
+        "/engine/evaluations/findings",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useQualityFindingDetail(findingId: string) {
+  return useQuery({
+    queryKey: ["evaluations", "finding-detail", findingId],
+    queryFn: async () => {
+      if (!findingId) return null;
+      const { data } = await apiClient.get<{ data: QualityFindingDetailResponse }>(
+        `/engine/evaluations/findings/${findingId}`,
+      );
+      return data.data;
+    },
+    enabled: !!findingId,
+  });
+}
+
+export function useSubmitRectification(findingId: string) {
+  return useMutation({
+    mutationFn: async (payload: {
+      request: { rectificationSummary: string; evidenceRef: string };
+      idempotencyKey?: string;
+    }) => {
+      const headers = payload.idempotencyKey
+        ? { "Idempotency-Key": payload.idempotencyKey }
+        : undefined;
+      const { data } = await apiClient.post<{ data: RectificationResponse }>(
+        `/engine/evaluations/findings/${findingId}/rectification`,
+        payload.request,
+        { headers },
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useReviewRectification(findingId: string) {
+  return useMutation({
+    mutationFn: async (payload: {
+      request: { decision: RectificationReviewDecision; comment: string; evidenceRef?: string };
+      idempotencyKey?: string;
+    }) => {
+      const headers = payload.idempotencyKey
+        ? { "Idempotency-Key": payload.idempotencyKey }
+        : undefined;
+      const { data } = await apiClient.post<{ data: RectificationReviewResponse }>(
+        `/engine/evaluations/findings/${findingId}/review`,
+        payload.request,
+        { headers },
+      );
+      return data.data;
+    },
+  });
+}
+
+// 4. Quality Audit Run & Sandbox calculations
+export function useEvaluateSnapshot() {
+  return useMutation({
+    mutationFn: async (payload: {
+      contextSnapshotId: string;
+      scenarioCode: string;
+      packageVersion?: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: EvaluationRunResponse }>(
+        "/engine/evaluations/evaluate-snapshot",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useEvaluationRunDiagnose(runId: string) {
+  return useQuery({
+    queryKey: ["evaluations", "run-diagnose", runId],
+    queryFn: async () => {
+      if (!runId) return null;
+      const { data } = await apiClient.get<{ data: DiagnoseResponse }>(
+        `/engine/evaluations/runs/${runId}/diagnose`,
+      );
+      return data.data;
+    },
+    enabled: !!runId,
+  });
+}
+
+export const DEMO_SNAPSHOTS = [
+  {
+    id: "ctx-vte-demo-1",
+    name: "患者李建国 - 术后静脉血栓高危风险已评估病例 (达标样板)",
+    desc: "出院诊断：脑梗死、深静脉血栓形成。已于入院24小时内规范进行了静脉血栓评估并开具预防性用药医嘱。",
+  },
+  {
+    id: "ctx-vte-demo-2",
+    name: "患者张淑芳 - 剖宫产术后未录入血栓评估病例 (缺陷样板)",
+    desc: "剖宫产术后24小时，医嘱与病历中均未记录下肢深静脉血栓风险分层评估及预防性护理，判定触发质控缺陷派单。",
+  },
+];

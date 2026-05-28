@@ -116,6 +116,18 @@ public class EvaluationEngineController {
     }
 
     /**
+     * 依据上下文快照自动执行质量控制扫描并持久化结果与整改。
+     *
+     * <p>权限：{@code evaluation.execute}；该方法会自动调取临床快照资源、校验入组、排除及达标状态。
+     */
+    @PostMapping("/evaluate-snapshot")
+    @PreAuthorize("@perm.has('evaluation.execute')")
+    public ResponseEntity<ApiResult<EvaluationRunResponse>> evaluateSnapshot(
+            @RequestBody @Valid EvaluationEvaluateSnapshotRequest request) {
+        return ResponseEntity.ok(ApiResult.ok(service.evaluateSnapshot(request)));
+    }
+
+    /**
      * 接收一次评估运行事实及其结果、质控问题和可选整改任务。
      *
      * <p>权限：{@code evaluation.execute}；接口不做自动指标计算，仅校验并持久化受控事实。
