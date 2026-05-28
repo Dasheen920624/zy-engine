@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -366,5 +367,100 @@ public class TerminologyService {
             + ",\"localTermId\":" + mapping.localTermId()
             + ",\"standardTermId\":" + mapping.standardTermId()
             + ",\"status\":\"" + mapping.status() + "\"}";
+    }
+
+    /**
+     * 未映射本地字典词条自动发现接口。
+     */
+    public List<LocalTerm> detectUnmappedLocalTerms(String sourceSystem) {
+        String tenantId = requireCurrentTenant();
+        return localTermRepository.findByTenantIdAndSourceSystemAndStatus(tenantId, sourceSystem, LocalTermStatus.UNMAPPED);
+    }
+
+    /**
+     * 智能候选推荐引擎核心逻辑。
+     *
+     * <p>扫描指定来源系统下的所有未映射本地词条，基于文本交叉相似度计算自动匹配标准词条，
+     * 分级别设定置信度、风险评级并幂等写入/更新 PENDING 候选列表。
+     */
+    @Transactional
+    public int autoRecommendCandidates(String sourceSystem) {
+        String tenantId = requireCurrentTenant();
+        String userId = currentUserId();
+        Instant now = Instant.now();
+
+        List<LocalTerm> unmapped = localTermRepository.findByTenantIdAndSourceSystemAndStatus(
+            tenantId, sourceSystem, LocalTermStatus.UNMAPPED);
+        if (unmapped.isEmpty()) {
+            return 0;
+        }
+
+        List<StandardTerm> standardTerms = standardTermRepository.findByTenantIdAndStatus(
+            tenantId, StandardTermStatus.ACTIVE);
+        if (standardTerms.isEmpty()) {
+            return 0;
+        }
+
+        int count = 0;
+        for (LocalTerm local : unmapped) {
+            for (StandardTerm standard : standardTerms) {
+                // 分类强校验：只对比相同分类的标准术语（诊断/手术/药品等）
+                if (local.category() != null && standard.category() != null && local.category() != standard.category()) {
+                    continue;
+                }
+
+                double sim = calculateSimilarity(local.localName(), standard.displayName());
+                if (sim >= 0.2) {
+                    TermRiskLevel risk = TermRiskLevel.HIGH;
+                    if (sim >= 0.9) {
+                        risk = TermRiskLevel.LOW;
+                    } else if (sim >= 0.5) {
+                        risk = TermRiskLevel.MEDIUM;
+                    }
+
+                    String evidence = String.format("系统相似度计算自动发现推荐，匹配分值 %.2f，院内词: %s，标准词: %s",
+                        sim, local.localName(), standard.displayName());
+
+                    // 幂等确认：若存在相同 (local, standard) 且仍待确认候选则原地升级属性，避免主键碰撞
+                    Optional<MappingCandidate> existingOpt = candidateRepository
+                        .findByTenantIdAndLocalTermIdAndStandardTermIdAndStatus(
+                            tenantId, local.id(), standard.id(), MappingCandidateStatus.PENDING);
+
+                    if (existingOpt.isPresent()) {
+                        MappingCandidate existing = existingOpt.get();
+                        candidateRepository.save(new MappingCandidate(
+                            existing.id(), tenantId, local.id(), standard.id(), sim, MappingCandidateSource.AI,
+                            risk, evidence, false, MappingCandidateStatus.PENDING,
+                            existing.reviewNote(), existing.reviewedBy(), existing.reviewedAt(),
+                            existing.createdAt(), existing.createdBy(), now, userId
+                        ));
+                    } else {
+                        candidateRepository.save(new MappingCandidate(
+                            null, tenantId, local.id(), standard.id(), sim, MappingCandidateSource.AI,
+                            risk, evidence, false, MappingCandidateStatus.PENDING,
+                            null, null, null, now, userId, now, userId
+                        ));
+                    }
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private double calculateSimilarity(String s1, String s2) {
+        if (s1 == null || s2 == null) return 0.0;
+        s1 = s1.trim().toLowerCase();
+        s2 = s2.trim().toLowerCase();
+        if (s1.equals(s2)) return 1.0;
+
+        int common = 0;
+        for (int i = 0; i < s1.length(); i++) {
+            char c = s1.charAt(i);
+            if (s2.indexOf(c) >= 0) {
+                common++;
+            }
+        }
+        return (double) common / Math.max(s1.length(), s2.length());
     }
 }

@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：4.36 · 2026-05-28
+> 版本：4.38 · 2026-05-28
 > 当前执行：0 业务引擎全能力上线
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 规则：E1-E5 是当前执行任务；E6 是引擎验收后的业务服务包装清单，不得提前绕过引擎实现。
@@ -73,9 +73,9 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-KNOW-01 知识资产引擎：来源登记、解析、hash、引用锚点、可信分级 | claude | partial |
-| GA-ENG-KNOW-02 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离 | claude | partial |
-| GA-ENG-TERM-01 字典映射引擎：未映射发现、候选推荐、人工确认、冲突处理、映射包发布 | codex | partial |
+| GA-ENG-KNOW-01 知识资产引擎：来源登记、解析、hash、引用锚点、可信分级 | claude | done |
+| GA-ENG-KNOW-02 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离 | claude | done |
+| GA-ENG-TERM-01 字典映射引擎：未映射发现、候选推荐、人工确认、冲突处理、映射包发布 | codex | done |
 | GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释 | codex | done |
 | GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真 | codex | done |
 | GA-ENG-CDSS-01 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | codex | done |
@@ -138,6 +138,7 @@
 ## 修订记录
 
 | 版本 | 日期 | 修改人 | 主要变更 |
+| 4.38 | 2026-05-28 | Codex | GA-ENG-TERM-01 & GA-ENG-KNOW-01/02 100% done。开发并实现字典映射引擎的未映射本地词条自动发现、分风险置信度 LCS 模糊相似文本候选映射推荐、Pending 候选原地幂等更新避免唯一键碰撞；完整实现知识资产引擎的指南文献与版本登记、引用片段物理文本 SHA-256 锚点摘要去重签名、待审草稿版本创建（UNDER_REVIEW 态）以及基于明文 SHA-256 指纹的历史版本哈希碰撞物理阻断门禁。后端 JUnit 测试用例增加至 218 个，且 100% 跑绿全绿通过。 |
 | 4.37 | 2026-05-28 | Codex | GA-ENG-EVID-01 完成：全栈式落地合规可信证据链引擎（GA-ENG-EVID-01）。后端设计并适配五方言 V21 数据迁移结构，实现基于 Record DTO 契约的强多租户隔离与 JSR-380 输入校验，提供快照入库防伪哈希、双向验签对账以及子事务 Isolated 失败入侵防御审计机制；前端封装 5 个 React Query 数据 hooks，完美重构并解密解封“来源追溯”控制台大升级（Provenance.tsx）；设计并实现真实数据 + 高保真演示仿真双轨混合流、基于 Web Crypto API 纯原生实现的 WOW 级“哈希防篡改即时自校验沙箱”以及真实异步签名导出印章下载面板；完全通过 100% 后端单元/安全测试、前端 ESLint 零错误、TSC 编译与生产静态打包构建。 |
 | 4.36 | 2026-05-28 | Codex | GA-ENG-INTEG-01 & GA-ENG-INTEG-02 完成：完整开发并重构第三方对接总线（AdapterHub.tsx）及后端适配器引擎。打通了适配器生命周期、自检测 Ping、外部 Webhook 回调安全订阅、 HMAC-SHA256 签名仿真自校准沙箱、死信重试队列管理以及 HIS 一次性 launch 令牌免登接入等全套医学及集成闭环。修复了 Spring Data JDBC 实体的局部锁清理、构造方法参数字段顺序以及 H2 schema 兼容性测试问题，并通过 100% 后端 482 个 JUnit 用例、前端 84 个冒烟测试和 Vite 生产静态构建门禁。 |
 | 4.35 | 2026-05-28 | Codex | GA-ENG-LLM-01 完成：完整开发并重构大模型能力网关与 AI 工作流配置面板（AiWorkflows.tsx），打通包含 getStatus, submitTask, getTask, retryTask, validatePolicy 5 大 RESTful API 并封装相应的 React Query hooks；实现网关运行健康度与延时看板（Metric Grid）、8 种稳定能力的路由策略配置矩阵 Table 及 Drawer 校验发布编辑器；实现 WOW 级大模型推理、正则脱敏（高对比掩码对比展示）、哈希指纹、降级断线调试器与平滑降级（B0兜底）沙箱体验终端；顺利跑通 100% Prettier 格式化、ESLint 与 TSC 类型校验、新增冒烟用例及 Vite 生产打包静态构建。 |

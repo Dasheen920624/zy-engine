@@ -203,4 +203,13 @@ public class TerminologyController {
                                                          @Valid @RequestBody RollbackTerminologyPackageRequest request) {
         return ApiResult.ok(service.rollbackPackage(id, request));
     }
+
+    /**
+     * 智能匹配推荐：一键为指定来源系统的未映射词条自动推荐标准候选词。
+     */
+    @PostMapping("/candidates/auto-recommend")
+    @PreAuthorize("@perm.has('term.write')")
+    public ApiResult<Integer> autoRecommend(@RequestParam String sourceSystem) {
+        return ApiResult.ok(service.autoRecommendCandidates(sourceSystem));
+    }
 }

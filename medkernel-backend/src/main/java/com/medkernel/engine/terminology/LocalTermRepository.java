@@ -46,4 +46,6 @@ public interface LocalTermRepository extends ListCrudRepository<LocalTerm, Long>
         """)
     List<LocalTerm> pageByFilter(String tenantId, String sourceSystem, String category, String status,
                                  String keyword, int offset, int limit);
+
+    List<LocalTerm> findByTenantIdAndSourceSystemAndStatus(String tenantId, String sourceSystem, LocalTermStatus status);
 }

@@ -232,4 +232,82 @@ public class KnowledgeVersionService {
             .filter(s -> !s.isBlank())
             .orElse("system");
     }
+
+    /**
+     * 创建待审版本草稿。
+     *
+     * @param request 创建请求
+     * @return 创建的版本草稿实体
+     */
+    @Transactional
+    public KnowledgeAssetVersion createDraftVersion(DraftVersionCreateRequest request) {
+        String tenantId = requireCurrentTenant();
+        String actor = currentActor();
+        Instant now = Instant.now();
+
+        // 1) 校验知识身份是否存在
+        KnowledgeIdentity identity = identityRepository.findByTenantIdAndId(tenantId, request.identityId())
+            .orElseThrow(() -> ApiException.notFound("知识身份 id=" + request.identityId()));
+
+        // 2) 校验版本号唯一性，避免 uk_knowledge_asset_version (identity_id, version_no) 碰撞
+        Optional<KnowledgeAssetVersion> existingVerOpt = versionRepository.findByTenantIdAndIdentityIdOrderByCreatedAtDesc(tenantId, request.identityId()).stream()
+            .filter(v -> v.versionNo().equalsIgnoreCase(request.versionNo()))
+            .findFirst();
+        if (existingVerOpt.isPresent()) {
+            throw new ApiException(ErrorCode.CONFLICT, "知识身份 id=" + request.identityId() + " 下的版本号 " + request.versionNo() + " 已存在");
+        }
+
+        // 3) 计算内容哈希 SHA-256
+        String content = request.content();
+        if (content == null) {
+            content = "";
+        }
+        String contentHash = sha256(content);
+
+        // 4) 扫描同 Identity 下的所有既有版本，若 contentHash 与之匹配则抛出 ENG_KNOW_002 冲突异常
+        List<KnowledgeAssetVersion> existingVersions = versionRepository.findByTenantIdAndIdentityIdOrderByCreatedAtDesc(tenantId, request.identityId());
+        for (KnowledgeAssetVersion v : existingVersions) {
+            if (contentHash.equals(v.contentHash())) {
+                throw new ApiException(ErrorCode.ENG_KNOW_002, "知识版本内容指纹冲突已存在，历史冲突版本号: " + v.versionNo());
+            }
+        }
+
+        // 5) 创建待审版本，初始状态为 UNDER_REVIEW
+        KnowledgeAssetVersion draft = new KnowledgeAssetVersion(
+            null,
+            tenantId,
+            request.identityId(),
+            request.versionNo(),
+            request.versionLabel(),
+            request.sourceDocumentId(),
+            request.sourceVersionId(),
+            contentHash,
+            request.anchors(),
+            KnowledgeVersionStatus.UNDER_REVIEW, // 初始状态为 UNDER_REVIEW
+            request.riskLevel() == null ? KnowledgeRiskLevel.MEDIUM : request.riskLevel(),
+            null, null, null, null, null, null, null, null,
+            now, actor, now, actor
+        );
+
+        return versionRepository.save(draft);
+    }
+
+    private String sha256(String text) {
+        if (text == null) {
+            return "";
+        }
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 }

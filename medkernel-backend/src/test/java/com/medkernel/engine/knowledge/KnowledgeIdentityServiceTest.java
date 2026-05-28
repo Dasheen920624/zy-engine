@@ -29,6 +29,9 @@ class KnowledgeIdentityServiceTest {
     private KnowledgeIdentityRepository identityRepo;
     private KnowledgeAssetVersionRepository versionRepo;
     private KnowledgeSupersessionRepository supersessionRepo;
+    private SourceDocumentRepository sourceDocRepo;
+    private SourceVersionRepository sourceVerRepo;
+    private SourceFragmentRepository sourceFragRepo;
     private KnowledgeIdentityService service;
 
     @BeforeEach
@@ -36,7 +39,12 @@ class KnowledgeIdentityServiceTest {
         identityRepo = Mockito.mock(KnowledgeIdentityRepository.class);
         versionRepo = Mockito.mock(KnowledgeAssetVersionRepository.class);
         supersessionRepo = Mockito.mock(KnowledgeSupersessionRepository.class);
-        service = new KnowledgeIdentityService(identityRepo, versionRepo, supersessionRepo);
+        sourceDocRepo = Mockito.mock(SourceDocumentRepository.class);
+        sourceVerRepo = Mockito.mock(SourceVersionRepository.class);
+        sourceFragRepo = Mockito.mock(SourceFragmentRepository.class);
+        service = new KnowledgeIdentityService(
+            identityRepo, versionRepo, supersessionRepo, sourceDocRepo, sourceVerRepo, sourceFragRepo
+        );
         RequestContext.restore(new RequestContext.Snapshot("trace", OrgScope.tenant("t-1"), "u-99"));
     }
 

@@ -73,4 +73,40 @@ public class KnowledgeIdentityController {
     public ApiResult<KnowledgeLineage> getLineage(@PathVariable Long id) {
         return ApiResult.ok(service.getLineage(id));
     }
+
+    /**
+     * 注册或返回已存在的来源文献。
+     *
+     * @param request 来源文献注册请求
+     * @return 来源文献实体
+     */
+    @org.springframework.web.bind.annotation.PostMapping("/sources")
+    @PreAuthorize("@perm.has('knowledge.write')")
+    public ApiResult<SourceDocument> registerSource(@org.springframework.web.bind.annotation.RequestBody SourceRegisterRequest request) {
+        return ApiResult.ok(service.registerSource(request));
+    }
+
+    /**
+     * 注册来源文献版本。
+     *
+     * @param request 来源版本注册请求
+     * @return 来源版本实体
+     */
+    @org.springframework.web.bind.annotation.PostMapping("/sources/versions")
+    @PreAuthorize("@perm.has('knowledge.write')")
+    public ApiResult<SourceVersion> registerSourceVersion(@org.springframework.web.bind.annotation.RequestBody SourceVersionRegisterRequest request) {
+        return ApiResult.ok(service.registerSourceVersion(request));
+    }
+
+    /**
+     * 注册文献片段，计算片段内 textExcerpt 的 SHA-256 摘要哈希，作为引用锚点摘要保护。
+     *
+     * @param request 片段创建请求
+     * @return 文献片段实体
+     */
+    @org.springframework.web.bind.annotation.PostMapping("/sources/fragments")
+    @PreAuthorize("@perm.has('knowledge.write')")
+    public ApiResult<SourceFragment> createFragment(@org.springframework.web.bind.annotation.RequestBody FragmentCreateRequest request) {
+        return ApiResult.ok(service.createFragment(request));
+    }
 }

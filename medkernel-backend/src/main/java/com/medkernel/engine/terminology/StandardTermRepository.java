@@ -45,4 +45,6 @@ public interface StandardTermRepository extends ListCrudRepository<StandardTerm,
         """)
     List<StandardTerm> pageByFilter(String tenantId, String standardSystem, String category, String status,
                                     String keyword, int offset, int limit);
+
+    List<StandardTerm> findByTenantIdAndStatus(String tenantId, StandardTermStatus status);
 }
