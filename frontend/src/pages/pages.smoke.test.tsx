@@ -16,6 +16,10 @@ import Dashboard from "./Dashboard";
 import Login from "./Login";
 import AdapterHub from "./tenant/AdapterHub";
 import EmbedLaunch from "./clinical/EmbedLaunch";
+import QcEvalResults from "./quality/QcEvalResults";
+import PatientPathways from "./clinical/PatientPathways";
+import Mpi from "./clinical/Mpi";
+import CdssFatigue from "./clinical/CdssFatigue";
 
 const testQueryClient = new QueryClient({
   defaultOptions: {
@@ -117,5 +121,29 @@ describe("page smoke coverage", () => {
 
     expect(screen.getByRole("button", { name: "用 CAS 登录" })).toBeInTheDocument();
     expect(screen.getByText(/统一身份由医院信息中心配置/)).toBeInTheDocument();
+  });
+
+  it("renders the quality qc-eval-results console", () => {
+    renderPage(<QcEvalResults />);
+    expect(screen.getByRole("heading", { name: "评估结果" })).toBeInTheDocument();
+    expect(screen.getByText(/总评估病例库/)).toBeInTheDocument();
+  });
+
+  it("renders the clinical patient-pathways console", () => {
+    renderPage(<PatientPathways />);
+    expect(screen.getByRole("heading", { name: "患者路径" })).toBeInTheDocument();
+    expect(screen.getByText(/患者 ID 检索/)).toBeInTheDocument();
+  });
+
+  it("renders the clinical mpi console", () => {
+    renderPage(<Mpi />);
+    expect(screen.getByRole("heading", { name: "患者主索引 MPI" })).toBeInTheDocument();
+    expect(screen.getByText(/活跃患者主索引/)).toBeInTheDocument();
+  });
+
+  it("renders the clinical cdss-fatigue console", () => {
+    renderPage(<CdssFatigue />);
+    expect(screen.getByRole("heading", { name: "智能建议治理" })).toBeInTheDocument();
+    expect(screen.getByText("全部状态")).toBeInTheDocument();
   });
 });
