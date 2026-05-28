@@ -20,6 +20,9 @@ import QcEvalResults from "./quality/QcEvalResults";
 import PatientPathways from "./clinical/PatientPathways";
 import Mpi from "./clinical/Mpi";
 import CdssFatigue from "./clinical/CdssFatigue";
+import PathwayTemplates from "./tenant/PathwayTemplates";
+import RuleDefinitions from "./tenant/RuleDefinitions";
+import AdminAudit from "./compliance/AdminAudit";
 
 const testQueryClient = new QueryClient({
   defaultOptions: {
@@ -145,5 +148,23 @@ describe("page smoke coverage", () => {
     renderPage(<CdssFatigue />);
     expect(screen.getByRole("heading", { name: "智能建议治理" })).toBeInTheDocument();
     expect(screen.getByText("全部状态")).toBeInTheDocument();
+  });
+
+  it("renders the tenant pathway-templates console", () => {
+    renderPage(<PathwayTemplates />);
+    expect(screen.getByRole("heading", { name: "路径中枢" })).toBeInTheDocument();
+    expect(screen.getByText("病种编码")).toBeInTheDocument();
+  });
+
+  it("renders the tenant rule-definitions console", () => {
+    renderPage(<RuleDefinitions />);
+    expect(screen.getByRole("heading", { name: "规则中枢" })).toBeInTheDocument();
+    expect(screen.getByText("全部评级")).toBeInTheDocument();
+  });
+
+  it("renders the compliance admin-audit console", () => {
+    renderPage(<AdminAudit />);
+    expect(screen.getByRole("heading", { name: "审计日志" })).toBeInTheDocument();
+    expect(screen.getByText("导出审计快照")).toBeInTheDocument();
   });
 });
