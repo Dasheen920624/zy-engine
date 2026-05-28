@@ -74,8 +74,8 @@
 | GA-ENG-KNOW-01 知识资产引擎：来源登记、解析、hash、引用锚点、可信分级 | claude | partial |
 | GA-ENG-KNOW-02 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离 | claude | partial |
 | GA-ENG-TERM-01 字典映射引擎：未映射发现、候选推荐、人工确认、冲突处理、映射包发布 | codex | partial |
-| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释 | codex | in_progress |
-| GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真 | - | pending |
+| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释 | codex | done |
+| GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真 | codex | in_progress |
 | GA-ENG-CDSS-01 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | - | pending |
 | GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | - | pending |
 | GA-ENG-FOLLOW-01 随访引擎：计划生成、任务、问卷、异常事件和回流 | - | pending |
