@@ -11,7 +11,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.math.BigDecimal;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.medkernel.engine.context.CanonicalResource;
+import com.medkernel.engine.context.CanonicalResourceRepository;
+import com.medkernel.engine.context.ContextSnapshot;
+import com.medkernel.engine.context.ContextSnapshotRepository;
+import com.medkernel.engine.rule.RuleDslEvaluation;
+import com.medkernel.engine.rule.RuleDslEvaluator;
 import com.medkernel.shared.api.PageRequest;
 import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.api.error.ApiException;
@@ -56,6 +67,10 @@ public class EvaluationEngineService {
     private final AuditEventPublisher auditPublisher;
     private final StateTransitionRecorder transitions;
     private final DiagnoseResponseAssembler diagnoseAssembler;
+    private final CanonicalResourceRepository canonicalResources;
+    private final ContextSnapshotRepository snapshots;
+    private final RuleDslEvaluator ruleEvaluator;
+    private final ObjectMapper json;
 
     /**
      * 注入评估质控闭环所需仓库、审计发布器、状态记录器与诊断装配器。
@@ -70,7 +85,11 @@ public class EvaluationEngineService {
             EvaluationIdempotencyKeyRepository idempotencyKeys,
             AuditEventPublisher auditPublisher,
             StateTransitionRecorder transitions,
-            DiagnoseResponseAssembler diagnoseAssembler) {
+            DiagnoseResponseAssembler diagnoseAssembler,
+            CanonicalResourceRepository canonicalResources,
+            ContextSnapshotRepository snapshots,
+            RuleDslEvaluator ruleEvaluator,
+            ObjectMapper json) {
         this.indicators = indicators;
         this.runs = runs;
         this.results = results;
@@ -81,6 +100,10 @@ public class EvaluationEngineService {
         this.auditPublisher = auditPublisher;
         this.transitions = transitions;
         this.diagnoseAssembler = diagnoseAssembler;
+        this.canonicalResources = canonicalResources;
+        this.snapshots = snapshots;
+        this.ruleEvaluator = ruleEvaluator;
+        this.json = json;
     }
 
     /**
@@ -198,6 +221,224 @@ public class EvaluationEngineService {
         auditPublisher.publish(AuditAction.UPDATE, INDICATOR_ENTITY, indicatorId,
             "激活评估指标 " + indicator.indicatorCode());
         return active;
+    }
+
+    /**
+     * 针对指定上下文快照执行病例质控扫描，依据 ACTIVE 指标的分子、分母及排除定义执行评估逻辑，
+     * 自动生成运行事实、达标/缺陷结果、质控问题和必要的科室整改任务，并调用 run 方法持久化。
+     */
+    @Transactional
+    public EvaluationRunResponse evaluateSnapshot(EvaluationEvaluateSnapshotRequest request) {
+        if (request == null || !hasText(request.contextSnapshotId()) || !hasText(request.scenarioCode())) {
+            throw new ApiException(ErrorCode.ENG_EVAL_001, "上下文快照ID与就诊场景不能为空");
+        }
+        
+        String tenantId = tenantId();
+        String actor = actor();
+        String traceId = traceId();
+        Instant now = Instant.now();
+
+        // 1. 获取并校验 ContextSnapshot 实体
+        ContextSnapshot snapshot = snapshots.findBySnapshotIdAndTenantId(request.contextSnapshotId(), tenantId)
+            .orElseThrow(() -> new ApiException(ErrorCode.ENG_EVAL_001, "就诊上下文快照不存在"));
+
+        // 2. 抓取并组装 12 类临床资源为 ObjectNode contextJson
+        List<CanonicalResource> resourceList = canonicalResources.findBySnapshotIdOrderBySeqNoAsc(request.contextSnapshotId());
+        ObjectNode contextJson = json.createObjectNode();
+        
+        ArrayNode encounters = json.createArrayNode();
+        ArrayNode conditions = json.createArrayNode();
+        ArrayNode symptoms = json.createArrayNode();
+        ArrayNode observations = json.createArrayNode();
+        ArrayNode diagnosticReports = json.createArrayNode();
+        ArrayNode medications = json.createArrayNode();
+        ArrayNode procedures = json.createArrayNode();
+        ArrayNode documents = json.createArrayNode();
+        ArrayNode carePlans = json.createArrayNode();
+        ArrayNode followUps = json.createArrayNode();
+        ArrayNode claims = json.createArrayNode();
+
+        for (CanonicalResource res : resourceList) {
+            try {
+                JsonNode dataNode = json.readTree(res.resourcePayloadJson());
+                switch (res.resourceType()) {
+                    case PATIENT -> contextJson.set("patient", dataNode);
+                    case ENCOUNTER -> encounters.add(dataNode);
+                    case CONDITION -> conditions.add(dataNode);
+                    case SYMPTOM -> symptoms.add(dataNode);
+                    case OBSERVATION -> observations.add(dataNode);
+                    case DIAGNOSTIC_REPORT -> diagnosticReports.add(dataNode);
+                    case MEDICATION -> medications.add(dataNode);
+                    case PROCEDURE -> procedures.add(dataNode);
+                    case DOCUMENT -> documents.add(dataNode);
+                    case CARE_PLAN -> carePlans.add(dataNode);
+                    case FOLLOW_UP -> followUps.add(dataNode);
+                    case CLAIM -> claims.add(dataNode);
+                }
+            } catch (Exception e) {
+                // 忽略异常行解析失败以确保流程高可用
+            }
+        }
+        contextJson.set("encounters", encounters);
+        contextJson.set("conditions", conditions);
+        contextJson.set("symptoms", symptoms);
+        contextJson.set("observations", observations);
+        contextJson.set("diagnosticReports", diagnosticReports);
+        contextJson.set("medications", medications);
+        contextJson.set("procedures", procedures);
+        contextJson.set("documents", documents);
+        contextJson.set("carePlans", carePlans);
+        contextJson.set("followUps", followUps);
+        contextJson.set("claims", claims);
+
+        // 3. 加载当前租户下所有活跃（ACTIVE）的指标库
+        List<EvaluationIndicator> activeIndicators = indicators.findByTenantIdAndStatus(tenantId, EvaluationIndicatorStatus.ACTIVE);
+        if (activeIndicators.isEmpty()) {
+            throw new ApiException(ErrorCode.ENG_EVAL_004, "当前租户无生效（ACTIVE）状态的质控评估指标，无法执行扫描");
+        }
+
+        List<EvaluationResultRequest> resultRequests = new ArrayList<>();
+
+        for (EvaluationIndicator indicator : activeIndicators) {
+            // A. 入组评估
+            if (indicator.denominatorDefinition() == null || indicator.denominatorDefinition().isBlank()) {
+                continue;
+            }
+
+            boolean inDenominator = false;
+            try {
+                ObjectNode denomDsl = json.createObjectNode();
+                denomDsl.set("when", json.readTree(indicator.denominatorDefinition()));
+                denomDsl.set("then", json.createArrayNode());
+                denomDsl.put("explain", "分母入组规则校验");
+                RuleDslEvaluation eval = ruleEvaluator.evaluate(denomDsl, contextJson);
+                inDenominator = eval.hit();
+            } catch (Exception e) {
+                // 解析或执行失败视为未入组
+            }
+
+            if (!inDenominator) {
+                continue;
+            }
+
+            // B. 排除条件评估
+            boolean excluded = false;
+            if (indicator.exclusionDefinition() != null && !indicator.exclusionDefinition().isBlank()) {
+                try {
+                    ObjectNode exclDsl = json.createObjectNode();
+                    exclDsl.set("when", json.readTree(indicator.exclusionDefinition()));
+                    exclDsl.set("then", json.createArrayNode());
+                    exclDsl.put("explain", "排除规则校验");
+                    RuleDslEvaluation eval = ruleEvaluator.evaluate(exclDsl, contextJson);
+                    excluded = eval.hit();
+                } catch (Exception e) {
+                    // 默认不排除
+                }
+            }
+
+            // C. 分子审计条件评估
+            boolean hitNumerator = false;
+            if (!excluded && indicator.numeratorDefinition() != null && !indicator.numeratorDefinition().isBlank()) {
+                try {
+                    ObjectNode numDsl = json.createObjectNode();
+                    numDsl.set("when", json.readTree(indicator.numeratorDefinition()));
+                    numDsl.set("then", json.createArrayNode());
+                    numDsl.put("explain", "分子达标规则校验");
+                    RuleDslEvaluation eval = ruleEvaluator.evaluate(numDsl, contextJson);
+                    hitNumerator = eval.hit();
+                } catch (Exception e) {
+                    // 解析失败视为未达标
+                }
+            }
+
+            // D. 组装评估结论、生成缺陷与整改
+            BigDecimal score;
+            EvaluationResultLevel level;
+            boolean hitFlag;
+            String evidenceSummary;
+            List<QualityFindingRequest> resultFindings = new ArrayList<>();
+
+            if (excluded) {
+                score = BigDecimal.valueOf(100);
+                level = EvaluationResultLevel.PASS;
+                hitFlag = true;
+                evidenceSummary = "病例已入组，但已由排除条件自动排除，审计判定达标。";
+            } else if (hitNumerator) {
+                score = BigDecimal.valueOf(100);
+                level = EvaluationResultLevel.PASS;
+                hitFlag = true;
+                evidenceSummary = "病例入组质量达标，已符合质量控制分子规则定义。";
+            } else {
+                score = BigDecimal.valueOf(0);
+                hitFlag = false;
+                
+                QualityFindingSeverity severity = QualityFindingSeverity.P1;
+                String scoreDef = indicator.scoringDefinition() == null ? "" : indicator.scoringDefinition();
+                if (scoreDef.contains("P0") || scoreDef.contains("CRITICAL") || scoreDef.contains("极危")) {
+                    severity = QualityFindingSeverity.P0;
+                    level = EvaluationResultLevel.CRITICAL;
+                } else if (scoreDef.contains("P2") || scoreDef.contains("中危")) {
+                    severity = QualityFindingSeverity.P2;
+                    level = EvaluationResultLevel.NON_COMPLIANT;
+                } else if (scoreDef.contains("P3") || scoreDef.contains("低危")) {
+                    severity = QualityFindingSeverity.P3;
+                    level = EvaluationResultLevel.NON_COMPLIANT;
+                } else {
+                    level = EvaluationResultLevel.NON_COMPLIANT;
+                }
+
+                evidenceSummary = "病例质量缺陷：未满足质量分子控制标准，自动生成整改派单。";
+
+                String findingCode = indicator.indicatorCode() + "_FND";
+                String findingTitle = "指标不达标：" + indicator.name();
+                String findingDesc = "系统病例扫描不达标：未满足质量审计的分子指标达标标准。";
+                
+                resultFindings.add(new QualityFindingRequest(
+                    findingCode,
+                    findingTitle,
+                    findingDesc,
+                    severity,
+                    "系统自动评估扫描质控证据支撑",
+                    indicator.responsibleDepartmentId(),
+                    now.plusSeconds(86400 * 7),
+                    null
+                ));
+            }
+
+            resultRequests.add(new EvaluationResultRequest(
+                indicator.indicatorId(),
+                indicator.subjectType() == null ? EvaluationSubjectType.PATIENT : indicator.subjectType(),
+                indicator.subjectType() == EvaluationSubjectType.MEDICAL_RECORD ? snapshot.encounterId() : snapshot.patientId(),
+                score,
+                level,
+                hitFlag,
+                evidenceSummary,
+                indicator.sourceRef(),
+                indicator.responsibleDepartmentId(),
+                resultFindings
+            ));
+        }
+
+        if (resultRequests.isEmpty()) {
+            throw new ApiException(ErrorCode.ENG_EVAL_004, "当前就诊上下文快照未匹配进入任何指标的分母入组规则，无须生成结果");
+        }
+
+        String runCode = "ER_AUTO_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        EvaluationRunRequest runRequest = new EvaluationRunRequest(
+            runCode,
+            EvaluationRunType.UPSTREAM_RESULT,
+            null,
+            request.contextSnapshotId(),
+            snapshot.patientId(),
+            snapshot.encounterId(),
+            request.scenarioCode(),
+            request.packageVersion() == null ? snapshot.knowledgePackageVersion() : request.packageVersion(),
+            digestValues(snapshot.patientId(), snapshot.encounterId(), now.toString()),
+            now,
+            resultRequests
+        );
+
+        return this.run(runRequest);
     }
 
     /**

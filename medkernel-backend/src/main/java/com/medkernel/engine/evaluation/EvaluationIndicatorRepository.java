@@ -26,6 +26,11 @@ public interface EvaluationIndicatorRepository extends ListCrudRepository<Evalua
     List<EvaluationIndicator> findByTenantIdOrderByUpdatedAtDesc(String tenantId);
 
     /**
+     * 按租户 ID 与指标状态获取指标版本集合。
+     */
+    List<EvaluationIndicator> findByTenantIdAndStatus(String tenantId, EvaluationIndicatorStatus status);
+
+    /**
      * 查询同租户、同指标编码、指定状态的指标版本，用于激活新版本时下线旧 {@code ACTIVE} 版本。
      */
     List<EvaluationIndicator> findByTenantIdAndIndicatorCodeAndStatus(

@@ -24,6 +24,9 @@ import com.medkernel.shared.context.RequestContext;
 import com.medkernel.shared.observability.DiagnoseResponse;
 import com.medkernel.shared.observability.DiagnoseResponseAssembler;
 import com.medkernel.shared.observability.StateTransitionRecorder;
+import com.medkernel.engine.context.ContextSnapshot;
+import com.medkernel.engine.context.CanonicalResource;
+import com.medkernel.engine.rule.RuleDslEvaluation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +44,10 @@ class EvaluationEngineServiceTest {
     private AuditEventPublisher auditPublisher;
     private StateTransitionRecorder transitions;
     private DiagnoseResponseAssembler diagnoseAssembler;
+    private com.medkernel.engine.context.CanonicalResourceRepository canonicalResources;
+    private com.medkernel.engine.context.ContextSnapshotRepository snapshots;
+    private com.medkernel.engine.rule.RuleDslEvaluator ruleEvaluator;
+    private com.fasterxml.jackson.databind.ObjectMapper json;
     private EvaluationEngineService service;
 
     @BeforeEach
@@ -55,9 +62,15 @@ class EvaluationEngineServiceTest {
         auditPublisher = mock(AuditEventPublisher.class);
         transitions = mock(StateTransitionRecorder.class);
         diagnoseAssembler = mock(DiagnoseResponseAssembler.class);
+        canonicalResources = mock(com.medkernel.engine.context.CanonicalResourceRepository.class);
+        snapshots = mock(com.medkernel.engine.context.ContextSnapshotRepository.class);
+        ruleEvaluator = mock(com.medkernel.engine.rule.RuleDslEvaluator.class);
+        json = new com.fasterxml.jackson.databind.ObjectMapper();
+
         service = new EvaluationEngineService(
             indicators, runs, results, findings, tasks, reviews, idempotencyKeys,
-            auditPublisher, transitions, diagnoseAssembler);
+            auditPublisher, transitions, diagnoseAssembler,
+            canonicalResources, snapshots, ruleEvaluator, json);
 
         when(indicators.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(runs.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -67,7 +80,7 @@ class EvaluationEngineServiceTest {
         when(reviews.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         RequestContext.restore(new RequestContext.Snapshot(
-            "trace-eval", OrgScope.tenant("tenant-A"), "qa-1"));
+            "trace-eval", com.medkernel.shared.context.OrgScope.tenant("tenant-A"), "qa-1"));
     }
 
     @AfterEach
@@ -324,5 +337,55 @@ class EvaluationEngineServiceTest {
             null, taskId, "tenant-A", "qf-1", "dept-1", "head-1", status,
             now.plusSeconds(86400), null, null, null, null, null,
             now, "qa-1", now, "qa-1", "trace-eval");
+    }
+
+    @Test
+    void evaluateSnapshotCalculatesMetricsAndCreatesDefectFindings() {
+        // Mock ContextSnapshot
+        ContextSnapshot snapshot = new ContextSnapshot(
+            null, "snap-1", "tenant-A", "dept-1", "patient-1", "enc-1",
+            "1.0.0", "1.0.0", "1.0.0", com.medkernel.engine.context.ContextSnapshotStatus.ACTIVE,
+            "[]", "{}", com.medkernel.engine.context.QualityStatus.VALID, "trace-eval",
+            "sig", Instant.now(), "qa-1");
+        when(snapshots.findBySnapshotIdAndTenantId("snap-1", "tenant-A")).thenReturn(Optional.of(snapshot));
+
+        // Mock CanonicalResource (Patient data)
+        CanonicalResource patientRes = new CanonicalResource(
+            null, "res-1", "snap-1", "tenant-A", com.medkernel.engine.context.CanonicalResourceType.PATIENT,
+            "{\"patientId\":\"patient-1\",\"name\":\"张三\"}", null, null, null, null, Instant.now(),
+            com.medkernel.engine.context.QualityStatus.VALID, 0, "trace-eval");
+        when(canonicalResources.findBySnapshotIdOrderBySeqNoAsc("snap-1"))
+            .thenReturn(List.of(patientRes));
+
+        // Mock Active Indicator
+        EvaluationIndicator indicator = new EvaluationIndicator(
+            null, "ei-active", "tenant-A", "IND.VTE.PROPHYLAXIS", 1, "静脉血栓预防完成率",
+            EvaluationSubjectType.MEDICAL_RECORD, "{\"all\":[]}", "{\"all\":[]}", "{\"all\":[]}",
+            "P1级严重质控缺陷", "DISCHARGE+24H", "全院", "dept-1", "guideline-1", "1.0.0",
+            EvaluationIndicatorStatus.ACTIVE, Instant.now(), "qa-1", Instant.now(), Instant.now(),
+            "qa-1", Instant.now(), "qa-1", "trace-eval");
+        when(indicators.findByTenantIdAndStatus("tenant-A", EvaluationIndicatorStatus.ACTIVE))
+            .thenReturn(List.of(indicator));
+        when(indicators.findByIndicatorIdAndTenantId("ei-active", "tenant-A")).thenReturn(Optional.of(indicator));
+
+        // Mock ruleEvaluator.evaluate
+        // 1. 分母校验：返回命中  2. 排除校验：不命中  3. 分子校验：不命中
+        when(ruleEvaluator.evaluate(any(), any()))
+            .thenReturn(new RuleDslEvaluation(true, com.medkernel.engine.rule.RuleRiskLevel.MEDIUM, List.of(), null))
+            .thenReturn(new RuleDslEvaluation(false, null, List.of(), null))
+            .thenReturn(new RuleDslEvaluation(false, null, List.of(), null));
+
+        EvaluationRunResponse response = service.evaluateSnapshot(
+            new EvaluationEvaluateSnapshotRequest("snap-1", "DISCHARGE", "1.0.0"));
+
+        assertThat(response.status()).isEqualTo(EvaluationRunStatus.RECORDED);
+        assertThat(response.resultCount()).isEqualTo(1);
+        assertThat(response.findingCount()).isEqualTo(1);
+        assertThat(response.taskCount()).isEqualTo(1);
+
+        verify(runs).save(any());
+        verify(results).save(any());
+        verify(findings).save(any());
+        verify(tasks).save(any());
     }
 }

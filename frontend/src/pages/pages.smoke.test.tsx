@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { ConfigProvider } from "antd";
 import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import ConfigPackages from "./tenant/ConfigPackages";
 import WorkflowTodos from "./clinical/WorkflowTodos";
@@ -12,8 +13,20 @@ import GraphExplore from "./advanced/GraphExplore";
 import Dashboard from "./Dashboard";
 import Login from "./Login";
 
+const testQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
 function renderPage(page: React.ReactElement) {
-  return render(<ConfigProvider>{page}</ConfigProvider>);
+  return render(
+    <QueryClientProvider client={testQueryClient}>
+      <ConfigProvider>{page}</ConfigProvider>
+    </QueryClientProvider>,
+  );
 }
 
 describe("page smoke coverage", () => {
@@ -31,8 +44,7 @@ describe("page smoke coverage", () => {
 
   it("renders the quality qc-alerts placeholder", () => {
     renderPage(<QcAlerts />);
-    expect(screen.getByRole("heading", { name: "质控预警" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /查看实施路线图/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "质控预警与整改工作台" })).toBeInTheDocument();
   });
 
   it("renders the compliance admin-users placeholder", () => {

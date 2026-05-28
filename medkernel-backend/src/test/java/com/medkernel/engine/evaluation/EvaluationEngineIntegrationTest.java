@@ -54,6 +54,10 @@ class EvaluationEngineIntegrationTest {
     @MockBean AuditEventPublisher auditPublisher;
     @MockBean StateTransitionRecorder transitions;
     @MockBean DiagnoseResponseAssembler diagnoseAssembler;
+    @MockBean com.medkernel.engine.context.CanonicalResourceRepository canonicalResources;
+    @MockBean com.medkernel.engine.context.ContextSnapshotRepository snapshots;
+    @MockBean com.medkernel.engine.rule.RuleDslEvaluator ruleEvaluator;
+    @MockBean com.fasterxml.jackson.databind.ObjectMapper json;
 
     @BeforeEach
     void setUp() {
