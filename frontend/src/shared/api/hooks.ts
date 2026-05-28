@@ -452,3 +452,397 @@ export function useRuleExecutionDiagnose(executionId: string) {
     enabled: !!executionId,
   });
 }
+
+// ==================== Pathway 引擎相关的实体及 DTO 契约 ====================
+
+export type SpecialtyPackageStatus = "DRAFT" | "PUBLISHED" | "OFFLINE";
+export type PathwayTemplateStatus = "DRAFT" | "PUBLISHED" | "OFFLINE";
+export type PathwayTemplateLevel = "CLINICAL" | "BUSINESS" | string;
+export type PathwayNodeType = "START" | "PROCESS" | "BRANCH" | "STOP" | string;
+export type PathwayEdgeType = "STANDARD" | "CONDITIONAL" | "EXCEPTION" | "VARIANCE" | string;
+export type PatientPathwayStatus = "ACTIVE" | "COMPLETED" | "EXITED" | string;
+export type ClinicalClockStatus = "RUNNING" | "COMPLETED" | "OVERDUE" | string;
+export type VarianceType =
+  | "MEDICAL"
+  | "PATIENT_REASON"
+  | "RESOURCE_REASON"
+  | "DOCTOR_CHOICE"
+  | "SYSTEM_REASON";
+export type PathwayAdvanceEventType = "COMPLETE" | "VARIANCE" | "EXIT";
+
+export interface SpecialtyPackage {
+  id?: number;
+  packageId: string;
+  packageCode: string;
+  diseaseCode: string;
+  name: string;
+  packageVersion: string;
+  status: SpecialtyPackageStatus;
+  sourceRef: string;
+  description: string;
+  publishedAt?: string;
+  publishedBy?: string;
+  createdAt?: string;
+  createdBy?: string;
+  traceId?: string;
+}
+
+export interface PathwayTemplate {
+  id?: number;
+  templateId: string;
+  packageId: string;
+  templateCode: string;
+  name: string;
+  diseaseCode: string;
+  templateVersion: number;
+  templateLevel: PathwayTemplateLevel;
+  status: PathwayTemplateStatus;
+  startNodeCode?: string;
+  sourceRef: string;
+  description: string;
+  entryCriteriaJson?: string;
+  exitCriteriaJson?: string;
+  createdAt?: string;
+  createdBy?: string;
+  traceId?: string;
+}
+
+export interface PathwayNode {
+  id?: number;
+  nodeId: string;
+  templateId: string;
+  nodeCode: string;
+  name: string;
+  nodeType: PathwayNodeType;
+  sortOrder: number;
+  responsibleRole?: string;
+  dependencyJson?: string;
+  timeWindowMinutes?: number;
+  terminalFlag: boolean;
+  configJson?: string;
+  createdAt?: string;
+  traceId?: string;
+}
+
+export interface PathwayEdge {
+  id?: number;
+  edgeId: string;
+  templateId: string;
+  edgeCode: string;
+  fromNodeCode: string;
+  toNodeCode: string;
+  edgeType: PathwayEdgeType;
+  conditionJson?: string;
+  priority: number;
+  createdAt?: string;
+  traceId?: string;
+}
+
+export interface SpecialtyMetricBinding {
+  id?: number;
+  bindingId: string;
+  templateId: string;
+  nodeCode: string;
+  metricCode: string;
+  createdAt?: string;
+}
+
+export interface SpecialtyPackageResponse {
+  packageId: string;
+  status: SpecialtyPackageStatus;
+  traceId: string;
+}
+
+export interface PathwayTemplateDetailResponse {
+  template: PathwayTemplate;
+  nodes: PathwayNode[];
+  edges: PathwayEdge[];
+  metricBindings: SpecialtyMetricBinding[];
+  traceId: string;
+}
+
+export interface PathwayTemplatePublishResponse {
+  templateId: string;
+  status: PathwayTemplateStatus;
+  traceId: string;
+}
+
+export interface PathwaySimulationResponse {
+  templateId: string;
+  simulatedPath: string[];
+  traceId: string;
+}
+
+export interface PatientPathway {
+  id?: number;
+  patientPathwayId: string;
+  patientId: string;
+  encounterId?: string;
+  templateId: string;
+  currentNodeCode?: string;
+  status: PatientPathwayStatus;
+  enteredAt?: string;
+  completedAt?: string;
+  exitedAt?: string;
+  exitReason?: string;
+  lastEventId?: string;
+  createdAt?: string;
+  traceId?: string;
+}
+
+export interface PathwayVariance {
+  id?: number;
+  varianceId: string;
+  patientPathwayId: string;
+  nodeCode: string;
+  varianceType: VarianceType;
+  reason: string;
+  resolutionAction: string;
+  continueNodeCode?: string;
+  createdAt?: string;
+  traceId?: string;
+}
+
+export interface ClinicalClock {
+  id?: number;
+  clockId: string;
+  patientPathwayId: string;
+  nodeCode: string;
+  metricCode?: string;
+  startedAt: string;
+  dueAt: string;
+  completedAt?: string;
+  status: ClinicalClockStatus;
+  createdAt?: string;
+  traceId?: string;
+}
+
+export interface PatientPathwayDetailResponse {
+  patientPathway: PatientPathway;
+  variances: PathwayVariance[];
+  clocks: ClinicalClock[];
+  traceId: string;
+}
+
+export interface PathwayAdvanceResponse {
+  patientPathwayId: string;
+  status: PatientPathwayStatus;
+  traceId: string;
+}
+
+// 1. SpecialtyPackage Hooks
+export function useSpecialtyPackages(params?: { page?: number; size?: number; sort?: string }) {
+  return useQuery({
+    queryKey: ["pathways", "packages", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<SpecialtyPackage> }>(
+        "/engine/pathways/packages",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useCreateSpecialtyPackage() {
+  return useMutation({
+    mutationFn: async (payload: {
+      packageCode: string;
+      diseaseCode: string;
+      name: string;
+      packageVersion: string;
+      sourceRef: string;
+      description: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: SpecialtyPackageResponse }>(
+        "/engine/pathways/packages",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 2. PathwayTemplate Hooks
+export function usePathwayTemplates(params?: {
+  status?: PathwayTemplateStatus;
+  diseaseCode?: string;
+  packageId?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}) {
+  return useQuery({
+    queryKey: ["pathways", "templates", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<PathwayTemplate> }>(
+        "/engine/pathways/templates",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+export function usePathwayTemplateDetail(templateId: string) {
+  return useQuery({
+    queryKey: ["pathways", "template-detail", templateId],
+    queryFn: async () => {
+      if (!templateId) return null;
+      const { data } = await apiClient.get<{ data: PathwayTemplateDetailResponse }>(
+        `/engine/pathways/templates/${templateId}`,
+      );
+      return data.data;
+    },
+    enabled: !!templateId,
+  });
+}
+
+export function useCreatePathwayTemplate() {
+  return useMutation({
+    mutationFn: async (payload: {
+      packageId: string;
+      templateCode: string;
+      name: string;
+      diseaseCode: string;
+      templateLevel: PathwayTemplateLevel;
+      sourceRef: string;
+      description: string;
+      entryCriteriaJson?: string;
+      exitCriteriaJson?: string;
+      nodes: Array<{
+        nodeCode: string;
+        name: string;
+        nodeType: PathwayNodeType;
+        sortOrder: number;
+        responsibleRole?: string;
+        timeWindowMinutes?: number;
+        terminalFlag: boolean;
+        configJson?: string;
+      }>;
+      edges: Array<{
+        edgeCode: string;
+        fromNodeCode: string;
+        toNodeCode: string;
+        edgeType: PathwayEdgeType;
+        conditionJson?: string;
+        priority: number;
+      }>;
+      metricBindings?: Array<{
+        nodeCode: string;
+        metricCode: string;
+      }>;
+    }) => {
+      const { data } = await apiClient.post<{ data: PathwayTemplateDetailResponse }>(
+        "/engine/pathways/templates",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function usePublishPathwayTemplate() {
+  return useMutation({
+    mutationFn: async (templateId: string) => {
+      const { data } = await apiClient.post<{ data: PathwayTemplatePublishResponse }>(
+        `/engine/pathways/templates/${templateId}/publish`,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useSimulatePathway(templateId: string) {
+  return useMutation({
+    mutationFn: async (payload: { startNodeCode?: string; contextJson?: string }) => {
+      const { data } = await apiClient.post<{ data: PathwaySimulationResponse }>(
+        `/engine/pathways/templates/${templateId}/simulate`,
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 3. PatientPathway Hooks
+export function useEnterPatientPathway() {
+  return useMutation({
+    mutationFn: async (payload: {
+      patientId: string;
+      encounterId?: string;
+      templateId: string;
+      startNodeCode?: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: PatientPathwayDetailResponse }>(
+        "/engine/pathways/patients",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function usePatientPathwayDetail(patientPathwayId: string) {
+  return useQuery({
+    queryKey: ["pathways", "patient-detail", patientPathwayId],
+    queryFn: async () => {
+      if (!patientPathwayId) return null;
+      const { data } = await apiClient.get<{ data: PatientPathwayDetailResponse }>(
+        `/engine/pathways/patients/${patientPathwayId}`,
+      );
+      return data.data;
+    },
+    enabled: !!patientPathwayId,
+  });
+}
+
+export function useAdvancePatientPathway() {
+  return useMutation({
+    mutationFn: async (payload: {
+      patientPathwayId: string;
+      eventType: PathwayAdvanceEventType;
+      currentNodeCode?: string;
+      requestedNextNodeCode?: string;
+      varianceType?: VarianceType;
+      varianceReason?: string;
+      resolutionAction?: string;
+      exitReason?: string;
+      eventId?: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: PathwayAdvanceResponse }>(
+        "/engine/pathways/advance",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function usePatientPathwayClocks(patientPathwayId: string) {
+  return useQuery({
+    queryKey: ["pathways", "patient-clocks", patientPathwayId],
+    queryFn: async () => {
+      if (!patientPathwayId) return [];
+      const { data } = await apiClient.get<{ data: ClinicalClock[] }>(
+        `/engine/pathways/${patientPathwayId}/clocks`,
+      );
+      return data.data;
+    },
+    enabled: !!patientPathwayId,
+  });
+}
+
+export function usePatientPathwayDiagnose(patientPathwayId: string) {
+  return useQuery({
+    queryKey: ["pathways", "patient-diagnose", patientPathwayId],
+    queryFn: async () => {
+      if (!patientPathwayId) return null;
+      const { data } = await apiClient.get<{ data: DiagnoseResponse }>(
+        `/engine/pathways/patients/${patientPathwayId}/diagnose`,
+      );
+      return data.data;
+    },
+    enabled: !!patientPathwayId,
+  });
+}
