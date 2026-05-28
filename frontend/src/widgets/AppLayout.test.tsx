@@ -115,6 +115,18 @@ describe("AppLayout", () => {
     expect(screen.getByText("字典映射内容")).toBeInTheDocument();
   });
 
+  it("renders nested routes as one breadcrumb line in the header", () => {
+    mockViewport(1280);
+    const { container } = renderLayout();
+
+    const header = container.querySelector(".mk-app-header");
+
+    expect(header).not.toBeNull();
+    expect(within(header as HTMLElement).getByText("试点准备")).toBeInTheDocument();
+    expect(within(header as HTMLElement).getAllByText("字典映射")).toHaveLength(1);
+    expect(header?.querySelector(".mk-route-title")).toBeNull();
+  });
+
   it("uses drawer navigation on mobile width", () => {
     mockViewport(390);
     renderLayout();

@@ -88,16 +88,14 @@ body,
   width: 110px;
 }
 
-.mk-route-title {
-  display: block;
-}
-
-.mk-route-title-desktop {
-  max-width: 320px;
-}
-
-.mk-route-title-mobile {
-  max-width: 132px;
+.mk-route-breadcrumb {
+  min-width: 0;
+  max-width: min(420px, 44vw);
+  line-height: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mk-command-results {

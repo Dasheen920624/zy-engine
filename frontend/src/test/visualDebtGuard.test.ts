@@ -30,7 +30,7 @@ function listSourceFiles(dir: string): string[] {
 function findViolations(pattern: RegExp, allowList = new Set<string>()) {
   return listSourceFiles(SRC_ROOT)
     .map((file) => ({
-      file: relative(SRC_ROOT, file),
+      file: relative(SRC_ROOT, file).replace(/\\/g, "/"),
       content: readFileSync(file, "utf8"),
     }))
     .filter(({ file, content }) => !allowList.has(file) && pattern.test(content))
