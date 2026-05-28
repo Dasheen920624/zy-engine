@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -16,6 +17,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * 验证系统运维快照 Controller 的安全切面防护与国产化数据契约 (GA-ENG-AUDIT-01)。
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -24,7 +28,20 @@ class RuntimeOperationsControllerTest {
     @Autowired
     MockMvc mvc;
 
+    /**
+     * 验证在没有授予 system.read 权限时，接口是否被物理安全拦截为 403 Forbidden。
+     */
     @Test
+    void operationsSnapshotWithoutAuthIsForbidden() throws Exception {
+        mvc.perform(get("/api/v1/system/operations"))
+            .andExpect(status().isForbidden());
+    }
+
+    /**
+     * 验证拥有 ROLE_IT_OPS 角色的受托用户，能够顺利穿透安全切面并获取不泄露密钥的运维快照。
+     */
+    @Test
+    @WithMockUser(authorities = "ROLE_IT_OPS")
     void operationsSnapshotExposesRuntimeContractWithoutSecrets() throws Exception {
         mvc.perform(get("/api/v1/system/operations"))
             .andExpect(status().isOk())

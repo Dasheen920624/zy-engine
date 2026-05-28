@@ -1,22 +1,40 @@
 package com.medkernel.shared.runtime;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.medkernel.shared.api.ApiResult;
 
+/**
+ * 系统运维快照控制器 (GA-ENG-AUDIT-01)。
+ *
+ * <p>提供当前系统的应用名称、运行环境、部署模式、国产化自检概貌、依赖连接及备份就绪度探测等快照数据服务。
+ * 全线受动作级权限鉴权保护，确保敏感内网运维拓扑安全不外泄。
+ */
 @RestController
 @RequestMapping("/api/v1/system")
 public class RuntimeOperationsController {
 
     private final RuntimeOperationsService service;
 
+    /**
+     * 构造函数。
+     *
+     * @param service 系统运维快照业务服务
+     */
     public RuntimeOperationsController(RuntimeOperationsService service) {
         this.service = service;
     }
 
+    /**
+     * 扫描获取当前系统全量运维状态与国产化自检快照。
+     *
+     * @return 全量运维状态及自检快照信息
+     */
     @GetMapping("/operations")
+    @PreAuthorize("@perm.has('system.read')")
     public ApiResult<RuntimeOperationsSnapshot> operations() {
         return ApiResult.ok(service.snapshot());
     }
