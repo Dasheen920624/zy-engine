@@ -2111,7 +2111,13 @@ export function useCreateAdapter() {
 // 3. 更新适配器
 export function useUpdateAdapter() {
   return useMutation({
-    mutationFn: async ({ adapterId, payload }: { adapterId: string; payload: AdapterUpdatePayload }) => {
+    mutationFn: async ({
+      adapterId,
+      payload,
+    }: {
+      adapterId: string;
+      payload: AdapterUpdatePayload;
+    }) => {
       const { data } = await apiClient.put<IntegrationEnvelope<IntegrationAdapter>>(
         `/api/v1/engine/integration/adapters/${adapterId}`,
         payload,
@@ -2177,12 +2183,11 @@ export function useIntegrationLogs(page: number, size: number) {
   return useQuery({
     queryKey: ["integration", "logs", page, size],
     queryFn: async () => {
-      const { data } = await apiClient.get<IntegrationEnvelope<{ items: IntegrationMessageLog[]; total: number }>>(
-        "/api/v1/engine/integration/logs",
-        {
-          params: { page, size },
-        },
-      );
+      const { data } = await apiClient.get<
+        IntegrationEnvelope<{ items: IntegrationMessageLog[]; total: number }>
+      >("/api/v1/engine/integration/logs", {
+        params: { page, size },
+      });
       return data.data ?? { items: [], total: 0 };
     },
   });
@@ -2268,7 +2273,7 @@ export function useEvidences(params: {
     queryFn: async () => {
       const { data } = await apiClient.get<{ data: PageResponse<EvidenceSnapshot> }>(
         "/compliance/evidence/snapshots",
-        { params }
+        { params },
       );
       return data.data ?? { items: [], total: 0 };
     },
@@ -2281,7 +2286,7 @@ export function useEvidenceById(evidenceId: string) {
     queryKey: ["evidence", "snapshot", evidenceId],
     queryFn: async () => {
       const { data } = await apiClient.get<{ data: EvidenceSnapshot }>(
-        `/compliance/evidence/snapshots/${evidenceId}`
+        `/compliance/evidence/snapshots/${evidenceId}`,
       );
       return data.data;
     },
@@ -2295,7 +2300,7 @@ export function useCreateEvidence() {
     mutationFn: async (payload: EvidenceCreatePayload) => {
       const { data } = await apiClient.post<{ data: EvidenceSnapshot }>(
         "/compliance/evidence/snapshots",
-        payload
+        payload,
       );
       return data.data;
     },
@@ -2307,7 +2312,7 @@ export function useVerifyEvidence() {
   return useMutation({
     mutationFn: async (evidenceId: string) => {
       const { data } = await apiClient.post<{ data: EvidenceVerifyResult }>(
-        `/compliance/evidence/snapshots/${evidenceId}/verify`
+        `/compliance/evidence/snapshots/${evidenceId}/verify`,
       );
       return data.data;
     },
@@ -2321,7 +2326,7 @@ export function useExportEvidences() {
       const { data } = await apiClient.post<{ data: EvidenceExportResult }>(
         "/compliance/evidence/snapshots/export",
         null,
-        { params: { evidenceType } }
+        { params: { evidenceType } },
       );
       return data.data;
     },

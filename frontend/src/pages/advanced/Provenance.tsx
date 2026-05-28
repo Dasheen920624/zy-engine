@@ -57,7 +57,11 @@ interface EvidenceNode {
 }
 
 // 辅助函数：清洗哈希中的 sha256- 前缀，方便一致性校验
-const cleanHash = (h: string) => (h || "").replace(/^sha256-/, "").trim().toLowerCase();
+const cleanHash = (h: string) =>
+  (h || "")
+    .replace(/^sha256-/, "")
+    .trim()
+    .toLowerCase();
 
 // 仿真不同病案 traceId 的生命周期可信证据链（内置精美业务 JSON 报文，用于自校验沙箱）
 const strokeEvidenceChain: EvidenceNode[] = [
@@ -74,15 +78,20 @@ const strokeEvidenceChain: EvidenceNode[] = [
       "核心条款：急性缺血性脑卒中发病 4.5 小时内，对符合适应证的患者应首选静脉阿替普酶溶栓；若收缩压 > 180 mmHg 或舒张压 > 105 mmHg，属于溶栓绝对禁忌症，必须先期静脉降压治疗。",
       "MDC 审计：已通过中华医学会卒中分会电子专家委员会数字指纹签名。",
     ],
-    payloadSnapshot: JSON.stringify({
-      source: "中国急性缺血性脑卒中诊疗指南 2024版",
-      evidenceLevel: "I-A",
-      bpThreshold: {
-        systolic: 180,
-        diastolic: 105
+    payloadSnapshot: JSON.stringify(
+      {
+        source: "中国急性缺血性脑卒中诊疗指南 2024版",
+        evidenceLevel: "I-A",
+        bpThreshold: {
+          systolic: 180,
+          diastolic: 105,
+        },
+        recommendation:
+          "发病 4.5 小时内对符合适应证的患者应首选静脉阿替普酶溶栓。收缩压>180mmHg为溶栓绝对禁忌症。",
       },
-      recommendation: "发病 4.5 小时内对符合适应证的患者应首选静脉阿替普酶溶栓。收缩压>180mmHg为溶栓绝对禁忌症。"
-    }, null, 2),
+      null,
+      2,
+    ),
   },
   {
     title: "2. 规则与路径 DSL 拟定存证 (Definition)",
@@ -97,13 +106,17 @@ const strokeEvidenceChain: EvidenceNode[] = [
       "触发条件：DIAGNOSIS IN ('脑卒中', '急性脑梗死') AND BP_systolic > 180",
       "执行动作：CRITICAL_BLOCK (红线阻断开药，医师强确认)",
     ],
-    payloadSnapshot: JSON.stringify({
-      ruleId: "STK-RULE-SYS-001",
-      dslVersion: "v2.4.1",
-      expression: "DIAGNOSIS IN ('脑卒中', '急性脑梗死') AND BP_systolic > 180",
-      action: "CRITICAL_BLOCK",
-      editor: "高级临床架构师"
-    }, null, 2),
+    payloadSnapshot: JSON.stringify(
+      {
+        ruleId: "STK-RULE-SYS-001",
+        dslVersion: "v2.4.1",
+        expression: "DIAGNOSIS IN ('脑卒中', '急性脑梗死') AND BP_systolic > 180",
+        action: "CRITICAL_BLOCK",
+        editor: "高级临床架构师",
+      },
+      null,
+      2,
+    ),
   },
   {
     title: "3. 专病配置包发布与投影存证 (Release)",
@@ -118,12 +131,16 @@ const strokeEvidenceChain: EvidenceNode[] = [
       "投影通道：HIS 投影激活、Dify 智能体投影正常、EMR 投影同步",
       "物理回滚指纹：pkg-stroke-v1.3 (随时可热切换回切状态)",
     ],
-    payloadSnapshot: JSON.stringify({
-      packageId: "pkg-stroke-v1.4",
-      grayScope: ["一病区", "二病区", "急诊医学科"],
-      projection: ["HIS", "Dify", "EMR"],
-      rollbackHash: "pkg-stroke-v1.3-sha256-f9d2c092a8e411b0e7cf84c8996fb9"
-    }, null, 2),
+    payloadSnapshot: JSON.stringify(
+      {
+        packageId: "pkg-stroke-v1.4",
+        grayScope: ["一病区", "二病区", "急诊医学科"],
+        projection: ["HIS", "Dify", "EMR"],
+        rollbackHash: "pkg-stroke-v1.3-sha256-f9d2c092a8e411b0e7cf84c8996fb9",
+      },
+      null,
+      2,
+    ),
   },
   {
     title: "4. 模型网关安全推理与正则脱敏存证 (Gateway)",
@@ -137,18 +154,22 @@ const strokeEvidenceChain: EvidenceNode[] = [
       'Schema约束：{"required": ["entity", "degree"]}',
       "Isolated 事务审计：审计事件已记录，物理子事务强隔离保障不丢失",
     ],
-    payloadSnapshot: JSON.stringify({
-      taskId: "task-82fba90288102",
-      modelName: "MedKernel-Cognitive-LLM-v2",
-      routing: "B2",
-      schemaConstraint: {
-        required: ["entity", "degree"]
+    payloadSnapshot: JSON.stringify(
+      {
+        taskId: "task-82fba90288102",
+        modelName: "MedKernel-Cognitive-LLM-v2",
+        routing: "B2",
+        schemaConstraint: {
+          required: ["entity", "degree"],
+        },
+        piiMasking: {
+          status: "COMPLETED",
+          fields: ["name", "phone", "idCard"],
+        },
       },
-      piiMasking: {
-        status: "COMPLETED",
-        fields: ["name", "phone", "idCard"]
-      }
-    }, null, 2),
+      null,
+      2,
+    ),
     extraContent: (
       <div className="bg-slate-900 text-slate-300 p-3 rounded-lg font-mono text-[9px] mt-2 leading-relaxed max-w-[500px]">
         <div className="text-slate-500 mb-1 border-b border-slate-800 pb-1">
@@ -179,21 +200,25 @@ const strokeEvidenceChain: EvidenceNode[] = [
       "医嘱触发节点：OUTPATIENT_DIAGNOSIS (医师开具静脉溶栓阿替普酶时触发)",
       "诊断事实证据：急诊 CT 已排除脑出血，诊断属于超早期急性缺血性脑卒中",
     ],
-    payloadSnapshot: JSON.stringify({
-      encounterId: "E-2001",
-      patient: {
-        name: "李建国",
-        age: 68,
-        gender: "M"
+    payloadSnapshot: JSON.stringify(
+      {
+        encounterId: "E-2001",
+        patient: {
+          name: "李建国",
+          age: 68,
+          gender: "M",
+        },
+        vitalSigns: {
+          systolic: 185,
+          diastolic: 105,
+          pulse: 102,
+        },
+        diagnosis: "急性脑卒中拟诊",
+        triggerNode: "OUTPATIENT_DIAGNOSIS",
       },
-      vitalSigns: {
-        systolic: 185,
-        diastolic: 105,
-        pulse: 102
-      },
-      diagnosis: "急性脑卒中拟诊",
-      triggerNode: "OUTPATIENT_DIAGNOSIS"
-    }, null, 2),
+      null,
+      2,
+    ),
   },
   {
     title: "6. 医师决策交互与跨域事件存证 (Feedback)",
@@ -208,14 +233,18 @@ const strokeEvidenceChain: EvidenceNode[] = [
       "HIS联动结果：HIS系统成功捕获 ADOPT 事件，已在处方区自动开具低分子肝素钙注射液",
       "审计留痕 ID：fdb-stk-9921 (Isolated 强子事务审计成功写入)",
     ],
-    payloadSnapshot: JSON.stringify({
-      feedbackId: "fdb-stk-9921",
-      operator: "doc-chao-009",
-      decision: "ADOPT",
-      orderItem: "低分子肝素钙注射液",
-      postMessageStatus: "SUCCESS",
-      auditTraceId: "Isolated-TX-008"
-    }, null, 2),
+    payloadSnapshot: JSON.stringify(
+      {
+        feedbackId: "fdb-stk-9921",
+        operator: "doc-chao-009",
+        decision: "ADOPT",
+        orderItem: "低分子肝素钙注射液",
+        postMessageStatus: "SUCCESS",
+        auditTraceId: "Isolated-TX-008",
+      },
+      null,
+      2,
+    ),
   },
   {
     title: "7. PDCA 质控整改与复核结案存证 (Rectification)",
@@ -230,14 +259,18 @@ const strokeEvidenceChain: EvidenceNode[] = [
       "整改备案说明：医师已先期使用静脉尼卡地平降压，待收缩压降至 178 mmHg 时才安全实施溶栓；整改复核通过并予以结案。",
       "可信追溯依据：整改上传降压记录单 EMR-PR-912，证据链完成合规闭环。",
     ],
-    payloadSnapshot: JSON.stringify({
-      rectificationId: "rec-stk-3001",
-      department: "神经内科",
-      riskReason: "收缩压185mmHg直接溶栓存在大出血高风险",
-      status: "APPROVED_AND_CLOSED",
-      actionTaken: "静脉注射尼卡地平控制收缩压至178mmHg后安全实施阿替普酶溶栓",
-      proofDocument: "EMR-PR-912"
-    }, null, 2),
+    payloadSnapshot: JSON.stringify(
+      {
+        rectificationId: "rec-stk-3001",
+        department: "神经内科",
+        riskReason: "收缩压185mmHg直接溶栓存在大出血高风险",
+        status: "APPROVED_AND_CLOSED",
+        actionTaken: "静脉注射尼卡地平控制收缩压至178mmHg后安全实施阿替普酶溶栓",
+        proofDocument: "EMR-PR-912",
+      },
+      null,
+      2,
+    ),
   },
 ];
 
@@ -254,12 +287,16 @@ const amiEvidenceChain: EvidenceNode[] = [
       "证据分级：I 级推荐，A 级证据",
       "核心条款：疑似急性心梗患者应立即在 10 分钟内完成首份心电图，并启动 PCI 介入或溶栓筛查；严重主动脉夹层、近期颅内出血属于绝对溶栓禁忌。",
     ],
-    payloadSnapshot: JSON.stringify({
-      source: "中国急性 ST 段抬高型心肌梗死诊断和治疗指南 2023",
-      timeframeLimitMinutes: 10,
-      contraindications: ["主动脉夹层", "近期颅内出血"],
-      recommendation: "疑似急性心梗10分钟内必须完成首份心电图校验"
-    }, null, 2),
+    payloadSnapshot: JSON.stringify(
+      {
+        source: "中国急性 ST 段抬高型心肌梗死诊断和治疗指南 2023",
+        timeframeLimitMinutes: 10,
+        contraindications: ["主动脉夹层", "近期颅内出血"],
+        recommendation: "疑似急性心梗10分钟内必须完成首份心电图校验",
+      },
+      null,
+      2,
+    ),
   },
   {
     title: "2. 规则与路径 DSL 拟定存证 (Definition)",
@@ -272,12 +309,16 @@ const amiEvidenceChain: EvidenceNode[] = [
       "规则ID：AMI-RULE-009 (急性心肌梗死首份心电图时效监控)",
       "执行动作：WARNING_ALERT (超时预警提示，限时 10 分钟内上传)",
     ],
-    payloadSnapshot: JSON.stringify({
-      ruleId: "AMI-RULE-009",
-      monitorTarget: "STEMI_ECG_TIMEFRAME",
-      limitSeconds: 600,
-      action: "WARNING_ALERT"
-    }, null, 2),
+    payloadSnapshot: JSON.stringify(
+      {
+        ruleId: "AMI-RULE-009",
+        monitorTarget: "STEMI_ECG_TIMEFRAME",
+        limitSeconds: 600,
+        action: "WARNING_ALERT",
+      },
+      null,
+      2,
+    ),
   },
   {
     title: "5. 临床 FACTS 就诊快照事实存证 (Execution)",
@@ -291,19 +332,23 @@ const amiEvidenceChain: EvidenceNode[] = [
       "体征快照：胸痛评分 8分，肌钙蛋白 I (cTnI) 极高，符合 STEMI 临床事实指征",
       "触发时钟：患者办完住院登记 (ADMISSION_CHECK) 时瞬间捕获时序凭证",
     ],
-    payloadSnapshot: JSON.stringify({
-      encounterId: "E-5002",
-      patient: {
-        name: "张国华",
-        age: 59,
-        gender: "M"
+    payloadSnapshot: JSON.stringify(
+      {
+        encounterId: "E-5002",
+        patient: {
+          name: "张国华",
+          age: 59,
+          gender: "M",
+        },
+        labResult: {
+          cTnI: "极高",
+          vasPainScore: 8,
+        },
+        trigger: "ADMISSION_CHECK",
       },
-      labResult: {
-        cTnI: "极高",
-        vasPainScore: 8
-      },
-      trigger: "ADMISSION_CHECK"
-    }, null, 2),
+      null,
+      2,
+    ),
   },
   {
     title: "6. 医师决策交互与跨域事件存证 (Feedback)",
@@ -316,33 +361,40 @@ const amiEvidenceChain: EvidenceNode[] = [
       "医师决策：已采纳建议，立即推送介入导管室行急诊 PCI 手术",
       "审计留痕 ID: fdb-ami-8120 (可信 traceId 审计成功写入)",
     ],
-    payloadSnapshot: JSON.stringify({
-      feedbackId: "fdb-ami-8120",
-      operator: "doc-li-003",
-      decision: "ADOPT",
-      targetDept: "介入导管室",
-      action: "急诊 PCI 手术"
-    }, null, 2),
+    payloadSnapshot: JSON.stringify(
+      {
+        feedbackId: "fdb-ami-8120",
+        operator: "doc-li-003",
+        decision: "ADOPT",
+        targetDept: "介入导管室",
+        action: "急诊 PCI 手术",
+      },
+      null,
+      2,
+    ),
   },
 ];
 
 export default function Provenance() {
   const { token: themeToken } = theme.useToken();
-  
+
   // ── 1. 真实后端数据 API Hooks ──
   const apiAudit = useAuditEvents();
-  
+
   const [searchTraceId, setSearchTraceId] = useState<string>("tr-stk-proof-009");
   const [evidenceTypeFilter, setEvidenceTypeFilter] = useState<string>("ALL");
   const [page] = useState<number>(1);
   const [pageSize] = useState<number>(20);
-  
+
   // 基于 React Query 检索真实的合规证据
   const { data: realEvidencesPage, isLoading: isListLoading } = useEvidences({
-    keyword: (searchTraceId === "tr-stk-proof-009" || searchTraceId === "tr-ami-proof-002") ? undefined : searchTraceId,
+    keyword:
+      searchTraceId === "tr-stk-proof-009" || searchTraceId === "tr-ami-proof-002"
+        ? undefined
+        : searchTraceId,
     evidenceType: evidenceTypeFilter === "ALL" ? undefined : evidenceTypeFilter,
     page,
-    size: pageSize
+    size: pageSize,
   });
 
   const verifyMutation = useVerifyEvidence();
@@ -390,7 +442,9 @@ export default function Provenance() {
         title: `${item.evidenceSummary || "合规数据快照"} (${item.action})`,
         type: item.evidenceType,
         tagColor: getTagColor(item.evidenceType),
-        time: item.createdAt ? new Date(item.createdAt).toLocaleString() : new Date().toLocaleString(),
+        time: item.createdAt
+          ? new Date(item.createdAt).toLocaleString()
+          : new Date().toLocaleString(),
         hash: item.payloadHash,
         operator: item.createdBy || "System",
         details: [
@@ -423,11 +477,15 @@ export default function Provenance() {
             hash: "sha256-a19db8ff" + Math.floor(Math.random() * 900000 + 100000) + "2d1f7e",
             operator: "医学知识库中心",
             details: [`检索关键字匹配知识源: ${searchTraceId} 相关文献`],
-            payloadSnapshot: JSON.stringify({
-              keyword: searchTraceId,
-              dataSource: "MedKernel 共享知识联邦",
-              timestamp: Date.now() - 3600000 * 2
-            }, null, 2),
+            payloadSnapshot: JSON.stringify(
+              {
+                keyword: searchTraceId,
+                dataSource: "MedKernel 共享知识联邦",
+                timestamp: Date.now() - 3600000 * 2,
+              },
+              null,
+              2,
+            ),
           },
           {
             title: "5. 临床 FACTS 就诊快照事实存证 (Execution)",
@@ -437,12 +495,16 @@ export default function Provenance() {
             hash: "sha256-c38d827f" + Math.floor(Math.random() * 900000 + 100000) + "a8f27e",
             operator: "急诊中心终端",
             details: [`匹配 traceId: ${searchTraceId} 时就诊快照事实已存入多租户审计数据库`],
-            payloadSnapshot: JSON.stringify({
-              traceId: searchTraceId,
-              encounterType: "EMERGENCY",
-              tenantId: "tenant-default",
-              timestamp: Date.now() - 600000
-            }, null, 2),
+            payloadSnapshot: JSON.stringify(
+              {
+                traceId: searchTraceId,
+                encounterType: "EMERGENCY",
+                tenantId: "tenant-default",
+                timestamp: Date.now() - 600000,
+              },
+              null,
+              2,
+            ),
           },
           {
             title: "6. 医师决策交互与跨域事件存证 (Feedback)",
@@ -452,12 +514,16 @@ export default function Provenance() {
             hash: "sha256-fb9a3182" + Math.floor(Math.random() * 900000 + 100000) + "d9a8c1",
             operator: "系统接诊科室",
             details: [`医师交互指令反馈已同步至 HIS 主站，关联链路 traceId=${searchTraceId}`],
-            payloadSnapshot: JSON.stringify({
-              traceId: searchTraceId,
-              decisionOutcome: "ADOPTED",
-              feedbackChannel: "postMessage",
-              timestamp: Date.now()
-            }, null, 2),
+            payloadSnapshot: JSON.stringify(
+              {
+                traceId: searchTraceId,
+                decisionOutcome: "ADOPTED",
+                feedbackChannel: "postMessage",
+                timestamp: Date.now(),
+              },
+              null,
+              2,
+            ),
           },
         ];
         setSearchedChain(fallbackChain);
@@ -489,7 +555,7 @@ export default function Provenance() {
   const handleSearch = (val: string) => {
     const cleanVal = val.trim();
     setSearchTraceId(cleanVal);
-    
+
     if (cleanVal === "tr-stk-proof-009") {
       message.success(`【卒中证据链已锁定】成功检索 7 项全生命周期数字存证凭证！`);
     } else if (cleanVal === "tr-ami-proof-002") {
@@ -505,19 +571,19 @@ export default function Provenance() {
   const handlePayloadChange = async (val: string) => {
     setEditedPayload(val);
     if (!sandboxNode) return;
-    
+
     try {
       const msgBuffer = new TextEncoder().encode(val);
       const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-      
+
       setCalculatedHash(hashHex);
-      
+
       // 与原始哈希比对（忽略 sha256- 前缀与大小写）
       const originClean = cleanHash(sandboxNode.hash);
       const calculatedClean = cleanHash(hashHex);
-      
+
       setIsSandboxValid(originClean === calculatedClean);
     } catch {
       // 忽略计算错误
@@ -530,7 +596,7 @@ export default function Provenance() {
     setEditedPayload(node.payloadSnapshot);
     setBackendVerifyResult(null);
     setSandboxVisible(true);
-    
+
     // 初始化计算一次哈希
     setTimeout(() => {
       handlePayloadChange(node.payloadSnapshot);
@@ -542,7 +608,7 @@ export default function Provenance() {
     if (!sandboxNode) return;
     setSandboxVerifying(true);
     setBackendVerifyResult(null);
-    
+
     try {
       if (sandboxNode.rawItem?.evidenceId) {
         // 真实后端验签
@@ -552,12 +618,12 @@ export default function Provenance() {
           storedHash: res.storedHash,
           calculatedHash: res.calculatedHash,
         });
-        
+
         // 刷新 Isolated 日志流水
         setTimeout(() => {
           apiAudit.refetch();
         }, 1000);
-        
+
         if (res.isValid) {
           message.success("【后端强验签通过】该快照指纹一致，数据库物理数据未受篡改。");
         } else {
@@ -568,13 +634,13 @@ export default function Provenance() {
         const originClean = cleanHash(sandboxNode.hash);
         const calculatedClean = cleanHash(calculatedHash);
         const isValid = originClean === calculatedClean;
-        
+
         setBackendVerifyResult({
           isValid,
           storedHash: sandboxNode.hash,
           calculatedHash: `sha256-${calculatedHash}`,
         });
-        
+
         if (isValid) {
           message.success("【仿真验签通过】演示存证哈希比对一致。");
         } else {
@@ -596,17 +662,23 @@ export default function Provenance() {
     setExportFinished(false);
     setEvidenceHash("");
 
-    let finalHash = "pkg-proof-sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    let finalHash =
+      "pkg-proof-sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
     try {
       // 触发后端真实导出逻辑 (若有真实 API 数据，走真接口)
-      const res = await exportMutation.mutateAsync(selectedExportType === "ALL" ? undefined : selectedExportType);
+      const res = await exportMutation.mutateAsync(
+        selectedExportType === "ALL" ? undefined : selectedExportType,
+      );
       if (res && res.archiveHash) {
         finalHash = `pkg-proof-sha256-${res.archiveHash.substring(0, 32)}`;
       }
     } catch {
       // 发生报错时，优雅降级，允许高保真仿真导出继续完成，WOW 体验不打折
-      finalHash = "pkg-proof-sha256-" + Math.floor(Math.random() * 90000000 + 10000000) + "e3b0c44298fc1c149afbf4c8";
+      finalHash =
+        "pkg-proof-sha256-" +
+        Math.floor(Math.random() * 90000000 + 10000000) +
+        "e3b0c44298fc1c149afbf4c8";
     }
 
     setEvidenceHash(finalHash);
@@ -634,7 +706,6 @@ export default function Provenance() {
       description="管理并追溯院内智能决策及内涵质控的全生命周期凭证（GA-ENG-EVID-01）。支持基于 traceId 的指南源头检索、大模型推理审计、医师采纳留痕、以及 PDCA 质控整改合规存证包导出。"
     >
       <div className="flex flex-col gap-6">
-        
         {/* ────────── SECTION 1: 存证指标与度量看板 ────────── */}
         <Row gutter={16}>
           <Col span={6}>
@@ -731,9 +802,7 @@ export default function Provenance() {
               </div>
 
               <div className="w-[180px]">
-                <div className="text-xs font-bold text-slate-800 mb-1.5">
-                  证据资产类型过滤：
-                </div>
+                <div className="text-xs font-bold text-slate-800 mb-1.5">证据资产类型过滤：</div>
                 <Select
                   value={evidenceTypeFilter}
                   onChange={(val) => setEvidenceTypeFilter(val)}
@@ -851,7 +920,10 @@ export default function Provenance() {
                             <div className="flex justify-between items-center w-full py-1 text-slate-800 text-xs font-bold">
                               <span>{node.title}</span>
                               <div className="flex items-center gap-1.5">
-                                <Tag color={node.tagColor} className="m-0 text-[10px] font-semibold">
+                                <Tag
+                                  color={node.tagColor}
+                                  className="m-0 text-[10px] font-semibold"
+                                >
                                   {node.type}
                                 </Tag>
                                 <Button
@@ -938,7 +1010,9 @@ export default function Provenance() {
                       <LoadingOutlined /> 读取运行底座真实合规日志...
                     </div>
                   )}
-                  {!apiAudit.isLoading && apiAudit.data && apiAudit.data.length > 0 && (
+                  {!apiAudit.isLoading &&
+                    apiAudit.data &&
+                    apiAudit.data.length > 0 &&
                     apiAudit.data.slice(0, 10).map((evt, i) => (
                       <div
                         key={i}
@@ -961,12 +1035,13 @@ export default function Provenance() {
                         <div className="text-indigo-300/80 break-all text-[9px] flex flex-col gap-0.5">
                           <span>{evt.actionCode}</span>
                           {evt.status === "FAILED" && (
-                            <span className="text-rose-500 font-bold">[🚨 G-SECGUARD: 篡改入侵警报发布]</span>
+                            <span className="text-rose-500 font-bold">
+                              [🚨 G-SECGUARD: 篡改入侵警报发布]
+                            </span>
                           )}
                         </div>
                       </div>
-                    ))
-                  )}
+                    ))}
                   {!apiAudit.isLoading && (!apiAudit.data || apiAudit.data.length === 0) && (
                     /* 仿真审计日志，且支持入侵篡改流展示 */
                     <div className="flex flex-col gap-2.5">
@@ -1128,15 +1203,23 @@ export default function Provenance() {
                     <div className="mt-2 bg-indigo-50 border border-indigo-150 p-3 rounded-xl">
                       <div className="text-[10px] text-indigo-800 font-bold mb-1.5 flex justify-between">
                         <span>🏛️ 后端密码学强验签结论：</span>
-                        <Tag color={backendVerifyResult.isValid ? "success" : "error"} className="m-0 text-[9px]">
+                        <Tag
+                          color={backendVerifyResult.isValid ? "success" : "error"}
+                          className="m-0 text-[9px]"
+                        >
                           {backendVerifyResult.isValid ? "SECURE" : "TAMPERED"}
                         </Tag>
                       </div>
                       <div className="text-[9px] text-indigo-700 leading-relaxed font-mono flex flex-col gap-0.5">
                         <div>数据库原件: {backendVerifyResult.storedHash.substring(0, 35)}...</div>
-                        <div>要素重算件: {backendVerifyResult.calculatedHash.substring(0, 35)}...</div>
+                        <div>
+                          要素重算件: {backendVerifyResult.calculatedHash.substring(0, 35)}...
+                        </div>
                         <div className="font-bold mt-1 text-right">
-                          结果: {backendVerifyResult.isValid ? "✅ 校验通过" : "❌ 校验失败，已发布篡改警报！"}
+                          结果:{" "}
+                          {backendVerifyResult.isValid
+                            ? "✅ 校验通过"
+                            : "❌ 校验失败，已发布篡改警报！"}
                         </div>
                       </div>
                     </div>
@@ -1240,7 +1323,12 @@ export default function Provenance() {
                     type="primary"
                     onClick={() => {
                       // 生成真实的虚拟归档包下载
-                      const blob = new Blob([`MedKernel Cryptographic Proof Archive\nHash: ${evidenceHash}\nTraceId: ${searchTraceId}\nTimestamp: ${new Date().toISOString()}`], { type: "text/plain" });
+                      const blob = new Blob(
+                        [
+                          `MedKernel Cryptographic Proof Archive\nHash: ${evidenceHash}\nTraceId: ${searchTraceId}\nTimestamp: ${new Date().toISOString()}`,
+                        ],
+                        { type: "text/plain" },
+                      );
                       const url = URL.createObjectURL(blob);
                       const link = document.createElement("a");
                       link.href = url;
@@ -1249,10 +1337,8 @@ export default function Provenance() {
                       link.click();
                       document.body.removeChild(link);
                       URL.revokeObjectURL(url);
-                      
-                      message.success(
-                        "加密防伪可信证据文件包下载成功！已安全传输。"
-                      );
+
+                      message.success("加密防伪可信证据文件包下载成功！已安全传输。");
                       setExportVisible(false);
                     }}
                     icon={<CloudDownloadOutlined />}
