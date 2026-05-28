@@ -6,7 +6,7 @@
 - 代码标识符、接口路径、命令、配置键、数据库字段、标准英文缩写、第三方产品名和必要原文引用可以保留英文，但必须用中文解释其业务含义。
 - `medkernel-backend` 引擎层（`com.medkernel.engine.**` 与 `com.medkernel.shared.**`）公共类、公共方法的 Javadoc，以及 Oracle/PostgreSQL/Kingbase 迁移脚本中新增表与枚举/状态/外键列的 `COMMENT ON`，必须使用简体中文；CI 由 `scripts/check-comment-zh.sh` 软门禁兜底。
 - 不允许新增以英文为主的 README、设计文档、计划、OpenSpec、PR 说明、Issue 模板、运行手册或 AI 协作说明。
-- 不保留历史归档、旧任务锁、旧协作模板或旧分支口径；项目按未上线的新项目方式运行。
+- 不保留旧版本历史归档、旧任务锁、旧协作模板或旧分支口径；项目按未上线的新项目方式运行。`openspec/archive/` 仅作已完成变更的审计追溯，不作为当前事实源。
 - 详细规则见 [docs/DOCUMENTATION_LANGUAGE_POLICY.md](docs/DOCUMENTATION_LANGUAGE_POLICY.md)。
 
 ## 开发与合并要求

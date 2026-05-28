@@ -43,7 +43,7 @@ npm install
 复制 `.env.example` 为 `.env.local`，按需修改：
 
 ```text
-VITE_API_BASE_URL=          # 留空时走 vite proxy（/medkernel → http://localhost:18080）
+VITE_API_BASE_URL=          # 预留项；当前 apiClient 固定同源 /medkernel/api/v1，并由 vite proxy 转发到后端
 VITE_ENABLE_MSW=false       # true 启用浏览器 mock，离开后端也可运行
 ```
 
@@ -219,11 +219,16 @@ export function PatientList() {
 开发期：
 
 - vite proxy：`/medkernel` → `http://localhost:18080`，无 CORS 困扰。
-- `VITE_API_BASE_URL` 默认为 `/medkernel/api`，与后端 servlet path 对齐。
+- 当前 `apiClient` 固定使用 `/medkernel/api/v1`，与后端 servlet path 对齐，并由 vite proxy 转发到 `http://localhost:18080`。
 
 内网部署：
 
 - 通过 nginx 把 `dist/` 静态资源与 `/medkernel/api` 反代到同源。
+
+第三方入口：
+
+- 前端只展示适配器、嵌入、Provider、回调、同步和降级状态，不直接连接院内第三方系统。
+- 外部系统故障必须有用户可见的受控降级态、traceId 和证据入口，不能用静态成功态掩盖失败。
 
 ## 框架自检
 
@@ -240,15 +245,14 @@ export function PatientList() {
 
 ## 后续任务
 
-参见 [../docs/backlog.md](../docs/backlog.md) 的引擎上线任务：
+参见 [../docs/backlog.md](../docs/backlog.md) 的引擎上线任务。当前前端已完成 `GA-ENG-BASE-06`、`GA-ENG-BASE-08`、`GA-ENG-BASE-10`，并接入字典、规则、路径、推荐/CDSS、评估、随访等已落地引擎 API；后续重点仍是：
 
-- `GA-ENG-BASE-06` 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流
-- `GA-ENG-BASE-08` 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出
-- `GA-ENG-API-*` 引擎接口前端调用契约
-- `GA-ENG-API-13` 大规模列表 API：分页/游标、排序、过滤、批量任务、导出任务
-- `GA-ENG-PKG-01` 包发布、灰度、全量、同步、回滚和证据
-- `GA-ENG-EMBED-01` iframe/SDK/纯 API 嵌入与降级状态
-- `GA-ENG-EVID-01` 证据链展示和导出
+- `GA-ENG-PKG-01` 包发布、灰度、全量、同步、回滚和证据的执行链与页面闭环。
+- `GA-ENG-EMBED-01` iframe/SDK/纯 API 嵌入与降级状态。
+- `GA-ENG-EVID-01` 证据链展示和导出。
+- `GA-ENG-INTEG-01` 第三方对接能力总线、接入健康、回调签名、字段映射和接口证据。
+- `GA-ENG-INTEG-02` 第三方接口文档与契约模板，保证联调前已有接口契约、字段映射、安全、回调、降级和验收证据。
+- `GA-ENG-DEGRADE-01` 模型、Dify、图投影和外部系统故障降级的用户可见状态。
 
 ## 维护约定
 
