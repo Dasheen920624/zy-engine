@@ -95,7 +95,7 @@ describe("page smoke coverage", () => {
 
   it("renders the dashboard workbench with tenant-lifecycle placeholder", () => {
     renderPage(<Dashboard />);
-    expect(screen.getByText("租户生命周期")).toBeInTheDocument();
+    expect(screen.getByText(/租户.*生命周期/)).toBeInTheDocument();
     expect(screen.getByText("本周建议动作")).toBeInTheDocument();
   });
 

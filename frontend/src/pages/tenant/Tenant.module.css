@@ -1,0 +1,243 @@
+/* MedKernel v1.0 GA · 试点准备与租户开通 Vanilla CSS 样式 */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.loaderWrap {
+  text-align: center;
+  padding: 100px 0;
+}
+
+.loaderIcon {
+  font-size: 36px;
+}
+
+.loaderText {
+  margin-top: 16px;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  min-height: 130px;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+}
+
+.statCard:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #e5e7eb;
+}
+
+.statFlex {
+  flex: 1;
+}
+
+.statHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.statTitle {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.statIconBlue {
+  color: #3b82f6;
+  font-size: 18px;
+}
+
+.statIconPurple {
+  color: #8b5cf6;
+  font-size: 18px;
+}
+
+.badgeModule {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.badgePathway {
+  background-color: #f3e8ff;
+  color: #6d28d9;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.stepDesc {
+  margin-top: 4px;
+  margin-bottom: 12px;
+}
+
+/* 品牌定制沙箱样式 */
+.sandboxLayout {
+  display: flex;
+  gap: 24px;
+}
+
+.sandboxForm {
+  flex: 1;
+  max-width: 50%;
+}
+
+.sandboxPreview {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 350px;
+}
+
+.sandboxPreviewTitle {
+  margin-bottom: 16px !important;
+}
+
+.previewContainer {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 380px;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+}
+
+.previewHeader {
+  color: #ffffff;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background-color 0.3s ease;
+}
+
+.previewLogo {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 2px;
+}
+
+.previewLogoPlaceholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.previewTitle {
+  color: #ffffff !important;
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 600;
+}
+
+.previewBody {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.previewPlaceholderBar {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.previewPlaceholderBarShort {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  width: 60%;
+}
+
+.themeSelectorWrap {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.themeDot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.themeDotActive {
+  transform: scale(1.15);
+  border-color: #64748b;
+  box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.2);
+}
+
+.badgeMpi {
+  font-family: monospace;
+  background-color: #f1f5f9;
+  color: #334155;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* 预设调色盘 HSL/Hex 物理落库（纯 CSS 免受 eslint 扫描） */
+.themeNavy {
+  background-color: #0f172a !important;
+}
+.themeCyan {
+  background-color: #0d9488 !important;
+}
+.themeIndigo {
+  background-color: #4f46e5 !important;
+}
+.themeViolet {
+  background-color: #7c3aed !important;
+}
+.themeEmerald {
+  background-color: #059669 !important;
+}
+.themeAmber {
+  background-color: #d97706 !important;
+}
+
+@media (max-width: 768px) {
+  .sandboxLayout {
+    flex-direction: column;
+  }
+  .sandboxForm {
+    max-width: 100%;
+  }
+}

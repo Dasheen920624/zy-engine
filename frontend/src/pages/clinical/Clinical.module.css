@@ -1,0 +1,358 @@
+/* MedKernel v1.0 GA · 临床协同服务包 Vanilla CSS 样式 */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+.description {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+/* 布局与网格 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* 按钮样式 */
+.btnPrimary {
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnPrimary:hover {
+  background-color: #1e293b;
+}
+
+.btnDanger {
+  background-color: #ef4444;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.btnDanger:hover {
+  background-color: #dc2626;
+}
+
+.btnSecondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.btnSecondary:hover {
+  background-color: #e2e8f0;
+}
+
+/* 呼吸灯微动画 badge */
+@keyframes pulseRed {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+@keyframes pulseYellow {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+.badgeP0 {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  animation: pulseRed 2s infinite;
+}
+
+.badgeP1 {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fef08a;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  animation: pulseYellow 2s infinite;
+}
+
+.badgeP2 {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.badgeP3 {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* 提示框 */
+.alertSuccess {
+  border: 1px solid #10b981;
+  background-color: #ecfdf5;
+  color: #065f46;
+  padding: 12px 24px;
+  border-radius: 12px;
+}
+
+/* 抽屉/弹窗样式 */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #f1f5f9;
+}
+
+/* 辅助排版与表单 */
+.fontMonospace {
+  font-family: monospace;
+}
+
+.fontWeight600 {
+  font-weight: 600;
+}
+
+.fontSize28 {
+  font-size: 28px;
+}
+
+.flexBetween {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.formInput {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.formInput:focus {
+  border-color: #0f172a;
+}
+
+.btnGroup {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* 表格 */
+.tableWrap {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: 12px 16px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #475569;
+  font-size: 13px;
+}
+
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+  color: #334155;
+}
+
+/* 通知条目 */
+.notificationItem {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s;
+}
+
+.notificationItem:hover {
+  background-color: #f8fafc;
+}
+
+.notificationUnread {
+  border-left: 4px solid #3b82f6;
+  background-color: #f0f9ff;
+}
+
+.notificationIcon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.notificationBody {
+  flex: 1;
+}
+
+.notificationTitle {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.notificationDesc {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.notificationMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* 低打扰过滤器 */
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.flexAlignGap12 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.marginLeftAuto {
+  margin-left: auto;
+}
+
+.marginTop16 {
+  margin-top: 16px;
+}
+
+.marginBottom8 {
+  margin-bottom: 8px;
+}
+
+.marginBottom20 {
+  margin-bottom: 20px;
+}
+
+.pad4px8px {
+  padding: 4px 8px;
+}
+
+.modalBodyText {
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.opinionTextarea {
+  min-height: 80px;
+  font-family: sans-serif;
+}
+
+.padding6px12px {
+  padding: 6px 12px;
+}
+
+.textSuccess {
+  color: #16a34a;
+  font-weight: 600;
+}

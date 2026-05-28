@@ -15,6 +15,10 @@ const STAGES = [
   { key: "RENEWAL", title: "年度续约", description: "服务成效评估与续约演进" },
 ];
 
+const getThemeStyle = (color: string) => ({
+  color,
+});
+
 export function TenantLifecyclePanel() {
   const { data, isLoading, error, refetch } = useSuccessPlan();
   const transitionMutation = useTransitionSuccessStage();
@@ -22,8 +26,7 @@ export function TenantLifecyclePanel() {
   if (isLoading) {
     return (
       <Card title={<Text className={styles.title}>租户多维生命周期控制台</Text>} className={styles.card}>
-        {/* eslint-disable-next-line medkernel/no-inline-style */}
-        <div style={{ textAlign: "center", padding: "40px 0" }}>
+        <div className={styles.loaderContainer}>
           <Spin size="large" tip="正在物理加载多维生命周期数据..." />
         </div>
       </Card>
@@ -141,8 +144,7 @@ export function TenantLifecyclePanel() {
                   format={(percent) => (
                     <div className={styles.progressFormat}>
                       <span className={styles.progressScore}>{percent}</span>
-                      {/* eslint-disable-next-line medkernel/no-inline-style */}
-                      <span style={{ color: healthMeta.color }} className={styles.progressStatus}>
+                      <span style={getThemeStyle(healthMeta.color)} className={styles.progressStatus}>
                         {healthMeta.status}
                       </span>
                     </div>

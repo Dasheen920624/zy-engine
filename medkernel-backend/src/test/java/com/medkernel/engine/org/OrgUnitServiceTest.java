@@ -97,6 +97,47 @@ class OrgUnitServiceTest {
         Mockito.verify(repository, Mockito.never()).pageByTenantId(any(), anyInt(), anyInt());
     }
 
+        @Test
+    void createOrgUnitSuccessfully() {
+        RequestContext.restore(new RequestContext.Snapshot("trace", OrgScope.tenant("t-1"), "u-1"));
+        OrgUnit input = sample("t-1", null, OrgLevel.CAMPUS, "CAMP-002", null);
+        OrgUnit expected = sample("t-1", null, OrgLevel.CAMPUS, "CAMP-002", 20L);
+
+        Mockito.when(repository.findByTenantIdAndCode("t-1", "CAMP-002")).thenReturn(Optional.empty());
+        Mockito.when(repository.save(any(OrgUnit.class))).thenReturn(expected);
+
+        OrgUnit saved = service.createOrgUnit(input);
+
+        assertThat(saved.id()).isEqualTo(20L);
+        assertThat(saved.code()).isEqualTo("CAMP-002");
+        assertThat(saved.tenantId()).isEqualTo("t-1");
+    }
+
+    @Test
+    void createOrgUnitCodeConflictThrowsApiException() {
+        RequestContext.restore(new RequestContext.Snapshot("trace", OrgScope.tenant("t-1"), "u-1"));
+        OrgUnit input = sample("t-1", null, OrgLevel.CAMPUS, "CAMP-002", null);
+        OrgUnit existing = sample("t-1", null, OrgLevel.CAMPUS, "CAMP-002", 10L);
+
+        Mockito.when(repository.findByTenantIdAndCode("t-1", "CAMP-002")).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> service.createOrgUnit(input))
+            .isInstanceOf(ApiException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.BAD_REQUEST);
+    }
+
+    @Test
+    void createOrgUnitNoTenantContextThrowsApiException() {
+        RequestContext.restore(new RequestContext.Snapshot("trace", OrgScope.empty(), null));
+        OrgUnit input = sample("t-1", null, OrgLevel.CAMPUS, "CAMP-002", null);
+
+        assertThatThrownBy(() -> service.createOrgUnit(input))
+            .isInstanceOf(ApiException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.TENANT_CONTEXT_MISSING);
+    }
+
     private OrgUnit sampleHospital(String tenantId) {
         return sample(tenantId, null, OrgLevel.HOSPITAL, "HOSP-001", 10L);
     }
