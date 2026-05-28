@@ -28,6 +28,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -233,26 +236,74 @@ class EvidenceServiceTest {
     // ── 异步导出 ──────────────────────────────────────────────
 
     @Test
-    @DisplayName("导出证据：生成防伪归档哈希并发布成功审计")
+    @DisplayName("导出证据：对真实快照生成 64 位十六进制归档指纹并发布成功审计")
     void exportEvidences_returnsHashAndPublishesAudit() {
+        when(repository.countEvidences(TENANT_ID, "KNOWLEDGE_SOURCE", null)).thenReturn(1L);
+        when(repository.findEvidencesPage(eq(TENANT_ID), eq("KNOWLEDGE_SOURCE"), isNull(), anyInt(), anyInt()))
+            .thenReturn(List.of(validSnapshot));
+
         String hash = service.exportEvidences(TENANT_ID, "KNOWLEDGE_SOURCE");
 
-        assertThat(hash).startsWith("sha256-archive-");
-        assertThat(hash).endsWith("-proof");
+        assertThat(hash).matches("[0-9a-f]{64}");
 
         // 验证审计记录已发布
         verify(isolatedAudit).publishInNewTx(any(AuditEvent.class));
     }
 
     @Test
-    @DisplayName("导出全量证据（无类型过滤）：使用 ALL 标记")
+    @DisplayName("导出全量证据（无类型过滤）：审计标记 ALL 并生成真实归档指纹")
     void exportEvidences_noTypeFilter_usesAllMarker() {
+        when(repository.countEvidences(TENANT_ID, null, null)).thenReturn(1L);
+        when(repository.findEvidencesPage(eq(TENANT_ID), isNull(), isNull(), anyInt(), anyInt()))
+            .thenReturn(List.of(validSnapshot));
+
         String hash = service.exportEvidences(TENANT_ID, null);
 
-        assertThat(hash).isNotBlank();
+        assertThat(hash).matches("[0-9a-f]{64}");
 
         ArgumentCaptor<AuditEvent> captor = ArgumentCaptor.forClass(AuditEvent.class);
         verify(isolatedAudit).publishInNewTx(captor.capture());
         assertThat(captor.getValue().resourceId()).contains("ALL");
+    }
+
+    @Test
+    @DisplayName("导出证据：范围内无快照时拒绝导出（不生成伪造指纹、不留导出审计）")
+    void exportEvidences_emptySet_throws() {
+        when(repository.countEvidences(TENANT_ID, "RULE_DEFINITION", null)).thenReturn(0L);
+
+        assertThatThrownBy(() -> service.exportEvidences(TENANT_ID, "RULE_DEFINITION"))
+            .isInstanceOf(ApiException.class)
+            .hasMessageContaining("无可导出");
+
+        verify(isolatedAudit, never()).publishInNewTx(any(AuditEvent.class));
+    }
+
+    @Test
+    @DisplayName("导出证据：对真实快照集合计算确定性真 SHA-256（非随机假串）")
+    void exportEvidences_computesDeterministicRealHash() {
+        EvidenceSnapshot tempB = new EvidenceSnapshot(
+            null, "evd-ami-002", TENANT_ID, "trace-002",
+            "KNOWLEDGE_SOURCE", "CREATE", "guideline", "guideline-ami-v2",
+            "心梗临床指南知识来源存证", "{\"door2balloon\":90}",
+            "", Instant.now(), "system", Instant.now(), "system"
+        );
+        EvidenceSnapshot second = new EvidenceSnapshot(
+            2L, tempB.evidenceId(), TENANT_ID, tempB.traceId(),
+            tempB.evidenceType(), tempB.action(), tempB.subjectType(), tempB.subjectId(),
+            tempB.evidenceSummary(), tempB.payloadSnapshot(), tempB.calculateHash(),
+            tempB.createdAt(), "system", tempB.updatedAt(), "system"
+        );
+
+        when(repository.countEvidences(TENANT_ID, "KNOWLEDGE_SOURCE", null)).thenReturn(2L);
+        when(repository.findEvidencesPage(eq(TENANT_ID), eq("KNOWLEDGE_SOURCE"), isNull(), anyInt(), anyInt()))
+            .thenReturn(List.of(validSnapshot, second));
+
+        String hash1 = service.exportEvidences(TENANT_ID, "KNOWLEDGE_SOURCE");
+        String hash2 = service.exportEvidences(TENANT_ID, "KNOWLEDGE_SOURCE");
+
+        assertThat(hash1).matches("[0-9a-f]{64}");   // 真 SHA-256：64 位十六进制
+        assertThat(hash1).isEqualTo(hash2);            // 确定性：同数据同指纹（旧实现用随机 UUID 每次都变）
+        assertThat(hash1).doesNotContain("proof");     // 杜绝旧 "sha256-archive-...-proof" 假格式
+        verify(isolatedAudit, atLeastOnce()).publishInNewTx(any(AuditEvent.class));
     }
 }

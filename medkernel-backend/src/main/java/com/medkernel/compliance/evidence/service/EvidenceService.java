@@ -1,9 +1,11 @@
 package com.medkernel.compliance.evidence.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -167,21 +169,60 @@ public class EvidenceService {
     }
 
     /**
-     * 模拟生成打包合规大导出（打包防伪哈希输出并在后台记录安全审计）。
+     * 生成合规证据大导出的归档防伪指纹。
+     *
+     * <p>对当前租户（可选按 {@code evidenceType} 过滤）的全部真实证据快照，按 evidenceId
+     * 稳定排序后，以 {@code evidenceId:payloadHash} 拼接为规范化内容，整体计算 SHA-256 归档指纹。
+     * 指纹由真实数据派生、确定可复算；范围内无任何快照时拒绝导出（不生成伪造指纹）。
+     *
+     * @return 归档内容的 64 位十六进制 SHA-256 指纹
      */
     @Transactional
     public String exportEvidences(String tenantId, String evidenceType) {
-        // 生成防伪包的特征哈希
-        String archiveZipHash = "sha256-archive-" + UUID.randomUUID().toString().replace("-", "") + "-proof";
+        long total = repository.countEvidences(tenantId, evidenceType, null);
+        if (total == 0) {
+            throw new ApiException(ErrorCode.ENG_EVID_001, "当前范围无可导出的证据快照");
+        }
 
-        // 记录大导出行为审计日志
+        List<EvidenceSnapshot> snapshots = repository.findEvidencesPage(
+            tenantId, evidenceType, null, (int) total, 0);
+
+        // 规范化内容：按 evidenceId 稳定排序，逐条拼接 evidenceId:payloadHash
+        // （payloadHash 为每条入库时计算的真 SHA-256），整体再算一次 SHA-256 作为归档指纹
+        String canonical = snapshots.stream()
+            .sorted(Comparator.comparing(EvidenceSnapshot::evidenceId))
+            .map(e -> e.evidenceId() + ":" + e.payloadHash())
+            .collect(Collectors.joining("|"));
+        String archiveHash = sha256Hex(canonical);
+
         isolatedAudit.publishInNewTx(AuditEvent.of(
             AuditAction.EXPORT,
             "evidence_snapshot",
             "bulk-export-" + (evidenceType == null ? "ALL" : evidenceType),
-            "审计合规数据包大规模异步打包导出成功，防伪指纹为：" + archiveZipHash
+            "证据合规数据包导出完成，含 " + total + " 条快照，归档防伪指纹 sha256=" + archiveHash
         ));
 
-        return archiveZipHash;
+        return archiveHash;
+    }
+
+    /**
+     * 计算文本的 SHA-256 十六进制摘要。
+     */
+    private String sha256Hex(String text) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) {
+                String h = Integer.toHexString(0xff & b);
+                if (h.length() == 1) {
+                    hex.append('0');
+                }
+                hex.append(h);
+            }
+            return hex.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("SHA-256 计算失败", e);
+        }
     }
 }
