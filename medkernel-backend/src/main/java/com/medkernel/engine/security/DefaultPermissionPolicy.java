@@ -54,13 +54,13 @@ import static com.medkernel.engine.security.PermissionCode.LLM_WRITE;
 import static com.medkernel.engine.security.PermissionCode.LIST_EXPORT;
 
 /**
- * MedKernel v1.0 GA · 默认角色 → 权限映射。
+ * 默认角色与动作权限的规则绑定策略类（Default Permission Policy）。
  *
- * <p>这是代码侧默认权限策略，作为角色授权基线。
- * 当前租户可通过 {@code role_permission} 表在默认策略基础上做加减，
- * 但任何医院不得授予未在 {@link PermissionCode} 登记的权限。
+ * <p>MedKernel v1.0 GA 默认角色与权限的关联规则基线映射。
+ * 这是代码侧的默认权限授权策略。当前租户可通过 {@code role_permission} 表在默认策略基础上做局部增减，
+ * 但任何医院不得授予未在 {@link PermissionCode} 中登记登记的权限。
  *
- * <p>设计原则：
+ * <p>默认设计原则包括：
  * <ol>
  *   <li><b>最小授权</b>：临床医生只看本人病例和提醒，不能改规则；护理只看护理资产</li>
  *   <li><b>分权审核</b>：发布类（{@code *.publish}）严格限定给医务处 / 质控办 / 医院管理员</li>

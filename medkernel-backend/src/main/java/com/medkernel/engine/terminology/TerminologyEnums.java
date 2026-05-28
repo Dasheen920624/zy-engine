@@ -2,6 +2,17 @@
 // 这里所有枚举值与 db/migration/.../V4__terminology_mapping_baseline.sql 的 CHECK 约束严格对齐。
 package com.medkernel.engine.terminology;
 
+/**
+ * 术语映射模块全部枚举类型聚合（Terminology Enums）。
+ *
+ * <p>这里定义了术语分类、风险等级、各类状态机及发布事件类型。
+ * 所有枚举值与 db/migration/.../V4__terminology_mapping_baseline.sql 的 CHECK 约束严格对齐。
+ */
+public final class TerminologyEnums {
+    private TerminologyEnums() {}
+}
+
+
 /** 术语分类（诊断/手术/药品/器械/检验/检查/医嘱/医保/科室/文书/随访/其他）。 */
 enum TermCategory {
     DIAGNOSIS,

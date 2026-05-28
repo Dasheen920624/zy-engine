@@ -6,6 +6,12 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 知识资产版本更替历史关系（Supersession）仓储接口。
+ *
+ * <p>提供针对医学指南逻辑及计算资产更迭（旧版隔离、原子替换及冲突审计）关系的处理，
+ * 支撑 GA-ENG-KNOW-02 知识版本引擎在版本热更新、原子灰度发布与追溯重放时的演化世系链条（Lineage）。
+ */
 @Repository
 public interface KnowledgeSupersessionRepository extends ListCrudRepository<KnowledgeSupersession, Long> {
 
