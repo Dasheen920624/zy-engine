@@ -178,7 +178,7 @@ class KnowledgeEngineTest {
     @Test
     void createFragmentReturnsExistingOnIdempotentMatch() {
         SourceFragment existing = new SourceFragment(
-            100L, "t-1", 10L, "sec-1", "第一章", "关节置换核心条文", Instant.now()
+            100L, "t-1", 10L, "sec-1", "第一章", "关节置换核心条文", sha256("关节置换核心条文"), Instant.now()
         );
 
         FragmentCreateRequest req = new FragmentCreateRequest(
@@ -201,7 +201,7 @@ class KnowledgeEngineTest {
     @Test
     void createFragmentThrowsConflictWhenTextExcerptDoesNotMatch() {
         SourceFragment existing = new SourceFragment(
-            100L, "t-1", 10L, "sec-1", "第一章", "不同文本内容", Instant.now()
+            100L, "t-1", 10L, "sec-1", "第一章", "不同文本内容", sha256("不同文本内容"), Instant.now()
         );
 
         FragmentCreateRequest req = new FragmentCreateRequest(

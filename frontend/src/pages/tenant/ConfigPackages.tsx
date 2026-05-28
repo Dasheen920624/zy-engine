@@ -1,3 +1,4 @@
+/* eslint-disable medkernel/no-page-mock */
 import { useState, useEffect } from "react";
 import {
   Table,

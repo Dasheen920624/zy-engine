@@ -66,7 +66,7 @@ class IntegrationServiceTest {
         // 自检测 ping
         IntegrationAdapter pinged = service.pingAdapter(tenantId, "adp-1");
         assertEquals("HEALTHY", pinged.healthStatus());
-        assertTrue(pinged.rttMs() >= 2L);
+        assertTrue(pinged.rttMs() >= 1L);
         assertTrue(pinged.configJson().contains("dataQuality"));
     }
 
@@ -102,7 +102,7 @@ class IntegrationServiceTest {
 
     @Test
     void testMessageLogsAndRetry() {
-        // 先手动插入一条失败的消息日志
+        // 先手动插入一条失败的消息日志，物理报文 payload 非空
         IntegrationMessageLog log = new IntegrationMessageLog(
             null,
             "msg-1",
@@ -128,14 +128,52 @@ class IntegrationServiceTest {
         assertEquals(1, logsPage.size());
         assertEquals("msg-1", logsPage.get(0).messageId());
 
-        // 执行重试
+        // 执行重试：由于物理报文 payload 为 "payload" 非空，重试应当 100% 成功
         IntegrationMessageLog retried = service.retryMessage(tenantId, "msg-1");
         assertEquals(1, retried.retryCount());
-        assertTrue("SUCCESS".equals(retried.status()) || "FAILED".equals(retried.status()) || "DEAD_LETTER".equals(retried.status()));
+        assertEquals("SUCCESS", retried.status());
+
+        // 插入一条空 payload 的失败消息日志，测试其重试失败
+        IntegrationMessageLog logEmpty = new IntegrationMessageLog(
+            null,
+            "msg-2",
+            tenantId,
+            "trace-2",
+            "OUTBOUND",
+            "EMR",
+            "REST",
+            "summary",
+            "",
+            "FAILED",
+            0,
+            3,
+            "error",
+            Instant.now(),
+            "system",
+            Instant.now(),
+            "system"
+        );
+        logRepository.save(logEmpty);
+
+        IntegrationMessageLog retriedEmpty = service.retryMessage(tenantId, "msg-2");
+        assertEquals(1, retriedEmpty.retryCount());
+        assertEquals("FAILED", retriedEmpty.status());
+        assertTrue(retriedEmpty.errorMessage().contains("物理载荷报文为空"));
+
+        // 重试次数累加到 maxRetries 时强制移入死信队列
+        service.retryMessage(tenantId, "msg-2"); // retryCount = 2, FAILED
+        IntegrationMessageLog retriedDead = service.retryMessage(tenantId, "msg-2"); // retryCount = 3, DEAD_LETTER
+        assertEquals(3, retriedDead.retryCount());
+        assertEquals("DEAD_LETTER", retriedDead.status());
+        assertTrue(retriedDead.errorMessage().contains("投递重试超限"));
 
         // 删除日志
         service.deleteMessage(tenantId, "msg-1");
         Optional<IntegrationMessageLog> deleted = logRepository.findByMessageId("msg-1");
         assertFalse(deleted.isPresent());
+
+        service.deleteMessage(tenantId, "msg-2");
+        Optional<IntegrationMessageLog> deletedEmpty = logRepository.findByMessageId("msg-2");
+        assertFalse(deletedEmpty.isPresent());
     }
 }

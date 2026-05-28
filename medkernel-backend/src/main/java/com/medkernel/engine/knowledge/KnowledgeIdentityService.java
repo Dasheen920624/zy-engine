@@ -206,6 +206,8 @@ public class KnowledgeIdentityService {
             throw new ApiException(ErrorCode.CONFLICT, "锚点路径 " + request.anchorPath() + " 已在当前版本下被占用");
         }
 
+        String contentHash = sha256(request.textExcerpt());
+
         SourceFragment fragment = new SourceFragment(
             null,
             tenantId,
@@ -213,6 +215,7 @@ public class KnowledgeIdentityService {
             request.anchorPath(),
             request.anchorLabel(),
             request.textExcerpt(),
+            contentHash,
             Instant.now()
         );
         return sourceFragmentRepository.save(fragment);

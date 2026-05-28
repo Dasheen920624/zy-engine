@@ -454,13 +454,22 @@ public class TerminologyService {
         s2 = s2.trim().toLowerCase();
         if (s1.equals(s2)) return 1.0;
 
-        int common = 0;
-        for (int i = 0; i < s1.length(); i++) {
-            char c = s1.charAt(i);
-            if (s2.indexOf(c) >= 0) {
-                common++;
+        int m = s1.length();
+        int n = s2.length();
+        if (m == 0 || n == 0) return 0.0;
+
+        int[][] dp = new int[m + 1][n + 1];
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (s1.charAt(i - 1) == s2.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+                } else {
+                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                }
             }
         }
-        return (double) common / Math.max(s1.length(), s2.length());
+        int lcsLength = dp[m][n];
+        // 经典 LCS 相似度公式：2 * LCS(s1, s2) / (len(s1) + len(s2))
+        return (double) 2 * lcsLength / (m + n);
     }
 }

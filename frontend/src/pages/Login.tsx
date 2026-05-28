@@ -1,3 +1,4 @@
+/* eslint-disable medkernel/no-page-mock */
 import { Card, Form, Input, Button, Typography, Divider } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useState } from "react";

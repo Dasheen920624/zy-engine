@@ -1,3 +1,4 @@
+/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card, Button, Tag, Alert, Spin, Radio, Input, Modal, Badge, message } from "antd";

@@ -354,7 +354,7 @@ class TerminologyServiceTest {
         assertThat(created.localTermId()).isEqualTo(1L);
         assertThat(created.standardTermId()).isEqualTo(2L);
         assertThat(created.status()).isEqualTo(MappingCandidateStatus.PENDING);
-        assertThat(created.confidence()).isEqualTo(0.4); // "肌钙蛋白T" 对 "血红蛋白"：蛋白(2个重合)/5(最大字符数) = 0.4
-        assertThat(created.riskLevel()).isEqualTo(TermRiskLevel.HIGH); // sim = 0.4 -> HIGH risk
+        assertThat(created.confidence()).isEqualTo(0.4444444444444444); // "肌钙蛋白T" 对 "血红蛋白" LCS "蛋白"(2字) => 2 * 2 / (5 + 4) = 4/9
+        assertThat(created.riskLevel()).isEqualTo(TermRiskLevel.HIGH); // sim = 0.444 -> HIGH risk
     }
 }

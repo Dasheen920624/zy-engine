@@ -20,6 +20,7 @@ public record SourceFragment(
     @Column("anchor_path") String anchorPath,
     @Column("anchor_label") String anchorLabel,
     @Column("text_excerpt") String textExcerpt,
+    @Column("content_hash") String contentHash,
     @Column("created_at") Instant createdAt
 ) {
 }

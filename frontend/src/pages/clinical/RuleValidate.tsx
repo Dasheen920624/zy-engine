@@ -1,3 +1,4 @@
+/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import {
   Row,

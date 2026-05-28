@@ -45,7 +45,6 @@ export default {
     return {
       VariableDeclarator(node) {
         if (node.id.type !== 'Identifier') return;
-        if (!NAME_PATTERN.test(node.id.name)) return;
         if (!node.init || node.init.type !== 'ArrayExpression') return;
         if (node.init.elements.length === 0) return;
         const first = node.init.elements[0];

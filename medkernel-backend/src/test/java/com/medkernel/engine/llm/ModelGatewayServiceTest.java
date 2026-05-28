@@ -120,7 +120,7 @@ class ModelGatewayServiceTest {
         assertEquals("B0", resp.modelMode());
         assertTrue(resp.fallbackUsed());
         // 验证摘要脱敏过滤
-        verify(taskRepo).save(argThat(task -> task.inputSummary().contains("138****8888") && !task.inputSummary().contains("13988888888")));
+        verify(taskRepo).save(argThat(task -> task.inputSummary().contains("139****8888") && !task.inputSummary().contains("13988888888")));
     }
 
     @Test
