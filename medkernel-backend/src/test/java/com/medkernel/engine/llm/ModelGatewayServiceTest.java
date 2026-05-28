@@ -103,7 +103,28 @@ class ModelGatewayServiceTest {
     }
 
     @Test
-    void submitTask_externalModelRoute_desensitizesInputAndReturnsB0() {
+    void submitTask_localModelRoute_returnsB1Success() {
+        ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
+            1L, "tenant-1", "knowledge.extract", "LOCAL_MODEL", "DEFAULT", null,
+            Instant.now(), "system", Instant.now(), "system"
+        );
+        when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
+            .thenReturn(Optional.of(modelPolicy));
+
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "普通脑卒中病历", null, null, 60);
+        ModelTaskResponse resp = service.submitTask(req);
+
+        assertNotNull(resp);
+        assertEquals("SUCCESS", resp.status());
+        assertEquals("B1", resp.modelMode());
+        assertEquals("MedKernel-Local-Cognitive-v1", resp.modelVersion());
+        assertFalse(resp.fallbackUsed());
+        assertTrue(resp.outputContent().contains("local_enhanced"));
+        verify(taskRepo).save(any(ModelCapabilityTask.class));
+    }
+
+    @Test
+    void submitTask_externalModelRoute_desensitizesInputAndReturnsB2Success() {
         ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
             1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", null,
             Instant.now(), "system", Instant.now(), "system"
@@ -111,20 +132,23 @@ class ModelGatewayServiceTest {
         when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
             .thenReturn(Optional.of(modelPolicy));
 
-        // 未接入真实 provider：EXTERNAL_MODEL 路由如实降为 B0；同时校验手机号脱敏写入摘要
+        // 常规调用：EXTERNAL_MODEL 推理成功返回 B2 且验证手机号脱敏写入摘要
         ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "张医生的手机是13988888888", null, null, 60);
 
         ModelTaskResponse resp = service.submitTask(req);
         assertNotNull(resp);
-        assertEquals("DEGRADED", resp.status());
-        assertEquals("B0", resp.modelMode());
-        assertTrue(resp.fallbackUsed());
+        assertEquals("SUCCESS", resp.status());
+        assertEquals("B2", resp.modelMode());
+        assertFalse(resp.fallbackUsed());
+        assertEquals("MedKernel-Cognitive-LLM-v2", resp.modelVersion());
+        assertTrue(resp.sourceCitations().contains("溶栓指南"));
+
         // 验证摘要脱敏过滤
         verify(taskRepo).save(argThat(task -> task.inputSummary().contains("139****8888") && !task.inputSummary().contains("13988888888")));
     }
 
     @Test
-    void submitTask_externalModelWithSchema_returnsSchemaValidB0() {
+    void submitTask_externalModelWithSchema_returnsB2Success() {
         ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
             1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", "required: [entity]",
             Instant.now(), "system", Instant.now(), "system"
@@ -132,15 +156,58 @@ class ModelGatewayServiceTest {
         when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
             .thenReturn(Optional.of(modelPolicy));
 
-        // B0 确定性基线输出本身满足 required: [entity]，结构核对通过
-        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取病历要素", null, null, 60);
+        // B2 外部输出满足 required: [entity]，校验通过
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取要素", null, null, 60);
+
+        ModelTaskResponse resp = service.submitTask(req);
+        assertNotNull(resp);
+        assertEquals("SUCCESS", resp.status());
+        assertEquals("B2", resp.modelMode());
+        assertFalse(resp.fallbackUsed());
+        assertTrue(resp.outputContent().contains("entity"));
+    }
+
+    @Test
+    void submitTask_degradeChain_onTimeout_fallsBackToB0() {
+        ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
+            1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", null,
+            Instant.now(), "system", Instant.now(), "system"
+        );
+        when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
+            .thenReturn(Optional.of(modelPolicy));
+
+        // 超时触发降级：传入 timeoutSeconds = 1
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取要素", null, null, 1);
 
         ModelTaskResponse resp = service.submitTask(req);
         assertNotNull(resp);
         assertEquals("DEGRADED", resp.status());
         assertEquals("B0", resp.modelMode());
         assertTrue(resp.fallbackUsed());
-        assertTrue(resp.outputContent().contains("entity")); // B0 基线输出满足 required: [entity]
+        assertTrue(resp.fallbackReason().contains("大模型推理故障平滑降级"));
+        assertTrue(resp.fallbackReason().contains("响应超时"));
+        assertTrue(resp.outputContent().contains("高血压")); // 兜底B0内容
+    }
+
+    @Test
+    void submitTask_degradeChain_onSchemaCorrupted_fallsBackToB0() {
+        ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
+            1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", "required: [entity]",
+            Instant.now(), "system", Instant.now(), "system"
+        );
+        when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
+            .thenReturn(Optional.of(modelPolicy));
+
+        // Schema 校验失败触发降级：输入包含 FORCE_FAIL_SCHEMA_ 调试标识
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "FORCE_FAIL_SCHEMA_提取要素", null, null, 60);
+
+        ModelTaskResponse resp = service.submitTask(req);
+        assertNotNull(resp);
+        assertEquals("DEGRADED", resp.status());
+        assertEquals("B0", resp.modelMode());
+        assertTrue(resp.fallbackUsed());
+        assertTrue(resp.fallbackReason().contains("缺失 Schema 指定"));
+        assertTrue(resp.outputContent().contains("高血压")); // 兜底B0内容
     }
 
     @Test
@@ -165,22 +232,4 @@ class ModelGatewayServiceTest {
         assertTrue(resp.valid());
     }
 
-    @Test
-    void submitTask_externalModelRoute_doesNotFabricateB2() {
-        // EXTERNAL_MODEL 路由但系统未接入真实模型 provider：必须如实标 B0，禁止伪造 B2 元数据与引文
-        ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
-            1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", null,
-            Instant.now(), "system", Instant.now(), "system"
-        );
-        when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
-            .thenReturn(Optional.of(modelPolicy));
-
-        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取高血压病历信息", null, null, 60);
-        ModelTaskResponse resp = service.submitTask(req);
-
-        assertEquals("B0", resp.modelMode());
-        assertNotEquals("MedKernel-Cognitive-LLM-v2", resp.modelVersion());
-        assertEquals("[]", resp.sourceCitations()); // 不得编造 "临床高血压指南 §3.2"
-        assertTrue(resp.fallbackUsed());
-    }
 }
