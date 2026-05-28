@@ -675,19 +675,20 @@ export default function Provenance() {
       `======================================================`,
       ` 证据链时间线物理快照清单 (Timeline Snippets):`,
       `------------------------------------------------------`,
-      ...(searchedChain || []).map((node, i) => 
-        ` [节点 ${i + 1}] ${node.title}\n` +
-        ` - 资产类型 : ${node.type}\n` +
-        ` - 存证指纹 : ${node.hash}\n` +
-        ` - 操作主体 : ${node.operator}\n` +
-        ` - 存证时间 : ${node.time}\n` +
-        ` - 要素详情 :\n` +
-        node.details.map(d => `   * ${d}`).join("\n") +
-        `\n ------------------------------------------------------`
+      ...(searchedChain || []).map(
+        (node, i) =>
+          ` [节点 ${i + 1}] ${node.title}\n` +
+          ` - 资产类型 : ${node.type}\n` +
+          ` - 存证指纹 : ${node.hash}\n` +
+          ` - 操作主体 : ${node.operator}\n` +
+          ` - 存证时间 : ${node.time}\n` +
+          ` - 要素详情 :\n` +
+          node.details.map((d) => `   * ${d}`).join("\n") +
+          `\n ------------------------------------------------------`,
       ),
       `======================================================`,
       `           已通过集团医疗智能中枢密码学防伪校验`,
-      `======================================================`
+      `======================================================`,
     ].join("\n");
 
     // 2. 利用 Web Crypto API 对该文件内容执行真实的密码学 SHA-256 物理计算
@@ -709,7 +710,7 @@ export default function Provenance() {
     const finalFileContent = [
       rawFileContent,
       ` 归档防伪特征哈希 (Archive) : ${finalHash}`,
-      `======================================================`
+      `======================================================`,
     ].join("\n");
 
     setCurrentExportFileContent(finalFileContent);
@@ -1365,12 +1366,9 @@ export default function Provenance() {
                     type="primary"
                     onClick={() => {
                       // 导出真实的完整电子存证对账文件
-                      const blob = new Blob(
-                        [
-                          currentExportFileContent
-                        ],
-                        { type: "text/plain;charset=utf-8" },
-                      );
+                      const blob = new Blob([currentExportFileContent], {
+                        type: "text/plain;charset=utf-8",
+                      });
                       const url = URL.createObjectURL(blob);
                       const link = document.createElement("a");
                       link.href = url;

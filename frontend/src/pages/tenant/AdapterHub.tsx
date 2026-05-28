@@ -370,17 +370,20 @@ export default function AdapterHub() {
       refetchAdapters();
     } catch (e: any) {
       // 真实捕获物理连接超时或后端响应异常并显式呈现
-      const errMsg = e?.response?.data?.message || e?.message || "物理连接超时或目标主机不可达 (Connection Refused)";
+      const errMsg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "物理连接超时或目标主机不可达 (Connection Refused)";
       setQualityDiagnosticReport({
         rtt: "OFFLINE",
         health: "UNHEALTHY",
         dataQuality: {
-          missingRate: 1.00,
-          termMappingRate: 0.00,
-          timestampAnomalyRate: 1.00,
+          missingRate: 1.0,
+          termMappingRate: 0.0,
+          timestampAnomalyRate: 1.0,
         },
         diagnosticTime: new Date().toISOString(),
-        errorMessage: errMsg
+        errorMessage: errMsg,
       });
       message.error(`[外部连接失败] 无法连通目标系统 [${adapterId}]！细节: ${errMsg}`);
     } finally {
@@ -695,12 +698,20 @@ export default function AdapterHub() {
                 >
                   <Descriptions size="small" column={3}>
                     <Descriptions.Item label="握手网络延迟">
-                      <Tag color={qualityDiagnosticReport.errorMessage ? "red" : "green"} className="font-mono font-bold">
+                      <Tag
+                        color={qualityDiagnosticReport.errorMessage ? "red" : "green"}
+                        className="font-mono font-bold"
+                      >
                         {qualityDiagnosticReport.rtt}
                       </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="通道健康状态">
-                      <Tag color={qualityDiagnosticReport.errorMessage ? "red" : "cyan"} className="font-bold">{qualityDiagnosticReport.health}</Tag>
+                      <Tag
+                        color={qualityDiagnosticReport.errorMessage ? "red" : "cyan"}
+                        className="font-bold"
+                      >
+                        {qualityDiagnosticReport.health}
+                      </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="诊断运行时间">
                       <span className="font-mono text-[10px] text-slate-500">
