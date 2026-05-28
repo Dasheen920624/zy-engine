@@ -18,4 +18,6 @@ public interface SourceVersionRepository extends ListCrudRepository<SourceVersio
     Optional<SourceVersion> findByTenantIdAndId(String tenantId, Long id);
 
     List<SourceVersion> findByTenantIdAndSourceDocumentIdOrderByPublishedAtDescIdDesc(String tenantId, Long sourceDocumentId);
+
+    Optional<SourceVersion> findBySourceDocumentIdAndVersionNo(Long sourceDocumentId, String versionNo);
 }

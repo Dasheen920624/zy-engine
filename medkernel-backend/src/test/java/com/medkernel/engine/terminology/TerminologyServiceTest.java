@@ -313,4 +313,48 @@ class TerminologyServiceTest {
             now, "system", now, "system"
         );
     }
+
+    @Test
+    void detectUnmappedLocalTermsReturnsUnmappedTerms() {
+        LocalTerm local = localTerm(1L);
+        when(localTermRepository.findByTenantIdAndSourceSystemAndStatus("t-1", "LIS", LocalTermStatus.UNMAPPED))
+            .thenReturn(List.of(local));
+
+        List<LocalTerm> result = service.detectUnmappedLocalTerms("LIS");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).localName()).isEqualTo("肌钙蛋白T");
+    }
+
+    @Test
+    void autoRecommendCandidatesGeneratesPendingCandidates() {
+        LocalTerm local = localTerm(1L); // "肌钙蛋白T"
+        StandardTerm standardMatch = standardTerm(2L, TermCategory.LAB); // "血红蛋白" -> 蛋白(2字重合) -> 2/4 = 0.5 相似度
+        StandardTerm standardMismatchCategory = new StandardTerm(
+            3L, "t-1", "LOINC", "718-8", TermCategory.DRUG, "肌钙蛋白", "肌钙蛋白",
+            "2.78", StandardTermStatus.ACTIVE, null, "LOINC", Instant.now(), "system", Instant.now(), "system"
+        );
+
+        when(localTermRepository.findByTenantIdAndSourceSystemAndStatus("t-1", "LIS", LocalTermStatus.UNMAPPED))
+            .thenReturn(List.of(local));
+        when(standardTermRepository.findByTenantIdAndStatus("t-1", StandardTermStatus.ACTIVE))
+            .thenReturn(List.of(standardMatch, standardMismatchCategory));
+
+        when(candidateRepository.findByTenantIdAndLocalTermIdAndStandardTermIdAndStatus(
+            eq("t-1"), eq(1L), eq(2L), eq(MappingCandidateStatus.PENDING)
+        )).thenReturn(Optional.empty());
+
+        when(candidateRepository.save(any(MappingCandidate.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        int recommended = service.autoRecommendCandidates("LIS");
+        assertThat(recommended).isEqualTo(1); // MismatchCategory 虽名字匹配，但因分类(DRUG)不同被过滤
+
+        ArgumentCaptor<MappingCandidate> candidateCaptor = ArgumentCaptor.forClass(MappingCandidate.class);
+        verify(candidateRepository).save(candidateCaptor.capture());
+        MappingCandidate created = candidateCaptor.getValue();
+        assertThat(created.localTermId()).isEqualTo(1L);
+        assertThat(created.standardTermId()).isEqualTo(2L);
+        assertThat(created.status()).isEqualTo(MappingCandidateStatus.PENDING);
+        assertThat(created.confidence()).isEqualTo(0.4); // "肌钙蛋白T" 对 "血红蛋白"：蛋白(2个重合)/5(最大字符数) = 0.4
+        assertThat(created.riskLevel()).isEqualTo(TermRiskLevel.HIGH); // sim = 0.4 -> HIGH risk
+    }
 }

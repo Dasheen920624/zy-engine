@@ -71,6 +71,18 @@ public class KnowledgeVersionController {
         return ApiResult.ok(versionService.withdraw(identityId, versionId, req.reason()));
     }
 
+    /**
+     * 创建待审版本草稿。
+     *
+     * @param request 创建请求
+     * @return 创建的版本草稿实体
+     */
+    @PostMapping("/versions/draft")
+    @PreAuthorize("@perm.has('knowledge.write')")
+    public ApiResult<KnowledgeAssetVersion> createDraftVersion(@RequestBody DraftVersionCreateRequest request) {
+        return ApiResult.ok(versionService.createDraftVersion(request));
+    }
+
     /** 版本激活请求体。reason 是激活说明，高风险必填，常风险可空。 */
     public record ActivateVersionRequest(@Size(max = 500) String reason) {}
 

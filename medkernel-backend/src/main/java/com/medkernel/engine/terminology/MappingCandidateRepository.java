@@ -41,4 +41,7 @@ public interface MappingCandidateRepository extends ListCrudRepository<MappingCa
         """)
     List<MappingCandidate> pageByFilter(String tenantId, String status, String riskLevel, Boolean conflictFlag,
                                         int offset, int limit);
+
+    Optional<MappingCandidate> findByTenantIdAndLocalTermIdAndStandardTermIdAndStatus(
+        String tenantId, Long localTermId, Long standardTermId, MappingCandidateStatus status);
 }

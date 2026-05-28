@@ -67,7 +67,7 @@ const defaultLocalAdapters: IntegrationAdapter[] = [
     name: "核心住院医生工作站 (HIS)",
     protocolType: "HL7 / SOAP",
     status: "ACTIVE",
-    configJson: "{\"missingRate\":0.01,\"termMappingRate\":0.98,\"timestampAnomalyRate\":0.00}",
+    configJson: '{"missingRate":0.01,"termMappingRate":0.98,"timestampAnomalyRate":0.00}',
     healthStatus: "HEALTHY",
     rttMs: 4,
     lastHeartbeatAt: new Date().toISOString(),
@@ -81,7 +81,7 @@ const defaultLocalAdapters: IntegrationAdapter[] = [
     name: "电子病历编辑器系统 (EMR)",
     protocolType: "REST API",
     status: "ACTIVE",
-    configJson: "{\"missingRate\":0.02,\"termMappingRate\":0.96,\"timestampAnomalyRate\":0.00}",
+    configJson: '{"missingRate":0.02,"termMappingRate":0.96,"timestampAnomalyRate":0.00}',
     healthStatus: "HEALTHY",
     rttMs: 12,
     lastHeartbeatAt: new Date().toISOString(),
@@ -95,7 +95,7 @@ const defaultLocalAdapters: IntegrationAdapter[] = [
     name: "检验信息管理系统 (LIS)",
     protocolType: "DB Link / SQL",
     status: "ACTIVE",
-    configJson: "{\"missingRate\":0.03,\"termMappingRate\":0.95,\"timestampAnomalyRate\":0.01}",
+    configJson: '{"missingRate":0.03,"termMappingRate":0.95,"timestampAnomalyRate":0.01}',
     healthStatus: "HEALTHY",
     rttMs: 18,
     lastHeartbeatAt: new Date().toISOString(),
@@ -109,7 +109,7 @@ const defaultLocalAdapters: IntegrationAdapter[] = [
     name: "医学影像归档系统 (PACS)",
     protocolType: "DICOM / Web",
     status: "ACTIVE",
-    configJson: "{\"missingRate\":0.02,\"termMappingRate\":0.97,\"timestampAnomalyRate\":0.00}",
+    configJson: '{"missingRate":0.02,"termMappingRate":0.97,"timestampAnomalyRate":0.00}',
     healthStatus: "HEALTHY",
     rttMs: 25,
     lastHeartbeatAt: new Date().toISOString(),
@@ -143,7 +143,7 @@ const defaultLocalLogs: IntegrationMessageLog[] = [
     systemName: "核心住院医生工作站 (HIS)",
     protocolType: "HL7 / SOAP",
     payloadSummary: "ADOPT_RECOMMENDATION | patientId=P-1001",
-    payload: "{\"action\":\"ADOPT\",\"recommendationCard\":\"STK-CDSS-001\",\"patientId\":\"P-1001\"}",
+    payload: '{"action":"ADOPT","recommendationCard":"STK-CDSS-001","patientId":"P-1001"}',
     status: "SUCCESS",
     retryCount: 0,
     maxRetries: 3,
@@ -160,7 +160,7 @@ const defaultLocalLogs: IntegrationMessageLog[] = [
     systemName: "检验信息管理系统 (LIS)",
     protocolType: "DB Link",
     payloadSummary: "CRITICAL_VALUE_ALARM | patientId=P-1002",
-    payload: "{\"alarmCode\":\"CRIT-01\",\"value\":\"Troponin T 2.4 ng/mL\",\"patientId\":\"P-1002\"}",
+    payload: '{"alarmCode":"CRIT-01","value":"Troponin T 2.4 ng/mL","patientId":"P-1002"}',
     status: "FAILED",
     retryCount: 2,
     maxRetries: 3,
@@ -177,7 +177,7 @@ const defaultLocalLogs: IntegrationMessageLog[] = [
     systemName: "电子病历编辑器系统 (EMR)",
     protocolType: "REST API",
     payloadSummary: "VTE_RISK_ASSESS | patientId=P-1003",
-    payload: "{\"assessScore\":5,\"riskLevel\":\"HIGH\",\"patientId\":\"P-1003\"}",
+    payload: '{"assessScore":5,"riskLevel":"HIGH","patientId":"P-1003"}',
     status: "DEAD_LETTER",
     retryCount: 3,
     maxRetries: 3,
@@ -204,7 +204,11 @@ export default function AdapterHub() {
   const generateTokenMutation = useGenerateEmbedToken();
 
   // 集成总线接口 hooks
-  const { data: apiAdapters, refetch: refetchAdapters, isLoading: loadingAdapters } = useIntegrationAdapters();
+  const {
+    data: apiAdapters,
+    refetch: refetchAdapters,
+    isLoading: loadingAdapters,
+  } = useIntegrationAdapters();
   const createAdapterMutation = useCreateAdapter();
   const updateAdapterMutation = useUpdateAdapter();
   const pingAdapterMutation = usePingAdapter();
@@ -214,7 +218,11 @@ export default function AdapterHub() {
   const testWebhookSigMutation = useTestWebhookSignature();
 
   const [logPage, setLogPage] = useState(1);
-  const { data: apiLogsData, refetch: refetchLogs, isLoading: loadingLogs } = useIntegrationLogs(logPage, 5);
+  const {
+    data: apiLogsData,
+    refetch: refetchLogs,
+    isLoading: loadingLogs,
+  } = useIntegrationLogs(logPage, 5);
   const retryMessageMutation = useRetryMessage();
   const deleteMessageMutation = useDeleteMessage();
 
@@ -242,7 +250,9 @@ export default function AdapterHub() {
 
   // Webhook 签名仿真测试状态
   const [selectedWebhookId, setSelectedWebhookId] = useState<string>("");
-  const [webhookTestPayload, setWebhookTestPayload] = useState<string>("{\n  \"eventId\": \"ev-90211\",\n  \"patientId\": \"P-1001\",\n  \"action\": \"DISCHARGE_PLAN\"\n}");
+  const [webhookTestPayload, setWebhookTestPayload] = useState<string>(
+    '{\n  "eventId": "ev-90211",\n  "patientId": "P-1001",\n  "action": "DISCHARGE_PLAN"\n}',
+  );
   const [testResultSummary, setTestResultSummary] = useState<any>(null);
   const [testLogLoading, setTestLogLoading] = useState<boolean>(false);
 
@@ -254,9 +264,12 @@ export default function AdapterHub() {
 
   // 兜底合并
   const displayOrigins = apiOrigins && apiOrigins.length > 0 ? apiOrigins : localOrigins;
-  const displayAdapters = apiAdapters && apiAdapters.length > 0 ? apiAdapters : defaultLocalAdapters;
-  const displayWebhooks = apiWebhooks && apiWebhooks.length > 0 ? apiWebhooks : defaultLocalWebhooks;
-  const displayLogs = apiLogsData?.items && apiLogsData.items.length > 0 ? apiLogsData.items : defaultLocalLogs;
+  const displayAdapters =
+    apiAdapters && apiAdapters.length > 0 ? apiAdapters : defaultLocalAdapters;
+  const displayWebhooks =
+    apiWebhooks && apiWebhooks.length > 0 ? apiWebhooks : defaultLocalWebhooks;
+  const displayLogs =
+    apiLogsData?.items && apiLogsData.items.length > 0 ? apiLogsData.items : defaultLocalLogs;
   const displayLogsTotal = apiLogsData?.total ?? defaultLocalLogs.length;
 
   // 3. 监听跨域通信
@@ -363,7 +376,7 @@ export default function AdapterHub() {
         dataQuality: {
           missingRate: 0.02,
           termMappingRate: 0.97,
-          timestampAnomalyRate: 0.00,
+          timestampAnomalyRate: 0.0,
         },
         diagnosticTime: new Date().toISOString(),
       });
@@ -423,7 +436,8 @@ export default function AdapterHub() {
       // 仿真签名生成
       const mockSecret = "sec_key_demo_" + Math.floor(Math.random() * 100000000000000);
       const mockTimestamp = Math.floor(Date.now() / 1000);
-      const mockSign = "sig_hmac_sha256_" + Math.floor(Math.random() * 100000000000000000).toString(16);
+      const mockSign =
+        "sig_hmac_sha256_" + Math.floor(Math.random() * 100000000000000000).toString(16);
       setTestResultSummary({
         webhookId: selectedWebhookId,
         callbackUrl: "http://his.hospital.local:8080/api/callback/discharge",
@@ -581,7 +595,9 @@ export default function AdapterHub() {
                     render: (_, record) => (
                       <div className="flex flex-col">
                         <span className="font-semibold text-slate-800 text-xs">{record.name}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">{record.adapterId}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {record.adapterId}
+                        </span>
                       </div>
                     ),
                   },
@@ -589,7 +605,11 @@ export default function AdapterHub() {
                     title: "接入协议",
                     dataIndex: "protocolType",
                     key: "protocolType",
-                    render: (type) => <Tag color="blue" className="font-mono m-0 text-[10px]">{type}</Tag>,
+                    render: (type) => (
+                      <Tag color="blue" className="font-mono m-0 text-[10px]">
+                        {type}
+                      </Tag>
+                    ),
                   },
                   {
                     title: "自检状态",
@@ -625,7 +645,11 @@ export default function AdapterHub() {
                     title: "最近握手心跳",
                     dataIndex: "lastHeartbeatAt",
                     key: "lastHeartbeatAt",
-                    render: (t) => <span className="text-[10px] text-slate-400 font-mono">{t ? new Date(t).toLocaleString() : "暂无"}</span>,
+                    render: (t) => (
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {t ? new Date(t).toLocaleString() : "暂无"}
+                      </span>
+                    ),
                   },
                   {
                     title: "连接操作项",
@@ -669,22 +693,35 @@ export default function AdapterHub() {
                 >
                   <Descriptions size="small" column={3}>
                     <Descriptions.Item label="握手网络延迟">
-                      <Tag color="green" className="font-mono">{qualityDiagnosticReport.rtt}</Tag>
+                      <Tag color="green" className="font-mono">
+                        {qualityDiagnosticReport.rtt}
+                      </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="通道健康状态">
                       <Tag color="cyan">{qualityDiagnosticReport.health}</Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="诊断运行时间">
-                      <span className="font-mono text-[10px] text-slate-500">{new Date(qualityDiagnosticReport.diagnosticTime).toLocaleString()}</span>
+                      <span className="font-mono text-[10px] text-slate-500">
+                        {new Date(qualityDiagnosticReport.diagnosticTime).toLocaleString()}
+                      </span>
                     </Descriptions.Item>
                     <Descriptions.Item label="核心数据缺失率 (Missing Rate)">
-                      <span className="font-mono font-bold text-red-500">{(qualityDiagnosticReport.dataQuality.missingRate * 100).toFixed(1)}%</span>
+                      <span className="font-mono font-bold text-red-500">
+                        {(qualityDiagnosticReport.dataQuality.missingRate * 100).toFixed(1)}%
+                      </span>
                     </Descriptions.Item>
                     <Descriptions.Item label="标准术语字典映射率">
-                      <span className="font-mono font-bold text-emerald-600">{(qualityDiagnosticReport.dataQuality.termMappingRate * 100).toFixed(1)}%</span>
+                      <span className="font-mono font-bold text-emerald-600">
+                        {(qualityDiagnosticReport.dataQuality.termMappingRate * 100).toFixed(1)}%
+                      </span>
                     </Descriptions.Item>
                     <Descriptions.Item label="时间戳异常序列率">
-                      <span className="font-mono">{(qualityDiagnosticReport.dataQuality.timestampAnomalyRate * 100).toFixed(1)}%</span>
+                      <span className="font-mono">
+                        {(qualityDiagnosticReport.dataQuality.timestampAnomalyRate * 100).toFixed(
+                          1,
+                        )}
+                        %
+                      </span>
                     </Descriptions.Item>
                   </Descriptions>
                   <Alert
@@ -745,12 +782,21 @@ export default function AdapterHub() {
                         ]}
                       >
                         <List.Item.Meta
-                          title={<span className="text-xs font-bold text-slate-800">{item.name}</span>}
+                          title={
+                            <span className="text-xs font-bold text-slate-800">{item.name}</span>
+                          }
                           description={
                             <div className="flex flex-col gap-1 text-[10px] text-slate-400">
                               <span className="font-mono select-all">地址: {item.callbackUrl}</span>
-                              <span>事件: <Tag className="m-0 py-0 px-1 text-[9px]" color="purple">{item.eventsSubscribed}</Tag></span>
-                              <span className="font-mono select-all text-amber-600">密钥: {item.secretKey}</span>
+                              <span>
+                                事件:{" "}
+                                <Tag className="m-0 py-0 px-1 text-[9px]" color="purple">
+                                  {item.eventsSubscribed}
+                                </Tag>
+                              </span>
+                              <span className="font-mono select-all text-amber-600">
+                                密钥: {item.secretKey}
+                              </span>
                             </div>
                           }
                         />
@@ -782,13 +828,17 @@ export default function AdapterHub() {
                         size="small"
                       >
                         {displayWebhooks.map((item) => (
-                          <Option key={item.webhookId} value={item.webhookId}>{item.name}</Option>
+                          <Option key={item.webhookId} value={item.webhookId}>
+                            {item.name}
+                          </Option>
                         ))}
                       </Select>
                     </div>
 
                     <div>
-                      <span className="block text-slate-600 text-xs mb-1 font-medium">输入模拟待通知报文 Payload (JSON):</span>
+                      <span className="block text-slate-600 text-xs mb-1 font-medium">
+                        输入模拟待通知报文 Payload (JSON):
+                      </span>
                       <Input.TextArea
                         rows={4}
                         value={webhookTestPayload}
@@ -814,12 +864,35 @@ export default function AdapterHub() {
                           <span>签名生成与验证过程 (HMAC-SHA256 Pipeline)</span>
                         </span>
                         <div className="text-[10px] font-mono flex flex-col gap-1 text-slate-600">
-                          <div><span className="font-bold text-slate-400">共享密钥 (Secret Key):</span> {testResultSummary.secretKey}</div>
-                          <div><span className="font-bold text-slate-400">自检测时间戳 (Timestamp Header):</span> {testResultSummary.timestamp}</div>
-                          <div><span className="font-bold text-slate-400">串联签名原文字段 (Timestamp + Payload):</span></div>
-                          <pre className="bg-slate-50 p-2 rounded border border-slate-100 text-[9px] overflow-auto select-all max-h-20">{testResultSummary.payloadSigned}</pre>
-                          <div><span className="font-bold text-slate-400">生成签名哈希结果 (X-MedKernel-Signature):</span></div>
-                          <Tag color="cyan" className="text-[10px] font-mono select-all w-fit py-0.5 px-2">{testResultSummary.signature}</Tag>
+                          <div>
+                            <span className="font-bold text-slate-400">共享密钥 (Secret Key):</span>{" "}
+                            {testResultSummary.secretKey}
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-400">
+                              自检测时间戳 (Timestamp Header):
+                            </span>{" "}
+                            {testResultSummary.timestamp}
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-400">
+                              串联签名原文字段 (Timestamp + Payload):
+                            </span>
+                          </div>
+                          <pre className="bg-slate-50 p-2 rounded border border-slate-100 text-[9px] overflow-auto select-all max-h-20">
+                            {testResultSummary.payloadSigned}
+                          </pre>
+                          <div>
+                            <span className="font-bold text-slate-400">
+                              生成签名哈希结果 (X-MedKernel-Signature):
+                            </span>
+                          </div>
+                          <Tag
+                            color="cyan"
+                            className="text-[10px] font-mono select-all w-fit py-0.5 px-2"
+                          >
+                            {testResultSummary.signature}
+                          </Tag>
                         </div>
                         <Alert
                           type="success"
@@ -879,8 +952,12 @@ export default function AdapterHub() {
                     key: "messageId",
                     render: (_, record) => (
                       <div className="flex flex-col">
-                        <span className="font-semibold text-slate-800 text-xs">{record.messageId}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">{record.traceId}</span>
+                        <span className="font-semibold text-slate-800 text-xs">
+                          {record.messageId}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {record.traceId}
+                        </span>
                       </div>
                     ),
                   },
@@ -898,7 +975,9 @@ export default function AdapterHub() {
                     title: "对接系统",
                     dataIndex: "systemName",
                     key: "systemName",
-                    render: (name) => <span className="font-medium text-xs text-slate-700">{name}</span>,
+                    render: (name) => (
+                      <span className="font-medium text-xs text-slate-700">{name}</span>
+                    ),
                   },
                   {
                     title: "报文摘要",
@@ -910,7 +989,9 @@ export default function AdapterHub() {
                     title: "重试控制门槛",
                     key: "retry",
                     render: (_, record) => (
-                      <span className="font-mono text-xs">{record.retryCount} / {record.maxRetries} 次</span>
+                      <span className="font-mono text-xs">
+                        {record.retryCount} / {record.maxRetries} 次
+                      </span>
                     ),
                   },
                   {
@@ -920,7 +1001,11 @@ export default function AdapterHub() {
                       let color = "green";
                       if (record.status === "FAILED") color = "orange";
                       if (record.status === "DEAD_LETTER") color = "red";
-                      return <Tag color={color} className="font-mono">{record.status}</Tag>;
+                      return (
+                        <Tag color={color} className="font-mono">
+                          {record.status}
+                        </Tag>
+                      );
                     },
                   },
                   {
@@ -928,7 +1013,10 @@ export default function AdapterHub() {
                     dataIndex: "errorMessage",
                     key: "errorMessage",
                     render: (err) => (
-                      <span className="text-[10px] text-red-500 font-sans block max-w-[200px] truncate" title={err || ""}>
+                      <span
+                        className="text-[10px] text-red-500 font-sans block max-w-[200px] truncate"
+                        title={err || ""}
+                      >
                         {err || "—"}
                       </span>
                     ),
@@ -981,7 +1069,11 @@ export default function AdapterHub() {
               {/* 左侧配置 */}
               <Col span={9}>
                 <Card
-                  title={<span className="text-xs font-semibold">一次性免登嵌入 Launch Token 发生器</span>}
+                  title={
+                    <span className="text-xs font-semibold">
+                      一次性免登嵌入 Launch Token 发生器
+                    </span>
+                  }
                   className="rounded-xl border-slate-200 bg-slate-50"
                   size="small"
                 >
@@ -1042,8 +1134,12 @@ export default function AdapterHub() {
                       initialValue="OUTPATIENT_DIAGNOSIS"
                     >
                       <Select className="rounded-lg text-xs">
-                        <Option value="OUTPATIENT_DIAGNOSIS">门诊诊断下达时 (OUTPATIENT_DIAGNOSIS)</Option>
-                        <Option value="ADMISSION_CHECK">患者办完住院登记时 (ADMISSION_CHECK)</Option>
+                        <Option value="OUTPATIENT_DIAGNOSIS">
+                          门诊诊断下达时 (OUTPATIENT_DIAGNOSIS)
+                        </Option>
+                        <Option value="ADMISSION_CHECK">
+                          患者办完住院登记时 (ADMISSION_CHECK)
+                        </Option>
                         <Option value="DISCHARGE_PLAN">开具出院小结随访时 (DISCHARGE_PLAN)</Option>
                       </Select>
                     </Form.Item>
@@ -1092,7 +1188,11 @@ export default function AdapterHub() {
                       {
                         title: "防护状态",
                         key: "status",
-                        render: () => <Tag color="green" className="text-[9px]">防护中</Tag>,
+                        render: () => (
+                          <Tag color="green" className="text-[9px]">
+                            防护中
+                          </Tag>
+                        ),
                       },
                     ]}
                   />
@@ -1114,8 +1214,13 @@ export default function AdapterHub() {
                   >
                     <Row gutter={16}>
                       <Col span={12}>
-                        <Card className="bg-amber-50/30 border-amber-100 mb-4 rounded-xl" size="small">
-                          <span className="font-bold text-xs text-slate-700 block mb-2">医生工作站处方开立区:</span>
+                        <Card
+                          className="bg-amber-50/30 border-amber-100 mb-4 rounded-xl"
+                          size="small"
+                        >
+                          <span className="font-bold text-xs text-slate-700 block mb-2">
+                            医生工作站处方开立区:
+                          </span>
                           <List
                             size="small"
                             dataSource={hisOrders}
@@ -1129,16 +1234,26 @@ export default function AdapterHub() {
                       </Col>
 
                       <Col span={12}>
-                        <Card className="bg-slate-900 border-slate-800 text-slate-200 mb-4 rounded-xl" size="small">
-                          <span className="font-bold text-xs text-slate-400 block mb-2">postMessage 双向跨域通信审计 {sandboxToken ? `(Token: ${sandboxToken})` : ""}:</span>
+                        <Card
+                          className="bg-slate-900 border-slate-800 text-slate-200 mb-4 rounded-xl"
+                          size="small"
+                        >
+                          <span className="font-bold text-xs text-slate-400 block mb-2">
+                            postMessage 双向跨域通信审计{" "}
+                            {sandboxToken ? `(Token: ${sandboxToken})` : ""}:
+                          </span>
                           <div className="max-h-24 overflow-y-auto font-mono text-[9px]">
                             {postMessageLogs.length === 0 ? (
-                              <span className="text-slate-500">等待 CDSS 交互反馈指令事件回传...</span>
+                              <span className="text-slate-500">
+                                等待 CDSS 交互反馈指令事件回传...
+                              </span>
                             ) : (
                               postMessageLogs.map((log, i) => (
                                 <div key={i} className="mb-1 border-b border-slate-800 pb-1">
                                   <div>[接收事件] action={log.action}</div>
-                                  <div className="text-[8px] text-slate-400">payload: {JSON.stringify(log)}</div>
+                                  <div className="text-[8px] text-slate-400">
+                                    payload: {JSON.stringify(log)}
+                                  </div>
                                 </div>
                               ))
                             )}
@@ -1156,7 +1271,8 @@ export default function AdapterHub() {
                 ) : (
                   <Card className="bg-slate-50 border-slate-200 rounded-xl h-full min-h-[400px] flex items-center justify-center">
                     <span className="text-slate-400 text-xs text-center block">
-                      请先在左侧输入就诊环境参数，<br />
+                      请先在左侧输入就诊环境参数，
+                      <br />
                       并点击“生成 60s 令牌”来拉起 HIS 嵌入仿真沙盒。
                     </span>
                   </Card>
@@ -1255,11 +1371,17 @@ export default function AdapterHub() {
             label="第三方回调 URL (Callback URL)"
             rules={[
               { required: true, message: "请输入回调 URL" },
-              { pattern: /^https?:\/\/.*$/, message: "请输入以 http:// 或 https:// 开头的合法地址" },
+              {
+                pattern: /^https?:\/\/.*$/,
+                message: "请输入以 http:// 或 https:// 开头的合法地址",
+              },
             ]}
             initialValue="http://thirdparty.alarm.local:8080/webhook/recv"
           >
-            <Input placeholder="输入以 http:// 或 https:// 开头的回调地址" className="rounded-lg font-mono" />
+            <Input
+              placeholder="输入以 http:// 或 https:// 开头的回调地址"
+              className="rounded-lg font-mono"
+            />
           </Form.Item>
 
           <Form.Item
@@ -1293,7 +1415,10 @@ export default function AdapterHub() {
             label="允许跨域的 Origin 域名地址"
             rules={[
               { required: true, message: "域名地址必填" },
-              { pattern: /^https?:\/\/[a-zA-Z0-9.-]+(:\d+)?$/, message: "请输入合法的 http(s)://origin 格式，且末尾不带斜杠" },
+              {
+                pattern: /^https?:\/\/[a-zA-Z0-9.-]+(:\d+)?$/,
+                message: "请输入合法的 http(s)://origin 格式，且末尾不带斜杠",
+              },
             ]}
             initialValue="http://test.hospital.local:9000"
           >
