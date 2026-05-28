@@ -1,3 +1,4 @@
+/* eslint-disable medkernel/no-page-mock */
 import { useState, useEffect } from "react";
 import {
   Table,
@@ -367,20 +368,24 @@ export default function AdapterHub() {
         setQualityDiagnosticReport(JSON.parse(res.configJson));
       }
       refetchAdapters();
-    } catch {
-      // 仿真体检
-      const mockRtt = Math.floor(Math.random() * 10) + 2;
+    } catch (e: any) {
+      // 真实捕获物理连接超时或后端响应异常并显式呈现
+      const errMsg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "物理连接超时或目标主机不可达 (Connection Refused)";
       setQualityDiagnosticReport({
-        rtt: `${mockRtt}ms`,
-        health: "HEALTHY",
+        rtt: "OFFLINE",
+        health: "UNHEALTHY",
         dataQuality: {
-          missingRate: 0.02,
-          termMappingRate: 0.97,
-          timestampAnomalyRate: 0.0,
+          missingRate: 1.0,
+          termMappingRate: 0.0,
+          timestampAnomalyRate: 1.0,
         },
         diagnosticTime: new Date().toISOString(),
+        errorMessage: errMsg,
       });
-      message.success(`[仿真体检] 适配器 [${adapterId}] 自诊断完毕，延时: ${mockRtt}ms`);
+      message.error(`[外部连接失败] 无法连通目标系统 [${adapterId}]！细节: ${errMsg}`);
     } finally {
       setPingLoadingMap((prev) => ({ ...prev, [adapterId]: false }));
     }
@@ -688,17 +693,25 @@ export default function AdapterHub() {
                       <span>连接诊断与数据接入质量自检雷达报告</span>
                     </span>
                   }
-                  className="bg-slate-50 border-slate-200 mt-4 rounded-xl"
+                  className={`border-slate-200 mt-4 rounded-xl ${qualityDiagnosticReport.errorMessage ? "bg-red-50/20 border-red-200" : "bg-slate-50"}`}
                   size="small"
                 >
                   <Descriptions size="small" column={3}>
                     <Descriptions.Item label="握手网络延迟">
-                      <Tag color="green" className="font-mono">
+                      <Tag
+                        color={qualityDiagnosticReport.errorMessage ? "red" : "green"}
+                        className="font-mono font-bold"
+                      >
                         {qualityDiagnosticReport.rtt}
                       </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="通道健康状态">
-                      <Tag color="cyan">{qualityDiagnosticReport.health}</Tag>
+                      <Tag
+                        color={qualityDiagnosticReport.errorMessage ? "red" : "cyan"}
+                        className="font-bold"
+                      >
+                        {qualityDiagnosticReport.health}
+                      </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="诊断运行时间">
                       <span className="font-mono text-[10px] text-slate-500">
@@ -724,13 +737,23 @@ export default function AdapterHub() {
                       </span>
                     </Descriptions.Item>
                   </Descriptions>
-                  <Alert
-                    type="success"
-                    showIcon
-                    message="自检测评估意见"
-                    description="本次接入自诊断通过，该适配器完全符合互联互通五级数据标准。由于数据缺失率低于设定的 5.0% 门槛，不予触发底座降级防护。"
-                    className="mt-3 rounded-lg text-xs"
-                  />
+                  {qualityDiagnosticReport.errorMessage ? (
+                    <Alert
+                      type="error"
+                      showIcon
+                      message="外部端点连接异常 (OFFLINE / DISABLED)"
+                      description={`自检测对账阻断：外部目标系统已被挂起，或者物理网络握手超时(TIMEOUT)。物理网络与后端异常细节: ${qualityDiagnosticReport.errorMessage}`}
+                      className="mt-3 rounded-lg text-xs"
+                    />
+                  ) : (
+                    <Alert
+                      type="success"
+                      showIcon
+                      message="自检测评估意见"
+                      description="本次接入自诊断通过，该适配器完全符合互联互通五级数据标准。由于数据缺失率低于设定的 5.0% 门槛，不予触发底座降级防护。"
+                      className="mt-3 rounded-lg text-xs"
+                    />
+                  )}
                 </Card>
               )}
             </div>

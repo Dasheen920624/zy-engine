@@ -303,11 +303,11 @@ public class ModelGatewayService {
         }
 
         String result = input;
-        // 1. 过滤手机号：1[3-9]\d{9} 替换为前三后四带星
-        result = result.replaceAll("(\\b)1[3-9]\\d{9}(\\b)", "$1138****8888$2");
+        // 1. 过滤手机号：保留前三位和后四位，中间四位替换为 ****
+        result = result.replaceAll("(\\b)(1[3-9]\\d)\\d{4}(\\d{4})(\\b)", "$1$2****$3$4");
 
-        // 2. 过滤中国居民身份证：前四后四带星
-        result = result.replaceAll("(\\b)\\d{6}\\d{8}\\d{3}[0-9Xx](\\b)", "$14401********0018$2");
+        // 2. 过滤中国居民身份证：保留前六位和后四位，中间八位替换为 ********
+        result = result.replaceAll("(\\b)(\\d{6})\\d{8}(\\d{3}[0-9Xx])(\\b)", "$1$2********$3$4");
 
         return result;
     }

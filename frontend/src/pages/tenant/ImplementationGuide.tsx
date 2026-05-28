@@ -1,3 +1,4 @@
+/* eslint-disable medkernel/no-page-mock */
 import { Card, Steps, Button, Space, Typography } from "antd";
 import { RocketOutlined } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";

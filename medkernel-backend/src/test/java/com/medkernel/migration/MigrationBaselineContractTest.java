@@ -47,7 +47,8 @@ class MigrationBaselineContractTest {
         "V18__model_gateway_api.sql",
         "V19__large_list_api.sql",
         "V20__integration_engine_api.sql",
-        "V21__audit_evidence_api.sql"
+        "V21__audit_evidence_api.sql",
+        "V22__engine_remediation.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",

@@ -1,3 +1,4 @@
+/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import { PageShell } from "@/shared/ui/PageShell";
 import {

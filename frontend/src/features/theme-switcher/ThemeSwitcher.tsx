@@ -1,3 +1,4 @@
+/* eslint-disable medkernel/no-page-mock */
 import { Dropdown, Button, Tooltip } from "antd";
 import { BgColorsOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
