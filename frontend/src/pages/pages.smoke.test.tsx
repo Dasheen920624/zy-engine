@@ -23,6 +23,7 @@ import CdssFatigue from "./clinical/CdssFatigue";
 import PathwayTemplates from "./tenant/PathwayTemplates";
 import RuleDefinitions from "./tenant/RuleDefinitions";
 import AdminAudit from "./compliance/AdminAudit";
+import TerminologyMapping from "./tenant/TerminologyMapping";
 
 const testQueryClient = new QueryClient({
   defaultOptions: {
@@ -166,5 +167,10 @@ describe("page smoke coverage", () => {
     renderPage(<AdminAudit />);
     expect(screen.getByRole("heading", { name: "审计日志" })).toBeInTheDocument();
     expect(screen.getByText("导出审计快照")).toBeInTheDocument();
+  });
+
+  it("renders the tenant terminology-mapping console", () => {
+    renderPage(<TerminologyMapping />);
+    expect(screen.getByRole("heading", { name: "字典映射" })).toBeInTheDocument();
   });
 });
