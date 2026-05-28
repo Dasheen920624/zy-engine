@@ -317,6 +317,23 @@ export const routeMetas: RouteMeta[] = [
     stateMachine: "todo",
   },
   {
+    path: "/clinical/followup",
+    title: "智能随访",
+    breadcrumb: ["临床运行", "智能随访"],
+    requireAuth: true,
+    sectionKey: "clinical-run",
+    menuKey: "clinical-followup",
+    menuLabel: "智能随访",
+    experience: readonlyExperience(
+      "随访专员 / 临床医生",
+      "智能生成专病随访计划并跟进分期随访任务与异常回院事件",
+      "计划台账列表",
+      "large",
+    ),
+    pageType: "list",
+    stateMachine: "todo",
+  },
+  {
     path: "/qc/dashboard",
     title: "院级质控驾驶舱",
     breadcrumb: ["质控改进", "院级质控驾驶舱"],

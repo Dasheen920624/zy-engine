@@ -1429,3 +1429,128 @@ export const DEMO_SNAPSHOTS = [
     desc: "剖宫产术后24小时，医嘱与病历中均未记录下肢深静脉血栓风险分层评估及预防性护理，判定触发质控缺陷派单。",
   },
 ];
+
+// ==================== 智能随访引擎相关的实体及 DTO 契约 ====================
+
+export type FollowupPlanStatus = "DRAFT" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+export type FollowupTaskType = "QUESTIONNAIRE" | "EXAM" | "LAB" | "OUTPATIENT";
+export type FollowupTaskStatus = "PENDING" | "COMPLETED" | "OVERDUE" | "CANCELLED";
+export type FollowupEventType = "ABNORMAL_RETURN" | "RESULT_INFLOW";
+
+export interface FollowupTaskDetailResponse {
+  taskId: string;
+  taskType: FollowupTaskType;
+  dueDate: string;
+  status: FollowupTaskStatus;
+}
+
+export interface FollowupPlanDetailResponse {
+  planId: string;
+  tenantId: string;
+  patientId: string;
+  encounterId: string;
+  diseaseCode: string;
+  status: FollowupPlanStatus;
+  tasks: FollowupTaskDetailResponse[];
+}
+
+export interface FollowupPlanGenerateRequest {
+  patientId: string;
+  encounterId: string;
+  pathwayId?: string;
+  diseaseCode?: string;
+  riskLevel?: string;
+  taskTypes: string[];
+}
+
+export interface FollowupQuestionnaireSubmitRequest {
+  taskId: string;
+  formData: string; // JSON string
+  executorId?: string;
+  executorType?: string;
+}
+
+export interface FollowupAbnormalReportRequest {
+  planId: string;
+  eventType: FollowupEventType;
+  payload: string; // JSON string or text description
+  triggeredBy?: string;
+}
+
+export interface FollowupPlansParams {
+  patientId?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+// 1. 获取随访计划分页
+export function useFollowupPlans(params?: FollowupPlansParams) {
+  return useQuery({
+    queryKey: ["followup", "plans", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<FollowupPlanDetailResponse> }>(
+        "/engine/followup/plans",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+// 2. 智能生成随访计划
+export function useGenerateFollowupPlan() {
+  return useMutation({
+    mutationFn: async (payload: FollowupPlanGenerateRequest) => {
+      const { data } = await apiClient.post<{ data: FollowupPlanDetailResponse }>(
+        "/engine/followup/plans/generate",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 3. 获取随访计划详情
+export function useFollowupPlanDetail(planId: string) {
+  return useQuery({
+    queryKey: ["followup", "plan-detail", planId],
+    queryFn: async () => {
+      if (!planId) return null;
+      const { data } = await apiClient.get<{ data: FollowupPlanDetailResponse }>(
+        `/engine/followup/plans/${planId}`,
+      );
+      return data.data;
+    },
+    enabled: !!planId,
+  });
+}
+
+// 4. 提交问卷并完成任务
+export function useSubmitFollowupQuestionnaire() {
+  return useMutation({
+    mutationFn: async (payload: {
+      taskId: string;
+      request: FollowupQuestionnaireSubmitRequest;
+    }) => {
+      const { data } = await apiClient.post<void>(
+        `/engine/followup/tasks/${payload.taskId}/questionnaires`,
+        payload.request,
+      );
+      return data;
+    },
+  });
+}
+
+// 5. 上报随访异常事件
+export function useReportFollowupAbnormal() {
+  return useMutation({
+    mutationFn: async (payload: FollowupAbnormalReportRequest) => {
+      const { data } = await apiClient.post<void>(
+        "/engine/followup/events/report-abnormal",
+        payload,
+      );
+      return data;
+    },
+  });
+}

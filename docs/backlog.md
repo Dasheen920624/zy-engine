@@ -78,7 +78,7 @@
 | GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真 | codex | done |
 | GA-ENG-CDSS-01 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | codex | done |
 | GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | codex | done |
-| GA-ENG-FOLLOW-01 随访引擎：计划生成、任务、问卷、异常事件和回流 | - | pending |
+| GA-ENG-FOLLOW-01 随访引擎：计划生成、任务、问卷、异常事件和回流 | codex | done |
 | GA-ENG-PKG-01 包发布引擎：导入导出、校验、灰度、全量、同步、回滚、证据 | - | pending |
 
 ---
@@ -133,6 +133,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 4.29 | 2026-05-28 | Codex | GA-ENG-FOLLOW-01 完成：完整开发智能随访引擎（GA-ENG-FOLLOW-01）工作台，打通出院事件 → 智能计划生成 → 任务时序分发与问卷回收 → 临床异常回院上报的医学闭环；后端追加随访计划的分页检索端点，注入多租户隔离与权限切面安全拦截；前端封装 5 个标准的 React Query API hooks，注册 /clinical/followup 路由与自动派生菜单；开发出WOW级极佳视觉交互工作台（Followup.tsx），融入治愈系海军蓝与青色（sky/cyan）配色，提供 Metric 看板、分期任务 Timeline 与问卷填报、高危回院一键上报及可信 traceId 审计追溯；通过 100% 前后端静态 Lint、TSC 编译、物理校验债门禁与 Vitest/JUnit 单元和集成测试。 |
 | 4.27 | 2026-05-28 | Codex | GA-ENG-EVAL-01 完成：打通后端自动病例扫描与指标计算核心引擎，实现分母/排除/分子 DSL 条件树三步匹配算法；完整重构并激活前端指标配置库（QcEvalSets.tsx）、整改预警与工作台（QcAlerts.tsx）和运行结果（QcEvalResults.tsx），注入带呼吸灯的严重度（P0..P3）卡片、PDCA 科室医师递交及专家复核工作流、P0 级核心红线豁免物理门禁阻断，通过 lint/typecheck/verify 静态安全门禁并保证 100% 测试通过。 |
 | 4.26 | 2026-05-28 | Codex | GA-ENG-CDSS-01 完成：重构激活临床建议与超频疲劳治理控制台（CdssFatigue.tsx），打通 triggers, cards, feedback, fatigue-signals 等核心 API 通道，封装 7 个 React Query API hooks；实现带有就诊/患者和严重度过滤的卡片台账、CDSS 沙箱触发仿真 Modal、采纳/不采纳人机交互与拒绝理由归集、超频疲劳指标及静音期进度条治理可视化，以及基于 StateTransitionRecorder 可信诊断解释审计 Drawer，通过全量 lint/TSC/物理门禁校验。 |
 | 4.25 | 2026-05-28 | Codex | GA-ENG-API-13 完成：新增 V19 五方言 DDL 迁移文件（包含 `large_list_export_job` 表）；实现包含游标分页参数解析（Base64 主键索引物理过滤）、总数近似估算（Total Estimate LIMIT 10001 限流）、Exporter 线程分批异步 CSV 文件导出与物理下载，以及集成 `@DataScope(requireTenant = true)` 类级隔离与高隔离物理子事务审计留痕等核心功能；跑通 100% 单元/集成测试及五方言静态门禁。 |

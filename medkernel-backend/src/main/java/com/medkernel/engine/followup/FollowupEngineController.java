@@ -1,6 +1,8 @@
 package com.medkernel.engine.followup;
 
 import com.medkernel.shared.api.ApiResult;
+import com.medkernel.shared.api.PageRequest;
+import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.datascope.DataScope;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,6 +47,25 @@ public class FollowupEngineController {
     @PreAuthorize("@perm.has('followup.read')")
     public ApiResult<FollowupPlanDetailResponse> getPlanDetail(@PathVariable String planId) {
         return ApiResult.ok(service.getPlanDetail(planId));
+    }
+
+    /**
+     * 分页查询随访计划列表。
+     *
+     * @param patientId 患者 ID（可选）
+     * @param page      页码（默认 1）
+     * @param size      分页大小（默认 50）
+     * @param sort      排序规则
+     * @return 分页随访计划列表
+     */
+    @GetMapping("/plans")
+    @PreAuthorize("@perm.has('followup.read')")
+    public ApiResult<PageResponse<FollowupPlanDetailResponse>> listPlans(
+            @RequestParam(required = false) String patientId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) String sort) {
+        return ApiResult.ok(service.listPlans(patientId, new PageRequest(page, size, sort)));
     }
 
     /**

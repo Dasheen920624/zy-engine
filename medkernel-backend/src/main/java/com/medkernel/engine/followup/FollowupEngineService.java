@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.medkernel.shared.api.PageRequest;
+import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.context.RequestContext;
@@ -224,5 +226,50 @@ public class FollowupEngineService {
             plan.status(),
             taskResponses
         );
+    }
+
+    /**
+     * 分页查询随访计划列表。
+     *
+     * @param patientId   患者 ID（可选）
+     * @param pageRequest 分页参数
+     * @return 分页计划详情列表
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<FollowupPlanDetailResponse> listPlans(String patientId, PageRequest pageRequest) {
+        RequestContext.Snapshot ctx = RequestContext.snapshot();
+        String tenantId = ctx.orgScope().tenantId();
+        
+        PageRequest req = pageRequest == null ? PageRequest.defaults() : pageRequest;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+            req.page() - 1,
+            req.safeSize()
+        );
+
+        org.springframework.data.domain.Page<FollowupPlan> pageResult;
+        if (patientId != null && !patientId.isBlank()) {
+            pageResult = planRepository.findByTenantIdAndPatientId(tenantId, patientId, pageable);
+        } else {
+            pageResult = planRepository.findByTenantId(tenantId, pageable);
+        }
+
+        List<FollowupPlanDetailResponse> list = pageResult.getContent().stream().map(plan -> {
+            List<FollowupTask> tasks = taskRepository.findByTenantIdAndPlanId(plan.tenantId(), plan.planId());
+            List<FollowupTaskDetailResponse> taskResponses = tasks.stream()
+                .map(t -> new FollowupTaskDetailResponse(t.taskId(), t.taskType(), t.dueDate(), t.status()))
+                .collect(Collectors.toList());
+
+            return new FollowupPlanDetailResponse(
+                plan.planId(),
+                plan.tenantId(),
+                plan.patientId(),
+                plan.encounterId(),
+                plan.diseaseCode(),
+                plan.status(),
+                taskResponses
+            );
+        }).collect(Collectors.toList());
+
+        return PageResponse.of(list, req, pageResult.getTotalElements());
     }
 }

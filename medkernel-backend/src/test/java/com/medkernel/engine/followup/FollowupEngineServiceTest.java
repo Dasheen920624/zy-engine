@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 
+import com.medkernel.shared.api.PageRequest;
+import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
 import org.junit.jupiter.api.AfterEach;
@@ -17,6 +19,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 随访引擎 Service 单元测试。
@@ -75,5 +80,28 @@ class FollowupEngineServiceTest {
         assertEquals("PLAN01", response.planId());
         assertEquals(1, response.tasks().size());
         assertEquals(FollowupTaskType.QUESTIONNAIRE, response.tasks().get(0).taskType());
+    }
+
+    @Test
+    void testListPlans() {
+        FollowupPlan plan = new FollowupPlan(1L, "PLAN01", "tenant-1", "PAT01", "ENC01", "PATH01", "D01", "HIGH",
+            FollowupPlanStatus.ACTIVE, Instant.now(), "sys", Instant.now(), "sys", "trace-123");
+            
+        Page<FollowupPlan> planPage = new PageImpl<>(List.of(plan));
+        
+        when(planRepository.findByTenantId(any(String.class), any(Pageable.class)))
+            .thenReturn(planPage);
+            
+        FollowupTask task = new FollowupTask(1L, "TASK01", "tenant-1", "PLAN01", FollowupTaskType.QUESTIONNAIRE,
+            Instant.now(), FollowupTaskStatus.PENDING, null, null, Instant.now(), "sys", Instant.now(), "sys", "trace-123");
+            
+        when(taskRepository.findByTenantIdAndPlanId(any(String.class), any(String.class)))
+            .thenReturn(List.of(task));
+
+        PageResponse<FollowupPlanDetailResponse> response = service.listPlans(null, new PageRequest(1, 10, null));
+        
+        assertNotNull(response);
+        assertEquals(1, response.items().size());
+        assertEquals("PLAN01", response.items().get(0).planId());
     }
 }

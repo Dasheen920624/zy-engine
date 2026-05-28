@@ -24,6 +24,7 @@ const CdssFatigue = lazy(() => import("@/pages/clinical/CdssFatigue"));
 const RuleValidate = lazy(() => import("@/pages/clinical/RuleValidate"));
 const WorkflowTodos = lazy(() => import("@/pages/clinical/WorkflowTodos"));
 const Notifications = lazy(() => import("@/pages/clinical/Notifications"));
+const Followup = lazy(() => import("@/pages/clinical/Followup"));
 
 // 质控改进域
 const QcDashboard = lazy(() => import("@/pages/quality/QcDashboard"));
@@ -74,6 +75,7 @@ export function AppRouter() {
           <Route path="/rule/validate" element={<RuleValidate />} />
           <Route path="/workflow/todos" element={<WorkflowTodos />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/clinical/followup" element={<Followup />} />
 
           {/* 质控改进 */}
           <Route path="/qc/dashboard" element={<QcDashboard />} />
