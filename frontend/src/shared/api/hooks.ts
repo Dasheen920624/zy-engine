@@ -846,3 +846,216 @@ export function usePatientPathwayDiagnose(patientPathwayId: string) {
     enabled: !!patientPathwayId,
   });
 }
+
+// ==================== 推荐/CDSS 引擎相关的实体及 DTO 契约 ====================
+
+export type RecommendationCardStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED" | string;
+export type RecommendationCardType =
+  | "DRUG_SAFETY"
+  | "INSURANCE_AUDIT"
+  | "CLINICAL_QUALITY"
+  | string;
+export type RecommendationRiskLevel = "LOW" | "MEDIUM" | "HIGH" | string;
+export type RecommendationInterruptLevel = "NONE" | "SOFT" | "HARD" | string;
+export type RecommendationSourceType = "GUIDELINE" | "LITERATURE" | "REGULATION" | string;
+export type RecommendationTriggerStatus = "SUCCESS" | "FAILED" | string;
+export type RecommendationFeedbackType = "ACCEPT" | "REJECT" | string;
+export type RecommendationFatigueSignalType = "MUTE" | "WARNING" | "BLOCK" | string;
+
+export interface RecommendationCard {
+  id?: number;
+  cardId: string;
+  tenantId: string;
+  triggerId: string;
+  patientId: string;
+  encounterId?: string;
+  scenarioCode: string;
+  cardType: RecommendationCardType;
+  title: string;
+  summary: string;
+  riskLevel: RecommendationRiskLevel;
+  interruptLevel: RecommendationInterruptLevel;
+  status: RecommendationCardStatus;
+  changeSummary?: string;
+  createdAt?: string;
+  createdBy?: string;
+  traceId?: string;
+}
+
+export interface RecommendationSource {
+  id?: number;
+  sourceId: string;
+  cardId: string;
+  sourceType: RecommendationSourceType;
+  title: string;
+  content: string;
+  evidenceLevel?: string;
+  authorityScore?: number;
+  sourceRef: string;
+  createdAt?: string;
+}
+
+export interface RecommendationFeedback {
+  id?: number;
+  feedbackId: string;
+  cardId: string;
+  feedbackType: RecommendationFeedbackType;
+  rejectReason?: string;
+  comments?: string;
+  physicianId: string;
+  createdAt?: string;
+}
+
+export interface RecommendationFatigueSignal {
+  id?: number;
+  signalId: string;
+  tenantId: string;
+  fatigueKey: string;
+  signalType: RecommendationFatigueSignalType;
+  triggerCount: number;
+  governanceThreshold: number;
+  summary?: string;
+  createdAt?: string;
+}
+
+export interface RecommendationCardDetailResponse {
+  card: RecommendationCard;
+  sources: RecommendationSource[];
+  feedback?: RecommendationFeedback;
+  fatigueSignals: RecommendationFatigueSignal[];
+  traceId: string;
+}
+
+export interface RecommendationTriggerResponse {
+  triggerId: string;
+  cardCount: number;
+  traceId: string;
+}
+
+export interface RecommendationFeedbackResponse {
+  cardId: string;
+  status: RecommendationCardStatus;
+  traceId: string;
+}
+
+// 1. Trigger Hooks
+export function useCreateRecommendationTrigger() {
+  return useMutation({
+    mutationFn: async (payload: {
+      patientId: string;
+      encounterId?: string;
+      scenarioCode: string;
+      diseaseCode?: string;
+      payloadJson: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: RecommendationTriggerResponse }>(
+        "/engine/recommendations/triggers",
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 2. Card Hooks
+export function useRecommendationCards(params?: {
+  status?: RecommendationCardStatus;
+  riskLevel?: RecommendationRiskLevel;
+  scenarioCode?: string;
+  patientId?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}) {
+  return useQuery({
+    queryKey: ["recommendations", "cards", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<RecommendationCard> }>(
+        "/engine/recommendations/cards",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useRecommendationCardDetail(cardId: string) {
+  return useQuery({
+    queryKey: ["recommendations", "card-detail", cardId],
+    queryFn: async () => {
+      if (!cardId) return null;
+      const { data } = await apiClient.get<{ data: RecommendationCardDetailResponse }>(
+        `/engine/recommendations/cards/${cardId}`,
+      );
+      return data.data;
+    },
+    enabled: !!cardId,
+  });
+}
+
+export function useRecommendationCardSources(cardId: string) {
+  return useQuery({
+    queryKey: ["recommendations", "card-sources", cardId],
+    queryFn: async () => {
+      if (!cardId) return [];
+      const { data } = await apiClient.get<{ data: RecommendationSource[] }>(
+        `/engine/recommendations/cards/${cardId}/sources`,
+      );
+      return data.data;
+    },
+    enabled: !!cardId,
+  });
+}
+
+// 3. Feedback Hook
+export function useSubmitRecommendationFeedback(cardId: string) {
+  return useMutation({
+    mutationFn: async (payload: {
+      feedbackType: RecommendationFeedbackType;
+      rejectReason?: string;
+      comments?: string;
+      physicianId?: string;
+    }) => {
+      const { data } = await apiClient.post<{ data: RecommendationFeedbackResponse }>(
+        `/engine/recommendations/cards/${cardId}/feedback`,
+        payload,
+      );
+      return data.data;
+    },
+  });
+}
+
+// 4. Fatigue Signal Hooks
+export function useRecommendationFatigueSignals(params?: {
+  fatigueKey?: string;
+  signalType?: RecommendationFatigueSignalType;
+  page?: number;
+  size?: number;
+  sort?: string;
+}) {
+  return useQuery({
+    queryKey: ["recommendations", "fatigue-signals", params ?? {}],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PageResponse<RecommendationFatigueSignal> }>(
+        "/engine/recommendations/fatigue-signals",
+        { params },
+      );
+      return data.data;
+    },
+  });
+}
+
+// 5. Diagnose Hook
+export function useRecommendationTriggerDiagnose(triggerId: string) {
+  return useQuery({
+    queryKey: ["recommendations", "trigger-diagnose", triggerId],
+    queryFn: async () => {
+      if (!triggerId) return null;
+      const { data } = await apiClient.get<{ data: DiagnoseResponse }>(
+        `/engine/recommendations/triggers/${triggerId}/diagnose`,
+      );
+      return data.data;
+    },
+    enabled: !!triggerId,
+  });
+}
