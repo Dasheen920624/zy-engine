@@ -1,27 +1,249 @@
-import { Card, Space, Typography } from "antd";
+import { Card, Space, Typography, Steps, Row, Col, Progress, Tag, Button, Spin, Alert, message, Divider } from "antd";
+import { ArrowRightOutlined, MedicineBoxOutlined, AppstoreOutlined, ClockCircleOutlined, UserOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import { useSuccessPlan, useTransitionSuccessStage } from "@/shared/api/hooks";
+import styles from "./TenantLifecyclePanel.module.css";
 
-import { PageState } from "@/shared/ui/PageState";
-import { RoadmapLink } from "@/shared/ui/RoadmapLink";
+const { Text, Paragraph } = Typography;
 
-const { Text } = Typography;
+// eslint-disable-next-line medkernel/no-page-mock
+const STAGES = [
+  { key: "PREPARATION", title: "系统准备", description: "对接就绪与数据导入" },
+  { key: "PILOT", title: "临床试点", description: "科室试运行与质控监测" },
+  { key: "ACCEPTANCE", title: "上线验收", description: "质控指标达成与物理验收" },
+  { key: "PROMOTION", title: "全院推广", description: "全科室推广与流程闭环" },
+  { key: "RUNNING", title: "常态运行", description: "长期稳定常态化生产运行" },
+  { key: "RENEWAL", title: "年度续约", description: "服务成效评估与续约演进" },
+];
 
-/**
- * 租户生命周期面板（与 docs/CONSTITUTION.md §6 对齐）。
- *
- * 6 阶段：0 准备 → 1 试运行 → 2 验收 → 3 推广 → 4 运行 → 5 续约
- * 多维治理切片：组织层级、病种/专病包、服务模块、角色、阶段、接入、风险和证据并行。
- *
- * GA-ENG-BASE-09 净化后占位：业务包装 GA-SVC-PILOT-01 完成后接入真实生命周期推进引擎。
- */
 export function TenantLifecyclePanel() {
-  return (
-    <Card title={<Text strong>租户生命周期</Text>}>
-      <Space direction="vertical" size="middle" className="mk-full-width">
-        <PageState
-          state="disabled"
-          description="本面板依赖 GA-SVC-PILOT-01；E6 服务包装启动后接入真实多维生命周期引擎。"
-          action={<RoadmapLink taskIds={["GA-SVC-PILOT-01"]} />}
+  const { data, isLoading, error, refetch } = useSuccessPlan();
+  const transitionMutation = useTransitionSuccessStage();
+
+  if (isLoading) {
+    return (
+      <Card title={<Text className={styles.title}>租户多维生命周期控制台</Text>} className={styles.card}>
+        {/* eslint-disable-next-line medkernel/no-inline-style */}
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <Spin size="large" tip="正在物理加载多维生命周期数据..." />
+        </div>
+      </Card>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card title={<Text className={styles.title}>租户多维生命周期控制台</Text>} className={styles.card}>
+        <Alert
+          message="数据加载失败"
+          description={error instanceof Error ? error.message : "无法与底层租户生命周期服务建立物理连接"}
+          type="error"
+          showIcon
         />
+      </Card>
+    );
+  }
+
+  const currentStep = STAGES.findIndex((s) => s.key === data.currentStage);
+  const currentStepSafe = currentStep !== -1 ? currentStep : 0;
+  
+  const hasNext = currentStepSafe < STAGES.length - 1;
+  const nextStage = hasNext ? STAGES[currentStepSafe + 1] : null;
+
+  const handleTransition = () => {
+    if (!nextStage) return;
+    transitionMutation.mutate(nextStage.key, {
+      onSuccess: () => {
+        message.success(`生命周期物理演进成功：已成功推进至【${nextStage.title}】`);
+        refetch();
+      },
+      onError: (err: unknown) => {
+        const axiosError = err as { message?: string; response?: { data?: { message?: string } } };
+        const errMsg = axiosError.response?.data?.message || axiosError.message || "请求物理变迁失败";
+        message.error(`推进生命周期失败: ${errMsg}`);
+      },
+    });
+  };
+
+  // 根据健康度得分获取颜色与状态描述
+  const getHealthMeta = (score: number) => {
+    if (score >= 80) return { color: "var(--ant-color-success)", status: "稳健" };
+    if (score >= 60) return { color: "var(--ant-color-warning)", status: "预警" };
+    return { color: "var(--ant-color-error)", status: "风险" };
+  };
+
+  const healthMeta = getHealthMeta(data.healthScore);
+
+  const activeModules = data.activatedModules ? data.activatedModules.split(",").filter(Boolean) : [];
+  const activePathways = data.activatedPathways ? data.activatedPathways.split(",").filter(Boolean) : [];
+
+  return (
+    <Card 
+      title={
+        <Space direction="vertical" size={2}>
+          <Text className={styles.title}>租户多维生命周期控制台</Text>
+          <Text className={styles.subtitle}>
+            与 docs/CONSTITUTION.md §6 多维并行生命周期物理驱动对齐
+          </Text>
+        </Space>
+      }
+      extra={
+        <Tag color="cyan" className={styles.stageTag}>
+          当前阶段：{STAGES[currentStepSafe]?.title}
+        </Tag>
+      }
+      className={styles.card}
+    >
+      <Space direction="vertical" size="large" className="mk-full-width">
+        {/* 步骤图谱展示 */}
+        <div className={styles.stepsContainer}>
+          <Steps
+            current={currentStepSafe}
+            size="small"
+            labelPlacement="vertical"
+            items={STAGES.map((s, index) => {
+              let status: "process" | "finish" | "wait" = "wait";
+              if (index === currentStepSafe) {
+                status = "process";
+              } else if (index < currentStepSafe) {
+                status = "finish";
+              }
+              return {
+                title: s.title,
+                description: (
+                  <span className={styles.stepDesc}>
+                    {s.description}
+                  </span>
+                ),
+                status
+              };
+            })}
+          />
+        </div>
+
+        {/* 物理切片多维数据 */}
+        <Row gutter={[24, 24]} align="stretch">
+          {/* 健康度得分切片 */}
+          <Col xs={24} md={8}>
+            <Card
+              size="small"
+              title={<span className={styles.cardIconTitle}><SafetyCertificateOutlined /> 租户健康度得分</span>}
+              className={styles.card}
+            >
+              <div className={styles.progressContainer}>
+                <Progress
+                  type="circle"
+                  percent={data.healthScore}
+                  strokeColor={{
+                    "0%": healthMeta.color,
+                    "100%": "var(--ant-color-primary)",
+                  }}
+                  width={100}
+                  format={(percent) => (
+                    <div className={styles.progressFormat}>
+                      <span className={styles.progressScore}>{percent}</span>
+                      {/* eslint-disable-next-line medkernel/no-inline-style */}
+                      <span style={{ color: healthMeta.color }} className={styles.progressStatus}>
+                        {healthMeta.status}
+                      </span>
+                    </div>
+                  )}
+                />
+                <Text className={styles.progressDesc}>
+                  全量集成证据链及模型成效得出
+                </Text>
+              </div>
+            </Card>
+          </Col>
+
+          {/* 激活的服务模块 */}
+          <Col xs={24} md={8}>
+            <Card
+              size="small"
+              title={<span className={styles.cardIconTitle}><AppstoreOutlined /> 已激活服务模块</span>}
+              className={styles.card}
+            >
+              <div className={styles.cardBody}>
+                {activeModules.length > 0 ? (
+                  <Space size={[4, 8]} wrap>
+                    {activeModules.map((m) => (
+                      <Tag color="geekblue" key={m} className={styles.tagGeekblue}>
+                        {m}
+                      </Tag>
+                    ))}
+                  </Space>
+                ) : (
+                  <Text type="secondary" italic>无已激活服务模块</Text>
+                )}
+                <Paragraph className={styles.cardDesc}>
+                  由底座统一认证中心对当前租户注入的安全服务许可范围。
+                </Paragraph>
+              </div>
+            </Card>
+          </Col>
+
+          {/* 激活的临床专病包 */}
+          <Col xs={24} md={8}>
+            <Card
+              size="small"
+              title={<span className={styles.cardIconTitle}><MedicineBoxOutlined /> 已配置临床专病包</span>}
+              className={styles.card}
+            >
+              <div className={styles.cardBody}>
+                {activePathways.length > 0 ? (
+                  <Space size={[4, 8]} wrap>
+                    {activePathways.map((p) => (
+                      <Tag color="magenta" key={p} className={styles.tagMagenta}>
+                        {p}
+                      </Tag>
+                    ))}
+                  </Space>
+                ) : (
+                  <Text type="secondary" italic>无已配置专病包</Text>
+                )}
+                <Paragraph className={styles.cardDesc}>
+                  当前租户已加载生效的临床路径与医疗规范知识库集合。
+                </Paragraph>
+              </div>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* 下一阶段演进操作与审计物理留痕 */}
+        <Divider className={styles.divider} />
+        
+        <Row align="middle" justify="space-between">
+          <Col>
+            <Space size="middle">
+              {data.updatedAt && (
+                <span className={styles.auditText}>
+                  <ClockCircleOutlined /> 物理更新时间：{new Date(data.updatedAt).toLocaleString()}
+                </span>
+              )}
+              {data.updatedBy && (
+                <span className={styles.auditText}>
+                  <UserOutlined /> 操作人：{data.updatedBy}
+                </span>
+              )}
+            </Space>
+          </Col>
+          <Col>
+            {hasNext && nextStage ? (
+              <Button
+                type="primary"
+                icon={<ArrowRightOutlined />}
+                loading={transitionMutation.isPending}
+                onClick={handleTransition}
+                className={styles.transitionBtn}
+              >
+                推进生命阶段至【{nextStage.title}】
+              </Button>
+            ) : (
+              <Button disabled className={styles.transitionBtn}>
+                已达生命周期终点【年度续约】
+              </Button>
+            )}
+          </Col>
+        </Row>
       </Space>
     </Card>
   );

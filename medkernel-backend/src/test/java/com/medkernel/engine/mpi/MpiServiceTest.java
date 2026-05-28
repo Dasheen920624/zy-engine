@@ -1,0 +1,254 @@
+package com.medkernel.engine.mpi;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+import com.medkernel.shared.api.PageRequest;
+import com.medkernel.shared.api.PageResponse;
+import com.medkernel.shared.context.OrgScope;
+import com.medkernel.shared.context.RequestContext;
+import com.medkernel.shared.observability.StateTransitionRecorder;
+
+/**
+ * MpiService 单元测试。
+ *
+ * <p>全面覆盖列表查询、多维度指标驾驶舱统计、物理事务合并逻辑及其可观测性审计记录。
+ */
+class MpiServiceTest {
+
+    private MpiPatientRepository repository;
+    private StateTransitionRecorder recorder;
+    private MpiService service;
+
+    private static final String TENANT_ID = "tenant-A";
+    private static final String ACTOR = "tester";
+
+    @BeforeEach
+    void setUp() {
+        repository = mock(MpiPatientRepository.class);
+        recorder = mock(StateTransitionRecorder.class);
+        service = new MpiService(repository, recorder);
+
+        // 设置 RequestContext
+        RequestContext.restore(new RequestContext.Snapshot("trace-mpi-test", OrgScope.tenant(TENANT_ID), ACTOR));
+    }
+
+    @AfterEach
+    void tearDown() {
+        RequestContext.clear();
+    }
+
+    @Test
+    void shouldThrowIfTenantMissingWhenQueryPatients() {
+        RequestContext.clear();
+        assertThatThrownBy(() -> service.getPatients(null, null, PageRequest.defaults()))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("租户 ID 缺失");
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoPatientsFound() {
+        when(repository.countPatients(eq(TENANT_ID), any(), any())).thenReturn(0L);
+
+        PageResponse<MpiPatient> page = service.getPatients("keyword", "ACTIVE", PageRequest.defaults());
+
+        assertThat(page.total()).isZero();
+        assertThat(page.items()).isEmpty();
+        verify(repository, never()).findPatients(anyString(), anyString(), anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    void shouldReturnPatientsPageWhenFound() {
+        MpiPatient patient = new MpiPatient(
+            1L, "mpi-1", TENANT_ID, "张*三", "M", 35, "1234", 0, "ACTIVE",
+            null, Instant.now(), ACTOR, Instant.now(), ACTOR
+        );
+
+        when(repository.countPatients(TENANT_ID, "张", "ACTIVE")).thenReturn(1L);
+        when(repository.findPatients(TENANT_ID, "张", "ACTIVE", 20, 0))
+            .thenReturn(List.of(patient));
+
+        PageResponse<MpiPatient> page = service.getPatients("张", "ACTIVE", PageRequest.defaults());
+
+        assertThat(page.total()).isEqualTo(1L);
+        assertThat(page.items()).containsExactly(patient);
+    }
+
+    @Test
+    void shouldReturnStatsCorrectly() {
+        when(repository.countActive(TENANT_ID)).thenReturn(10L);
+        when(repository.countMerged(TENANT_ID)).thenReturn(2L);
+        when(repository.averageAge(TENANT_ID)).thenReturn(42.5);
+
+        MpiPatientRepository.GenderCount gcMale = mock(MpiPatientRepository.GenderCount.class);
+        when(gcMale.getGender()).thenReturn("M");
+        when(gcMale.getCnt()).thenReturn(6L);
+
+        MpiPatientRepository.GenderCount gcFemale = mock(MpiPatientRepository.GenderCount.class);
+        when(gcFemale.getGender()).thenReturn("F");
+        when(gcFemale.getCnt()).thenReturn(4L);
+
+        when(repository.countGender(TENANT_ID)).thenReturn(List.of(gcMale, gcFemale));
+
+        MpiStatsResponse stats = service.getStats();
+
+        assertThat(stats.activeCount()).isEqualTo(10L);
+        assertThat(stats.mergedCount()).isEqualTo(2L);
+        assertThat(stats.averageAge()).isEqualTo(42.5);
+        assertThat(stats.genderCounts()).containsEntry("M", 6L);
+        assertThat(stats.genderCounts()).containsEntry("F", 4L);
+        assertThat(stats.genderCounts()).containsEntry("UNKNOWN", 0L);
+    }
+
+    @Test
+    void shouldThrowIfTenantMissingWhenGetStats() {
+        RequestContext.clear();
+        assertThatThrownBy(() -> service.getStats())
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("租户 ID 缺失");
+    }
+
+    @Test
+    void shouldRejectMergeWhenIdsAreBlank() {
+        assertThatThrownBy(() -> service.mergePatients("", "mpi-2"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("不能为空");
+
+        assertThatThrownBy(() -> service.mergePatients("mpi-1", null))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("不能为空");
+    }
+
+    @Test
+    void shouldRejectMergeWhenIdsAreEqual() {
+        assertThatThrownBy(() -> service.mergePatients("mpi-1", "mpi-1"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("不能是同一个患者");
+    }
+
+    @Test
+    void shouldRejectMergeWhenSourcePatientMissing() {
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-source")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.mergePatients("mpi-source", "mpi-target"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("未找到源患者");
+    }
+
+    @Test
+    void shouldRejectMergeWhenTargetPatientMissing() {
+        MpiPatient source = new MpiPatient(
+            1L, "mpi-source", TENANT_ID, "张*三", "M", 30, "1234", 0, "ACTIVE",
+            null, Instant.now(), ACTOR, Instant.now(), ACTOR
+        );
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-source")).thenReturn(Optional.of(source));
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-target")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.mergePatients("mpi-source", "mpi-target"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("未找到目标患者");
+    }
+
+    @Test
+    void shouldRejectMergeWhenSourceIsNotActive() {
+        MpiPatient source = new MpiPatient(
+            1L, "mpi-source", TENANT_ID, "张*三", "M", 30, "1234", 0, "MERGED_INTO",
+            "mpi-other", Instant.now(), ACTOR, Instant.now(), ACTOR
+        );
+        MpiPatient target = new MpiPatient(
+            2L, "mpi-target", TENANT_ID, "张*四", "M", 32, "5678", 1, "ACTIVE",
+            null, Instant.now(), ACTOR, Instant.now(), ACTOR
+        );
+
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-source")).thenReturn(Optional.of(source));
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-target")).thenReturn(Optional.of(target));
+
+        assertThatThrownBy(() -> service.mergePatients("mpi-source", "mpi-target"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("源患者状态不是活跃状态");
+    }
+
+    @Test
+    void shouldRejectMergeWhenTargetIsNotActive() {
+        MpiPatient source = new MpiPatient(
+            1L, "mpi-source", TENANT_ID, "张*三", "M", 30, "1234", 0, "ACTIVE",
+            null, Instant.now(), ACTOR, Instant.now(), ACTOR
+        );
+        MpiPatient target = new MpiPatient(
+            2L, "mpi-target", TENANT_ID, "张*四", "M", 32, "5678", 1, "MERGED_INTO",
+            "mpi-other", Instant.now(), ACTOR, Instant.now(), ACTOR
+        );
+
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-source")).thenReturn(Optional.of(source));
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-target")).thenReturn(Optional.of(target));
+
+        assertThatThrownBy(() -> service.mergePatients("mpi-source", "mpi-target"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("合并目标必须是活跃患者");
+    }
+
+    @Test
+    void shouldMergeSuccessfullyAndRecordAudit() {
+        MpiPatient source = new MpiPatient(
+            1L, "mpi-source", TENANT_ID, "张*三", "M", 30, "1234", 2, "ACTIVE",
+            null, Instant.now(), ACTOR, Instant.now(), ACTOR
+        );
+        MpiPatient target = new MpiPatient(
+            2L, "mpi-target", TENANT_ID, "张*四", "M", 32, "5678", 1, "ACTIVE",
+            null, Instant.now(), ACTOR, Instant.now(), ACTOR
+        );
+
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-source")).thenReturn(Optional.of(source));
+        when(repository.findByTenantIdAndMpiId(TENANT_ID, "mpi-target")).thenReturn(Optional.of(target));
+
+        service.mergePatients("mpi-source", "mpi-target");
+
+        // 验证源患者更新：状态变为 MERGED_INTO，指向目标 mpi-target
+        ArgumentCaptor<MpiPatient> patientCaptor = ArgumentCaptor.forClass(MpiPatient.class);
+        verify(repository, times(2)).save(patientCaptor.capture());
+
+        List<MpiPatient> allSaved = patientCaptor.getAllValues();
+        MpiPatient savedSource = allSaved.stream()
+            .filter(p -> "mpi-source".equals(p.mpiId()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("未捕获到 mpi-source 的保存操作"));
+        MpiPatient savedTarget = allSaved.stream()
+            .filter(p -> "mpi-target".equals(p.mpiId()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("未捕获到 mpi-target 的保存操作"));
+
+        assertThat(savedSource.status()).isEqualTo("MERGED_INTO");
+        assertThat(savedSource.mergedIntoMpiId()).isEqualTo("mpi-target");
+        // 目标患者 mergedCount = 目标原有 1 + 源原有 2 + 1 = 4
+        assertThat(savedTarget.mergedCount()).isEqualTo(4);
+
+        // 验证审计日志记录
+        verify(recorder, times(1)).record(
+            eq("mpi_patient"),
+            eq("mpi-source"),
+            eq("ACTIVE"),
+            eq("MERGED_INTO"),
+            eq("物理合并至目标患者主索引：mpi-target"),
+            isNull()
+        );
+    }
+}

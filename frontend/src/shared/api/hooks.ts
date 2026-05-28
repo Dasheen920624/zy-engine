@@ -2332,3 +2332,139 @@ export function useExportEvidences() {
     },
   });
 }
+
+// ──────────────────────────────────────────
+// 租户品牌个性化定制与生命周期管理 · GA-SVC-PILOT-01
+// ──────────────────────────────────────────
+export interface Branding {
+  id?: number;
+  tenantId: string;
+  hospitalName: string;
+  logoUrl: string;
+  themeColor: string;
+  expertMode: boolean;
+  customBrandingJson: string;
+  createdAt?: string;
+  createdBy?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface SuccessPlan {
+  id?: number;
+  tenantId: string;
+  currentStage: "PREPARATION" | "PILOT" | "ACCEPTANCE" | "PROMOTION" | "RUNNING" | "RENEWAL";
+  healthScore: number;
+  activatedModules: string;
+  activatedPathways: string;
+  createdAt?: string;
+  createdBy?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export function useBranding() {
+  return useQuery({
+    queryKey: ["platform", "branding"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: Branding }>("/platform/branding");
+      return data.data;
+    },
+  });
+}
+
+export function useUpdateBranding() {
+  return useMutation({
+    mutationFn: async (payload: Partial<Branding>) => {
+      const { data } = await apiClient.post<{ data: Branding }>("/platform/branding", payload);
+      return data.data;
+    },
+  });
+}
+
+export function useSuccessPlan() {
+  return useQuery({
+    queryKey: ["platform", "success", "lifecycle"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: SuccessPlan }>("/platform/success/lifecycle");
+      return data.data;
+    },
+  });
+}
+
+export function useTransitionSuccessStage() {
+  return useMutation({
+    mutationFn: async (nextStage: string) => {
+      const { data } = await apiClient.post<{ data: SuccessPlan }>(
+        "/platform/success/lifecycle/transition",
+        { nextStage }
+      );
+      return data.data;
+    },
+  });
+}
+
+// ──────────────────────────────────────────
+// 临床服务包装 · 患者主索引 MPI（GA-SVC-CLINICAL-01）
+// ──────────────────────────────────────────
+export interface MpiPatient {
+  id?: number;
+  mpiId: string;
+  tenantId: string;
+  maskedName: string;
+  gender: string;
+  age: number;
+  idLast4: string;
+  mergedCount: number;
+  status: "ACTIVE" | "MERGED_INTO" | string;
+  mergedIntoMpiId?: string | null;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export interface MpiStatsResponse {
+  activeCount: number;
+  mergedCount: number;
+  averageAge: number;
+  genderCounts: Record<string, number>;
+}
+
+export function useMpiPatients(params: { keyword?: string; status?: string; page?: number; size?: number } = {}) {
+  return useQuery({
+    queryKey: ["clinical", "mpi", "patients", params],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: { items: MpiPatient[]; total: number } }>(
+        "/clinical/mpi/patients",
+        { params }
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useMpiStats() {
+  return useQuery({
+    queryKey: ["clinical", "mpi", "stats"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: MpiStatsResponse }>("/clinical/mpi/stats");
+      return data.data;
+    },
+  });
+}
+
+export interface MergeMpiPayload {
+  sourceMpiId: string;
+  targetMpiId: string;
+}
+
+export function useMergeMpiPatients() {
+  return useMutation({
+    mutationFn: async (payload: MergeMpiPayload) => {
+      const { data } = await apiClient.post<{ data: void }>("/clinical/mpi/patients/merge", payload);
+      return data.data;
+    },
+  });
+}
+

@@ -48,7 +48,9 @@ class MigrationBaselineContractTest {
         "V19__large_list_api.sql",
         "V20__integration_engine_api.sql",
         "V21__audit_evidence_api.sql",
-        "V22__engine_remediation.sql"
+        "V22__engine_remediation.sql",
+        "V23__tenant_pilot_baseline.sql",
+        "V24__mpi_patient_registry.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -72,7 +74,9 @@ class MigrationBaselineContractTest {
         "model_capability_task", "model_capability_policy",
         "large_list_export_job",
         "integration_adapter", "integration_webhook_config", "integration_message_log",
-        "evidence_snapshot"
+        "evidence_snapshot",
+        "tenant_branding", "tenant_success_plan",
+        "mpi_patient"
     );
     private static final Set<String> REQUIRED_INDEXES = Set.of(
         "idx_org_unit_parent", "idx_org_unit_tenant_lv", "idx_audit_event_resource",
@@ -132,7 +136,7 @@ class MigrationBaselineContractTest {
         "idx_followup_event_type", "idx_embed_token_tenant", "idx_model_task_tenant",
         "idx_large_list_job_tenant",
         "idx_integ_adapter_tenant", "idx_integ_webhook_tenant", "idx_integ_msg_tenant", "idx_integ_msg_trace",
-        "idx_evd_tenant", "idx_evd_trace"
+        "idx_evd_tenant", "idx_evd_trace", "idx_mpi_patient_tenant_status"
     );
     private static final Set<String> COMMON_CONSTRAINTS = Set.of(
         "uk_org_unit_tenant_code", "ck_org_unit_level", "ck_org_unit_status",
@@ -203,7 +207,9 @@ class MigrationBaselineContractTest {
         "uk_integration_adapter", "uk_integration_webhook", "uk_integration_message",
         "ck_integration_adapter_status", "ck_integration_adapter_health",
         "ck_integration_webhook_status", "ck_integration_message_dir", "ck_integration_message_status",
-        "uk_evidence_snapshot"
+        "uk_evidence_snapshot",
+        "uk_tenant_branding", "uk_tenant_success_plan",
+        "uk_mpi_patient_id"
     );
     private static final Set<String> TENANT_TABLES = Set.of(
         "org_unit", "audit_event", "source_document", "source_version", "source_fragment",
@@ -225,7 +231,9 @@ class MigrationBaselineContractTest {
         "model_capability_task", "model_capability_policy",
         "large_list_export_job",
         "integration_adapter", "integration_webhook_config", "integration_message_log",
-        "evidence_snapshot"
+        "evidence_snapshot",
+        "tenant_branding", "tenant_success_plan",
+        "mpi_patient"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -244,7 +252,9 @@ class MigrationBaselineContractTest {
         "model_capability_task", "model_capability_policy",
         "large_list_export_job",
         "integration_adapter", "integration_webhook_config", "integration_message_log",
-        "evidence_snapshot"
+        "evidence_snapshot",
+        "tenant_branding", "tenant_success_plan",
+        "mpi_patient"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
@@ -307,7 +317,9 @@ class MigrationBaselineContractTest {
         Map.entry("large_list_export_job", Set.of("status")),
         Map.entry("integration_adapter", Set.of("status", "health_status")),
         Map.entry("integration_webhook_config", Set.of("status")),
-        Map.entry("integration_message_log", Set.of("status", "direction"))
+        Map.entry("integration_message_log", Set.of("status", "direction")),
+        Map.entry("tenant_success_plan", Set.of("current_stage")),
+        Map.entry("mpi_patient", Set.of("status"))
     );
 
     private static final Pattern TABLE_PATTERN =
