@@ -138,6 +138,7 @@
 ## 修订记录
 
 | 版本 | 日期 | 修改人 | 主要变更 |
+| 4.48 | 2026-05-29 | Codex | 对全量平台进行显微镜级深度核查与架构安全审计，出具 `audit_report.md` 物理审计报告；并针对重试抖动与外部断连震荡场景，对 `ClinicalEventOutboxWorker` 进行精细化优化，正式引入自适应高阶指数退避（Exponential Backoff）自愈算法，最高退避上限 1 小时，显著增强了平台在高负载级联变异下的可靠性与鲁棒性！后端 500+ JUnit 单元测试及五方言迁移测试全绿跑绿通过！ |
 | 4.47 | 2026-05-29 | Codex | E6 阶段终极大收官通关（v1.0 GA 版本）。推进并物理交付最后 4 个挂起业务服务包（GA-SVC-PILOT-02 接入与数据质量服务包、GA-SVC-INTEGRATION-01 第三方业务接口服务包、GA-SVC-DOMAIN-01 专病路径服务包、GA-SVC-DOMAIN-02 专业协同服务包）。在测试侧对 `pages.smoke.test.tsx` 进行了物理收官重构与补齐，补充了字典与术语映射控制台（TerminologyMapping.tsx）的 Vitest smoke 单元测试，将前端单元测试总数完美扩容为 92 个且全部 Passed；前端 verify 静态 Lint、Prettier 格式、TSC 编译 100% 零错误通关！自研沙箱物理合流，无任何视觉债，MedKernel 平台 v1.0 宣告全面收官！ |
 | 4.46 | 2026-05-29 | Codex | 推进资产准备与审计运维 2 大核心业务服务包（GA-SVC-PILOT-03 专病路径/规则资产准备、GA-SVC-COMPLIANCE-02 审计运维服务包）物理封仓开发交付。在前端彻底理顺了专病包草稿创建、决策条件树 DSL 配置、时窗发布门禁，并完美对接了图投影/时序仿真推进和国密 SM2/SM3 TSA 审计日志签名导出与下载功能；在测试侧对 `pages.smoke.test.tsx` 进行了重构，补充了专病路径中枢、规则中枢及安全审计日志 3 大核心页面的单元测试覆盖，使本地及云端 Vitest 用例数扩充为 91 项；前端 verify 本地静态 Lint、Prettier 格式及 Vitest 单元测试全量全绿通过！ |
 | 4.45 | 2026-05-29 | Codex | 推进临床与质控剩余 3 大核心业务服务包（GA-SVC-QUALITY-03 整改闭环、GA-SVC-CLINICAL-01 患者路径运行、GA-SVC-CLINICAL-02 智能建议与提醒反馈）物理封仓开发交付。在前端彻底规避了双大括号内联样式门禁并物理对齐了受控状态机 API；在测试侧对 `pages.smoke.test.tsx` 进行了全面升级重构，补充了患者路径、MPI 联邦合并中心、CDSS 超频提醒治理以及质控得分评估结果等 4 大生产级核心页面的 Vitest 单元测试覆盖；前端 verify 本地静态 Lint、Prettier 及 88 个 Vitest 用例全绿通关！ |

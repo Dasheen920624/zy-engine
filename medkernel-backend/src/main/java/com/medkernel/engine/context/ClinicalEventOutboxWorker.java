@@ -69,8 +69,18 @@ public class ClinicalEventOutboxWorker {
         if (retryCount >= properties.maxRetries()) {
             return Instant.now();
         }
-        int index = Math.min(retryCount - 1, properties.backoffSeconds().size() - 1);
-        return Instant.now().plusSeconds(properties.backoffSeconds().get(index));
+        int listSize = properties.backoffSeconds().size();
+        if (retryCount <= listSize) {
+            return Instant.now().plusSeconds(properties.backoffSeconds().get(retryCount - 1));
+        } else {
+            // 当重试次数超过预设列表时，开启基于指数退避（Exponential Backoff）算法进行安全退避，
+            // 基础时间是配置列表的最后一个值，以 2 的指数次方递增，最大不超过 3600 秒（1小时），防高并发震荡锁死。
+            long lastConfiguredBackoff = properties.backoffSeconds().get(listSize - 1);
+            long factor = 1L << Math.min(retryCount - listSize, 6); // 限制指数大小防止溢出 (最大 2^6 = 64)
+            long exponentialBackoff = lastConfiguredBackoff * factor;
+            long finalBackoff = Math.min(exponentialBackoff, 3600L); // 最大上限 1 小时
+            return Instant.now().plusSeconds(finalBackoff);
+        }
     }
 
     private int safeRetryCount(ClinicalEventOutbox row) {
