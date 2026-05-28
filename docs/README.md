@@ -62,7 +62,7 @@ docs/
 |---|---|
 | 任务命名 | `GA-ENG-*` 用于当前引擎任务；后续业务服务包装使用 `GA-SVC-*` |
 | 代码基线 | 当前生产主链路必须逐步去 mock、去裸 Map、去单病种假闭环 |
-| 分支模型 | trunk-based：远程 `main` 单线 + `codex/*` 或 `feature/*` 短分支（≤ 3 天） |
+| 分支模型 | trunk-based：远程长期分支只保留 `main`，不设 `develop`；日常使用 `codex/*` 或 `feature/*` 短分支（≤ 3 天） |
 | PR base | 一律 → `main` |
 | 文档登记 | 文档与代码改动**同 PR** |
 | 任务台账 | 单一 [`backlog.md`](backlog.md) |
