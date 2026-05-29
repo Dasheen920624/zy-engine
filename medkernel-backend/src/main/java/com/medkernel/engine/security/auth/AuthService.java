@@ -2,6 +2,7 @@ package com.medkernel.engine.security.auth;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +14,12 @@ import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.audit.AuditAction;
 import com.medkernel.shared.audit.AuditEvent;
+import com.medkernel.shared.audit.AuditEventPublisher;
 import com.medkernel.shared.audit.IsolatedAuditPublisher;
 
-/** 平台账号登录：BCrypt 校验 → 取角色 → 签发 JWT；成功/失败均隔离审计。 */
+/** 平台账号登录：BCrypt 校验 → 取角色 → 签发 JWT；成功/失败均审计。 */
 @Service
+@Profile({"dev", "test"})
 public class AuthService {
 
     private final PlatformCredentialRepository credentials;
@@ -24,22 +27,30 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtIssuer jwtIssuer;
     private final IsolatedAuditPublisher isolatedAudit;
+    private final AuditEventPublisher auditPublisher;
+    private final String dummyHash;
 
     public AuthService(PlatformCredentialRepository credentials,
                        UserRoleAssignmentRepository roleAssignments,
                        PasswordEncoder passwordEncoder,
                        JwtIssuer jwtIssuer,
-                       IsolatedAuditPublisher isolatedAudit) {
+                       IsolatedAuditPublisher isolatedAudit,
+                       AuditEventPublisher auditPublisher) {
         this.credentials = credentials;
         this.roleAssignments = roleAssignments;
         this.passwordEncoder = passwordEncoder;
         this.jwtIssuer = jwtIssuer;
         this.isolatedAudit = isolatedAudit;
+        this.auditPublisher = auditPublisher;
+        this.dummyHash = passwordEncoder.encode("__medkernel_dummy_account__");
     }
 
     public AuthResult login(String tenantId, String username, String rawPassword) {
         PlatformCredential cred = credentials.findByTenantIdAndUsername(tenantId, username).orElse(null);
-        if (cred == null || !passwordEncoder.matches(rawPassword, cred.passwordHash())) {
+        // C1: 无论用户是否存在都跑一次 BCrypt，拉平 timing 防枚举
+        String hashToCompare = (cred != null) ? cred.passwordHash() : dummyHash;
+        boolean passwordMatches = passwordEncoder.matches(rawPassword, hashToCompare);
+        if (cred == null || !passwordMatches) {
             isolatedAudit.publishInNewTx(AuditEvent.failure(
                 AuditAction.LOGIN, "platform_credential", username,
                 ErrorCode.ENG_AUTH_001.code(), "登录失败：用户名或密码不正确 username=" + username));
@@ -55,16 +66,17 @@ public class AuthService {
             .findActiveByTenantIdAndUserId(tenantId, cred.userId())
             .stream().map(UserRoleAssignment::roleCode).distinct().toList();
         String jwt = jwtIssuer.issue(cred.userId(), tenantId, roles);
-        isolatedAudit.publishInNewTx(AuditEvent.of(
-            AuditAction.LOGIN, "platform_credential", cred.userId(),
-            "登录成功 username=" + username + " roles=" + roles));
+        // I3: 成功路径用 AuditEventPublisher.publish
+        auditPublisher.publish(AuditAction.LOGIN, "platform_credential", cred.userId(),
+            "登录成功 username=" + username + " roles=" + roles);
         return new AuthResult(jwt,
             new LoginResponse(cred.userId(), tenantId, roles, "Y".equalsIgnoreCase(cred.mustChangePwd())));
     }
 
     public void logout(String userId) {
-        isolatedAudit.publishInNewTx(AuditEvent.of(
-            AuditAction.LOGOUT, "platform_credential", userId == null ? "anonymous" : userId, "登出"));
+        // I3: 登出也用 AuditEventPublisher.publish
+        auditPublisher.publish(AuditAction.LOGOUT, "platform_credential",
+            userId == null ? "anonymous" : userId, "登出");
     }
 
     public record AuthResult(String jwt, LoginResponse response) {}

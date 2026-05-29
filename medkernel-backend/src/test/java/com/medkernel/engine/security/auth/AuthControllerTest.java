@@ -1,6 +1,7 @@
 package com.medkernel.engine.security.auth;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +21,8 @@ import com.medkernel.engine.security.RoleCode;
 import com.medkernel.engine.security.UserRoleAssignment;
 import com.medkernel.engine.security.UserRoleAssignmentRepository;
 
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -78,8 +78,13 @@ class AuthControllerTest {
 
     @AfterEach
     void cleanUp() {
+        // I2: 清理凭证
         credentialRepository.findByTenantIdAndUsername(TENANT, USERNAME)
             .ifPresent(c -> credentialRepository.delete(c));
+        // I2: 对称清理角色分配
+        List<UserRoleAssignment> assignments =
+            roleAssignmentRepository.findActiveByTenantIdAndUserId(TENANT, USER_ID);
+        roleAssignmentRepository.deleteAll(assignments);
     }
 
     @Test
@@ -87,16 +92,13 @@ class AuthControllerTest {
         var body = objectMapper.writeValueAsString(
             new LoginRequest(USERNAME, RAW_PASSWORD, TENANT));
 
+        // I1: 改用 MockMvc 真断言代替 Java assert（assert 关键字默认不执行）
         mvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isOk())
-            .andExpect(header().exists("Set-Cookie"))
-            .andExpect(result -> {
-                String setCookie = result.getResponse().getHeader("Set-Cookie");
-                assert setCookie != null && setCookie.contains("mk_access");
-                assert setCookie.contains("HttpOnly");
-            })
+            .andExpect(cookie().exists("mk_access"))
+            .andExpect(cookie().httpOnly("mk_access", true))
             .andExpect(jsonPath("$.data.userId").value(USER_ID))
             .andExpect(jsonPath("$.data.tenantId").value(TENANT))
             .andExpect(jsonPath("$.data.mustChangePwd").value(false));
@@ -104,20 +106,22 @@ class AuthControllerTest {
 
     @Test
     void login_wrongPassword_rejectedWithoutLeakingExistence() throws Exception {
-        // 错误密码 → 401
+        // 错误密码 → 401 + ENG-AUTH-001
         var wrongPwd = objectMapper.writeValueAsString(
             new LoginRequest(USERNAME, "WrongPassword123", TENANT));
         mvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(wrongPwd))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("ENG-AUTH-001"));
 
-        // 不存在用户 → 也 401（防枚举：状态码一致）
+        // 不存在用户 → 也 401 + ENG-AUTH-001（防枚举：状态码与错误码均一致）
         var noUser = objectMapper.writeValueAsString(
             new LoginRequest("nobody-xyz", "anything", TENANT));
         mvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(noUser))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("ENG-AUTH-001"));
     }
 }

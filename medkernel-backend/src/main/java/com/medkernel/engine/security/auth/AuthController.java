@@ -1,5 +1,6 @@
 package com.medkernel.engine.security.auth;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import jakarta.validation.Valid;
 /** 平台账号登录/登出。/auth/login 在 SecurityConfig 中 permitAll。 */
 @RestController
 @RequestMapping("/api/v1/auth")
+@Profile({"dev", "test"})
 public class AuthController {
 
     private final AuthService authService;
