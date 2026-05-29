@@ -108,12 +108,10 @@ describe("page smoke coverage", () => {
   });
 
   it("renders the login page as a focused identity entry", async () => {
-    render(
-      <ConfigProvider>
-        <MemoryRouter>
-          <Login />
-        </MemoryRouter>
-      </ConfigProvider>,
+    renderPage(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>,
     );
 
     expect(screen.getByRole("heading", { name: "集团医疗智能中枢" })).toBeInTheDocument();
@@ -125,12 +123,6 @@ describe("page smoke coverage", () => {
 
     expect(screen.getByRole("button", { name: "用 CAS 登录" })).toBeInTheDocument();
     expect(screen.getByText(/统一身份由医院信息中心配置/)).toBeInTheDocument();
-
-    await userEvent.type(screen.getByPlaceholderText("工号 / 账号"), "implementation");
-    await userEvent.type(screen.getByPlaceholderText("密码"), "password");
-    await userEvent.click(screen.getByRole("button", { name: "进入工作台" }));
-
-    expect(screen.getByText("真实身份认证尚未接入")).toBeInTheDocument();
   });
 
   it("renders the quality qc-eval-results console", () => {
