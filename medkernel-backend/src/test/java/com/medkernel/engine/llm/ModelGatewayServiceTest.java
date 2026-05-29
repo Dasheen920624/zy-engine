@@ -103,7 +103,7 @@ class ModelGatewayServiceTest {
     }
 
     @Test
-    void submitTask_localModelRoute_returnsB1Success() {
+    void submitTask_localModelRoute_honestlyDegradesToB0_noFabrication() {
         ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
             1L, "tenant-1", "knowledge.extract", "LOCAL_MODEL", "DEFAULT", null,
             Instant.now(), "system", Instant.now(), "system"
@@ -115,16 +115,22 @@ class ModelGatewayServiceTest {
         ModelTaskResponse resp = service.submitTask(req);
 
         assertNotNull(resp);
-        assertEquals("SUCCESS", resp.status());
-        assertEquals("B1", resp.modelMode());
-        assertEquals("MedKernel-Local-Cognitive-v1", resp.modelVersion());
-        assertFalse(resp.fallbackUsed());
-        assertTrue(resp.outputContent().contains("local_enhanced"));
+        // 未接入真实 provider → 诚实降级 B0，绝不伪造 B1 元数据（宪法 #9/#13）
+        assertEquals("DEGRADED", resp.status());
+        assertEquals("B0", resp.modelMode());
+        assertTrue(resp.fallbackUsed());
+        assertEquals("B0-Deterministic-Baseline", resp.modelVersion());
+        assertNull(resp.confidence());
+        assertEquals("[]", resp.sourceCitations());
+        assertTrue(resp.fallbackReason().contains("未接入本地微调模型(B1)"));
+        // 反例：杜绝旧实现伪造的本地模型版本与字段
+        assertNotEquals("MedKernel-Local-Cognitive-v1", resp.modelVersion());
+        assertFalse(resp.outputContent().contains("local_enhanced"));
         verify(taskRepo).save(any(ModelCapabilityTask.class));
     }
 
     @Test
-    void submitTask_externalModelRoute_desensitizesInputAndReturnsB2Success() {
+    void submitTask_externalModelRoute_honestB0_desensitizesInput_neverFabricates() {
         ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
             1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", null,
             Instant.now(), "system", Instant.now(), "system"
@@ -132,23 +138,30 @@ class ModelGatewayServiceTest {
         when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
             .thenReturn(Optional.of(modelPolicy));
 
-        // 常规调用：EXTERNAL_MODEL 推理成功返回 B2 且验证手机号脱敏写入摘要
+        // EXTERNAL_MODEL 配置但无 provider：诚实降级 B0，并验证手机号脱敏写入摘要
         ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "张医生的手机是13988888888", null, null, 60);
 
         ModelTaskResponse resp = service.submitTask(req);
         assertNotNull(resp);
-        assertEquals("SUCCESS", resp.status());
-        assertEquals("B2", resp.modelMode());
-        assertFalse(resp.fallbackUsed());
-        assertEquals("MedKernel-Cognitive-LLM-v2", resp.modelVersion());
-        assertTrue(resp.sourceCitations().contains("溶栓指南"));
+        assertEquals("DEGRADED", resp.status());
+        assertEquals("B0", resp.modelMode());
+        assertTrue(resp.fallbackUsed());
+        assertNull(resp.confidence());
+        assertEquals("[]", resp.sourceCitations());
+        assertTrue(resp.fallbackReason().contains("未接入外部大模型/Dify(B2)"));
 
-        // 验证摘要脱敏过滤
-        verify(taskRepo).save(argThat(task -> task.inputSummary().contains("139****8888") && !task.inputSummary().contains("13988888888")));
+        // 反例（医疗安全红线）：绝不出现伪造的外部模型版本 / 编造引文 / 编造患者
+        assertNotEquals("MedKernel-Cognitive-LLM-v2", resp.modelVersion());
+        assertFalse(resp.sourceCitations().contains("溶栓指南"));
+        assertFalse(resp.outputContent().contains("李建国"));
+
+        // 验证摘要脱敏过滤（手机号掩码）
+        verify(taskRepo).save(argThat(task ->
+            task.inputSummary().contains("139****8888") && !task.inputSummary().contains("13988888888")));
     }
 
     @Test
-    void submitTask_externalModelWithSchema_returnsB2Success() {
+    void submitTask_withSatisfiedSchema_passesRealJsonValidation() {
         ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
             1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", "required: [entity]",
             Instant.now(), "system", Instant.now(), "system"
@@ -156,58 +169,34 @@ class ModelGatewayServiceTest {
         when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
             .thenReturn(Optional.of(modelPolicy));
 
-        // B2 外部输出满足 required: [entity]，校验通过
+        // B0 基线输出（含 entity）满足 required: [entity]，真实 JSON 校验通过
         ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取要素", null, null, 60);
 
         ModelTaskResponse resp = service.submitTask(req);
         assertNotNull(resp);
-        assertEquals("SUCCESS", resp.status());
-        assertEquals("B2", resp.modelMode());
-        assertFalse(resp.fallbackUsed());
+        assertEquals("B0", resp.modelMode());
         assertTrue(resp.outputContent().contains("entity"));
+        verify(taskRepo).save(any(ModelCapabilityTask.class));
     }
 
     @Test
-    void submitTask_degradeChain_onTimeout_fallsBackToB0() {
+    void submitTask_withUnsatisfiableSchema_throwsRealSchemaErrorAndAuditsFailure() {
         ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
-            1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", null,
+            1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT",
+            "{\"required\":[\"nonexistent_field\"]}",
             Instant.now(), "system", Instant.now(), "system"
         );
         when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
             .thenReturn(Optional.of(modelPolicy));
 
-        // 超时触发降级：传入 timeoutSeconds = 1
-        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取要素", null, null, 1);
+        // required 字段在 B0 输出中不存在 → 真实 JSON Schema 校验失败抛 ENG-LLM-002
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取要素", null, null, 60);
 
-        ModelTaskResponse resp = service.submitTask(req);
-        assertNotNull(resp);
-        assertEquals("DEGRADED", resp.status());
-        assertEquals("B0", resp.modelMode());
-        assertTrue(resp.fallbackUsed());
-        assertTrue(resp.fallbackReason().contains("大模型推理故障平滑降级"));
-        assertTrue(resp.fallbackReason().contains("响应超时"));
-        assertTrue(resp.outputContent().contains("高血压")); // 兜底B0内容
-    }
-
-    @Test
-    void submitTask_degradeChain_onSchemaCorrupted_fallsBackToB0() {
-        ModelCapabilityPolicy modelPolicy = new ModelCapabilityPolicy(
-            1L, "tenant-1", "knowledge.extract", "EXTERNAL_MODEL", "DEFAULT", "required: [entity]",
-            Instant.now(), "system", Instant.now(), "system"
-        );
-        when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
-            .thenReturn(Optional.of(modelPolicy));
-
-        // Schema 校验失败触发降级：输入包含 FORCE_FAIL_SCHEMA_ 调试标识
-        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "FORCE_FAIL_SCHEMA_提取要素", null, null, 60);
-
-        ModelTaskResponse resp = service.submitTask(req);
-        assertNotNull(resp);
-        assertEquals("DEGRADED", resp.status());
-        assertEquals("B0", resp.modelMode());
-        assertTrue(resp.fallbackUsed());
-        assertTrue(resp.fallbackReason().contains("缺失 Schema 指定"));
-        assertTrue(resp.outputContent().contains("高血压")); // 兜底B0内容
+        ApiException ex = assertThrows(ApiException.class, () -> service.submitTask(req));
+        assertEquals("ENG-LLM-002", ex.errorCode().code());
+        // 失败路径也发 FAILED 审计；且不得落库成功任务
+        verify(isolatedAudit).publishInNewTx(any(AuditEvent.class));
+        verify(taskRepo, never()).save(any(ModelCapabilityTask.class));
     }
 
     @Test

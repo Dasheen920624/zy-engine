@@ -13,7 +13,6 @@ import {
   Alert,
   Badge,
   Timeline,
-  Switch,
   message,
   Statistic,
   Empty,
@@ -21,7 +20,6 @@ import {
 } from "antd";
 import {
   PlayCircleOutlined,
-  SafetyCertificateOutlined,
   CodeOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
@@ -45,7 +43,7 @@ import type { ModelCapabilityStatusResponse, ModelTaskResponse } from "@/shared/
 const { TextArea } = Input;
 const { Option } = Select;
 
-// 稳定大模型能力映射中文业务描述 (防 ESLint no-page-mock，采用驼峰法规避)
+// 稳定大模型能力的中文业务展示元数据（静态文案映射，非业务数据 mock）。
 interface CapabilityMeta {
   name: string;
   desc: string;
@@ -112,7 +110,7 @@ export default function AiWorkflows() {
   const retryTaskMutation = useRetryModelTask();
   const validatePolicyMutation = useValidateModelPolicy();
 
-  // 2. 本地策略缓存 (与沙盒完全联动，仿真顶级路由控制)
+  // 2. 本地策略预览缓存（编辑器预演用；后端无策略落库端点时仅本地生效，不冒充已部署）
   const [localPolicies, setLocalPolicies] = useState<
     Record<
       string,
@@ -170,24 +168,21 @@ export default function AiWorkflows() {
   const [editorVisible, setEditorVisible] = useState<boolean>(false);
   const [activeConfigCap, setActiveConfigCap] = useState<string>("");
 
-  // 沙箱输入与调试状态
+  // 沙箱输入状态
   const [sandboxInput, setSandboxInput] = useState<string>(defaultCaseInput);
   const [expectedSchemaInput, setExpectedSchemaInput] = useState<string>(
     '{\n  "required": ["entity", "degree"]\n}',
   );
-  const [forceTimeout, setForceTimeout] = useState<boolean>(false);
-  const [forceSchemaFail, setForceSchemaFail] = useState<boolean>(false);
 
-  // 沙箱运行过程状态
+  // 沙箱运行结果状态（仅渲染后端真实返回，绝不前端伪造）
   const [sandboxResult, setSandboxResult] = useState<ModelTaskResponse | null>(null);
   const [timelineActive, setTimelineActive] = useState<boolean>(false);
-  const [computedHash, setComputedHash] = useState<string>("");
   const [desensitizedText, setDesensitizedText] = useState<string>("");
 
   // 表单定义
   const [policyForm] = Form.useForm();
 
-  // 合并 API 数据与本地仿真数据
+  // 展示数据：优先用后端真实状态，未配置项回退到本地预览默认值（不伪造后端不存在的状态）
   const displayStatus: ModelCapabilityStatusResponse[] = Object.keys(capabilityMetaMap).map(
     (code) => {
       const apiItem = apiStatus?.find((i) => i.capabilityCode === code);
@@ -216,11 +211,16 @@ export default function AiWorkflows() {
     setEditorVisible(true);
   };
 
-  // 5. 校验并保存/发布策略
+  // 5. 校验策略（调用后端 validate API）。当前无策略持久化端点，校验通过仅本地预演生效。
   const handleSavePolicy = async () => {
+    let values;
     try {
-      const values = await policyForm.validateFields();
-      // 调用后端 validate API 进行深度 JSON Schema 与路由规则核查
+      values = await policyForm.validateFields();
+    } catch {
+      return; // 表单校验错误已在控件上提示
+    }
+
+    try {
       const res = await validatePolicyMutation.mutateAsync({
         capabilityCode: activeConfigCap,
         routeStrategy: values.routeStrategy,
@@ -233,7 +233,7 @@ export default function AiWorkflows() {
         return;
       }
 
-      // 前端策略库同步更新并持久化，保证沙盒物理联动
+      // 网关校验通过：本地预演生效（无策略落库端点，持久化由后续接入提供）。
       setLocalPolicies((prev) => ({
         ...prev,
         [activeConfigCap]: {
@@ -243,7 +243,7 @@ export default function AiWorkflows() {
         },
       }));
 
-      message.success("【模型网关安全合规路由策略配置】已物理校验并成功发布部署！");
+      message.success("策略已通过网关校验（本地预演生效，未落库持久化）。");
       setEditorVisible(false);
 
       // 若修改的是当前沙盒选中的能力，自动同步 schema
@@ -251,22 +251,8 @@ export default function AiWorkflows() {
         setExpectedSchemaInput(values.expectedSchema);
       }
       refetchStatus();
-    } catch {
-      // 仿真模式降级发布
-      const values = policyForm.getFieldsValue();
-      setLocalPolicies((prev) => ({
-        ...prev,
-        [activeConfigCap]: {
-          routeStrategy: values.routeStrategy,
-          desensitizeStrategy: values.desensitizeStrategy,
-          expectedSchema: values.expectedSchema,
-        },
-      }));
-      message.success(`[仿真模式] 策略逻辑校验完成。安全策略已物理就绪：${values.routeStrategy}`);
-      setEditorVisible(false);
-      if (activeConfigCap === selectedCapability) {
-        setExpectedSchemaInput(values.expectedSchema);
-      }
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "策略校验请求失败，请稍后重试");
     }
   };
 
@@ -276,18 +262,18 @@ export default function AiWorkflows() {
     setExpectedSchemaInput(localPolicies[code].expectedSchema);
   };
 
-  // 7. 正则数据脱敏 (与后端 desensitize 100% 同构，UI 渲染高亮)
+  // 7. 正则数据脱敏预览 (与后端 desensitize 同构：保留真实前缀/后缀，不写死掩码值)
   const performDesensitize = (text: string, strategy: string) => {
     if (!text || strategy === "NONE") return text;
     let res = text;
-    // 手机掩码
-    res = res.replace(/(\b)1[3-9]\d{9}(\b)/g, "$1138****8888$2");
-    // 身份证掩码
-    res = res.replace(/(\b)\d{6}\d{8}\d{3}[0-9Xx](\b)/g, "$14401********0018$2");
+    // 手机号：保留前 3 后 4
+    res = res.replace(/(?<!\d)(1[3-9]\d)\d{4}(\d{4})(?!\d)/g, "$1****$2");
+    // 身份证：保留前 6 后 4
+    res = res.replace(/(?<!\d)(\d{6})\d{8}(\d{3}[0-9Xx])(?!\d)/g, "$1********$2");
     return res;
   };
 
-  // 8. 智能模型网关推理与平滑降级执行 (WOW 旗舰级物理流)
+  // 8. 智能模型网关推理执行：提交后端并只渲染后端真实返回；失败显示真实错误，绝不前端伪造成功。
   const runSandbox = async () => {
     setTimelineActive(true);
     setSandboxResult(null);
@@ -295,166 +281,50 @@ export default function AiWorkflows() {
     const activePolicy = localPolicies[selectedCapability];
     const desens = activePolicy.desensitizeStrategy;
 
-    // A. 计算哈希与执行脱敏
-    const hash = "sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-    setComputedHash(hash);
-    const masked = performDesensitize(sandboxInput, desens);
-    setDesensitizedText(masked);
-
-    // B. 构建请求载荷
-    const inputPayload = forceSchemaFail ? "FORCE_FAIL_SCHEMA_" + sandboxInput : sandboxInput;
+    // 脱敏预览（与后端 desensitize 同构）
+    setDesensitizedText(performDesensitize(sandboxInput, desens));
 
     try {
       const res = await submitTaskMutation.mutateAsync({
         capabilityCode: selectedCapability,
-        inputData: inputPayload,
+        inputData: sandboxInput,
         desensitizeStrategy: desens,
         expectedSchema: expectedSchemaInput,
-        timeoutSeconds: forceTimeout ? 0 : 60, // 传入 0 强制触发超时
+        timeoutSeconds: 60,
       });
 
       if (res) {
         setSandboxResult(res);
         if (res.fallbackUsed) {
-          message.warning("【网关警报】模型推理受阻，系统已自动走向 B0 物理降级兜底生存路径！");
+          message.warning(`网关按 B0 确定性基线执行：${res.fallbackReason}`);
         } else {
-          message.success("【推理完成】大模型结构化特征提取完成，输出结果 Schema 合规校验通过！");
+          message.success("网关推理完成，结构化输出 Schema 校验通过。");
         }
       }
-    } catch {
-      // C. 仿真降级与断连退回策略
-      // 如果后端连接超时或没有接口，我们将前端捕获并无缝唤醒“高保真仿真大模型网关”以保证 WOW 级视觉效果
-      const mockTaskId = "tkn-llm-" + Math.floor(Math.random() * 900000 + 100000);
-      const isB0Route = activePolicy.routeStrategy === "BASEPLAY";
-
-      let status = "SUCCESS";
-      let outputContent = "";
-      let modelMode = "B2";
-      let modelVersion = "MedKernel-Cognitive-LLM-v2";
-      let fallbackUsed = false;
-      let fallbackReason = "";
-
-      if (isB0Route) {
-        status = "DEGRADED";
-        modelMode = "B0";
-        modelVersion = "Baseline-Fallback";
-        fallbackUsed = true;
-        fallbackReason = "组织安全策略显式指定B0基线路径";
-        outputContent = getB0MockResult(selectedCapability);
-      } else if (forceTimeout) {
-        status = "DEGRADED";
-        modelMode = "B0";
-        modelVersion = "Baseline-Fallback";
-        fallbackUsed = true;
-        fallbackReason = "连接超时/故障阻断 (ENG-LLM-003)；网关已自动平滑降级";
-        outputContent = getB0MockResult(selectedCapability);
-      } else if (forceSchemaFail) {
-        status = "DEGRADED";
-        modelMode = "B0";
-        modelVersion = "Baseline-Fallback";
-        fallbackUsed = true;
-        fallbackReason = "模型输出缺失 Schema 必要 required 字段；网关安全阻断并降级";
-        outputContent = getB0MockResult(selectedCapability);
-      } else {
-        status = "SUCCESS";
-        modelMode = "B2";
-        modelVersion = "MedKernel-Cognitive-LLM-v2";
-        outputContent = getB2MockResult(selectedCapability);
-      }
-
-      const mockRes: ModelTaskResponse = {
-        taskId: mockTaskId,
-        status,
-        outputContent,
-        modelMode,
-        modelVersion,
-        promptVersion: "p-extract-v3.2",
-        sourceCitations: '["急性脑卒中规范化溶栓指南 (2025版) §4"]',
-        confidence: isB0Route || forceTimeout || forceSchemaFail ? 1.0 : 0.95,
-        riskLevel: isB0Route || forceTimeout || forceSchemaFail ? "LOW" : "MEDIUM",
-        fallbackUsed,
-        fallbackReason,
-        timeCostMs: isB0Route ? 12 : forceTimeout ? 1200 : 258,
-        traceId: "tr-llm-gate-" + Math.floor(Math.random() * 80000 + 10000),
-      };
-
-      setTimeout(() => {
-        setSandboxResult(mockRes);
-        if (fallbackUsed) {
-          message.warning(`[仿真警告] 推理受阻：${fallbackReason}，已无缝切换 B0 无模型兜底基线！`);
-        } else {
-          message.success("[仿真推理成功] 大模型特征提取完成，Schema 安全过滤通过！");
-        }
-      }, 500);
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "网关推理请求失败，请稍后重试");
     }
   };
 
-  // 9. 一键强切 B0 重试链路 (容灾演示)
+  // 9. 重试任务（后端按 B0 确定性基线重试），结果以后端真实返回为准。
   const handleRetrySandbox = async () => {
     if (!sandboxResult) return;
     try {
       const res = await retryTaskMutation.mutateAsync(sandboxResult.taskId);
       if (res) {
         setSandboxResult(res);
-        message.success("【重试成功】已强制切换为 B0 人工/确定性基线通道，容灾验证通过！");
+        message.success("已按 B0 确定性基线重试，结果以后端真实返回为准。");
       }
-    } catch {
-      // 仿真强切
-      const mockRetry: ModelTaskResponse = {
-        ...sandboxResult,
-        status: "DEGRADED",
-        modelMode: "B0",
-        modelVersion: "Baseline-Force-Retry",
-        fallbackUsed: true,
-        fallbackReason: "工程师发起物理干预，强切 B0 确定性基线通道",
-        outputContent: getB0MockResult(selectedCapability),
-        timeCostMs: 8,
-        traceId: sandboxResult.traceId + "-retry",
-      };
-      setSandboxResult(mockRetry);
-      message.success("[仿真重试成功] 发生器已强制重试，成功走入 B0 基线通道并结案！");
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "重试请求失败，请稍后重试");
     }
   };
 
-  // 辅助：获取 B0 确定性降级数据
-  const getB0MockResult = (code: string) => {
-    switch (code) {
-      case "knowledge.extract":
-        return '{\n  "entity": "急性脑梗死 (脑卒中)",\n  "degree": "超早期",\n  "contraindications": ["严重高血压 185/105 mmHg"]\n}';
-      case "terminology.map":
-        return '{\n  "standard_code": "I10.xx02",\n  "standard_name": "原发性高血压"\n}';
-      case "rule.draft":
-        return '{\n  "rule_name": "溶栓绝对高压禁用红线",\n  "trigger": "BP_systolic > 180",\n  "action": "CRITICAL_BLOCK"\n}';
-      case "pathway.draft":
-        return '{\n  "pathway_name": "缺血性脑卒中临床路径",\n  "steps": ["急诊评估", "静脉溶栓", "重症监护", "生活随访"]\n}';
-      default:
-        return '{\n  "fallback_status": "B0_兜底基线数据",\n  "code": "' + code + '"\n}';
-    }
-  };
-
-  // 辅助：获取 B2 智能推理数据
-  const getB2MockResult = (code: string) => {
-    switch (code) {
-      case "knowledge.extract":
-        return '{\n  "patient_name": "李建国",\n  "gender": "男",\n  "age": 68,\n  "entity": "急性脑梗死",\n  "degree": "III级极高危",\n  "clinical_symptoms": ["左侧肢体无力", "运动性失语", "口角歪斜"],\n  "vital_signs": {\n    "blood_pressure": "185/105 mmHg",\n    "heart_rate": "86 次/分"\n  },\n  "contraindications": [\n    "收缩压持续 > 180 mmHg，大剂量溶栓易诱发颅内继发出血风险"\n  ]\n}';
-      case "terminology.map":
-        return '{\n  "original_text": "脑卒中 / 脑梗",\n  "standard_code": "I63.900",\n  "standard_name": "脑梗死未特指",\n  "mapping_confidence": 0.98,\n  "database": "ICD-10 国家标准版"\n}';
-      case "rule.draft":
-        return '{\n  "rule_code": "STK-RULE-SYS-001",\n  "rule_name": "溶栓前高血压禁忌阻断",\n  "evidence": "急性缺血性卒中溶栓前收缩压应控制在 < 185 mmHg 且舒张压 < 110 mmHg",\n  "severity": "CRITICAL",\n  "conditions": {\n    "field": "vital_signs.blood_pressure.systolic",\n    "operator": "GTE",\n    "value": 185\n  }\n}';
-      case "pathway.draft":
-        return '{\n  "pathway_code": "CP-STK-001",\n  "pathway_name": "急性脑梗死溶栓临床路径",\n  "stages": [\n    {\n      "stage_name": "急诊评估(0.5h)",\n      "orders": ["头颅CT排除出血", "血压监测", "建立静脉通路"]\n    },\n    {\n      "stage_name": "静脉溶栓(1.0h)",\n      "orders": ["阿替普酶静脉溶栓", "防跌倒/出血监护"]\n    }\n  ]\n}';
-      default:
-        return '{\n  "model_output": "大模型高级智能推理结果",\n  "capability": "' + code + '"\n}';
-    }
-  };
-
-  // 10. 判断沙箱 Timeline 中每个节点的颜色与状态
+  // 10. Timeline 节点状态：以后端真实返回为准（当前未接入 provider，恒为 B0 基线降级）。
   const activePolicy = localPolicies[selectedCapability];
-  const isB0Active =
-    activePolicy.routeStrategy === "BASEPLAY" ||
-    activePolicy.routeStrategy === "DISABLED" ||
-    forceTimeout ||
-    forceSchemaFail;
+  const isB0Active = sandboxResult
+    ? sandboxResult.fallbackUsed
+    : activePolicy.routeStrategy === "BASEPLAY" || activePolicy.routeStrategy === "DISABLED";
 
   return (
     <PageShell
@@ -462,7 +332,7 @@ export default function AiWorkflows() {
       description="统一管理院内大模型资源与混合推理路由（GA-ENG-LLM-01）。在外部服务连接超时、不可用或 Schema 格式损坏时，支持物理阻断并平滑降级至 B0（无模型确定性基线）的医疗容灾策略。"
     >
       <div className="flex flex-col gap-6">
-        {/* ────────── SECTION 1: 网关运行健康度与延时看板 ────────── */}
+        {/* ────────── SECTION 1: 网关运行状态看板（均取自真实数据，不写死指标） ────────── */}
         <Row gutter={16}>
           <Col span={6}>
             <Card className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition-shadow">
@@ -470,16 +340,16 @@ export default function AiWorkflows() {
                 title={
                   <span className="text-slate-400 text-xs font-semibold flex items-center gap-1.5">
                     <DashboardOutlined className="text-sky-500" />
-                    <span>大模型网关健康度</span>
+                    <span>可用能力数 (实时)</span>
                   </span>
                 }
-                value="正常运行 (UP)"
+                value={`${displayStatus.filter((s) => s.fallbackAvailable).length}/${displayStatus.length}`}
                 valueStyle={{
                   color: themeToken.colorSuccess,
                   fontSize: "16px",
                   fontWeight: "bold",
                 }}
-                prefix={<Badge status="processing" className="mr-1.5" />}
+                prefix={<Badge status={apiStatus ? "processing" : "default"} className="mr-1.5" />}
               />
             </Card>
           </Col>
@@ -489,10 +359,10 @@ export default function AiWorkflows() {
                 title={
                   <span className="text-slate-400 text-xs font-semibold flex items-center gap-1.5">
                     <ClockCircleOutlined className="text-sky-500" />
-                    <span>模型平均推理用时</span>
+                    <span>最近一次推理用时</span>
                   </span>
                 }
-                value={forceTimeout ? "1.2s (超时降级)" : "238 ms"}
+                value={sandboxResult ? `${sandboxResult.timeCostMs} ms` : "—"}
                 valueStyle={{ color: themeToken.colorInfo, fontSize: "16px", fontWeight: "bold" }}
               />
             </Card>
@@ -503,16 +373,15 @@ export default function AiWorkflows() {
                 title={
                   <span className="text-slate-400 text-xs font-semibold flex items-center gap-1.5">
                     <SlidersOutlined className="text-indigo-500" />
-                    <span>累计调用 Token 数</span>
+                    <span>最近一次路由模式</span>
                   </span>
                 }
-                value="154,290"
+                value={sandboxResult?.modelMode ?? "—"}
                 valueStyle={{
                   color: themeToken.colorPrimary,
                   fontSize: "16px",
                   fontWeight: "bold",
                 }}
-                suffix={<span className="text-xs text-slate-400 font-medium">tokens</span>}
               />
             </Card>
           </Col>
@@ -521,17 +390,16 @@ export default function AiWorkflows() {
               <Statistic
                 title={
                   <span className="text-slate-400 text-xs font-semibold flex items-center gap-1.5">
-                    <InfoCircleOutlined className="text-amber-500 animate-pulse" />
-                    <span>物理降级发生占比</span>
+                    <InfoCircleOutlined className="text-amber-500" />
+                    <span>最近一次降级状态</span>
                   </span>
                 }
-                value="11.8%"
+                value={sandboxResult ? (sandboxResult.fallbackUsed ? "已降级 B0" : "未降级") : "—"}
                 valueStyle={{
                   color: themeToken.colorWarning,
                   fontSize: "16px",
                   fontWeight: "bold",
                 }}
-                suffix={<span className="text-xs text-slate-400 font-medium">B0 基线兜底</span>}
               />
             </Card>
           </Col>
@@ -707,42 +575,6 @@ export default function AiWorkflows() {
                     />
                   </Form.Item>
 
-                  {/* 降级断连调试开关面板 */}
-                  <div className="bg-amber-50/70 border border-amber-200/50 p-4 rounded-xl flex flex-col gap-3">
-                    <div className="text-xs font-semibold text-amber-800 flex items-center gap-1">
-                      <SafetyCertificateOutlined className="text-amber-600" />
-                      <span>【降级断线物理调试器】模拟大模型故障场景：</span>
-                    </div>
-
-                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-100">
-                      <span className="text-[11px] text-slate-600 font-medium">
-                        模拟大模型服务响应超时 (FORCE_TIMEOUT)
-                      </span>
-                      <Switch
-                        size="small"
-                        checked={forceTimeout}
-                        onChange={(checked) => {
-                          setForceTimeout(checked);
-                          if (checked) setForceSchemaFail(false);
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-100">
-                      <span className="text-[11px] text-slate-600 font-medium">
-                        模拟模型输出损坏/缺失必要字段 (FORCE_FAIL_SCHEMA)
-                      </span>
-                      <Switch
-                        size="small"
-                        checked={forceSchemaFail}
-                        onChange={(checked) => {
-                          setForceSchemaFail(checked);
-                          if (checked) setForceTimeout(false);
-                        }}
-                      />
-                    </div>
-                  </div>
-
                   <Form.Item
                     label="测试病案事实输入 (含手机/身份证等敏感隐私数据)"
                     className="mt-4"
@@ -810,9 +642,8 @@ export default function AiWorkflows() {
 
                     <Timeline.Item color="blue" label="3. 哈希存证">
                       <div className="flex flex-col gap-0.5 max-w-[200px]">
-                        <span className="font-semibold text-slate-700">计算 SHA-256 指纹</span>
-                        <span className="font-mono text-[8px] text-slate-400 break-all">
-                          {computedHash}
+                        <span className="font-semibold text-slate-700">
+                          网关后端计算 SHA-256 并写入审计留痕
                         </span>
                       </div>
                     </Timeline.Item>
@@ -843,20 +674,18 @@ export default function AiWorkflows() {
                     </Timeline.Item>
 
                     <Timeline.Item
-                      color={expectedSchemaInput ? (forceSchemaFail ? "red" : "green") : "gray"}
+                      color={expectedSchemaInput ? "green" : "gray"}
                       label="6. Schema校验"
                     >
                       <div className="flex flex-col gap-0.5">
                         <span className="font-semibold text-slate-700">格式结构强约束</span>
                         {expectedSchemaInput ? (
-                          forceSchemaFail ? (
-                            <span className="text-rose-500 font-medium">
-                              ❌ Schema 缺失 required 阻断
+                          sandboxResult ? (
+                            <span className="text-emerald-600 font-medium">
+                              ✓ 后端 JSON Schema 校验通过
                             </span>
                           ) : (
-                            <span className="text-emerald-600 font-medium">
-                              ✓ 校验通过 JSON 输出合规
-                            </span>
+                            <span className="text-slate-500">已启用结构化 Schema 校验</span>
                           )
                         ) : (
                           <span className="text-slate-400">未配置 Schema 约束</span>

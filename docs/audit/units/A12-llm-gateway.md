@@ -149,3 +149,25 @@ V18 五方言均存在。逐字段比对待后续。
 - **可否进入 GA 验收**：否。LLM-CRIT-01/02 是患者安全 + 假闭环红线，必须先返工。
 - **最危险点**：编造的临床引文/置信度/患者数据若被上层引擎消费会污染临床决策；审计还会把伪造内容固化成"证据"。**建议优先于其它单元修复本单元 CRIT-01。**
 - **与 backlog 联动**：v4.40 曾把本模块改回 done、v4.41 又标 DEGRADE-01 done、#128 称"B0/B1/B2 路由开发"——均与代码事实不符，建议据实订正台账。
+
+---
+
+## 8. 修复记录（2026-05-29 · Claude · 用户授权"针对有问题的进行改造"）
+
+> 验证：`ModelGatewayServiceTest` 9 项 + Controller(Security)Test 8 项全绿（17/17）；前端 typecheck/lint(0 error)/build/smoke 全过。
+
+| Finding | 状态 | 修复内容（file） |
+|---|---|---|
+| LLM-CRIT-01 | ☑️ 已修 | 删除 `executeB1LocalInference`/`executeB2ExternalInference` 写死推理与编造患者"李建国"/引文/置信度；`ModelGatewayService.submitTask` 改为：未接入 provider 时所有非 DISABLED 一律诚实降级 B0（`modelMode=B0`、`fallbackUsed=true`、`citations=[]`、`confidence=null`、`baselineReason()` 据实说明）。类 Javadoc 与实现一致 |
+| LLM-CRIT-02 | ☑️ 已修 | `AiWorkflows.tsx` 删除 `runSandbox`/`handleRetrySandbox`/`handleSavePolicy` 三处 catch 伪造（`mockRes`/`mockRetry`/`Math.random` taskId/编造引文/`getB0MockResult`/`getB2MockResult`）；失败改 `message.error` 真实报错，沙箱只渲染后端真实返回 |
+| LLM-H-01 | ☑️ 已修 | `validateSchema` 改用 Jackson `readTree` 真实解析 + `required` 字段存在性校验（`extractRequiredFields`/`hasField`），不再字符串 `contains` |
+| LLM-H-02 | ☑️ 已修 | 重写单测：删除断言伪造 B1/B2 版本/引文的用例；新增"无 provider→B0 诚实降级、绝不出现 MedKernel-Cognitive-LLM-v2/溶栓指南/李建国"负向断言 + 真实 Schema 失败用例（ENG-LLM-002 + 失败审计） |
+| LLM-H-03 | ☑️ 已修 | 删除 `AiWorkflows.tsx:48` "驼峰法规避 no-page-mock"注释；并修复 `eslint-rules/no-page-mock.js`（启用其文档声明却未生效的 `NAME_PATTERN`，仅拦截 SHOUTY-CASE mock 数组，消除对 `const columns` 的误伤＝R1 门禁失效根因） |
+| LLM-M-01 | ☑️ 已修 | 删除 `FORCE_FAIL_SCHEMA_` 生产测试钩子及关联的 B2 假元数据分支；前端 FORCE_TIMEOUT/FORCE_FAIL_SCHEMA 调试开关一并移除 |
+| LLM-M-02 | ☑️ 已修 | `System.err.println` 改 `org.slf4j.Logger.warn` |
+| LLM-M-03 | ☑️ 已修 | `desensitize` 扩展覆盖银行卡/邮箱，MASK_ALL 增标注姓名/病历号脱敏，并改用前后非数字断言（中文安全，弃用 `\b`）；前端脱敏预览同步保留真实前缀/后缀（弃用写死 "138****8888"） |
+| LLM-M-04 | ⬜ 待办(Low) | `retryTask` 仍用普通 `auditPublisher`（保持构造器不变以降风险）；建议后续与全模块统一切 `IsolatedAuditPublisher` |
+
+附带（非原 finding，本次顺手据实化）：`AiWorkflows.tsx` 顶部看板由写死 "154,290 tokens / 11.8% / 238ms / UP" 改为取自真实 `displayStatus`/`sandboxResult` 的派生值（无数据显 "—"）；删除写死的 `sha256-e3b0c44…` 假哈希。
+
+**复核结论**：CRIT-01/02 + H-01/02/03 + M-01/02/03 已闭环并测试固化；仅余 1 项 Low(M-04)。LLM-01/02/DEGRADE-01 现可如实表述为"B0 诚实基线 + provider 待接入(GA-ENG-LLM-02)"，不再名不副实。
