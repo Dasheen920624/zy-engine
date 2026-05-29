@@ -12,6 +12,7 @@ export const apiClient = axios.create({
   baseURL: "/medkernel/api/v1",
   timeout: 30_000,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
 apiClient.interceptors.request.use((config) => {
