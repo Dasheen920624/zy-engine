@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：5.6（重做基线 R2 · 补错误处理与表单反馈一致性 GA-ENG-ERROR-UX-R2）· 2026-05-30
+> 版本：**6.0**（**全任务归零 · 逐项核查通过才能宣告完成**）· 2026-05-30
 > 当前执行：P0 真实性门禁与归零 →（系统架构 ∥ 无模型 AI 工厂 ∥ 假闭环清零）
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 标记：`⟳R2` = 重做基线重置项（done→in_progress），须按 §0.3 验收铁律重建。
@@ -13,9 +13,47 @@
 
 | 先做 | 后做 |
 |---|---|
-| 已 done 真实底座 → P0 真实性门禁 →（P1a 系统架构 SYS-01~08 ∥ P1b 无模型 AI 工厂 AIK-STD-01~12 + MED-C1/C2/C3 ∥ P1c 假闭环清零 KNOW/TERM/CDSS/FOLLOW/PKG/EVID/EMBED/LLM/INTEG R2）| P2 接真实模型（LLM-03~08）→ P3 真连接器与互操作（OPT-01/02/03）→ P4 14 领域门面 GA-XXX-01 → P5 世界级补强（OPT-04~10 + EMR-LEVEL）→ P6 SVC 业务包重做（作为集成包）→ P7 重新验收 |
+| P0 真实性门禁 T-GATE-01/02 → 从最底层 DOC/BASE/OBS/API 真实子集开始**逐项核查**（核查通过才能宣告 done）→ 平行推进 ⟳R2 重做项 + 新增 R2 任务 | P2 接真实模型 → P3 真连接器 → P4 14 领域门面 → P5 世界级补强 → P6 SVC 业务包重做 → P7 重新验收 |
 
-禁止：单病种硬编码、业务 mock 假闭环、假证据/假同步、业务模块直连模型或 Dify、绕真实性门禁、伪造引擎层（专业领域必须复用引擎不另起）。
+禁止：单病种硬编码、业务 mock 假闭环、假证据/假同步、业务模块直连模型或 Dify、绕真实性门禁、伪造引擎层（专业领域必须复用引擎不另起）、**不经核查直接宣告 done**。
+
+---
+
+## 0.5 v6.0 全任务归零 · 重置原则（最高优先级）
+
+**触发原因**：v5.0–v5.6 连续核查暴露 5 轮系统性"done 注水"——
+- v5.0：FOLLOW-01 起 39 项分界线后的 done 不可信（PR #150 已处理）
+- v5.3：RuleDefinitions/PathwayTemplates 前端 done 但 JSON 裸露
+- v5.4：22 页前端 done 但有 `eslint-disable medkernel` + 写死医学常量
+- v5.5：BASE-10 done 但 198 处硬编码 hex + 0 处深色响应（注水回退 ⟳R2）
+- v5.6：所有 mutation done 但 0 个 onError + 0 个 Form validateStatus（保存报错根因）
+
+**结论**：**已无任何 done 任务可信**。继续按"以 FOLLOW-01 为分界线"区分已是不够的——分界线前后都有 done 注水。
+
+**v6.0 重置原则（用户决策 2026-05-30）**：
+1. **所有 done → in_progress**（30 项），状态归零
+2. 每项 in_progress 必须**逐项核查逻辑严密性**：①代码是否真实（无写死/无假闭环/无绕门禁）；②与规划对齐（宪法/落地规划/详规 + 体验规范）；③测试覆盖正常/异常/降级/安全边界；④文档同步；⑤无注水痕迹
+3. 核查通过、且能在 PR 中提供**核查证据清单**（代码引用 + 测试报告 + 截图）才能从 in_progress → done
+4. 任何"无证据回 done"的操作视为注水，须立即回退并入 R2
+5. PR/任务 Owner 在 commit message 必须显式回答"本任务是否经过 v6.0 逐项核查？证据在哪？"
+
+**新核查工作流**（每项任务必走）：
+```
+in_progress → [核查 spec 提交] → [代码逐文件审计] → [测试用例验真] → [文档对齐验证]
+            → [审计员签字（owner ≠ 核查员）] → [PR 中粘贴核查证据] → done
+```
+
+**当前执行顺序**：
+- P0 必须先：T-GATE-01/02（真实性门禁），否则核查无强制工具
+- 核查从最底层往上：DOC（已最低风险）→ BASE → OBS → API → ENG → SVC
+- 核查 ⟳R2 项目与"已实施待核查"项目按依赖图并行
+- 新增 pending 任务（SYS/AIK/LLM/DOMAIN/OPT/KNOWGEN/FE-R2/DESIGN-SYSTEM/ERROR-UX）按 P1-P7 阶段顺序推进
+
+**状态字段语义（v6.0 修订）**：
+- `pending`：未启动，等待派单
+- `in_progress`：正在做或已实施但 done 不可信，待核查证明
+- `done`：**已通过逐项核查并提交证据**（v6.0 后入此态需附核查证据）
+- `blocked`：受其他任务/资源阻断
 
 ---
 
@@ -36,12 +74,12 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-DOC-01 当前权威文档统一：README、docs README、宪法、总览、实施方案、详细规范、台账 | codex | done |
-| GA-ENG-DOC-02 清除旧计划和不相关参考入口 | codex | done |
-| GA-ENG-DOC-03 详细规范保留并允许继续细化，新增细节只进唯一详细规范 | codex | done |
-| GA-ENG-DOC-04 全系统产品与交互体验固定规范：角色、页面、分页、低打扰、可信解释和体验门禁 | codex | done |
-| GA-ENG-DOC-05 引擎能力、业务范围和第三方对接口径统一：S0-S40 API 归类、第三方接入矩阵、业务包装边界和验收门禁 | codex | done |
-| GA-ENG-DOC-06 业务细节一致性核查：多维治理切片、E6 服务包、任务台账和文档导航口径统一 | codex | done |
+| GA-ENG-DOC-01 当前权威文档统一：README、docs README、宪法、总览、实施方案、详细规范、台账 | codex | in_progress |
+| GA-ENG-DOC-02 清除旧计划和不相关参考入口 | codex | in_progress |
+| GA-ENG-DOC-03 详细规范保留并允许继续细化，新增细节只进唯一详细规范 | codex | in_progress |
+| GA-ENG-DOC-04 全系统产品与交互体验固定规范：角色、页面、分页、低打扰、可信解释和体验门禁 | codex | in_progress |
+| GA-ENG-DOC-05 引擎能力、业务范围和第三方对接口径统一：S0-S40 API 归类、第三方接入矩阵、业务包装边界和验收门禁 | codex | in_progress |
+| GA-ENG-DOC-06 业务细节一致性核查：多维治理切片、E6 服务包、任务台账和文档导航口径统一 | codex | in_progress |
 
 ---
 
@@ -49,15 +87,15 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-BASE-01 组织与租户上下文：tenant/group/hospital/campus/site/department/user/role/package version | claude | done |
-| GA-ENG-BASE-02 身份权限：用户、角色、菜单权限、动作权限、数据范围、无权限响应 | codex | done |
-| GA-ENG-BASE-03 API 契约：ApiResult、ProblemDetail、分页、错误码、DTO 校验、幂等、traceId | claude | done |
-| GA-ENG-BASE-04 审计上下文：写操作、审核、发布、运行、反馈、导出、回滚统一留痕 | claude | done |
-| GA-ENG-BASE-05 数据迁移：5 方言表族、审计字段、状态字段、版本字段、索引和约束门禁 | codex | done |
-| GA-ENG-BASE-06 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流 | codex | done |
-| GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | codex | done |
-| GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | codex | done |
-| GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | claude | done |
+| GA-ENG-BASE-01 组织与租户上下文：tenant/group/hospital/campus/site/department/user/role/package version | claude | in_progress |
+| GA-ENG-BASE-02 身份权限：用户、角色、菜单权限、动作权限、数据范围、无权限响应 | codex | in_progress |
+| GA-ENG-BASE-03 API 契约：ApiResult、ProblemDetail、分页、错误码、DTO 校验、幂等、traceId | claude | in_progress |
+| GA-ENG-BASE-04 审计上下文：写操作、审核、发布、运行、反馈、导出、回滚统一留痕 | claude | in_progress |
+| GA-ENG-BASE-05 数据迁移：5 方言表族、审计字段、状态字段、版本字段、索引和约束门禁 | codex | in_progress |
+| GA-ENG-BASE-06 前端基础：5+1 菜单、路由元数据、PageShell、六态、状态机 Badge、7 步流 | codex | in_progress |
+| GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | codex | in_progress |
+| GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | codex | in_progress |
+| GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | claude | in_progress |
 | GA-ENG-BASE-10 ⟳R2 前端视觉债净化（注水）：核查证实"硬编码颜色全部归零"未达成——`frontend/src/pages/{Login,tenant/Tenant,quality/Quality,clinical/Clinical,compliance/Compliance}.module.css` 共 **198 处硬编码 hex 颜色**（直接违反宪法 §8 "任何颜色/字号/圆角的硬编码自动拒，必须走 token"）；且 5 份 module.css **全部不响应深色模式**（0 处 `prefers-color-scheme` 或 `.dark` 选择器），切到 dark/system 模式时 Antd 组件变深但页面级 CSS 仍白底 → 用户报告"样式混乱、跟随系统颜色混乱"坐实。重做要求合并入 GA-ENG-DESIGN-SYSTEM-R2 | codex | in_progress |
 | GA-ENG-BASE-11 平台首发种子身份与生产环境初始化：dev profile 已有 `PlatformCredentialDevSeeder` 种 13 角色账号；生产 profile 缺首次部署初始平台管理员能力——首启动无任何账号无法登录。要求：①首次启动 init token 机制（一次性、自动过期、不可重复使用、写审计）创建首个 `platform-admin`；②强制首次登录改密 + MFA 配置；③可选 CLI 工具（如 `medkernel-cli admin create`）应急重置；④运维手册写清首次部署步骤；⑤反例：硬编码默认密码进入生产、init token 不过期、token 不审计 | - | pending |
 
@@ -67,21 +105,21 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-OBS-01 引擎可观测性骨干：StateTransitionRecorder / PayloadStoragePort / ErrorCode 增强 / DiagnoseResponse / MDC / TraceIdPropagator / V8 五方言迁移 | claude | done |
-| GA-ENG-API-01 标准上下文 API：患者、就诊、诊断、医嘱、报告、组织、包版本快照 | claude | done |
-| GA-ENG-API-01b 标准上下文 retrofit：snapshot 接 StateTransitionRecorder / canonical_resource 持久化 trace_id / GET /diagnose / PackageVersionPort 抽象 / 失败 audit 留痕 + V9 audit_event +outcome | claude | done |
-| GA-ENG-API-02 临床事件 API：同步、异步、批量、回放、重试、死信、回调 | codex | done |
-| GA-ENG-API-03 知识资产 API：来源、解析、引用、版本、审核、替换、历史重放、分页、筛选、搜索、异步导出 | claude | done |
+| GA-ENG-OBS-01 引擎可观测性骨干：StateTransitionRecorder / PayloadStoragePort / ErrorCode 增强 / DiagnoseResponse / MDC / TraceIdPropagator / V8 五方言迁移 | claude | in_progress |
+| GA-ENG-API-01 标准上下文 API：患者、就诊、诊断、医嘱、报告、组织、包版本快照 | claude | in_progress |
+| GA-ENG-API-01b 标准上下文 retrofit：snapshot 接 StateTransitionRecorder / canonical_resource 持久化 trace_id / GET /diagnose / PackageVersionPort 抽象 / 失败 audit 留痕 + V9 audit_event +outcome | claude | in_progress |
+| GA-ENG-API-02 临床事件 API：同步、异步、批量、回放、重试、死信、回调 | codex | in_progress |
+| GA-ENG-API-03 知识资产 API：来源、解析、引用、版本、审核、替换、历史重放、分页、筛选、搜索、异步导出 | claude | in_progress |
 | GA-ENG-API-04 ⟳R2 字典映射 API：标准字典、院内字典、候选映射、冲突、发布 | codex | in_progress |
-| GA-ENG-API-05 规则引擎 API：定义、测试、影响分析、发布、执行、解释 | codex | done |
-| GA-ENG-API-06 路径引擎 API：模板、专病包、患者路径、节点推进、变异、关键时钟 | codex | done |
+| GA-ENG-API-05 规则引擎 API：定义、测试、影响分析、发布、执行、解释 | codex | in_progress |
+| GA-ENG-API-06 路径引擎 API：模板、专病包、患者路径、节点推进、变异、关键时钟 | codex | in_progress |
 | GA-ENG-API-07 ⟳R2 推荐/CDSS API：触发、推荐卡、来源解释、医师反馈、疲劳治理输入 | codex | in_progress |
-| GA-ENG-API-08 评估质控 API：指标、运行、结果、问题、整改、复核 | codex | done |
-| GA-ENG-API-09 随访 API：计划、任务、问卷、异常回院、结果回流 | codex | done |
+| GA-ENG-API-08 评估质控 API：指标、运行、结果、问题、整改、复核 | codex | in_progress |
+| GA-ENG-API-09 随访 API：计划、任务、问卷、异常回院、结果回流 | codex | in_progress |
 | GA-ENG-API-10 ⟳R2 包发布 API：知识包、配置包、校验、灰度、全量、同步、回滚 | codex | in_progress |
-| GA-ENG-API-11 嵌入 API：launch token、iframe/SDK/纯 API、回调、降级 | codex | done |
+| GA-ENG-API-11 嵌入 API：launch token、iframe/SDK/纯 API、回调、降级 | codex | in_progress |
 | GA-ENG-API-12 ⟳R2 模型能力网关 API：能力代码、路由、脱敏、结构化输出、审计、B0 降级 | codex | in_progress |
-| GA-ENG-API-13 大规模列表 API：统一分页/游标、排序、过滤、total estimate、批量任务、导出任务、traceId | codex | done |
+| GA-ENG-API-13 大规模列表 API：统一分页/游标、排序、过滤、total estimate、批量任务、导出任务、traceId | codex | in_progress |
 
 > ⟳R2 说明：API-04/07/10/12 接口契约层核查为真，因下游引擎重做随之回退，重做完成后统一复核标 done。
 
@@ -94,12 +132,12 @@
 | GA-ENG-KNOW-01 ⟳R2 知识资产引擎（含图投影增强 + 前端 GraphExplore.tsx 真实化）：来源登记、解析、hash、引用锚点、可信分级；关系库 graph_node/edge/citation 为权威源，Neo4j 仅查询投影可重建，无图降级关系库查询；**前端** GraphExplore 关系图按"展开核心节点/分层加载/限制节点数"避免一次拉全量 + 默认隐藏边表/JSON 到专家模式（详规 §1.2.1 图谱/关系结果规则）| claude | in_progress |
 | GA-ENG-KNOW-02 ⟳R2 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离；对接 GA-SYS-08 + GA-AIK-STD-09/10 | claude | in_progress |
 | GA-ENG-TERM-01 ⟳R2 字典映射引擎（含标准编码集导入 + 医学语义匹配 MED-C1 + 前端 TerminologyMapping.tsx 真实化）：未映射发现、候选推荐、人工确认、冲突处理、映射包发布；ICD-10 国临版/ICD-9-CM-3/药品本位码/LOINC 兼容映射导入+版本；LCS→同义词典+编码交叉表+模型嵌入；高危近似负样本判别器（钾/钠、肌钙蛋白T/I、左/右、剂量量级强制 HIGH，禁批量/禁自动确认）；**前端** TerminologyMapping 移除 `eslint-disable medkernel/no-page-mock` + 去假覆盖 + 高危近似判别结果显著标识 HIGH + 禁批量按钮在 HIGH 时灰化 | codex | in_progress |
-| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释（后端引擎核查为真，保留）| codex | done |
+| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释（后端引擎核查为真，保留）| codex | in_progress |
 | GA-ENG-RULE-02 ⟳R2 规则引擎专业维护界面（前端 RuleDefinitions.tsx + RuleValidate.tsx）：核查证实两份页面同病同模式——`eslint-disable medkernel/no-page-mock` 绕真实性门禁 + 默认 `<pre>JSON.stringify(DSL)</pre>` 暴露技术对象 + TextArea 手编 JSON payload + 写死"高血压/DRUG-001"医学常量 + 创建/发布只一步无 7 步流 + 多同权主按钮 + 中英混杂"Rule Code/Payload/DSL/STRONG_REMINDER" + font-mono 暴露。违反宪法 §1.#4/§1.#6/§1.#18/§11 禁区 + 详规 §4.2 三层配置 + 体验规范。要求：①L1 模板模式（业务专家：模板库+参数表单+智能填默认值）；②L2 可视化条件树编辑器（专科/质控专家：点击式 AND/OR/NOT + 条件原子 + 时间窗 + 阈值控件）；③L3 DSL 模式折叠到专家模式 Tab；④真实 7 步流（导入/选择 → 自动校验 → 看影响 → 提交审核 → 灰度 → 全量 → 留证/回滚）；⑤移除 eslint-disable + 移除写死医学常量 + 中文化文案；⑥仿真 payload 改用"病例选择器"（从已脱敏患者上下文挑选）替代 JSON 手编；⑦后端补"规则模板库/条件树→DSL 转换/影响分析/审核工作流/灰度策略" API；⑧RuleValidate 临床规则校验运行视图同样去 eslint-disable / 去手编 JSON / 去 font-mono / 默认按角色裁剪命中详情 | - | pending |
-| GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真（后端引擎核查为真，保留）| codex | done |
+| GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真（后端引擎核查为真，保留）| codex | in_progress |
 | GA-ENG-PATH-02 ⟳R2 路径引擎专业维护界面（前端 PathwayTemplates.tsx + PatientPathways.tsx）：核查证实两份页面同病同模式——`eslint-disable medkernel/no-page-mock` + `DEFAULT_NODES_JSON` 写死"抗感染化疗/STABLE/DETERIORATED" + TextArea 手编 nodes/edges JSON + conditionJson 嵌套转义 + Tabs 套 Tabs 多主按钮 + Edge/Node/conditionJson 技术词暴露 + font-mono 暴露。违反同上一套约束 + 宪法 §5 "专科专家画 X6 节点"角色硬指标。要求：①L1 模板模式（从专病包库选 + 参数化填空）；②L2 节点画布（X6/G6 拖拽：节点类型/责任角色/时间窗/分支条件/关键时钟可视化）；③L3 DSL 模式折叠到专家模式 Tab；④真实 7 步流；⑤移除 eslint-disable + 移除写死示例 + 中文化；⑥仿真用真实/脱敏病例触发，不让用户手编 JSON；⑦后端补"路径模板继承/节点编辑/边条件 DSL 生成/关键时钟绑定/随访接续 API/灰度发布"；⑧关键时钟必须可视化展示在画布上，不藏在 JSON 字段里；⑨PatientPathways 患者路径运行视图同样去 eslint-disable / 去写死病种 / 去 font-mono / 默认按角色裁剪节点详情 | - | pending |
 | GA-ENG-CDSS-01 ⟳R2 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | codex | in_progress |
-| GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | codex | done |
+| GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | codex | in_progress |
 | GA-ENG-FOLLOW-01 ⟳R2 随访引擎（重做基线分界线起点）：计划生成、任务、问卷、异常事件和回流 | codex | in_progress |
 | GA-ENG-PKG-01 ⟳R2 包发布引擎：导入导出、校验、灰度、全量、同步、回滚、证据 | codex | in_progress |
 
@@ -163,7 +201,7 @@
 |---|---|---|
 | T-GATE-01 前端真实性门禁增强：升级 eslint-plugin medkernel/no-page-mock，阻断 catch 内伪造数据/函数包装绕 AST/camelCase 绕过/假数据/`eslint-disable medkernel/*`，放行合法静态 UI 文案。**已知必爆目标**：①13 页 `eslint-disable medkernel/no-page-mock`（RuleDefinitions/PathwayTemplates/ConfigPackages/TerminologyMapping/Provenance/InsuranceAudit/QcEvalResults/QcEvalSets/QcAlerts/Followup/RuleValidate/PatientPathways/EmbedLaunch）；②5 份 module.css 共 198 处硬编码 hex 颜色（新增 stylelint 规则阻断 `.module.css` 含 hex/rgb/hsl 字面量，除 `theme.ts` 一处定义外） | - | pending |
 | T-GATE-02 后端真实性门禁：CI 脚本扫 src/main 阻断 Math.random/写死医学常量(如"高血压"/"I10")/catch 吞错返回成功/UUID 充哈希/Javadoc 模拟占位于生产路径 | - | pending |
-| T-RESET-01 backlog 据实重置：按改造清单 R2 v2 调整状态 + 写入 §0.3 验收铁律 + 修订记录，本台账设为 R2 施工基线 | claude | done |
+| T-RESET-01 backlog 据实重置：按改造清单 R2 v2 调整状态 + 写入 §0.3 验收铁律 + 修订记录，本台账设为 R2 施工基线 | claude | in_progress |
 
 ---
 
@@ -385,6 +423,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| **6.0** | 2026-05-30 | Claude | **全任务归零 · 逐项核查通过才能宣告完成**（用户决策）。**触发**：v5.0–v5.6 连续 5 轮核查暴露系统性 "done 注水"——FOLLOW-01 后 39 项不可信、RuleDef/PathwayTemplates 前端 JSON 裸露、22 页 eslint-disable、BASE-10 硬编码 hex 198 处、所有 mutation 0 个 onError——已无任何 done 任务可信。**处理**：①全部 30 个 `\| done \|` → `\| in_progress \|`，状态归零；②新增 §0.5 v6.0 重置原则章节，明确每项 in_progress 必须经过"代码逐文件审计 + 测试用例验真 + 文档对齐 + 审计员签字（owner ≠ 核查员）+ PR 粘贴核查证据"5 步才能回 done；③`done` 状态语义修订为"已通过逐项核查并提交证据"，commit message 必须显式回答"是否经过 v6.0 核查？证据在哪？"；④核查从底层往上 DOC→BASE→OBS→API→ENG→SVC，与 ⟳R2 / 新增 R2 并行；⑤PR/任务 Owner 责任明示——任何"无证据回 done"视为注水须立即回退。合计 154 项不变；状态分布 done 30→**0** / in_progress 40→**70** / pending 84 不变。 |
 | 5.6 | 2026-05-30 | Claude | **补错误处理与表单反馈一致性整改**（用户四次反馈"各种保存报错"）。核查发现 4 大根因：①`frontend/src/shared/api/hooks.ts` 2734 行含 39+ 个 useMutation 但 **`onError` 总数 = 0**——所有 mutation 无统一错误处理，全推给页面 try/catch；②全部页面 **0 个 `Form.Item validateStatus`**——字段级错误无法回显到表单，用户看到弹窗但不知哪个字段错；③后端 GlobalExceptionHandler 返回 ApiResult（含 `errors[]` 字段级数组）但前端全部 `err.response?.data?.message` 只取总称、忽略 `errors[]`——多字段校验只显示总称如"参数校验失败"；④后端 Throwable 兜底返回 INTERNAL_ERROR "系统内部错误"，服务端 log 有 root cause 但前端 traceId 不展示——用户无法报告。新增 **GA-ENG-ERROR-UX-R2** 独立任务（~12d）：前端补统一 onError + Form 字段回流 + traceId 复制按钮；后端补 service 层显式 ApiException（用户名重复/唯一约束/数据范围/路径已发布不可改等）+ DataIntegrityViolation 专项 handler + audit 写失败不回滚业务（fail-soft）；E2E 覆盖 7 类错误场景；CI 加规则阻断"假错误处理"模式。合计 153 → **154 项**（pending 83 → 84）；总工作量 ~520-525d → **~532-537d**（ERROR-UX-R2 ~12d）。 |
 | 5.5 | 2026-05-30 | Claude | **补设计系统与主题响应 + BASE-10 注水回退 ⟳R2**（用户三次反馈"样式混乱，跟随系统颜色混乱"，核查证实 BASE-10 "硬编码颜色全部归零" 注水）。核查现状：①Antd token 系统（theme.ts + ConfigProvider + cssVar:true + 5 种主题模式 default/elder/dark/eye/system + prefers-color-scheme 系统响应）**已建好**；②但 5 份 module.css（Login/Tenant/Quality/Clinical/Compliance）含 **198 处硬编码 hex 颜色**直接违反宪法 §8；③且 5 份 module.css **全部不响应深色模式**（0 处 `prefers-color-scheme` 或 `.dark` 选择器）。用户问题坐实：切到 dark/system 模式时 Antd 组件变深但页面 CSS 仍白底 → 一半组件深色一半白底 = 样式混乱。处理：①**BASE-10 done → ⟳R2 in_progress**（注水回退，加入分界线前经核查证实有假的项）；②**新增 GA-ENG-DESIGN-SYSTEM-R2** 独立任务：把 198 处 hex 改用 Antd token CSS 变量（var(--ant-color-text) 等）+ 添加深色/elder/eye/system 模式响应 + stylelint 阻断 .module.css 含 hex + Storybook 主题切换验证 + E2E 切换无断裂 + 自创 --mk-* 变量必须从 Antd token 派生；③**T-GATE-01 描述扩展**：新增"5 份 module.css 共 198 处硬编码 hex 颜色"作为必爆目标 + 新增 stylelint 规则阻断 module.css 含 hex/rgb/hsl 字面量。合计 152 → **153 项**（pending 82 → 83）；总工作量 ~510-515d → **~520-525d**（DESIGN-SYSTEM-R2 ~8d）。 |
 | 5.4 | 2026-05-30 | Claude | **全前端 36 页面合规核查 + 6 项前端业务页面真实化整改 ⟳R2 包**（用户反馈"其他前端页面一起过一下"，主线程批量 grep 5 类违反模式 = eslint-disable medkernel（13 页）/ JSON 裸渲染（5 页）/ 手编 JSON TextArea（5 页）/ font-mono 暴露（14 页）/ 写死医学常量（11 页））。发现 **22 个页面要重做或调整**——已被既有 R2 任务覆盖 14 页（RuleDefinitions/PathwayTemplates/Followup/CdssFatigue/EmbedLaunch/Provenance/AiWorkflows/AiReview/TerminologyMapping/ConfigPackages/AdapterHub/GraphExplore + 本次明示扩展的 RuleValidate/PatientPathways）；剩余 **未覆盖页面新增 6 个按业务包归类的独立 R2 包**：①GA-ENG-QUALITY-FE-R2（QcDashboard/QcAlerts/QcEvalSets/QcEvalResults/InsuranceAudit 5 页）②GA-ENG-CLINICAL-FE-R2（WorkflowTodos/Notifications/Mpi 3 页）③GA-ENG-COMPLIANCE-FE-R2（AdminUsers/AdminAudit/IdentityBinding/SecurityBaseline/SystemProviders/NotificationSettings 6 页）④GA-ENG-PILOT-FE-R2（TenantOnboarding/ImplementationGuide 2 页）⑤GA-ENG-ADVANCED-FE-R2（DomesticCheck/DevConsole 2 页）⑥GA-ENG-SHELL-FE-R2（Dashboard/Login + StepFlowDemo 评估删除 3 页）。同时扩展 10 个引擎任务描述明示前端范围：KNOW-01-R2 + GraphExplore、TERM-01-R2 + TerminologyMapping、RULE-02 + RuleValidate、PATH-02 + PatientPathways、EMBED-01-R2 + EmbedLaunch。统一整改要求（8 条铁律）写入新章节：移除 eslint-disable / 去 JSON 裸 / 去手编 JSON / 去 font-mono / 去写死医学常量 / 走 7 步流或角色默认视图 / 中文化 / 大列表服务端分页。合计 146 → **152 项**（pending 76 → 82）；总工作量 ~465-470d → **~510-515d**（6 个新前端 R2 包 ~45d）。 |
