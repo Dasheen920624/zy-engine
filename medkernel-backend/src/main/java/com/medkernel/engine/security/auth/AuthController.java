@@ -16,7 +16,10 @@ import com.medkernel.shared.security.AuthCookieProperties;
 
 import jakarta.validation.Valid;
 
-/** 平台账号登录/登出。/auth/login 在 SecurityConfig 中 permitAll。 */
+/**
+ * 平台账号登录 / 登出控制器。/auth/login 与 /auth/logout 在 SecurityConfig 中 permitAll；
+ * 登录成功写 httpOnly cookie，登出清 cookie。
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
 @Profile({"dev", "test"})

@@ -7,7 +7,9 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenResolv
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.stereotype.Component;
 
-/** 优先从 mk_access cookie 取 JWT；无则回退标准 Authorization: Bearer（兼容 embed / API 客户端）。 */
+/**
+ * 优先从 mk_access cookie 取 JWT；无则回退标准 Authorization: Bearer（兼容 embed / API 客户端）。
+ */
 @Component
 public class CookieBearerTokenResolver implements BearerTokenResolver {
 

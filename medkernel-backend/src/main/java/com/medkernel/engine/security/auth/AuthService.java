@@ -17,7 +17,10 @@ import com.medkernel.shared.audit.AuditEvent;
 import com.medkernel.shared.audit.AuditEventPublisher;
 import com.medkernel.shared.audit.IsolatedAuditPublisher;
 
-/** 平台账号登录：BCrypt 校验 → 取角色 → 签发 JWT；成功/失败均审计。 */
+/**
+ * 平台账号登录服务：BCrypt 校验凭证 → 取激活角色 → 签发 JWT；成功/失败均留痕审计。
+ * 用户不存在与密码错误统一返回 ENG-AUTH-001（防用户名枚举，含 dummy hash 拉平耗时）。
+ */
 @Service
 @Profile({"dev", "test"})
 public class AuthService {

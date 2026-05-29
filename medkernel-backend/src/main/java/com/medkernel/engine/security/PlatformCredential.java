@@ -6,7 +6,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-/** 平台自建身份凭证（外网 SaaS / 本地 dev）。真实身份认证内网走院方 IdP，本表仅用于平台签发。 */
+/**
+ * 平台自建身份凭证（外网 SaaS / 本地 dev）。真实身份认证内网走院方 IdP，本表仅用于平台签发。
+ */
 @Table("platform_credential")
 public record PlatformCredential(
     @Id Long id,

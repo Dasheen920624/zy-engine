@@ -2,7 +2,9 @@ package com.medkernel.shared.security;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** 鉴权 cookie 配置。dev(http) 必须 secure=false，否则浏览器不存 cookie。 */
+/**
+ * 鉴权 cookie 配置。dev(http) 必须 secure=false，否则浏览器不存 cookie；生产 / govcloud 覆盖为 true。
+ */
 @ConfigurationProperties(prefix = "medkernel.auth.cookie")
 public record AuthCookieProperties(
     String name,

@@ -22,3 +22,5 @@ CREATE TABLE IF NOT EXISTS platform_credential (
 
 CREATE INDEX IF NOT EXISTS idx_platform_credential_login
     ON platform_credential (tenant_id, username, status);
+
+COMMENT ON TABLE platform_credential IS '平台自建身份凭证表（外网 SaaS / 本地 dev 登录）';

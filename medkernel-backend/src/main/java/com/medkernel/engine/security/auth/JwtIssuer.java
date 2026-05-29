@@ -19,7 +19,9 @@ import org.springframework.stereotype.Component;
 
 import com.medkernel.shared.context.JwtClaimsResolver;
 
-/** 平台 JWT 签发器（HS256，复用 medkernel.jwt.dev-secret，与 devJwtDecoder 对称验签）。 */
+/**
+ * 平台 JWT 签发器（HS256，复用 medkernel.jwt.dev-secret，与 devJwtDecoder 对称验签）。
+ */
 @Component
 @Profile({"dev", "test"})
 public class JwtIssuer {
