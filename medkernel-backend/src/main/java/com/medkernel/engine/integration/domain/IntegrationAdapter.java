@@ -17,7 +17,7 @@ public record IntegrationAdapter(
     @Column("protocol_type") String protocolType,
     @Column("status") String status, // ACTIVE, SUSPENDED
     @Column("config_json") String configJson,
-    @Column("health_status") String healthStatus, // HEALTHY, UNHEALTHY
+    @Column("health_status") String healthStatus, // NOT_CONNECTED(未探活) / MISCONFIGURED(配置非法) / HEALTHY(接入真实连接器后)
     @Column("rtt_ms") Long rttMs,
     @Column("last_heartbeat_at") Instant lastHeartbeatAt,
     @Column("created_at") Instant createdAt,
@@ -25,8 +25,14 @@ public record IntegrationAdapter(
     @Column("updated_at") Instant updatedAt,
     @Column("updated_by") String updatedBy
 ) {
-    public IntegrationAdapter withPing(Long newRtt, String newConfigReport, Instant timestamp) {
-        return new IntegrationAdapter(id, adapterId, tenantId, name, protocolType, status, newConfigReport, healthStatus, newRtt, timestamp, createdAt, createdBy, Instant.now(), updatedBy);
+    /**
+     * 记录一次自检结果：更新 healthStatus、rttMs 与心跳时间。
+     *
+     * <p>修复原实现的字段错位 bug——此前把体检报告写入 configJson（覆盖真实配置）且从不更新 healthStatus；
+     * 现保留 configJson 原值，仅更新自检相关字段。
+     */
+    public IntegrationAdapter withPing(String newHealthStatus, Long newRtt, Instant timestamp) {
+        return new IntegrationAdapter(id, adapterId, tenantId, name, protocolType, status, configJson, newHealthStatus, newRtt, timestamp, createdAt, createdBy, Instant.now(), updatedBy);
     }
 
     public IntegrationAdapter withUpdate(String newName, String newProtocol, String newConfig, String newStatus) {

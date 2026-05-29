@@ -79,8 +79,8 @@ public class IntegrationService {
             dto.protocolType(),
             "ACTIVE",
             dto.configJson(),
-            "HEALTHY",
-            5L,
+            "NOT_CONNECTED", // 新建适配器尚未探活，据实标未连接（不预设 HEALTHY）
+            0L,
             Instant.now(),
             Instant.now(),
             "system",
@@ -110,14 +110,15 @@ public class IntegrationService {
     }
 
     /**
-     * 手动触发对指定第三方系统的健康自检 Ping 连接。
+     * 对指定适配器执行自检：当前仅做本地配置预检，不连接外部系统。
      *
-     * <p>模拟网络握手 RTT (毫秒时延)，同时构建高拟真的“体检分析报告”写入 configJson
-     * 字段以提供给前端可视化呈现。
+     * <p>未接入真实外部连接器（{@code ExternalSystemConnectorPort}，由 INTEG-02 / QA-08 落地）前，
+     * 无法判定外部可达性——据实返回：配置非法 → {@code MISCONFIGURED}；配置合法 → {@code NOT_CONNECTED}
+     * （外部可达性未知）。绝不伪造 {@code HEALTHY} 或网络 RTT。
      *
      * @param tenantId  租户标识
      * @param adapterId 适配器全局唯一业务 ID
-     * @return 更新了最新时延与诊断报告的适配器实体
+     * @return 更新了 healthStatus 与心跳时间的适配器实体（configJson 原值保留）
      * @throws ApiException 若适配器不存在，则抛出 ENG_INTEG_002 错误
      */
     @Transactional
@@ -125,33 +126,20 @@ public class IntegrationService {
         IntegrationAdapter adapter = adapterRepository.findByAdapterIdAndTenantId(adapterId, tenantId)
             .orElseThrow(() -> new ApiException(ErrorCode.ENG_INTEG_002, "适配器不存在: " + adapterId));
 
-        long startTime = System.nanoTime();
-        
-        // 物理配置校验：验证 configJson 是否为合法 JSON 格式，以此决定自检健康度
-        boolean isJsonHealthy = true;
+        // 本地预检：仅校验 configJson 是否为合法 JSON（不连接外部系统）。
+        boolean configValid = true;
         try {
             if (adapter.configJson() != null && !adapter.configJson().isBlank()) {
                 org.springframework.boot.json.JsonParserFactory.getJsonParser().parseMap(adapter.configJson());
             }
         } catch (Exception e) {
-            isJsonHealthy = false;
+            configValid = false;
         }
 
-        // 计算物理操作耗时并转换为毫秒（最小为 1ms 保证 RTT 的物理意义）
-        long costNs = System.nanoTime() - startTime;
-        long rttMs = Math.max(1L, costNs / 1_000_000L);
-
-        String healthStatus = isJsonHealthy ? "HEALTHY" : "UNHEALTHY";
-        double missingRate = isJsonHealthy ? 0.00 : 1.00;
-        double mappingRate = isJsonHealthy ? 1.00 : 0.00;
-
-        // 高保真物理体检诊断报告
-        String qualityDiagnosisReport = String.format(
-            "{\"rtt\":\"%dms\",\"health\":\"%s\",\"dataQuality\":{\"missingRate\":%.2f,\"termMappingRate\":%.2f,\"timestampAnomalyRate\":0.00},\"diagnosticTime\":\"%s\"}",
-            rttMs, healthStatus, missingRate, mappingRate, Instant.now().toString()
-        );
-
-        IntegrationAdapter pinged = adapter.withPing(rttMs, qualityDiagnosisReport, Instant.now());
+        // 无真实外部连接器：配置合法只能标 NOT_CONNECTED（外部可达性未知），不得伪造 HEALTHY；
+        // 不记录伪造网络 RTT（0 表示未做真实探活）。
+        String healthStatus = configValid ? "NOT_CONNECTED" : "MISCONFIGURED";
+        IntegrationAdapter pinged = adapter.withPing(healthStatus, 0L, Instant.now());
         return adapterRepository.save(pinged);
     }
 
@@ -278,8 +266,11 @@ public class IntegrationService {
     /**
      * 手动触发对指定已失败（FAILED）或死信（DEAD_LETTER）队列的消息投递重试补偿。
      *
-     * <p>根据幂等规则校验，已成功的消息不再重投；每次重试将累加 retry_count，
-     * 超过 max_retries 后强制归档进 DEAD_LETTER。此处以 70% 概率高仿真成功结果以供演示联调。
+     * <p>根据幂等规则校验，已成功的消息不再重投；每次重试累加 retry_count，达到 max_retries 后归档进 DEAD_LETTER。
+     *
+     * <p>当前未接入真实外部连接器（{@code ExternalSystemConnectorPort}，由 INTEG-02 / QA-08 落地），
+     * 无法真正重投递到 HIS/LIS——据实处理：绝不伪造 {@code SUCCESS}。空载荷或达到最大重试 → {@code DEAD_LETTER}；
+     * 否则保持 {@code FAILED} 并在 errorMessage 说明根因。
      *
      * @param tenantId  租户标识
      * @param messageId 集成日志的唯一主键 UUID
@@ -295,21 +286,20 @@ public class IntegrationService {
             throw new ApiException(ErrorCode.ENG_INTEG_006, "交易已成功，无需重复投递: " + messageId);
         }
 
-        // 递增已重试次数
         int newRetryCount = msgLog.retryCount() + 1;
+        boolean payloadValid = msgLog.payload() != null && !msgLog.payload().isBlank();
 
-        // 物理逻辑：检查消息内容 payload 是否为非空。如果 payload 缺失或者长度为 0，则重试失败
-        boolean isPayloadValid = msgLog.payload() != null && !msgLog.payload().isBlank();
+        // 根因：空载荷无法投递；载荷合法但无外部连接器同样无法真实重投递。两者均不得标 SUCCESS。
+        String cause = payloadValid
+            ? "未接入真实外部连接器，无法完成真实重投递（连接器接入由 INTEG-02 / QA-08 落地）"
+            : "物理载荷报文为空(Payload is empty)";
 
         IntegrationMessageLog retried;
-        if (isPayloadValid) {
-            retried = msgLog.withRetry("SUCCESS", newRetryCount, null);
+        if (newRetryCount >= msgLog.maxRetries()) {
+            retried = msgLog.withRetry("DEAD_LETTER", newRetryCount,
+                "投递重试超限，已强制移入死信隔离舱！根因: " + cause);
         } else {
-            if (newRetryCount >= msgLog.maxRetries()) {
-                retried = msgLog.withRetry("DEAD_LETTER", newRetryCount, "投递重试超限，已强制移入死信隔离舱！故障原因: 物理载荷报文为空(Payload is empty)");
-            } else {
-                retried = msgLog.withRetry("FAILED", newRetryCount, "重新投递失败: 物理载荷报文为空(Payload is empty)");
-            }
+            retried = msgLog.withRetry("FAILED", newRetryCount, "重新投递失败: " + cause);
         }
 
         return logRepository.save(retried);
