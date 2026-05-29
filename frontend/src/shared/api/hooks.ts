@@ -2624,3 +2624,68 @@ export function useLogout() {
     },
   });
 }
+
+// ──────────────────────────────────────────
+// 鉴权 · 成员账号（凭证）管理
+// ──────────────────────────────────────────
+export interface CredentialSummary {
+  userId: string;
+  username: string;
+  status: string;
+  mustChangePwd: boolean;
+  createdAt: string;
+}
+
+export interface CreateMemberPayload {
+  username: string;
+  userId?: string;
+  roleCode?: string;
+  initialPassword?: string;
+}
+
+export interface CreateMemberResult {
+  userId: string;
+  username: string;
+  tempPassword: string | null;
+}
+
+export function usePlatformCredentials() {
+  return useQuery({
+    queryKey: ["platform-credentials"],
+    queryFn: async () => {
+      const resp = await apiClient.get<{ data: CredentialSummary[] }>("/admin/credentials");
+      return resp.data.data;
+    },
+  });
+}
+
+export function useCreateMember() {
+  return useMutation({
+    mutationFn: async (payload: CreateMemberPayload) => {
+      const resp = await apiClient.post<{ data: CreateMemberResult }>(
+        "/admin/credentials",
+        payload,
+      );
+      return resp.data.data;
+    },
+  });
+}
+
+export function useResetMemberPassword() {
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const resp = await apiClient.post<{ data: { tempPassword: string } }>(
+        `/admin/credentials/${userId}/reset-password`,
+      );
+      return resp.data.data;
+    },
+  });
+}
+
+export function useSetCredentialStatus() {
+  return useMutation({
+    mutationFn: async (vars: { userId: string; status: string }) => {
+      await apiClient.patch(`/admin/credentials/${vars.userId}/status`, { status: vars.status });
+    },
+  });
+}

@@ -4,6 +4,10 @@ import {
   useUserRoleAssignments,
   useCreateUserRoleAssignment,
   useDeleteUserRoleAssignment,
+  usePlatformCredentials,
+  useCreateMember,
+  useResetMemberPassword,
+  useSetCredentialStatus,
 } from "@/shared/api/hooks";
 import styles from "./Compliance.module.css";
 
@@ -39,6 +43,16 @@ export default function AdminUsers() {
   const { data: assignments, isLoading, refetch } = useUserRoleAssignments();
   const createMutation = useCreateUserRoleAssignment();
   const deleteMutation = useDeleteUserRoleAssignment();
+
+  // 成员账号（凭证）管理
+  const { data: credentials, refetch: refetchCredentials } = usePlatformCredentials();
+  const createMemberMutation = useCreateMember();
+  const resetPwdMutation = useResetMemberPassword();
+  const setStatusMutation = useSetCredentialStatus();
+  const [showMemberForm, setShowMemberForm] = useState(false);
+  const [memberUsername, setMemberUsername] = useState("");
+  const [memberRole, setMemberRole] = useState("doctor");
+  const [memberInitPwd, setMemberInitPwd] = useState("");
 
   // 表单状态
   const [userId, setUserId] = useState("");
@@ -86,6 +100,66 @@ export default function AdminUsers() {
       const errMsg = err?.response?.data?.message || err?.message || "解绑失败";
       setMessage({ text: `操作失败: ${errMsg}`, type: "error" });
     }
+  };
+
+  const handleCreateMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!memberUsername.trim()) {
+      setMessage({ text: "登录名不能为空", type: "error" });
+      return;
+    }
+    try {
+      const res = await createMemberMutation.mutateAsync({
+        username: memberUsername.trim(),
+        roleCode: memberRole,
+        initialPassword: memberInitPwd.trim() || undefined,
+      });
+      setMessage({
+        text: res.tempPassword
+          ? `成员 ${res.username} 已开通，临时密码：${res.tempPassword}（请转交本人并提示首登改密）`
+          : `成员 ${res.username} 已开通（使用所设初始密码，须首登改密）`,
+        type: "success",
+      });
+      setMemberUsername("");
+      setMemberInitPwd("");
+      refetchCredentials();
+      refetch();
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || "开通失败";
+      setMessage({ text: `开通成员失败: ${errMsg}`, type: "error" });
+    }
+  };
+
+  const handleResetPassword = async (uid: string) => {
+    try {
+      const res = await resetPwdMutation.mutateAsync(uid);
+      setMessage({
+        text: `已重置 ${uid} 的密码，临时密码：${res.tempPassword}（请转交本人并提示首登改密）`,
+        type: "success",
+      });
+      refetchCredentials();
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || "重置失败";
+      setMessage({ text: `重置密码失败: ${errMsg}`, type: "error" });
+    }
+  };
+
+  const handleToggleStatus = async (uid: string, currentStatus: string) => {
+    const next = currentStatus === "ACTIVE" ? "DISABLED" : "ACTIVE";
+    try {
+      await setStatusMutation.mutateAsync({ userId: uid, status: next });
+      setMessage({ text: `账号 ${uid} 已${next === "ACTIVE" ? "启用" : "停用"}`, type: "success" });
+      refetchCredentials();
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || "操作失败";
+      setMessage({ text: `状态更新失败: ${errMsg}`, type: "error" });
+    }
+  };
+
+  const credStatusLabel = (statusCode: string) => {
+    if (statusCode === "ACTIVE") return "运行中";
+    if (statusCode === "DISABLED") return "已停用";
+    return statusCode;
   };
 
   const getRoleName = (code: string) => {
@@ -140,6 +214,135 @@ export default function AdminUsers() {
             {message.text}
           </div>
         )}
+
+        {/* 成员账号管理卡片（开通登录账号 / 重置密码 / 启停） */}
+        <div className={styles.card}>
+          <div className={styles.flexBetween}>
+            <div className={styles.title}>成员账号管理（开通登录账号）</div>
+            <button
+              onClick={() => setShowMemberForm(!showMemberForm)}
+              className={styles.btnPrimary}
+            >
+              {showMemberForm ? "收起开通面板" : "开通新成员"}
+            </button>
+          </div>
+
+          {showMemberForm && (
+            <form onSubmit={handleCreateMember}>
+              <div className={styles.grid}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>登录名 / 工号</label>
+                  <input
+                    type="text"
+                    value={memberUsername}
+                    onChange={(e) => setMemberUsername(e.target.value)}
+                    placeholder="如 drwang"
+                    className={styles.formInput}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>初始角色</label>
+                  <select
+                    value={memberRole}
+                    onChange={(e) => setMemberRole(e.target.value)}
+                    className={styles.formInput}
+                  >
+                    {getRolesConfig().map((role) => (
+                      <option key={role.code} value={role.code}>
+                        {role.name} ({role.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>初始密码（留空自动生成临时密码）</label>
+                  <input
+                    type="text"
+                    value={memberInitPwd}
+                    onChange={(e) => setMemberInitPwd(e.target.value)}
+                    placeholder="留空则系统生成并一次性返回"
+                    className={styles.formInput}
+                  />
+                </div>
+              </div>
+              <div className={styles.btnGroup}>
+                <button
+                  type="submit"
+                  disabled={createMemberMutation.isPending}
+                  className={styles.btnPrimary}
+                >
+                  {createMemberMutation.isPending ? "正在开通..." : "确认开通成员"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMemberForm(false);
+                    setMessage(null);
+                  }}
+                  className={styles.btnPrimary}
+                >
+                  取消
+                </button>
+              </div>
+            </form>
+          )}
+
+          {!credentials || credentials.length === 0 ? (
+            <div className={styles.description}>
+              当前租户暂无平台自建账号，可通过上方面板开通成员登录账号。
+            </div>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>登录名</th>
+                    <th>用户标识</th>
+                    <th>状态</th>
+                    <th>须改密</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {credentials.map((c) => (
+                    <tr key={c.userId}>
+                      <td className={styles.fontWeight600}>{c.username}</td>
+                      <td className={styles.fontMonospace}>{c.userId}</td>
+                      <td>
+                        <span
+                          className={
+                            c.status === "ACTIVE" ? styles.badgeActive : styles.badgeInactive
+                          }
+                        >
+                          {credStatusLabel(c.status)}
+                        </span>
+                      </td>
+                      <td>
+                        {c.mustChangePwd ? <span className={styles.scopeTag}>待改密</span> : "—"}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => handleResetPassword(c.userId)}
+                          disabled={resetPwdMutation.isPending}
+                          className={styles.btnPrimary}
+                        >
+                          重置密码
+                        </button>{" "}
+                        <button
+                          onClick={() => handleToggleStatus(c.userId, c.status)}
+                          disabled={setStatusMutation.isPending}
+                          className={styles.btnDanger}
+                        >
+                          {c.status === "ACTIVE" ? "停用" : "启用"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
         {/* 新增绑定卡片 */}
         <div className={styles.card}>

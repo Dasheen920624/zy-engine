@@ -1,0 +1,132 @@
+package com.medkernel.engine.security.auth;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.medkernel.engine.security.PlatformCredentialRepository;
+import com.medkernel.engine.security.UserRoleAssignmentRepository;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * 平台成员账号管理 + 自助改密的端到端行为测试（test profile，MockMvc + 模拟 JWT）。
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class CredentialAdminControllerTest {
+
+    @Autowired MockMvc mvc;
+    @Autowired PlatformCredentialRepository credentials;
+    @Autowired UserRoleAssignmentRepository roleAssignments;
+
+    @AfterEach
+    void cleanUp() {
+        credentials.deleteAll();
+        roleAssignments.deleteAll();
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor admin() {
+        return jwt().jwt(t -> t.subject("admin-1").claim("tenant_id", "t-1"))
+            .authorities(new SimpleGrantedAuthority("ROLE_HOSPITAL_ADMIN"));
+    }
+
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor member(String userId) {
+        return jwt().jwt(t -> t.subject(userId).claim("tenant_id", "t-1"))
+            .authorities(new SimpleGrantedAuthority("ROLE_DOCTOR"));
+    }
+
+    @Test
+    void createMember_generatesTempPassword_andListsWithoutHash() throws Exception {
+        mvc.perform(post("/api/v1/admin/credentials").with(admin())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"drwang\",\"roleCode\":\"doctor\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.username").value("drwang"))
+            .andExpect(jsonPath("$.data.userId").value("drwang"))
+            .andExpect(jsonPath("$.data.tempPassword", not(emptyOrNullString())));
+
+        mvc.perform(get("/api/v1/admin/credentials").with(admin()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data", hasSize(1)))
+            .andExpect(jsonPath("$.data[0].username").value("drwang"))
+            .andExpect(jsonPath("$.data[0].mustChangePwd").value(true))
+            .andExpect(jsonPath("$.data[0].passwordHash").doesNotExist());
+    }
+
+    @Test
+    void createMember_duplicateUsername_conflict() throws Exception {
+        String body = "{\"username\":\"drwang\",\"roleCode\":\"doctor\"}";
+        mvc.perform(post("/api/v1/admin/credentials").with(admin())
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk());
+        mvc.perform(post("/api/v1/admin/credentials").with(admin())
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("ENG-AUTH-006"));
+    }
+
+    @Test
+    void resetPassword_returnsNewTempPassword() throws Exception {
+        mvc.perform(post("/api/v1/admin/credentials").with(admin())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"drwang\",\"initialPassword\":\"Init@1234\"}"))
+            .andExpect(status().isOk());
+
+        mvc.perform(post("/api/v1/admin/credentials/{userId}/reset-password", "drwang").with(admin()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.tempPassword", not(emptyOrNullString())));
+    }
+
+    @Test
+    void setStatus_disablesAccount() throws Exception {
+        mvc.perform(post("/api/v1/admin/credentials").with(admin())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"drwang\",\"initialPassword\":\"Init@1234\"}"))
+            .andExpect(status().isOk());
+
+        mvc.perform(patch("/api/v1/admin/credentials/{userId}/status", "drwang").with(admin())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DISABLED\"}"))
+            .andExpect(status().isOk());
+
+        mvc.perform(get("/api/v1/admin/credentials").with(admin()))
+            .andExpect(jsonPath("$.data[0].status").value("DISABLED"));
+    }
+
+    @Test
+    void changePassword_wrongOldRejected_thenSuccessClearsMustChange() throws Exception {
+        mvc.perform(post("/api/v1/admin/credentials").with(admin())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"drwang\",\"initialPassword\":\"Init@1234\"}"))
+            .andExpect(status().isOk());
+
+        mvc.perform(post("/api/v1/auth/change-password").with(member("drwang"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"oldPassword\":\"WRONG\",\"newPassword\":\"NewPwd@123\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("ENG-AUTH-004"));
+
+        mvc.perform(post("/api/v1/auth/change-password").with(member("drwang"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"oldPassword\":\"Init@1234\",\"newPassword\":\"NewPwd@123\"}"))
+            .andExpect(status().isOk());
+
+        mvc.perform(get("/api/v1/admin/credentials").with(admin()))
+            .andExpect(jsonPath("$.data[0].mustChangePwd").value(false));
+    }
+}
