@@ -1,11 +1,14 @@
 package com.medkernel.migration;
 
+import java.util.List;
+
 import javax.sql.DataSource;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,11 +31,25 @@ class H2BaselineMigrationTest {
 
         var result = flyway.migrate();
         assertThat(result.success).as("H2 baseline migrations succeed").isTrue();
-        assertThat(result.migrationsExecuted).as("V1 至 V24 全部应用").isEqualTo(24);
+        assertThat(result.migrationsExecuted).as("V1 至 V25 全部应用").isEqualTo(25);
 
         var applied = flyway.info().applied();
         assertThat(applied).extracting(info -> info.getVersion().getVersion())
-            .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24");
+            .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25");
+
+        JdbcTemplate jdbc = new JdbcTemplate(ds);
+        Integer assignmentCount = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM user_role_assignment WHERE tenant_id = 't-1' AND active_flag = 'Y'",
+            Integer.class);
+        assertThat(assignmentCount).as("初始化用户角色绑定数量").isEqualTo(13);
+
+        List<String> seededUsers = jdbc.queryForList("""
+            SELECT user_id FROM user_role_assignment
+            WHERE tenant_id = 't-1'
+            ORDER BY user_id
+            """, String.class);
+        assertThat(seededUsers)
+            .contains("admin-1", "doctor-1", "implementation-1", "it-ops-1", "qa-manager-1");
     }
 
     private HikariConfig hikari() {

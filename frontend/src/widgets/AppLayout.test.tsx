@@ -65,6 +65,7 @@ function renderLayout(initialPath = "/terminology/mapping") {
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
           <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<div>工作台内容</div>} />
             <Route path="/terminology/mapping" element={<div>字典映射内容</div>} />
             <Route path="/qc/dashboard" element={<div>质控驾驶舱内容</div>} />
           </Route>
@@ -172,6 +173,15 @@ describe("AppLayout", () => {
     expect(navigation).not.toBeNull();
     expect(within(navigation as HTMLElement).queryByText("试点准备")).toBeNull();
     expect(screen.getAllByText("工作台").length).toBeGreaterThan(0);
+  });
+
+  it("does not render the workbench before an effective permission profile is available", () => {
+    securityProfileState.value = { data: undefined };
+    mockViewport(1280);
+    renderLayout("/dashboard");
+
+    expect(screen.queryByText("工作台内容")).toBeNull();
+    expect(screen.getByText("正在核验权限")).toBeInTheDocument();
   });
 
   it("blocks direct entry to a page outside the granted menu scope", () => {
