@@ -33,7 +33,7 @@ public class PlatformCredentialDevSeeder implements ApplicationRunner {
         Map.entry("qa-manager", new String[]{"qa-manager-1", "qa-manager"}),
         Map.entry("insurance-manager", new String[]{"insurance-manager-1", "insurance-manager"}),
         Map.entry("dept-head", new String[]{"dept-head-1", "dept-head"}),
-        Map.entry("implementation", new String[]{"implementation-1", "implementation-engineer"}),
+        Map.entry("implementation-engineer", new String[]{"implementation-1", "implementation-engineer"}),
         Map.entry("specialist", new String[]{"specialist-1", "specialist"}),
         Map.entry("doctor", new String[]{"doctor-1", "doctor"}),
         Map.entry("nurse", new String[]{"nurse-1", "nurse"}),
