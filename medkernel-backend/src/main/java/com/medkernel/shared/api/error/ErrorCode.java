@@ -131,7 +131,8 @@ public enum ErrorCode {
     ENG_AUTH_003("ENG-AUTH-003", 400, "登录请求参数不合法", ErrorClass.INPUT, false),
     ENG_AUTH_004("ENG-AUTH-004", 400, "原密码不正确", ErrorClass.AUTH, false),
     ENG_AUTH_005("ENG-AUTH-005", 404, "账号不存在", ErrorClass.DATA, false),
-    ENG_AUTH_006("ENG-AUTH-006", 409, "用户名在该租户下已存在", ErrorClass.DATA, false);
+    ENG_AUTH_006("ENG-AUTH-006", 409, "用户名在该租户下已存在", ErrorClass.DATA, false),
+    ENG_TENANT_001("ENG-TENANT-001", 409, "租户已存在，无法重复开通", ErrorClass.DATA, false);
 
     private final String code;
     private final int httpStatus;
