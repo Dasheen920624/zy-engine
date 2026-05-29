@@ -34,9 +34,7 @@ describe("AppRouter", () => {
   it("uses the login page as the default entry instead of opening the workbench", async () => {
     renderRouter("/");
 
-    expect(
-      await screen.findByRole("heading", { name: "集团医疗智能中枢" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "集团医疗智能中枢" })).toBeInTheDocument();
     expect(screen.queryByText("本周建议动作")).toBeNull();
   });
 
