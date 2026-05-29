@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState, useEffect } from "react";
 import {
   Table,
@@ -53,146 +52,9 @@ import {
   useRetryMessage,
   useDeleteMessage,
   IntegrationAdapter,
-  IntegrationWebhookConfig,
-  IntegrationMessageLog,
 } from "@/shared/api/hooks";
 
 const { Option } = Select;
-
-// 仿真底座兜底数据 (规范命名，避免 SHOUTY-CASE)
-const defaultLocalAdapters: IntegrationAdapter[] = [
-  {
-    id: 1,
-    adapterId: "sys-his",
-    tenantId: "tenant-001",
-    name: "核心住院医生工作站 (HIS)",
-    protocolType: "HL7 / SOAP",
-    status: "ACTIVE",
-    configJson: '{"missingRate":0.01,"termMappingRate":0.98,"timestampAnomalyRate":0.00}',
-    healthStatus: "HEALTHY",
-    rttMs: 4,
-    lastHeartbeatAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    adapterId: "sys-emr",
-    tenantId: "tenant-001",
-    name: "电子病历编辑器系统 (EMR)",
-    protocolType: "REST API",
-    status: "ACTIVE",
-    configJson: '{"missingRate":0.02,"termMappingRate":0.96,"timestampAnomalyRate":0.00}',
-    healthStatus: "HEALTHY",
-    rttMs: 12,
-    lastHeartbeatAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    adapterId: "sys-lis",
-    tenantId: "tenant-001",
-    name: "检验信息管理系统 (LIS)",
-    protocolType: "DB Link / SQL",
-    status: "ACTIVE",
-    configJson: '{"missingRate":0.03,"termMappingRate":0.95,"timestampAnomalyRate":0.01}',
-    healthStatus: "HEALTHY",
-    rttMs: 18,
-    lastHeartbeatAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 4,
-    adapterId: "sys-pacs",
-    tenantId: "tenant-001",
-    name: "医学影像归档系统 (PACS)",
-    protocolType: "DICOM / Web",
-    status: "ACTIVE",
-    configJson: '{"missingRate":0.02,"termMappingRate":0.97,"timestampAnomalyRate":0.00}',
-    healthStatus: "HEALTHY",
-    rttMs: 25,
-    lastHeartbeatAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-const defaultLocalWebhooks: IntegrationWebhookConfig[] = [
-  {
-    id: 1,
-    webhookId: "whk-discharge",
-    tenantId: "tenant-001",
-    name: "出院小结回传订阅",
-    callbackUrl: "http://his.hospital.local:8080/api/callback/discharge",
-    secretKey: "sec_key_e3b0c44298fc1c149afbf4c8996fb92427ae",
-    eventsSubscribed: "DISCHARGE_PLAN",
-    status: "ACTIVE",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-const defaultLocalLogs: IntegrationMessageLog[] = [
-  {
-    id: 1,
-    messageId: "msg-log-001",
-    tenantId: "tenant-001",
-    traceId: "tr-stroke-proof-009",
-    direction: "OUTBOUND",
-    systemName: "核心住院医生工作站 (HIS)",
-    protocolType: "HL7 / SOAP",
-    payloadSummary: "ADOPT_RECOMMENDATION | patientId=P-1001",
-    payload: '{"action":"ADOPT","recommendationCard":"STK-CDSS-001","patientId":"P-1001"}',
-    status: "SUCCESS",
-    retryCount: 0,
-    maxRetries: 3,
-    errorMessage: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    messageId: "msg-log-002",
-    tenantId: "tenant-001",
-    traceId: "tr-ami-proof-002",
-    direction: "OUTBOUND",
-    systemName: "检验信息管理系统 (LIS)",
-    protocolType: "DB Link",
-    payloadSummary: "CRITICAL_VALUE_ALARM | patientId=P-1002",
-    payload: '{"alarmCode":"CRIT-01","value":"Troponin T 2.4 ng/mL","patientId":"P-1002"}',
-    status: "FAILED",
-    retryCount: 2,
-    maxRetries: 3,
-    errorMessage: "接收方服务器无响应 (Socket Timeout)",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    messageId: "msg-log-003",
-    tenantId: "tenant-001",
-    traceId: "tr-vte-proof-005",
-    direction: "OUTBOUND",
-    systemName: "电子病历编辑器系统 (EMR)",
-    protocolType: "REST API",
-    payloadSummary: "VTE_RISK_ASSESS | patientId=P-1003",
-    payload: '{"assessScore":5,"riskLevel":"HIGH","patientId":"P-1003"}',
-    status: "DEAD_LETTER",
-    retryCount: 3,
-    maxRetries: 3,
-    errorMessage: "投递重试超限，已移入死信！原因: 400 Bad Request",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-const fallbackOriginsList = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://his.hospital.local:8080",
-];
 
 export default function AdapterHub() {
   const { token } = theme.useToken();
@@ -230,7 +92,7 @@ export default function AdapterHub() {
   // ==========================================
   // 2. 本地仿真与交互状态
   // ==========================================
-  const [localOrigins, setLocalOrigins] = useState<string[]>(fallbackOriginsList);
+  const [localOrigins] = useState<string[]>([]);
   const [originFormVisible, setOriginFormVisible] = useState<boolean>(false);
   const [sandboxVisible, setSandboxVisible] = useState<boolean>(false);
 
@@ -263,15 +125,12 @@ export default function AdapterHub() {
   const [adapterForm] = Form.useForm();
   const [webhookForm] = Form.useForm();
 
-  // 兜底合并
-  const displayOrigins = apiOrigins && apiOrigins.length > 0 ? apiOrigins : localOrigins;
-  const displayAdapters =
-    apiAdapters && apiAdapters.length > 0 ? apiAdapters : defaultLocalAdapters;
-  const displayWebhooks =
-    apiWebhooks && apiWebhooks.length > 0 ? apiWebhooks : defaultLocalWebhooks;
-  const displayLogs =
-    apiLogsData?.items && apiLogsData.items.length > 0 ? apiLogsData.items : defaultLocalLogs;
-  const displayLogsTotal = apiLogsData?.total ?? defaultLocalLogs.length;
+  // 仅展示后端真实数据（含本会话内本地新增的跨域白名单）；无数据走空态，不再用写死兜底冒充已接入。
+  const displayOrigins = apiOrigins ?? localOrigins;
+  const displayAdapters = apiAdapters ?? [];
+  const displayWebhooks = apiWebhooks ?? [];
+  const displayLogs = apiLogsData?.items ?? [];
+  const displayLogsTotal = apiLogsData?.total ?? 0;
 
   // 3. 监听跨域通信
   useEffect(() => {
@@ -301,19 +160,20 @@ export default function AdapterHub() {
 
   // 4. 动作执行 (跨域白名单 & Token 发生)
   const handleAddOrigin = async () => {
+    let values;
     try {
-      const values = await originForm.validateFields();
+      values = await originForm.validateFields();
+    } catch {
+      return; // 表单校验错误已在控件上提示
+    }
+    try {
       await addOriginMutation.mutateAsync({ origin: values.origin });
       message.success("跨域安全域名配置成功！");
       setOriginFormVisible(false);
       originForm.resetFields();
       refetchOrigins();
-    } catch {
-      const values = originForm.getFieldsValue();
-      setLocalOrigins((prev) => [...prev, values.origin]);
-      message.success(`[仿真模式] 安全域名白名单配置成功: ${values.origin}`);
-      setOriginFormVisible(false);
-      originForm.resetFields();
+    } catch (e: any) {
+      message.error(e?.response?.data?.message || "跨域安全域名配置失败，请稍后重试");
     }
   };
 
@@ -335,13 +195,11 @@ export default function AdapterHub() {
         setSandboxVisible(true);
         setPostMessageLogs([]);
       }
-    } catch {
-      const mockToken = "tkn-stroke-demo-" + Math.floor(Math.random() * 100000);
-      setSandboxToken(mockToken);
-      setSandboxUrl(`${window.location.origin}/embed/launch?token=${mockToken}`);
-      setSandboxVisible(true);
-      setPostMessageLogs([]);
-      message.info("[仿真模式] 成功生成 HIS 一次性安全启动令牌，已拉起集成仿真沙箱！");
+    } catch (e: any) {
+      if (e?.errorFields) return; // 表单校验错误已在控件上提示
+      message.error(
+        e?.response?.data?.message || "生成 Launch Token 失败，请稍后重试或确认嵌入服务已就绪",
+      );
     }
   };
 
@@ -363,29 +221,30 @@ export default function AdapterHub() {
     setPingLoadingMap((prev) => ({ ...prev, [adapterId]: true }));
     try {
       const res = await pingAdapterMutation.mutateAsync(adapterId);
-      message.success(`适配器 [${adapterId}] 自检测体检握手成功！`);
-      if (res.configJson) {
-        setQualityDiagnosticReport(JSON.parse(res.configJson));
+      // 仅展示后端真实自检结果（healthStatus / rttMs / lastHeartbeatAt），不再从 configJson 反解伪造体检报告。
+      setQualityDiagnosticReport({
+        adapterId: res.adapterId,
+        healthStatus: res.healthStatus,
+        rttMs: res.rttMs,
+        lastHeartbeatAt: res.lastHeartbeatAt,
+      });
+      if (res.healthStatus === "MISCONFIGURED") {
+        message.error(`适配器 [${adapterId}] 配置非法 (MISCONFIGURED)，请修正 configJson 后重试`);
+      } else {
+        message.success(
+          `适配器 [${adapterId}] 本地配置校验通过；外部连通性未探活 (NOT_CONNECTED)，待接入真实连接器`,
+        );
       }
       refetchAdapters();
     } catch (e: any) {
-      // 真实捕获物理连接超时或后端响应异常并显式呈现
-      const errMsg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "物理连接超时或目标主机不可达 (Connection Refused)";
+      const errMsg = e?.response?.data?.message || e?.message || "自检请求失败，请稍后重试";
       setQualityDiagnosticReport({
-        rtt: "OFFLINE",
-        health: "UNHEALTHY",
-        dataQuality: {
-          missingRate: 1.0,
-          termMappingRate: 0.0,
-          timestampAnomalyRate: 1.0,
-        },
-        diagnosticTime: new Date().toISOString(),
+        adapterId,
+        healthStatus: "ERROR",
+        rttMs: null,
         errorMessage: errMsg,
       });
-      message.error(`[外部连接失败] 无法连通目标系统 [${adapterId}]！细节: ${errMsg}`);
+      message.error(`[自检失败] ${adapterId}：${errMsg}`);
     } finally {
       setPingLoadingMap((prev) => ({ ...prev, [adapterId]: false }));
     }
@@ -405,8 +264,8 @@ export default function AdapterHub() {
       });
       message.success(`适配器状态已变更为: ${newStatus}`);
       refetchAdapters();
-    } catch {
-      message.info("[仿真模式] 切换适配器启动状态成功");
+    } catch (e: any) {
+      message.error(e?.response?.data?.message || "切换适配器状态失败，请稍后重试");
     }
   };
 
@@ -437,22 +296,10 @@ export default function AdapterHub() {
       });
       setTestResultSummary(res);
       message.success("HMAC-SHA256 签名双向安全校准握手测试成功！");
-    } catch {
-      // 仿真签名生成
-      const mockSecret = "sec_key_demo_" + Math.floor(Math.random() * 100000000000000);
-      const mockTimestamp = Math.floor(Date.now() / 1000);
-      const mockSign =
-        "sig_hmac_sha256_" + Math.floor(Math.random() * 100000000000000000).toString(16);
-      setTestResultSummary({
-        webhookId: selectedWebhookId,
-        callbackUrl: "http://his.hospital.local:8080/api/callback/discharge",
-        secretKey: mockSecret,
-        timestamp: mockTimestamp,
-        payloadSigned: `${mockTimestamp}.${webhookTestPayload}`,
-        signature: mockSign,
-        status: "SUCCESS",
-      });
-      message.success("[仿真校准] HMAC-SHA256 签名双向握手测试成功！");
+    } catch (e: any) {
+      message.error(
+        e?.response?.data?.message || "Webhook 签名自检失败，请确认订阅通道存在且报文为合法 JSON",
+      );
     } finally {
       setTestLogLoading(false);
     }
@@ -468,9 +315,8 @@ export default function AdapterHub() {
         message.warning(`重新投递失败，状态: ${res.status}`);
       }
       refetchLogs();
-    } catch {
-      message.success(`[仿真重投] 消息 [${messageId}] 重新路由投递成功！状态已标记为 SUCCESS`);
-      refetchLogs();
+    } catch (e: any) {
+      message.error(e?.response?.data?.message || `消息 [${messageId}] 重试失败，请稍后重试`);
     }
   };
 
@@ -479,32 +325,27 @@ export default function AdapterHub() {
       await deleteMessageMutation.mutateAsync(messageId);
       message.success("成功删除该重试死信项并标记已解决");
       refetchLogs();
-    } catch {
-      message.success("[仿真模式] 成功删除并置为已解决");
-      refetchLogs();
+    } catch (e: any) {
+      message.error(e?.response?.data?.message || "删除消息失败，请稍后重试");
     }
   };
 
+  // 客户端导出当前页交易流水快照（真实数据，无伪造哈希）；带后端签名的防伪存证包需 INTEG 导出接口支持。
   const handleExportLogsCertificate = () => {
-    message.loading("正在为当前所有交易流水记录生成防伪审计数字哈希证据包...", 1.5, () => {
-      Modal.success({
-        title: "接口数据交换防伪电子凭证导出成功",
-        content: (
-          <Space direction="vertical" className="mk-full-width">
-            <span>接口总线哈希校验指纹 (SHA-256):</span>
-            <Tag color="cyan" className="font-mono text-xs select-all">
-              sha256-4c74026fa808019b88e1a129427ae41e4649b934ca495991b7852b80a109a1a2
-            </Tag>
-            <Alert
-              type="success"
-              showIcon
-              message="防伪机制完整"
-              description="导出的接口交换日志已完美加盖 MEDKERNEL 实施专用数字存证签名，随时可用于互联互通测评与评级审计。"
-            />
-          </Space>
-        ),
-      });
-    });
+    if (displayLogs.length === 0) {
+      message.info("当前没有可导出的交易流水记录。");
+      return;
+    }
+    const blob = new Blob([JSON.stringify(displayLogs, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `integration-message-logs-${Date.now()}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    message.success(
+      "已导出当前页交易流水快照（客户端 JSON）。带后端签名、可用于互联互通测评的防伪存证包需 INTEG 导出接口支持（待接入）。",
+    );
   };
 
   return (
@@ -527,8 +368,16 @@ export default function AdapterHub() {
         <Col span={6}>
           <Card bordered={false} className="shadow-sm hover:shadow transition-shadow">
             <Statistic
-              title="健康接入率"
-              value={100}
+              title="健康接入率 (HEALTHY)"
+              value={
+                displayAdapters.length === 0
+                  ? 0
+                  : Math.round(
+                      (displayAdapters.filter((a) => a.healthStatus === "HEALTHY").length /
+                        displayAdapters.length) *
+                        100,
+                    )
+              }
               suffix="%"
               prefix={<CheckCircleOutlined className="text-emerald-500 mr-1.5" />}
               valueStyle={{ color: token.colorSuccess }}
@@ -620,10 +469,16 @@ export default function AdapterHub() {
                     title: "自检状态",
                     key: "healthStatus",
                     render: (_, record) => {
-                      const isHealthy = record.healthStatus === "HEALTHY";
+                      const statusMap: Record<string, "success" | "error" | "default" | "warning"> =
+                        {
+                          HEALTHY: "success",
+                          NOT_CONNECTED: "default",
+                          MISCONFIGURED: "error",
+                          UNHEALTHY: "error",
+                        };
                       return (
                         <Badge
-                          status={isHealthy ? "success" : "error"}
+                          status={statusMap[record.healthStatus] ?? "default"}
                           text={record.healthStatus}
                           className="font-mono text-xs"
                         />
@@ -634,7 +489,9 @@ export default function AdapterHub() {
                     title: "握手延迟",
                     dataIndex: "rttMs",
                     key: "rttMs",
-                    render: (rtt) => <span className="font-mono text-xs">{rtt}ms</span>,
+                    render: (rtt) => (
+                      <span className="font-mono text-xs">{rtt ? `${rtt}ms` : "—"}</span>
+                    ),
                   },
                   {
                     title: "运行状态",
@@ -684,73 +541,71 @@ export default function AdapterHub() {
                 ]}
               />
 
-              {/* 连接诊断与质量自诊断快照 */}
+              {/* 适配器自检结果（仅展示后端真实返回，不伪造体检指标） */}
               {qualityDiagnosticReport && (
                 <Card
                   title={
                     <span className="flex items-center gap-1.5 text-xs text-sky-600 font-semibold">
                       <CompassOutlined />
-                      <span>连接诊断与数据接入质量自检雷达报告</span>
+                      <span>适配器自检结果</span>
                     </span>
                   }
-                  className={`border-slate-200 mt-4 rounded-xl ${qualityDiagnosticReport.errorMessage ? "bg-red-50/20 border-red-200" : "bg-slate-50"}`}
+                  className={`border-slate-200 mt-4 rounded-xl ${
+                    qualityDiagnosticReport.healthStatus === "MISCONFIGURED" ||
+                    qualityDiagnosticReport.healthStatus === "ERROR"
+                      ? "bg-red-50/20 border-red-200"
+                      : "bg-slate-50"
+                  }`}
                   size="small"
                 >
                   <Descriptions size="small" column={3}>
-                    <Descriptions.Item label="握手网络延迟">
-                      <Tag
-                        color={qualityDiagnosticReport.errorMessage ? "red" : "green"}
-                        className="font-mono font-bold"
-                      >
-                        {qualityDiagnosticReport.rtt}
-                      </Tag>
+                    <Descriptions.Item label="适配器">
+                      <span className="font-mono text-xs">{qualityDiagnosticReport.adapterId}</span>
                     </Descriptions.Item>
-                    <Descriptions.Item label="通道健康状态">
+                    <Descriptions.Item label="自检状态">
                       <Tag
-                        color={qualityDiagnosticReport.errorMessage ? "red" : "cyan"}
+                        color={
+                          qualityDiagnosticReport.healthStatus === "HEALTHY"
+                            ? "green"
+                            : qualityDiagnosticReport.healthStatus === "NOT_CONNECTED"
+                              ? "default"
+                              : "red"
+                        }
                         className="font-bold"
                       >
-                        {qualityDiagnosticReport.health}
+                        {qualityDiagnosticReport.healthStatus}
                       </Tag>
                     </Descriptions.Item>
-                    <Descriptions.Item label="诊断运行时间">
-                      <span className="font-mono text-[10px] text-slate-500">
-                        {new Date(qualityDiagnosticReport.diagnosticTime).toLocaleString()}
-                      </span>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="核心数据缺失率 (Missing Rate)">
-                      <span className="font-mono font-bold text-red-500">
-                        {(qualityDiagnosticReport.dataQuality.missingRate * 100).toFixed(1)}%
-                      </span>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="标准术语字典映射率">
-                      <span className="font-mono font-bold text-emerald-600">
-                        {(qualityDiagnosticReport.dataQuality.termMappingRate * 100).toFixed(1)}%
-                      </span>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="时间戳异常序列率">
-                      <span className="font-mono">
-                        {(qualityDiagnosticReport.dataQuality.timestampAnomalyRate * 100).toFixed(
-                          1,
-                        )}
-                        %
+                    <Descriptions.Item label="网络 RTT">
+                      <span className="font-mono text-xs">
+                        {qualityDiagnosticReport.rttMs
+                          ? `${qualityDiagnosticReport.rttMs}ms`
+                          : "未测量"}
                       </span>
                     </Descriptions.Item>
                   </Descriptions>
-                  {qualityDiagnosticReport.errorMessage ? (
+                  {qualityDiagnosticReport.healthStatus === "ERROR" ? (
                     <Alert
                       type="error"
                       showIcon
-                      message="外部端点连接异常 (OFFLINE / DISABLED)"
-                      description={`自检测对账阻断：外部目标系统已被挂起，或者物理网络握手超时(TIMEOUT)。物理网络与后端异常细节: ${qualityDiagnosticReport.errorMessage}`}
+                      message="自检请求失败"
+                      description={qualityDiagnosticReport.errorMessage}
+                      className="mt-3 rounded-lg text-xs"
+                    />
+                  ) : qualityDiagnosticReport.healthStatus === "MISCONFIGURED" ? (
+                    <Alert
+                      type="error"
+                      showIcon
+                      message="适配器配置非法 (MISCONFIGURED)"
+                      description="configJson 不是合法 JSON，请修正后重试。"
                       className="mt-3 rounded-lg text-xs"
                     />
                   ) : (
                     <Alert
-                      type="success"
+                      type="info"
                       showIcon
-                      message="自检测评估意见"
-                      description="本次接入自诊断通过，该适配器完全符合互联互通五级数据标准。由于数据缺失率低于设定的 5.0% 门槛，不予触发底座降级防护。"
+                      message="本地配置校验通过，外部连通性未探活 (NOT_CONNECTED)"
+                      description="当前未接入真实外部连接器（ExternalSystemConnectorPort，由 INTEG-02 / QA-08 落地），无法判定外部可达性；据实不伪造 HEALTHY 或网络 RTT。"
                       className="mt-3 rounded-lg text-xs"
                     />
                   )}

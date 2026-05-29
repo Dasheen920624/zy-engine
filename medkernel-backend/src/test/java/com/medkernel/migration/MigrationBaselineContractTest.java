@@ -51,7 +51,8 @@ class MigrationBaselineContractTest {
         "V22__engine_remediation.sql",
         "V23__tenant_pilot_baseline.sql",
         "V24__mpi_patient_registry.sql",
-        "V25__security_user_role_seed.sql"
+        "V25__security_user_role_seed.sql",
+        "V26__integration_adapter_health_states.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
