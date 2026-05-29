@@ -5,12 +5,6 @@ import styles from "./Login.module.css";
 
 const { Title, Text } = Typography;
 
-const identitySignals = [
-  { label: "试点组织", value: "集团总院 · 信息科联调环境" },
-  { label: "安全审计", value: "安全审计已开启" },
-  { label: "身份策略", value: "MFA / 国密 / 国产 CA 按医院策略自动选择" },
-];
-
 /**
  * 默认登录路径 + MFA/SSO 折叠区。
  *
@@ -38,12 +32,18 @@ export default function Login() {
         <Text className={styles.primaryGoal}>当前任务：确认身份并进入工作台</Text>
 
         <ul className={styles.signalList} aria-label="当前入口状态">
-          {identitySignals.map((signal) => (
-            <li key={signal.label} className={styles.signalItem}>
-              <span>{signal.label}</span>
-              <strong>{signal.value}</strong>
-            </li>
-          ))}
+          <li className={styles.signalItem}>
+            <span>试点组织</span>
+            <strong>集团总院 · 信息科联调环境</strong>
+          </li>
+          <li className={styles.signalItem}>
+            <span>安全审计</span>
+            <strong>安全审计已开启</strong>
+          </li>
+          <li className={styles.signalItem}>
+            <span>身份策略</span>
+            <strong>MFA / 国密 / 国产 CA 按医院策略自动选择</strong>
+          </li>
         </ul>
 
         <Text className={styles.safetyCopy}>
