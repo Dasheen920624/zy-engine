@@ -63,11 +63,28 @@ class IntegrationServiceTest {
         assertEquals("REST", updated.protocolType());
         assertEquals("SUSPENDED", updated.status());
 
-        // 自检测 ping
+        // 自检：未接入真实外部连接器 → 配置合法只标 NOT_CONNECTED，不伪造 HEALTHY/网络 RTT，且不覆盖 configJson
         IntegrationAdapter pinged = service.pingAdapter(tenantId, "adp-1");
-        assertEquals("HEALTHY", pinged.healthStatus());
-        assertTrue(pinged.rttMs() >= 1L);
-        assertTrue(pinged.configJson().contains("dataQuality"));
+        assertEquals("NOT_CONNECTED", pinged.healthStatus());
+        assertEquals(0L, pinged.rttMs());
+        assertEquals("{}", pinged.configJson());
+        assertFalse(pinged.configJson().contains("dataQuality"));
+    }
+
+    @Test
+    void pingHonestlyReportsConfigStateNeverFakesHealthy() {
+        // 配置合法 → NOT_CONNECTED（外部可达性未知，绝不伪造 HEALTHY）
+        service.createAdapter(tenantId, new AdapterCreateDto("adp-ok", "LIS集成", "HL7", "{\"host\":\"lis.local\"}"));
+        IntegrationAdapter okPing = service.pingAdapter(tenantId, "adp-ok");
+        assertEquals("NOT_CONNECTED", okPing.healthStatus());
+        assertNotEquals("HEALTHY", okPing.healthStatus());
+        assertEquals(0L, okPing.rttMs());
+        assertTrue(okPing.configJson().contains("lis.local"), "配置原值应被保留，不被体检报告覆盖");
+
+        // 配置非法 → MISCONFIGURED
+        service.createAdapter(tenantId, new AdapterCreateDto("adp-bad", "坏配置", "REST", "{not-json"));
+        IntegrationAdapter badPing = service.pingAdapter(tenantId, "adp-bad");
+        assertEquals("MISCONFIGURED", badPing.healthStatus());
     }
 
     @Test
@@ -128,10 +145,11 @@ class IntegrationServiceTest {
         assertEquals(1, logsPage.size());
         assertEquals("msg-1", logsPage.get(0).messageId());
 
-        // 执行重试：由于物理报文 payload 为 "payload" 非空，重试应当 100% 成功
+        // 执行重试：未接入真实外部连接器，即便 payload 合法也绝不伪造 SUCCESS（retryCount 1 < maxRetries 3 → FAILED）
         IntegrationMessageLog retried = service.retryMessage(tenantId, "msg-1");
         assertEquals(1, retried.retryCount());
-        assertEquals("SUCCESS", retried.status());
+        assertEquals("FAILED", retried.status());
+        assertTrue(retried.errorMessage().contains("未接入真实外部连接器"));
 
         // 插入一条空 payload 的失败消息日志，测试其重试失败
         IntegrationMessageLog logEmpty = new IntegrationMessageLog(

@@ -44,3 +44,19 @@
 
 ## 6. 总评
 INTEG-01/02 **部分名副其实**——签名/审计/裸 Map 修复（B6）真实，但 ping/retry 是"去骰子未补真连通"的**半修复**，前端仍系统性造假。**不可进入第三方对接验收（QA-08）**。建议 backlog 标注 INTEG 为部分完成。
+
+---
+
+## 7. 修复记录（2026-05-29 · Claude · 用户授权"继续优化任务"）
+
+> 验证：后端 IntegrationServiceTest 5 + IntegrationControllerSecurityTest 6 + H2BaselineMigrationTest 1 + MigrationBaselineContractTest 20 全绿；前端 typecheck/lint(0 error)/build/smoke 全过。多方言 FlywayMultiDialectSmokeTest（需 Docker）已同步期望值，交 CI 验证。
+
+| Finding | 状态 | 修复内容（file） |
+|---|---|---|
+| A14-H-01 | ☑️ 已修 | `IntegrationService.pingAdapter` 不再"配置合法即 HEALTHY + 本地解析耗时当 RTT"：改为本地仅校验 configJson → 合法标 `NOT_CONNECTED`（外部可达性未知）、非法标 `MISCONFIGURED`，不伪造 RTT（0=未测量）。**并修复 `IntegrationAdapter.withPing` 字段错位 bug**（此前把体检报告写入 configJson 覆盖真实配置、且从不更新 healthStatus）。新增 V26 五方言迁移放开 `ck_integration_adapter_health` 约束以容纳新状态 |
+| A14-H-02 | ☑️ 已修 | `retryMessage` 不再"payload 非空即 SUCCESS"：未接入真实连接器时绝不标 SUCCESS——空载荷或超 maxRetries → DEAD_LETTER，否则 FAILED 并在 errorMessage 说明根因 |
+| A14-CRIT-01 | ☑️ 已修 | `AdapterHub.tsx` 删除 6 处 catch 伪造成功（mockToken/mockSign/mockSecret/「[仿真模式]成功」）、删除写死假哈希 `sha256-4c74026f…` 导出（改为真实客户端 JSON 快照导出 + 诚实说明签名存证需后端接口）、删除 4 组写死兜底数据（adapters/webhooks/logs/origins）改走真实 API 空态、看板"健康接入率"写死 100% 改为真实派生、自检结果卡改展示后端真实 healthStatus/rttMs、移除整文件 eslint-disable |
+| A14-M-01 | ☑️ 已修 | 清理"模拟网络握手 RTT"/"70% 概率高仿真成功"等旧造假注释，Javadoc 与确定性实现一致 |
+| A14-M-02 | ☑️ 已修 | 新增 `pingHonestlyReportsConfigStateNeverFakesHealthy`（NOT_CONNECTED/MISCONFIGURED 双态 + configJson 保留断言）；retry 用例改断言"无连接器→FAILED，绝不 SUCCESS" |
+
+**复核结论（2026-05-29 整改）**：C1+H2+M2 **全部闭环并测试固化**。INTEG-01/02 现可如实表述为"签名/审计/裸 Map 真实 + 自检/重试诚实标未连接（真实连接器待 INTEG-02/QA-08 接入）"，不再以伪造连通/重投成功冒充已对接。真实 `ExternalSystemConnectorPort` 接入仍为 R-06 待办。

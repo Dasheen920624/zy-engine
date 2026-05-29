@@ -11,8 +11,11 @@ import com.medkernel.shared.api.PageResponse;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEvent;
 import com.medkernel.shared.audit.AuditEventPublisher;
+import com.medkernel.shared.audit.IsolatedAuditPublisher;
 import com.medkernel.shared.context.RequestContext;
+import com.medkernel.shared.observability.BusinessMetrics;
 import com.medkernel.shared.observability.DiagnoseResponse;
 import com.medkernel.shared.observability.DiagnoseResponseAssembler;
 import com.medkernel.shared.observability.StateTransitionRecorder;
@@ -37,8 +40,10 @@ public class RecommendationEngineService {
     private final RecommendationFeedbackRepository feedback;
     private final RecommendationFatigueSignalRepository fatigueSignals;
     private final AuditEventPublisher auditPublisher;
+    private final IsolatedAuditPublisher isolatedAudit;
     private final StateTransitionRecorder transitions;
     private final DiagnoseResponseAssembler diagnoseAssembler;
+    private final BusinessMetrics businessMetrics;
 
     public RecommendationEngineService(
             RecommendationTriggerRepository triggers,
@@ -48,7 +53,9 @@ public class RecommendationEngineService {
             RecommendationFatigueSignalRepository fatigueSignals,
             AuditEventPublisher auditPublisher,
             StateTransitionRecorder transitions,
-            DiagnoseResponseAssembler diagnoseAssembler) {
+            DiagnoseResponseAssembler diagnoseAssembler,
+            IsolatedAuditPublisher isolatedAudit,
+            BusinessMetrics businessMetrics) {
         this.triggers = triggers;
         this.cards = cards;
         this.sources = sources;
@@ -57,6 +64,8 @@ public class RecommendationEngineService {
         this.auditPublisher = auditPublisher;
         this.transitions = transitions;
         this.diagnoseAssembler = diagnoseAssembler;
+        this.isolatedAudit = isolatedAudit;
+        this.businessMetrics = businessMetrics;
     }
 
     /**
@@ -70,7 +79,16 @@ public class RecommendationEngineService {
      */
     @Transactional
     public RecommendationTriggerResponse trigger(RecommendationTriggerRequest request) {
-        validateCards(request.candidateCards());
+        try {
+            validateCards(request.candidateCards());
+        } catch (ApiException e) {
+            // CDSS-M-01：来源缺失/高风险未确认/强打断非高风险等医疗安全校验失败，
+            // 经 IsolatedAuditPublisher 发 outcome=FAILED 审计，保证失败也留痕（不被主事务回滚带走）。
+            isolatedAudit.publishInNewTx(AuditEvent.failure(
+                AuditAction.EXECUTE, "recommendation_trigger", request.triggerCode(),
+                e.errorCode().code(), "推荐触发校验失败 errorCode=" + e.errorCode().code()));
+            throw e;
+        }
         String tenantId = tenantId();
         String actor = actor();
         String traceId = traceId();
@@ -93,6 +111,8 @@ public class RecommendationEngineService {
                 saveSource(card.cardId(), sourceRequest, now, actor, traceId);
             }
             saveFatigueSignal(trigger, card, initialSignal(cardRequest), null, now, actor, traceId);
+            // CDSS-M-03：每发出一张提醒卡计入 medkernel_cdss_alerts_total（临床运行业务指标）。
+            businessMetrics.incCdssAlerts();
         }
 
         transitions.record("recommendation_trigger", triggerId, null, status.name(), "接收推荐触发", null);

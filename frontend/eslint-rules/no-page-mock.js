@@ -45,6 +45,10 @@ export default {
     return {
       VariableDeclarator(node) {
         if (node.id.type !== 'Identifier') return;
+        // 仅拦截 SHOUTY-CASE 命名的硬编码数据数组常量（MOCK/DEPTS/ITEMS/LINKS/PROVIDERS 等）。
+        // antd 的 const columns = [{...}] / const items = [...] 等驼峰命名结构不在拦截范围，
+        // 避免误伤合法页面被迫整文件 eslint-disable，从而架空本门禁（修复 R1 门禁失效）。
+        if (!NAME_PATTERN.test(node.id.name)) return;
         if (!node.init || node.init.type !== 'ArrayExpression') return;
         if (node.init.elements.length === 0) return;
         const first = node.init.elements[0];
