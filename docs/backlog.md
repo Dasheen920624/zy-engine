@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：5.2（重做基线 R2 · 补 BASE-11 平台首发种子身份 + R2-NEW 医疗知识首发资产生产）· 2026-05-29
+> 版本：5.3（重做基线 R2 · 补 RULE-02 / PATH-02 前端专业维护界面 ⟳R2）· 2026-05-30
 > 当前执行：P0 真实性门禁与归零 →（系统架构 ∥ 无模型 AI 工厂 ∥ 假闭环清零）
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 标记：`⟳R2` = 重做基线重置项（done→in_progress），须按 §0.3 验收铁律重建。
@@ -94,8 +94,10 @@
 | GA-ENG-KNOW-01 ⟳R2 知识资产引擎（含图投影增强）：来源登记、解析、hash、引用锚点、可信分级；关系库 graph_node/edge/citation 为权威源，Neo4j 仅查询投影可重建，无图降级关系库查询 | claude | in_progress |
 | GA-ENG-KNOW-02 ⟳R2 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离；对接 GA-SYS-08 + GA-AIK-STD-09/10 | claude | in_progress |
 | GA-ENG-TERM-01 ⟳R2 字典映射引擎（含标准编码集导入 + 医学语义匹配 MED-C1）：未映射发现、候选推荐、人工确认、冲突处理、映射包发布；ICD-10 国临版/ICD-9-CM-3/药品本位码/LOINC 兼容映射导入+版本；LCS→同义词典+编码交叉表+模型嵌入；高危近似负样本判别器（钾/钠、肌钙蛋白T/I、左/右、剂量量级强制 HIGH，禁批量/禁自动确认）| codex | in_progress |
-| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释 | codex | done |
-| GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真 | codex | done |
+| GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释（后端引擎核查为真，保留）| codex | done |
+| GA-ENG-RULE-02 ⟳R2 规则引擎专业维护界面（前端）：核查证实 `RuleDefinitions.tsx` 第一行 `eslint-disable medkernel/no-page-mock` 绕真实性门禁 + 默认 `<pre>JSON.stringify(DSL)</pre>` 暴露技术对象 + TextArea 手编 JSON payload + 写死"高血压/DRUG-001"医学常量 + 创建/发布只一步无 7 步流 + 多同权主按钮 + 中英混杂"Rule Code/Payload/DSL/STRONG_REMINDER"。违反宪法 §1.#4/§1.#6/§1.#18/§11 禁区 + 详规 §4.2 三层配置 + 体验规范。要求：①L1 模板模式（业务专家：模板库+参数表单+智能填默认值）；②L2 可视化条件树编辑器（专科/质控专家：点击式 AND/OR/NOT + 条件原子 + 时间窗 + 阈值控件）；③L3 DSL 模式折叠到专家模式 Tab；④真实 7 步流（导入/选择 → 自动校验 → 看影响 → 提交审核 → 灰度 → 全量 → 留证/回滚）；⑤移除 eslint-disable + 移除写死医学常量 + 中文化文案；⑥仿真 payload 改用"病例选择器"（从已脱敏患者上下文挑选）替代 JSON 手编；⑦后端补"规则模板库/条件树→DSL 转换/影响分析/审核工作流/灰度策略" API | - | pending |
+| GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真（后端引擎核查为真，保留）| codex | done |
+| GA-ENG-PATH-02 ⟳R2 路径引擎专业维护界面（前端）：核查证实 `PathwayTemplates.tsx` 第一行 `eslint-disable medkernel/no-page-mock` + `DEFAULT_NODES_JSON` 写死"抗感染化疗/STABLE/DETERIORATED" + TextArea 手编 nodes/edges JSON + conditionJson 嵌套转义 + Tabs 套 Tabs 多主按钮 + Edge/Node/conditionJson 技术词暴露。违反同上一套约束 + 宪法 §5 "专科专家画 X6 节点"角色硬指标。要求：①L1 模板模式（从专病包库选 + 参数化填空）；②L2 节点画布（X6/G6 拖拽：节点类型/责任角色/时间窗/分支条件/关键时钟可视化）；③L3 DSL 模式折叠到专家模式 Tab；④真实 7 步流；⑤移除 eslint-disable + 移除写死示例 + 中文化；⑥仿真用真实/脱敏病例触发，不让用户手编 JSON；⑦后端补"路径模板继承/节点编辑/边条件 DSL 生成/关键时钟绑定/随访接续 API/灰度发布"；⑧关键时钟必须可视化展示在画布上，不藏在 JSON 字段里 | - | pending |
 | GA-ENG-CDSS-01 ⟳R2 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | codex | in_progress |
 | GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | codex | done |
 | GA-ENG-FOLLOW-01 ⟳R2 随访引擎（重做基线分界线起点）：计划生成、任务、问卷、异常事件和回流 | codex | in_progress |
@@ -159,7 +161,7 @@
 
 | id | owner | status |
 |---|---|---|
-| T-GATE-01 前端真实性门禁增强：升级 eslint-plugin medkernel/no-page-mock，阻断 catch 内伪造数据/函数包装绕 AST/camelCase 绕过/假数据/`eslint-disable medkernel/*`，放行合法静态 UI 文案 | - | pending |
+| T-GATE-01 前端真实性门禁增强：升级 eslint-plugin medkernel/no-page-mock，阻断 catch 内伪造数据/函数包装绕 AST/camelCase 绕过/假数据/`eslint-disable medkernel/*`，放行合法静态 UI 文案。**已知必爆目标**：`RuleDefinitions.tsx` + `PathwayTemplates.tsx` + `CdssFatigue.tsx` + `Provenance.tsx` 等所有 `eslint-disable medkernel/no-page-mock` 行 | - | pending |
 | T-GATE-02 后端真实性门禁：CI 脚本扫 src/main 阻断 Math.random/写死医学常量(如"高血压"/"I10")/catch 吞错返回成功/UUID 充哈希/Javadoc 模拟占位于生产路径 | - | pending |
 | T-RESET-01 backlog 据实重置：按改造清单 R2 v2 调整状态 + 写入 §0.3 验收铁律 + 修订记录，本台账设为 R2 施工基线 | claude | done |
 
@@ -338,6 +340,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 5.3 | 2026-05-30 | Claude | **追加 RULE-02 / PATH-02 前端专业维护界面 ⟳R2**（用户报告"路径引擎和规则引擎显示 JSON 没有维护界面"，核查证实属实且更严重）。`frontend/src/pages/tenant/RuleDefinitions.tsx` 与 `PathwayTemplates.tsx` 系统性违反：①两份第一行 `eslint-disable medkernel/no-page-mock` 绕真实性门禁（违反宪法 §1.#18）；②默认 `<pre>JSON.stringify(DSL)</pre>` 暴露技术对象（违反宪法 §11 禁区 + 详规 §10.2）；③只有 L3 DSL，零 L1 模板 + 零 L2 可视化（违反详规 §4.2 三层配置 + 宪法 §5 "专科专家画 X6 节点"角色硬指标）；④创建/发布无 7 步流（违反宪法 §1.#4）；⑤多同权主按钮（违反宪法 §1.#6）；⑥写死"高血压/DRUG-001/抗感染化疗/STABLE/DETERIORATED"医学常量（违反 §0.3 真实性铁律 #1 + T-GATE-02 必爆）；⑦中英混杂"Rule Code/Payload/DSL/Edge/conditionJson/STRONG_REMINDER"（违反宪法 §7 + 体验规范 §11）；⑧仿真 payload 让用户手编 JSON 而非"病例选择器"。后端 RULE-01/PATH-01 引擎本身核查为真保留 done；前端两份页面追加为 RULE-02 / PATH-02 两项独立 pending 任务（L1 模板模式 + L2 可视化条件树/节点画布 + L3 DSL 折叠专家模式 + 真实 7 步流 + 移除 eslint-disable + 移除写死医学常量 + 中文化 + 病例选择器仿真 + 后端补模板库/条件树→DSL 转换/影响分析/审核工作流/灰度策略 API）。T-GATE-01 描述追加"已知必爆目标"明示这两份页面。合计 144 → **146 项**（pending 74 → 76）；总工作量 ~440-445d → **~465-470d**（追加 RULE-02 ~10d + PATH-02 ~14d）。 |
 | 5.2 | 2026-05-29 | Claude | **补两块产品兑现链条上原本漏掉的环节**——（A）**GA-ENG-BASE-11 平台首发种子身份与生产环境初始化**：核查发现 `PlatformCredentialDevSeeder` 仅 `@Profile("dev")`，V27 platform_credential 表生产环境空白，**首次部署无任何账号无法登录**；新增 BASE-11 要求 init token 机制 + 强制首次改密+MFA + CLI 应急工具 + 运维手册首次部署步骤。（B）**R2-NEW 医疗知识首发资产生产（GA-KNOWGEN-01~15，15 项 pending）**：AI 工厂（工具）+ 真实模型（产能）+ 知识首发包（产品兑现）是三件不同的事，前两者已立项，知识首发包之前缺失。15 项按详规 §8.5 资产模型分域：标准术语/药品说明书事实/指南条款/临床规则/专病路径/CDSS 模板/评估指标/随访计划/护理/医技报告解读/床旁知识卡/中医药/医保病案/公卫院感 + 总验收。AI 大规模生成候选 + 专家审核 + 灰度发布，工作量 ~100d（不是 100d 纯人工写）。时机：P3 真模型接入后启动，必须先于 P6 SVC 业务包完成。新验收门加 #11 BASE-11 + #12 KNOWGEN-15。 |
 | 5.1 | 2026-05-29 | Claude | **R2 路线据规划本身形态调整**：全面重读宪法/落地规划/详规/体验规范后，发现 v5.0 R2-NEW 章节存在两类系统性偏差——（A）误造"临床安全引擎"独立层（DRUG/CRITICAL/DOSE/AMS 是 §18 业务领域门面而非引擎；DOCPARSE 是 AIK-STD-02 内涵；GRAPH 是 KNOW 图投影；TERMSET 是 TERM 标准词导入）；（B）漏列规划本身要求的整层（GA-SYS-01~08 系统架构 / 14 项 GA-XXX-01 领域门面 / OPT-01~10 + EMR-LEVEL 共 12 项世界级补强）。本次调整：①删除 v5.0 R2-NEW 临床安全引擎章节；②DOCPARSE 合并入 GA-AIK-STD-02、GRAPH 合并入 GA-ENG-KNOW-01-R2 描述、TERMSET 合并入 GA-ENG-TERM-01-R2 描述、DOSE 算术能力合并入 MED-C2 derived 算子；③新增 R2-NEW 系统架构强化（GA-SYS-01~08，8 项）；④新增 R2-NEW 世界级 + 国情补强（OPT-01~10 + EMR-LEVEL-01/02，12 项，含 OPT-04 临床安全案例与红线规则库——这才是"临床安全"真实位置）；⑤新增 R2-NEW 全医疗领域门面（GA-NURSING/REPORT/POC-KNOW/PHARMACY/CRITICAL/SPECIAL-POP/PERIOP/ONCO-RENAL/ALLIED-CARE/TCM-HEALTH/INFECTION-PH/PRIMARY-CARE/REGION-COLLAB/SPECIALTY-EXT/RWD，14 项，宪法 §1.#15 强制要求覆盖全医疗专业领域）；⑥SVC-DOMAIN-01/02 重定位为"集成包"（由 GA-XXX-01 组合而成，不另起业务实现）；⑦MED-C1 已合并入 TERM-01-R2 描述。施工台账见 [改造任务总清单 R2 v2](audit/2026-05-29-改造任务总清单.md)。 |
 | 5.0 | 2026-05-29 | Claude | 重做基线 R2：执行 T-RESET-01，据 [改造任务总清单 R2](audit/2026-05-29-改造任务总清单.md) §0.4 据实重置 backlog。以 GA-ENG-FOLLOW-01（v4.29 起由能力不足 AI 主导，核查证实系统性假闭环/假证据/绕门禁/写死候选/验收注水）为分界线，该任务及其后全部 done→in_progress：E3 KNOW-01/02、TERM-01、CDSS-01、FOLLOW-01、PKG-01；E4 全 7；E5 QA 全 8；E6 SVC 全 14；前置区 E2 API-04/07/10/12（下游引擎重做随之回退）——合计 39 项 ⟳R2。保留 done 30 项（DOC/BASE/OBS/API 真实子集/RULE/PATH/EVAL，核查广度未见假）。新增 pending 31 项（v5.1 据规划重整为 ~57 项）。写入 §0.3 验收铁律，本台账设为 R2 施工基线。撤销 4.40/4.41 将经核查退回项翻回 done 的不实操作。 |
