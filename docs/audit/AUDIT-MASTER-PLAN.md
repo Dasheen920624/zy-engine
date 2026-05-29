@@ -89,8 +89,12 @@
 | L2 | **Critical** | A12 LLM | `ModelGatewayService.java:482` | B2 编造患者"李建国/68岁"、编造体征禁忌；`:192` 编造引文"急性脑梗死规范化溶栓指南(2025版)§4.2"、`:193` 写死 confidence=0.96。违反宪法#9，患者安全风险 |
 | L3 | High | A12 LLM | `ModelGatewayService.java:136` | `FORCE_FAIL_SCHEMA_` 测试钩子混入生产代码 |
 | L4 | High | A12 LLM | `ModelGatewayService.java:440` `validateSchema` | Schema 校验仅字符串 `contains`，非真 JSON Schema |
+| CDSS-CRIT-01 | **Critical** | A7 前端 | `CdssFatigue.tsx:172-189` | 真实触发后客户端额外伪造写死药理卡展示给医师（引擎未产出） |
+| CDSS-CRIT-02 | **Critical** | A7 前端 | `CdssFatigue.tsx:204` | 医师反馈署名硬编码 PHYS-1002，非真实登录用户，破坏审计追责 |
+| CDSS-H-02 | High | A7 前端 | `CdssFatigue.tsx:209` | 成功提示谎称「医嘱流转成功」，违背后端「不写医嘱」契约 |
 
-> 注：LLM-01 / LLM-02 / GA-ENG-DEGRADE-01 三项 backlog `done` **名不副实**，应回退。
+> 注 1：LLM-01 / LLM-02 / GA-ENG-DEGRADE-01 三项 backlog `done` **名不副实**，应回退。
+> 注 2：A7 **后端真实达标**，问题集中在前端展示层；详见 [units/A7](units/A7-recommendation-cdss.md)。前端"成功后仍叠加写死数据 + eslint-disable 门禁 + 硬编码身份"模式预计在 C2–C6 复现。
 
 ### 5.2 已确认真修复（下一个 AI 不要重复审这几点）
 
@@ -132,7 +136,7 @@
 | A4 | 字典映射 | TERM-01, API-04 | `engine/terminology` | 实施工程师 | P1 | ⬜ 待审 | - | 疑 B2 |
 | A5 | 规则引擎 | RULE-01, API-05 | `engine/rule` | 路径专家/医务处 | P0 | ⬜ 待审（免重验 §5.3 DSL）| - | - |
 | A6 | 路径引擎 | PATH-01, API-06 | `engine/pathway` | 路径专家/临床 | P0 | ⬜ 待审 | - | - |
-| A7 | 推荐/CDSS | CDSS-01, API-07 | `engine/recommendation` | **临床医生** | **P0** | ⬜ 待审 | - | - |
+| A7 | 推荐/CDSS | CDSS-01, API-07 | `engine/recommendation` | **临床医生** | **P0** | ⚠️ 已审需返工（后端✅/前端🔴）| [A7](units/A7-recommendation-cdss.md) | 2/2/4/0 |
 | A8 | 评估质控 | EVAL-01, API-08 | `engine/evaluation` | 医务处/院长 | P0 | ⬜ 待审 | - | - |
 | A9 | 随访 | FOLLOW-01, API-09 | `engine/followup` | 临床/护理 | P1 | ⬜ 待审 | - | - |
 | A10 | 包发布 | PKG-01, API-10 | `engine/pkg` | 实施工程师 | P0 | ⬜ 待审 | - | - |
@@ -169,7 +173,8 @@
 | D2 | 测试有效性 | 全部 | 97 后端+23 前端是否 mock 掉真实现固化假绿 | P1 | ⬜ 待审 | - | - |
 | D3 | E6 业务包真实性 | GA-SVC-* ×14 | 14 包 1 天速通是否假闭环 | P0 | ⬜ 待审 | - | - |
 
-**进度统计**：共 27 单元 · 待审 26 · 需返工 1（A12）· 已通过 0 · 修复已复核 0 ·（全量重审口径，无单元跳过）
+**进度统计**：共 27 单元 · 待审 25 · 需返工 2（A12 全假 / A7 前端）· 已通过 0 · 修复已复核 0 ·（全量重审口径，无单元跳过）
+> 已出单元报告：[A7 推荐/CDSS](units/A7-recommendation-cdss.md)（后端达标、前端 2 Critical）
 
 ---
 
