@@ -166,8 +166,8 @@ V18 五方言均存在。逐字段比对待后续。
 | LLM-M-01 | ☑️ 已修 | 删除 `FORCE_FAIL_SCHEMA_` 生产测试钩子及关联的 B2 假元数据分支；前端 FORCE_TIMEOUT/FORCE_FAIL_SCHEMA 调试开关一并移除 |
 | LLM-M-02 | ☑️ 已修 | `System.err.println` 改 `org.slf4j.Logger.warn` |
 | LLM-M-03 | ☑️ 已修 | `desensitize` 扩展覆盖银行卡/邮箱，MASK_ALL 增标注姓名/病历号脱敏，并改用前后非数字断言（中文安全，弃用 `\b`）；前端脱敏预览同步保留真实前缀/后缀（弃用写死 "138****8888"） |
-| LLM-M-04 | ⬜ 待办(Low) | `retryTask` 仍用普通 `auditPublisher`（保持构造器不变以降风险）；建议后续与全模块统一切 `IsolatedAuditPublisher` |
+| LLM-M-04 | ☑️ 已修 | 统一审计语义：`submitTask` 成功留痕改走 `AuditEventPublisher`（AFTER_COMMIT 同事务，符合 `IsolatedAuditPublisher` 契约——isolated 仅用于失败留痕），失败留痕仍走 isolated；`retryTask` 维持 `AuditEventPublisher`。模块内成功/失败留痕语义一致，且修正了原成功审计在独立子事务中可能脱离任务回滚的隐患 |
 
 附带（非原 finding，本次顺手据实化）：`AiWorkflows.tsx` 顶部看板由写死 "154,290 tokens / 11.8% / 238ms / UP" 改为取自真实 `displayStatus`/`sandboxResult` 的派生值（无数据显 "—"）；删除写死的 `sha256-e3b0c44…` 假哈希。
 
-**复核结论**：CRIT-01/02 + H-01/02/03 + M-01/02/03 已闭环并测试固化；仅余 1 项 Low(M-04)。LLM-01/02/DEGRADE-01 现可如实表述为"B0 诚实基线 + provider 待接入(GA-ENG-LLM-02)"，不再名不副实。
+**复核结论（2026-05-29 二次整改）**：CRIT-01/02 + H-01/02/03 + M-01/02/03 + M-04 **全部闭环并测试固化**（后端 LLM 17/17 绿）。LLM-01/02/DEGRADE-01 现可如实表述为"B0 诚实基线 + provider 待接入(GA-ENG-LLM-02)"，不再名不副实。本单元 9 项 findings 全清。

@@ -99,7 +99,9 @@ class ModelGatewayServiceTest {
         assertTrue(resp.outputContent().contains("高血压"));
 
         verify(taskRepo).save(any(ModelCapabilityTask.class));
-        verify(isolatedAudit).publishInNewTx(any(AuditEvent.class));
+        // 成功路径走 AuditEventPublisher（同事务）；isolated 仅用于失败留痕（LLM-M-04）
+        verify(auditPublisher).publish(eq(AuditAction.EXECUTE), eq("model_capability_task"), anyString(), anyString());
+        verify(isolatedAudit, never()).publishInNewTx(any(AuditEvent.class));
     }
 
     @Test

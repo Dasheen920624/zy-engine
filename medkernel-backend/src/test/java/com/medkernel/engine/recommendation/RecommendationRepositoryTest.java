@@ -80,11 +80,20 @@ class RecommendationRepositoryTest {
     @Test
     void repositoryQueriesDoNotLeakAcrossTenants() {
         String triggerId = "rt-" + UUID.randomUUID();
+        String cardId = "rc-" + UUID.randomUUID();
         triggers.save(sampleTrigger(triggerId, "tenant-A"));
+        cards.save(sampleCard(cardId, "tenant-A", triggerId));
 
         Optional<RecommendationTrigger> wrongTenant = triggers.findByTriggerIdAndTenantId(triggerId, "tenant-B");
-
         assertThat(wrongTenant).isEmpty();
+
+        // CDSS-M-04：卡片维度同样零泄露——错误租户查不到该卡、按 triggerId 列不出、按租户计数为 0
+        assertThat(cards.findByCardIdAndTenantId(cardId, "tenant-B")).isEmpty();
+        assertThat(cards.findByTriggerIdAndTenantIdOrderByCreatedAtAsc(triggerId, "tenant-B")).isEmpty();
+        assertThat(cards.countByFilter("tenant-B", null, null, null, null)).isZero();
+
+        // 正确租户下可正常读到，证明隔离来自 tenant 过滤而非数据缺失
+        assertThat(cards.findByCardIdAndTenantId(cardId, "tenant-A")).isPresent();
     }
 
     private RecommendationTrigger sampleTrigger(String triggerId, String tenantId) {

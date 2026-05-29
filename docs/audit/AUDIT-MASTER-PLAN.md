@@ -139,12 +139,12 @@
 | A4 | 字典映射 | ✅ 通过（相似度已修为真 LCS）| [A4](units/A4-terminology.md) | 0/0/2/0 |
 | A5 | 规则引擎 | ✅ 通过（真 DSL 引擎；前端归 C2）| [A5](units/A5-rule.md) | 0/1/2/0 |
 | A6 | 路径引擎 | ⚠️ 后端优秀/前端中度 | [A6](units/A6-pathway.md) | 0/2/2/1 |
-| A7 | 推荐/CDSS | 🔧 修复中（前端 2C2H 已修/后端 4M 待办，2026-05-29）| [A7](units/A7-recommendation-cdss.md) | 2/2/4/0 |
+| A7 | 推荐/CDSS | ☑️ 修复已复核（前后端 8 项全清，2026-05-29）| [A7](units/A7-recommendation-cdss.md) | 2/2/4/0 |
 | A8 | 评估质控 | ✅ 通过（前后端均达标）| [A8](units/A8-evaluation.md) | 0/0/3/1 |
 | A9 | 随访 | ⚠️ 后端✅/前端归 C3 | [A9](units/A9-followup.md) | 0/1/1/0 |
 | A10 | 包发布 | ⚠️ 需返工（看影响假+前端假）| [A10](units/A10-package-release.md) | 1/2/3/0 |
 | A11 | 嵌入 | ⚠️ 后端✅/前端归 C3 | [A11](units/A11-embed.md) | 0/1/1/0 |
-| A12 | 模型能力网关 | 🔧 修复中（2C3H3M 已修/余 1L，2026-05-29）| [A12](units/A12-llm-gateway.md) | 2/3/3/1 |
+| A12 | 模型能力网关 | ☑️ 修复已复核（9 项全清，2026-05-29）| [A12](units/A12-llm-gateway.md) | 2/3/3/1 |
 | A13 | 大规模列表 | ✅ 通过 | [A13](units/A13-large-list.md) | 0/0/2/0 |
 | A14 | 第三方对接总线 | 🔴 半修复返工（不真连外部）| [A14](units/A14-integration.md) | 1/2/2/0 |
 | A15 | 证据链 | ⚠️ 后端✅/前端🔴 | [A15](units/A15-evidence.md) | 0/1/2/0 |
@@ -209,6 +209,8 @@
 
 > **整改进度（2026-05-29，本次提交 PR）**：**R-01 ✅ / R-02 ✅** 已完成并测试固化（后端 LLM 17/17、前端 typecheck/lint(0 error)/build/vitest 92/92 全绿；详见 [A12 §8](units/A12-llm-gateway.md) / [A7 §8](units/A7-recommendation-cdss.md)）。**R-03 部分**：已修复 no-page-mock 误伤 `const columns` 的失效根因（启用文档声明却未生效的 `NAME_PATTERN`）并移除 CdssFatigue 整文件 eslint-disable；其"检测 catch 伪造/写死数组"增强与其余页 eslint-disable 清理并入 R-04 待办。**R-08 部分**：A12 LLM 单测已重写为诚实断言（无 provider→B0、负向无伪造），前端业务行为测试仍待补。
 
+> **整改进度（2026-05-29 第二批）**：**A7 / A12 两单元 findings 全部清零并测试固化**（A12 9 项、A7 8 项）。其中 **R-10 部分**：A7 失败路径已补 IsolatedAuditPublisher 失败审计、A12 成功/失败留痕语义统一（EVAL/PKG/PATH 仍待统一）；**R-14 部分**：A7 已接 `medkernel_cdss_alerts_total` 真实计数（其余引擎业务指标仍待补）；LLM-M-04 已闭环。
+
 ### P1 功能真实性
 | 任务 | 来源 | 工作量 |
 |---|---|---|
@@ -264,6 +266,7 @@
 | 1.1 | 2026-05-29 | Claude | 用户决策：全系统全部重新深度核查、27 单元无一跳过、Claude 串行逐个深审；4 个"部分已审"单元重置为待审（仅免重验 §5.2 已修具体点） |
 | 2.0 | 2026-05-29 | Claude | **27 单元全部审完**：出齐 units/ 报告；终态看板（通过 11 / 返工 16）；新增 §6.1 终态结论 + §6.2 改造任务清单 R-01..R-15 + 验收门禁建议。核心结论：后端内核大体为真，问题集中在 LLM 核心造假/第三方不真连/前端约 11 页假闭环/门禁失效/E5-E6 验收先标 done |
 | 2.1 | 2026-05-29 | Claude | **整改首批落地**（用户授权"针对有问题的进行改造"）：R-01（A12 网关诚实 B0）、R-02（A7 CdssFatigue 去伪造 + 契约对齐）完成并测试固化；R-03 修复 no-page-mock 门禁失效根因；A7/A12 看板转「🔧 修复中」并补 §8 修复记录。后端 LLM 17/17、前端 92/92 全绿 |
+| 2.2 | 2026-05-29 | Claude | **整改第二批：A7/A12 全清**。补 A7 后端 CDSS-M-01（失败审计）/M-03（cdss_alerts 指标）/M-04（跨租户测试强化）、澄清 M-02 契约；A12 LLM-M-04（成功/失败留痕语义统一）。A7/A12 看板转「☑️ 修复已复核」。后端 Recommendation/LLM/Repository 单测 18/18 绿（全量待 CI） |
 
 ---
 

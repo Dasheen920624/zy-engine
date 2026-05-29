@@ -185,14 +185,15 @@ public class ModelGatewayService {
         );
         taskRepo.save(task);
 
-        // 6. Isolated 独立物理子事务调用留痕审计
-        isolatedAudit.publishInNewTx(AuditEvent.of(
+        // 6. 成功留痕：成功路径走 AuditEventPublisher（AFTER_COMMIT 同事务一致性，符合 IsolatedAuditPublisher
+        //    契约——isolated 仅用于失败留痕）；retryTask 亦走 AuditEventPublisher，模块内统一（LLM-M-04）。
+        auditPublisher.publish(
             AuditAction.EXECUTE,
             "model_capability_task",
             taskId,
             String.format("推理任务完成 capabilityCode=%s mode=%s fallback=%b cost=%dms",
                 req.capabilityCode(), modelMode, fallbackUsed, timeCost)
-        ));
+        );
 
         return new ModelTaskResponse(
             taskId,

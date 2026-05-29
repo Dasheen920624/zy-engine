@@ -17,9 +17,12 @@ import java.util.Optional;
 import com.medkernel.shared.api.error.ApiException;
 import com.medkernel.shared.api.error.ErrorCode;
 import com.medkernel.shared.audit.AuditAction;
+import com.medkernel.shared.audit.AuditEvent;
 import com.medkernel.shared.audit.AuditEventPublisher;
+import com.medkernel.shared.audit.IsolatedAuditPublisher;
 import com.medkernel.shared.context.OrgScope;
 import com.medkernel.shared.context.RequestContext;
+import com.medkernel.shared.observability.BusinessMetrics;
 import com.medkernel.shared.observability.DiagnoseResponse;
 import com.medkernel.shared.observability.DiagnoseResponseAssembler;
 import com.medkernel.shared.observability.StateTransitionRecorder;
@@ -36,8 +39,10 @@ class RecommendationEngineServiceTest {
     private RecommendationFeedbackRepository feedback;
     private RecommendationFatigueSignalRepository fatigueSignals;
     private AuditEventPublisher auditPublisher;
+    private IsolatedAuditPublisher isolatedAudit;
     private StateTransitionRecorder transitions;
     private DiagnoseResponseAssembler diagnoseAssembler;
+    private BusinessMetrics businessMetrics;
     private RecommendationEngineService service;
 
     @BeforeEach
@@ -48,11 +53,13 @@ class RecommendationEngineServiceTest {
         feedback = mock(RecommendationFeedbackRepository.class);
         fatigueSignals = mock(RecommendationFatigueSignalRepository.class);
         auditPublisher = mock(AuditEventPublisher.class);
+        isolatedAudit = mock(IsolatedAuditPublisher.class);
         transitions = mock(StateTransitionRecorder.class);
         diagnoseAssembler = mock(DiagnoseResponseAssembler.class);
+        businessMetrics = mock(BusinessMetrics.class);
         service = new RecommendationEngineService(
             triggers, cards, sources, feedback, fatigueSignals,
-            auditPublisher, transitions, diagnoseAssembler);
+            auditPublisher, transitions, diagnoseAssembler, isolatedAudit, businessMetrics);
 
         when(triggers.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(cards.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -99,6 +106,8 @@ class RecommendationEngineServiceTest {
         assertThat(signalCap.getValue().signalType()).isEqualTo(RecommendationFatigueSignalType.SHOWN);
         verify(auditPublisher).publish(AuditAction.EXECUTE, "recommendation_trigger",
             response.triggerId(), "接收推荐触发 TRG.ORDER");
+        // CDSS-M-03：单卡触发应计入一次 CDSS 提醒指标
+        verify(businessMetrics).incCdssAlerts();
     }
 
     @Test
@@ -125,6 +134,8 @@ class RecommendationEngineServiceTest {
             .isInstanceOf(ApiException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.ENG_REC_005);
+        // CDSS-M-01：医疗安全校验失败也必须发 FAILED 审计留痕
+        verify(isolatedAudit).publishInNewTx(any(AuditEvent.class));
     }
 
     @Test
@@ -139,6 +150,8 @@ class RecommendationEngineServiceTest {
             .isInstanceOf(ApiException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.ENG_REC_006);
+        // CDSS-M-01：高风险未确认被拒，同样发 FAILED 审计
+        verify(isolatedAudit).publishInNewTx(any(AuditEvent.class));
     }
 
     @Test
