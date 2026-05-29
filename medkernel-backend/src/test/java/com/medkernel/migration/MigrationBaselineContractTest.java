@@ -239,7 +239,8 @@ class MigrationBaselineContractTest {
         "integration_adapter", "integration_webhook_config", "integration_message_log",
         "evidence_snapshot",
         "tenant_branding", "tenant_success_plan",
-        "mpi_patient"
+        "mpi_patient",
+        "platform_credential"
     );
     private static final Set<String> MUTABLE_AUDITED_TABLES = Set.of(
         "org_unit", "source_document", "knowledge_identity", "knowledge_asset_version",
@@ -260,7 +261,8 @@ class MigrationBaselineContractTest {
         "integration_adapter", "integration_webhook_config", "integration_message_log",
         "evidence_snapshot",
         "tenant_branding", "tenant_success_plan",
-        "mpi_patient"
+        "mpi_patient",
+        "platform_credential"
     );
     private static final Map<String, Set<String>> TECHNICAL_AUDIT_FIELDS = Map.of(
         "audit_event", Set.of("occurred_at", "actor_user_id", "created_at"),
@@ -359,9 +361,6 @@ class MigrationBaselineContractTest {
             if (dialect.equals("oracle") || dialect.equals("dm")) {
                 expectedConstraints = new HashSet<>(COMMON_CONSTRAINTS);
                 expectedConstraints.add("ck_mapping_candidate_conflict");
-                // oracle/dm の uk_platform_credential_username は30字制限により短縮名
-                expectedConstraints.remove("uk_platform_credential_username");
-                expectedConstraints.add("uk_plat_cred_username");
             }
             assertThat(names(CONSTRAINT_PATTERN, ddl)).as("%s 业务约束", dialect)
                 .containsExactlyInAnyOrderElementsOf(expectedConstraints);

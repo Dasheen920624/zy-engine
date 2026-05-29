@@ -15,7 +15,7 @@ CREATE TABLE platform_credential (
     updated_by      VARCHAR2(64)  DEFAULT 'system' NOT NULL,
     trace_id        VARCHAR2(64),
     CONSTRAINT uk_platform_credential_id UNIQUE (credential_id),
-    CONSTRAINT uk_plat_cred_username UNIQUE (tenant_id, username),
+    CONSTRAINT uk_platform_credential_username UNIQUE (tenant_id, username),
     CONSTRAINT ck_platform_credential_status CHECK (status IN ('ACTIVE','DISABLED','LOCKED')),
     CONSTRAINT ck_platform_credential_mustchg CHECK (must_change_pwd IN ('Y','N'))
 );
