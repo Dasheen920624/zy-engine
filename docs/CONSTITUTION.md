@@ -1,6 +1,6 @@
 # MedKernel 产品宪法
 
-> 版本：2.3 · 2026-05-28
+> 版本：2.5 · 2026-05-30
 > 状态：v1.0 GA 必须遵守的最高准则
 > 适用对象：所有 AI 团队成员、产品、架构、实施、客户
 > 凌驾：本文是产品硬约束、菜单、状态机、流程和医疗安全边界的权威；运行入口、文档阅读顺序和分支协作仍按 `AGENTS.md` 的文档权威顺序执行。
@@ -32,12 +32,14 @@
 | 3 | 管理层怎么看效果？ | **质控改进**：预警、医保审核、评估结果、整改追踪 |
 | 4 | 能不能放心上线？ | **合规运维**：身份、审计、安全、监控、备份、SLA |
 
-当前工程执行只讲一个节奏：
+当前工程执行只讲一个节奏 —— 按业务域纵向推进，从登录起：
 
-| 阶段 | 口径 |
+| 波次 | 口径 |
 |---|---|
-| 0 业务引擎全能力上线 | 先打通知识、字典、规则、路径、推荐、评估、随访、包发布、嵌入、模型网关、审计证据和降级链路 |
-| 业务服务包装 | 引擎全能力验收后，再按唯一详细规范包装试点、临床、质控、合规、第三方业务接口和专业领域服务 |
+| 第一波 · B0 真实纵向 | 沿真实用户旅程逐域交付（登录 → 工作台 → 试点准备 → 临床运行 → 质控改进 → 合规运维 → 高级工具）；每域名下页面做到“无模型也真实可用、可验证”（确定性规则/已发布知识/人工），域级验收通过才走下一域 |
+| 第二波 · AI 加深 | D0~D6 的 B0 全跑通后，建 AI 工厂、模型网关、首发知识资产等跨域共享深引擎，再回灌相关域做模型增强 |
+
+→ 引擎能力不再集中前置成阶段，而是被“第一个用到它的域”按需拉入并先做 B0 真实；模型/AI/知识自动生成整体后移第二波（铁律 #4：B0 先于模型）。
 
 ---
 
@@ -244,10 +246,10 @@ docs/
 ├─ CONSTITUTION.md            ← 本文（最高优先级）
 ├─ MEDKERNEL_FOUNDATION_AND_SERVICES.md ← 基础底座与引擎服务能力总览
 ├─ MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md ← 全系统产品与交互体验固定规范
-├─ MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md ← 0 业务引擎全能力上线计划
+├─ MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md ← 按业务域纵向推进计划
 ├─ MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md ← 唯一实现级详细规范
 ├─ DOCUMENTATION_LANGUAGE_POLICY.md ← 文档语言与 AI 协作规范
-├─ backlog.md                 ← 单一任务台账（E1-E5 当前执行；E6 后置包装清单）
+├─ backlog.md                 ← 单一任务台账（D0~D6 第一波 B0 逐域；第二波 AI 加深）
 ├─ handbook/                  ← 实施手册（按需）
 │   ├─ implementation.md      # 实施工程师手册
 │   ├─ operations.md          # 运维手册
@@ -308,10 +310,10 @@ docs/
 | 宪法 | 本文 | 命名、产品边界、菜单、状态机、流程、合规硬约束 | 权威 |
 | 归类导航 | [MEDKERNEL_FOUNDATION_AND_SERVICES.md](MEDKERNEL_FOUNDATION_AND_SERVICES.md) | 基础底座、引擎服务能力和业务服务包装的关系 | 权威导航 |
 | 产品体验 | [MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md](MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md) | 全系统角色体验、页面交互、大规模分页、临床低打扰、可信解释和体验验收 | 权威 |
-| 实施路线 | [MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md](MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md) | 0 业务引擎全能力上线计划、架构原则、阶段节奏和任务拆分 | 权威 |
+| 实施路线 | [MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md](MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md) | 按业务域纵向推进计划、架构原则、阶段节奏和任务拆分 | 权威 |
 | 实现细节 | [MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md](MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md) | S0-S40、全医疗专业领域、护理/报告/床旁知识/中医药、系统详细设计、可插拔大模型、权威版本替换、AI 标准化知识工厂、API/嵌入、质控、评级、验收 | **唯一实现级权威** |
 | 文档语言 | [DOCUMENTATION_LANGUAGE_POLICY.md](DOCUMENTATION_LANGUAGE_POLICY.md) | 中文文档、AI 协作和远程 main 合并要求 | 权威 |
-| 任务执行 | [backlog.md](backlog.md) | AI 团队任务领取、状态和当前引擎全能力上线实施 | 权威 |
+| 任务执行 | [backlog.md](backlog.md) | AI 团队任务领取、状态和按业务域纵向推进（D0~D6 + 第二波）实施 | 权威 |
 
 ---
 
@@ -334,6 +336,7 @@ docs/
 | 2.2 | 2026-05-28 | Codex | 补充第三方系统统一对接链路和外部系统不得绕过引擎的硬边界 |
 | 2.3 | 2026-05-28 | Codex | 将租户生命周期从旧三维表修正为多维治理切片，并同步任务台账口径 |
 | 2.4 | 2026-05-28 | Antigravity | 立字为据，将“引擎真实性与开发严谨性”写入第 18 条不可妥协硬约束，彻底根除 mock 假闭环与代码不严谨行为 |
+| 2.5 | 2026-05-30 | 用户决策 + Claude | §0 工程节奏从“引擎优先·自底向上”改为“按业务域纵向推进·从登录起”两波结构，同步 §9.1/§12 口径 |
 
 ---
 
