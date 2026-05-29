@@ -8,6 +8,8 @@ import {
   useCreateMember,
   useResetMemberPassword,
   useSetCredentialStatus,
+  useTenants,
+  useProvisionTenant,
 } from "@/shared/api/hooks";
 import styles from "./Compliance.module.css";
 
@@ -53,6 +55,14 @@ export default function AdminUsers() {
   const [memberUsername, setMemberUsername] = useState("");
   const [memberRole, setMemberRole] = useState("doctor");
   const [memberInitPwd, setMemberInitPwd] = useState("");
+
+  // 平台租户开通（平台管理员）
+  const { data: tenants, refetch: refetchTenants } = useTenants();
+  const provisionTenantMutation = useProvisionTenant();
+  const [showTenantForm, setShowTenantForm] = useState(false);
+  const [newTenantId, setNewTenantId] = useState("");
+  const [newTenantName, setNewTenantName] = useState("");
+  const [newTenantAdmin, setNewTenantAdmin] = useState("");
 
   // 表单状态
   const [userId, setUserId] = useState("");
@@ -156,6 +166,32 @@ export default function AdminUsers() {
     }
   };
 
+  const handleProvisionTenant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTenantId.trim() || !newTenantName.trim() || !newTenantAdmin.trim()) {
+      setMessage({ text: "租户标识、租户名称、管理员登录名均不能为空", type: "error" });
+      return;
+    }
+    try {
+      const res = await provisionTenantMutation.mutateAsync({
+        tenantId: newTenantId.trim(),
+        tenantName: newTenantName.trim(),
+        adminUsername: newTenantAdmin.trim(),
+      });
+      setMessage({
+        text: `租户 ${res.tenantId} 已开通，管理员 ${res.adminUsername} 临时密码：${res.tempPassword}（登录时租户填 ${res.tenantId}，须首登改密）`,
+        type: "success",
+      });
+      setNewTenantId("");
+      setNewTenantName("");
+      setNewTenantAdmin("");
+      refetchTenants();
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || "开通失败";
+      setMessage({ text: `开通租户失败: ${errMsg}`, type: "error" });
+    }
+  };
+
   const credStatusLabel = (statusCode: string) => {
     if (statusCode === "ACTIVE") return "运行中";
     if (statusCode === "DISABLED") return "已停用";
@@ -214,6 +250,108 @@ export default function AdminUsers() {
             {message.text}
           </div>
         )}
+
+        {/* 平台租户开通卡片（平台管理员：建新医院租户 + 首个管理员） */}
+        <div className={styles.card}>
+          <div className={styles.flexBetween}>
+            <div className={styles.title}>平台租户开通（新建医院租户）</div>
+            <button
+              onClick={() => setShowTenantForm(!showTenantForm)}
+              className={styles.btnPrimary}
+            >
+              {showTenantForm ? "收起开通面板" : "开通新租户"}
+            </button>
+          </div>
+
+          {showTenantForm && (
+            <form onSubmit={handleProvisionTenant}>
+              <div className={styles.grid}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>租户标识（小写字母/数字/连字符）</label>
+                  <input
+                    type="text"
+                    value={newTenantId}
+                    onChange={(e) => setNewTenantId(e.target.value)}
+                    placeholder="如 t-renmin"
+                    className={styles.formInput}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>租户名称</label>
+                  <input
+                    type="text"
+                    value={newTenantName}
+                    onChange={(e) => setNewTenantName(e.target.value)}
+                    placeholder="如 人民医院"
+                    className={styles.formInput}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>首个管理员登录名</label>
+                  <input
+                    type="text"
+                    value={newTenantAdmin}
+                    onChange={(e) => setNewTenantAdmin(e.target.value)}
+                    placeholder="如 renmin-admin"
+                    className={styles.formInput}
+                  />
+                </div>
+              </div>
+              <div className={styles.btnGroup}>
+                <button
+                  type="submit"
+                  disabled={provisionTenantMutation.isPending}
+                  className={styles.btnPrimary}
+                >
+                  {provisionTenantMutation.isPending ? "正在开通..." : "确认开通租户"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTenantForm(false);
+                    setMessage(null);
+                  }}
+                  className={styles.btnPrimary}
+                >
+                  取消
+                </button>
+              </div>
+            </form>
+          )}
+
+          {!tenants || tenants.length === 0 ? (
+            <div className={styles.description}>暂无租户记录（需平台管理员权限查看/开通）。</div>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>租户标识</th>
+                    <th>租户名称</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenants.map((t) => (
+                    <tr key={t.tenantId}>
+                      <td className={styles.fontMonospace}>{t.tenantId}</td>
+                      <td className={styles.fontWeight600}>{t.name}</td>
+                      <td>
+                        <span
+                          className={
+                            t.status === "ACTIVE" ? styles.badgeActive : styles.badgeInactive
+                          }
+                        >
+                          {t.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
         {/* 成员账号管理卡片（开通登录账号 / 重置密码 / 启停） */}
         <div className={styles.card}>

@@ -22,10 +22,14 @@ export default function Login() {
   const navigate = useNavigate();
   const login = useLogin();
 
-  async function handleSubmit(values: { username: string; password: string }) {
+  async function handleSubmit(values: { username: string; password: string; tenantId?: string }) {
     setErrorMsg(null);
     try {
-      await login.mutateAsync({ username: values.username, password: values.password });
+      await login.mutateAsync({
+        username: values.username,
+        password: values.password,
+        tenantId: values.tenantId?.trim() || undefined,
+      });
       navigate("/dashboard");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string; message?: string } } };
@@ -83,6 +87,9 @@ export default function Login() {
             </Form.Item>
             <Form.Item name="password" rules={[{ required: true, message: "请输入密码" }]}>
               <Input.Password prefix={<LockOutlined />} placeholder="密码" size="large" />
+            </Form.Item>
+            <Form.Item name="tenantId">
+              <Input placeholder="租户标识（选填，跨院区/外网租户登录时填写）" size="large" />
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit" block size="large" loading={login.isPending}>

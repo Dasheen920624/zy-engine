@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 const createMemberMock = vi.fn();
 const refetchCredentials = vi.fn();
+const provisionTenantMock = vi.fn();
 
 vi.mock("@/shared/api/hooks", () => ({
   useUserRoleAssignments: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
@@ -12,6 +13,8 @@ vi.mock("@/shared/api/hooks", () => ({
   useCreateMember: () => ({ mutateAsync: createMemberMock, isPending: false }),
   useResetMemberPassword: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSetCredentialStatus: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useTenants: () => ({ data: [], refetch: vi.fn() }),
+  useProvisionTenant: () => ({ mutateAsync: provisionTenantMock, isPending: false }),
 }));
 
 import AdminUsers from "./AdminUsers";
@@ -20,6 +23,38 @@ describe("AdminUsers · 成员账号管理", () => {
   beforeEach(() => {
     createMemberMock.mockReset();
     refetchCredentials.mockReset();
+    provisionTenantMock.mockReset();
+  });
+
+  it("开通租户后展示管理员临时密码与登录租户提示", async () => {
+    provisionTenantMock.mockResolvedValue({
+      tenantId: "t-renmin",
+      adminUserId: "renmin-admin",
+      adminUsername: "renmin-admin",
+      tempPassword: "TenantPwd@9",
+    });
+    render(<AdminUsers />);
+
+    fireEvent.click(screen.getByRole("button", { name: "开通新租户" }));
+    fireEvent.change(screen.getByPlaceholderText("如 t-renmin"), {
+      target: { value: "t-renmin" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("如 人民医院"), {
+      target: { value: "人民医院" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("如 renmin-admin"), {
+      target: { value: "renmin-admin" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "确认开通租户" }));
+
+    await waitFor(() =>
+      expect(provisionTenantMock).toHaveBeenCalledWith({
+        tenantId: "t-renmin",
+        tenantName: "人民医院",
+        adminUsername: "renmin-admin",
+      }),
+    );
+    expect(await screen.findByText(/临时密码：TenantPwd@9/)).toBeInTheDocument();
   });
 
   it("开通成员后展示一次性临时密码", async () => {

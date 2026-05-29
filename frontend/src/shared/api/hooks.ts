@@ -2689,3 +2689,46 @@ export function useSetCredentialStatus() {
     },
   });
 }
+
+// ──────────────────────────────────────────
+// 鉴权 · 平台租户开通（平台管理员）
+// ──────────────────────────────────────────
+export interface TenantSummary {
+  tenantId: string;
+  name: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface ProvisionTenantPayload {
+  tenantId: string;
+  tenantName: string;
+  adminUsername: string;
+  adminInitialPassword?: string;
+}
+
+export interface ProvisionTenantResult {
+  tenantId: string;
+  adminUserId: string;
+  adminUsername: string;
+  tempPassword: string | null;
+}
+
+export function useTenants() {
+  return useQuery({
+    queryKey: ["platform-tenants"],
+    queryFn: async () => {
+      const resp = await apiClient.get<{ data: TenantSummary[] }>("/admin/tenants");
+      return resp.data.data;
+    },
+  });
+}
+
+export function useProvisionTenant() {
+  return useMutation({
+    mutationFn: async (payload: ProvisionTenantPayload) => {
+      const resp = await apiClient.post<{ data: ProvisionTenantResult }>("/admin/tenants", payload);
+      return resp.data.data;
+    },
+  });
+}
