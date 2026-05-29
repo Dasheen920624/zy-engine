@@ -135,11 +135,11 @@
 | A3 | 知识资产与版本 | KNOW-01/02, API-03 | `engine/knowledge` | 路径专家/合规 | P0 | ⬜ 待审（免重验 §5.2 B1）| - | - |
 | A4 | 字典映射 | TERM-01, API-04 | `engine/terminology` | 实施工程师 | P1 | ⬜ 待审 | - | 疑 B2 |
 | A5 | 规则引擎 | RULE-01, API-05 | `engine/rule` | 路径专家/医务处 | P0 | ⬜ 待审（免重验 §5.3 DSL）| - | - |
-| A6 | 路径引擎 | PATH-01, API-06 | `engine/pathway` | 路径专家/临床 | P0 | ⬜ 待审 | - | - |
+| A6 | 路径引擎 | PATH-01, API-06 | `engine/pathway` | 路径专家/临床 | P0 | ⚠️ 已审（后端✅优秀/前端中度）| [A6](units/A6-pathway.md) | 0/2/2/1 |
 | A7 | 推荐/CDSS | CDSS-01, API-07 | `engine/recommendation` | **临床医生** | **P0** | ⚠️ 已审需返工（后端✅/前端🔴）| [A7](units/A7-recommendation-cdss.md) | 2/2/4/0 |
 | A8 | 评估质控 | EVAL-01, API-08 | `engine/evaluation` | 医务处/院长 | P0 | ✅ 已审通过（前后端均达标）| [A8](units/A8-evaluation.md) | 0/0/3/1 |
 | A9 | 随访 | FOLLOW-01, API-09 | `engine/followup` | 临床/护理 | P1 | ⬜ 待审 | - | - |
-| A10 | 包发布 | PKG-01, API-10 | `engine/pkg` | 实施工程师 | P0 | ⬜ 待审 | - | - |
+| A10 | 包发布 | PKG-01, API-10 | `engine/pkg` | 实施工程师 | P0 | ⚠️ 已审需返工（后端骨架真/看影响假+前端假）| [A10](units/A10-package-release.md) | 1/2/3/0 |
 | A11 | 嵌入 | EMBED-01, API-11 | `engine/embed` | 信息科主任 | P2 | ⬜ 待审 | - | - |
 | A12 | 模型能力网关 | LLM-01/02, API-12, DEGRADE-01 | `engine/llm` | 合规审计 | **P0** | ⚠️ 已审需返工（外壳真/核心假）| [A12](units/A12-llm-gateway.md) | 2/3/3/1 |
 | A13 | 大规模列表 | API-13 | `engine/list` | 全角色 | P2 | ⬜ 待审 | - | - |
@@ -173,8 +173,17 @@
 | D2 | 测试有效性 | 全部 | 97 后端+23 前端是否 mock 掉真实现固化假绿 | P1 | ⬜ 待审 | - | - |
 | D3 | E6 业务包真实性 | GA-SVC-* ×14 | 14 包 1 天速通是否假闭环 | P0 | ⬜ 待审 | - | - |
 
-**进度统计**：共 27 单元 · 待审 24 · 需返工 2（A12 核心假 / A7 前端）· 已通过 1（A8）· 修复已复核 0 ·（全量重审口径，无单元跳过）
-> 已出单元报告：[A7 推荐/CDSS](units/A7-recommendation-cdss.md)（后端达标/前端 2C）· [A12 模型网关](units/A12-llm-gateway.md)（外壳真/核心假 2C3H3M1L）· [A8 评估质控](units/A8-evaluation.md)（✅前后端达标 0C0H3M1L）
+**进度统计**：共 27 单元 · 待审 22 · 需返工 4（A12 核心假 / A7 前端 / A10 看影响+前端 / A6 前端）· 已通过 1（A8）· 修复已复核 0 ·（全量重审口径，无单元跳过）
+> 已出单元报告：[A7 CDSS](units/A7-recommendation-cdss.md)（后端达标/前端2C）· [A12 模型网关](units/A12-llm-gateway.md)（外壳真/核心假 2C3H3M1L）· [A8 评估质控](units/A8-evaluation.md)（✅前后端达标）· [A10 包发布](units/A10-package-release.md)（后端骨架真/看影响假+前端假 1C2H3M）· [A6 路径](units/A6-pathway.md)（后端优秀/前端中度 0C2H2M1L）
+
+### 已审 5 单元结论速览（截至当前）
+| 单元 | 后端 | 前端 | 净结论 |
+|---|---|---|---|
+| A8 评估 | ✅真 | ✅诚实 | **通过** |
+| A6 路径 | ✅优秀(图遍历+专属单测) | 🟡写死种子+mock fallback(catch诚实) | 前端轻返工 |
+| A7 CDSS | ✅真(医疗安全校验全) | 🔴伪造药理卡+署名造假 | 前端重返工 |
+| A10 包发布 | 🟡骨架真/看影响科室写死 | 🔴假闭环 | 返工 |
+| A12 模型网关 | 🔴B1/B2假推理+编造引文 | 🔴假闭环+测试固化假绿 | 全面返工 |
 
 ### 截至当前的跨单元规律（给下一个 AI 的提示）
 1. **后端引擎多为真**：A5/A8 真、A7 后端真、A3/A14/EVID 已修；**唯 A12 核心造假**（B1/B2 假推理 + 编造临床引文）。
