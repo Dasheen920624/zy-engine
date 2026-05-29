@@ -182,9 +182,7 @@ export default function CdssFatigue() {
       refetchDiagnose();
     } catch (err: any) {
       if (err?.errorFields) return;
-      message.error(
-        err?.response?.data?.message || "反馈提交失败，卡片可能已过期或已处于终止态",
-      );
+      message.error(err?.response?.data?.message || "反馈提交失败，卡片可能已过期或已处于终止态");
     }
   };
 
@@ -405,7 +403,10 @@ export default function CdssFatigue() {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="payloadJson" label="病种快照上下文 JSON (可选，将计算 SHA-256 作为 inputDigest)">
+          <Form.Item
+            name="payloadJson"
+            label="病种快照上下文 JSON (可选，将计算 SHA-256 作为 inputDigest)"
+          >
             <TextArea
               rows={4}
               placeholder="请输入临床上下文载荷 JSON..."
@@ -535,7 +536,8 @@ export default function CdssFatigue() {
                     <Tabs defaultActiveKey="accept" type="card" size="small" className="mb-4">
                       <Tabs.TabPane tab="采纳合理建议 (ACCEPT)" key="accept">
                         <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-800 text-xs mb-4">
-                          确认采纳此建议。系统将登记采纳反馈并生成临床决策证据；是否下达/撤销医嘱由医师在 HIS 中确认。
+                          确认采纳此建议。系统将登记采纳反馈并生成临床决策证据；是否下达/撤销医嘱由医师在
+                          HIS 中确认。
                         </div>
                         <Form.Item name="comments" label="采纳说明 (非必填)">
                           <Input placeholder="输入采纳说明，如：遵照指南撤销不合理克拉霉素..." />
