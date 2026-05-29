@@ -54,10 +54,10 @@ export function AppRouter() {
   return (
     <Suspense fallback={<Spin size="large" className="mk-route-spinner" />}>
       <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/embed/launch" element={<EmbedLaunch />} />
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
 
           {/* 试点准备 */}

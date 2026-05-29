@@ -1,17 +1,9 @@
-/* eslint-disable medkernel/no-page-mock */
-import { Card, Form, Input, Button, Typography, Divider } from "antd";
+import { Alert, Card, Form, Input, Button, Typography, Divider } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import styles from "./Login.module.css";
 
 const { Title, Text } = Typography;
-
-const identitySignals = [
-  { label: "试点组织", value: "集团总院 · 信息科联调环境" },
-  { label: "安全审计", value: "安全审计已开启" },
-  { label: "身份策略", value: "MFA / 国密 / 国产 CA 按医院策略自动选择" },
-];
 
 /**
  * 默认登录路径 + MFA/SSO 折叠区。
@@ -24,11 +16,10 @@ const identitySignals = [
  */
 export default function Login() {
   const [showSso, setShowSso] = useState(false);
-  const navigate = useNavigate();
+  const [authNoticeVisible, setAuthNoticeVisible] = useState(false);
 
   function handleSubmit(_values: { username: string; password: string }) {
-    // 骨架版：不真实鉴权。GA-CORE-02 后端 OAuth2 接通后实装。
-    navigate("/dashboard");
+    setAuthNoticeVisible(true);
   }
 
   return (
@@ -41,12 +32,18 @@ export default function Login() {
         <Text className={styles.primaryGoal}>当前任务：确认身份并进入工作台</Text>
 
         <ul className={styles.signalList} aria-label="当前入口状态">
-          {identitySignals.map((signal) => (
-            <li key={signal.label} className={styles.signalItem}>
-              <span>{signal.label}</span>
-              <strong>{signal.value}</strong>
-            </li>
-          ))}
+          <li className={styles.signalItem}>
+            <span>试点组织</span>
+            <strong>集团总院 · 信息科联调环境</strong>
+          </li>
+          <li className={styles.signalItem}>
+            <span>安全审计</span>
+            <strong>安全审计已开启</strong>
+          </li>
+          <li className={styles.signalItem}>
+            <span>身份策略</span>
+            <strong>MFA / 国密 / 国产 CA 按医院策略自动选择</strong>
+          </li>
         </ul>
 
         <Text className={styles.safetyCopy}>
@@ -62,6 +59,15 @@ export default function Login() {
             </Title>
             <Text type="secondary">使用医院账号继续</Text>
           </div>
+
+          {authNoticeVisible && (
+            <Alert
+              type="warning"
+              showIcon
+              message="真实身份认证尚未接入"
+              description="当前版本只保留院方统一身份入口界面；完成 OIDC、CAS、SAML 或国产 CA 配置后，才能进入受控工作台。"
+            />
+          )}
 
           <Form layout="vertical" requiredMark={false} onFinish={handleSubmit}>
             <Form.Item name="username" rules={[{ required: true, message: "请输入工号或账号" }]}>

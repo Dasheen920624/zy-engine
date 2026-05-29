@@ -50,7 +50,8 @@ class MigrationBaselineContractTest {
         "V21__audit_evidence_api.sql",
         "V22__engine_remediation.sql",
         "V23__tenant_pilot_baseline.sql",
-        "V24__mpi_patient_registry.sql"
+        "V24__mpi_patient_registry.sql",
+        "V25__security_user_role_seed.sql"
     );
     private static final Set<String> REQUIRED_TABLES = Set.of(
         "medkernel_meta", "org_unit", "audit_event", "source_document", "source_version",
@@ -572,6 +573,22 @@ class MigrationBaselineContractTest {
                 .as("%s 复核意见列必须避开 Oracle 保留字", dialect)
                 .contains("review_comment")
                 .doesNotContainPattern("(?m)^\\s*comment\\s+VARCHAR");
+        }
+    }
+
+    @Test
+    void v25ShouldSeedInitialUsersAndRolesInAllDialects() {
+        for (String dialect : DIALECTS) {
+            String ddl = readMigration(dialect, "V25__security_user_role_seed.sql");
+            assertThat(ddl).as("%s V25 初始化用户角色数据", dialect)
+                .contains("user_role_assignment")
+                .contains("admin-1")
+                .contains("implementation-1")
+                .contains("doctor-1")
+                .contains("hospital-admin")
+                .contains("implementation-engineer")
+                .contains("doctor")
+                .contains("migration-v25");
         }
     }
 
