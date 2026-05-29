@@ -125,7 +125,10 @@ public enum ErrorCode {
     ENG_EVID_002("ENG-EVID-002", 400, "防伪数字指纹检验失败，数据已被篡改", ErrorClass.AUTH, false),
     ENG_EVID_003("ENG-EVID-003", 409, "证据快照已存在，无法重复创建", ErrorClass.DATA, false),
     ENG_KNOW_001("ENG-KNOW-001", 404, "来源文献或版本不存在", ErrorClass.DATA, false),
-    ENG_KNOW_002("ENG-KNOW-002", 409, "知识版本内容指纹冲突已存在", ErrorClass.DATA, false);
+    ENG_KNOW_002("ENG-KNOW-002", 409, "知识版本内容指纹冲突已存在", ErrorClass.DATA, false),
+    ENG_AUTH_001("ENG-AUTH-001", 401, "用户名或密码不正确", ErrorClass.AUTH, false),
+    ENG_AUTH_002("ENG-AUTH-002", 403, "账号已被禁用或锁定", ErrorClass.AUTH, false),
+    ENG_AUTH_003("ENG-AUTH-003", 400, "登录请求参数不合法", ErrorClass.INPUT, false);
 
     private final String code;
     private final int httpStatus;
