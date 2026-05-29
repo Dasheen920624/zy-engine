@@ -22,6 +22,9 @@ security:
   bypass: false
 
 medkernel:
+  auth:
+    cookie:
+      secure: true
   runtime:
     environment: govcloud
     deployment-mode: govcloud

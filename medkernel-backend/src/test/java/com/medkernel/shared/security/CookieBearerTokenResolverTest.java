@@ -25,4 +25,20 @@ class CookieBearerTokenResolverTest {
         req.addHeader("Authorization", "Bearer jwt-from-header");
         assertThat(resolver.resolve(req)).isEqualTo("jwt-from-header");
     }
+
+    @Test
+    void nullCookiesFallsBackToAuthorizationHeader() {
+        // getCookies() 为 null（未调用 setCookies），有 Authorization: Bearer 头 → 返回 header token
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.addHeader("Authorization", "Bearer jwt-from-header-no-cookies");
+        assertThat(resolver.resolve(req)).isEqualTo("jwt-from-header-no-cookies");
+    }
+
+    @Test
+    void emptyCookieValueReturnsNull() {
+        // cookie 值为空字符串，无 Authorization 头 → resolve 返回 null（空值不误判）
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setCookies(new Cookie("mk_access", ""));
+        assertThat(resolver.resolve(req)).isNull();
+    }
 }

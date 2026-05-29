@@ -54,7 +54,7 @@ medkernel:
       ttl-seconds: 28800
     cookie:
       name: mk_access
-      secure: false
+      secure: false   # 生产/govcloud profile 覆盖为 true
       same-site: Strict
       path: /medkernel
       max-age-seconds: 28800
