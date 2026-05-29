@@ -49,6 +49,15 @@ logging:
     com.medkernel: DEBUG
 
 medkernel:
+  auth:
+    jwt:
+      ttl-seconds: 28800
+    cookie:
+      name: mk_access
+      secure: false   # 生产/govcloud profile 覆盖为 true
+      same-site: Strict
+      path: /medkernel
+      max-age-seconds: 28800
   runtime:
     environment: ${MEDKERNEL_RUNTIME_ENV:dev}
     deployment-mode: ${MEDKERNEL_DEPLOYMENT_MODE:local}

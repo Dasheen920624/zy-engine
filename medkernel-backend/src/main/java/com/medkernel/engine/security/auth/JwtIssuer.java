@@ -1,0 +1,60 @@
+package com.medkernel.engine.security.auth;
+
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+
+import com.medkernel.shared.context.JwtClaimsResolver;
+
+/**
+ * 平台 JWT 签发器（HS256，复用 medkernel.jwt.dev-secret，与 devJwtDecoder 对称验签）。
+ */
+@Component
+@Profile({"dev", "test"})
+public class JwtIssuer {
+
+    private final byte[] secret;
+    private final long ttlSeconds;
+
+    public JwtIssuer(
+            @Value("${medkernel.jwt.dev-secret:medkernel-dev-secret-please-change-at-least-32-bytes}") String secret,
+            @Value("${medkernel.auth.jwt.ttl-seconds:28800}") long ttlSeconds) {
+        this.secret = secret.getBytes(StandardCharsets.UTF_8);
+        this.ttlSeconds = ttlSeconds;
+    }
+
+    public String issue(String userId, String tenantId, List<String> roles) {
+        try {
+            Instant now = Instant.now();
+            JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .subject(userId)
+                .claim(JwtClaimsResolver.CLAIM_TENANT_ID, tenantId)
+                .claim(JwtClaimsResolver.CLAIM_ROLES, roles)
+                .issueTime(Date.from(now))
+                .expirationTime(Date.from(now.plusSeconds(ttlSeconds)))
+                .build();
+            SignedJWT jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);
+            jwt.sign(new MACSigner(secret));
+            return jwt.serialize();
+        } catch (JOSEException e) {
+            throw new IllegalStateException("JWT 签发失败", e);
+        }
+    }
+
+    public long ttlSeconds() {
+        return ttlSeconds;
+    }
+}

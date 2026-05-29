@@ -1,5 +1,6 @@
 package com.medkernel.shared.security;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -7,6 +8,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -14,6 +16,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -46,17 +50,22 @@ import com.medkernel.shared.context.TenantContextEnricherFilter;
  */
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
+@EnableConfigurationProperties(AuthCookieProperties.class)
 public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http,
-                                    TenantContextEnricherFilter tenantEnricher) throws Exception {
+                                    TenantContextEnricherFilter tenantEnricher,
+                                    CookieBearerTokenResolver cookieResolver) throws Exception {
         http
+            // CSRF 关闭：前后端分离 + SameSite=Strict cookie，CSRF 双提交令牌方案列 Phase 2
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/v1/system/**",
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/logout",
                     "/actuator/health",
                     "/actuator/health/**",
                     "/actuator/info",
@@ -67,12 +76,18 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
             )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
-                .jwtAuthenticationConverter(buildJwtAuthenticationConverter())
-            ))
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .bearerTokenResolver(cookieResolver)
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(buildJwtAuthenticationConverter()))
+            )
             .addFilterAfter(tenantEnricher, BearerTokenAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     /**
@@ -107,7 +122,7 @@ public class SecurityConfig {
     @Bean
     @Profile({"dev", "test"})
     JwtDecoder devJwtDecoder(@Value("${medkernel.jwt.dev-secret:medkernel-dev-secret-please-change-at-least-32-bytes}") String secret) {
-        SecretKey key = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
+        SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(key).build();
     }
 }

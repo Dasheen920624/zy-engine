@@ -1,6 +1,8 @@
 import { Alert, Card, Form, Input, Button, Typography, Divider } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLogin } from "@/shared/api/hooks";
 import styles from "./Login.module.css";
 
 const { Title, Text } = Typography;
@@ -16,10 +18,23 @@ const { Title, Text } = Typography;
  */
 export default function Login() {
   const [showSso, setShowSso] = useState(false);
-  const [authNoticeVisible, setAuthNoticeVisible] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const login = useLogin();
 
-  function handleSubmit(_values: { username: string; password: string }) {
-    setAuthNoticeVisible(true);
+  async function handleSubmit(values: { username: string; password: string }) {
+    setErrorMsg(null);
+    try {
+      await login.mutateAsync({ username: values.username, password: values.password });
+      navigate("/dashboard");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detail?: string; message?: string } } };
+      setErrorMsg(
+        axiosErr.response?.data?.detail ??
+          axiosErr.response?.data?.message ??
+          "登录失败：用户名或密码不正确",
+      );
+    }
   }
 
   return (
@@ -60,14 +75,7 @@ export default function Login() {
             <Text type="secondary">使用医院账号继续</Text>
           </div>
 
-          {authNoticeVisible && (
-            <Alert
-              type="warning"
-              showIcon
-              message="真实身份认证尚未接入"
-              description="当前版本只保留院方统一身份入口界面；完成 OIDC、CAS、SAML 或国产 CA 配置后，才能进入受控工作台。"
-            />
-          )}
+          {errorMsg && <Alert type="error" showIcon message="登录失败" description={errorMsg} />}
 
           <Form layout="vertical" requiredMark={false} onFinish={handleSubmit}>
             <Form.Item name="username" rules={[{ required: true, message: "请输入工号或账号" }]}>
@@ -77,7 +85,7 @@ export default function Login() {
               <Input.Password prefix={<LockOutlined />} placeholder="密码" size="large" />
             </Form.Item>
             <Form.Item>
-              <Button type="primary" htmlType="submit" block size="large">
+              <Button type="primary" htmlType="submit" block size="large" loading={login.isPending}>
                 进入工作台
               </Button>
             </Form.Item>

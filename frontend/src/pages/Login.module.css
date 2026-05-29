@@ -1,17 +1,18 @@
 .page {
+  --mk-text: #1f2329;
+  --mk-text-muted: #5a6573;
+  --mk-primary: #1565c0;
+  --mk-surface: #ffffff;
+  --mk-surface-tint: #f0f5ff;
+
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
   align-items: center;
   gap: 32px;
   padding: 48px clamp(24px, 6vw, 72px);
-  color: CanvasText;
-  background: radial-gradient(
-      circle at top left,
-      color-mix(in srgb, Canvas 84%, currentColor 6%),
-      transparent 34%
-    ),
-    linear-gradient(135deg, Canvas, color-mix(in srgb, Canvas 88%, currentColor 10%));
+  color: var(--mk-text);
+  background: linear-gradient(135deg, var(--mk-surface-tint), var(--mk-surface));
 }
 
 .contextPanel {
@@ -23,18 +24,21 @@
 
 .kicker {
   font-weight: 700;
+  color: var(--mk-primary);
 }
 
 .brandTitle {
   margin: 0;
   font-size: 36px;
   line-height: 1.18;
+  color: var(--mk-primary);
 }
 
 .primaryGoal {
   max-width: 520px;
   font-size: 18px;
   font-weight: 700;
+  color: var(--mk-text);
 }
 
 .signalList {
@@ -52,30 +56,31 @@
   gap: 16px;
   align-items: center;
   padding: 14px 16px;
-  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border: 1px solid rgba(21, 101, 192, 0.16);
   border-radius: 8px;
-  background: color-mix(in srgb, Canvas 94%, currentColor 3%);
+  background: #fff;
 }
 
 .signalItem span {
   font-size: 13px;
-  color: color-mix(in srgb, currentColor 58%, transparent);
+  color: var(--mk-text-muted);
 }
 
 .signalItem strong {
   font-weight: 700;
+  color: var(--mk-text);
 }
 
 .safetyCopy {
   max-width: 560px;
-  color: color-mix(in srgb, currentColor 68%, transparent);
+  color: var(--mk-text-muted);
 }
 
 .loginCard {
   width: 100%;
-  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  border: 1px solid rgba(21, 101, 192, 0.12);
   border-radius: 8px;
-  box-shadow: 0 24px 60px color-mix(in srgb, currentColor 10%, transparent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .loginCard :global(.ant-card-body) {

@@ -2591,3 +2591,36 @@ export function useDeleteUserRoleAssignment() {
     },
   });
 }
+
+// ──────────────────────────────────────────
+// 鉴权 · 登录 / 登出
+// ──────────────────────────────────────────
+export interface LoginPayload {
+  username: string;
+  password: string;
+  tenantId?: string;
+}
+
+export interface LoginResult {
+  userId: string;
+  tenantId: string;
+  roles: string[];
+  mustChangePwd: boolean;
+}
+
+export function useLogin() {
+  return useMutation({
+    mutationFn: async (payload: LoginPayload) => {
+      const resp = await apiClient.post<{ data: LoginResult }>("/auth/login", payload);
+      return resp.data.data;
+    },
+  });
+}
+
+export function useLogout() {
+  return useMutation({
+    mutationFn: async () => {
+      await apiClient.post("/auth/logout");
+    },
+  });
+}
