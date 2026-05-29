@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：5.5（重做基线 R2 · 补设计系统与主题响应 GA-ENG-DESIGN-SYSTEM-R2 + BASE-10 注水回退 ⟳R2）· 2026-05-30
+> 版本：5.6（重做基线 R2 · 补错误处理与表单反馈一致性 GA-ENG-ERROR-UX-R2）· 2026-05-30
 > 当前执行：P0 真实性门禁与归零 →（系统架构 ∥ 无模型 AI 工厂 ∥ 假闭环清零）
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 标记：`⟳R2` = 重做基线重置项（done→in_progress），须按 §0.3 验收铁律重建。
@@ -289,6 +289,16 @@
 
 ---
 
+## R2-NEW · 错误处理与表单反馈一致性整改（GA-ENG-ERROR-UX-R2，1 项）
+
+> **核查依据**：用户 2026-05-30 四次反馈"各种保存报错"。核查 `frontend/src/shared/api/hooks.ts` 2734 行含 39+ 个 useMutation 但 **`onError` 总数 = 0**；全部页面 **0 个 `Form.Item validateStatus`** → 字段级错误无回显；后端 GlobalExceptionHandler 返回 ApiResult（含 `errors[]` 字段级数组）但前端全部 `err.response?.data?.message` 只取总称、忽略 `errors[]`；后端 Throwable 兜底返回"系统内部错误"，traceId 服务端有但前端不展示无法报告。
+
+| id | owner | status |
+|---|---|---|
+| GA-ENG-ERROR-UX-R2 错误处理与表单反馈一致性整改：①前端 `hooks.ts` 39+ 个 useMutation 加统一 `onError`（全局 message.error 兜底 + 字段级错误回流 Form）；②前端 `client.ts` 响应拦截器扩展：401 已有事件，新增 403 跳无权限页 / 5xx + traceId 显示 + 网络超时友好提示；③所有 Form 提交对接 `errors[]` 字段级错误（`<Form.Item validateStatus help={...}>`）；④定义 axios 错误→业务错误标准对象 `MedKernelApiError { errorCode, message, fields: Record<field, msg>, traceId, isValidation, isAuth, isPermission, isConflict, isInternal }`；⑤后端补：service 层显式抛 `ApiException` 带业务 message（用户名重复/数据范围拒绝/路径已发布不可改/唯一约束冲突/外键约束等），避免落入 Throwable 兜底返回泛指错误；⑥后端补：数据库唯一性冲突（`DataIntegrityViolationException`）专项 handler → 翻译为业务级 ApiException（"该编码已存在"等），不暴露 SQL；⑦后端补：审计写失败不应回滚业务（详规 §10 验收要求）→ audit 异步或 fail-soft；⑧前端错误弹窗统一含 traceId 复制按钮 + 反馈入口（体验规范 §5 错误状态规则）；⑨E2E 覆盖：必填缺失/格式错误/唯一冲突/无权限/网络断开/超时/服务端 500，全部走到正确 UX；⑩CI 加规则阻断 `try { await xxx.mutateAsync(...) } catch` 但 catch 体只 console / 仅 message.error 而不展示 field 错误（即"假错误处理"模式）| - | pending |
+
+---
+
 ## R2-NEW · 设计系统与主题响应整改（GA-ENG-DESIGN-SYSTEM-R2，1 项）
 
 > **核查依据**：用户 2026-05-30 三次反馈"样式混乱，跟随系统颜色混乱"，核查证实 BASE-10 "硬编码颜色归零" 注水——5 份 module.css 含 198 处硬编码 hex 且 0 处深色响应。BASE-10 已 ⟳R2 in_progress；本任务承接其重建要求。
@@ -375,6 +385,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 5.6 | 2026-05-30 | Claude | **补错误处理与表单反馈一致性整改**（用户四次反馈"各种保存报错"）。核查发现 4 大根因：①`frontend/src/shared/api/hooks.ts` 2734 行含 39+ 个 useMutation 但 **`onError` 总数 = 0**——所有 mutation 无统一错误处理，全推给页面 try/catch；②全部页面 **0 个 `Form.Item validateStatus`**——字段级错误无法回显到表单，用户看到弹窗但不知哪个字段错；③后端 GlobalExceptionHandler 返回 ApiResult（含 `errors[]` 字段级数组）但前端全部 `err.response?.data?.message` 只取总称、忽略 `errors[]`——多字段校验只显示总称如"参数校验失败"；④后端 Throwable 兜底返回 INTERNAL_ERROR "系统内部错误"，服务端 log 有 root cause 但前端 traceId 不展示——用户无法报告。新增 **GA-ENG-ERROR-UX-R2** 独立任务（~12d）：前端补统一 onError + Form 字段回流 + traceId 复制按钮；后端补 service 层显式 ApiException（用户名重复/唯一约束/数据范围/路径已发布不可改等）+ DataIntegrityViolation 专项 handler + audit 写失败不回滚业务（fail-soft）；E2E 覆盖 7 类错误场景；CI 加规则阻断"假错误处理"模式。合计 153 → **154 项**（pending 83 → 84）；总工作量 ~520-525d → **~532-537d**（ERROR-UX-R2 ~12d）。 |
 | 5.5 | 2026-05-30 | Claude | **补设计系统与主题响应 + BASE-10 注水回退 ⟳R2**（用户三次反馈"样式混乱，跟随系统颜色混乱"，核查证实 BASE-10 "硬编码颜色全部归零" 注水）。核查现状：①Antd token 系统（theme.ts + ConfigProvider + cssVar:true + 5 种主题模式 default/elder/dark/eye/system + prefers-color-scheme 系统响应）**已建好**；②但 5 份 module.css（Login/Tenant/Quality/Clinical/Compliance）含 **198 处硬编码 hex 颜色**直接违反宪法 §8；③且 5 份 module.css **全部不响应深色模式**（0 处 `prefers-color-scheme` 或 `.dark` 选择器）。用户问题坐实：切到 dark/system 模式时 Antd 组件变深但页面 CSS 仍白底 → 一半组件深色一半白底 = 样式混乱。处理：①**BASE-10 done → ⟳R2 in_progress**（注水回退，加入分界线前经核查证实有假的项）；②**新增 GA-ENG-DESIGN-SYSTEM-R2** 独立任务：把 198 处 hex 改用 Antd token CSS 变量（var(--ant-color-text) 等）+ 添加深色/elder/eye/system 模式响应 + stylelint 阻断 .module.css 含 hex + Storybook 主题切换验证 + E2E 切换无断裂 + 自创 --mk-* 变量必须从 Antd token 派生；③**T-GATE-01 描述扩展**：新增"5 份 module.css 共 198 处硬编码 hex 颜色"作为必爆目标 + 新增 stylelint 规则阻断 module.css 含 hex/rgb/hsl 字面量。合计 152 → **153 项**（pending 82 → 83）；总工作量 ~510-515d → **~520-525d**（DESIGN-SYSTEM-R2 ~8d）。 |
 | 5.4 | 2026-05-30 | Claude | **全前端 36 页面合规核查 + 6 项前端业务页面真实化整改 ⟳R2 包**（用户反馈"其他前端页面一起过一下"，主线程批量 grep 5 类违反模式 = eslint-disable medkernel（13 页）/ JSON 裸渲染（5 页）/ 手编 JSON TextArea（5 页）/ font-mono 暴露（14 页）/ 写死医学常量（11 页））。发现 **22 个页面要重做或调整**——已被既有 R2 任务覆盖 14 页（RuleDefinitions/PathwayTemplates/Followup/CdssFatigue/EmbedLaunch/Provenance/AiWorkflows/AiReview/TerminologyMapping/ConfigPackages/AdapterHub/GraphExplore + 本次明示扩展的 RuleValidate/PatientPathways）；剩余 **未覆盖页面新增 6 个按业务包归类的独立 R2 包**：①GA-ENG-QUALITY-FE-R2（QcDashboard/QcAlerts/QcEvalSets/QcEvalResults/InsuranceAudit 5 页）②GA-ENG-CLINICAL-FE-R2（WorkflowTodos/Notifications/Mpi 3 页）③GA-ENG-COMPLIANCE-FE-R2（AdminUsers/AdminAudit/IdentityBinding/SecurityBaseline/SystemProviders/NotificationSettings 6 页）④GA-ENG-PILOT-FE-R2（TenantOnboarding/ImplementationGuide 2 页）⑤GA-ENG-ADVANCED-FE-R2（DomesticCheck/DevConsole 2 页）⑥GA-ENG-SHELL-FE-R2（Dashboard/Login + StepFlowDemo 评估删除 3 页）。同时扩展 10 个引擎任务描述明示前端范围：KNOW-01-R2 + GraphExplore、TERM-01-R2 + TerminologyMapping、RULE-02 + RuleValidate、PATH-02 + PatientPathways、EMBED-01-R2 + EmbedLaunch。统一整改要求（8 条铁律）写入新章节：移除 eslint-disable / 去 JSON 裸 / 去手编 JSON / 去 font-mono / 去写死医学常量 / 走 7 步流或角色默认视图 / 中文化 / 大列表服务端分页。合计 146 → **152 项**（pending 76 → 82）；总工作量 ~465-470d → **~510-515d**（6 个新前端 R2 包 ~45d）。 |
 | 5.3 | 2026-05-30 | Claude | **追加 RULE-02 / PATH-02 前端专业维护界面 ⟳R2**（用户报告"路径引擎和规则引擎显示 JSON 没有维护界面"，核查证实属实且更严重）。`frontend/src/pages/tenant/RuleDefinitions.tsx` 与 `PathwayTemplates.tsx` 系统性违反：①两份第一行 `eslint-disable medkernel/no-page-mock` 绕真实性门禁（违反宪法 §1.#18）；②默认 `<pre>JSON.stringify(DSL)</pre>` 暴露技术对象（违反宪法 §11 禁区 + 详规 §10.2）；③只有 L3 DSL，零 L1 模板 + 零 L2 可视化（违反详规 §4.2 三层配置 + 宪法 §5 "专科专家画 X6 节点"角色硬指标）；④创建/发布无 7 步流（违反宪法 §1.#4）；⑤多同权主按钮（违反宪法 §1.#6）；⑥写死"高血压/DRUG-001/抗感染化疗/STABLE/DETERIORATED"医学常量（违反 §0.3 真实性铁律 #1 + T-GATE-02 必爆）；⑦中英混杂"Rule Code/Payload/DSL/Edge/conditionJson/STRONG_REMINDER"（违反宪法 §7 + 体验规范 §11）；⑧仿真 payload 让用户手编 JSON 而非"病例选择器"。后端 RULE-01/PATH-01 引擎本身核查为真保留 done；前端两份页面追加为 RULE-02 / PATH-02 两项独立 pending 任务（L1 模板模式 + L2 可视化条件树/节点画布 + L3 DSL 折叠专家模式 + 真实 7 步流 + 移除 eslint-disable + 移除写死医学常量 + 中文化 + 病例选择器仿真 + 后端补模板库/条件树→DSL 转换/影响分析/审核工作流/灰度策略 API）。T-GATE-01 描述追加"已知必爆目标"明示这两份页面。合计 144 → **146 项**（pending 74 → 76）；总工作量 ~440-445d → **~465-470d**（追加 RULE-02 ~10d + PATH-02 ~14d）。 |
