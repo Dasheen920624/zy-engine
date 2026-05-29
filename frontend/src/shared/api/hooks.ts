@@ -909,9 +909,11 @@ export interface RecommendationFeedback {
   feedbackId: string;
   cardId: string;
   feedbackType: RecommendationFeedbackType;
-  rejectReason?: string;
-  comments?: string;
-  physicianId: string;
+  reasonCode?: string;
+  reasonText?: string;
+  // 操作者由后端从 RequestContext 取真实登录用户写入；前端不传，仅展示。
+  operatorId: string;
+  operatorRole?: string;
   createdAt?: string;
 }
 
@@ -948,14 +950,23 @@ export interface RecommendationFeedbackResponse {
 }
 
 // 1. Trigger Hooks
+// 契约对齐后端 RecommendationTriggerRequest：triggerCode/triggerType/scenarioCode/inputDigest 必填，
+// 可选携带候选卡（首版允许上游直接提交）。后端不会凭患者+病种"生成"卡，故沙箱不提交候选卡时 cardCount=0。
 export function useCreateRecommendationTrigger() {
   return useMutation({
     mutationFn: async (payload: {
-      patientId: string;
-      encounterId?: string;
+      triggerCode: string;
+      triggerType: string;
       scenarioCode: string;
-      diseaseCode?: string;
-      payloadJson: string;
+      inputDigest: string;
+      patientId?: string;
+      encounterId?: string;
+      sourceEventId?: string;
+      contextSnapshotId?: string;
+      patientPathwayId?: string;
+      packageVersion?: string;
+      occurredAt?: string;
+      candidateCards?: unknown[];
     }) => {
       const { data } = await apiClient.post<{ data: RecommendationTriggerResponse }>(
         "/engine/recommendations/triggers",
@@ -1017,13 +1028,15 @@ export function useRecommendationCardSources(cardId: string) {
 }
 
 // 3. Feedback Hook
+// 契约对齐后端 RecommendationFeedbackRequest：仅 feedbackType / reasonCode / reasonText / operatorRole；
+// 操作者 id 由后端从 RequestContext 取真实登录用户，前端不得伪造 physicianId。
 export function useSubmitRecommendationFeedback(cardId: string) {
   return useMutation({
     mutationFn: async (payload: {
       feedbackType: RecommendationFeedbackType;
-      rejectReason?: string;
-      comments?: string;
-      physicianId?: string;
+      reasonCode?: string;
+      reasonText?: string;
+      operatorRole?: string;
     }) => {
       const { data } = await apiClient.post<{ data: RecommendationFeedbackResponse }>(
         `/engine/recommendations/cards/${cardId}/feedback`,

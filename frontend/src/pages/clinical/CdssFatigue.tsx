@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import {
   Table,
@@ -19,6 +18,7 @@ import {
   Col,
   Timeline,
   Progress,
+  Empty,
 } from "antd";
 import {
   BugOutlined,
@@ -33,8 +33,10 @@ import {
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import { PageShell } from "@/shared/ui/PageShell";
+import { PageState } from "@/shared/ui/PageState";
 import {
   useCreateRecommendationTrigger,
+  useRecommendationCards,
   useRecommendationCardDetail,
   useRecommendationCardSources,
   useSubmitRecommendationFeedback,
@@ -53,6 +55,15 @@ import type {
 const { TextArea } = Input;
 const { Option } = Select;
 
+/** 计算输入载荷的真实 SHA-256 摘要（不伪造哈希）。 */
+async function sha256Hex(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export default function CdssFatigue() {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [triggerModalVisible, setTriggerModalVisible] = useState<boolean>(false);
@@ -69,54 +80,20 @@ export default function CdssFatigue() {
   const [feedbackForm] = Form.useForm();
   const [triggerForm] = Form.useForm();
 
-  // API 突变与查询
-  // 1. 获取提醒卡列表
-  // 后端 RecommendationEngineController: cards/cardDetail/sources/feedback/fatigueSignals/diagnose，
-  // 我们在 API hooks.ts 中封装了标准 cards 分页查询。为了能在前端无缝跑通，我们在此模拟并支持本地新卡生成合并！
-  const [localCards, setLocalCards] = useState<RecommendationCard[]>([
-    {
-      cardId: "REC-88091",
-      tenantId: "TEN-001",
-      triggerId: "TRIG-55102",
-      patientId: "P-1001",
-      encounterId: "E-2001",
-      scenarioCode: "PRESCRIPTION_SUBMIT",
-      cardType: "DRUG_SAFETY",
-      title: "红线警告：重复开立同类大环内酯类抗生素",
-      summary:
-        "患者已开立‘阿奇霉素胶囊 0.25g’，再次开立‘克拉霉素缓释片 0.5g’，存在严重药物重叠与蓄积毒性风险，建议撤销克拉霉素。",
-      riskLevel: "HIGH",
-      interruptLevel: "HARD",
-      status: "PENDING",
-      createdAt: new Date(Date.now() - 600000).toISOString(), // 10分钟前
-      traceId: "TRACE-REC-889102",
-    },
-    {
-      cardId: "REC-99120",
-      tenantId: "TEN-001",
-      triggerId: "TRIG-88091",
-      patientId: "P-1002",
-      encounterId: "E-2002",
-      scenarioCode: "ORDER_CHECK",
-      cardType: "INSURANCE_AUDIT",
-      title: "医保合规提示：该诊断不符合特级护理限制",
-      summary:
-        "患者主要诊断为‘原发性高血压’，开立‘特级护理’不符合医保特护准入标准，面临医保全额扣款风险，建议调整为一级或二级护理。",
-      riskLevel: "MEDIUM",
-      interruptLevel: "SOFT",
-      status: "PENDING",
-      createdAt: new Date(Date.now() - 3600000).toISOString(), // 1小时前
-      traceId: "TRACE-REC-112930",
-    },
-  ]);
-
-  // 检索过滤卡片列表
-  const filteredCards = localCards.filter((c) => {
-    if (statusFilter && c.status !== statusFilter) return false;
-    if (riskFilter && c.riskLevel !== riskFilter) return false;
-    if (patientIdFilter && !c.patientId.includes(patientIdFilter)) return false;
-    return true;
+  // 真实推荐卡列表：后端分页 + 服务端过滤。绝不使用本地写死/伪造卡片。
+  const {
+    data: cardsPage,
+    isLoading: cardsLoading,
+    isError: cardsError,
+    refetch: refetchCards,
+  } = useRecommendationCards({
+    status: statusFilter,
+    riskLevel: riskFilter,
+    patientId: patientIdFilter || undefined,
+    page,
+    size,
   });
+  const cards: RecommendationCard[] = cardsPage?.items ?? [];
 
   const { data: detailData, refetch: refetchDetail } = useRecommendationCardDetail(
     selectedCardId || "",
@@ -142,93 +119,72 @@ export default function CdssFatigue() {
   const triggerCdssMutation = useCreateRecommendationTrigger();
   const feedbackMutation = useSubmitRecommendationFeedback(selectedCardId || "");
 
-  // 沙箱仿真触发 CDSS 卡片计算
+  // 触发一次推荐评估事件。后端为受控写入/治理层，不会凭患者+病种"生成"卡；
+  // 候选卡由上游引擎/适配器提交，本沙箱仅登记触发并按后端真实返回刷新列表。
   const handleTriggerCdss = async () => {
     try {
       const values = await triggerForm.validateFields();
       let payloadJsonParsed = "{}";
-      try {
-        if (values.payloadJson) {
+      if (values.payloadJson) {
+        try {
           JSON.parse(values.payloadJson);
           payloadJsonParsed = values.payloadJson;
+        } catch {
+          message.error("病种快照 payload 的 JSON 格式不合法！");
+          return;
         }
-      } catch {
-        message.error("病种快照 payload 的 JSON 格式不合法！");
-        return;
       }
 
       const res = await triggerCdssMutation.mutateAsync({
-        patientId: values.patientId,
-        encounterId: values.encounterId || "E-" + Math.floor(Math.random() * 10000),
+        triggerCode: `CDSS-SANDBOX-${values.scenarioCode}`,
+        triggerType: "MANUAL_SANDBOX",
         scenarioCode: values.scenarioCode,
-        diseaseCode: values.diseaseCode || "I10",
-        payloadJson: payloadJsonParsed,
+        inputDigest: await sha256Hex(payloadJsonParsed),
+        patientId: values.patientId,
+        encounterId: values.encounterId || undefined,
       });
 
-      message.success(`CDSS 计算触发成功，生成 ${res?.cardCount || 1} 张临床提醒卡！`);
+      message.success(
+        `已登记推荐触发事件（trigger=${res.triggerId}），后端生成提醒卡 ${res.cardCount} 张；下方列表为后端真实数据。`,
+      );
       setTriggerModalVisible(false);
       triggerForm.resetFields();
-
-      // 本地追加一张新模拟卡片
-      const newCard: RecommendationCard = {
-        cardId: "REC-" + Math.floor(Math.random() * 100000),
-        tenantId: "TEN-001",
-        triggerId: res?.triggerId || "TRIG-" + Math.floor(Math.random() * 100000),
-        patientId: values.patientId,
-        encounterId: values.encounterId || "E-MOCK-3301",
-        scenarioCode: values.scenarioCode,
-        cardType: "DRUG_SAFETY",
-        title: "智能药理提示：发现潜在中高度相互作用风险",
-        summary: `患者开立了针对 ${values.diseaseCode || "I10"} 的新医嘱，智能系统评估显示其与当前就诊在途的其它药物存在蓄积或毒副作用重合，建议临床注意监控肾功能指征。`,
-        riskLevel: "MEDIUM",
-        interruptLevel: "SOFT",
-        status: "PENDING",
-        createdAt: new Date().toISOString(),
-        traceId: "TRACE-" + Math.floor(Math.random() * 1000000),
-      };
-      setLocalCards((prev) => [newCard, ...prev]);
+      refetchCards();
     } catch (err: any) {
-      message.error(err.response?.data?.message || "触发 CDSS 计算失败");
+      if (err?.errorFields) return; // 表单校验错误已在控件上提示
+      message.error(err?.response?.data?.message || "触发 CDSS 计算失败，请稍后重试");
     }
   };
 
-  // 提交医师反馈 (ACCEPT / REJECT)
+  // 提交医师反馈 (ACCEPT / REJECT)。操作者身份由后端从登录态取真实用户，前端绝不伪造 physicianId。
   const handleFeedback = async (feedbackType: RecommendationFeedbackType) => {
     if (!selectedCardId) return;
     try {
       const values = await feedbackForm.validateFields();
       await feedbackMutation.mutateAsync({
         feedbackType,
-        rejectReason: feedbackType === "REJECT" ? values.rejectReason : undefined,
-        comments: values.comments,
-        physicianId: "PHYS-1002", // 当前登录医生模拟
+        reasonCode: feedbackType === "REJECT" ? values.rejectReason : undefined,
+        reasonText: values.comments,
       });
 
       message.success(
         feedbackType === "ACCEPT"
-          ? "已采纳该合理化建议，医嘱流转成功！"
-          : "已登记拒绝采纳反馈，建议已封存归档！",
+          ? "已登记采纳，已生成临床决策证据；是否下达医嘱请在 HIS 中确认。"
+          : "已登记不采纳反馈，建议已封存归档。",
       );
       feedbackForm.resetFields();
 
-      // 更新本地状态
-      setLocalCards((prev) =>
-        prev.map((c) =>
-          c.cardId === selectedCardId
-            ? {
-                ...c,
-                status: feedbackType === "ACCEPT" ? "ACCEPTED" : "REJECTED",
-              }
-            : c,
-        ),
-      );
-
+      // 反馈后刷新真实数据，状态以后端为准
+      refetchCards();
       refetchDetail();
       refetchSources();
       refetchFatigue();
       refetchDiagnose();
     } catch (err: any) {
-      message.error(err.response?.data?.message || "反馈提交失败，卡片可能已过期");
+      if (err?.errorFields) return;
+      message.error(
+        err?.response?.data?.message || "反馈提交失败，卡片可能已过期或已处于终止态",
+      );
     }
   };
 
@@ -324,7 +280,10 @@ export default function CdssFatigue() {
               placeholder="全部状态"
               allowClear
               value={statusFilter}
-              onChange={setStatusFilter}
+              onChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
               className="w-[140px]"
             >
               <Option value="PENDING">待处理</Option>
@@ -338,7 +297,10 @@ export default function CdssFatigue() {
               placeholder="全部严重度"
               allowClear
               value={riskFilter}
-              onChange={setRiskFilter}
+              onChange={(v) => {
+                setRiskFilter(v);
+                setPage(1);
+              }}
               className="w-[140px]"
             >
               <Option value="HIGH">HIGH (红线强阻断)</Option>
@@ -351,7 +313,10 @@ export default function CdssFatigue() {
               placeholder="如 P-1001"
               allowClear
               value={patientIdFilter}
-              onChange={(e) => setPatientIdFilter(e.target.value)}
+              onChange={(e) => {
+                setPatientIdFilter(e.target.value);
+                setPage(1);
+              }}
               className="w-[160px]"
             />
           </Form.Item>
@@ -370,23 +335,34 @@ export default function CdssFatigue() {
 
       {/* 主表格数据 */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <Table
-          columns={columns}
-          dataSource={filteredCards}
-          rowKey="cardId"
-          pagination={{
-            current: page,
-            pageSize: size,
-            onChange: (p) => setPage(p),
-            showTotal: (t) => `共 ${t} 张临床运行提醒卡`,
-          }}
-          className="medkernel-table"
-        />
+        {cardsError ? (
+          <PageState
+            state="error"
+            description="推荐卡列表加载失败，请稍后重试或联系信息科。"
+            onRetry={() => refetchCards()}
+            traceId={cardsPage?.traceId}
+          />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={cards}
+            rowKey="cardId"
+            loading={cardsLoading}
+            pagination={{
+              current: page,
+              pageSize: size,
+              total: cardsPage?.total ?? 0,
+              onChange: (p) => setPage(p),
+              showTotal: (t) => `共 ${t} 张临床运行提醒卡`,
+            }}
+            className="medkernel-table"
+          />
+        )}
       </div>
 
       {/* 触发 CDSS 沙箱 Modal */}
       <Modal
-        title="CDSS 触发沙箱 (临床触发模拟测试)"
+        title="CDSS 触发沙箱 (登记一次推荐触发评估)"
         open={triggerModalVisible}
         onOk={handleTriggerCdss}
         onCancel={() => setTriggerModalVisible(false)}
@@ -394,7 +370,13 @@ export default function CdssFatigue() {
         confirmLoading={triggerCdssMutation.isPending}
         destroyOnClose
       >
-        <Form form={triggerForm} layout="vertical" className="mt-4">
+        <Alert
+          message="本沙箱仅向推荐引擎登记一次触发评估事件。候选提醒卡由上游临床引擎/适配器提交，触发本身不凭空生成卡片；提交后下方列表按后端真实数据刷新。"
+          type="info"
+          showIcon
+          className="mb-4 rounded-lg text-xs"
+        />
+        <Form form={triggerForm} layout="vertical" className="mt-2">
           <Row gutter={12}>
             <Col span={12}>
               <Form.Item name="patientId" label="患者 ID (临床快照卡)" rules={[{ required: true }]}>
@@ -403,7 +385,7 @@ export default function CdssFatigue() {
             </Col>
             <Col span={12}>
               <Form.Item name="encounterId" label="就诊 ID (Encounter ID，可选)">
-                <Input placeholder="输入或由系统随机分配" />
+                <Input placeholder="可留空" />
               </Form.Item>
             </Col>
           </Row>
@@ -423,7 +405,7 @@ export default function CdssFatigue() {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="payloadJson" label="病种快照上下文 JSON (可选，默认为标准模板)">
+          <Form.Item name="payloadJson" label="病种快照上下文 JSON (可选，将计算 SHA-256 作为 inputDigest)">
             <TextArea
               rows={4}
               placeholder="请输入临床上下文载荷 JSON..."
@@ -526,35 +508,7 @@ export default function CdssFatigue() {
                       </Card>
                     ))
                   ) : (
-                    // Mock fallback
-                    <Card
-                      size="small"
-                      title={
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-gray-800 text-xs">
-                            《合理用药大环内酯类临床应用共识2024 §4.1》
-                          </span>
-                          <Tag color="purple">权威度评分: 95分</Tag>
-                        </div>
-                      }
-                      className="border-gray-200 bg-gray-50 rounded-lg shadow-sm"
-                    >
-                      <div className="text-xs text-gray-700 leading-relaxed font-mono">
-                        “严禁在无明确临床指征情况下联合使用阿奇霉素与克拉霉素，此类重叠处方会导致显著的QT间期延长、诱发尖端扭转性室速等危及生命的药源性心律失常风险。”
-                      </div>
-                      <Descriptions
-                        size="small"
-                        column={2}
-                        className="mt-3 bg-white p-2 rounded border border-gray-100 text-[10px]"
-                      >
-                        <Descriptions.Item label="指南文献出处">
-                          <span className="text-gray-500 font-semibold">国家合理用药质控指南</span>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="证据级别">
-                          <Tag color="cyan">Class I 级强推荐</Tag>
-                        </Descriptions.Item>
-                      </Descriptions>
-                    </Card>
+                    <Empty description="该提醒卡暂无来源解释证据（仅展示后端真实来源，不做任何兜底伪造）" />
                   )}
                 </div>
               </Tabs.TabPane>
@@ -572,7 +526,7 @@ export default function CdssFatigue() {
                 <Card className="border-gray-200 shadow-sm rounded-xl mt-2">
                   <Form form={feedbackForm} layout="vertical">
                     <Alert
-                      message="合理化医师反馈是临床合理处方闭环的核心留痕。选择不采纳时，请录入客观严谨的临床医学抗拒理由，以便医疗质控追溯与持续优化CDSS阈值。"
+                      message="合理化医师反馈是临床合理处方闭环的核心留痕。选择不采纳时，请录入客观严谨的临床医学抗拒理由，以便医疗质控追溯与持续优化CDSS阈值。操作者身份由系统按登录态如实记录。"
                       type="info"
                       showIcon
                       className="mb-4 rounded-lg"
@@ -581,7 +535,7 @@ export default function CdssFatigue() {
                     <Tabs defaultActiveKey="accept" type="card" size="small" className="mb-4">
                       <Tabs.TabPane tab="采纳合理建议 (ACCEPT)" key="accept">
                         <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-800 text-xs mb-4">
-                          确认采纳此建议。系统将自动撤回冲突医嘱，保障患者用药安全。
+                          确认采纳此建议。系统将登记采纳反馈并生成临床决策证据；是否下达/撤销医嘱由医师在 HIS 中确认。
                         </div>
                         <Form.Item name="comments" label="采纳说明 (非必填)">
                           <Input placeholder="输入采纳说明，如：遵照指南撤销不合理克拉霉素..." />
@@ -705,31 +659,7 @@ export default function CdssFatigue() {
                       </Card>
                     ))
                   ) : (
-                    // Mock fallback
-                    <Card size="small" className="border-gray-200 bg-gray-50 rounded-lg shadow-sm">
-                      <Descriptions size="small" column={2}>
-                        <Descriptions.Item label="疲劳 Key">
-                          <span className="font-mono text-xs font-semibold">
-                            {detailData.card.scenarioCode}
-                          </span>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="信号定位">
-                          <Tag color="orange">MUTE (已触发自动静音限频)</Tag>
-                        </Descriptions.Item>
-                      </Descriptions>
-                      <div className="mt-3">
-                        <div className="flex justify-between items-center text-xs text-gray-500 mb-1">
-                          <span>疲劳触发进度 (当前就诊场景超频触发 / 提醒疲劳治理阻断阈值)</span>
-                          <span className="font-semibold text-gray-700">12 / 10 次</span>
-                        </div>
-                        <Progress percent={100} status="exception" />
-                      </div>
-                      <div className="mt-3 text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-100 font-mono">
-                        “系统分析显示：针对开立大环内酯处方冲突场景，当前医师在途已连续触发并忽略该提醒达
-                        12 次（已超过限频上限 10 次）。MedKernel 智能决策底座已自动开启
-                        MUTE(超频自动静音拦截) 物理降噪，以降低低打扰疲劳干扰。”
-                      </div>
-                    </Card>
+                    <Empty description="该场景暂无疲劳治理信号（仅展示后端真实采集信号）" />
                   )}
                 </div>
               </Tabs.TabPane>
@@ -783,9 +713,7 @@ export default function CdssFatigue() {
                 <span className="font-mono text-xs">{diagnoseData.traceId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="输入 Payload 摘要 (SHA-256)">
-                <span className="font-mono text-xs">
-                  {diagnoseData.inputPayloadSummary || "SHA-256-REC-MOCK-HASH"}
-                </span>
+                <span className="font-mono text-xs">{diagnoseData.inputPayloadSummary || "—"}</span>
               </Descriptions.Item>
               <Descriptions.Item label="提醒卡风险定级">
                 <Tag color={diagnoseData.riskLevel === "HIGH" ? "red" : "orange"}>
@@ -804,8 +732,7 @@ export default function CdssFatigue() {
               className="mb-6 rounded-xl border-gray-200"
             >
               <div className="text-sm text-gray-800 bg-gray-50 p-4 rounded-lg font-mono border border-gray-100">
-                {diagnoseData.explanationSnapshot ||
-                  "由于患者就诊在途已存在阿奇霉素医嘱（生效中），本次处方提交中包含克拉霉素，依据《合理用药底座安全规则集 §4.1》大环内酯蓄积冲突规则被命中，触发 HARD(强阻断提示) 归因判定成立。"}
+                {diagnoseData.explanationSnapshot || "暂无决策解释快照"}
               </div>
             </Card>
 

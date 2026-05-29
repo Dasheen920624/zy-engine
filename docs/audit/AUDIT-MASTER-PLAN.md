@@ -95,6 +95,7 @@
 
 > 注 1：LLM-01 / LLM-02 / GA-ENG-DEGRADE-01 三项 backlog `done` **名不副实**，应回退。
 > 注 2：A7 **后端真实达标**，问题集中在前端展示层；详见 [units/A7](units/A7-recommendation-cdss.md)。前端"成功后仍叠加写死数据 + eslint-disable 门禁 + 硬编码身份"模式预计在 C2–C6 复现。
+> 注 3（2026-05-29 修复）：上表 L1–L4 与 CDSS-CRIT-01/02、CDSS-H-02 **已全部修复并测试固化**（A12 后端 17/17 绿，前端 typecheck/lint/build/smoke 全过）。详见 [A12 §8](units/A12-llm-gateway.md) / [A7 §8](units/A7-recommendation-cdss.md)。R1 门禁失效根因（no-page-mock 误伤 `const columns`）一并修复。仅余 LLM-M-04(Low) 与 A7 后端 4 项 Medium 待办。
 
 ### 5.2 已确认真修复（下一个 AI 不要重复审这几点）
 
@@ -136,12 +137,12 @@
 | A4 | 字典映射 | TERM-01, API-04 | `engine/terminology` | 实施工程师 | P1 | ⬜ 待审 | - | 疑 B2 |
 | A5 | 规则引擎 | RULE-01, API-05 | `engine/rule` | 路径专家/医务处 | P0 | ⬜ 待审（免重验 §5.3 DSL）| - | - |
 | A6 | 路径引擎 | PATH-01, API-06 | `engine/pathway` | 路径专家/临床 | P0 | ⬜ 待审 | - | - |
-| A7 | 推荐/CDSS | CDSS-01, API-07 | `engine/recommendation` | **临床医生** | **P0** | ⚠️ 已审需返工（后端✅/前端🔴）| [A7](units/A7-recommendation-cdss.md) | 2/2/4/0 |
+| A7 | 推荐/CDSS | CDSS-01, API-07 | `engine/recommendation` | **临床医生** | **P0** | 🔧 修复中（前端 2C2H 已修/后端 4M 待办）| [A7](units/A7-recommendation-cdss.md) | 2/2/4/0 |
 | A8 | 评估质控 | EVAL-01, API-08 | `engine/evaluation` | 医务处/院长 | P0 | ✅ 已审通过（前后端均达标）| [A8](units/A8-evaluation.md) | 0/0/3/1 |
 | A9 | 随访 | FOLLOW-01, API-09 | `engine/followup` | 临床/护理 | P1 | ⬜ 待审 | - | - |
 | A10 | 包发布 | PKG-01, API-10 | `engine/pkg` | 实施工程师 | P0 | ⬜ 待审 | - | - |
 | A11 | 嵌入 | EMBED-01, API-11 | `engine/embed` | 信息科主任 | P2 | ⬜ 待审 | - | - |
-| A12 | 模型能力网关 | LLM-01/02, API-12, DEGRADE-01 | `engine/llm` | 合规审计 | **P0** | ⚠️ 已审需返工（外壳真/核心假）| [A12](units/A12-llm-gateway.md) | 2/3/3/1 |
+| A12 | 模型能力网关 | LLM-01/02, API-12, DEGRADE-01 | `engine/llm` | 合规审计 | **P0** | 🔧 修复中（2C3H3M 已修/余 1L）| [A12](units/A12-llm-gateway.md) | 2/3/3/1 |
 | A13 | 大规模列表 | API-13 | `engine/list` | 全角色 | P2 | ⬜ 待审 | - | - |
 | A14 | 第三方对接总线 | INTEG-01/02 | `engine/integration` | 信息科主任 | P1 | ⬜ 待审（免重验 §5.2 B4/B5）| - | - |
 | A15 | 证据链 | EVID-01 | `compliance/evidence` | 合规审计 | P0 | ⬜ 待审（免重验 §5.2 B8）| - | - |
@@ -173,7 +174,7 @@
 | D2 | 测试有效性 | 全部 | 97 后端+23 前端是否 mock 掉真实现固化假绿 | P1 | ⬜ 待审 | - | - |
 | D3 | E6 业务包真实性 | GA-SVC-* ×14 | 14 包 1 天速通是否假闭环 | P0 | ⬜ 待审 | - | - |
 
-**进度统计**：共 27 单元 · 待审 24 · 需返工 2（A12 核心假 / A7 前端）· 已通过 1（A8）· 修复已复核 0 ·（全量重审口径，无单元跳过）
+**进度统计**：共 27 单元 · 待审 24 · 修复中 2（A12 / A7：Critical+High 已修并测试固化，余少量 Medium/Low）· 已通过 1（A8）·（全量重审口径，无单元跳过）
 > 已出单元报告：[A7 推荐/CDSS](units/A7-recommendation-cdss.md)（后端达标/前端 2C）· [A12 模型网关](units/A12-llm-gateway.md)（外壳真/核心假 2C3H3M1L）· [A8 评估质控](units/A8-evaluation.md)（✅前后端达标 0C0H3M1L）
 
 ### 截至当前的跨单元规律（给下一个 AI 的提示）
