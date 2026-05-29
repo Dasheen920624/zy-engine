@@ -82,5 +82,26 @@ public class AuthService {
             userId == null ? "anonymous" : userId, "登出");
     }
 
+    /**
+     * 自助改密：校验原密码后设置新密码并清除"首登须改密"标志。
+     * 账号不存在抛 {@code ENG_AUTH_005}；原密码错抛 {@code ENG_AUTH_004}（失败留痕）。
+     */
+    public void changePassword(String tenantId, String userId, String oldPassword, String newPassword) {
+        PlatformCredential cred = credentials.findByTenantIdAndUserId(tenantId, userId)
+            .orElseThrow(() -> new ApiException(ErrorCode.ENG_AUTH_005));
+        if (!passwordEncoder.matches(oldPassword, cred.passwordHash())) {
+            isolatedAudit.publishInNewTx(AuditEvent.failure(
+                AuditAction.EXECUTE, "platform_credential", userId,
+                ErrorCode.ENG_AUTH_004.code(), "改密失败：原密码不正确 userId=" + userId));
+            throw new ApiException(ErrorCode.ENG_AUTH_004);
+        }
+        java.time.Instant now = java.time.Instant.now();
+        credentials.save(new PlatformCredential(
+            cred.id(), cred.credentialId(), cred.tenantId(), cred.userId(), cred.username(),
+            passwordEncoder.encode(newPassword), cred.status(), "N", cred.mfaSecret(),
+            cred.createdAt(), cred.createdBy(), now, userId, cred.traceId()));
+        auditPublisher.publish(AuditAction.EXECUTE, "platform_credential", userId, "自助修改密码成功");
+    }
+
     public record AuthResult(String jwt, LoginResponse response) {}
 }

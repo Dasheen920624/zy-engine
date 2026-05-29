@@ -51,6 +51,15 @@ public class AuthController {
             .body(ApiResult.ok(null));
     }
 
+    /** 自助改密（需登录态）：从 JWT 取当前用户与租户，校验原密码后设新密码。 */
+    @PostMapping("/change-password")
+    public ApiResult<Void> changePassword(@AuthenticationPrincipal Jwt jwt,
+                                          @Valid @RequestBody ChangePasswordRequest req) {
+        authService.changePassword(
+            jwt.getClaimAsString("tenant_id"), jwt.getSubject(), req.oldPassword(), req.newPassword());
+        return ApiResult.ok(null);
+    }
+
     private ResponseCookie buildCookie(String value, long maxAge) {
         return ResponseCookie.from(cookieProps.name(), value)
             .httpOnly(true)

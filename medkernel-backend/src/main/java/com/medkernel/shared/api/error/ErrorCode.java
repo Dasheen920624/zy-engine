@@ -128,7 +128,10 @@ public enum ErrorCode {
     ENG_KNOW_002("ENG-KNOW-002", 409, "知识版本内容指纹冲突已存在", ErrorClass.DATA, false),
     ENG_AUTH_001("ENG-AUTH-001", 401, "用户名或密码不正确", ErrorClass.AUTH, false),
     ENG_AUTH_002("ENG-AUTH-002", 403, "账号已被禁用或锁定", ErrorClass.AUTH, false),
-    ENG_AUTH_003("ENG-AUTH-003", 400, "登录请求参数不合法", ErrorClass.INPUT, false);
+    ENG_AUTH_003("ENG-AUTH-003", 400, "登录请求参数不合法", ErrorClass.INPUT, false),
+    ENG_AUTH_004("ENG-AUTH-004", 400, "原密码不正确", ErrorClass.AUTH, false),
+    ENG_AUTH_005("ENG-AUTH-005", 404, "账号不存在", ErrorClass.DATA, false),
+    ENG_AUTH_006("ENG-AUTH-006", 409, "用户名在该租户下已存在", ErrorClass.DATA, false);
 
     private final String code;
     private final int httpStatus;
