@@ -54,13 +54,16 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http,
-                                    TenantContextEnricherFilter tenantEnricher) throws Exception {
+                                    TenantContextEnricherFilter tenantEnricher,
+                                    CookieBearerTokenResolver cookieResolver) throws Exception {
         http
+            // CSRF 关闭：前后端分离 + SameSite=Strict cookie，CSRF 双提交令牌方案列 Phase 2
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/v1/system/**",
+                    "/api/v1/auth/login",
                     "/actuator/health",
                     "/actuator/health/**",
                     "/actuator/info",
@@ -71,9 +74,10 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
             )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
-                .jwtAuthenticationConverter(buildJwtAuthenticationConverter())
-            ))
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .bearerTokenResolver(cookieResolver)
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(buildJwtAuthenticationConverter()))
+            )
             .addFilterAfter(tenantEnricher, BearerTokenAuthenticationFilter.class);
 
         return http.build();
