@@ -1,8 +1,6 @@
-/* eslint-disable medkernel/no-page-mock */
-import { Card, Form, Input, Button, Typography, Divider } from "antd";
+import { Alert, Card, Form, Input, Button, Typography, Divider } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import styles from "./Login.module.css";
 
 const { Title, Text } = Typography;
@@ -24,11 +22,10 @@ const identitySignals = [
  */
 export default function Login() {
   const [showSso, setShowSso] = useState(false);
-  const navigate = useNavigate();
+  const [authNoticeVisible, setAuthNoticeVisible] = useState(false);
 
   function handleSubmit(_values: { username: string; password: string }) {
-    // 骨架版：不真实鉴权。GA-CORE-02 后端 OAuth2 接通后实装。
-    navigate("/dashboard");
+    setAuthNoticeVisible(true);
   }
 
   return (
@@ -62,6 +59,15 @@ export default function Login() {
             </Title>
             <Text type="secondary">使用医院账号继续</Text>
           </div>
+
+          {authNoticeVisible && (
+            <Alert
+              type="warning"
+              showIcon
+              message="真实身份认证尚未接入"
+              description="当前版本只保留院方统一身份入口界面；完成 OIDC、CAS、SAML 或国产 CA 配置后，才能进入受控工作台。"
+            />
+          )}
 
           <Form layout="vertical" requiredMark={false} onFinish={handleSubmit}>
             <Form.Item name="username" rules={[{ required: true, message: "请输入工号或账号" }]}>

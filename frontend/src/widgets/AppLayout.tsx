@@ -37,10 +37,14 @@ export function AppLayout() {
   const breadcrumb = getRouteBreadcrumb(location.pathname);
   const securityProfile = useSecurityProfile();
   const allowedMenuKeys = securityProfile.data?.menuKeys;
+  const routeRequiresAuth = currentRoute?.requireAuth ?? true;
+  const hasSecurityProfile = Boolean(securityProfile.data);
   const canViewCurrentRoute =
-    !currentRoute?.sectionKey ||
-    currentRoute.sectionKey === "workbench" ||
-    Boolean(allowedMenuKeys?.includes(currentRoute.sectionKey));
+    !routeRequiresAuth ||
+    (hasSecurityProfile &&
+      (!currentRoute?.sectionKey ||
+        currentRoute.sectionKey === "workbench" ||
+        Boolean(allowedMenuKeys?.includes(currentRoute.sectionKey))));
 
   const visibleMenuSections = useMemo(
     () =>
@@ -95,10 +99,7 @@ export function AppLayout() {
   };
 
   const renderContent = () => {
-    if (canViewCurrentRoute) {
-      return <Outlet />;
-    }
-    if (!securityProfile.data) {
+    if (routeRequiresAuth && !hasSecurityProfile) {
       return securityProfile.isError ? (
         <PageState
           state="error"
@@ -112,6 +113,9 @@ export function AppLayout() {
           description="正在确认当前角色与数据范围。"
         />
       );
+    }
+    if (canViewCurrentRoute) {
+      return <Outlet />;
     }
     return <PageState state="forbidden" />;
   };
