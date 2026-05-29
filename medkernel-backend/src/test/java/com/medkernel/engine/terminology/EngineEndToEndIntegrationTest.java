@@ -247,19 +247,21 @@ class EngineEndToEndIntegrationTest {
 
 
         System.out.println("====== [6. 大模型网关安全自愈降级 (B0 主链路验收)] ======");
-        // 验证大模型能力网关在外部服务发生故障（传 FORCE_FAIL_SCHEMA_ 且 expectedSchema 不符）时，
-        // 能够真实捕获异常并自愈平滑降级到 B0 确定性防线
+        // 验证大模型能力网关在未接入真实 provider 时，诚实降级到 B0 确定性基线，
+        // 且绝不伪造 B1/B2 模型名、置信度、来源引文或患者数据（宪法 #9/#13）。
         ModelTaskRequest gateReq = new ModelTaskRequest(
-            "knowledge.extract", "FORCE_FAIL_SCHEMA_李建国的急性卒中用药指征",
+            "knowledge.extract", "急性卒中用药指征结构化抽取",
             "DEFAULT", "required: [entity]", 60
         );
-        
+
         ModelTaskResponse gateResp = modelGatewayService.submitTask(gateReq);
         assertNotNull(gateResp.taskId());
-        assertEquals("DEGRADED", gateResp.status(), "推理受阻时任务状态转为 DEGRADED 降级运行状态");
+        assertEquals("DEGRADED", gateResp.status(), "未接入 provider 时任务状态为 DEGRADED 降级运行");
         assertEquals("B0", gateResp.modelMode(), "诚实退回到 B0 无模型基线");
         assertTrue(gateResp.fallbackUsed(), "标记物理使用了 fallback 降级");
-        assertTrue(gateResp.fallbackReason().contains("缺失 Schema 指定"), "故障根因被诚实记录");
+        assertTrue(gateResp.fallbackReason().contains("B0 确定性基线"), "B0 基线归因被诚实记录");
+        assertNull(gateResp.confidence(), "B0 基线不得伪造置信度");
+        assertEquals("[]", gateResp.sourceCitations(), "B0 基线不得伪造来源引文");
 
 
         System.out.println("====== [7. 合规证据快照打包、物理验签与防篡改对账] ======");
