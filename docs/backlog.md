@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：5.4（重做基线 R2 · 全前端 36 页面合规核查 + 6 项前端业务页面真实化 ⟳R2 包 + 10 项引擎任务前端范围扩展）· 2026-05-30
+> 版本：5.5（重做基线 R2 · 补设计系统与主题响应 GA-ENG-DESIGN-SYSTEM-R2 + BASE-10 注水回退 ⟳R2）· 2026-05-30
 > 当前执行：P0 真实性门禁与归零 →（系统架构 ∥ 无模型 AI 工厂 ∥ 假闭环清零）
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 标记：`⟳R2` = 重做基线重置项（done→in_progress），须按 §0.3 验收铁律重建。
@@ -58,7 +58,7 @@
 | GA-ENG-BASE-07 运行底座：Feature Flag、配置、监控、健康检查、备份恢复、国产化 profile | codex | done |
 | GA-ENG-BASE-08 产品体验底座：一页一目标、角色默认视图、专家模式、服务端分页、详情抽屉、异步导出、保存视图 | codex | done |
 | GA-ENG-BASE-09 代码基线净化：移除业务主链路 mock、裸 Map、硬编码示例数据、旧命名和单病种假闭环 | claude | done |
-| GA-ENG-BASE-10 前端视觉债净化：硬编码颜色、内联样式、console、localStorage 敏感写入和 axios 直连规则全部归零 | codex | done |
+| GA-ENG-BASE-10 ⟳R2 前端视觉债净化（注水）：核查证实"硬编码颜色全部归零"未达成——`frontend/src/pages/{Login,tenant/Tenant,quality/Quality,clinical/Clinical,compliance/Compliance}.module.css` 共 **198 处硬编码 hex 颜色**（直接违反宪法 §8 "任何颜色/字号/圆角的硬编码自动拒，必须走 token"）；且 5 份 module.css **全部不响应深色模式**（0 处 `prefers-color-scheme` 或 `.dark` 选择器），切到 dark/system 模式时 Antd 组件变深但页面级 CSS 仍白底 → 用户报告"样式混乱、跟随系统颜色混乱"坐实。重做要求合并入 GA-ENG-DESIGN-SYSTEM-R2 | codex | in_progress |
 | GA-ENG-BASE-11 平台首发种子身份与生产环境初始化：dev profile 已有 `PlatformCredentialDevSeeder` 种 13 角色账号；生产 profile 缺首次部署初始平台管理员能力——首启动无任何账号无法登录。要求：①首次启动 init token 机制（一次性、自动过期、不可重复使用、写审计）创建首个 `platform-admin`；②强制首次登录改密 + MFA 配置；③可选 CLI 工具（如 `medkernel-cli admin create`）应急重置；④运维手册写清首次部署步骤；⑤反例：硬编码默认密码进入生产、init token 不过期、token 不审计 | - | pending |
 
 ---
@@ -161,7 +161,7 @@
 
 | id | owner | status |
 |---|---|---|
-| T-GATE-01 前端真实性门禁增强：升级 eslint-plugin medkernel/no-page-mock，阻断 catch 内伪造数据/函数包装绕 AST/camelCase 绕过/假数据/`eslint-disable medkernel/*`，放行合法静态 UI 文案。**已知必爆目标**：`RuleDefinitions.tsx` + `PathwayTemplates.tsx` + `CdssFatigue.tsx` + `Provenance.tsx` 等所有 `eslint-disable medkernel/no-page-mock` 行 | - | pending |
+| T-GATE-01 前端真实性门禁增强：升级 eslint-plugin medkernel/no-page-mock，阻断 catch 内伪造数据/函数包装绕 AST/camelCase 绕过/假数据/`eslint-disable medkernel/*`，放行合法静态 UI 文案。**已知必爆目标**：①13 页 `eslint-disable medkernel/no-page-mock`（RuleDefinitions/PathwayTemplates/ConfigPackages/TerminologyMapping/Provenance/InsuranceAudit/QcEvalResults/QcEvalSets/QcAlerts/Followup/RuleValidate/PatientPathways/EmbedLaunch）；②5 份 module.css 共 198 处硬编码 hex 颜色（新增 stylelint 规则阻断 `.module.css` 含 hex/rgb/hsl 字面量，除 `theme.ts` 一处定义外） | - | pending |
 | T-GATE-02 后端真实性门禁：CI 脚本扫 src/main 阻断 Math.random/写死医学常量(如"高血压"/"I10")/catch 吞错返回成功/UUID 充哈希/Javadoc 模拟占位于生产路径 | - | pending |
 | T-RESET-01 backlog 据实重置：按改造清单 R2 v2 调整状态 + 写入 §0.3 验收铁律 + 修订记录，本台账设为 R2 施工基线 | claude | done |
 
@@ -289,6 +289,16 @@
 
 ---
 
+## R2-NEW · 设计系统与主题响应整改（GA-ENG-DESIGN-SYSTEM-R2，1 项）
+
+> **核查依据**：用户 2026-05-30 三次反馈"样式混乱，跟随系统颜色混乱"，核查证实 BASE-10 "硬编码颜色归零" 注水——5 份 module.css 含 198 处硬编码 hex 且 0 处深色响应。BASE-10 已 ⟳R2 in_progress；本任务承接其重建要求。
+
+| id | owner | status |
+|---|---|---|
+| GA-ENG-DESIGN-SYSTEM-R2 设计系统与主题响应整改：①把 5 份 module.css（Login/Tenant/Quality/Clinical/Compliance）共 198 处硬编码 hex 全部改用 Antd token CSS 变量（`var(--ant-color-text)` / `var(--ant-color-bg-container)` / `var(--ant-color-border-secondary)` 等，cssVar:true 已开）；②每份 module.css 添加深色模式响应（`prefers-color-scheme: dark` 或 `[data-theme="dark"]` 选择器），与 Antd darkAlgorithm 同步；③elder 模式字号响应（≥16pt）；④eye 模式响应（黄色背景）；⑤system 模式与浏览器/OS prefers-color-scheme 联动验证；⑥新增 stylelint 规则阻断 `.module.css` 含 hex/rgb/hsl 字面量（除 `theme.ts` 一处定义）；⑦Storybook 主题切换器验证全部组件 5 模式呈现一致；⑧E2E 用例覆盖 default→dark→system 切换无样式断裂；⑨自创 CSS 变量 `--mk-*` 必须从 Antd token 派生，禁止独立写死 | - | pending |
+
+---
+
 ## R2-NEW · 前端业务页面真实化整改（按归属业务包，共 6 项 ⟳R2 包）
 
 > **核查依据**：用户 2026-05-30 反馈"其他前端页面一起过一下"，主线程全量 grep 36 个业务页面 5 类违反模式（eslint-disable medkernel / JSON 裸渲染 / 手编 JSON TextArea / font-mono 技术字段 / 写死医学常量），发现 **22 个页面要重做或调整**。已被既有 R2 任务覆盖的 14 页（RuleDefinitions/PathwayTemplates/Followup/CdssFatigue/EmbedLaunch/Provenance/AiWorkflows/AiReview/TerminologyMapping/ConfigPackages/AdapterHub/GraphExplore/RuleValidate/PatientPathways）已在对应任务描述中明示前端范围；本节为**未被任何 R2 任务覆盖的剩余页面**新增 6 个按业务包归类的整改任务。
@@ -365,6 +375,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 5.5 | 2026-05-30 | Claude | **补设计系统与主题响应 + BASE-10 注水回退 ⟳R2**（用户三次反馈"样式混乱，跟随系统颜色混乱"，核查证实 BASE-10 "硬编码颜色全部归零" 注水）。核查现状：①Antd token 系统（theme.ts + ConfigProvider + cssVar:true + 5 种主题模式 default/elder/dark/eye/system + prefers-color-scheme 系统响应）**已建好**；②但 5 份 module.css（Login/Tenant/Quality/Clinical/Compliance）含 **198 处硬编码 hex 颜色**直接违反宪法 §8；③且 5 份 module.css **全部不响应深色模式**（0 处 `prefers-color-scheme` 或 `.dark` 选择器）。用户问题坐实：切到 dark/system 模式时 Antd 组件变深但页面 CSS 仍白底 → 一半组件深色一半白底 = 样式混乱。处理：①**BASE-10 done → ⟳R2 in_progress**（注水回退，加入分界线前经核查证实有假的项）；②**新增 GA-ENG-DESIGN-SYSTEM-R2** 独立任务：把 198 处 hex 改用 Antd token CSS 变量（var(--ant-color-text) 等）+ 添加深色/elder/eye/system 模式响应 + stylelint 阻断 .module.css 含 hex + Storybook 主题切换验证 + E2E 切换无断裂 + 自创 --mk-* 变量必须从 Antd token 派生；③**T-GATE-01 描述扩展**：新增"5 份 module.css 共 198 处硬编码 hex 颜色"作为必爆目标 + 新增 stylelint 规则阻断 module.css 含 hex/rgb/hsl 字面量。合计 152 → **153 项**（pending 82 → 83）；总工作量 ~510-515d → **~520-525d**（DESIGN-SYSTEM-R2 ~8d）。 |
 | 5.4 | 2026-05-30 | Claude | **全前端 36 页面合规核查 + 6 项前端业务页面真实化整改 ⟳R2 包**（用户反馈"其他前端页面一起过一下"，主线程批量 grep 5 类违反模式 = eslint-disable medkernel（13 页）/ JSON 裸渲染（5 页）/ 手编 JSON TextArea（5 页）/ font-mono 暴露（14 页）/ 写死医学常量（11 页））。发现 **22 个页面要重做或调整**——已被既有 R2 任务覆盖 14 页（RuleDefinitions/PathwayTemplates/Followup/CdssFatigue/EmbedLaunch/Provenance/AiWorkflows/AiReview/TerminologyMapping/ConfigPackages/AdapterHub/GraphExplore + 本次明示扩展的 RuleValidate/PatientPathways）；剩余 **未覆盖页面新增 6 个按业务包归类的独立 R2 包**：①GA-ENG-QUALITY-FE-R2（QcDashboard/QcAlerts/QcEvalSets/QcEvalResults/InsuranceAudit 5 页）②GA-ENG-CLINICAL-FE-R2（WorkflowTodos/Notifications/Mpi 3 页）③GA-ENG-COMPLIANCE-FE-R2（AdminUsers/AdminAudit/IdentityBinding/SecurityBaseline/SystemProviders/NotificationSettings 6 页）④GA-ENG-PILOT-FE-R2（TenantOnboarding/ImplementationGuide 2 页）⑤GA-ENG-ADVANCED-FE-R2（DomesticCheck/DevConsole 2 页）⑥GA-ENG-SHELL-FE-R2（Dashboard/Login + StepFlowDemo 评估删除 3 页）。同时扩展 10 个引擎任务描述明示前端范围：KNOW-01-R2 + GraphExplore、TERM-01-R2 + TerminologyMapping、RULE-02 + RuleValidate、PATH-02 + PatientPathways、EMBED-01-R2 + EmbedLaunch。统一整改要求（8 条铁律）写入新章节：移除 eslint-disable / 去 JSON 裸 / 去手编 JSON / 去 font-mono / 去写死医学常量 / 走 7 步流或角色默认视图 / 中文化 / 大列表服务端分页。合计 146 → **152 项**（pending 76 → 82）；总工作量 ~465-470d → **~510-515d**（6 个新前端 R2 包 ~45d）。 |
 | 5.3 | 2026-05-30 | Claude | **追加 RULE-02 / PATH-02 前端专业维护界面 ⟳R2**（用户报告"路径引擎和规则引擎显示 JSON 没有维护界面"，核查证实属实且更严重）。`frontend/src/pages/tenant/RuleDefinitions.tsx` 与 `PathwayTemplates.tsx` 系统性违反：①两份第一行 `eslint-disable medkernel/no-page-mock` 绕真实性门禁（违反宪法 §1.#18）；②默认 `<pre>JSON.stringify(DSL)</pre>` 暴露技术对象（违反宪法 §11 禁区 + 详规 §10.2）；③只有 L3 DSL，零 L1 模板 + 零 L2 可视化（违反详规 §4.2 三层配置 + 宪法 §5 "专科专家画 X6 节点"角色硬指标）；④创建/发布无 7 步流（违反宪法 §1.#4）；⑤多同权主按钮（违反宪法 §1.#6）；⑥写死"高血压/DRUG-001/抗感染化疗/STABLE/DETERIORATED"医学常量（违反 §0.3 真实性铁律 #1 + T-GATE-02 必爆）；⑦中英混杂"Rule Code/Payload/DSL/Edge/conditionJson/STRONG_REMINDER"（违反宪法 §7 + 体验规范 §11）；⑧仿真 payload 让用户手编 JSON 而非"病例选择器"。后端 RULE-01/PATH-01 引擎本身核查为真保留 done；前端两份页面追加为 RULE-02 / PATH-02 两项独立 pending 任务（L1 模板模式 + L2 可视化条件树/节点画布 + L3 DSL 折叠专家模式 + 真实 7 步流 + 移除 eslint-disable + 移除写死医学常量 + 中文化 + 病例选择器仿真 + 后端补模板库/条件树→DSL 转换/影响分析/审核工作流/灰度策略 API）。T-GATE-01 描述追加"已知必爆目标"明示这两份页面。合计 144 → **146 项**（pending 74 → 76）；总工作量 ~440-445d → **~465-470d**（追加 RULE-02 ~10d + PATH-02 ~14d）。 |
 | 5.2 | 2026-05-29 | Claude | **补两块产品兑现链条上原本漏掉的环节**——（A）**GA-ENG-BASE-11 平台首发种子身份与生产环境初始化**：核查发现 `PlatformCredentialDevSeeder` 仅 `@Profile("dev")`，V27 platform_credential 表生产环境空白，**首次部署无任何账号无法登录**；新增 BASE-11 要求 init token 机制 + 强制首次改密+MFA + CLI 应急工具 + 运维手册首次部署步骤。（B）**R2-NEW 医疗知识首发资产生产（GA-KNOWGEN-01~15，15 项 pending）**：AI 工厂（工具）+ 真实模型（产能）+ 知识首发包（产品兑现）是三件不同的事，前两者已立项，知识首发包之前缺失。15 项按详规 §8.5 资产模型分域：标准术语/药品说明书事实/指南条款/临床规则/专病路径/CDSS 模板/评估指标/随访计划/护理/医技报告解读/床旁知识卡/中医药/医保病案/公卫院感 + 总验收。AI 大规模生成候选 + 专家审核 + 灰度发布，工作量 ~100d（不是 100d 纯人工写）。时机：P3 真模型接入后启动，必须先于 P6 SVC 业务包完成。新验收门加 #11 BASE-11 + #12 KNOWGEN-15。 |
