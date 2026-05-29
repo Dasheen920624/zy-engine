@@ -1,6 +1,6 @@
 # MedKernel v1.0 GA 单一任务台账
 
-> 版本：5.3（重做基线 R2 · 补 RULE-02 / PATH-02 前端专业维护界面 ⟳R2）· 2026-05-30
+> 版本：5.4（重做基线 R2 · 全前端 36 页面合规核查 + 6 项前端业务页面真实化 ⟳R2 包 + 10 项引擎任务前端范围扩展）· 2026-05-30
 > 当前执行：P0 真实性门禁与归零 →（系统架构 ∥ 无模型 AI 工厂 ∥ 假闭环清零）
 > 字段：`id` / `owner` / `status`（pending / in_progress / done / blocked）
 > 标记：`⟳R2` = 重做基线重置项（done→in_progress），须按 §0.3 验收铁律重建。
@@ -91,13 +91,13 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-KNOW-01 ⟳R2 知识资产引擎（含图投影增强）：来源登记、解析、hash、引用锚点、可信分级；关系库 graph_node/edge/citation 为权威源，Neo4j 仅查询投影可重建，无图降级关系库查询 | claude | in_progress |
+| GA-ENG-KNOW-01 ⟳R2 知识资产引擎（含图投影增强 + 前端 GraphExplore.tsx 真实化）：来源登记、解析、hash、引用锚点、可信分级；关系库 graph_node/edge/citation 为权威源，Neo4j 仅查询投影可重建，无图降级关系库查询；**前端** GraphExplore 关系图按"展开核心节点/分层加载/限制节点数"避免一次拉全量 + 默认隐藏边表/JSON 到专家模式（详规 §1.2.1 图谱/关系结果规则）| claude | in_progress |
 | GA-ENG-KNOW-02 ⟳R2 知识版本引擎：新旧识别、去重、冲突、待审新版、原子替换、旧版隔离；对接 GA-SYS-08 + GA-AIK-STD-09/10 | claude | in_progress |
-| GA-ENG-TERM-01 ⟳R2 字典映射引擎（含标准编码集导入 + 医学语义匹配 MED-C1）：未映射发现、候选推荐、人工确认、冲突处理、映射包发布；ICD-10 国临版/ICD-9-CM-3/药品本位码/LOINC 兼容映射导入+版本；LCS→同义词典+编码交叉表+模型嵌入；高危近似负样本判别器（钾/钠、肌钙蛋白T/I、左/右、剂量量级强制 HIGH，禁批量/禁自动确认）| codex | in_progress |
+| GA-ENG-TERM-01 ⟳R2 字典映射引擎（含标准编码集导入 + 医学语义匹配 MED-C1 + 前端 TerminologyMapping.tsx 真实化）：未映射发现、候选推荐、人工确认、冲突处理、映射包发布；ICD-10 国临版/ICD-9-CM-3/药品本位码/LOINC 兼容映射导入+版本；LCS→同义词典+编码交叉表+模型嵌入；高危近似负样本判别器（钾/钠、肌钙蛋白T/I、左/右、剂量量级强制 HIGH，禁批量/禁自动确认）；**前端** TerminologyMapping 移除 `eslint-disable medkernel/no-page-mock` + 去假覆盖 + 高危近似判别结果显著标识 HIGH + 禁批量按钮在 HIGH 时灰化 | codex | in_progress |
 | GA-ENG-RULE-01 规则引擎：规则 DSL/模板、测试样例、执行结果、风险动作、解释（后端引擎核查为真，保留）| codex | done |
-| GA-ENG-RULE-02 ⟳R2 规则引擎专业维护界面（前端）：核查证实 `RuleDefinitions.tsx` 第一行 `eslint-disable medkernel/no-page-mock` 绕真实性门禁 + 默认 `<pre>JSON.stringify(DSL)</pre>` 暴露技术对象 + TextArea 手编 JSON payload + 写死"高血压/DRUG-001"医学常量 + 创建/发布只一步无 7 步流 + 多同权主按钮 + 中英混杂"Rule Code/Payload/DSL/STRONG_REMINDER"。违反宪法 §1.#4/§1.#6/§1.#18/§11 禁区 + 详规 §4.2 三层配置 + 体验规范。要求：①L1 模板模式（业务专家：模板库+参数表单+智能填默认值）；②L2 可视化条件树编辑器（专科/质控专家：点击式 AND/OR/NOT + 条件原子 + 时间窗 + 阈值控件）；③L3 DSL 模式折叠到专家模式 Tab；④真实 7 步流（导入/选择 → 自动校验 → 看影响 → 提交审核 → 灰度 → 全量 → 留证/回滚）；⑤移除 eslint-disable + 移除写死医学常量 + 中文化文案；⑥仿真 payload 改用"病例选择器"（从已脱敏患者上下文挑选）替代 JSON 手编；⑦后端补"规则模板库/条件树→DSL 转换/影响分析/审核工作流/灰度策略" API | - | pending |
+| GA-ENG-RULE-02 ⟳R2 规则引擎专业维护界面（前端 RuleDefinitions.tsx + RuleValidate.tsx）：核查证实两份页面同病同模式——`eslint-disable medkernel/no-page-mock` 绕真实性门禁 + 默认 `<pre>JSON.stringify(DSL)</pre>` 暴露技术对象 + TextArea 手编 JSON payload + 写死"高血压/DRUG-001"医学常量 + 创建/发布只一步无 7 步流 + 多同权主按钮 + 中英混杂"Rule Code/Payload/DSL/STRONG_REMINDER" + font-mono 暴露。违反宪法 §1.#4/§1.#6/§1.#18/§11 禁区 + 详规 §4.2 三层配置 + 体验规范。要求：①L1 模板模式（业务专家：模板库+参数表单+智能填默认值）；②L2 可视化条件树编辑器（专科/质控专家：点击式 AND/OR/NOT + 条件原子 + 时间窗 + 阈值控件）；③L3 DSL 模式折叠到专家模式 Tab；④真实 7 步流（导入/选择 → 自动校验 → 看影响 → 提交审核 → 灰度 → 全量 → 留证/回滚）；⑤移除 eslint-disable + 移除写死医学常量 + 中文化文案；⑥仿真 payload 改用"病例选择器"（从已脱敏患者上下文挑选）替代 JSON 手编；⑦后端补"规则模板库/条件树→DSL 转换/影响分析/审核工作流/灰度策略" API；⑧RuleValidate 临床规则校验运行视图同样去 eslint-disable / 去手编 JSON / 去 font-mono / 默认按角色裁剪命中详情 | - | pending |
 | GA-ENG-PATH-01 路径引擎：专病包、分型分支、节点推进、变异、关键时钟、仿真（后端引擎核查为真，保留）| codex | done |
-| GA-ENG-PATH-02 ⟳R2 路径引擎专业维护界面（前端）：核查证实 `PathwayTemplates.tsx` 第一行 `eslint-disable medkernel/no-page-mock` + `DEFAULT_NODES_JSON` 写死"抗感染化疗/STABLE/DETERIORATED" + TextArea 手编 nodes/edges JSON + conditionJson 嵌套转义 + Tabs 套 Tabs 多主按钮 + Edge/Node/conditionJson 技术词暴露。违反同上一套约束 + 宪法 §5 "专科专家画 X6 节点"角色硬指标。要求：①L1 模板模式（从专病包库选 + 参数化填空）；②L2 节点画布（X6/G6 拖拽：节点类型/责任角色/时间窗/分支条件/关键时钟可视化）；③L3 DSL 模式折叠到专家模式 Tab；④真实 7 步流；⑤移除 eslint-disable + 移除写死示例 + 中文化；⑥仿真用真实/脱敏病例触发，不让用户手编 JSON；⑦后端补"路径模板继承/节点编辑/边条件 DSL 生成/关键时钟绑定/随访接续 API/灰度发布"；⑧关键时钟必须可视化展示在画布上，不藏在 JSON 字段里 | - | pending |
+| GA-ENG-PATH-02 ⟳R2 路径引擎专业维护界面（前端 PathwayTemplates.tsx + PatientPathways.tsx）：核查证实两份页面同病同模式——`eslint-disable medkernel/no-page-mock` + `DEFAULT_NODES_JSON` 写死"抗感染化疗/STABLE/DETERIORATED" + TextArea 手编 nodes/edges JSON + conditionJson 嵌套转义 + Tabs 套 Tabs 多主按钮 + Edge/Node/conditionJson 技术词暴露 + font-mono 暴露。违反同上一套约束 + 宪法 §5 "专科专家画 X6 节点"角色硬指标。要求：①L1 模板模式（从专病包库选 + 参数化填空）；②L2 节点画布（X6/G6 拖拽：节点类型/责任角色/时间窗/分支条件/关键时钟可视化）；③L3 DSL 模式折叠到专家模式 Tab；④真实 7 步流；⑤移除 eslint-disable + 移除写死示例 + 中文化；⑥仿真用真实/脱敏病例触发，不让用户手编 JSON；⑦后端补"路径模板继承/节点编辑/边条件 DSL 生成/关键时钟绑定/随访接续 API/灰度发布"；⑧关键时钟必须可视化展示在画布上，不藏在 JSON 字段里；⑨PatientPathways 患者路径运行视图同样去 eslint-disable / 去写死病种 / 去 font-mono / 默认按角色裁剪节点详情 | - | pending |
 | GA-ENG-CDSS-01 ⟳R2 推荐引擎：规则/路径/知识综合、提醒卡、采纳/拒绝、解释追溯 | codex | in_progress |
 | GA-ENG-EVAL-01 评估质控引擎：指标配置、病例命中、问题生成、整改和复核闭环 | codex | done |
 | GA-ENG-FOLLOW-01 ⟳R2 随访引擎（重做基线分界线起点）：计划生成、任务、问卷、异常事件和回流 | codex | in_progress |
@@ -111,7 +111,7 @@
 
 | id | owner | status |
 |---|---|---|
-| GA-ENG-EMBED-01 ⟳R2 iframe/SDK/纯 API 嵌入：启动、安全、最小数据、反馈、降级占位；对接 OPT-02 CDS Hooks 风格事件契约 | codex | in_progress |
+| GA-ENG-EMBED-01 ⟳R2 iframe/SDK/纯 API 嵌入（含前端 EmbedLaunch.tsx 真实化）：启动、安全、最小数据、反馈、降级占位；对接 OPT-02 CDS Hooks 风格事件契约；**前端** EmbedLaunch 移除 `eslint-disable medkernel/no-page-mock` + 去写死医学常量 + 去 font-mono 暴露 + 嵌入卡片预览用真实 launch token 触发 | codex | in_progress |
 | GA-ENG-LLM-01 ⟳R2 模型能力网关：provider 无关、组织/场景路由、结构输出、调用审计 | codex | in_progress |
 | GA-ENG-LLM-02 ⟳R2 B0/B1/B2：无模型基线、模型辅助、探索生成的策略和验收 | codex | in_progress |
 | GA-ENG-EVID-01 ⟳R2 证据链：来源、生成、审核、发布、运行、反馈、整改、回滚可导出 | codex | in_progress |
@@ -289,6 +289,31 @@
 
 ---
 
+## R2-NEW · 前端业务页面真实化整改（按归属业务包，共 6 项 ⟳R2 包）
+
+> **核查依据**：用户 2026-05-30 反馈"其他前端页面一起过一下"，主线程全量 grep 36 个业务页面 5 类违反模式（eslint-disable medkernel / JSON 裸渲染 / 手编 JSON TextArea / font-mono 技术字段 / 写死医学常量），发现 **22 个页面要重做或调整**。已被既有 R2 任务覆盖的 14 页（RuleDefinitions/PathwayTemplates/Followup/CdssFatigue/EmbedLaunch/Provenance/AiWorkflows/AiReview/TerminologyMapping/ConfigPackages/AdapterHub/GraphExplore/RuleValidate/PatientPathways）已在对应任务描述中明示前端范围；本节为**未被任何 R2 任务覆盖的剩余页面**新增 6 个按业务包归类的整改任务。
+>
+> **统一整改要求**（每个包通用，不重复列）：
+> 1. 移除所有 `eslint-disable medkernel/no-page-mock`；T-GATE-01 强制爆出
+> 2. 去 JSON 裸渲染（`<pre>{JSON.stringify(...)}</pre>`）→ 隐藏到专家模式 Tab
+> 3. 去 TextArea 手编 JSON → 改可视化表单或上下文选择器
+> 4. 去 font-mono 暴露技术字段 → 改业务中文
+> 5. 去写死医学常量（病种/药品/编码）→ 数据从 API 取真值，无数据走诚实空态
+> 6. 走真实 7 步流（配置类）/ 角色默认视图（运行/管理类）/ 一页一目标 1 主按钮 ≤3 默认筛选 / 六态完整
+> 7. 客户可见文案中文化（按详规 §10.2 + 体验规范 §11）
+> 8. 大列表服务端分页 + 详情抽屉 + 异步导出（按体验规范 §6）
+
+| id | owner | status |
+|---|---|---|
+| GA-ENG-QUALITY-FE-R2 质控前端真实化整改：QcDashboard.tsx（驾驶舱）/ QcAlerts.tsx（质控预警）/ QcEvalSets.tsx（评估指标库）/ QcEvalResults.tsx（评估结果）/ InsuranceAudit.tsx（医保智能审核）。核查发现 QcAlerts/QcEvalSets/QcEvalResults/InsuranceAudit 4 页有 `eslint-disable medkernel/no-page-mock`；QcEvalSets 同时 JSON 裸渲染 + 手编 JSON + font-mono。后端 EVAL-01/RULE-01 引擎 done，但前端全部重做按统一整改要求；驾驶舱必须支持下钻到责任对象（体验规范 §9）；评估指标用 L1+L2 模式不让用户手编 JSON；医保审核结果展示 DRG/DIP 规则真实命中证据 | - | pending |
+| GA-ENG-CLINICAL-FE-R2 临床运行非引擎前端真实化整改：WorkflowTodos.tsx（待办中心）/ Notifications.tsx（通知中心）/ Mpi.tsx（患者主索引）。核查发现 WorkflowTodos 有写死医学常量；Mpi/Notifications 需逐项验证按统一整改要求重做；MPI 必须接 SVC-CLINICAL-01-R2 后端真实 MPI 索引；待办按 SLA 倒序 + 角色默认视图；通知按打扰等级展示（信息提示/弱打扰/红线强打扰，体验规范 §8）| - | pending |
+| GA-ENG-COMPLIANCE-FE-R2 合规运维前端真实化整改：AdminUsers.tsx（用户管理）/ AdminAudit.tsx（审计日志）/ IdentityBinding.tsx（身份绑定）/ SecurityBaseline.tsx（安全基线）/ SystemProviders.tsx（Provider 状态）/ NotificationSettings.tsx（通知设置）。后端 BASE-02/04 done + 近期 Phase 2 账号管理 #146~#148 已 merge；前端需按统一整改要求审核 + 用户列表默认视图按角色裁剪 + 审计日志大列表游标分页 + 安全基线展示真实国密/MFA/会话状态而非占位；IdentityBinding 接真实 SSO/CA 身份源；SystemProviders 展示真实 provider 健康/降级状态 | - | pending |
+| GA-ENG-PILOT-FE-R2 试点准备非引擎前端真实化整改：TenantOnboarding.tsx（租户开通）/ ImplementationGuide.tsx（客户实施向导）。租户开通必须接 BASE-11 init token 机制（生产环境首次部署能登录的前置）；实施向导按宪法 §6 租户 6 阶段生命周期 + 7 步流；向导进度展示真实剩余动作，不写死步骤完成数 | - | pending |
+| GA-ENG-ADVANCED-FE-R2 高级工具前端真实化整改：DomesticCheck.tsx（国产化自检）/ DevConsole.tsx（开发者控制台）。DomesticCheck 接真实 BASE-07 国产化 profile 探测结果 + 展示 OS/JDK/DB/中间件真实国产化程度；DevConsole 限受控访问 + 不暴露生产配置/密钥；按宪法高级工具入口弱化要求（SideMenu 底部小图标）| - | pending |
+| GA-ENG-SHELL-FE-R2 入口与工作台前端真实化整改：Dashboard.tsx（工作台演示与校验）/ Login.tsx（登录页）+ 评估 StepFlowDemo.tsx 是否删除（演示页不应进生产）。Dashboard 按宪法 §6.4 租户生命周期面板 + 多维治理切片（不是固定三维表）+ 系统健康/试点阶段/待办/风险/知识同步/验收进度 6 卡片；Login 已 Phase 2 完成租户登录闭环（#148），核查是否需补 BASE-11 init token 流程；StepFlowDemo 演示页应从生产路由移除（保留作 Storybook fixture 或删除）| - | pending |
+
+---
+
 ## R2-NEW · 医疗知识首发资产生产（GA-KNOWGEN-01~15，共 15 项）
 
 > **定位**：AI 工厂（工具）+ 真实模型（产能）+ 知识首发包（产品兑现）是三件不同的事，缺一就是空壳。
@@ -340,6 +365,7 @@
 
 | 版本 | 日期 | 修改人 | 主要变更 |
 |---|---|---|---|
+| 5.4 | 2026-05-30 | Claude | **全前端 36 页面合规核查 + 6 项前端业务页面真实化整改 ⟳R2 包**（用户反馈"其他前端页面一起过一下"，主线程批量 grep 5 类违反模式 = eslint-disable medkernel（13 页）/ JSON 裸渲染（5 页）/ 手编 JSON TextArea（5 页）/ font-mono 暴露（14 页）/ 写死医学常量（11 页））。发现 **22 个页面要重做或调整**——已被既有 R2 任务覆盖 14 页（RuleDefinitions/PathwayTemplates/Followup/CdssFatigue/EmbedLaunch/Provenance/AiWorkflows/AiReview/TerminologyMapping/ConfigPackages/AdapterHub/GraphExplore + 本次明示扩展的 RuleValidate/PatientPathways）；剩余 **未覆盖页面新增 6 个按业务包归类的独立 R2 包**：①GA-ENG-QUALITY-FE-R2（QcDashboard/QcAlerts/QcEvalSets/QcEvalResults/InsuranceAudit 5 页）②GA-ENG-CLINICAL-FE-R2（WorkflowTodos/Notifications/Mpi 3 页）③GA-ENG-COMPLIANCE-FE-R2（AdminUsers/AdminAudit/IdentityBinding/SecurityBaseline/SystemProviders/NotificationSettings 6 页）④GA-ENG-PILOT-FE-R2（TenantOnboarding/ImplementationGuide 2 页）⑤GA-ENG-ADVANCED-FE-R2（DomesticCheck/DevConsole 2 页）⑥GA-ENG-SHELL-FE-R2（Dashboard/Login + StepFlowDemo 评估删除 3 页）。同时扩展 10 个引擎任务描述明示前端范围：KNOW-01-R2 + GraphExplore、TERM-01-R2 + TerminologyMapping、RULE-02 + RuleValidate、PATH-02 + PatientPathways、EMBED-01-R2 + EmbedLaunch。统一整改要求（8 条铁律）写入新章节：移除 eslint-disable / 去 JSON 裸 / 去手编 JSON / 去 font-mono / 去写死医学常量 / 走 7 步流或角色默认视图 / 中文化 / 大列表服务端分页。合计 146 → **152 项**（pending 76 → 82）；总工作量 ~465-470d → **~510-515d**（6 个新前端 R2 包 ~45d）。 |
 | 5.3 | 2026-05-30 | Claude | **追加 RULE-02 / PATH-02 前端专业维护界面 ⟳R2**（用户报告"路径引擎和规则引擎显示 JSON 没有维护界面"，核查证实属实且更严重）。`frontend/src/pages/tenant/RuleDefinitions.tsx` 与 `PathwayTemplates.tsx` 系统性违反：①两份第一行 `eslint-disable medkernel/no-page-mock` 绕真实性门禁（违反宪法 §1.#18）；②默认 `<pre>JSON.stringify(DSL)</pre>` 暴露技术对象（违反宪法 §11 禁区 + 详规 §10.2）；③只有 L3 DSL，零 L1 模板 + 零 L2 可视化（违反详规 §4.2 三层配置 + 宪法 §5 "专科专家画 X6 节点"角色硬指标）；④创建/发布无 7 步流（违反宪法 §1.#4）；⑤多同权主按钮（违反宪法 §1.#6）；⑥写死"高血压/DRUG-001/抗感染化疗/STABLE/DETERIORATED"医学常量（违反 §0.3 真实性铁律 #1 + T-GATE-02 必爆）；⑦中英混杂"Rule Code/Payload/DSL/Edge/conditionJson/STRONG_REMINDER"（违反宪法 §7 + 体验规范 §11）；⑧仿真 payload 让用户手编 JSON 而非"病例选择器"。后端 RULE-01/PATH-01 引擎本身核查为真保留 done；前端两份页面追加为 RULE-02 / PATH-02 两项独立 pending 任务（L1 模板模式 + L2 可视化条件树/节点画布 + L3 DSL 折叠专家模式 + 真实 7 步流 + 移除 eslint-disable + 移除写死医学常量 + 中文化 + 病例选择器仿真 + 后端补模板库/条件树→DSL 转换/影响分析/审核工作流/灰度策略 API）。T-GATE-01 描述追加"已知必爆目标"明示这两份页面。合计 144 → **146 项**（pending 74 → 76）；总工作量 ~440-445d → **~465-470d**（追加 RULE-02 ~10d + PATH-02 ~14d）。 |
 | 5.2 | 2026-05-29 | Claude | **补两块产品兑现链条上原本漏掉的环节**——（A）**GA-ENG-BASE-11 平台首发种子身份与生产环境初始化**：核查发现 `PlatformCredentialDevSeeder` 仅 `@Profile("dev")`，V27 platform_credential 表生产环境空白，**首次部署无任何账号无法登录**；新增 BASE-11 要求 init token 机制 + 强制首次改密+MFA + CLI 应急工具 + 运维手册首次部署步骤。（B）**R2-NEW 医疗知识首发资产生产（GA-KNOWGEN-01~15，15 项 pending）**：AI 工厂（工具）+ 真实模型（产能）+ 知识首发包（产品兑现）是三件不同的事，前两者已立项，知识首发包之前缺失。15 项按详规 §8.5 资产模型分域：标准术语/药品说明书事实/指南条款/临床规则/专病路径/CDSS 模板/评估指标/随访计划/护理/医技报告解读/床旁知识卡/中医药/医保病案/公卫院感 + 总验收。AI 大规模生成候选 + 专家审核 + 灰度发布，工作量 ~100d（不是 100d 纯人工写）。时机：P3 真模型接入后启动，必须先于 P6 SVC 业务包完成。新验收门加 #11 BASE-11 + #12 KNOWGEN-15。 |
 | 5.1 | 2026-05-29 | Claude | **R2 路线据规划本身形态调整**：全面重读宪法/落地规划/详规/体验规范后，发现 v5.0 R2-NEW 章节存在两类系统性偏差——（A）误造"临床安全引擎"独立层（DRUG/CRITICAL/DOSE/AMS 是 §18 业务领域门面而非引擎；DOCPARSE 是 AIK-STD-02 内涵；GRAPH 是 KNOW 图投影；TERMSET 是 TERM 标准词导入）；（B）漏列规划本身要求的整层（GA-SYS-01~08 系统架构 / 14 项 GA-XXX-01 领域门面 / OPT-01~10 + EMR-LEVEL 共 12 项世界级补强）。本次调整：①删除 v5.0 R2-NEW 临床安全引擎章节；②DOCPARSE 合并入 GA-AIK-STD-02、GRAPH 合并入 GA-ENG-KNOW-01-R2 描述、TERMSET 合并入 GA-ENG-TERM-01-R2 描述、DOSE 算术能力合并入 MED-C2 derived 算子；③新增 R2-NEW 系统架构强化（GA-SYS-01~08，8 项）；④新增 R2-NEW 世界级 + 国情补强（OPT-01~10 + EMR-LEVEL-01/02，12 项，含 OPT-04 临床安全案例与红线规则库——这才是"临床安全"真实位置）；⑤新增 R2-NEW 全医疗领域门面（GA-NURSING/REPORT/POC-KNOW/PHARMACY/CRITICAL/SPECIAL-POP/PERIOP/ONCO-RENAL/ALLIED-CARE/TCM-HEALTH/INFECTION-PH/PRIMARY-CARE/REGION-COLLAB/SPECIALTY-EXT/RWD，14 项，宪法 §1.#15 强制要求覆盖全医疗专业领域）；⑥SVC-DOMAIN-01/02 重定位为"集成包"（由 GA-XXX-01 组合而成，不另起业务实现）；⑦MED-C1 已合并入 TERM-01-R2 描述。施工台账见 [改造任务总清单 R2 v2](audit/2026-05-29-改造任务总清单.md)。 |
