@@ -75,9 +75,7 @@ export default function Login() {
             <Text type="secondary">使用医院账号继续</Text>
           </div>
 
-          {errorMsg && (
-            <Alert type="error" showIcon message="登录失败" description={errorMsg} />
-          )}
+          {errorMsg && <Alert type="error" showIcon message="登录失败" description={errorMsg} />}
 
           <Form layout="vertical" requiredMark={false} onFinish={handleSubmit}>
             <Form.Item name="username" rules={[{ required: true, message: "请输入工号或账号" }]}>
@@ -87,13 +85,7 @@ export default function Login() {
               <Input.Password prefix={<LockOutlined />} placeholder="密码" size="large" />
             </Form.Item>
             <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                block
-                size="large"
-                loading={login.isPending}
-              >
+              <Button type="primary" htmlType="submit" block size="large" loading={login.isPending}>
                 进入工作台
               </Button>
             </Form.Item>
