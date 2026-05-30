@@ -42,7 +42,7 @@
 | 详规 | L584 S11 智能评估与整改 | D4 [EVAL-01](D4/EVAL-01.md)/[SVC-QUALITY-01](D4/SVC-QUALITY-01.md)/[SVC-QUALITY-03](D4/SVC-QUALITY-03.md)/[OPT-08](D4/OPT-08.md) + 页 [QCDASH-01](D4/QCDASH-01.md)/[QCALERT-01](D4/QCALERT-01.md)/[EVALSET-01](D4/EVALSET-01.md)/[EVALRES-01](D4/EVALRES-01.md) | |
 | 详规 | L593 S12 智能随访 | D3 [API-09](D3/API-09.md)/[FOLLOW-01](D3/FOLLOW-01.md) + 页 [FUP-01](D3/FUP-01.md) | |
 | 详规 | L602 S13 包发布与院内同步 | D2 [PKG-01](D2/PKG-01.md)/[API-10](D2/API-10.md)/[SYS-04](D2/SYS-04.md)/[SYS-08](D2/SYS-08.md)/[SVC-PILOT-03](D2/SVC-PILOT-03.md)/[CFGPKG-01](D2/CFGPKG-01.md) | |
-| 详规 | L611 S14 用户、权限与合规 | 待迁 | |
+| 详规 | L611 S14 用户、权限与合规 | D0 [AUTH-01](D0/AUTH-01.md)/[BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 身份权限 + D5 [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md)/[SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md)/[SYS-06](D5/SYS-06.md)/[EVID-01](D5/EVID-01.md) + 页 [USERS-01](D5/USERS-01.md)/[AUDITLOG-01](D5/AUDITLOG-01.md)/[SECBASE-01](D5/SECBASE-01.md) | |
 | 详规 | L620 S15 AI 验证与验收 | D4 [AIREVIEW-01](D4/AIREVIEW-01.md)（AI 知识审/发；生成随 wave2）；S0-S40 全验收/证据随 GA | |
 | 详规 | L629 S16 辅助诊疗与鉴别诊断 | D3 [CDSS-01](D3/CDSS-01.md)（B0 辅助诊疗/候选）；深度鉴别诊断生成随 wave2 | |
 | 详规 | L656 S17 检查检验推荐 | 待迁 | |
@@ -288,7 +288,7 @@
 | 详规 | L393 S11 智能评估与整改 院长、质控办 指标、结果、整改闭环 | D4 [EVAL-01](D4/EVAL-01.md)/[SVC-QUALITY-01](D4/SVC-QUALITY-01.md)/[OPT-08](D4/OPT-08.md) + 页 [QCDASH-01](D4/QCDASH-01.md)/[EVALSET-01](D4/EVALSET-01.md) | |
 | 详规 | L394 S12 智能随访 医生、随访团队 随访计划、任务、异常回院 | D3 [FOLLOW-01](D3/FOLLOW-01.md)/[API-09](D3/API-09.md) + 页 [FUP-01](D3/FUP-01.md) | |
 | 详规 | L395 S13 包发布与院内同步 实施、信息科 知识包、配置包、同步日志 | D2 [PKG-01](D2/PKG-01.md)/[SVC-PILOT-03](D2/SVC-PILOT-03.md) + 页 [CFGPKG-01](D2/CFGPKG-01.md) | |
-| 详规 | L396 S14 用户、权限与合规 合规、信息科 身份、权限、审计、证据 | 待迁 | |
+| 详规 | L396 S14 用户、权限与合规 合规、信息科 身份、权限、审计、证据 | D5 [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md)/[SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md)/[EVID-01](D5/EVID-01.md)/[OPT-05](D5/OPT-05.md) + 页 [IDBIND-01](D5/IDBIND-01.md)/[PROVIDER-01](D5/PROVIDER-01.md)（+ D0 身份脊柱）| |
 | 详规 | L397 S15 AI 验证与验收 QA、AI 团队、实施 S0-S40 实现卡、全领域重点 E2E、证据包 | D4 [AIREVIEW-01](D4/AIREVIEW-01.md)（AI 审/发）；S0-S40 全验收/E2E 随 GA | |
 | 详规 | L398 S16 辅助诊疗与鉴别诊断 临床医生、专科专家 疾病候选、鉴别诊断、诊疗方案候选 | D3 [CDSS-01](D3/CDSS-01.md)（B0 候选）；深度生成随 wave2 | |
 | 详规 | L399 S17 检查检验推荐 临床医生 检查建议、检验建议、异常解释 | 待迁 | |
@@ -318,6 +318,6 @@
 
 ## 进度
 - 旧锚点总数：310
-- 已迁（非"待迁"）：118（D0 36 + D1 2 + D2 卡 49 + D2 场景锚点 14 + D3 场景锚点 7 + D4 场景锚点 10：详规 §3/§2 的 S9/S10/S11/S15/S23）
-- 退役就绪：否（D0/D1/D2/D3 全卡 + D4 全 14 卡已搬；卡级 §-锚点细化与 D5/D6 + wave2 + ga 待续）
-- 域搬迁进度：D0 ✅ / D1 ✅ / D2 ✅（30 卡）/ D3 ✅（21 卡）/ D4 ✅（14 卡：8 ID + 6 页面全建）/ D5/D6 ⬜ / wave2 ⬜ / ga ⬜
+- 已迁（非"待迁"）：120（D0 36 + D1 2 + D2 卡 49 + D2 场景锚点 14 + D3 场景锚点 7 + D4 场景锚点 10 + D5 场景锚点 2：详规 §3/§2 的 S14）
+- 退役就绪：否（D0/D1/D2/D3/D4 全卡 + D5 全 11 卡已搬；卡级 §-锚点细化与 D6 + wave2 + ga 待续）
+- 域搬迁进度：D0 ✅ / D1 ✅ / D2 ✅（30 卡）/ D3 ✅（21 卡）/ D4 ✅（14 卡）/ D5 ✅（11 卡：5 ID + 6 页面全建）/ D6 ⬜ / wave2 ⬜ / ga ⬜
