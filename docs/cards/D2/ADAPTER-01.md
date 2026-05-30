@@ -1,0 +1,70 @@
+# ADAPTER-01 · 适配器中心页
+
+> 读卡前置：[核心 CONSTITUTION](../../CONSTITUTION.md) + [D2 域简报](_brief.md) + [体验契约](../../EXPERIENCE_CONTRACT.md)。
+> 迁移来源（覆盖矩阵锚点）：详规 §S2 院内系统接入（L489）· 落地规划 §11.3 院内系统对接（L741）· 核心 §10 集成边界 / 铁律 #2 断连不伪造。
+> 实化映射：占位 `D2-PAGE-适配器中心` → 本卡 **ADAPTER-01**。
+
+## 身份
+- 卡 ID：ADAPTER-01（页面卡；= backlog `D2-PAGE-适配器中心` 实化）
+- 域：D2 试点准备
+- 关联场景：S2 院内系统接入
+- 依赖卡：[INTEG-01](INTEG-01.md)（对接总线）· [SVC-PILOT-02](SVC-PILOT-02.md)（接入与数据质量）· [SVC-INTEGRATION-01](SVC-INTEGRATION-01.md)（业务接口）· [OPT-01](OPT-01.md)（FHIR 门面）· [BASE-06](../D0/BASE-06.md)/[BASE-08](../D0/BASE-08.md)/[BASE-10](../D0/BASE-10.md)
+- 工作量：3d
+- owner / reviewer：待派单（owner ≠ reviewer）
+
+## 目标
+把适配器中心页**真实化**：适配器目录 + 连通/健康状态 + 字段映射 + 重试死信 + **数据质量看板** + 接入向导。**接 [INTEG-01](INTEG-01.md)/[SVC-PILOT-02](SVC-PILOT-02.md) 真实状态，断连诚实标 `NOT_CONNECTED`，不伪造连接**。
+
+## 现状（搬迁时核查 2026-05-30，以 `frontend/src` 为准）
+页面**已存在待真实化**：`pages/tenant/AdapterHub`（路由 `/adapter/hub` 已注册 sectionKey `pilot-setup`，占位）。本卡＝接 [INTEG-01](INTEG-01.md)/[SVC-PILOT-02](SVC-PILOT-02.md) 真实适配器/健康/数据质量 + 六态/RBAC。
+
+## 功能要求（原子可测条目）
+- [ ] **FR-1 适配器目录**：列出 HIS/EMR/LIS/PACS/医保/病案/随访适配器 + 连通态；启停（[INTEG-01](INTEG-01.md)）。
+- [ ] **FR-2 健康状态**：实时健康 + 断连诚实标 `NOT_CONNECTED`，不伪造在线。
+- [ ] **FR-3 字段映射 + 死信**：字段映射配置（接 [TERM-01](TERM-01.md)）；死信队列查看 + 重放。
+- [ ] **FR-4 数据质量看板**：必填率/编码映射率/时效（[SVC-PILOT-02](SVC-PILOT-02.md) `DataQualityReport`），缺口诚实暴露。
+- [ ] **FR-5 接入向导**：向导式新增适配器（[SVC-INTEGRATION-01](SVC-INTEGRATION-01.md) 接入生命周期）。
+- [ ] **FR-6 六态 + RBAC**：六态齐全；仅信息科·实施工程师可操作；数据按 `OrgContext`。
+
+## 接口契约 / 页面契约
+### 接口契约（引擎/API 卡）
+N·A —— 页面卡，消费 [INTEG-01](INTEG-01.md) `/engine/integration/**` + [SVC-PILOT-02](SVC-PILOT-02.md) `/engine/mpi/**` 现有 API。
+### 页面契约（页面卡）
+- 路由元数据：sectionKey `pilot-setup` / menuKey `adapter-hub` / menuLabel `适配器中心` / path `/adapter/hub` / requiredPermissions 适配器管理 / requiredRoles 信息科·实施工程师。
+- 结构：PageShell（[BASE-08](../D0/BASE-08.md)）+ 适配器目录 + 健康面板 + 字段映射 + 死信队列 + 数据质量看板 + 六态。
+- 主按钮 ≤1（新增适配器）/ 默认筛选 ≤3（类型/状态/院区）/ 默认角色视图。
+- 五维 RBAC：菜单 / 动作（启停/重放权）/ 数据（org）/ 资产（适配器）/ 环境。
+- 样式：仅引用 [BASE-10](../D0/BASE-10.md) token + [体验契约](../../EXPERIENCE_CONTRACT.md)；禁硬编码。
+
+## 数据与迁移
+N·A —— 页面卡不落库；消费 [INTEG-01](INTEG-01.md)/[SVC-PILOT-02](SVC-PILOT-02.md) 表族。
+
+## 视角清单（11 视角逐条）
+1. **产品架构**：院内系统接入的运维中枢页。
+2. **产品体验**：适配器目录 + 健康 + 死信 + 数据质量看板 + 六态；国产浏览器可读。
+3. **系统与数据架构**：状态实时取数、独立降级；大消息日志分页；P95 ≤1s。
+4. **临床医疗安全**：外部数据经标准上下文不绕引擎直写；同步异常不阻断临床。
+5. **知识与数据治理**：字段映射经 [TERM-01](TERM-01.md) 归一可溯。
+6. **安全合规与监管**：接入/启停/重放/质量留审计（[BASE-04](../D0/BASE-04.md)）。
+7. **集团化与多租户治理**：适配器按 org 隔离；集团协议 + 院内实例。
+8. **集成与互操作**：★主战场 —— 适配器目录 + 健康 + 死信 + FHIR 门面双路（核心 §10）。
+9. **运维 / SRE / 国产化**：死信重放；国产中间件；内外网；离线接入。
+10. **质量与真实性审计**：★断连标 `NOT_CONNECTED` 不伪造、数据质量真实统计；无演示页（[INFRA-09](../D1/INFRA-09.md)，铁律 #1/#2）。
+11. **AI / 模型治理与可降级**：N·A —— 接入页无模型。
+
+## 适用不变量
+- 命中核心约束：**§10 集成边界 / 不阻断主流程** · **铁律 #2 断连不伪造** · **§13 数据质量不伪造** · **依赖 [INTEG-01](INTEG-01.md)/[SVC-PILOT-02](SVC-PILOT-02.md)**。
+- 本卡落点：把适配器中心从占位页变为真实状态、诚实降级、含数据质量看板的接入运维页。
+
+## 验收 + 验证
+- [ ] **AC-1（FR-1/2）**：适配器目录 + 健康；断连显示 `NOT_CONNECTED`（不伪造在线）。
+- [ ] **AC-2（FR-3/4）**：字段映射配置 + 死信重放；数据质量看板真实统计、缺口暴露。
+- [ ] **AC-3（FR-5/6）**：接入向导新增适配器；六态齐全；非授权角色无访问。
+- 关联 A1–A9 剧本：A1 接入、A6 合规（数据质量证据）。
+- T-GATE：前端真实性门禁全绿（no-page-mock、断连不伪造）。
+- B0 验收：确定性接入运维，**天然 B0**。
+
+## 完工证据
+- 代码 permalink：`pages/tenant/AdapterHub` 真实化 + 接 [INTEG-01](INTEG-01.md)/[SVC-PILOT-02](SVC-PILOT-02.md) + 数据质量看板 + 六态。
+- 测试：适配器目录/健康测试 + 断连 `NOT_CONNECTED` 测试 + 死信重放测试 + 数据质量测试 + no-page-mock 门禁。
+- 审计员签字：@<reviewer>（owner ≠ reviewer）。
