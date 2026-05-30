@@ -8,21 +8,21 @@
 
 ### 线 1 · D2 试点准备施工卡迁移 🚧
 - **类型**：文档（施工卡迁移）
-- **分支**：`claude/unruffled-satoshi-1105db`（基于含 #155 的新 main；B1 四卡 + 索引回填均在此分支，PR 待开/待合）
-- **目标**：D2 域 30 卡（23 原 ID + 7 页面）搬成自包含施工卡，分 6 批 B1–B6、每批一 PR
-- **全域进度**：D0 ✅(#152/#153) · D1 ✅(#154) · **D2 🚧 B1 卡已建+索引回填（PR 待合）** · D3/D4/D5/D6/wave2/ga ⬜
-- **当前批 B1**（模型与版本框架基石）：API-01 · OPT-01 · SYS-04 · SYS-08
-- **状态**：#155 已合并；**B1 _brief + 四卡（API-01/OPT-01/SYS-04/SYS-08）已建**、引用约定（已建卡→相对路径 / 未建卡→`../_index.md`）与 D0/D1 一致、**_index + _coverage-matrix + backlog D2 段已回填**（覆盖矩阵已迁 38→50，场景级锚点保持 `待迁` 待页面/服务卡）；待提交 → 开 PR → 合并
+- **分支**：`claude/d2-engines`（基于含 #156 的新 main；B2–B4 引擎/API 15 卡 + 索引回填在此，PR-A 待开/待合）。B1 已并入 #156
+- **目标**：D2 域 30 卡（23 原 ID + 7 页面）搬成自包含施工卡。**合批省推送**：B1 已合(#156)；B2–B4 合为 **PR-A**（引擎/API 15 卡）；B5+B6 合为 **PR-B**（4 服务包 + 7 页面）
+- **全域进度**：D0 ✅(#152/#153) · D1 ✅(#154) · **D2 🚧 B1 ✅(#156) + B2–B4 引擎/API 15 卡已建（PR-A 待合）** · D3/D4/D5/D6/wave2/ga ⬜
+- **当前批 PR-A**（B2 知识+字典 / B3 规则+路径 / B4 包发布+集成）：KNOW-01·KNOW-02·TERM-01·API-03·API-04 / RULE-01·PATH-01·MED-C2·API-05·API-06 / PKG-01·API-10·INTEG-01·INTEG-02·OPT-07
+- **状态**：#156（B1）已合并；**B2–B4 引擎/API 15 卡已建**（现状段基于后端真实类名核实 `engine/{knowledge,terminology,rule,pathway,pkg,integration}`，引擎多已实质建成＝契约化/补全非从零）、**_index + _coverage-matrix（已迁 50→87）+ backlog D2 段已回填**（AI 生成类锚点 §8.1/8.2.1/8.2.2/8.6-8.12、落地 §6.1/6.3/6.4 保持 `待迁` 归 wave2；场景级锚点仍 `待迁` 待页面/服务卡）；待提交 → 开 PR-A → 合并
 - **B1 后端现状（已核实 2026-05-30，建卡「现状」段照此写、勿凭空）**：
   - **API-01 标准上下文 API**：已有实质基础——`engine/context/` 下 ContextSnapshot(+Response/Filter)、PackageVersionPort、CanonicalResource(Type/Repository)、ContextValidator、ClinicalEventController 等；卡为"真实化/契约化/补全"非从零。
   - **OPT-01 FHIR R4/R5 门面**：基本待建——无 FHIR 资源门面（仅 `engine/integration` adapter DTO 提及 fhir）；现状是项目自有 `CanonicalResource` 抽象；卡＝新建 FHIR 门面并映射到 CanonicalResource。
   - **SYS-04 版本继承与发布框架**：待建——无统一 publish/inheritance 框架（散落各处）。
   - **SYS-08 权威知识版本解析/原子替换**：部分已有——`engine/knowledge/` 有 KnowledgeVersionService/Controller/Status、KnowledgeAssetVersion；卡聚焦"唯一有效约束/替代链/紧急失效/原子替换"框架化（与 B2·KNOW-02 划清单一归属）。
 - **下一步**（精确动作）：
-  1. ✅ _brief + 四卡已建、_index/_coverage-matrix/backlog D2 段已回填（本分支）
-  2. 提交 → 推送 → 开 PR（`docs(cards): D2-B1 模型与版本框架基石`）→ 请用户合并
-  3. 合并后更新本文件（B1 ✅）→ 从新 origin/main 起 `claude/d2-knowledge` 做 B2（知识+字典：API-03 / KNOW-01 / KNOW-02 / TERM-01 / API-04）
-- **后续批**：B2 知识+字典 → B3 规则+路径 → B4 包发布+集成 → B5 试点服务包 → B6 七页面
+  1. ✅ B2–B4 引擎/API 15 卡已建、_index/_coverage-matrix/backlog 已回填（本分支 `claude/d2-engines`）
+  2. 提交 → 推送 → 开 **PR-A**（`docs(cards): D2 B2~B4 引擎/API 15 卡 + 索引回填`）→ 请用户合并
+  3. 合并后从新 origin/main 起 `claude/d2-pages` 做 **PR-B**（B5 服务包 SVC-PILOT-01/02/03 + SVC-INTEGRATION-01 + B6 七页面）
+- **后续批**：PR-B（B5 服务包 + B6 七页面）→ D2 域级验收 → D3 临床运行
 - **专项流程**：填卡五步见 `docs/superpowers/specs/2026-05-30-doc-architecture-build-cards-design.md §7 P1`
 
 ## 已归档工作线（最近完成，供回溯）
