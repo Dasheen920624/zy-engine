@@ -8,18 +8,18 @@
 |---|---|---|
 | S0 | 工作台与总览 | [WORKBENCH-01](D1/WORKBENCH-01.md) 工作台页 · [WORKBENCH-02](D1/WORKBENCH-02.md) 演示与校验 · [INFRA-09](D1/INFRA-09.md) 清演示页 |
 | S1 | 集团与租户开通 | [BASE-01](D0/BASE-01.md) 组织上下文底座；租户开通页待建（D2）|
-| S2 | 院内系统接入 | 待建 |
-| S3 | AI 知识工厂 | 待建 |
+| S2 | 院内系统接入 | [OPT-01](D2/OPT-01.md) FHIR R4/R5 互操作门面 · [API-01](D2/API-01.md) 标准上下文 API；适配器中心 / INTEG-* 等待建（D2）|
+| S3 | AI 知识工厂 | [SYS-08](D2/SYS-08.md) 权威知识版本解析与原子替换框架；知识工厂页 / KNOW-* / AIK-* 待建（D2/wave2）|
 | S4 | 字典映射 | 待建 |
 | S5 | 规则引擎配置 | 待建 |
 | S6 | 路径引擎配置 | 待建 |
 | S7 | 图谱与来源追溯 | 待建 |
-| S8 | 临床嵌入运行 | 待建 |
+| S8 | 临床嵌入运行 | [API-01](D2/API-01.md) 标准上下文输入底座；运行/嵌入卡待建（D3）|
 | S9 | 病历内涵质控 | 待建 |
 | S10 | 医保与病案质控 | 待建 |
 | S11 | 智能评估与整改 | 待建 |
 | S12 | 智能随访 | 待建 |
-| S13 | 包发布与院内同步 | 待建 |
+| S13 | 包发布与院内同步 | [SYS-04](D2/SYS-04.md) 版本继承与发布框架 · [SYS-08](D2/SYS-08.md) 权威知识替换；PKG-01 / API-10 等待建（D2）|
 | S14 | 用户、权限与合规 | [AUTH-01](D0/AUTH-01.md)/[AUTH-02](D0/AUTH-02.md)/[AUTH-03](D0/AUTH-03.md) 双模登录认证 · [BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 权限 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 超管 · [CONFIG-01](D0/CONFIG-01.md) 配置 · [BASE-04](D0/BASE-04.md) 审计 · [INFRA-04](D0/INFRA-04.md)/[INFRA-08](D0/INFRA-08.md) 会话；用户管理/审计日志页待建（D5）|
 | S15 | AI 验证与验收 | 待建 |
 | S16 | 辅助诊疗与鉴别诊断 | 待建 |
@@ -58,8 +58,9 @@
 ### D1 工作台 ✅ 已建（[域简报](D1/_brief.md)）
 [INFRA-09](D1/INFRA-09.md) StepFlowDemo 清出生产路由 · [WORKBENCH-01](D1/WORKBENCH-01.md) 工作台页面（原 `D1-PAGE-工作台`）· [WORKBENCH-02](D1/WORKBENCH-02.md) 演示与校验页面（原 `D1-PAGE-演示校验`）
 
-### D2 试点准备
-API-01 / API-03 / API-04 / API-05 / API-06 / API-10 / KNOW-01 / KNOW-02 / TERM-01 / RULE-01 / PATH-01 / PKG-01 / SYS-04 / SYS-08 / INTEG-01 / INTEG-02 / MED-C2 / OPT-01 / OPT-07 / SVC-PILOT-01 / SVC-PILOT-02 / SVC-PILOT-03 / SVC-INTEGRATION-01 / 页面：客户实施向导 · 租户开通 · 配置包中心 · 路径配置 · 规则库 · 字典映射 · 适配器中心（待建）
+### D2 试点准备 🚧 B1 已建（[域简报](D2/_brief.md)）
+**B1 已建**：[API-01](D2/API-01.md) 标准上下文 API · [OPT-01](D2/OPT-01.md) 标准临床模型与 FHIR R4/R5 门面 · [SYS-04](D2/SYS-04.md) 版本继承与发布框架 · [SYS-08](D2/SYS-08.md) 权威知识版本解析与原子替换框架
+**待建**：API-03 / API-04 / API-05 / API-06 / API-10 / KNOW-01 / KNOW-02 / TERM-01 / RULE-01 / PATH-01 / PKG-01 / INTEG-01 / INTEG-02 / MED-C2 / OPT-07 / SVC-PILOT-01 / SVC-PILOT-02 / SVC-PILOT-03 / SVC-INTEGRATION-01 / 页面：客户实施向导 · 租户开通 · 配置包中心 · 路径配置 · 规则库 · 字典映射 · 适配器中心
 
 ### D3 临床运行
 API-02 / API-07 / API-09 / API-11 / CDSS-01 / FOLLOW-01 / EMBED-01 / MED-C3 / OPT-02 / OPT-03 / OPT-04 / SVC-CLINICAL-01 / SVC-CLINICAL-02 / SVC-CLINICAL-03 / 页面：患者主索引 · 患者路径 · 临床提醒治理 · 规则校验 · 待办中心 · 通知中心 · 智能随访（待建）
