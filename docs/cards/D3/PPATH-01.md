@@ -1,0 +1,69 @@
+# PPATH-01 · 患者路径页
+
+> 读卡前置：[核心 CONSTITUTION](../../CONSTITUTION.md) + [D3 域简报](_brief.md) + [体验契约](../../EXPERIENCE_CONTRACT.md)。
+> 迁移来源（覆盖矩阵锚点）：详规 §3 S6 路径引擎配置（运行侧）· 详规 S8 临床嵌入运行 · 体验规范 §3 角色体验标准。
+> 实化映射：占位 `D3-PAGE-患者路径` → 本卡 **PPATH-01**。
+
+## 身份
+- 卡 ID：PPATH-01（页面卡；= backlog `D3-PAGE-患者路径` 实化）
+- 域：D3 临床运行
+- 关联场景：S8 临床嵌入运行
+- 依赖卡：[SVC-CLINICAL-01](SVC-CLINICAL-01.md)（路径实例/时钟后端）· [PATH-01](../D2/PATH-01.md)（路径模型）· [BASE-08](../D0/BASE-08.md)/[BASE-10](../D0/BASE-10.md)（体验/token）· [INFRA-09](../D1/INFRA-09.md)（清演示页门禁）
+- 工作量：3d
+- owner / reviewer：待派单（owner ≠ reviewer）
+
+## 目标
+把患者路径页**真实化**：呈现患者在径路径节点/进度/关键时钟到期，支持节点推进与变异记录，全部接 [SVC-CLINICAL-01](SVC-CLINICAL-01.md) 真实路径实例，**不前端写死节点**。
+
+## 现状（搬迁时核查 2026-05-30，以 `frontend/src` 为准）
+页面**已存在待真实化**：`pages/clinical/PatientPathways.tsx`（路由 `/pathway/patients` 已注册 `app/router.tsx`）。本卡＝去占位/mock + 接路径实例/节点推进/时钟 API + 六态/五维 RBAC 齐全。
+
+## 功能要求（原子可测条目）
+- [ ] FR-1 路径概览：列患者在径路径 + 当前节点 + 进度，数据真实。
+- [ ] FR-2 节点推进：推进节点状态（调 [SVC-CLINICAL-01](SVC-CLINICAL-01.md) advance），关键时钟到期可见。
+- [ ] FR-3 变异记录：节点变异/偏离登记带原因，可追溯。
+- [ ] FR-4 六态：加载/空/错误/无权限/部分成功/正常齐全（[BASE-08](../D0/BASE-08.md)）。
+- [ ] FR-5 五维 RBAC：仅主管医生/专科专家可推进；数据按 `OrgContext` 作用域。
+
+## 接口契约 / 页面契约
+### 接口契约（引擎/API 卡）
+N·A —— 本卡为页面，不新增后端；消费 [SVC-CLINICAL-01](SVC-CLINICAL-01.md) 路径实例 API（路径模型归 [PATH-01](../D2/PATH-01.md)）。
+### 页面契约（页面卡）
+- 路由元数据：sectionKey `clinical-run` / menuKey `patient-pathway` / menuLabel `患者路径` / path `/pathway/patients` / requiredPermissions 路径运行 / requiredRoles 主管医生·专科专家。
+- 结构：PageShell（[BASE-08](../D0/BASE-08.md)）+ 路径泳道/节点时间轴（StepFlow [INFRA-09](../D1/INFRA-09.md) 组件）+ 关键时钟标识 + 六态。
+- 主按钮 ≤1（推进节点）/ 默认筛选 ≤3 / 默认角色视图（主管医生）。
+- 五维 RBAC：菜单 / 动作（推进/变异）/ 数据（org）/ 资产（路径版本）/ 环境。
+- 样式：仅引用 [BASE-10](../D0/BASE-10.md) token + [体验契约](../../EXPERIENCE_CONTRACT.md)；禁硬编码 hex/px。
+
+## 数据与迁移
+N·A —— 页面卡不落库；消费 [SVC-CLINICAL-01](SVC-CLINICAL-01.md) 后端。
+
+## 视角清单（11 视角逐条）
+1. 产品架构：患者在径运行的"进度驾驶舱"。
+2. 产品体验：★节点时间轴清晰 + 关键时钟提示 + 六态；国产浏览器可读。
+3. 系统与数据架构：路径实例查询 P95 ≤1s；时钟到期实时。
+4. 临床医疗安全：推进只走真实节点状态机；变异带原因不静默跳。
+5. 知识与数据治理：路径实例绑路径版本（[SYS-08](../D2/SYS-08.md)）；旧版历史重放标识。
+6. 安全合规与监管：推进/变异留审计（[BASE-04](../D0/BASE-04.md)）。
+7. 集团化与多租户治理：按 `OrgContext`/科室作用域。
+8. 集成与互操作：节点事件可触发 [API-02](API-02.md) 临床事件。
+9. 运维 / SRE / 国产化：内网慢场景骨架；时钟降级可见。
+10. 质量与真实性审计：★无前端写死节点/假进度；无演示路由（[INFRA-09](../D1/INFRA-09.md) no-page-mock）。
+11. AI / 模型治理与可降级：N·A（确定性页面）。
+
+## 适用不变量
+- 命中核心约束：**铁律 #1 真实性** · **§2 菜单 IA** · **§5 状态机** · **§9 多租户作用域** · **依赖 [SVC-CLINICAL-01](SVC-CLINICAL-01.md)**。
+- 本卡落点：把患者路径页变为接真实路径实例、可推进、可变异追溯的运行页。
+
+## 验收 + 验证
+- [ ] AC-1（FR-1/2）：路径/节点/时钟数据真实；推进生效。
+- [ ] AC-2（FR-3）：变异带原因可追溯。
+- [ ] AC-3（FR-4/5）：六态齐全；非授权角色不可推进。
+- 关联 A1–A9 剧本：A3 节点推进。
+- T-GATE：前端真实性门禁全绿（no-page-mock、无写死节点、无演示路由）。
+- B0 验收：N·A（无模型；纯确定性页面）。
+
+## 完工证据
+- 代码 permalink：`pages/clinical/PatientPathways` 真实化 + 接 [SVC-CLINICAL-01](SVC-CLINICAL-01.md) + 六态。
+- 测试：路径/推进/变异 + 六态 + RBAC + no-page-mock 门禁。
+- 审计员签字：@<reviewer>（owner ≠ reviewer）。

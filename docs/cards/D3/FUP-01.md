@@ -1,0 +1,69 @@
+# FUP-01 · 智能随访页
+
+> 读卡前置：[核心 CONSTITUTION](../../CONSTITUTION.md) + [D3 域简报](_brief.md) + [体验契约](../../EXPERIENCE_CONTRACT.md)。
+> 迁移来源（覆盖矩阵锚点）：详规 §3 S12 智能随访 · 体验规范 §3 角色体验标准 · 落地规划 §17。
+> 实化映射：占位 `D3-PAGE-智能随访` → 本卡 **FUP-01**。
+
+## 身份
+- 卡 ID：FUP-01（页面卡；= backlog `D3-PAGE-智能随访` 实化）
+- 域：D3 临床运行
+- 关联场景：S12 智能随访
+- 依赖卡：[FOLLOW-01](FOLLOW-01.md)（随访引擎）· [API-09](API-09.md)（随访契约）· [SVC-CLINICAL-03](SVC-CLINICAL-03.md)（任务/通知）· [BASE-08](../D0/BASE-08.md)/[BASE-10](../D0/BASE-10.md) · [INFRA-09](../D1/INFRA-09.md)
+- 工作量：3d
+- owner / reviewer：待派单（owner ≠ reviewer）
+
+## 目标
+把智能随访页**真实化**：呈现随访计划/任务/问卷、异常回院，随访团队执行任务，全部接 [FOLLOW-01](FOLLOW-01.md)/[API-09](API-09.md)，**不前端造随访人群/假作答**。
+
+## 现状（搬迁时核查 2026-05-30，以 `frontend/src` 为准）
+页面**已存在待真实化**：`pages/clinical/Followup.tsx`（路由 `/clinical/followup` 已注册 `app/router.tsx`）。本卡＝去占位/mock + 接随访计划/任务/问卷/异常 API + 六态/五维 RBAC 齐全。
+
+## 功能要求（原子可测条目）
+- [ ] FR-1 计划/任务：列患者随访计划与任务（来源受控事实，[FOLLOW-01](FOLLOW-01.md)），数据真实。
+- [ ] FR-2 问卷执行：下发/回收问卷，结构化作答、不前端假填。
+- [ ] FR-3 异常回院：异常作答触发回院任务可见（汇 [SVC-CLINICAL-03](SVC-CLINICAL-03.md) 待办）。
+- [ ] FR-4 进度看板：随访完成率/异常率真实统计，按作用域。
+- [ ] FR-5 六态 + 五维 RBAC：齐全；仅随访团队/医生可执行；数据按 `OrgContext`。
+
+## 接口契约 / 页面契约
+### 接口契约（引擎/API 卡）
+N·A —— 消费 [API-09](API-09.md) / [FOLLOW-01](FOLLOW-01.md) 随访 API。
+### 页面契约（页面卡）
+- 路由元数据：sectionKey `clinical-run` / menuKey `followup` / menuLabel `智能随访` / path `/clinical/followup` / requiredPermissions 随访执行 / requiredRoles 随访团队·临床医生。
+- 结构：PageShell（[BASE-08](../D0/BASE-08.md)）+ 计划/任务列表 + 问卷执行抽屉 + 异常回院标识 + 进度看板 + 六态。
+- 主按钮 ≤1（执行任务）/ 默认筛选 ≤3（待执行/今日/异常）/ 默认角色视图（随访团队）。
+- 五维 RBAC：菜单 / 动作（执行/回收）/ 数据（org）/ 资产 / 环境。
+- 样式：仅引用 [BASE-10](../D0/BASE-10.md) token + [体验契约](../../EXPERIENCE_CONTRACT.md)；禁硬编码 hex/px。
+
+## 数据与迁移
+N·A —— 页面卡不落库；消费 [FOLLOW-01](FOLLOW-01.md) 后端。
+
+## 视角清单（11 视角逐条）
+1. 产品架构：随访闭环的"执行工作台"。
+2. 产品体验：★任务清晰、问卷易填、异常醒目；国产浏览器/老年模式可读。
+3. 系统与数据架构：任务/问卷分页 P95 ≤1s；看板聚合查询。
+4. 临床医疗安全：异常回院醒目不漏；随访不替代诊疗。
+5. 知识与数据治理：随访计划绑路径/知识版本（[SYS-08](../D2/SYS-08.md)）可追溯。
+6. 安全合规与监管：问卷隐私最小化；执行留审计（[BASE-04](../D0/BASE-04.md)）。
+7. 集团化与多租户治理：按随访团队/科室 + `OrgContext` 作用域。
+8. 集成与互操作：异常/提醒外发经 [SVC-CLINICAL-03](SVC-CLINICAL-03.md)/[INTEG-01](../D2/INTEG-01.md)。
+9. 运维 / SRE / 国产化：内网慢场景骨架。
+10. 质量与真实性审计：★无前端造人群/假作答；完成率真实；无演示路由（[INFRA-09](../D1/INFRA-09.md)）。
+11. AI / 模型治理与可降级：智能分层为挂点，关模型确定性计划 `MODEL_DISABLED`。
+
+## 适用不变量
+- 命中核心约束：**铁律 #1 真实性** · **核心 §11 B0** · **§2 菜单 IA** · **§9 多租户作用域** · **依赖 [FOLLOW-01](FOLLOW-01.md)**。
+- 本卡落点：把智能随访页变为接真实随访计划/任务/问卷/异常、完成率真实的执行工作台。
+
+## 验收 + 验证
+- [ ] AC-1（FR-1/2）：计划/任务/问卷真实；作答结构化。
+- [ ] AC-2（FR-3/4）：异常回院可见汇待办；完成率真实。
+- [ ] AC-3（FR-5）：六态齐全；非授权不可执行。
+- 关联 A1–A9 剧本：A7 随访接续。
+- T-GATE：前端真实性门禁全绿（no-page-mock、无造人群/假作答、无演示路由）。
+- B0 验收：关模型确定性随访页仍可用。
+
+## 完工证据
+- 代码 permalink：`pages/clinical/Followup` 真实化 + 接 [API-09](API-09.md)/[FOLLOW-01](FOLLOW-01.md) + 六态。
+- 测试：计划/任务/问卷/异常/看板 + 六态 + RBAC + no-page-mock 门禁。
+- 审计员签字：@<reviewer>（owner ≠ reviewer）。
