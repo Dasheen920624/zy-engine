@@ -164,7 +164,7 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 | MED-C2 | 规则 DSL 补临床算子 | between/unit_compare 单位换算/temporal 时间窗·连续次数/derived 受控算术 eGFR/CrCl/BSA | 5d | pending |
 | OPT-01 | 标准临床模型与 FHIR R4/R5 门面 | Patient/Encounter/Condition/Observation/Medication/Procedure/CarePlan/ServiceRequest/DiagnosticReport/DocumentReference | 6d | pending |
 | OPT-07 | 来源证据分级与冲突仲裁 | A 法规/B 国家指南/C 共识文献/D 院内/E 反馈 + GRADE 兼容 | 5d | pending |
-| SVC-PILOT-01 | 租户与组织服务包 | TenantOnboarding + ImplementationGuide + 集团/医院/院区/科室/团队组织树 | 4d | pending |
+| SVC-PILOT-01 | 租户与组织服务包 | TenantOnboarding + ImplementationGuide + 组织树（核心 §9 七层：平台/集团/医院/院区/社区服务点/科室/专病）| 4d | pending |
 | SVC-PILOT-02 | 接入与数据质量服务包 | HIS/EMR/LIS/PACS/医保/病案/随访适配 + AdapterHub + 字段映射 | 5d | pending |
 | SVC-PILOT-03 | 资产准备服务包 | 知识包/配置包/字典/规则/路径 + ConfigPackages + 灰度全量回滚 | 4d | pending |
 | SVC-INTEGRATION-01 | 第三方业务接口服务包 | 接入管理 + 字段映射 + 健康检查 + FHIR 门面 + 回调 + 区域协同 | 5d | pending |
