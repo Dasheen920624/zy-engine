@@ -35,7 +35,7 @@
 | 详规 | L511 S4 字典映射 | D2 [TERM-01](D2/TERM-01.md)/[API-04](D2/API-04.md)/[DICTMAP-01](D2/DICTMAP-01.md) | |
 | 详规 | L522 S5 规则引擎配置 | D2 [RULE-01](D2/RULE-01.md)（含规则库页）/[MED-C2](D2/MED-C2.md)/[API-05](D2/API-05.md) | |
 | 详规 | L533 S6 路径引擎配置 | D2 [PATH-01](D2/PATH-01.md)（含路径配置页）/[API-06](D2/API-06.md) | |
-| 详规 | L544 S7 图谱与来源追溯 | 待迁 | |
+| 详规 | L544 S7 图谱与来源追溯 | D6 [PROV-01](D6/PROV-01.md)/[GRAPH-01](D6/GRAPH-01.md)（来源链 [OPT-07](D2/OPT-07.md) · 投影 [SYS-03](D0/SYS-03.md)）| |
 | 详规 | L554 S8 临床嵌入运行 | D3 [API-02](D3/API-02.md)/[API-07](D3/API-07.md)/[API-11](D3/API-11.md)/[CDSS-01](D3/CDSS-01.md)/[EMBED-01](D3/EMBED-01.md)/[OPT-02](D3/OPT-02.md)/[OPT-04](D3/OPT-04.md) + 服务包 [SVC-CLINICAL-01](D3/SVC-CLINICAL-01.md)/[02](D3/SVC-CLINICAL-02.md)/[03](D3/SVC-CLINICAL-03.md) + 6 页 | |
 | 详规 | L565 S9 病历内涵质控 | D4 [EVAL-01](D4/EVAL-01.md)/[SVC-QUALITY-02](D4/SVC-QUALITY-02.md) + 页 [EVALRES-01](D4/EVALRES-01.md) | |
 | 详规 | L575 S10 医保与病案质控 | D4 [SVC-QUALITY-02](D4/SVC-QUALITY-02.md)（DRG/DIP/编码/费用）+ 页 [INSAUDIT-01](D4/INSAUDIT-01.md) | |
@@ -281,7 +281,7 @@
 | 详规 | L386 S4 字典映射 信息科、专科专家 标准字典、院内字典、映射包 | D2 [TERM-01](D2/TERM-01.md) + 页 [DICTMAP-01](D2/DICTMAP-01.md) | |
 | 详规 | L387 S5 规则引擎配置 医务处、质控办、专家 规则集、测试集、发布版本 | D2 [RULE-01](D2/RULE-01.md)（规则库页）| |
 | 详规 | L388 S6 路径引擎配置 专科专家、科主任 专病路径、节点、变异、随访 | D2 [PATH-01](D2/PATH-01.md)（路径配置页）| |
-| 详规 | L389 S7 图谱与来源追溯 专家、架构师 图谱投影、来源链、冲突 | 待迁 | |
+| 详规 | L389 S7 图谱与来源追溯 专家、架构师 图谱投影、来源链、冲突 | D6 [GRAPH-01](D6/GRAPH-01.md)/[PROV-01](D6/PROV-01.md) | |
 | 详规 | L390 S8 临床嵌入运行 临床医生 提醒、推荐、路径节点、反馈 | D3 [CDSS-01](D3/CDSS-01.md)/[API-07](D3/API-07.md) + 页 [REMIND-01](D3/REMIND-01.md)/[PPATH-01](D3/PPATH-01.md) | |
 | 详规 | L391 S9 病历内涵质控 质控办、医务处、科主任 质控规则、问题、整改 | D4 [EVAL-01](D4/EVAL-01.md)/[SVC-QUALITY-03](D4/SVC-QUALITY-03.md) + 页 [EVALRES-01](D4/EVALRES-01.md) | |
 | 详规 | L392 S10 医保与病案质控 医保办、病案室 DRG/DIP、首页、编码、费用问题 | D4 [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) + 页 [INSAUDIT-01](D4/INSAUDIT-01.md) | |
@@ -318,6 +318,6 @@
 
 ## 进度
 - 旧锚点总数：310
-- 已迁（非"待迁"）：120（D0 36 + D1 2 + D2 卡 49 + D2 场景锚点 14 + D3 场景锚点 7 + D4 场景锚点 10 + D5 场景锚点 2：详规 §3/§2 的 S14）
-- 退役就绪：否（D0/D1/D2/D3/D4 全卡 + D5 全 11 卡已搬；卡级 §-锚点细化与 D6 + wave2 + ga 待续）
-- 域搬迁进度：D0 ✅ / D1 ✅ / D2 ✅（30 卡）/ D3 ✅（21 卡）/ D4 ✅（14 卡）/ D5 ✅（11 卡：5 ID + 6 页面全建）/ D6 ⬜ / wave2 ⬜ / ga ⬜
+- 已迁（非"待迁"）：122（D0 36 + D1 2 + D2 卡 49 + D2 场景锚点 14 + D3 场景锚点 7 + D4 场景锚点 10 + D5 场景锚点 2 + D6 场景锚点 2：详规 §3/§2 的 S7）
+- 退役就绪：**核心域 D0–D6 全卡已搬**；剩 wave2（AI 加深）+ ga 总验收 + 各域卡级 §-锚点细化 + 场景 S17–S40（wave2 专病域）待续
+- 域搬迁进度：D0 ✅ / D1 ✅ / D2 ✅（30 卡）/ D3 ✅（21 卡）/ D4 ✅（14 卡）/ D5 ✅（11 卡）/ **D6 ✅（6 卡：1 ID + 5 页面全建）** / wave2 ⬜ / ga ⬜

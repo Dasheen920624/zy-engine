@@ -13,7 +13,7 @@
 | S4 | 字典映射 | [TERM-01](D2/TERM-01.md) 字典映射引擎（含高危近似判别）· [API-04](D2/API-04.md) 字典 API · [DICTMAP-01](D2/DICTMAP-01.md) 字典映射页 |
 | S5 | 规则引擎配置 | [RULE-01](D2/RULE-01.md) 规则引擎（三层+仿真，含规则库页）· [MED-C2](D2/MED-C2.md) 临床 DSL 算子 · [API-05](D2/API-05.md) 规则 API |
 | S6 | 路径引擎配置 | [PATH-01](D2/PATH-01.md) 路径引擎（三层+关键时钟+随访接续，含路径配置页）· [API-06](D2/API-06.md) 路径 API |
-| S7 | 图谱与来源追溯 | 待建 |
+| S7 | 图谱与来源追溯 | [PROV-01](D6/PROV-01.md) 来源追溯（到条/版本）· [GRAPH-01](D6/GRAPH-01.md) 图谱查询（投影非权威）；来源链 [OPT-07](D2/OPT-07.md)/[KNOW-01](D2/KNOW-01.md) · 投影 [SYS-03](D0/SYS-03.md) |
 | S8 | 临床嵌入运行 | [API-02](D3/API-02.md) 临床事件 · [API-07](D3/API-07.md) 推荐/CDSS · [API-11](D3/API-11.md) 嵌入 · [CDSS-01](D3/CDSS-01.md) CDSS 引擎 · [EMBED-01](D3/EMBED-01.md) 嵌入引擎 · [OPT-02](D3/OPT-02.md) CDS Hooks · [OPT-04](D3/OPT-04.md) 红线 · [SVC-CLINICAL-01](D3/SVC-CLINICAL-01.md)/[02](D3/SVC-CLINICAL-02.md)/[03](D3/SVC-CLINICAL-03.md) 服务包 · 页 [PMI-01](D3/PMI-01.md)/[PPATH-01](D3/PPATH-01.md)/[REMIND-01](D3/REMIND-01.md)/[RULECHK-01](D3/RULECHK-01.md)/[TODO-01](D3/TODO-01.md)/[NOTIFY-01](D3/NOTIFY-01.md)（消费 [API-01](D2/API-01.md) 上下文底座）|
 | S9 | 病历内涵质控 | [EVAL-01](D4/EVAL-01.md) 评估引擎 · [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) 病案医保 · 页 [EVALRES-01](D4/EVALRES-01.md) 评估结果 |
 | S10 | 医保与病案质控 | [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) 病案医保（DRG/DIP/编码/费用）· 页 [INSAUDIT-01](D4/INSAUDIT-01.md) 医保智能审核 |
@@ -84,8 +84,9 @@
 **服务包**：[SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md) 身份安全 · [SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md) 审计运维
 **页面**（实化占位 `D5-PAGE-*`）：[USERS-01](D5/USERS-01.md) 用户管理 · [IDBIND-01](D5/IDBIND-01.md) 身份绑定 · [AUDITLOG-01](D5/AUDITLOG-01.md) 审计日志 · [SECBASE-01](D5/SECBASE-01.md) 安全基线与系统配置（承载 [CONFIG-01](D0/CONFIG-01.md) 前台，二级菜单仍 27）· [PROVIDER-01](D5/PROVIDER-01.md) Provider 状态 · [NOTIFSET-01](D5/NOTIFSET-01.md) 通知设置
 
-### D6 高级工具
-OPT-10 / 页面：来源追溯 · 图谱查询 · AI 工作流 · 国产化自检 · 开发者控制台（待建）
+### D6 高级工具 ✅ 已建（6 卡：1 ID + 5 页面，[域简报](D6/_brief.md)）
+**安全边界**：[OPT-10](D6/OPT-10.md) 插件和生态安全边界
+**页面**（实化占位 `D6-PAGE-*`）：[PROV-01](D6/PROV-01.md) 来源追溯 · [GRAPH-01](D6/GRAPH-01.md) 图谱查询 · [AIFLOW-01](D6/AIFLOW-01.md) AI 工作流（壳/查看，编排 wave2）· [DOMCHK-01](D6/DOMCHK-01.md) 国产化自检 · [DEVCON-01](D6/DEVCON-01.md) 开发者控制台
 
 ### 第二波 wave2
 API-12 / LLM-01 … LLM-08 / OPT-06 / OPT-09 / AIK-STD-01 … AIK-STD-12 / KNOWGEN-01 … KNOWGEN-15 / NURSING-01 / REPORT-01 / POC-KNOW-01 / PHARMACY-01 / CRITICAL-01 / SPECIAL-POP-01 / PERIOP-01 / ONCO-RENAL-01 / ALLIED-CARE-01 / TCM-HEALTH-01 / INFECTION-PH-01 / PRIMARY-CARE-01 / REGION-COLLAB-01 / SPECIALTY-EXT-01 / RWD-01 / SVC-DOMAIN-01 / SVC-DOMAIN-02（待建）
