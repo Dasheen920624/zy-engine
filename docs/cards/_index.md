@@ -20,7 +20,7 @@
 | S11 | 智能评估与整改 | 待建 |
 | S12 | 智能随访 | 待建 |
 | S13 | 包发布与院内同步 | 待建 |
-| S14 | 用户、权限与合规 | [BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 权限 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 超管 · [CONFIG-01](D0/CONFIG-01.md) 配置 · [BASE-04](D0/BASE-04.md) 审计 · [INFRA-04](D0/INFRA-04.md)/[INFRA-08](D0/INFRA-08.md) 会话；用户管理/审计日志页待建（D5）|
+| S14 | 用户、权限与合规 | [AUTH-01](D0/AUTH-01.md)/[AUTH-02](D0/AUTH-02.md)/[AUTH-03](D0/AUTH-03.md) 双模登录认证 · [BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 权限 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 超管 · [CONFIG-01](D0/CONFIG-01.md) 配置 · [BASE-04](D0/BASE-04.md) 审计 · [INFRA-04](D0/INFRA-04.md)/[INFRA-08](D0/INFRA-08.md) 会话；用户管理/审计日志页待建（D5）|
 | S15 | AI 验证与验收 | 待建 |
 | S16 | 辅助诊疗与鉴别诊断 | 待建 |
 | S17 | 检查检验推荐 | 待建 |
@@ -53,7 +53,7 @@
 > 卡 ID = backlog 可交付物 ID。逐域搬迁时本目录回填链接（`D{n}/<ID>.md`）。`待建`。
 
 ### D0 登录域/平台脊柱 ✅ 已建（[域简报](D0/_brief.md)）
-[BASE-01](D0/BASE-01.md) 组织与租户上下文 · [BASE-02](D0/BASE-02.md) 身份权限五维 · [BASE-03](D0/BASE-03.md) 标准 API 契约 · [BASE-04](D0/BASE-04.md) 审计骨干 · [BASE-05](D0/BASE-05.md) 5 方言迁移骨架 · [BASE-06](D0/BASE-06.md) 5+1 菜单与前端骨架 · [BASE-07](D0/BASE-07.md) 运行底座 · [BASE-08](D0/BASE-08.md) 产品体验底座 · [BASE-09](D0/BASE-09.md) 代码基线净化 · [BASE-10](D0/BASE-10.md) 设计 Token 系统 · [BASE-11](D0/BASE-11.md) 平台首发种子身份 · [OBS-01](D0/OBS-01.md) 引擎可观测性骨干 · [API-13](D0/API-13.md) 大规模列表 API · [SYS-01](D0/SYS-01.md) 标准临床模型与事件上下文 · [SYS-02](D0/SYS-02.md) 引擎领域边界与服务契约 · [SYS-03](D0/SYS-03.md) 关系库权威源与投影同步 · [SYS-05](D0/SYS-05.md) 在线/异步/批量/离线运行框架 · [INFRA-01](D0/INFRA-01.md) 前端真实性门禁 · [INFRA-02](D0/INFRA-02.md) 后端真实性门禁 · [INFRA-03](D0/INFRA-03.md) 错误处理与表单反馈一致性 · [INFRA-04](D0/INFRA-04.md) 退出登录 UI · [INFRA-05](D0/INFRA-05.md) 27 二级菜单粒度权限模型 · [INFRA-08](D0/INFRA-08.md) 会话超时与多 tab 同步 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 内置超级管理员 · [CONFIG-01](D0/CONFIG-01.md) 配置中心引擎
+[BASE-01](D0/BASE-01.md) 组织与租户上下文 · [BASE-02](D0/BASE-02.md) 身份权限五维 · [BASE-03](D0/BASE-03.md) 标准 API 契约 · [BASE-04](D0/BASE-04.md) 审计骨干 · [BASE-05](D0/BASE-05.md) 5 方言迁移骨架 · [BASE-06](D0/BASE-06.md) 5+1 菜单与前端骨架 · [BASE-07](D0/BASE-07.md) 运行底座 · [BASE-08](D0/BASE-08.md) 产品体验底座 · [BASE-09](D0/BASE-09.md) 代码基线净化 · [BASE-10](D0/BASE-10.md) 设计 Token 系统 · [BASE-11](D0/BASE-11.md) 平台首发种子身份 · [OBS-01](D0/OBS-01.md) 引擎可观测性骨干 · [API-13](D0/API-13.md) 大规模列表 API · [SYS-01](D0/SYS-01.md) 标准临床模型与事件上下文 · [SYS-02](D0/SYS-02.md) 引擎领域边界与服务契约 · [SYS-03](D0/SYS-03.md) 关系库权威源与投影同步 · [SYS-05](D0/SYS-05.md) 在线/异步/批量/离线运行框架 · [INFRA-01](D0/INFRA-01.md) 前端真实性门禁 · [INFRA-02](D0/INFRA-02.md) 后端真实性门禁 · [INFRA-03](D0/INFRA-03.md) 错误处理与表单反馈一致性 · [INFRA-04](D0/INFRA-04.md) 退出登录 UI · [INFRA-05](D0/INFRA-05.md) 27 二级菜单粒度权限模型 · [INFRA-08](D0/INFRA-08.md) 会话超时与多 tab 同步 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 内置超级管理员 · [CONFIG-01](D0/CONFIG-01.md) 配置中心引擎 · **[AUTH-01](D0/AUTH-01.md) 双模身份与登录闭环** · **[AUTH-02](D0/AUTH-02.md) 登录页** · **[AUTH-03](D0/AUTH-03.md) 凭证自助与口令安全**
 
 ### D1 工作台
 INFRA-09 / 页面：工作台 · 演示校验（待建）
