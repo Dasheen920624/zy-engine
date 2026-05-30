@@ -15,13 +15,13 @@
 | S6 | 路径引擎配置 | [PATH-01](D2/PATH-01.md) 路径引擎（三层+关键时钟+随访接续，含路径配置页）· [API-06](D2/API-06.md) 路径 API |
 | S7 | 图谱与来源追溯 | 待建 |
 | S8 | 临床嵌入运行 | [API-02](D3/API-02.md) 临床事件 · [API-07](D3/API-07.md) 推荐/CDSS · [API-11](D3/API-11.md) 嵌入 · [CDSS-01](D3/CDSS-01.md) CDSS 引擎 · [EMBED-01](D3/EMBED-01.md) 嵌入引擎 · [OPT-02](D3/OPT-02.md) CDS Hooks · [OPT-04](D3/OPT-04.md) 红线 · [SVC-CLINICAL-01](D3/SVC-CLINICAL-01.md)/[02](D3/SVC-CLINICAL-02.md)/[03](D3/SVC-CLINICAL-03.md) 服务包 · 页 [PMI-01](D3/PMI-01.md)/[PPATH-01](D3/PPATH-01.md)/[REMIND-01](D3/REMIND-01.md)/[RULECHK-01](D3/RULECHK-01.md)/[TODO-01](D3/TODO-01.md)/[NOTIFY-01](D3/NOTIFY-01.md)（消费 [API-01](D2/API-01.md) 上下文底座）|
-| S9 | 病历内涵质控 | 待建 |
-| S10 | 医保与病案质控 | 待建 |
-| S11 | 智能评估与整改 | 待建 |
+| S9 | 病历内涵质控 | [EVAL-01](D4/EVAL-01.md) 评估引擎 · [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) 病案医保 · 页 [EVALRES-01](D4/EVALRES-01.md) 评估结果 |
+| S10 | 医保与病案质控 | [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) 病案医保（DRG/DIP/编码/费用）· 页 [INSAUDIT-01](D4/INSAUDIT-01.md) 医保智能审核 |
+| S11 | 智能评估与整改 | [EVAL-01](D4/EVAL-01.md) 评估引擎 · [SVC-QUALITY-01](D4/SVC-QUALITY-01.md) 驾驶舱 · [SVC-QUALITY-03](D4/SVC-QUALITY-03.md) 整改闭环 · [OPT-08](D4/OPT-08.md) 价值/ROI · 页 [QCDASH-01](D4/QCDASH-01.md)/[QCALERT-01](D4/QCALERT-01.md)/[EVALSET-01](D4/EVALSET-01.md)/[EVALRES-01](D4/EVALRES-01.md) |
 | S12 | 智能随访 | [API-09](D3/API-09.md) 随访 API · [FOLLOW-01](D3/FOLLOW-01.md) 随访引擎 · 页 [FUP-01](D3/FUP-01.md) 智能随访 |
 | S13 | 包发布与院内同步 | [PKG-01](D2/PKG-01.md) 包发布引擎 · [API-10](D2/API-10.md) 包发布 API · [SYS-04](D2/SYS-04.md) 版本发布框架 · [SYS-08](D2/SYS-08.md) 权威知识替换 · [SVC-PILOT-03](D2/SVC-PILOT-03.md) 资产准备服务包 · [CFGPKG-01](D2/CFGPKG-01.md) 配置包中心页 |
 | S14 | 用户、权限与合规 | [AUTH-01](D0/AUTH-01.md)/[AUTH-02](D0/AUTH-02.md)/[AUTH-03](D0/AUTH-03.md) 双模登录认证 · [BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 权限 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 超管 · [CONFIG-01](D0/CONFIG-01.md) 配置 · [BASE-04](D0/BASE-04.md) 审计 · [INFRA-04](D0/INFRA-04.md)/[INFRA-08](D0/INFRA-08.md) 会话；用户管理/审计日志页待建（D5）|
-| S15 | AI 验证与验收 | 待建 |
+| S15 | AI 验证与验收 | [AIREVIEW-01](D4/AIREVIEW-01.md) AI 知识审核台（人工审/发，AI 生成随 wave2）；S0–S40 全验收/E2E 证据随 GA |
 | S16 | 辅助诊疗与鉴别诊断 | [CDSS-01](D3/CDSS-01.md) 推荐/CDSS 引擎（B0 确定性辅助诊疗/候选）；深度鉴别诊断生成随 wave2 |
 | S17 | 检查检验推荐 | 待建 |
 | S18 | 用药安全与治疗方案 | 待建 |
@@ -29,7 +29,7 @@
 | S20 | 护理康复与宣教 | 待建 |
 | S21 | 院感与公共卫生 | 待建 |
 | S22 | MDT 与专科中心协同 | 待建 |
-| S23 | 电子病历评级支撑 | 待建 |
+| S23 | 电子病历评级支撑 | [EMR-LEVEL-01](D4/EMR-LEVEL-01.md) 评级目标映射 · [EMR-LEVEL-02](D4/EMR-LEVEL-02.md) 评级数据质量与证据包 |
 | S24 | 门急诊全过程支持 | 待建 |
 | S25 | 住院诊疗与核心制度 | 待建 |
 | S26 | 围手术期、麻醉与输血 | 待建 |
@@ -73,8 +73,11 @@
 **服务包**：[SVC-CLINICAL-01](D3/SVC-CLINICAL-01.md) 患者与路径运行 · [SVC-CLINICAL-02](D3/SVC-CLINICAL-02.md) 提醒与反馈 · [SVC-CLINICAL-03](D3/SVC-CLINICAL-03.md) 临床协同
 **页面**（实化占位 `D3-PAGE-*`）：[PMI-01](D3/PMI-01.md) 患者主索引 · [PPATH-01](D3/PPATH-01.md) 患者路径 · [REMIND-01](D3/REMIND-01.md) 临床提醒治理 · [RULECHK-01](D3/RULECHK-01.md) 规则校验 · [TODO-01](D3/TODO-01.md) 待办中心 · [NOTIFY-01](D3/NOTIFY-01.md) 通知中心 · [FUP-01](D3/FUP-01.md) 智能随访
 
-### D4 质控改进
-API-08 / EVAL-01 / OPT-08 / EMR-LEVEL-01 / EMR-LEVEL-02 / SVC-QUALITY-01 / SVC-QUALITY-02 / SVC-QUALITY-03 / 页面：院级质控驾驶舱 · 质控预警 · 医保智能审核 · 评估指标库 · 评估结果 · AI 知识审核（待建）
+### D4 质控改进 ✅ 已建（14 卡：8 ID + 6 页面，[域简报](D4/_brief.md)）
+**评估/整改**：[API-08](D4/API-08.md) 评估质控 API · [EVAL-01](D4/EVAL-01.md) 评估引擎 · [SVC-QUALITY-03](D4/SVC-QUALITY-03.md) 整改闭环
+**价值/评级**：[OPT-08](D4/OPT-08.md) 价值与 ROI 看板 · [EMR-LEVEL-01](D4/EMR-LEVEL-01.md) 评级目标映射 · [EMR-LEVEL-02](D4/EMR-LEVEL-02.md) 评级数据质量与证据包
+**服务包**：[SVC-QUALITY-01](D4/SVC-QUALITY-01.md) 质控驾驶舱 · [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) 病案医保
+**页面**（实化占位 `D4-PAGE-*`）：[QCDASH-01](D4/QCDASH-01.md) 院级质控驾驶舱 · [QCALERT-01](D4/QCALERT-01.md) 质控预警 · [INSAUDIT-01](D4/INSAUDIT-01.md) 医保智能审核 · [EVALSET-01](D4/EVALSET-01.md) 评估指标库 · [EVALRES-01](D4/EVALRES-01.md) 评估结果 · [AIREVIEW-01](D4/AIREVIEW-01.md) AI 知识审核
 
 ### D5 合规运维
 EVID-01 / SYS-06 / OPT-05 / SVC-COMPLIANCE-01 / SVC-COMPLIANCE-02 / 页面：用户管理 · 身份绑定 · 审计日志 · 安全基线与系统配置 · Provider 状态 · 通知设置（待建，系统配置中心页挂"安全基线与系统配置"槽，二级菜单仍 27）
