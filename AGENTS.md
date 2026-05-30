@@ -39,8 +39,10 @@
 
 ## 会话接力（中断续接）
 
-会话可能因额度耗尽突然中断。为避免下个会话花大量 token 考古"上次做到哪"：
+会话可能因额度耗尽突然中断，且本项目由多种 AI 工具（Claude Code / Codex / Cursor / Copilot / Gemini 等）协作。为避免下个会话、或换一个工具后花大量 token 考古"上次做到哪"，统一走一套**工具中立**的接力：
 
-- **开工第一件事**：读 [docs/cards/_HANDOFF.md](docs/cards/_HANDOFF.md) —— 当前域/批次进度、活跃分支、下一步精确动作都在里面。不要翻历史会话或 git 考古。
-- **收尾或预感中断时**：立刻更新 `docs/cards/_HANDOFF.md` 的「当前活跃工作」「下一步」两段（更新一个文件，远比下次重新考古省）。
-- 中断后找散落草稿：`git worktree list` + 各 worktree 查未跟踪文件（整批卡草稿曾停在未提交的 worktree）。
+- **真相源**：[docs/_HANDOFF.md](docs/_HANDOFF.md) —— 所有在途工作线的活跃分支、状态、下一步精确动作。纯 markdown、在版本库里，**任何 AI 工具或人都能读写，不依赖某工具的私有记忆**。
+- **开工第一件事**：读 `docs/_HANDOFF.md`，按对应工作线续接。不要翻历史会话或 git 考古。
+- **收尾或预感中断时**：立刻更新 `docs/_HANDOFF.md` 中对应工作线的「状态」「下一步」；完成的线移入「已归档」。
+- **开新工作线**（领新功能/任务）：按 `docs/_HANDOFF.md` 末尾模板加一条线。
+- 中断后找散落改动：`git worktree list` + `git status` + 各 worktree 查未跟踪文件（改动曾停在未提交的 worktree）。
