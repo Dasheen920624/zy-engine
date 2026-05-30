@@ -6,7 +6,7 @@
 ## 场景 → 卡
 | 场景 | 名称 | 拥有要求的卡 |
 |---|---|---|
-| S0 | 工作台与总览 | 待建 |
+| S0 | 工作台与总览 | [WORKBENCH-01](D1/WORKBENCH-01.md) 工作台页 · [WORKBENCH-02](D1/WORKBENCH-02.md) 演示与校验 · [INFRA-09](D1/INFRA-09.md) 清演示页 |
 | S1 | 集团与租户开通 | [BASE-01](D0/BASE-01.md) 组织上下文底座；租户开通页待建（D2）|
 | S2 | 院内系统接入 | 待建 |
 | S3 | AI 知识工厂 | 待建 |
@@ -55,8 +55,8 @@
 ### D0 登录域/平台脊柱 ✅ 已建（[域简报](D0/_brief.md)）
 [BASE-01](D0/BASE-01.md) 组织与租户上下文 · [BASE-02](D0/BASE-02.md) 身份权限五维 · [BASE-03](D0/BASE-03.md) 标准 API 契约 · [BASE-04](D0/BASE-04.md) 审计骨干 · [BASE-05](D0/BASE-05.md) 5 方言迁移骨架 · [BASE-06](D0/BASE-06.md) 5+1 菜单与前端骨架 · [BASE-07](D0/BASE-07.md) 运行底座 · [BASE-08](D0/BASE-08.md) 产品体验底座 · [BASE-09](D0/BASE-09.md) 代码基线净化 · [BASE-10](D0/BASE-10.md) 设计 Token 系统 · [BASE-11](D0/BASE-11.md) 平台首发种子身份 · [OBS-01](D0/OBS-01.md) 引擎可观测性骨干 · [API-13](D0/API-13.md) 大规模列表 API · [SYS-01](D0/SYS-01.md) 标准临床模型与事件上下文 · [SYS-02](D0/SYS-02.md) 引擎领域边界与服务契约 · [SYS-03](D0/SYS-03.md) 关系库权威源与投影同步 · [SYS-05](D0/SYS-05.md) 在线/异步/批量/离线运行框架 · [INFRA-01](D0/INFRA-01.md) 前端真实性门禁 · [INFRA-02](D0/INFRA-02.md) 后端真实性门禁 · [INFRA-03](D0/INFRA-03.md) 错误处理与表单反馈一致性 · [INFRA-04](D0/INFRA-04.md) 退出登录 UI · [INFRA-05](D0/INFRA-05.md) 27 二级菜单粒度权限模型 · [INFRA-08](D0/INFRA-08.md) 会话超时与多 tab 同步 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 内置超级管理员 · [CONFIG-01](D0/CONFIG-01.md) 配置中心引擎 · **[AUTH-01](D0/AUTH-01.md) 双模身份与登录闭环** · **[AUTH-02](D0/AUTH-02.md) 登录页** · **[AUTH-03](D0/AUTH-03.md) 凭证自助与口令安全**
 
-### D1 工作台
-INFRA-09 / 页面：工作台 · 演示校验（待建）
+### D1 工作台 ✅ 已建（[域简报](D1/_brief.md)）
+[INFRA-09](D1/INFRA-09.md) StepFlowDemo 清出生产路由 · [WORKBENCH-01](D1/WORKBENCH-01.md) 工作台页面（原 `D1-PAGE-工作台`）· [WORKBENCH-02](D1/WORKBENCH-02.md) 演示与校验页面（原 `D1-PAGE-演示校验`）
 
 ### D2 试点准备
 API-01 / API-03 / API-04 / API-05 / API-06 / API-10 / KNOW-01 / KNOW-02 / TERM-01 / RULE-01 / PATH-01 / PKG-01 / SYS-04 / SYS-08 / INTEG-01 / INTEG-02 / MED-C2 / OPT-01 / OPT-07 / SVC-PILOT-01 / SVC-PILOT-02 / SVC-PILOT-03 / SVC-INTEGRATION-01 / 页面：客户实施向导 · 租户开通 · 配置包中心 · 路径配置 · 规则库 · 字典映射 · 适配器中心（待建）
