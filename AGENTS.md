@@ -19,12 +19,20 @@
 
 ## 文档权威顺序
 
-1. [README.md](README.md)
-2. [docs/README.md](docs/README.md)
-3. [docs/CONSTITUTION.md](docs/CONSTITUTION.md)
-4. [docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md](docs/MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md)
-5. [docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md](docs/MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md)
-6. [docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md](docs/MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md)
-7. [docs/backlog.md](docs/backlog.md)
+构建任一任务，按下序读（读最少、拿最全）：
 
-若文档之间冲突，按以上顺序裁决；仍无法判断时，先在 PR 中说明冲突，不要自行扩展新的事实源。
+1. [docs/CONSTITUTION.md](docs/CONSTITUTION.md) —— 核心（恒读，11 视角不变量）
+2. `docs/cards/<域>/_brief.md` —— 所领卡所在域的域简报
+3. `docs/cards/<域>/<TASK-ID>.md` —— 所领的施工卡
+
+页面卡额外读 [docs/EXPERIENCE_CONTRACT.md](docs/EXPERIENCE_CONTRACT.md)（共享体验与组件契约）。
+
+辅助（按需查，不通读）：
+- 找卡：[docs/cards/_index.md](docs/cards/_index.md)（场景 S0–S40 → 卡）
+- 验收方法论：[docs/audit/质量基线.md](docs/audit/质量基线.md)
+- 名词：[docs/glossary.md](docs/glossary.md)
+- 任务状态 / 派单：[docs/backlog.md](docs/backlog.md)
+
+冲突裁决：核心 > 域简报 > 卡。卡与核心冲突 → 核心赢；卡之间本不应重叠，若冲突＝分区错误，修分区而非裁决。
+
+> 迁移过渡期（P0–P7）：旧巨物（详规/落地规划/FOUNDATION/体验规范）在对应域搬迁完成前物理保留但**不再作为权威**；以本序为准。全部域搬迁完成后（P8）删除。
