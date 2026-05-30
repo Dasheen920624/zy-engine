@@ -2,6 +2,7 @@
 
 > 用途：拆解巨物时零要求丢失。每行 = 一个旧锚点；逐域搬迁时把"迁入"从 `待迁` 改为承接它的"卡ID / 核心§ / 域简报 / EXPERIENCE_CONTRACT§ / glossary"。
 > 退役门（P8）：本表"迁入"列 0 个 `待迁`、且旧锚点在新文档零残留引用，才允许删 4 巨物（详规/落地规划/FOUNDATION/体验规范）。
+> 卡级细化（2026-05-31）：详规 §3 已迁场景（S0–S16 + S23）已按"场景子责任 → 单卡"拆到卡级（其余 §1/§4/§5/§7/§8/§10 行本就卡级）；下方 §2「全业务场景目录」行（L382–422）为角色/对象摘要视图，**卡级拆分以 §3 为准**。
 
 | 旧文档 | 旧锚点（章节/场景） | 迁入（卡ID / 核心§ / 其它） | 核对人 |
 |---|---|---|---|
@@ -28,30 +29,80 @@
 | 详规 | L424 2.1 业务医疗服务包归类 | 待迁 | |
 | 详规 | L442 3. 场景详细设计 | 待迁 | |
 | 详规 | L444 3.0 场景 API 归类规则 | 待迁 | |
-| 详规 | L466 S0 工作台与总览 | D1 [WORKBENCH-01](D1/WORKBENCH-01.md) / [WORKBENCH-02](D1/WORKBENCH-02.md) | |
-| 详规 | L478 S1 集团与租户开通 | D0 [BASE-01](D0/BASE-01.md) + D2 [SVC-PILOT-01](D2/SVC-PILOT-01.md)/[TENANT-01](D2/TENANT-01.md)/[IMPL-01](D2/IMPL-01.md) | |
-| 详规 | L489 S2 院内系统接入 | D2 [OPT-01](D2/OPT-01.md)/[INTEG-01](D2/INTEG-01.md)/[INTEG-02](D2/INTEG-02.md)/[SVC-PILOT-02](D2/SVC-PILOT-02.md)/[SVC-INTEGRATION-01](D2/SVC-INTEGRATION-01.md)/[ADAPTER-01](D2/ADAPTER-01.md) | |
-| 详规 | L500 S3 AI 知识工厂 | D2 [KNOW-01](D2/KNOW-01.md)/[KNOW-02](D2/KNOW-02.md)/[API-03](D2/API-03.md)/[OPT-07](D2/OPT-07.md)/[SYS-08](D2/SYS-08.md)（B0）；AI 生成/工厂页随 wave2 + D4 | |
-| 详规 | L511 S4 字典映射 | D2 [TERM-01](D2/TERM-01.md)/[API-04](D2/API-04.md)/[DICTMAP-01](D2/DICTMAP-01.md) | |
-| 详规 | L522 S5 规则引擎配置 | D2 [RULE-01](D2/RULE-01.md)（含规则库页）/[MED-C2](D2/MED-C2.md)/[API-05](D2/API-05.md) | |
-| 详规 | L533 S6 路径引擎配置 | D2 [PATH-01](D2/PATH-01.md)（含路径配置页）/[API-06](D2/API-06.md) | |
-| 详规 | L544 S7 图谱与来源追溯 | D6 [PROV-01](D6/PROV-01.md)/[GRAPH-01](D6/GRAPH-01.md)（来源链 [OPT-07](D2/OPT-07.md) · 投影 [SYS-03](D0/SYS-03.md)）| |
-| 详规 | L554 S8 临床嵌入运行 | D3 [API-02](D3/API-02.md)/[API-07](D3/API-07.md)/[API-11](D3/API-11.md)/[CDSS-01](D3/CDSS-01.md)/[EMBED-01](D3/EMBED-01.md)/[OPT-02](D3/OPT-02.md)/[OPT-04](D3/OPT-04.md) + 服务包 [SVC-CLINICAL-01](D3/SVC-CLINICAL-01.md)/[02](D3/SVC-CLINICAL-02.md)/[03](D3/SVC-CLINICAL-03.md) + 6 页 | |
-| 详规 | L565 S9 病历内涵质控 | D4 [EVAL-01](D4/EVAL-01.md)/[SVC-QUALITY-02](D4/SVC-QUALITY-02.md) + 页 [EVALRES-01](D4/EVALRES-01.md) | |
-| 详规 | L575 S10 医保与病案质控 | D4 [SVC-QUALITY-02](D4/SVC-QUALITY-02.md)（DRG/DIP/编码/费用）+ 页 [INSAUDIT-01](D4/INSAUDIT-01.md) | |
-| 详规 | L584 S11 智能评估与整改 | D4 [EVAL-01](D4/EVAL-01.md)/[SVC-QUALITY-01](D4/SVC-QUALITY-01.md)/[SVC-QUALITY-03](D4/SVC-QUALITY-03.md)/[OPT-08](D4/OPT-08.md) + 页 [QCDASH-01](D4/QCDASH-01.md)/[QCALERT-01](D4/QCALERT-01.md)/[EVALSET-01](D4/EVALSET-01.md)/[EVALRES-01](D4/EVALRES-01.md) | |
-| 详规 | L593 S12 智能随访 | D3 [API-09](D3/API-09.md)/[FOLLOW-01](D3/FOLLOW-01.md) + 页 [FUP-01](D3/FUP-01.md) | |
-| 详规 | L602 S13 包发布与院内同步 | D2 [PKG-01](D2/PKG-01.md)/[API-10](D2/API-10.md)/[SYS-04](D2/SYS-04.md)/[SYS-08](D2/SYS-08.md)/[SVC-PILOT-03](D2/SVC-PILOT-03.md)/[CFGPKG-01](D2/CFGPKG-01.md) | |
-| 详规 | L611 S14 用户、权限与合规 | D0 [AUTH-01](D0/AUTH-01.md)/[BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 身份权限 + D5 [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md)/[SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md)/[SYS-06](D5/SYS-06.md)/[EVID-01](D5/EVID-01.md) + 页 [USERS-01](D5/USERS-01.md)/[AUDITLOG-01](D5/AUDITLOG-01.md)/[SECBASE-01](D5/SECBASE-01.md) | |
-| 详规 | L620 S15 AI 验证与验收 | D4 [AIREVIEW-01](D4/AIREVIEW-01.md)（AI 审/发）+ ga [QA-01](ga/QA-01.md)/[INFRA-07](ga/INFRA-07.md)/[INFRA-10](ga/INFRA-10.md)（全验收/E2E，实际 pass 待 wave2）| |
-| 详规 | L629 S16 辅助诊疗与鉴别诊断 | D3 [CDSS-01](D3/CDSS-01.md)（B0 辅助诊疗/候选）；深度鉴别诊断生成随 wave2 | |
+| 详规 | L466 S0 · 工作台主屏（6 主卡片/待办/默认角色视图/租户生命周期，复用现有 API） | D1 [WORKBENCH-01](D1/WORKBENCH-01.md) | |
+| 详规 | L466 S0 · 演示与校验 Tab（"试点是否可验收"侧·A1–A9 验收清单可视） | D1 [WORKBENCH-02](D1/WORKBENCH-02.md) | |
+| 详规 | L478 S1 · 组织/租户上下文底座（七层继承·行级隔离） | D0 [BASE-01](D0/BASE-01.md) | |
+| 详规 | L478 S1 · 开通+实施服务包编排（组织树/就绪门/实施向导分步） | D2 [SVC-PILOT-01](D2/SVC-PILOT-01.md) | |
+| 详规 | L478 S1 · 页面：租户开通 | D2 [TENANT-01](D2/TENANT-01.md) | |
+| 详规 | L478 S1 · 页面：客户实施向导 | D2 [IMPL-01](D2/IMPL-01.md) | |
+| 详规 | L489 S2 · 标准互操作门面（FHIR R4/R5 对接方式） | D2 [OPT-01](D2/OPT-01.md) | |
+| 详规 | L489 S2 · 适配器总线+对接能力全景（含契约模板） | D2 [INTEG-01](D2/INTEG-01.md) + [INTEG-02](D2/INTEG-02.md) | |
+| 详规 | L489 S2 · 接入+数据质量服务包（HIS/EMR/LIS/PACS/医保/病案/随访） | D2 [SVC-PILOT-02](D2/SVC-PILOT-02.md) | |
+| 详规 | L489 S2 · 第三方业务接口服务包（接入管理/字段映射/健康检查/区域协同） | D2 [SVC-INTEGRATION-01](D2/SVC-INTEGRATION-01.md) | |
+| 详规 | L489 S2 · 页面：适配器中心 | D2 [ADAPTER-01](D2/ADAPTER-01.md) | |
+| 详规 | L500 S3 · 知识资产元数据+标准化模型+来源范围（B0） | D2 [KNOW-01](D2/KNOW-01.md) | |
+| 详规 | L500 S3 · 来源证据分级与冲突仲裁 | D2 [OPT-07](D2/OPT-07.md) | |
+| 详规 | L500 S3 · 生成期新旧识别+审核去重工作流 | D2 [KNOW-02](D2/KNOW-02.md) | |
+| 详规 | L500 S3 · 权威知识版本替换/旧版隔离 | D2 [SYS-08](D2/SYS-08.md) | |
+| 详规 | L500 S3 · 知识资产 API | D2 [API-03](D2/API-03.md) | |
+| 详规 | L500 S3 · AI 知识审核页（生成/工厂页随 wave2） | D4 [AIREVIEW-01](D4/AIREVIEW-01.md)；生成 wave2 | |
+| 详规 | L511 S4 · 映射引擎（标准术语/编码/MED-C1 高危近似判别） | D2 [TERM-01](D2/TERM-01.md) | |
+| 详规 | L511 S4 · 字典映射 API（映射闭环） | D2 [API-04](D2/API-04.md) | |
+| 详规 | L511 S4 · 页面：字典映射 | D2 [DICTMAP-01](D2/DICTMAP-01.md) | |
+| 详规 | L522 S5 · 规则引擎（三层配置+规则库页+测试集+发布版本） | D2 [RULE-01](D2/RULE-01.md) | |
+| 详规 | L522 S5 · 规则 DSL 临床算子补全（between/单位换算/时间窗/derived） | D2 [MED-C2](D2/MED-C2.md) | |
+| 详规 | L522 S5 · 规则引擎 API（含发布门禁） | D2 [API-05](D2/API-05.md) | |
+| 详规 | L533 S6 · 路径引擎（专病模板/节点/分支/变异/随访接续+配置页） | D2 [PATH-01](D2/PATH-01.md) | |
+| 详规 | L533 S6 · 路径引擎 API（运行状态/推进） | D2 [API-06](D2/API-06.md) | |
+| 详规 | L544 S7 · 图谱投影底座（关系库 graph_* 权威·Neo4j 可重建投影） | D0 [SYS-03](D0/SYS-03.md) | |
+| 详规 | L544 S7 · 页面：图谱查询（投影解释） | D6 [GRAPH-01](D6/GRAPH-01.md) | |
+| 详规 | L544 S7 · 页面：来源追溯（来源链/冲突仲裁；来源分级复用 [OPT-07](D2/OPT-07.md)） | D6 [PROV-01](D6/PROV-01.md) | |
+| 详规 | L554 S8 · 嵌入入参/launch（iframe/SDK/纯API，§1.4 嵌入） | D3 [EMBED-01](D3/EMBED-01.md)（引擎）+ [API-11](D3/API-11.md)（API） | |
+| 详规 | L554 S8 · 6 触发点事件契约（patient-view/order-sign…） | D3 [OPT-02](D3/OPT-02.md) | |
+| 详规 | L554 S8 · 临床事件入口（同步/异步/批量/回放→触发） | D3 [API-02](D3/API-02.md) | |
+| 详规 | L554 S8 · 推荐卡命中+反馈（触发→推荐卡→采纳/不采纳） | D3 [CDSS-01](D3/CDSS-01.md)（引擎）+ [API-07](D3/API-07.md)（API） | |
+| 详规 | L554 S8 · 临床安全红线（超时不阻断开医嘱·红线强优先） | D3 [OPT-04](D3/OPT-04.md) | |
+| 详规 | L554 S8 · 服务包编排（患者/路径运行·提醒反馈·待办通知协同） | D3 [SVC-CLINICAL-01](D3/SVC-CLINICAL-01.md)/[02](D3/SVC-CLINICAL-02.md)/[03](D3/SVC-CLINICAL-03.md) | |
+| 详规 | L554 S8 · 运行页面（提醒治理/患者路径/待办/通知/患者主索引/规则校验） | D3 页 [REMIND-01](D3/REMIND-01.md)/[PPATH-01](D3/PPATH-01.md)/[TODO-01](D3/TODO-01.md)/[NOTIFY-01](D3/NOTIFY-01.md)/[PMI-01](D3/PMI-01.md)/[RULECHK-01](D3/RULECHK-01.md) | |
+| 详规 | L565 S9 · 内涵质控引擎（结构化抽取/规则执行/问题分级，B0） | D4 [EVAL-01](D4/EVAL-01.md) | |
+| 详规 | L565 S9 · 评估质控 API | D4 [API-08](D4/API-08.md) | |
+| 详规 | L565 S9 · 病案内涵质控（服务包侧） | D4 [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) | |
+| 详规 | L565 S9 · 页面：评估结果（问题/整改） | D4 [EVALRES-01](D4/EVALRES-01.md) | |
+| 详规 | L575 S10 · 医保病案服务包（DRG/DIP/首页/编码/费用问题） | D4 [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) | |
+| 详规 | L575 S10 · 页面：医保智能审核 | D4 [INSAUDIT-01](D4/INSAUDIT-01.md) | |
+| 详规 | L584 S11 · 评估引擎（指标/结果/整改闭环驱动，B0；API [API-08](D4/API-08.md)） | D4 [EVAL-01](D4/EVAL-01.md) | |
+| 详规 | L584 S11 · 质控驾驶舱服务包（院级总览） | D4 [SVC-QUALITY-01](D4/SVC-QUALITY-01.md) | |
+| 详规 | L584 S11 · 整改闭环服务包 | D4 [SVC-QUALITY-03](D4/SVC-QUALITY-03.md) | |
+| 详规 | L584 S11 · 价值指标与 ROI 看板 | D4 [OPT-08](D4/OPT-08.md) | |
+| 详规 | L584 S11 · 页面：质控驾驶舱/质控预警/评估指标库/评估结果 | D4 [QCDASH-01](D4/QCDASH-01.md)/[QCALERT-01](D4/QCALERT-01.md)/[EVALSET-01](D4/EVALSET-01.md)/[EVALRES-01](D4/EVALRES-01.md) | |
+| 详规 | L593 S12 · 随访引擎（计划/任务/异常回院，B0） | D3 [FOLLOW-01](D3/FOLLOW-01.md) | |
+| 详规 | L593 S12 · 随访 API | D3 [API-09](D3/API-09.md) | |
+| 详规 | L593 S12 · 页面：智能随访 | D3 [FUP-01](D3/FUP-01.md) | |
+| 详规 | L602 S13 · 版本继承+发布框架（灰度/全量/回滚） | D2 [SYS-04](D2/SYS-04.md) | |
+| 详规 | L602 S13 · 包发布引擎（知识包/配置包结构） | D2 [PKG-01](D2/PKG-01.md) | |
+| 详规 | L602 S13 · 包发布 API（发布流程/同步日志） | D2 [API-10](D2/API-10.md) | |
+| 详规 | L602 S13 · 资产准备服务包（知识/配置/字典/规则/路径） | D2 [SVC-PILOT-03](D2/SVC-PILOT-03.md) | |
+| 详规 | L602 S13 · 页面：配置包中心（权威版本原子替换见 S3 [SYS-08](D2/SYS-08.md)） | D2 [CFGPKG-01](D2/CFGPKG-01.md) | |
+| 详规 | L611 S14 · 双模身份/登录闭环 | D0 [AUTH-01](D0/AUTH-01.md) | |
+| 详规 | L611 S14 · 五维身份权限底座+13 角色矩阵+菜单粒度权限 | D0 [BASE-02](D0/BASE-02.md) + [INFRA-05](D0/INFRA-05.md) | |
+| 详规 | L611 S14 · 身份安全服务包（认证/会话/隔离） | D5 [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md) | |
+| 详规 | L611 S14 · 审计运维服务包（审计/Provider/备份） | D5 [SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md) | |
+| 详规 | L611 S14 · 安全合规+证据框架（数据权限/脱敏/导出审批） | D5 [SYS-06](D5/SYS-06.md) | |
+| 详规 | L611 S14 · 证据链（签名/留证） | D5 [EVID-01](D5/EVID-01.md) | |
+| 详规 | L611 S14 · 互联互通测评映射 | D5 [OPT-05](D5/OPT-05.md) | |
+| 详规 | L611 S14 · 页面：用户管理/审计日志/安全基线/身份绑定/Provider 状态/通知设置 | D5 [USERS-01](D5/USERS-01.md)/[AUDITLOG-01](D5/AUDITLOG-01.md)/[SECBASE-01](D5/SECBASE-01.md)/[IDBIND-01](D5/IDBIND-01.md)/[PROVIDER-01](D5/PROVIDER-01.md)/[NOTIFSET-01](D5/NOTIFSET-01.md) | |
+| 详规 | L620 S15 · AI 知识审核/发布页（生成随 wave2） | D4 [AIREVIEW-01](D4/AIREVIEW-01.md) | |
+| 详规 | L620 S15 · S0–S40 全验收/E2E/证据包（实际 pass 待 wave2） | ga [QA-01](ga/QA-01.md)/[INFRA-07](ga/INFRA-07.md)/[INFRA-10](ga/INFRA-10.md) | |
+| 详规 | L629 S16 · 辅助诊疗/疾病候选（B0 确定性命中） | D3 [CDSS-01](D3/CDSS-01.md) | |
+| 详规 | L629 S16 · 深度鉴别诊断生成 | 随 wave2（LLM/AIK 深度生成，本阶段不建） | |
 | 详规 | L656 S17 检查检验推荐 | 待迁 | |
 | 详规 | L666 S18 用药安全与治疗方案 | 待迁 | |
 | 详规 | L676 S19 急危重症与预警 | 待迁 | |
 | 详规 | L686 S20 护理康复与宣教（路径接续） | 待迁 | |
 | 详规 | L696 S21 院感与公共卫生 | 待迁 | |
 | 详规 | L706 S22 MDT 与专科中心协同 | 待迁 | |
-| 详规 | L716 S23 电子病历评级支撑 | D4 [EMR-LEVEL-01](D4/EMR-LEVEL-01.md)/[EMR-LEVEL-02](D4/EMR-LEVEL-02.md) | |
+| 详规 | L716 S23 · 评级目标映射+评价业务项目覆盖矩阵 | D4 [EMR-LEVEL-01](D4/EMR-LEVEL-01.md) | |
+| 详规 | L716 S23 · 评级数据质量指标+评级证据包 | D4 [EMR-LEVEL-02](D4/EMR-LEVEL-02.md) | |
 | 详规 | L727 S24 门急诊全过程支持 | 待迁 | |
 | 详规 | L739 S25 住院诊疗与核心制度 | 待迁 | |
 | 详规 | L751 S26 围手术期、麻醉与输血 | 待迁 | |
@@ -319,5 +370,5 @@
 ## 进度
 - 旧锚点总数：310
 - 已迁（非"待迁"）：125（D0 36 + D1 2 + D2 卡 49 + D2 场景锚点 14 + D3 场景锚点 7 + D4 场景锚点 10 + D5 场景锚点 2 + D6 场景锚点 2 + ga 锚点 3：落地 §16.2 A1-A9 剧本 + 体验 §12 PR 门禁 + §13 验收清单）
-- 退役就绪：核心域 D0–D6 全卡 + **ga 总验收 12 卡**已搬（ga 实际 pass 待 wave2）；剩 wave2（AI 加深）+ 各域卡级 §-锚点细化 + 场景 S17–S40（wave2 专病域）待续
+- 退役就绪：核心域 D0–D6 全卡 + **ga 总验收 12 卡**已搬（ga 实际 pass 待 wave2）；**已迁场景行 S0–S16 + S23 已细化到卡级**（详规 §3「场景子责任→单卡」，18 场景→68 行）；剩 wave2（AI 加深）+ 场景 S17–S40（wave2 专病域）待续
 - 域搬迁进度：D0 ✅ / D1 ✅ / D2 ✅（30 卡）/ D3 ✅（21 卡）/ D4 ✅（14 卡）/ D5 ✅（11 卡）/ D6 ✅（6 卡）/ wave2 ⬜ / **ga ✅（12 卡·规格，pass 待 wave2）**
