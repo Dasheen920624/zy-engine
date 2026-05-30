@@ -141,7 +141,7 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 
 > 目标：配置类引擎做成 B0 真实——这是 D3 临床能消费的料。
 
-> 🗂️ 本域施工卡迁移中（**B1 已建 4**：[API-01](cards/D2/API-01.md) / [OPT-01](cards/D2/OPT-01.md) / [SYS-04](cards/D2/SYS-04.md) / [SYS-08](cards/D2/SYS-08.md)）：[D2 域简报](cards/D2/_brief.md) + [卡索引 · D2 全卡目录](cards/_index.md)；已建卡 ID = 卡名（`cards/D2/<ID>.md`），合同级功能/契约/11 视角/验收以卡为准；其余卡逐批迁移（B2 知识+字典 → B3 规则+路径 → B4 包发布+集成 → B5 试点服务包 → B6 七页面）。
+> 🗂️ 本域施工卡迁移中（**B1–B4 已建 19 卡**：B1 框架 API-01/OPT-01/SYS-04/SYS-08 · B2 知识+字典 KNOW-01/KNOW-02/TERM-01/API-03/API-04 · B3 规则+路径 RULE-01/PATH-01/MED-C2/API-05/API-06 · B4 包发布+集成 PKG-01/API-10/INTEG-01/INTEG-02/OPT-07）：[D2 域简报](cards/D2/_brief.md) + [卡索引 · D2 全卡目录](cards/_index.md)；已建卡 ID = 卡名（`cards/D2/<ID>.md`），合同级功能/契约/11 视角/验收以卡为准；**待建** SVC-PILOT-01/02/03 + SVC-INTEGRATION-01（B5）+ 7 页面（B6）逐批迁移。
 
 | ID | 任务 | 范围 | 工作量 | 状态 |
 |---|---|---|---:|---|

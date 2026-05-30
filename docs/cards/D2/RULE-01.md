@@ -1,0 +1,82 @@
+# RULE-01 · 规则引擎（后端 + 三层前端）
+
+> 读卡前置：[核心 CONSTITUTION](../../CONSTITUTION.md) + [D2 域简报](_brief.md) + [体验契约](../../EXPERIENCE_CONTRACT.md)（含三层编辑前端）。
+> 迁移来源（覆盖矩阵锚点）：详规 §4 规则引擎详细规范（L1015 / 4.1 目标 L1017 / 4.2 三层配置 L1026 / 4.3 对象模型 L1034 / 4.4 操作符 L1048 / 4.5 动作 L1063 / 4.6 DSL L1077 / 4.7 发布门禁 L1115）· 落地规划 §8.2 规则引擎（L458）· 核心 §4 7 步流 / §3 状态机。
+
+## 身份
+- 卡 ID：RULE-01（= backlog 任务 ID）
+- 域：D2 试点准备
+- 关联场景：S5 规则引擎配置
+- 依赖卡：[SYS-04](SYS-04.md)（规则版本与发布）· [API-01](API-01.md)（标准上下文输入）· [API-05](API-05.md)（规则 API）· [MED-C2](MED-C2.md)（临床 DSL 算子）· [BASE-06](../D0/BASE-06.md)/[BASE-08](../D0/BASE-08.md)/[BASE-10](../D0/BASE-10.md)（前端骨架/体验底座/token）· [INFRA-09](../D1/INFRA-09.md)（StepFlow 组件）
+- 工作量：12d
+- owner / reviewer：待派单（owner ≠ reviewer）
+
+## 目标
+提供规则引擎 **B0 真实**：**三层配置**（L1 模板 / L2 可视化条件树 / L3 DSL）+ **7 步流**发布 + **仿真**（病例选择器跑真实快照）+ **测试病例**（阳/阴/边界/冲突）。让医务处/质控/专家**无需写死 yml**即可配置规则集，经审核灰度全量发布供 D3 临床消费。
+
+## 现状（搬迁时核查 2026-05-30，以 `medkernel-backend/src` 为准）
+`engine/rule` **后端已实质建成**，本卡＝**契约化 + 三层前端 + 仿真/发布补全**：
+- 已有（后端）：`RuleDefinition`/`RuleVersion`(+Status)、`RuleAuthoringMode`（L1/L2/L3 三层已建模）、`RuleType`/`RuleRiskLevel`、`RuleDslEvaluator`(+`RuleDslEvaluation`/Test)、`RuleTestCase`(+`Type`/`Result`/`Status`)、`RuleEvaluateRequest`/`Response`/`RuleEvaluationItem`、`RuleSimulateRequest`、`RuleActionResult`、`RuleExecutionLog`、`RuleEngineService`/`Controller`(+ 安全测试)。
+- 缺口（本卡补）：① **三层前端**（L1 模板选择 / L2 条件树可视化 / L3 DSL 编辑器，[BASE-08](../D0/BASE-08.md) 六态）；② **仿真病例选择器**接 [API-01](API-01.md) 真实快照；③ 发布**7 步流 + §3 状态机**接 [SYS-04](SYS-04.md)；④ 临床算子补全归 [MED-C2](MED-C2.md)；⑤ 发布门禁（高危必带测试病例 + 影响分析）。
+
+## 功能要求（原子可测条目）
+- [ ] **FR-1 三层配置**：L1 从模板实例化；L2 可视化条件树（与/或/比较/分组）双向 ↔ L3 DSL；三层产出**同一 `RuleDefinition`**，互转无损。
+- [ ] **FR-2 DSL 执行**：`RuleDslEvaluator` 对标准上下文（[API-01](API-01.md)）求值，输出 `RuleActionResult` + **可解释**（命中条件/取值/来源）。
+- [ ] **FR-3 测试病例**：每规则可挂阳性/阴性/边界/冲突用例（`RuleTestCase`）；发布前必须**全绿**。
+- [ ] **FR-4 仿真**：病例选择器选真实/脱敏患者快照 → 跑规则 → 展示命中与解释（不写库、不发提醒）。
+- [ ] **FR-5 7 步流发布**：选模板/导入 → 自动校验 → 看影响 → 提交审核 → 灰度（10%）→ 全量 → 留证据/可回滚（核心 §4，[SYS-04](SYS-04.md)）。
+- [ ] **FR-6 发布门禁**：高危规则（`RuleRiskLevel=HIGH`）无测试病例/无影响分析/无审核 → **拒绝发布**（详规 §4.7 / 核心 §13）。
+
+## 接口契约 / 页面契约
+### 接口契约（引擎/API 卡）
+- 端点：执行/仿真/测试能力，REST 客户面在 [API-05](API-05.md)。`RuleDslEvaluator` 求值入参为标准上下文快照。
+- DTO：复用 `RuleDefinition`/`RuleVersion`/`RuleTestCase`/`RuleSimulateRequest`/`RuleActionResult`。
+- 状态机：规则版本走核心 §3 配置类 + 变更类（发布 [SYS-04](SYS-04.md)）；**禁自创**。
+- 幂等 / 错误码 / traceId：高危无测试病例发布 → `RULE_PUBLISH_GATE_DENIED`；DSL 语法错 → `RULE_DSL_INVALID` + 行列；全链路 traceId（[OBS-01](../D0/OBS-01.md)）。
+### 页面契约（页面卡 —— 规则库页，S5）
+- 路由元数据：sectionKey `pilot` / menuKey `rule-library` / requiredPermissions 规则配置 / requiredRoles 医务处·质控·专家。
+- 结构：PageShell（[BASE-08](../D0/BASE-08.md)）+ 规则列表（大列表 [API-13](../D0/API-13.md)）+ 三层编辑器（L1 模板 / L2 条件树画布 / L3 DSL）+ 仿真面板 + 7 步流（[INFRA-09](../D1/INFRA-09.md) StepFlow）+ 六态。
+- 主按钮 ≤1（新建/发布上下文相关）/ 默认筛选 ≤3（域/状态/风险）/ 默认角色视图。
+- 五维 RBAC 点位：菜单 / 动作（发布权仅医务处）/ 数据（按 org）/ 资产（规则集）/ 环境。
+- 样式：仅引用 [BASE-10](../D0/BASE-10.md) token + [体验契约](../../EXPERIENCE_CONTRACT.md)；禁硬编码 hex/px。
+
+## 数据与迁移
+- 表族（已有）：`rule_definition`/`rule_version`/`rule_test_case`/`rule_execution_log`；本卡补发布/仿真关联字段 + 测试病例必填门禁。
+- 主键 ULID；唯一约束：`(rule_identity, org_scope, version)` ACTIVE 唯一（经 [SYS-04](SYS-04.md)）；索引：`status`、`risk_level`、`org_path`。
+- 5 方言迁移一致 + 中文注释。
+
+## 视角清单（11 视角逐条）
+1. **产品架构**：规则三层配置 + 仿真 + 7 步流，配置外置不写死（铁律 #11/#19）。
+2. **产品体验**：★三层编辑器 + 仿真 + 7 步流，六态齐全；条件树/DSL 双向无损；老年/国产浏览器可读（[BASE-10](../D0/BASE-10.md)）。
+3. **系统与数据架构**：DSL 对标准上下文求值；大规则列表分页；仿真不写库；P95 求值可观测。
+4. **临床医疗安全**：★高危规则发布门禁（测试病例全绿 + 影响分析），错规则不出厂直达 D3。
+5. **知识与数据治理**：规则版本化、可回滚、可解释；引用知识/字典标准码（[TERM-01](TERM-01.md)）。
+6. **安全合规与监管**：配置/审核/发布/回滚留审计（[BASE-04](../D0/BASE-04.md)）。
+7. **集团化与多租户治理**：规则集七层继承覆盖 + 局部覆盖可解释 + 安全红线不可下级关（[SYS-04](SYS-04.md)）。
+8. **集成与互操作**：规则消费标准上下文（[API-01](API-01.md)），不绕引擎直读外部。
+9. **运维 / SRE / 国产化**：5 方言；X6/G6 条件树前端国产浏览器兼容；灰度/回滚。
+10. **质量与真实性审计**：仿真用真实快照非造数；无写死医学常量（外置规则）；高危门禁 CI（铁律 #1）。
+11. **AI / 模型治理与可降级**：★**B0＝人工三层配置 + 确定性执行**；AI 辅助生成规则候选（第二波）必经审核仿真，关模型规则引擎照常。
+
+## 适用不变量
+- 命中核心约束：**§4 7 步流** · **§3 状态机** · **铁律 #11 配置外置 / #19** · **§13 高危发布门禁** · **§9 继承覆盖** · **依赖 [SYS-04](SYS-04.md)/[API-01](API-01.md)/[MED-C2](MED-C2.md)**。
+- 本卡落点：规则从"写死 yml"变为"三层配置 + 仿真 + 门禁发布"，资产化、可回滚、可解释。
+
+## 验收 + 验证
+- [ ] **AC-1（FR-1）**：L2 条件树编辑 → 切 L3 DSL 内容一致、回切无损；产出同一 `RuleDefinition`。
+- [ ] **AC-2（FR-2/3）**：挂阳/阴/边界/冲突用例 → 求值结果符合预期且可解释；用例不全绿 → 不可发布。
+- [ ] **AC-3（FR-4）**：仿真选真实快照跑规则 → 命中与解释正确、不写库不发提醒。
+- [ ] **AC-4（FR-5/6）**：7 步流发布；高危规则无测试病例点发布 → `RULE_PUBLISH_GATE_DENIED`；灰度→全量→回滚证据完整。
+- 关联 A1–A9 剧本：A3 规则配置、A4 发布回滚。
+- T-GATE：前后端真实性门禁全绿（仿真非造数、无写死常量、高危门禁生效）。
+- B0 验收：三层配置 + 确定性执行，**天然 B0**；关模型行为不变。
+
+## 完工证据
+- 代码 permalink：三层编辑器前端 + `RuleDslEvaluator` 接 [API-01](API-01.md) + 仿真 + 7 步流接 [SYS-04](SYS-04.md) + 发布门禁 + 5 方言迁移。
+- 测试：三层互转测试 + 阳阴边界冲突用例 + 仿真真实快照测试 + 高危门禁测试 + 灰度回滚 E2E。
+- 审计员签字：@<reviewer>（owner ≠ reviewer）。
+
+## 大卡工序（12d，后端 + 三层前端；按 PR 拆分）
+- PR1：后端契约 + DSL 求值接标准上下文 + 测试病例门禁（[MED-C2](MED-C2.md) 算子并行）→ AC-2。
+- PR2：L1/L2/L3 三层前端（条件树画布 + DSL 编辑器，六态）+ 互转无损 → AC-1。
+- PR3：仿真病例选择器 + 7 步流发布（[SYS-04](SYS-04.md)）+ 高危门禁 → AC-3/4。
