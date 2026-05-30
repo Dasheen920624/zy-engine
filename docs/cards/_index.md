@@ -21,7 +21,7 @@
 | S12 | 智能随访 | [API-09](D3/API-09.md) 随访 API · [FOLLOW-01](D3/FOLLOW-01.md) 随访引擎 · 页 [FUP-01](D3/FUP-01.md) 智能随访 |
 | S13 | 包发布与院内同步 | [PKG-01](D2/PKG-01.md) 包发布引擎 · [API-10](D2/API-10.md) 包发布 API · [SYS-04](D2/SYS-04.md) 版本发布框架 · [SYS-08](D2/SYS-08.md) 权威知识替换 · [SVC-PILOT-03](D2/SVC-PILOT-03.md) 资产准备服务包 · [CFGPKG-01](D2/CFGPKG-01.md) 配置包中心页 |
 | S14 | 用户、权限与合规 | [AUTH-01](D0/AUTH-01.md)/[AUTH-02](D0/AUTH-02.md)/[AUTH-03](D0/AUTH-03.md) 双模登录认证 · [BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 权限 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 超管 · [CONFIG-01](D0/CONFIG-01.md) 配置 · [BASE-04](D0/BASE-04.md) 审计 · [INFRA-04](D0/INFRA-04.md)/[INFRA-08](D0/INFRA-08.md) 会话 · **D5** [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md)/[SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md) 服务包 · [SYS-06](D5/SYS-06.md) 证据框架 · [EVID-01](D5/EVID-01.md) 证据链 · [OPT-05](D5/OPT-05.md) 互联互通测评 · 页 [USERS-01](D5/USERS-01.md)/[IDBIND-01](D5/IDBIND-01.md)/[AUDITLOG-01](D5/AUDITLOG-01.md)/[SECBASE-01](D5/SECBASE-01.md)/[PROVIDER-01](D5/PROVIDER-01.md)/[NOTIFSET-01](D5/NOTIFSET-01.md) |
-| S15 | AI 验证与验收 | [AIREVIEW-01](D4/AIREVIEW-01.md) AI 知识审核台（人工审/发，AI 生成随 wave2）；S0–S40 全验收/E2E 证据随 GA |
+| S15 | AI 验证与验收 | [AIREVIEW-01](D4/AIREVIEW-01.md) AI 知识审核台（人工审/发，AI 生成随 wave2）· **GA** [QA-01](ga/QA-01.md) 全链路 / [INFRA-07](ga/INFRA-07.md) 可打开性 / [INFRA-10](ga/INFRA-10.md) A1-A9 自动化 / [QA-06](ga/QA-06.md) 体验（实际 pass 待 wave2）|
 | S16 | 辅助诊疗与鉴别诊断 | [CDSS-01](D3/CDSS-01.md) 推荐/CDSS 引擎（B0 确定性辅助诊疗/候选）；深度鉴别诊断生成随 wave2 |
 | S17 | 检查检验推荐 | 待建 |
 | S18 | 用药安全与治疗方案 | 待建 |
@@ -91,5 +91,7 @@
 ### 第二波 wave2
 API-12 / LLM-01 … LLM-08 / OPT-06 / OPT-09 / AIK-STD-01 … AIK-STD-12 / KNOWGEN-01 … KNOWGEN-15 / NURSING-01 / REPORT-01 / POC-KNOW-01 / PHARMACY-01 / CRITICAL-01 / SPECIAL-POP-01 / PERIOP-01 / ONCO-RENAL-01 / ALLIED-CARE-01 / TCM-HEALTH-01 / INFECTION-PH-01 / PRIMARY-CARE-01 / REGION-COLLAB-01 / SPECIALTY-EXT-01 / RWD-01 / SVC-DOMAIN-01 / SVC-DOMAIN-02（待建）
 
-### GA 验收 ga
-QA-01 … QA-08 / DEGRADE-01 / SYS-07 / INFRA-07 / INFRA-10（待建）
+### GA 验收 ga ✅ 已建（12 卡，[域简报](ga/_brief.md)）
+**跨域验收**：[QA-01](ga/QA-01.md) 引擎 E2E · [QA-02](ga/QA-02.md) 迁移/性能/国产化 · [QA-03](ga/QA-03.md) 医疗安全 · [QA-04](ga/QA-04.md) 无模型 B0 · [QA-05](ga/QA-05.md) 上线评审 · [QA-06](ga/QA-06.md) 产品体验 · [QA-07](ga/QA-07.md) 代码净化 · [QA-08](ga/QA-08.md) 第三方对接
+**降级/非功能/可打开性/自动化**：[DEGRADE-01](ga/DEGRADE-01.md) 四类降级链 · [SYS-07](ga/SYS-07.md) 非功能基线 · [INFRA-07](ga/INFRA-07.md) 全页面可打开性 E2E · [INFRA-10](ga/INFRA-10.md) A1-A9 自动化 + 14 门禁
+> ⚠️ GA 卡＝验收规格；**实际 GA pass 待 wave2 建成**（门禁 3/8/10 依赖 AIK / 15 领域门面 / KNOWGEN）。
