@@ -6,20 +6,19 @@
 
 ## 在途工作线
 
-### 线 1 · D5 合规运维施工卡迁移 🚧
+### 线 1 · D6 高级工具施工卡迁移 🚧（核心域收官）
 - **类型**：文档（施工卡迁移）
-- **分支**：`claude/d5-compliance`（基于含 #160 的新 main；D5 全 11 卡 + 简报 + 四索引回填在此，PR 待开/待合）
-- **目标**：D5 域 11 卡（5 ID + 6 页面）搬成自包含施工卡 —— **全部已建**；**一次提交一个收官 PR**（用户要求减少提交/省 token）
-- **全域进度**：D0 ✅(#152/#153) · D1 ✅(#154) · D2 ✅(#156/#157/#158) · D3 ✅(#159) · D4 ✅(#160) · **D5 🚧 全 11 卡已建（PR 待合）** · D6/wave2/ga ⬜
-- **当前批**（5 ID + 6 页面）：EVID-01 · SYS-06 · OPT-05 · SVC-COMPLIANCE-01/02 / 页 USERS-01 · IDBIND-01 · AUDITLOG-01 · SECBASE-01 · PROVIDER-01 · NOTIFSET-01
-- **状态**：#160 已合（D4 收官）；**D5 共 11 卡已建**（现状段基于真实后端类名 + 前端真实路由）、**_index（D5 目录 ✅ 11 卡 + S14 场景行）+ _coverage-matrix（已迁 118→120，D5 场景锚点 2(S14) 已迁，D5 标 ✅）+ backlog（🗂️ 全 11 卡 + D5-PAGE 实化）已回填**；待提交 → 开 PR → 合并
-- **D5 后端/前端现状（已核实 2026-05-30，建卡照此、勿凭空）**：证据链＝`com/medkernel/compliance/evidence`（EvidenceController/Service/Snapshot/VerifyResult/CreateDto，国密签名/验签）· 审计＝`com/medkernel/compliance/audit`（AuditController/AuditEvent，建在 D0 BASE-04）· 身份/权限＝`engine/security`（Auth/Credential/EffectivePermission/PermissionEvaluator，**单一归属 D0** AUTH-01/BASE-02/INFRA-05，D5 只编排）；6 前端页 `frontend/src/pages/compliance/*.tsx` 已存在待真实化（`/admin/users`、`/security/identity-binding`、`/admin/audit`、`/security/baseline`、`/system/providers`、`/notifications/settings`）。缺口（新建/框架化）：数据权限/脱敏/导出审批(SYS-06)、互联互通测评(OPT-05)、Provider 状态/备份/离线许可(SVC-COMPLIANCE-02)。SECBASE-01 承载 CONFIG-01 配置中心前台、二级菜单仍 27 不净增。
+- **分支**：`claude/d6-tools`（基于含 #161 的新 main；D6 全 6 卡 + 简报 + 四索引回填在此，PR 待开/待合）
+- **目标**：D6 域 6 卡（1 ID + 5 页面）搬成自包含施工卡 —— **全部已建**；整域一个收官 PR。**合并后核心业务域 D0–D6 全部完成**
+- **全域进度**：D0 ✅(#152/#153) · D1 ✅(#154) · D2 ✅(#156/#157/#158) · D3 ✅(#159) · D4 ✅(#160) · D5 ✅(#161) · **D6 🚧 全 6 卡已建（PR 待合）** · wave2/ga ⬜
+- **当前批**（1 ID + 5 页面）：OPT-10 / 页 PROV-01 · GRAPH-01 · AIFLOW-01 · DOMCHK-01 · DEVCON-01
+- **状态**：#161 已合（D5 收官）；**D6 共 6 卡已建**（现状段基于真实后端类名 + 前端真实路由）、**_index（D6 目录 ✅ 6 卡 + S7 场景行）+ _coverage-matrix（已迁 120→122，D6 场景锚点 2(S7) 已迁，D6 标 ✅，核心域 D0–D6 全搬）+ backlog（🗂️ 全 6 卡 + D6-PAGE 实化）已回填**；待提交 → 开 PR → 合并
+- **D6 后端/前端现状（已核实 2026-05-30，建卡照此、勿凭空）**：来源链＝`engine/knowledge` `KnowledgeLineage`（来源分级 [OPT-07](../D2/OPT-07.md) 在 D2）· 图谱＝`engine/pathway` `PathwayGraph` + 关系库投影（[SYS-03](../D0/SYS-03.md)，图为投影非权威）· 5 前端页 `frontend/src/pages/advanced/*.tsx` 已存在待真实化（`/advanced/{provenance,graph,ai-workflows,domestic,dev-console}`）。缺口（新建/壳）：插件安全边界(OPT-10)、国产化自检/开发者控制台后端；**AIFLOW-01 本期只壳/查看，编排留 wave2**。
 - **下一步**（精确动作）：
-  1. ✅ D5 全 11 卡已建、_index/_coverage-matrix/backlog 已回填（本分支 `claude/d5-compliance`）
-  2. 提交 → 推送 → 开 **PR**（`docs(cards): D5 合规运维 11 卡 + 索引回填（D5 收官）`）→ 请用户合并
-  3. 合并后 **D5 卡全建** → 走 D5 域级验收（[质量基线 §2.3]）→ 从新 main 起 D6 高级工具迁移
-- **后续批**：D6 高级工具（OPT-10 + 5 页：来源追溯/图谱查询/AI 工作流/国产化自检/开发者控制台）→ wave2 → ga
-- **遗留 sweep（不急）**：各域卡对同域已建卡仍有 `../_index.md` 间接引用（可达、不算错），全域搬完做一次「间接→直链」升级 pass；_coverage-matrix 当前为场景级锚点，卡级 §-锚点细化可后补。
+  1. ✅ D6 全 6 卡已建、_index/_coverage-matrix/backlog 已回填（本分支 `claude/d6-tools`）
+  2. 提交 → 推送 → 开 **PR**（`docs(cards): D6 高级工具 6 卡 + 索引回填（D6 收官，核心域 D0–D6 全建）`）→ 请用户合并
+  3. 合并后 **核心业务域 D0–D6 卡全建完成** → D6 域级验收 → 转入 **wave2（AI 加深）/ ga 总验收**（按用户节奏）
+- **后续（核心域之后，待用户起）**：① 遗留 sweep：各域卡间接 `../_index.md` 引用→直链升级 pass + _coverage-matrix 卡级 §-锚点细化；② wave2 第二波 AI（LLM-*/AIK-*/KNOWGEN-* + 15 领域门面 + 专病服务包，详规 S17–S40）；③ ga 总验收（QA-01…08/DEGRADE-01/SYS-07/INFRA-07/10）。
 - **专项流程**：填卡五步见 `docs/superpowers/specs/2026-05-30-doc-architecture-build-cards-design.md §7 P1`
 
 ## 已归档工作线（最近完成，供回溯）
@@ -28,6 +27,7 @@
 - D2 试点准备 30 卡 ✅（#156 B1 框架 + #157 B2-B4 引擎/API + #158 B5-B6 服务包+7页面 收官）
 - D3 临床运行 21 卡 ✅（#159：14 ID + 7 页面，整域一个 PR）
 - D4 质控改进 14 卡 ✅（#160：8 ID + 6 页面，整域一个 PR）
+- D5 合规运维 11 卡 ✅（#161：5 ID + 6 页面，整域一个 PR）
 
 ## 通用约定（所有工作线 / 所有工具适用）
 - **分支与 PR**：禁直推 main；分支 → 推送 → PR → 合并 → 确认 origin/main 含合并提交。**squash 合并后必须从新 origin/main 重拉分支**再做下一单元（否则基点回退、重复带入）。一个逻辑单元一个 PR；大任务拆批、每批独立分支基于当时最新 main。分支前缀现状用 `claude/`。
@@ -48,4 +48,4 @@
 ```
 
 ---
-> 末次更新：2026-05-30 · D4 收官合并（#160）；D5 合规运维 11 卡已建（`claude/d5-compliance`，收官 PR 待合）
+> 末次更新：2026-05-30 · D5 收官合并（#161）；D6 高级工具 6 卡已建（`claude/d6-tools`，收官 PR 待合）——合并后核心业务域 D0–D6 全建，转 wave2/ga
