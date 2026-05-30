@@ -43,7 +43,7 @@
 | 详规 | L593 S12 智能随访 | D3 [API-09](D3/API-09.md)/[FOLLOW-01](D3/FOLLOW-01.md) + 页 [FUP-01](D3/FUP-01.md) | |
 | 详规 | L602 S13 包发布与院内同步 | D2 [PKG-01](D2/PKG-01.md)/[API-10](D2/API-10.md)/[SYS-04](D2/SYS-04.md)/[SYS-08](D2/SYS-08.md)/[SVC-PILOT-03](D2/SVC-PILOT-03.md)/[CFGPKG-01](D2/CFGPKG-01.md) | |
 | 详规 | L611 S14 用户、权限与合规 | D0 [AUTH-01](D0/AUTH-01.md)/[BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 身份权限 + D5 [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md)/[SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md)/[SYS-06](D5/SYS-06.md)/[EVID-01](D5/EVID-01.md) + 页 [USERS-01](D5/USERS-01.md)/[AUDITLOG-01](D5/AUDITLOG-01.md)/[SECBASE-01](D5/SECBASE-01.md) | |
-| 详规 | L620 S15 AI 验证与验收 | D4 [AIREVIEW-01](D4/AIREVIEW-01.md)（AI 知识审/发；生成随 wave2）；S0-S40 全验收/证据随 GA | |
+| 详规 | L620 S15 AI 验证与验收 | D4 [AIREVIEW-01](D4/AIREVIEW-01.md)（AI 审/发）+ ga [QA-01](ga/QA-01.md)/[INFRA-07](ga/INFRA-07.md)/[INFRA-10](ga/INFRA-10.md)（全验收/E2E，实际 pass 待 wave2）| |
 | 详规 | L629 S16 辅助诊疗与鉴别诊断 | D3 [CDSS-01](D3/CDSS-01.md)（B0 辅助诊疗/候选）；深度鉴别诊断生成随 wave2 | |
 | 详规 | L656 S17 检查检验推荐 | 待迁 | |
 | 详规 | L666 S18 用药安全与治疗方案 | 待迁 | |
@@ -223,7 +223,7 @@
 | 落地规划 | L889 15. 智能评估系统底座要求 | 待迁 | |
 | 落地规划 | L904 16. AI 全面验证与验收 | 待迁 | |
 | 落地规划 | L908 16.1 验证层级 | 待迁 | |
-| 落地规划 | L920 16.2 A1-A9 全功能验收剧本 | 待迁 | |
+| 落地规划 | L920 16.2 A1-A9 全功能验收剧本 | ga [INFRA-10](ga/INFRA-10.md)/[QA-01](ga/QA-01.md) | |
 | 落地规划 | L938 17. 按业务域纵向推进计划 | 待迁 | |
 | 落地规划 | L942 17.1 上线阶段 | 待迁 | |
 | 落地规划 | L958 17.2 当前允许与冻结 | 待迁 | |
@@ -272,8 +272,8 @@
 | 体验规范 | L179 9. 驾驶舱与管理体验 | 待迁 | |
 | 体验规范 | L191 10. 表单、校验与发布体验 | D0 [INFRA-03](D0/INFRA-03.md)（表单校验）；发布体验→D2 配置卡 | |
 | 体验规范 | L204 11. 文案与视觉 | D0 [BASE-10](D0/BASE-10.md) / 核心 §5 / §14 | |
-| 体验规范 | L219 12. AI 开发与 PR 门禁 | 待迁 | |
-| 体验规范 | L249 13. 验收清单 | 待迁 | |
+| 体验规范 | L219 12. AI 开发与 PR 门禁 | ga [QA-07](ga/QA-07.md)（T-GATE/无 disable/铁律 0 违反）| |
+| 体验规范 | L249 13. 验收清单 | ga [QA-06](ga/QA-06.md)/[INFRA-10](ga/INFRA-10.md) | |
 | 详规 | L382 S0 工作台与总览 全角色 今日待办、风险、发布、同步、价值指标 | D1 [WORKBENCH-01](D1/WORKBENCH-01.md) | |
 | 详规 | L383 S1 集团与租户开通 平台、集团、医院管理员 组织、用户、权限、生命周期 | D2 [SVC-PILOT-01](D2/SVC-PILOT-01.md) + 页 [TENANT-01](D2/TENANT-01.md)/[IMPL-01](D2/IMPL-01.md)（+ D0 [BASE-01](D0/BASE-01.md)）| |
 | 详规 | L384 S2 院内系统接入 信息科、实施 适配器、字段映射、数据质量 | D2 [INTEG-01](D2/INTEG-01.md)/[SVC-PILOT-02](D2/SVC-PILOT-02.md) + 页 [ADAPTER-01](D2/ADAPTER-01.md) | |
@@ -289,7 +289,7 @@
 | 详规 | L394 S12 智能随访 医生、随访团队 随访计划、任务、异常回院 | D3 [FOLLOW-01](D3/FOLLOW-01.md)/[API-09](D3/API-09.md) + 页 [FUP-01](D3/FUP-01.md) | |
 | 详规 | L395 S13 包发布与院内同步 实施、信息科 知识包、配置包、同步日志 | D2 [PKG-01](D2/PKG-01.md)/[SVC-PILOT-03](D2/SVC-PILOT-03.md) + 页 [CFGPKG-01](D2/CFGPKG-01.md) | |
 | 详规 | L396 S14 用户、权限与合规 合规、信息科 身份、权限、审计、证据 | D5 [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md)/[SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md)/[EVID-01](D5/EVID-01.md)/[OPT-05](D5/OPT-05.md) + 页 [IDBIND-01](D5/IDBIND-01.md)/[PROVIDER-01](D5/PROVIDER-01.md)（+ D0 身份脊柱）| |
-| 详规 | L397 S15 AI 验证与验收 QA、AI 团队、实施 S0-S40 实现卡、全领域重点 E2E、证据包 | D4 [AIREVIEW-01](D4/AIREVIEW-01.md)（AI 审/发）；S0-S40 全验收/E2E 随 GA | |
+| 详规 | L397 S15 AI 验证与验收 QA、AI 团队、实施 S0-S40 实现卡、全领域重点 E2E、证据包 | D4 [AIREVIEW-01](D4/AIREVIEW-01.md)（AI 审/发）+ ga [QA-01](ga/QA-01.md)/[INFRA-10](ga/INFRA-10.md)（全验收，实际 pass 待 wave2）| |
 | 详规 | L398 S16 辅助诊疗与鉴别诊断 临床医生、专科专家 疾病候选、鉴别诊断、诊疗方案候选 | D3 [CDSS-01](D3/CDSS-01.md)（B0 候选）；深度生成随 wave2 | |
 | 详规 | L399 S17 检查检验推荐 临床医生 检查建议、检验建议、异常解释 | 待迁 | |
 | 详规 | L400 S18 用药安全与治疗方案 临床医生、药师 用药推荐、禁忌、相互作用、剂量提醒 | 待迁 | |
@@ -318,6 +318,6 @@
 
 ## 进度
 - 旧锚点总数：310
-- 已迁（非"待迁"）：122（D0 36 + D1 2 + D2 卡 49 + D2 场景锚点 14 + D3 场景锚点 7 + D4 场景锚点 10 + D5 场景锚点 2 + D6 场景锚点 2：详规 §3/§2 的 S7）
-- 退役就绪：**核心域 D0–D6 全卡已搬**；剩 wave2（AI 加深）+ ga 总验收 + 各域卡级 §-锚点细化 + 场景 S17–S40（wave2 专病域）待续
-- 域搬迁进度：D0 ✅ / D1 ✅ / D2 ✅（30 卡）/ D3 ✅（21 卡）/ D4 ✅（14 卡）/ D5 ✅（11 卡）/ **D6 ✅（6 卡：1 ID + 5 页面全建）** / wave2 ⬜ / ga ⬜
+- 已迁（非"待迁"）：125（D0 36 + D1 2 + D2 卡 49 + D2 场景锚点 14 + D3 场景锚点 7 + D4 场景锚点 10 + D5 场景锚点 2 + D6 场景锚点 2 + ga 锚点 3：落地 §16.2 A1-A9 剧本 + 体验 §12 PR 门禁 + §13 验收清单）
+- 退役就绪：核心域 D0–D6 全卡 + **ga 总验收 12 卡**已搬（ga 实际 pass 待 wave2）；剩 wave2（AI 加深）+ 各域卡级 §-锚点细化 + 场景 S17–S40（wave2 专病域）待续
+- 域搬迁进度：D0 ✅ / D1 ✅ / D2 ✅（30 卡）/ D3 ✅（21 卡）/ D4 ✅（14 卡）/ D5 ✅（11 卡）/ D6 ✅（6 卡）/ wave2 ⬜ / **ga ✅（12 卡·规格，pass 待 wave2）**
