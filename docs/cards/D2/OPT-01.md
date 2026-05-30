@@ -1,0 +1,89 @@
+# OPT-01 · 标准临床模型与 FHIR R4/R5 门面
+
+> 读卡前置：[核心 CONSTITUTION](../../CONSTITUTION.md) + [D2 域简报](_brief.md)。
+> 迁移来源（覆盖矩阵锚点）：详规 §1.5.1 对接方式·FHIR 门面（L174）· §1.5.3 第三方对接能力全景·标准互操作门面（L211）· §7.4 标准临床模型（L1378）· 落地规划 §11.3 院内系统对接（L741）· 核心 §10 集成互操作边界。
+
+## 身份
+- 卡 ID：OPT-01（= backlog 任务 ID）
+- 域：D2 试点准备
+- 关联场景：S2 院内系统接入（标准互操作门面）
+- 依赖卡：[SYS-01](../D0/SYS-01.md)（12 标准对象）· [API-01](API-01.md)（共用 `CanonicalResource` 上下文）· [INTEG-01](../_index.md)（适配器总线承载门面）· [BASE-03](../D0/BASE-03.md)（API 契约）· [TERM-01](../_index.md)（编码字典映射）
+- 工作量：6d
+- owner / reviewer：待派单（owner ≠ reviewer）
+
+## 目标
+
+提供 **FHIR R4/R5 标准互操作门面**：把 10 类核心 FHIR 资源（Patient / Encounter / Condition / Observation / Medication / Procedure / CarePlan / ServiceRequest / DiagnosticReport / DocumentReference）**双向映射**到院内 `CanonicalResource`，让标准化程度高的医院/集团平台经 FHIR 接入，**同时保留院内私有适配器**；门面是**协议转换层**，不替代院内适配、不绕引擎直写医疗结论（核心 §10）。
+
+## 现状（搬迁时核查 2026-05-30，以 `medkernel-backend/src` 为准）
+
+本卡**基本待建**：
+
+- 全仓"fhir" 仅作 `integration_adapter.protocol_type` 的枚举值出现（`HL7|FHIR|Webhook|REST|WebService`，见 `AdapterCreateDto/AdapterUpdateDto` + V20 集成迁移注释），**无任何 FHIR 资源门面或资源映射实现**。
+- 项目已有自有 `CanonicalResource(+Type/Repository)` 与 `canonical/` 12 子类型（[API-01](API-01.md)/[SYS-01](../D0/SYS-01.md)）——这是门面的映射目标，**本卡不重定义模型**。
+- 本卡＝**新建** FHIR R4/R5 资源门面（10 类资源 + R4/R5 双版本 + CapabilityStatement）并映射到 `CanonicalResource`，挂在 [INTEG-01](../_index.md) 适配器总线上。
+
+## 功能要求（原子可测条目）
+
+- [ ] **FR-1 10 类 FHIR 资源门面**：暴露受控 FHIR 端点覆盖 Patient/Encounter/Condition/Observation/Medication（含 MedicationRequest/Statement）/Procedure/CarePlan/ServiceRequest/DiagnosticReport/DocumentReference 的 read/search/受控 create。
+- [ ] **FR-2 双向映射到 CanonicalResource**：FHIR 资源 ↔ `engine/context/canonical` 12 类**映射**（入：FHIR → Canonical；出：Canonical → FHIR），映射规则版本化、可追溯；**不重定义院内模型**。
+- [ ] **FR-3 R4/R5 双版本**：同一资源支持 R4 与 R5 输出（version-aware 序列化），经 `CapabilityStatement` 声明支持的资源与交互范围。
+- [ ] **FR-4 门面不绕引擎**：FHIR 写入一律经[标准上下文](API-01.md)/临床事件入引擎，**不直写医嘱/病历/法定上报/支付/设备控制**（核心 §10/#10）；高风险写触发医师确认链（核心 §6/#10）。
+- [ ] **FR-5 字段映射可追溯 + 缺失诚实**：字段映射率/缺失率/转换规则可统计；未映射字段**诚实标记**（`OperationOutcome` warning），不伪造、不静默丢弃。
+- [ ] **FR-6 保留院内适配器并存**：FHIR 门面与院内私有适配器**并存**，不要求医院一次性标准化改造；门面/外部断连诚实标 `NOT_CONNECTED`，不阻断院内适配链路。
+- [ ] **FR-7 编码经字典映射**：FHIR `CodeableConcept`/`Coding` ↔ 标准字典（ICD/LOINC/药品本位码）经 [TERM-01](../_index.md) 映射，**禁字符 LCS**，高危近似强制 HIGH（核心 §7）。
+
+## 接口契约 / 页面契约
+
+### 接口契约（引擎/API 卡）
+- 端点：FHIR 风格 `/<fhir-base>/R4/{ResourceType}`、`/<fhir-base>/R5/{ResourceType}`（read/search/受控 create）+ `/<fhir-base>/metadata`（CapabilityStatement）；门面挂 [INTEG-01](../_index.md) 适配器总线下。
+- DTO：对外 FHIR 资源经**映射层**转/自 `CanonicalResource`；对内仍 Record DTO + Bean Validation（核心 #7）；FHIR 资源校验经 profile（可选对齐中国核心数据集）。
+- 响应信封：门面层用 FHIR `Bundle`/`OperationOutcome`；对内仍 `ApiResult`/`ProblemDetail`，二者**映射可逆**（[BASE-03](../D0/BASE-03.md)）。
+- 状态机：N·A —— 门面是**协议转换层**，资产状态机在被映射的实体（上下文/知识/规则），门面自身无状态流转。
+- 幂等 / 错误码 / traceId：FHIR conditional create 按 `(tenant, identifier)` 幂等；映射失败/未映射 → `OperationOutcome`（issue 级别 error/warning）；全链路 traceId（[OBS-01](../D0/OBS-01.md)）。
+
+### 页面契约（页面卡）
+N·A —— 本卡无独立页面。门面健康/字段映射率在 **D2 适配器中心页**（[INTEG-01](../_index.md) 承接）只读呈现；CDS Hooks 风格事件归 [OPT-02](../D3/OPT-02.md)（D3）。
+
+## 数据与迁移
+- 表族：`fhir_resource_mapping`（FHIR `(resourceType, id)` ↔ `canonical_resource_id` 映射）· `fhir_mapping_rule`（字段映射规则 + 版本 + R4/R5）· 复用 `canonical_resource`（[SYS-01](../D0/SYS-01.md)/[API-01](API-01.md)，本卡读/映射）。
+- 主键：ULID；唯一约束：`(tenant_id, fhir_resource_type, fhir_id)`、`(tenant_id, canonical_resource_id, fhir_version)`；索引：`canonical_resource_id`、`fhir_resource_type`。
+- 组织字段：`tenant_id` + `org_path` + 审计字段（映射动作留痕，[BASE-04](../D0/BASE-04.md)）。
+- 5 方言迁移：h2/postgres/oracle/dm/kingbase 一致 + 中文注释 + 映射唯一约束。
+
+## 视角清单（11 视角逐条）
+1. **产品架构**：FHIR 门面 = 标准互操作**单一入口**，全部映射到 `CanonicalResource` 单一源；不因"对外标准化"而养出第二份临床模型。
+2. **产品体验**：N·A —— 本卡无客户面页面；门面健康与映射率在适配器中心页（[INTEG-01](../_index.md)）呈现，技术字段进专家模式。
+3. **系统与数据架构**：★R4/R5 双版本 version-aware 映射 + `CapabilityStatement`；映射层无状态可水平扩展；`CanonicalResource` 关系库权威，门面非权威可重建。
+4. **临床医疗安全**：★FHIR 写**不绕引擎、不直写**医嘱/病历/上报/支付/设备（核心 §10/#10）；高风险写经医师确认链（核心 §6）；门面不自动产生临床结论。
+5. **知识与数据治理**：FHIR `CodeableConcept` ↔ 标准字典经 [TERM-01](../_index.md) 语义映射（禁 LCS、高危 HIGH，核心 §7）；映射规则来源可追溯、版本化。
+6. **安全合规与监管**：FHIR 端点签名/白名单/最小字段/脱敏/审计（核心 §8）；SMART on FHIR / launch token 受控（详规 §1.5.5）；数据出境经合规评估。
+7. **集团化与多租户治理**：门面经 `OrgContext` 作用域（[BASE-01](../D0/BASE-01.md)）；集团平台跨院 FHIR 访问按租户隔离，不串院。
+8. **集成与互操作**：★主战场 —— FHIR R4/R5 资源门面（核心 §10）；与院内私有适配器**并存不替代**；CDS Hooks 风格事件由 [OPT-02](../D3/OPT-02.md) 承接、适配器总线由 [INTEG-01](../_index.md) 承载，本卡专注资源门面与映射。
+9. **运维 / SRE / 国产化**：门面非权威、可关；断连诚实标 `NOT_CONNECTED` 不伪造；内外网双形态（内网院内 FHIR、外网 SaaS）；5 方言。
+10. **质量与真实性审计**：无伪造 FHIR 资源、无假映射；字段映射率/缺失率可统计；未映射**诚实 `OperationOutcome`**（铁律 #1/#2）。
+11. **AI / 模型治理与可降级**：门面**纯确定性映射、天然 B0**；语义辅助映射建议（B1）整体后移第二波，B0 用确定性字段映射规则，关模型不影响门面。
+
+## 适用不变量
+- 命中核心约束：**§10 FHIR 门面 + 不绕引擎 + 断连诚实 + 门面不替代院内适配** · **#5 关系库权威（`CanonicalResource`）** · **§7 字典语义映射** · **#8 安全脱敏加密** · **#10 医师确认**。
+- 本卡落点：FHIR R4/R5 资源门面只做**协议↔CanonicalResource 的可逆映射**，标准化接入与院内适配两路并存，所有写入回流引擎，杜绝"FHIR 直写"与"第二份临床模型"。
+
+## 验收 + 验证
+- [ ] **AC-1（FR-1/2）**：经 FHIR 门面 read 一个 Patient/Condition/Observation，返回 FHIR 资源且字段与院内 `CanonicalResource` 一致；create 一个 Observation → 正确映射落 `canonical_resource` 并经引擎入口。
+- [ ] **AC-2（FR-3）**：同一资源分别请求 R4 与 R5 → 两版结构正确、`/metadata` CapabilityStatement 声明范围与实际一致。
+- [ ] **AC-3（FR-4）**：经 FHIR create 一条高风险医嘱类资源 → 系统**不自动写医嘱/病历**，回流引擎并要求医师确认（核心 §10/#10）。
+- [ ] **AC-4（FR-5/7）**：含未映射本地编码的资源 → `OperationOutcome` warning 列出未映射项，字段映射率可统计，**无伪造映射**。
+- [ ] **AC-5（FR-6）**：关闭 FHIR 门面/外部 → 门面标 `NOT_CONNECTED`，院内私有适配器链路与医生主流程不受影响。
+- 关联 A1–A9 剧本：A2 院内接入（FHIR 与院内适配两路）、A7 标准互操作/区域共享。
+- T-GATE：前后端真实性门禁全绿（无假 FHIR 资源/无伪造映射哈希；迁移 5 方言一致）。
+- B0 验收：门面纯确定性映射、无模型依赖，**天然 B0**（关闭全部模型后映射不变）。
+
+## 完工证据
+- 代码 permalink：10 类 FHIR 资源门面端点 + R4/R5 映射层 + `CapabilityStatement` + `fhir_resource_mapping`/`fhir_mapping_rule` 迁移（×5 方言）+ 引擎回流入口。
+- 测试：FHIR↔Canonical 双向映射往返测试 + R4/R5 双版本测试 + "FHIR 写不绕引擎"安全测试 + 未映射 `OperationOutcome` 测试 + 断连 `NOT_CONNECTED` 测试。
+- 审计员签字：@<reviewer>（owner ≠ reviewer）。
+
+## 大卡工序（6d，后端为主；按 PR 拆分）
+- PR1：FHIR 资源映射数据模型 + `fhir_mapping_rule` + 5 方言迁移 + Canonical↔FHIR 映射层（R4）→ AC-1。
+- PR2：R5 双版本 + CapabilityStatement + 编码经 TERM 字典映射 + 未映射诚实 `OperationOutcome` → AC-2/4。
+- PR3：受控 create 回流引擎（不绕引擎 + 医师确认）+ 门面挂 INTEG-01 总线 + 断连 `NOT_CONNECTED` + 安全（签名/白名单/脱敏）→ AC-3/5。
