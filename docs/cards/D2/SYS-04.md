@@ -20,7 +20,7 @@
 本卡＝**框架抽取/统一**，当前散落无统一框架：
 
 - 版本字段散落多引擎：`engine/context`（`PackageVersionPort`）、`engine/knowledge`（`KnowledgeAssetVersion` + 状态机 + `activate/withdraw`）、`engine/pathway`（`SpecialtyPackage`）、`engine/pkg`（`ReleasePlan/PackageSyncPort/KnowledgePackage`）、`engine/evaluation`（版本字段）。
-- `engine/pkg` 已有 `ReleasePlan(+Status)`、`PackageSyncPort`、`LenientPackageSyncAdapter`、`PackageEngineService` 雏形——属**包级**（[PKG-01](../_index.md)/[API-10](../_index.md)），非通用框架。
+- `engine/pkg` 已有 `ReleasePlan(+Status)`、`PackageSyncPort`、`LenientPackageSyncAdapter`、`PackageEngineService` 雏形——属**包级**（[PKG-01](PKG-01.md)/[API-10](API-10.md)），非通用框架。
 - **缺口**：无统一的「不可变版本 + 七层继承解析 + 变更类发布流 + 灰度/回滚/历史重放」框架；各引擎各写版本与发布。本卡抽取为复用框架（Port/SPI），各引擎接入，**不推翻已有 `engine/knowledge` 的 `activate` 主干**（[SYS-08](SYS-08.md) 在其上专项化）。
 
 ## 功能要求（原子可测条目）
@@ -36,7 +36,7 @@
 ## 接口契约 / 页面契约
 
 ### 接口契约（引擎/框架卡）
-- 端点：本卡交付**框架契约（Port/SPI）**供各引擎复用，不新增客户面端点：`VersionedAssetPort`（不可变版本读写）· `InheritanceResolver`（七层继承解析）· `ReleasePort`（草稿→灰度→全量→回滚）· `ReplayPort`（历史重放）。REST 发布端点在 [API-10](../_index.md) 包发布 API 承接。
+- 端点：本卡交付**框架契约（Port/SPI）**供各引擎复用，不新增客户面端点：`VersionedAssetPort`（不可变版本读写）· `InheritanceResolver`（七层继承解析）· `ReleasePort`（草稿→灰度→全量→回滚）· `ReplayPort`（历史重放）。REST 发布端点在 [API-10](API-10.md) 包发布 API 承接。
 - DTO：`AssetVersion`（不可变 Record：`assetIdentity`/`versionNo`/`contentHash`/`status`/`effectiveScope`/`effectiveTime`）· `ReleasePlan`（范围/灰度水位/回滚目标/状态，复用并泛化 `engine/pkg` 现有 `ReleasePlan`）· `InheritanceOverride`（覆盖差异说明）。
 - 响应信封：`ApiResult` / `ProblemDetail`（[BASE-03](../D0/BASE-03.md)）。
 - 状态机：★复用核心 §3 两套——**配置类**（草稿→待审核→已发布→生效中→已下线→已归档）+ **变更类**（待发布→灰度→全量→回滚）；**禁自创**。
@@ -46,7 +46,7 @@
 N·A —— 本卡无页面。发布流走 [BASE-06](../D0/BASE-06.md) 的 7 步流组件，呈现在各配置页与 **D2 配置包中心页**；本卡只立框架。
 
 ## 数据与迁移
-- 表族（对齐详规 §7.6 发布同步族）：`asset_version`（通用版本：身份/版本号/`content_hash`/状态/生效域/不可变）· `release_plan`（范围/灰度水位/回滚目标/状态）· `activation_transaction`（激活/失效原子事务记录）· `inheritance_override`（局部覆盖 + 差异说明）· `sync_target`/`sync_log`（同步水位，[PKG-01](../_index.md) 共用）。
+- 表族（对齐详规 §7.6 发布同步族）：`asset_version`（通用版本：身份/版本号/`content_hash`/状态/生效域/不可变）· `release_plan`（范围/灰度水位/回滚目标/状态）· `activation_transaction`（激活/失效原子事务记录）· `inheritance_override`（局部覆盖 + 差异说明）· `sync_target`/`sync_log`（同步水位，[PKG-01](PKG-01.md) 共用）。
 - 主键：ULID；唯一约束：**`(asset_identity, organization_scope, applicable, effective)` 上 `ACTIVE` 唯一**（框架级保证 FR-2）；索引：`org_path`、`status`、`effective_time`、`asset_identity`。
 - 组织字段：`tenant_id` + `org_path` + 审计字段；继承解析依赖 [BASE-01](../D0/BASE-01.md) 的 `org_closure`。
 - 5 方言迁移：h2/postgres/oracle/dm/kingbase 一致 + 中文注释；`ACTIVE` 唯一约束按方言实现（部分唯一索引或发布事务校验）。
@@ -59,7 +59,7 @@ N·A —— 本卡无页面。发布流走 [BASE-06](../D0/BASE-06.md) 的 7 步
 5. **知识与数据治理**：唯一权威生效域（核心 §7）；**版本不可变 + content_hash**；**替代而非覆盖**（旧内容保留来源/审核/历史运行证据，禁删）。
 6. **安全合规与监管**：发布审计链全留证（审核/激活/失效/回滚，核心 §8）；每次发布证据可导出供监管。
 7. **集团化与多租户治理**：★七层继承覆盖 + 局部覆盖可解释 + 冲突仲裁 + 灰度默认 10% 床位（核心 §9）；**仅院级管理员可直接全量**。
-8. **集成与互操作**：发布同步到院内/离线节点（[PKG-01](../_index.md)/[API-10](../_index.md)）；**同步失败不得破坏权威版本**（核心 §10）；无通道返回 `NOT_SYNCED`。
+8. **集成与互操作**：发布同步到院内/离线节点（[PKG-01](PKG-01.md)/[API-10](API-10.md)）；**同步失败不得破坏权威版本**（核心 §10）；无通道返回 `NOT_SYNCED`。
 9. **运维 / SRE / 国产化**：5 方言；灰度/回滚机制；离线包版本水位与失败站点告警；内外网双形态（内网离线包导入、外网在线同步）。
 10. **质量与真实性审计**：高危发布**必带影响分析 + 审核 + 回滚证据**，缺一即拒（核心 §13 通用拒绝项）；无伪造同步哈希/无假灰度（铁律 #1）。
 11. **AI / 模型治理与可降级**：框架**确定性 B0**；AI 生成的候选资产复用**同一版本框架**——候选 `PENDING` 不自动生效，必经审核灰度（核心 §11 / 铁律 #4、#14）。

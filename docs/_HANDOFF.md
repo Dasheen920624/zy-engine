@@ -6,19 +6,14 @@
 
 ## 在途工作线
 
-### 线 1 · D6 高级工具施工卡迁移 🚧（核心域收官）
-- **类型**：文档（施工卡迁移）
-- **分支**：`claude/d6-tools`（基于含 #161 的新 main；D6 全 6 卡 + 简报 + 四索引回填在此，PR 待开/待合）
-- **目标**：D6 域 6 卡（1 ID + 5 页面）搬成自包含施工卡 —— **全部已建**；整域一个收官 PR。**合并后核心业务域 D0–D6 全部完成**
-- **全域进度**：D0 ✅(#152/#153) · D1 ✅(#154) · D2 ✅(#156/#157/#158) · D3 ✅(#159) · D4 ✅(#160) · D5 ✅(#161) · **D6 🚧 全 6 卡已建（PR 待合）** · wave2/ga ⬜
-- **当前批**（1 ID + 5 页面）：OPT-10 / 页 PROV-01 · GRAPH-01 · AIFLOW-01 · DOMCHK-01 · DEVCON-01
-- **状态**：#161 已合（D5 收官）；**D6 共 6 卡已建**（现状段基于真实后端类名 + 前端真实路由）、**_index（D6 目录 ✅ 6 卡 + S7 场景行）+ _coverage-matrix（已迁 120→122，D6 场景锚点 2(S7) 已迁，D6 标 ✅，核心域 D0–D6 全搬）+ backlog（🗂️ 全 6 卡 + D6-PAGE 实化）已回填**；待提交 → 开 PR → 合并
-- **D6 后端/前端现状（已核实 2026-05-30，建卡照此、勿凭空）**：来源链＝`engine/knowledge` `KnowledgeLineage`（来源分级 [OPT-07](../D2/OPT-07.md) 在 D2）· 图谱＝`engine/pathway` `PathwayGraph` + 关系库投影（[SYS-03](../D0/SYS-03.md)，图为投影非权威）· 5 前端页 `frontend/src/pages/advanced/*.tsx` 已存在待真实化（`/advanced/{provenance,graph,ai-workflows,domestic,dev-console}`）。缺口（新建/壳）：插件安全边界(OPT-10)、国产化自检/开发者控制台后端；**AIFLOW-01 本期只壳/查看，编排留 wave2**。
-- **下一步**（精确动作）：
-  1. ✅ D6 全 6 卡已建、_index/_coverage-matrix/backlog 已回填（本分支 `claude/d6-tools`）
-  2. 提交 → 推送 → 开 **PR**（`docs(cards): D6 高级工具 6 卡 + 索引回填（D6 收官，核心域 D0–D6 全建）`）→ 请用户合并
-  3. 合并后 **核心业务域 D0–D6 卡全建完成** → D6 域级验收 → 转入 **wave2（AI 加深）/ ga 总验收**（按用户节奏）
-- **后续（核心域之后，待用户起）**：① 遗留 sweep：各域卡间接 `../_index.md` 引用→直链升级 pass + _coverage-matrix 卡级 §-锚点细化；② wave2 第二波 AI（LLM-*/AIK-*/KNOWGEN-* + 15 领域门面 + 专病服务包，详规 S17–S40）；③ ga 总验收（QA-01…08/DEGRADE-01/SYS-07/INFRA-07/10）。
+### 线 1 · 核心域 D0–D6 施工卡迁移 ✅ 全部完成 —— 下一波待用户起
+- **核心进度**：D0 ✅(#152/#153) · D1 ✅(#154) · D2 ✅(#156/#157/#158) · D3 ✅(#159) · D4 ✅(#160) · D5 ✅(#161) · D6 ✅(#162) —— **核心 6 域 113 卡全建**，覆盖矩阵已迁 122 锚点。
+- **收尾 sweep**：各域卡 `[X](../_index.md)` 间接引用 → 直链**已升级**（32 处：D2 五卡 API-01/OPT-01/SYS-04/SYS-08/_brief + D3/_brief；`claude/sweep-links`，PR 待合）。校验：残留 0、零死链。
+- **剩余（待用户点哪条）**：
+  1. `_coverage-matrix` 卡级 §-锚点细化（当前为场景级；**非轻量**，要逐卡映射详规 §-锚点）
+  2. **wave2 第二波 AI**（LLM-*/AIK-*/KNOWGEN-* + 15 领域门面 + 专病服务包，详规 S17–S40，55 项，**需分批多 PR**）
+  3. **ga 总验收**（QA-01…08 / DEGRADE-01 / SYS-07 / INFRA-07 / INFRA-10，约 12 卡，可整域一 PR）
+- **起新域口径（沿用，已跑通 6 域）**：从新 origin/main 起 `claude/<name>` → 套 [`_template.md`](cards/_template.md) + backlog 域段卡清单 + `grep` 真实后端/前端现状（**不深调研**，差异留执行开发）→ 建域简报 + 全卡 → 回填四索引（`_index`/`_coverage-matrix`/`backlog`/`_HANDOFF`）→ **整域一个 PR** → 用户合并 → 从新 main 重拉做下一域。
 - **专项流程**：填卡五步见 `docs/superpowers/specs/2026-05-30-doc-architecture-build-cards-design.md §7 P1`
 
 ## 已归档工作线（最近完成，供回溯）
@@ -28,12 +23,13 @@
 - D3 临床运行 21 卡 ✅（#159：14 ID + 7 页面，整域一个 PR）
 - D4 质控改进 14 卡 ✅（#160：8 ID + 6 页面，整域一个 PR）
 - D5 合规运维 11 卡 ✅（#161：5 ID + 6 页面，整域一个 PR）
+- D6 高级工具 6 卡 ✅（#162：1 ID + 5 页面，整域一个 PR）—— 核心域收官
 
 ## 通用约定（所有工作线 / 所有工具适用）
 - **分支与 PR**：禁直推 main；分支 → 推送 → PR → 合并 → 确认 origin/main 含合并提交。**squash 合并后必须从新 origin/main 重拉分支**再做下一单元（否则基点回退、重复带入）。一个逻辑单元一个 PR；大任务拆批、每批独立分支基于当时最新 main。分支前缀现状用 `claude/`。
 - **核现状别信单次 read**：建卡/改代码前用 `grep`/`find`/`git diff` 对照真实仓库（`frontend/src`、`medkernel-backend/src`），曾因伪造 read 整批返工。
 - **软件开发**：遵循 TDD（先写失败测试再实现）；动手前跑现有测试建绿色基线；改动后跑测试 + 真实性门禁（T-GATE）再宣称完成——**证据优先，别空口说「已修复/已通过」**。
-- **找散落改动**：中断后 `git worktree list` + `git status` + 各 worktree 查未跟踪文件（改动曾停在未提交的 worktree；曾发生「写完卡+回填但截断在提交前」，续接先 `git status` 查未提交）。
+- **找散落改动**：中断后 `git worktree list` + `git status` + `git log origin/main` 查未提交/是否真合（改动曾停在未提交的 worktree；曾发生「写完卡+回填但截断在提交前、分支未提交」）。
 - **语言**：文档/PR/注释简体中文（详见 AGENTS.md 语言要求）。
 
 ## 新开工作线模板（复制到「在途工作线」填写）
@@ -48,4 +44,4 @@
 ```
 
 ---
-> 末次更新：2026-05-30 · D5 收官合并（#161）；D6 高级工具 6 卡已建（`claude/d6-tools`，收官 PR 待合）——合并后核心业务域 D0–D6 全建，转 wave2/ga
+> 末次更新：2026-05-30 · 核心业务域 D0–D6 全建（#152–#162）；间接引用→直链 sweep 已做（`claude/sweep-links`，PR 待合）；下一波 wave2/ga/矩阵细化待用户起
