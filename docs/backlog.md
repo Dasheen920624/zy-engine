@@ -1,9 +1,9 @@
 # MedKernel v1.0 GA 任务清单
 
-> 版本：8.0 · 2026-05-30 · **单一基线 · 项目未上线**
+> 版本：8.1 · 2026-05-30 · **单一基线 · 项目未上线**
 > 编制原则：v8.0 按业务域纵向推进重排，废止 v7.0 的 E0~E6 自底向上编排（自底向上先堆引擎、业务界面后置，导致长期无可验证界面、done 无法证伪）。原 149 项任务 ID 与标题/范围全部保留，仅换归属。
 > 任务依据：[宪法 §0](CONSTITUTION.md) · [基础底座与服务能力总览](MEDKERNEL_FOUNDATION_AND_SERVICES.md) · [落地规划 §17/§18/§21](MEDKERNEL_IMPLEMENTATION_LANDING_PLAN.md) · [详规 §7/§8](MEDKERNEL_BUSINESS_SCENARIO_DETAIL_SPEC.md) · [产品体验固定规范](MEDKERNEL_PRODUCT_EXPERIENCE_RULES.md)
-> 验收方法：每项 done 必须在 PR 中提供核查证据；每个域 done 必须过域级验收。标准模板 + 10 条验收铁律 + 域级验收见 [质量基线指南](audit/质量基线.md)。
+> 验收方法：每项 done 必须在 PR 中提供核查证据；每个域 done 必须过域级验收。标准模板 + 11 条验收铁律 + 域级验收见 [质量基线指南](audit/质量基线.md)。
 
 ---
 
@@ -18,7 +18,7 @@
 
 废止 `in_progress` / `blocked` 等冗余状态——项目未上线，简单到只有“做了没 / 经核查没”。
 
-### 0.2 10 条验收铁律（所有任务通用）
+### 0.2 11 条验收铁律（所有任务通用）
 
 1. **真实性**：禁止写死结果/Math.random 造数/catch 吞错伪造成功/UUID 充哈希/前端 mock 假闭环/假证据假同步
 2. **诚实降级**：无模型/无连接器/无图投影时返回诚实状态 + 真实主链路
@@ -30,6 +30,7 @@
 8. **六态完整**：加载/空/错误/无权限/部分成功/正常六态在每个页面齐全
 9. **中文优先**：客户可见默认中文；技术对象（JSON/DSL/trace）默认隐藏到专家模式
 10. **文档同步**：代码与文档同 PR；文档对应章节锚点必须在 commit message 引用
+11. **配置外置**：除启动必需（DB/端口/profile/迁移/密钥）外，业务与运营配置不写死 yml；经配置中心（CONFIG-01）管理、可审计、高危项有护栏（呼应宪法 #19 配置外置 + #20 内置超管）
 
 ### 0.3 任务通过标准模板
 
@@ -82,6 +83,7 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 ## D0 登录域（平台脊柱）
 
 > 目标：登录与登入后可导航空壳真实可用。脊柱是登录和所有页面绕不开的地基。
+> 🗂️ 本域 25 张施工卡已建：[D0 域简报](cards/D0/_brief.md) + [卡索引 · D0 全卡目录](cards/_index.md)；下表 ID = 卡名（`cards/D0/<ID>.md`），合同级功能/契约/11 视角/验收以卡为准。
 
 | ID | 任务 | 范围 | 工作量 | 状态 |
 |---|---|---|---:|---|
@@ -91,7 +93,7 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 | BASE-04 | 审计骨干 | 写操作/审核/发布/运行/反馈/导出/回滚统一留痕；audit 异步或 fail-soft 不回滚业务 | 3d | pending |
 | BASE-05 | 5 方言数据迁移骨架 | h2/postgres/oracle/dm/kingbase + 一致性测试 + 中文注释 + 索引约束 | 4d | pending |
 | BASE-06 | 5+1 菜单与前端骨架 | 路由元数据 + PageShell + 六态 + 状态机 Badge + 7 步流组件 + 命令面板 | 4d | pending |
-| BASE-07 | 运行底座 | Feature Flag + 监控 + 健康检查 + 备份恢复 + 国产化 profile | 3d | pending |
+| BASE-07 | 运行底座 | Feature Flag（消费 CONFIG-01 配置存储，yml 仅启动引导/兜底）+ 监控 + 健康检查 + 备份恢复 + 国产化 profile | 3d | pending |
 | BASE-08 | 产品体验底座 | 一页一目标 + 角色默认视图 + 专家模式 + 服务端分页 + 详情抽屉 + 异步导出 + 保存视图 | 3d | pending |
 | BASE-09 | 代码基线净化 | 无 mock 假闭环 + 无裸 Map + 无硬编码业务示例 + 无单病种硬编码 | 2d | pending |
 | BASE-10 | 设计 Token 系统 | Antd token + 5 主题模式（default/elder/dark/eye/system）+ module.css 全部走 var + stylelint 阻断 hex | 4d | pending |
@@ -108,9 +110,11 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 | INFRA-04 | 退出登录 UI | AppLayout Header Avatar Dropdown（当前用户/修改密码/退出登录）+ useLogout + 401 自动跳登录 | 3d | pending |
 | INFRA-05 | 27 二级菜单粒度权限模型 | 后端 MenuPermissionCatalog 到二级菜单粒度 + DefaultPermissionPolicy 13 角色×N 菜单矩阵 + 前端 routes.ts requiredPermissions/requiredRoles | 10d | pending |
 | INFRA-08 | 会话超时与多 tab 同步 | token 过期自动跳登录 + 多 tab storage event 同步 + 长时间无操作自动登出 | 3d | pending |
+| SUPERADMIN-01 | 内置超级管理员 | 启动强制内置 + 自动授满五维 + 系统配置中心；不可降权/删除/移出 + 不旁路（走 RBAC）+ 独立高亮审计 + 强制 MFA（宪法 #20）| 3d | pending |
+| CONFIG-01 | 配置中心引擎 | DB 配置存储 key/value + 元数据 + 热生效 + 变更审计 + 可回滚 + 高危二次确认；启动只读 DB/端口/profile/迁移/密钥，其余 medkernel.* 从配置存储；高危护栏审计持久化不可关（宪法 #19）| 5d | pending |
 | **D0-验收** | **登录域级验收** | 按 13 角色登入 → 菜单按 RBAC 正确呈现 → 各页路由可打开到六态空态 → 退出/会话过期生效 | — | pending |
 
-**小计**：23 项（原 ID）+ 1 域级验收
+**小计**：25 项（原 ID + SUPERADMIN-01 + CONFIG-01）+ 1 域级验收
 
 ---
 
@@ -224,7 +228,7 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 | OPT-05 | 互联互通测评映射 | 数据资源/标准化/基础设施/应用效果 映射到产品证据 | 4d | pending |
 | SVC-COMPLIANCE-01 | 身份安全服务包 | 用户 + 身份绑定 + 数据权限 + 租户隔离 + 安全基线 | 5d | pending |
 | SVC-COMPLIANCE-02 | 审计运维服务包 | 审计 + 证据包 + Provider/模型状态 + 备份恢复 + 离线许可 | 4d | pending |
-| D5-PAGE-用户管理 / 身份绑定 / 审计日志 / 安全基线 / Provider 状态 / 通知设置 | 6 页面真实化 | 每页：五维权限管理粒度 + 审计可查 + 六态 + Provider 无连接诚实显示（NOT_CONNECTED）；每页必交见质量基线 | — | pending |
+| D5-PAGE-用户管理 / 身份绑定 / 审计日志 / 安全基线与系统配置 / Provider 状态 / 通知设置 | 6 页面真实化 | 每页：五维权限管理粒度 + 审计可查 + 六态 + Provider 无连接诚实显示（NOT_CONNECTED）；**「安全基线与系统配置」承载系统配置中心**（[CONFIG-01](cards/D0/CONFIG-01.md) 前台：功能开关/认证/备份/国产化/Provider/日志级别，高危护栏置灰不可关，不净增二级菜单）；每页必交见质量基线 | — | pending |
 | **D5-验收** | **合规运维域级验收** | 管权限 → 改身份绑定 → 查审计 → 导出证据包，全 B0 真实可跑；Provider 无连接诚实降级 | — | pending |
 
 **小计**：5 项（原 ID）+ 6 页面 + 1 域级验收
@@ -384,7 +388,7 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 | D6 高级工具 | 1 | 5 |
 | 第二波 · AI 加深 | 55 | — |
 | GA 总验收 | 12 | — |
-| **合计** | **148**（+ INFRA-06 炸开为各域页面、MED-C1 并入 TERM-01 = 原 149）| **33** |
+| **合计** | **150**（+ INFRA-06 炸开为各域页面、MED-C1 并入 TERM-01 = 原 149；v8.1 D0 新增 SUPERADMIN-01 + CONFIG-01）| **33** |
 
 > 每域另有 1 道域级验收（D0~D6 共 7 道），不计入上表任务编号。
 > 核心价值排序：临床安全（OPT-04 + D3）> 平台脊柱（D0）> 配置引擎 B0（D2）> AI 工厂/知识资产（第二波）。
