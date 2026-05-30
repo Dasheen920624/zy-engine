@@ -231,6 +231,8 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 
 > 目标：身份/审计/安全 B0 真实，Provider 无连接诚实显示。
 
+> 🗂️ 本域 **11 张施工卡已建**（5 ID + 6 页面，全建）：[D5 域简报](cards/D5/_brief.md) + [卡索引 · D5 全卡目录](cards/_index.md)；已建卡 ID = 卡名（`cards/D5/<ID>.md`），合同级功能/契约/11 视角/验收以卡为准。页面卡 ID 由占位 `D5-PAGE-*` 实化（USERS-01 用户管理 / IDBIND-01 身份绑定 / AUDITLOG-01 审计日志 / SECBASE-01 安全基线与系统配置 / PROVIDER-01 Provider 状态 / NOTIFSET-01 通知设置）。下表 ID/范围以卡为准。
+
 | ID | 任务 | 范围 | 工作量 | 状态 |
 |---|---|---|---:|---|
 | EVID-01 | 证据链 | 真实文件 + 国密签名 + 验签 + 大导出真实文件 URI | 4d | pending |
@@ -238,7 +240,7 @@ E0 文档清场原 6 项（DOC-01 权威文档统一 / DOC-02 清除旧入口 / 
 | OPT-05 | 互联互通测评映射 | 数据资源/标准化/基础设施/应用效果 映射到产品证据 | 4d | pending |
 | SVC-COMPLIANCE-01 | 身份安全服务包 | 用户 + 身份绑定 + 数据权限 + 租户隔离 + 安全基线 | 5d | pending |
 | SVC-COMPLIANCE-02 | 审计运维服务包 | 审计 + 证据包 + Provider/模型状态 + 备份恢复 + 离线许可 | 4d | pending |
-| D5-PAGE-用户管理 / 身份绑定 / 审计日志 / 安全基线与系统配置 / Provider 状态 / 通知设置 | 6 页面真实化 | 每页：五维权限管理粒度 + 审计可查 + 六态 + Provider 无连接诚实显示（NOT_CONNECTED）；**「安全基线与系统配置」承载系统配置中心**（[CONFIG-01](cards/D0/CONFIG-01.md) 前台：功能开关/认证/备份/国产化/Provider/日志级别，高危护栏置灰不可关，不净增二级菜单）；每页必交见质量基线 | — | pending |
+| USERS-01 / IDBIND-01 / AUDITLOG-01 / SECBASE-01 / PROVIDER-01 / NOTIFSET-01 | 6 页面真实化 | 每页：五维权限管理粒度 + 审计可查 + 六态 + Provider 无连接诚实显示（NOT_CONNECTED）；**「安全基线与系统配置」承载系统配置中心**（[CONFIG-01](cards/D0/CONFIG-01.md) 前台：功能开关/认证/备份/国产化/Provider/日志级别，高危护栏置灰不可关，不净增二级菜单）；每页必交见质量基线 | — | pending |
 | **D5-验收** | **合规运维域级验收** | 管权限 → 改身份绑定 → 查审计 → 导出证据包，全 B0 真实可跑；Provider 无连接诚实降级 | — | pending |
 
 **小计**：5 项（原 ID）+ 6 页面 + 1 域级验收

@@ -20,7 +20,7 @@
 | S11 | 智能评估与整改 | [EVAL-01](D4/EVAL-01.md) 评估引擎 · [SVC-QUALITY-01](D4/SVC-QUALITY-01.md) 驾驶舱 · [SVC-QUALITY-03](D4/SVC-QUALITY-03.md) 整改闭环 · [OPT-08](D4/OPT-08.md) 价值/ROI · 页 [QCDASH-01](D4/QCDASH-01.md)/[QCALERT-01](D4/QCALERT-01.md)/[EVALSET-01](D4/EVALSET-01.md)/[EVALRES-01](D4/EVALRES-01.md) |
 | S12 | 智能随访 | [API-09](D3/API-09.md) 随访 API · [FOLLOW-01](D3/FOLLOW-01.md) 随访引擎 · 页 [FUP-01](D3/FUP-01.md) 智能随访 |
 | S13 | 包发布与院内同步 | [PKG-01](D2/PKG-01.md) 包发布引擎 · [API-10](D2/API-10.md) 包发布 API · [SYS-04](D2/SYS-04.md) 版本发布框架 · [SYS-08](D2/SYS-08.md) 权威知识替换 · [SVC-PILOT-03](D2/SVC-PILOT-03.md) 资产准备服务包 · [CFGPKG-01](D2/CFGPKG-01.md) 配置包中心页 |
-| S14 | 用户、权限与合规 | [AUTH-01](D0/AUTH-01.md)/[AUTH-02](D0/AUTH-02.md)/[AUTH-03](D0/AUTH-03.md) 双模登录认证 · [BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 权限 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 超管 · [CONFIG-01](D0/CONFIG-01.md) 配置 · [BASE-04](D0/BASE-04.md) 审计 · [INFRA-04](D0/INFRA-04.md)/[INFRA-08](D0/INFRA-08.md) 会话；用户管理/审计日志页待建（D5）|
+| S14 | 用户、权限与合规 | [AUTH-01](D0/AUTH-01.md)/[AUTH-02](D0/AUTH-02.md)/[AUTH-03](D0/AUTH-03.md) 双模登录认证 · [BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 权限 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 超管 · [CONFIG-01](D0/CONFIG-01.md) 配置 · [BASE-04](D0/BASE-04.md) 审计 · [INFRA-04](D0/INFRA-04.md)/[INFRA-08](D0/INFRA-08.md) 会话 · **D5** [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md)/[SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md) 服务包 · [SYS-06](D5/SYS-06.md) 证据框架 · [EVID-01](D5/EVID-01.md) 证据链 · [OPT-05](D5/OPT-05.md) 互联互通测评 · 页 [USERS-01](D5/USERS-01.md)/[IDBIND-01](D5/IDBIND-01.md)/[AUDITLOG-01](D5/AUDITLOG-01.md)/[SECBASE-01](D5/SECBASE-01.md)/[PROVIDER-01](D5/PROVIDER-01.md)/[NOTIFSET-01](D5/NOTIFSET-01.md) |
 | S15 | AI 验证与验收 | [AIREVIEW-01](D4/AIREVIEW-01.md) AI 知识审核台（人工审/发，AI 生成随 wave2）；S0–S40 全验收/E2E 证据随 GA |
 | S16 | 辅助诊疗与鉴别诊断 | [CDSS-01](D3/CDSS-01.md) 推荐/CDSS 引擎（B0 确定性辅助诊疗/候选）；深度鉴别诊断生成随 wave2 |
 | S17 | 检查检验推荐 | 待建 |
@@ -79,8 +79,10 @@
 **服务包**：[SVC-QUALITY-01](D4/SVC-QUALITY-01.md) 质控驾驶舱 · [SVC-QUALITY-02](D4/SVC-QUALITY-02.md) 病案医保
 **页面**（实化占位 `D4-PAGE-*`）：[QCDASH-01](D4/QCDASH-01.md) 院级质控驾驶舱 · [QCALERT-01](D4/QCALERT-01.md) 质控预警 · [INSAUDIT-01](D4/INSAUDIT-01.md) 医保智能审核 · [EVALSET-01](D4/EVALSET-01.md) 评估指标库 · [EVALRES-01](D4/EVALRES-01.md) 评估结果 · [AIREVIEW-01](D4/AIREVIEW-01.md) AI 知识审核
 
-### D5 合规运维
-EVID-01 / SYS-06 / OPT-05 / SVC-COMPLIANCE-01 / SVC-COMPLIANCE-02 / 页面：用户管理 · 身份绑定 · 审计日志 · 安全基线与系统配置 · Provider 状态 · 通知设置（待建，系统配置中心页挂"安全基线与系统配置"槽，二级菜单仍 27）
+### D5 合规运维 ✅ 已建（11 卡：5 ID + 6 页面，[域简报](D5/_brief.md)）
+**证据/合规**：[EVID-01](D5/EVID-01.md) 证据链（国密签名/验签）· [SYS-06](D5/SYS-06.md) 安全合规与证据框架 · [OPT-05](D5/OPT-05.md) 互联互通测评映射
+**服务包**：[SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md) 身份安全 · [SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md) 审计运维
+**页面**（实化占位 `D5-PAGE-*`）：[USERS-01](D5/USERS-01.md) 用户管理 · [IDBIND-01](D5/IDBIND-01.md) 身份绑定 · [AUDITLOG-01](D5/AUDITLOG-01.md) 审计日志 · [SECBASE-01](D5/SECBASE-01.md) 安全基线与系统配置（承载 [CONFIG-01](D0/CONFIG-01.md) 前台，二级菜单仍 27）· [PROVIDER-01](D5/PROVIDER-01.md) Provider 状态 · [NOTIFSET-01](D5/NOTIFSET-01.md) 通知设置
 
 ### D6 高级工具
 OPT-10 / 页面：来源追溯 · 图谱查询 · AI 工作流 · 国产化自检 · 开发者控制台（待建）
