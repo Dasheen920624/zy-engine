@@ -1,0 +1,71 @@
+# EMBED-01 · iframe / SDK / 纯 API 嵌入引擎
+
+> 读卡前置：[核心 CONSTITUTION](../../CONSTITUTION.md) + [D3 域简报](_brief.md)。
+> 迁移来源（覆盖矩阵锚点）：详规 S8 临床嵌入运行 · 核心 §10 集成边界 · 详规 §1.4 嵌入与 launch。
+
+## 身份
+- 卡 ID：EMBED-01（引擎卡；`EmbedLaunchToken`/嵌入会话单一归属）
+- 域：D3 临床运行
+- 关联场景：S8 临床嵌入运行
+- 依赖卡：[API-11](API-11.md) 对外契约 · [CDSS-01](CDSS-01.md) 推荐 · [API-01](../D2/API-01.md) 上下文 · [OPT-02](OPT-02.md) 触发点 · [INTEG-01](../D2/INTEG-01.md) 对接总线
+- 工作量：5d
+- owner / reviewer：待派单（owner ≠ reviewer）
+
+## 目标
+把嵌入做成**安全可控**：第三方 HIS/EMR 经 iframe / SDK / 纯 API 三路嵌入 CDSS，**launch token 一次性消费/过期/白名单为真**，CDS Hooks 风格事件契约，断连诚实降级、不阻断宿主主流程。
+
+## 现状（搬迁时核查 2026-05-30，以 `medkernel-backend` 为准）
+已有实质基础：`engine/embed/` 下 `EmbedEngineService` / `EmbedEngineController` + `EmbedLaunchToken` + `EmbedLaunchContextResponse` + `EmbedFeedbackRequest` + 安全/契约测试；前端 `clinical/EmbedLaunch.tsx`（路由 `/embed/launch`）。本卡＝把 token 一次性/过期/白名单 + 三路集成 + 事件契约框架化为引擎核心。
+
+## 功能要求（原子可测条目）
+- [ ] FR-1 token 生命周期：签发→一次性消费→失效；过期/已用/撤销均拒绝。
+- [ ] FR-2 白名单：消费时校验 origin/宿主在白名单；越权拒绝并审计。
+- [ ] FR-3 三路集成：iframe / SDK / 纯 API 共享同一 token + 上下文契约。
+- [ ] FR-4 事件契约：CDS Hooks 风格 6 触发点（[OPT-02](OPT-02.md)）+ 反馈回调。
+- [ ] FR-5 降级：宿主断连/引擎不可用 → `NOT_CONNECTED`/`MODEL_DISABLED`，不阻断宿主、不伪造卡。
+
+## 接口契约 / 页面契约
+### 接口契约（引擎/API 卡）
+- 对外端点契约归 [API-11](API-11.md)；本卡负责引擎内 token 签发/消费/撤销 + `EmbedLaunchToken` 状态机（签发→已消费/已过期/已撤销）+ 白名单校验。
+- 幂等 / traceId：token 消费幂等（二次消费拒绝）；嵌入会话 trace（[OBS-01](../D0/OBS-01.md)）。
+### 页面契约（页面卡）
+- N·A —— 嵌入页 `clinical/EmbedLaunch.tsx` 为宿主内启动页，体验在宿主系统；本卡只管引擎+契约。
+
+## 数据与迁移
+- 表族：`embed_launch_token`（token + 一次性标记 + 过期 + origin + 组织字段 + 审计）+ 白名单表；五方言（[BASE-05](../D0/BASE-05.md)）
+- 唯一约束：token 值唯一 + 消费标记；索引：过期时间/origin
+
+## 视角清单（11 视角逐条）
+1. 产品架构：CDSS 对第三方系统的安全嵌入边界。
+2. 产品体验：嵌入启动 ≤1 跳；宿主内无缝（体验契约由宿主约束）。
+3. 系统与数据架构：token 验签 O(1)；换上下文 P95 ≤500ms；高并发签发。
+4. 临床医疗安全：嵌入只读上下文 + 触发命中，不绕引擎直写医嘱；断连不阻断宿主。
+5. 知识与数据治理：嵌入命中按 `ACTIVE` 权威版本（[SYS-08](../D2/SYS-08.md)）。
+6. 安全合规与监管：★token 一次性/过期/白名单 + 签发/消费审计（[BASE-04](../D0/BASE-04.md)）；越权拒绝。
+7. 集团化与多租户治理：token 绑 `OrgContext`，跨租户不可复用。
+8. 集成与互操作：★三路集成 + CDS Hooks 事件契约（[OPT-02](OPT-02.md)）；经 [INTEG-01](../D2/INTEG-01.md)。
+9. 运维 / SRE / 国产化：嵌入失败诚实标记、可观测；离线宿主降级。
+10. 质量与真实性审计：★token 不可重放、白名单不可绕、无伪造嵌入卡。
+11. AI / 模型治理与可降级：模型不可用回确定性推荐 `MODEL_DISABLED`。
+
+## 适用不变量
+- 命中核心约束：**核心 §10 集成边界** · **§6 安全（token 一次性/白名单）** · **铁律 #1 真实性**。
+- 本卡落点：安全可控三路嵌入 + token 生命周期，对外契约归 [API-11](API-11.md)。
+
+## 验收 + 验证
+- [ ] AC-1（FR-1/2）：token 一次性、过期/越权/非白名单拒绝且审计。
+- [ ] AC-2（FR-3/4）：三路集成契约一致；事件/回调可达。
+- [ ] AC-3（FR-5）：断连/关模型诚实降级、不阻断宿主。
+- 关联 A1–A9 剧本：A4 嵌入触发。
+- T-GATE：后端真实性门禁全绿（token 不可重放 / 白名单不可绕）。
+- B0 验收：关模型嵌入换上下文 + 确定性命中可用。
+
+## 大卡工序（5d）
+- PR1：token 生命周期 + 白名单 + 门禁 → 验收
+- PR2：三路集成 + 事件/回调契约 → 验收
+- PR3：降级 + 安全/重放测试 → 验收
+
+## 完工证据
+- 代码 permalink：`engine/embed` token + 三路集成 + 白名单。
+- 测试：token 一次性/过期/白名单/降级 + 安全测试。
+- 审计员签字：@<reviewer>（owner ≠ reviewer）。
