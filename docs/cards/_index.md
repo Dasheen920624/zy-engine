@@ -23,30 +23,30 @@
 | S14 | 用户、权限与合规 | [AUTH-01](D0/AUTH-01.md)/[AUTH-02](D0/AUTH-02.md)/[AUTH-03](D0/AUTH-03.md) 双模登录认证 · [BASE-02](D0/BASE-02.md)/[INFRA-05](D0/INFRA-05.md) 权限 · [SUPERADMIN-01](D0/SUPERADMIN-01.md) 超管 · [CONFIG-01](D0/CONFIG-01.md) 配置 · [BASE-04](D0/BASE-04.md) 审计 · [INFRA-04](D0/INFRA-04.md)/[INFRA-08](D0/INFRA-08.md) 会话 · **D5** [SVC-COMPLIANCE-01](D5/SVC-COMPLIANCE-01.md)/[SVC-COMPLIANCE-02](D5/SVC-COMPLIANCE-02.md) 服务包 · [SYS-06](D5/SYS-06.md) 证据框架 · [EVID-01](D5/EVID-01.md) 证据链 · [OPT-05](D5/OPT-05.md) 互联互通测评 · 页 [USERS-01](D5/USERS-01.md)/[IDBIND-01](D5/IDBIND-01.md)/[AUDITLOG-01](D5/AUDITLOG-01.md)/[SECBASE-01](D5/SECBASE-01.md)/[PROVIDER-01](D5/PROVIDER-01.md)/[NOTIFSET-01](D5/NOTIFSET-01.md) |
 | S15 | AI 验证与验收 | [AIREVIEW-01](D4/AIREVIEW-01.md) AI 知识审核台（人工审/发，AI 生成随 wave2）· **GA** [QA-01](ga/QA-01.md) 全链路 / [INFRA-07](ga/INFRA-07.md) 可打开性 / [INFRA-10](ga/INFRA-10.md) A1-A9 自动化 / [QA-06](ga/QA-06.md) 体验（实际 pass 待 wave2）|
 | S16 | 辅助诊疗与鉴别诊断 | [CDSS-01](D3/CDSS-01.md) 推荐/CDSS 引擎（B0 确定性辅助诊疗/候选）；深度鉴别诊断生成随 wave2 |
-| S17 | 检查检验推荐 | 待建 |
-| S18 | 用药安全与治疗方案 | 待建 |
-| S19 | 急危重症与预警 | 待建 |
-| S20 | 护理康复与宣教 | 待建 |
-| S21 | 院感与公共卫生 | 待建 |
-| S22 | MDT 与专科中心协同 | 待建 |
+| S17 | 检查检验推荐 | [REPORT-01](wave2/REPORT-01.md) 报告解读 · [CDSS-01](D3/CDSS-01.md) 推荐（B0）|
+| S18 | 用药安全与治疗方案 | [PHARMACY-01](wave2/PHARMACY-01.md) 药事门面 · 资产 [KNOWGEN-02](wave2/KNOWGEN-02.md)/[KNOWGEN-04](wave2/KNOWGEN-04.md) |
+| S19 | 急危重症与预警 | [CRITICAL-01](wave2/CRITICAL-01.md) 急危重症门面 · 资产 [KNOWGEN-04](wave2/KNOWGEN-04.md)/[KNOWGEN-05](wave2/KNOWGEN-05.md) |
+| S20 | 护理康复与宣教 | [NURSING-01](wave2/NURSING-01.md) 护理门面 · [ALLIED-CARE-01](wave2/ALLIED-CARE-01.md) 康复照护 · 资产 [KNOWGEN-09](wave2/KNOWGEN-09.md) |
+| S21 | 院感与公共卫生 | [INFECTION-PH-01](wave2/INFECTION-PH-01.md) 院感公卫门面 · 资产 [KNOWGEN-14](wave2/KNOWGEN-14.md) |
+| S22 | MDT 与专科中心协同 | [SVC-DOMAIN-01](wave2/SVC-DOMAIN-01.md)/[SVC-DOMAIN-02](wave2/SVC-DOMAIN-02.md) 服务包 · [REGION-COLLAB-01](wave2/REGION-COLLAB-01.md) 远程协同 |
 | S23 | 电子病历评级支撑 | [EMR-LEVEL-01](D4/EMR-LEVEL-01.md) 评级目标映射 · [EMR-LEVEL-02](D4/EMR-LEVEL-02.md) 评级数据质量与证据包 |
-| S24 | 门急诊全过程支持 | 待建 |
-| S25 | 住院诊疗与核心制度 | 待建 |
-| S26 | 围手术期、麻醉与输血 | 待建 |
-| S27 | 重症与生命支持 | 待建 |
-| S28 | 妇产、儿科与特殊人群 | 待建 |
-| S29 | 肿瘤与日间诊疗 | 待建 |
-| S30 | 慢病、基层与双向转诊 | 待建 |
-| S31 | 药事治理与抗菌药物 | 待建 |
-| S32 | 医疗安全事件管理 | 待建 |
-| S33 | 器械耗材与医疗技术 | 待建 |
-| S34 | 科研、真实世界与数据服务 | 待建 |
-| S35 | 护理专业智能与护理决策 | 待建 |
-| S36 | 医技报告解读与结果闭环 | 待建 |
-| S37 | 床旁知识查阅与证据问答 | 待建 |
-| S38 | 营养、心理、疼痛与安宁照护 | 待建 |
-| S39 | 中医药、预防保健与健康管理 | 待建 |
-| S40 | 医技互认、远程协同与区域共享 | 待建 |
+| S24 | 门急诊全过程支持 | [CRITICAL-01](wave2/CRITICAL-01.md) 分诊/全过程 |
+| S25 | 住院诊疗与核心制度 | [SVC-DOMAIN-01](wave2/SVC-DOMAIN-01.md) 专病路径服务包 · [PERIOP-01](wave2/PERIOP-01.md) 核心制度核查 |
+| S26 | 围手术期、麻醉与输血 | [PERIOP-01](wave2/PERIOP-01.md) 围术期门面 |
+| S27 | 重症与生命支持 | [CRITICAL-01](wave2/CRITICAL-01.md) 重症门面 |
+| S28 | 妇产、儿科与特殊人群 | [SPECIAL-POP-01](wave2/SPECIAL-POP-01.md) 特殊人群门面 |
+| S29 | 肿瘤与日间诊疗 | [ONCO-RENAL-01](wave2/ONCO-RENAL-01.md) 肿瘤日间门面 |
+| S30 | 慢病、基层与双向转诊 | [PRIMARY-CARE-01](wave2/PRIMARY-CARE-01.md) 基层慢病门面 |
+| S31 | 药事治理与抗菌药物 | [PHARMACY-01](wave2/PHARMACY-01.md) 药事门面（抗菌分级）|
+| S32 | 医疗安全事件管理 | [INFECTION-PH-01](wave2/INFECTION-PH-01.md) 不良事件 · [OPT-04](D3/OPT-04.md) 红线 |
+| S33 | 器械耗材与医疗技术 | [PERIOP-01](wave2/PERIOP-01.md) 器械准入 · [SPECIALTY-EXT-01](wave2/SPECIALTY-EXT-01.md) 医疗技术 |
+| S34 | 科研、真实世界与数据服务 | [RWD-01](wave2/RWD-01.md) 科研数据门面 · [SPECIALTY-EXT-01](wave2/SPECIALTY-EXT-01.md) |
+| S35 | 护理专业智能与护理决策 | [NURSING-01](wave2/NURSING-01.md) 护理门面 · 资产 [KNOWGEN-09](wave2/KNOWGEN-09.md) |
+| S36 | 医技报告解读与结果闭环 | [REPORT-01](wave2/REPORT-01.md) 报告解读门面 · 资产 [KNOWGEN-10](wave2/KNOWGEN-10.md) |
+| S37 | 床旁知识查阅与证据问答 | [POC-KNOW-01](wave2/POC-KNOW-01.md) 床旁知识门面 · 资产 [KNOWGEN-11](wave2/KNOWGEN-11.md) |
+| S38 | 营养、心理、疼痛与安宁照护 | [ALLIED-CARE-01](wave2/ALLIED-CARE-01.md) 照护门面 |
+| S39 | 中医药、预防保健与健康管理 | [TCM-HEALTH-01](wave2/TCM-HEALTH-01.md) 中医药门面 · 资产 [KNOWGEN-12](wave2/KNOWGEN-12.md) |
+| S40 | 医技互认、远程协同与区域共享 | [REGION-COLLAB-01](wave2/REGION-COLLAB-01.md) 区域协同门面 |
 
 ## 全卡目录（按域）
 
@@ -88,11 +88,11 @@
 **安全边界**：[OPT-10](D6/OPT-10.md) 插件和生态安全边界
 **页面**（实化占位 `D6-PAGE-*`）：[PROV-01](D6/PROV-01.md) 来源追溯 · [GRAPH-01](D6/GRAPH-01.md) 图谱查询 · [AIFLOW-01](D6/AIFLOW-01.md) AI 工作流（壳/查看，编排 wave2）· [DOMCHK-01](D6/DOMCHK-01.md) 国产化自检 · [DEVCON-01](D6/DEVCON-01.md) 开发者控制台
 
-### 第二波 wave2 🚧 建设中（[域简报](wave2/_brief.md)；分 4 子块多 PR 增量交付）
+### 第二波 wave2 ✅ 全建（55 卡，[域简报](wave2/_brief.md)；4 子块）
 **X-LLM 模型网关与真实接入 ✅ 已建（11 卡，批 1）**：[API-12](wave2/API-12.md) 网关 API · [LLM-01](wave2/LLM-01.md) 网关引擎 · [LLM-02](wave2/LLM-02.md) B0/B1/B2 切换矩阵 · [LLM-03](wave2/LLM-03.md) 数据最小化外调安全 · [LLM-04](wave2/LLM-04.md) 版本治理 · [LLM-05](wave2/LLM-05.md) 增强接入矩阵 · [LLM-06](wave2/LLM-06.md) 来源探索编排 · [LLM-07](wave2/LLM-07.md) 医学回归评测 · [LLM-08](wave2/LLM-08.md) provider 真实接入 · [OPT-06](wave2/OPT-06.md) AI 质量评测中心 · [OPT-09](wave2/OPT-09.md) 数据最小化策略引擎
-**X-AIK AI 工厂（批 2，待建）**：AIK-STD-01 … AIK-STD-12
-**X-KNOWGEN 首发知识资产（批 3，待建）**：KNOWGEN-01 … KNOWGEN-15
-**X-DOMAIN 15 领域门面 + 服务包（批 4，待建）**：NURSING-01 / REPORT-01 / POC-KNOW-01 / PHARMACY-01 / CRITICAL-01 / SPECIAL-POP-01 / PERIOP-01 / ONCO-RENAL-01 / ALLIED-CARE-01 / TCM-HEALTH-01 / INFECTION-PH-01 / PRIMARY-CARE-01 / REGION-COLLAB-01 / SPECIALTY-EXT-01 / RWD-01 / SVC-DOMAIN-01 / SVC-DOMAIN-02
+**X-AIK AI 工厂 ✅ 已建（12 卡，批 2）**：[AIK-STD-01](wave2/AIK-STD-01.md) 资产 schema · [AIK-STD-02](wave2/AIK-STD-02.md) 文档解析锚点 · [AIK-STD-03](wave2/AIK-STD-03.md) 术语映射流水线 · [AIK-STD-04](wave2/AIK-STD-04.md) 候选生成 · [AIK-STD-05](wave2/AIK-STD-05.md) 11 项门禁仲裁 · [AIK-STD-06](wave2/AIK-STD-06.md) 静默评测 · [AIK-STD-07](wave2/AIK-STD-07.md) 包生成同步 · [AIK-STD-08](wave2/AIK-STD-08.md) 探索差异过期 · [AIK-STD-09](wave2/AIK-STD-09.md) 替换处置 · [AIK-STD-10](wave2/AIK-STD-10.md) 8 态分流 · [AIK-STD-11](wave2/AIK-STD-11.md) 待审共存 · [AIK-STD-12](wave2/AIK-STD-12.md) 资产模板 + AiReview 台
+**X-KNOWGEN 首发知识资产 ✅ 已建（15 卡，批 3）**：[KNOWGEN-01](wave2/KNOWGEN-01.md) 术语 · [KNOWGEN-02](wave2/KNOWGEN-02.md) 说明书 · [KNOWGEN-03](wave2/KNOWGEN-03.md) 指南条款 · [KNOWGEN-04](wave2/KNOWGEN-04.md) 临床规则 · [KNOWGEN-05](wave2/KNOWGEN-05.md) 专病路径 · [KNOWGEN-06](wave2/KNOWGEN-06.md) 推荐模板 · [KNOWGEN-07](wave2/KNOWGEN-07.md) 评估指标 · [KNOWGEN-08](wave2/KNOWGEN-08.md) 随访计划 · [KNOWGEN-09](wave2/KNOWGEN-09.md) 护理资产 · [KNOWGEN-10](wave2/KNOWGEN-10.md) 报告解读 · [KNOWGEN-11](wave2/KNOWGEN-11.md) 床旁知识 · [KNOWGEN-12](wave2/KNOWGEN-12.md) 中医药 · [KNOWGEN-13](wave2/KNOWGEN-13.md) 医保病案 · [KNOWGEN-14](wave2/KNOWGEN-14.md) 公卫院感 · [KNOWGEN-15](wave2/KNOWGEN-15.md) 首发包总验收
+**X-DOMAIN 15 领域门面 + 服务包 ✅ 已建（17 卡，批 4）**：[NURSING-01](wave2/NURSING-01.md) 护理 · [REPORT-01](wave2/REPORT-01.md) 报告解读 · [POC-KNOW-01](wave2/POC-KNOW-01.md) 床旁知识 · [PHARMACY-01](wave2/PHARMACY-01.md) 药事 · [CRITICAL-01](wave2/CRITICAL-01.md) 急危重症 · [SPECIAL-POP-01](wave2/SPECIAL-POP-01.md) 特殊人群 · [PERIOP-01](wave2/PERIOP-01.md) 围术期 · [ONCO-RENAL-01](wave2/ONCO-RENAL-01.md) 肿瘤日间 · [ALLIED-CARE-01](wave2/ALLIED-CARE-01.md) 照护 · [TCM-HEALTH-01](wave2/TCM-HEALTH-01.md) 中医药 · [INFECTION-PH-01](wave2/INFECTION-PH-01.md) 院感公卫 · [PRIMARY-CARE-01](wave2/PRIMARY-CARE-01.md) 基层慢病 · [REGION-COLLAB-01](wave2/REGION-COLLAB-01.md) 区域协同 · [SPECIALTY-EXT-01](wave2/SPECIALTY-EXT-01.md) 扩展专科 · [RWD-01](wave2/RWD-01.md) 科研数据 · 服务包 [SVC-DOMAIN-01](wave2/SVC-DOMAIN-01.md)/[SVC-DOMAIN-02](wave2/SVC-DOMAIN-02.md)
 
 ### GA 验收 ga ✅ 已建（12 卡，[域简报](ga/_brief.md)）
 **跨域验收**：[QA-01](ga/QA-01.md) 引擎 E2E · [QA-02](ga/QA-02.md) 迁移/性能/国产化 · [QA-03](ga/QA-03.md) 医疗安全 · [QA-04](ga/QA-04.md) 无模型 B0 · [QA-05](ga/QA-05.md) 上线评审 · [QA-06](ga/QA-06.md) 产品体验 · [QA-07](ga/QA-07.md) 代码净化 · [QA-08](ga/QA-08.md) 第三方对接

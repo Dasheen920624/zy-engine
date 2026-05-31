@@ -6,17 +6,13 @@
 
 ## 在途工作线
 
-### 线 1 · wave2 第二波 AI 施工卡（55 项 · 4 子块多 PR）🚧 —— 批 1 X-LLM 待合
-- **背景**：核心域 D0–D6 + GA 12 卡 + 覆盖矩阵卡级锚点 + 根文档对齐 **全部已合**（#152–#167）。卡体系迁移进入最后一域 **wave2**（AI 加深）；覆盖矩阵已迁 **127** 锚点。
-- **批次（4 子块 = 4 PR，子块内整批一个 PR）**：
-  1. **X-LLM 模型网关 11 卡 🚧（`claude/wave2-llm`，PR 待合）** —— API-12 · LLM-01~08 · OPT-06/09 + wave2 域简报 + 四索引回填。现状：后端 `engine/llm/` 已有网关 MVP（`ModelGatewayService`/`Controller` + 五方言 `V18` + 8 能力码 + B0 诚实回退），卡照实写「MVP 已建 / 缺口待建」。
-  2. X-AIK AI 工厂 12 卡（AIK-STD-01~12）—— 待起（`claude/wave2-aik`）。
-  3. X-KNOWGEN 首发资产 15 卡（KNOWGEN-01~15）—— 待起（`claude/wave2-knowgen`）。
-  4. X-DOMAIN 15 领域门面 + 服务包 17 卡（NURSING…SVC-DOMAIN-02）—— 待起（`claude/wave2-domain`），同批回填场景 S17–S40。
-- **下一步（精确到动作）**：1. 推 `claude/wave2-llm` → 开 PR（标题 `docs(cards): wave2 X-LLM 模型网关 11 卡 + 域简报 + 四索引回填`）。2. 用户合并后从**新 origin/main 重拉**，起批 2 `claude/wave2-aik`。3. 四批全合 → 过 wave2 域级验收 → 点亮 GA 门禁 3/8/10。
-- **GA pass 前置**：门禁 3（AIK）/ 8（15 领域门面）/ 10（KNOWGEN-15）依赖 wave2 建成。
-- **起新子块口径（沿用，已跑通 7 单元 + wave2 批1）**：从新 origin/main 起 `claude/<name>` → 套 [`_template.md`](cards/_template.md) + backlog 段卡清单 + `grep` 真实后端/前端现状（**不深调研**，差异留执行开发）→ 域简报（首批已建可复用）+ 全卡 → 回填四索引（`_index`/`_coverage-matrix`/`backlog`/`_HANDOFF`）→ **整批一个 PR** → 用户合并 → 从新 main 重拉。
-- **专项流程**：填卡五步见 `docs/superpowers/specs/2026-05-30-doc-architecture-build-cards-design.md §7 P1`
+### 线 1 · wave2 第二波 AI 施工卡（55 卡）🚧 —— 批 2-4 待合（卡体系迁移收官）
+- **背景**：核心域 D0–D6 + GA 12 卡 + 覆盖矩阵卡级锚点 + 根文档对齐 **全部已合**（#152–#167）。wave2（AI 加深，55 卡）4 子块：
+  - **X-LLM 模型网关 11 卡 ✅ 已合（#168）**。
+  - **X-AIK 12 + X-KNOWGEN 15 + X-DOMAIN 17 = 44 卡 🚧（`claude/wave2-aik-knowgen-domain`，PR 待合）** —— 用户省 token 口径「一次性写完合一个 PR」；四索引全回填（含场景 S17–S40 映射领域门面）。
+- **现状口径（卡「现状」段照实写）**：模型网关 MVP（`engine/llm/`）已建；AIK 流水线 / KNOWGEN 首发资产 / 15 领域门面 **未建**，承载引擎（KNOW/TERM/RULE/PATH/CDSS/EVAL/FOLLOW/PKG/INTEG）D2–D4 已建——差异/精确实现留**执行开发**。
+- **下一步（精确到动作）**：1. 推 `claude/wave2-aik-knowgen-domain` → 开 PR。2. 用户合并 → **卡体系迁移 100% 完成**（D0–D6 + GA + wave2 全建；覆盖矩阵 131 锚点 + 场景 S0–S40 全覆盖），本线移入已归档。3. 之后进入**执行开发阶段**（按卡 TDD 实现，非建卡）；旧巨物可退役（P8）。GA 门禁 3/8/10 待 wave2 **实现**。
+- **填卡口径（已跑通 8 单元）**：新 main 起分支 → 套 [`_template.md`](cards/_template.md) + backlog 段 + `grep` 真实现状（**不深调研**）→ 简报 + 全卡 → 回填四索引 → 整批一 PR → 合并重拉。详 `docs/superpowers/specs/2026-05-30-doc-architecture-build-cards-design.md §7 P1`。
 
 ## 已归档工作线（最近完成，供回溯）
 - D0 登录域 28 卡 ✅（#152 + #153）
@@ -31,6 +27,7 @@
 - 组织树七层一致性修复 ✅（#165：D2 SVC-PILOT-01/TENANT-01）
 - 覆盖矩阵卡级 §-锚点细化 ✅（#166：§3 已迁场景 18→68 卡级行；原线 2）
 - 根文档对齐 ✅（#167：README 卡为中心 + AGENTS 分支前缀工具中立）
+- wave2 X-LLM 模型网关 11 卡 ✅（#168：API-12 + LLM-01~08 + OPT-06/09 + wave2 域简报，批 1）
 
 ## 通用约定（所有工作线 / 所有工具适用）
 - **分支与 PR**：禁直推 main；分支 → 推送 → PR → 合并 → 确认 origin/main 含合并提交。**squash 合并后必须从新 origin/main 重拉分支**再做下一单元（否则基点回退、重复带入）。一个逻辑单元一个 PR；大任务拆批、每批独立分支基于当时最新 main。分支前缀现状用 `claude/`。
@@ -51,4 +48,4 @@
 ```
 
 ---
-> 末次更新：2026-05-31 · 核心域 D0–D6 + GA 12 卡 + 覆盖矩阵卡级锚点 + 根文档对齐 **全部已合**（#152–#167）；wave2 启动——**批 1 X-LLM 模型网关 11 卡 + 域简报已建（`claude/wave2-llm`，PR 待合）**；剩 wave2 X-AIK/KNOWGEN/DOMAIN（44 项，批 2-4）
+> 末次更新：2026-05-31 · wave2 X-LLM 11 卡已合（#168）；**批 2-4 X-AIK 12 + X-KNOWGEN 15 + X-DOMAIN 17 = 44 卡 + 四索引回填（含 S17–S40）已建（`claude/wave2-aik-knowgen-domain`，PR 待合）**；合并后**卡体系迁移 100% 完成**（D0–D6 + GA + wave2 全 113+ 卡），转入执行开发阶段
