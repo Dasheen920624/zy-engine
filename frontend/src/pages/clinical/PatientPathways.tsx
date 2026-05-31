@@ -399,7 +399,9 @@ export default function PatientPathways() {
                 <Option key={t.templateId} value={t.templateId}>
                   {t.name} (v{t.templateVersion}.0)
                 </Option>
-              )) || <Option value="PT-CAP-01">社区获得性呼吸系统感染标准诊疗路径 (PT-CAP-01)</Option>}
+              )) || (
+                <Option value="PT-CAP-01">社区获得性呼吸系统感染标准诊疗路径 (PT-CAP-01)</Option>
+              )}
             </Select>
           </Form.Item>
           <Form.Item name="startNodeCode" label="起始临床推进节点 (可选，默认为 START)">

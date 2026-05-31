@@ -40,10 +40,7 @@ import {
   useSubmitFollowupQuestionnaire,
   useReportFollowupAbnormal,
 } from "@/shared/api/hooks";
-import type {
-  FollowupPlanDetailResponse,
-  FollowupPlanStatus,
-} from "@/shared/api/hooks";
+import type { FollowupPlanDetailResponse, FollowupPlanStatus } from "@/shared/api/hooks";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -578,7 +575,9 @@ export default function Followup() {
               className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm"
             >
               <Descriptions.Item label="计划编号">
-                <span className="font-normal text-xs font-semibold">{selectedPlanDetail.planId}</span>
+                <span className="font-normal text-xs font-semibold">
+                  {selectedPlanDetail.planId}
+                </span>
               </Descriptions.Item>
               <Descriptions.Item label="患者识别码">
                 <span className="font-semibold">{selectedPlanDetail.patientId}</span>

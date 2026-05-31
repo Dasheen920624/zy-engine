@@ -715,7 +715,9 @@ export default function CdssFatigue() {
                 <span className="font-normal text-xs">{diagnoseData.traceId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="输入 Payload 摘要 (SHA-256)">
-                <span className="font-normal text-xs">{diagnoseData.inputPayloadSummary || "—"}</span>
+                <span className="font-normal text-xs">
+                  {diagnoseData.inputPayloadSummary || "—"}
+                </span>
               </Descriptions.Item>
               <Descriptions.Item label="提醒卡风险定级">
                 <Tag color={diagnoseData.riskLevel === "HIGH" ? "red" : "orange"}>

@@ -115,7 +115,9 @@ describe("page smoke coverage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "集团医疗智能中枢" })).toBeInTheDocument();
-    expect(screen.getByText("确认身份后进入工作台，系统会按角色展示对应菜单。")).toBeInTheDocument();
+    expect(
+      screen.getByText("确认身份后进入工作台，系统会按角色展示对应菜单。"),
+    ).toBeInTheDocument();
     expect(screen.getByText("安全审计已开启")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /默认/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /进入工作台/ })).toBeInTheDocument();

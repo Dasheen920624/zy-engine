@@ -154,8 +154,8 @@ export default function EmbedLaunch() {
       setFeedbackVisible(false);
       setSubmittedFeedback(true);
       sendPostMessage("REJECT", finalReason);
-      } catch {
-        message.error("拒绝反馈提交失败，未向集成方发送拒绝事件。");
+    } catch {
+      message.error("拒绝反馈提交失败，未向集成方发送拒绝事件。");
     }
   };
 

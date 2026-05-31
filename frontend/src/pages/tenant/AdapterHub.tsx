@@ -560,7 +560,9 @@ export default function AdapterHub() {
                 >
                   <Descriptions size="small" column={3}>
                     <Descriptions.Item label="适配器">
-                      <span className="font-normal text-xs">{qualityDiagnosticReport.adapterId}</span>
+                      <span className="font-normal text-xs">
+                        {qualityDiagnosticReport.adapterId}
+                      </span>
                     </Descriptions.Item>
                     <Descriptions.Item label="自检状态">
                       <Tag
@@ -665,7 +667,9 @@ export default function AdapterHub() {
                           }
                           description={
                             <div className="flex flex-col gap-1 text-[10px] text-slate-400">
-                              <span className="font-normal select-all">地址: {item.callbackUrl}</span>
+                              <span className="font-normal select-all">
+                                地址: {item.callbackUrl}
+                              </span>
                               <span>
                                 事件:{" "}
                                 <Tag className="m-0 py-0 px-1 text-[9px]" color="purple">
@@ -1300,7 +1304,10 @@ export default function AdapterHub() {
             ]}
             initialValue="http://test.hospital.local:9000"
           >
-            <Input placeholder="如 http://his-system.local:8080" className="rounded-lg font-normal" />
+            <Input
+              placeholder="如 http://his-system.local:8080"
+              className="rounded-lg font-normal"
+            />
           </Form.Item>
         </Form>
       </Modal>
