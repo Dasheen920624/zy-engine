@@ -10,15 +10,8 @@
 > 下一步 = 按卡 TDD 实现（**非建卡**）：从 [backlog](backlog.md) 选 D0 第一闸任务 → 读核心 + 该域 `_brief` + 卡 → TDD（先失败测试 → 实现 → 绿，动手前建绿色基线）→ T-GATE 前后端全绿 → 一逻辑单元一 PR（详 [AGENTS.md](../AGENTS.md) §4–§6）。
 > GA 门禁 3 / 8 / 10 待 wave2 卡**实现**；旧巨物按 P8 退役。**新领任务按本文件末尾模板加一条工作线。**
 
-### 线 1 · 登录页体验与真实性债务整治 🚧
-- 类型：软件开发 / 前端体验
-- 分支：`codex/base-10-login-token`
-- 目标：按用户要求一次性补齐登录页体验、主题切换、真实性门禁和触碰文件存量债，确保入口页可渲染、可交互、可截图验收，并把后续 AI 低质实现风险纳入门禁。
-- 状态：本地实现已完成并通过总验收：真实性 inventory 清零；登录页默认/暗黑/移动端浏览器验收通过；前端测试 104/104、构建通过；后端 Maven 561 项通过、3 项 Docker/Testcontainers 多方言冒烟因本机 socket 识别问题跳过；Docker Desktop 已运行。
-- 下一步（精确到动作）：1. 提交当前改动。2. 推送 `codex/base-10-login-token` 并创建中文 PR。3. 等远端 CI 通过后合并到远程 `main`。4. 确认 `origin/main` 含合并提交后，将本线移入已归档。
-- 相关文件 / 测试 / 坑：重点文件为 `frontend/src/pages/Login.tsx`、`frontend/src/pages/Login.module.css`、`frontend/src/features/theme-switcher/ThemeSwitcher.tsx`、`scripts/authenticity-guard.mjs`；本地 Docker CLI 正常，但 Testcontainers 对 Docker Desktop socket 返回 400，远端 CI 环境需以实际检查为准。
-
 ## 已归档工作线（最近完成，供回溯）
+- 登录页体验与真实性债务整治 ✅（#173）：补齐登录页主题切换、品牌上下文、表单可用性、统一身份待配置入口、浏览器桌面/暗黑/移动端验收；清理触碰文件真实性债务，真实性 inventory 清零；远端 CI 8/8 通过并合入 `origin/main`。本机 Docker Desktop 可用，但 Testcontainers 在本机 socket 下仍跳过 3 个多方言冒烟，远端 CI 已通过。
 - D0 登录域 28 卡 ✅（#152 + #153）
 - D1 工作台 3 卡 ✅（#154：INFRA-09 + WORKBENCH-01/02）
 - D2 试点准备 30 个逻辑能力/页面交付项 ✅（#156 B1 + #157 B2-B4 + #158 B5-B6 收官；28 张物理卡，RULE/PATH 含页）
@@ -56,4 +49,4 @@
 ```
 
 ---
-> 末次更新：2026-05-31 · wave2 全 55 卡已合（#168 + #169）→ **卡体系迁移 100% 完成**；AGENTS.md AI 协作总纲已合（#170）；AI 研发重启闸门 + 业务实现范围核查已完成（#171）；D0 第一闸真实性触碰文件门禁已完成（#172）；下一步进入 **BASE-10 登录页设计 token 修复**
+> 末次更新：2026-05-31 · wave2 全 55 卡已合（#168 + #169）→ **卡体系迁移 100% 完成**；AGENTS.md AI 协作总纲已合（#170）；AI 研发重启闸门 + 业务实现范围核查已完成（#171）；D0 第一闸真实性触碰文件门禁已完成（#172）；登录页体验与真实性债务整治已完成（#173）；下一步从 backlog 选择新的 D0 执行开发任务
