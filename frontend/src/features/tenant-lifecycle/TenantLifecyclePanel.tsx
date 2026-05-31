@@ -22,19 +22,10 @@ import {
   SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import { useSuccessPlan, useTransitionSuccessStage } from "@/shared/api/hooks";
+import { tenantLifecycleStages } from "@/shared/config/tenantLifecycleStages";
 import styles from "./TenantLifecyclePanel.module.css";
 
 const { Text, Paragraph } = Typography;
-
-// eslint-disable-next-line medkernel/no-page-mock
-const STAGES = [
-  { key: "PREPARATION", title: "系统准备", description: "对接就绪与数据导入" },
-  { key: "PILOT", title: "临床试点", description: "科室试运行与质控监测" },
-  { key: "ACCEPTANCE", title: "上线验收", description: "质控指标达成与物理验收" },
-  { key: "PROMOTION", title: "全院推广", description: "全科室推广与流程闭环" },
-  { key: "RUNNING", title: "常态运行", description: "长期稳定常态化生产运行" },
-  { key: "RENEWAL", title: "年度续约", description: "服务成效评估与续约演进" },
-];
 
 const getThemeStyle = (color: string) => ({
   color,
@@ -75,11 +66,11 @@ export function TenantLifecyclePanel() {
     );
   }
 
-  const currentStep = STAGES.findIndex((s) => s.key === data.currentStage);
+  const currentStep = tenantLifecycleStages.findIndex((s) => s.key === data.currentStage);
   const currentStepSafe = currentStep !== -1 ? currentStep : 0;
 
-  const hasNext = currentStepSafe < STAGES.length - 1;
-  const nextStage = hasNext ? STAGES[currentStepSafe + 1] : null;
+  const hasNext = currentStepSafe < tenantLifecycleStages.length - 1;
+  const nextStage = hasNext ? tenantLifecycleStages[currentStepSafe + 1] : null;
 
   const handleTransition = () => {
     if (!nextStage) return;
@@ -125,7 +116,7 @@ export function TenantLifecyclePanel() {
       }
       extra={
         <Tag color="cyan" className={styles.stageTag}>
-          当前阶段：{STAGES[currentStepSafe]?.title}
+          当前阶段：{tenantLifecycleStages[currentStepSafe]?.title}
         </Tag>
       }
       className={styles.card}
@@ -137,7 +128,7 @@ export function TenantLifecyclePanel() {
             current={currentStepSafe}
             size="small"
             labelPlacement="vertical"
-            items={STAGES.map((s, index) => {
+            items={tenantLifecycleStages.map((s, index) => {
               let status: "process" | "finish" | "wait" = "wait";
               if (index === currentStepSafe) {
                 status = "process";

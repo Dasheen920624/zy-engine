@@ -449,7 +449,7 @@ export default function AdapterHub() {
                     render: (_, record) => (
                       <div className="flex flex-col">
                         <span className="font-semibold text-slate-800 text-xs">{record.name}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-[10px] text-slate-400 font-normal">
                           {record.adapterId}
                         </span>
                       </div>
@@ -460,7 +460,7 @@ export default function AdapterHub() {
                     dataIndex: "protocolType",
                     key: "protocolType",
                     render: (type) => (
-                      <Tag color="blue" className="font-mono m-0 text-[10px]">
+                      <Tag color="blue" className="font-normal m-0 text-[10px]">
                         {type}
                       </Tag>
                     ),
@@ -480,7 +480,7 @@ export default function AdapterHub() {
                         <Badge
                           status={statusMap[record.healthStatus] ?? "default"}
                           text={record.healthStatus}
-                          className="font-mono text-xs"
+                          className="font-normal text-xs"
                         />
                       );
                     },
@@ -490,7 +490,7 @@ export default function AdapterHub() {
                     dataIndex: "rttMs",
                     key: "rttMs",
                     render: (rtt) => (
-                      <span className="font-mono text-xs">{rtt ? `${rtt}ms` : "—"}</span>
+                      <span className="font-normal text-xs">{rtt ? `${rtt}ms` : "—"}</span>
                     ),
                   },
                   {
@@ -508,7 +508,7 @@ export default function AdapterHub() {
                     dataIndex: "lastHeartbeatAt",
                     key: "lastHeartbeatAt",
                     render: (t) => (
-                      <span className="text-[10px] text-slate-400 font-mono">
+                      <span className="text-[10px] text-slate-400 font-normal">
                         {t ? new Date(t).toLocaleString() : "暂无"}
                       </span>
                     ),
@@ -560,7 +560,9 @@ export default function AdapterHub() {
                 >
                   <Descriptions size="small" column={3}>
                     <Descriptions.Item label="适配器">
-                      <span className="font-mono text-xs">{qualityDiagnosticReport.adapterId}</span>
+                      <span className="font-normal text-xs">
+                        {qualityDiagnosticReport.adapterId}
+                      </span>
                     </Descriptions.Item>
                     <Descriptions.Item label="自检状态">
                       <Tag
@@ -577,7 +579,7 @@ export default function AdapterHub() {
                       </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label="网络 RTT">
-                      <span className="font-mono text-xs">
+                      <span className="font-normal text-xs">
                         {qualityDiagnosticReport.rttMs
                           ? `${qualityDiagnosticReport.rttMs}ms`
                           : "未测量"}
@@ -665,14 +667,16 @@ export default function AdapterHub() {
                           }
                           description={
                             <div className="flex flex-col gap-1 text-[10px] text-slate-400">
-                              <span className="font-mono select-all">地址: {item.callbackUrl}</span>
+                              <span className="font-normal select-all">
+                                地址: {item.callbackUrl}
+                              </span>
                               <span>
                                 事件:{" "}
                                 <Tag className="m-0 py-0 px-1 text-[9px]" color="purple">
                                   {item.eventsSubscribed}
                                 </Tag>
                               </span>
-                              <span className="font-mono select-all text-amber-600">
+                              <span className="font-normal select-all text-amber-600">
                                 密钥: {item.secretKey}
                               </span>
                             </div>
@@ -721,7 +725,7 @@ export default function AdapterHub() {
                         rows={4}
                         value={webhookTestPayload}
                         onChange={(e) => setWebhookTestPayload(e.target.value)}
-                        className="font-mono text-xs rounded-lg"
+                        className="font-normal text-xs rounded-lg"
                       />
                     </div>
 
@@ -741,7 +745,7 @@ export default function AdapterHub() {
                           <CheckCircleOutlined />
                           <span>签名生成与验证过程 (HMAC-SHA256 Pipeline)</span>
                         </span>
-                        <div className="text-[10px] font-mono flex flex-col gap-1 text-slate-600">
+                        <div className="text-[10px] font-normal flex flex-col gap-1 text-slate-600">
                           <div>
                             <span className="font-bold text-slate-400">共享密钥 (Secret Key):</span>{" "}
                             {testResultSummary.secretKey}
@@ -757,9 +761,9 @@ export default function AdapterHub() {
                               串联签名原文字段 (Timestamp + Payload):
                             </span>
                           </div>
-                          <pre className="bg-slate-50 p-2 rounded border border-slate-100 text-[9px] overflow-auto select-all max-h-20">
+                          <div className="bg-slate-50 p-2 rounded border border-slate-100 text-[9px] overflow-auto select-all max-h-20">
                             {testResultSummary.payloadSigned}
-                          </pre>
+                          </div>
                           <div>
                             <span className="font-bold text-slate-400">
                               生成签名哈希结果 (X-MedKernel-Signature):
@@ -767,7 +771,7 @@ export default function AdapterHub() {
                           </div>
                           <Tag
                             color="cyan"
-                            className="text-[10px] font-mono select-all w-fit py-0.5 px-2"
+                            className="text-[10px] font-normal select-all w-fit py-0.5 px-2"
                           >
                             {testResultSummary.signature}
                           </Tag>
@@ -833,7 +837,7 @@ export default function AdapterHub() {
                         <span className="font-semibold text-slate-800 text-xs">
                           {record.messageId}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-[10px] text-slate-400 font-normal">
                           {record.traceId}
                         </span>
                       </div>
@@ -861,13 +865,13 @@ export default function AdapterHub() {
                     title: "报文摘要",
                     dataIndex: "payloadSummary",
                     key: "payloadSummary",
-                    className: "font-mono text-xs",
+                    className: "font-normal text-xs",
                   },
                   {
                     title: "重试控制门槛",
                     key: "retry",
                     render: (_, record) => (
-                      <span className="font-mono text-xs">
+                      <span className="font-normal text-xs">
                         {record.retryCount} / {record.maxRetries} 次
                       </span>
                     ),
@@ -880,7 +884,7 @@ export default function AdapterHub() {
                       if (record.status === "FAILED") color = "orange";
                       if (record.status === "DEAD_LETTER") color = "red";
                       return (
-                        <Tag color={color} className="font-mono">
+                        <Tag color={color} className="font-normal">
                           {record.status}
                         </Tag>
                       );
@@ -1000,7 +1004,7 @@ export default function AdapterHub() {
                           rules={[{ required: true }]}
                           initialValue="E-2001"
                         >
-                          <Input className="rounded-lg text-xs font-mono" />
+                          <Input className="rounded-lg text-xs font-normal" />
                         </Form.Item>
                       </Col>
                     </Row>
@@ -1061,7 +1065,7 @@ export default function AdapterHub() {
                         title: "允许的跨域 Origin 域名地址",
                         dataIndex: "origin",
                         key: "origin",
-                        className: "font-mono text-[10px] text-slate-700",
+                        className: "font-normal text-[10px] text-slate-700",
                       },
                       {
                         title: "防护状态",
@@ -1120,7 +1124,7 @@ export default function AdapterHub() {
                             postMessage 双向跨域通信审计{" "}
                             {sandboxToken ? `(Token: ${sandboxToken})` : ""}:
                           </span>
-                          <div className="max-h-24 overflow-y-auto font-mono text-[9px]">
+                          <div className="max-h-24 overflow-y-auto font-normal text-[9px]">
                             {postMessageLogs.length === 0 ? (
                               <span className="text-slate-500">
                                 等待 CDSS 交互反馈指令事件回传...
@@ -1210,7 +1214,7 @@ export default function AdapterHub() {
             label="连接字段映射规则配制 JSON (Config JSON)"
             initialValue={`{\n  "baseUrl": "http://lis.hospital.local",\n  "timeoutMs": 5000\n}`}
           >
-            <Input.TextArea rows={4} className="font-mono text-xs rounded-lg" />
+            <Input.TextArea rows={4} className="font-normal text-xs rounded-lg" />
           </Form.Item>
         </Form>
       </Modal>
@@ -1258,7 +1262,7 @@ export default function AdapterHub() {
           >
             <Input
               placeholder="输入以 http:// 或 https:// 开头的回调地址"
-              className="rounded-lg font-mono"
+              className="rounded-lg font-normal"
             />
           </Form.Item>
 
@@ -1300,7 +1304,10 @@ export default function AdapterHub() {
             ]}
             initialValue="http://test.hospital.local:9000"
           >
-            <Input placeholder="如 http://his-system.local:8080" className="rounded-lg font-mono" />
+            <Input
+              placeholder="如 http://his-system.local:8080"
+              className="rounded-lg font-normal"
+            />
           </Form.Item>
         </Form>
       </Modal>

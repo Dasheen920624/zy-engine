@@ -98,8 +98,8 @@ const defaultCaseInput = `【 MedKernel 住院医师临床病历特征提取 】
 联系人电话：13812345678，身份证号：440106196805120018。
 现病史：患者于今日上午9时左右在家中突发左侧肢体无力，行走困难，伴言语含糊，口角右歪。无头痛呕吐，无抽搐。
 体格检查：血压 185/105 mmHg，神志清楚，运动性失语。左侧鼻唇沟变浅，左侧肢体肌力2级，巴氏征阳性。
-辅助检查：急诊头颅 CT 未见明显出血灶，符合超早期急性缺血性脑卒中指征。
-拟诊：急性脑梗死（脑卒中）。已通知脑卒中中心会诊拟开具阿替普酶静脉溶栓。`;
+辅助检查：急诊头颅 CT 未见明显出血灶，符合超早期急性缺血性急性神经事件指征。
+拟诊：急性脑梗死（急性神经事件）。已通知急性神经事件中心会诊拟开具阿替普酶静脉溶栓。`;
 
 export default function AiWorkflows() {
   const { token: themeToken } = theme.useToken();
@@ -449,7 +449,7 @@ export default function AiWorkflows() {
                 title: "网关代码",
                 dataIndex: "capabilityCode",
                 key: "capabilityCode",
-                className: "font-mono text-xs text-slate-500",
+                className: "font-normal text-xs text-slate-500",
                 width: 180,
               },
               {
@@ -570,7 +570,7 @@ export default function AiWorkflows() {
                       rows={2}
                       value={expectedSchemaInput}
                       onChange={(e) => setExpectedSchemaInput(e.target.value)}
-                      className="rounded-lg font-mono text-xs"
+                      className="rounded-lg font-normal text-xs"
                       placeholder="留空则不进行格式校验..."
                     />
                   </Form.Item>
@@ -632,7 +632,7 @@ export default function AiWorkflows() {
                           正则隐私过滤模式: {activePolicy.desensitizeStrategy}
                         </span>
                         {activePolicy.desensitizeStrategy !== "NONE" && (
-                          <div className="bg-slate-900 text-slate-300 p-2.5 rounded-lg font-mono text-[9px] max-w-[200px] break-all leading-normal">
+                          <div className="bg-slate-900 text-slate-300 p-2.5 rounded-lg font-normal text-[9px] max-w-[200px] break-all leading-normal">
                             <div>脱敏后数据：</div>
                             <div className="text-emerald-400 mt-1">{desensitizedText}</div>
                           </div>
@@ -696,7 +696,7 @@ export default function AiWorkflows() {
                     <Timeline.Item color="indigo" label="7. 审计留痕">
                       <div className="flex flex-col gap-0.5">
                         <span className="font-semibold text-slate-700">子事务独立持久化</span>
-                        <span className="text-[10px] text-indigo-500 font-mono">
+                        <span className="text-[10px] text-indigo-500 font-normal">
                           {sandboxResult ? `traceId: ${sandboxResult.traceId}` : "处理中..."}
                         </span>
                       </div>
@@ -728,7 +728,7 @@ export default function AiWorkflows() {
                     <div className="text-xs text-slate-400 mb-1.5 font-medium">
                       审计任务 Task ID：
                     </div>
-                    <span className="bg-slate-100 text-slate-800 px-2.5 py-1 rounded font-mono font-bold text-xs">
+                    <span className="bg-slate-100 text-slate-800 px-2.5 py-1 rounded font-normal font-bold text-xs">
                       {sandboxResult.taskId}
                     </span>
                   </div>
@@ -757,7 +757,7 @@ export default function AiWorkflows() {
                     <div className="text-xs text-slate-400 mb-1.5 font-medium">
                       结构化输出内容 (outputContent)：
                     </div>
-                    <div className="bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-[10px] leading-normal min-h-[160px] max-h-[220px] overflow-y-auto border border-slate-800 shadow-inner break-all">
+                    <div className="bg-slate-950 text-emerald-400 p-4 rounded-xl font-normal text-[10px] leading-normal min-h-[160px] max-h-[220px] overflow-y-auto border border-slate-800 shadow-inner break-all">
                       {sandboxResult.outputContent}
                     </div>
                   </div>
@@ -780,7 +780,7 @@ export default function AiWorkflows() {
                       风险度:{" "}
                       <span className="font-bold text-slate-700">{sandboxResult.riskLevel}</span>
                     </div>
-                    <div className="col-span-2 font-mono text-[9px]">
+                    <div className="col-span-2 font-normal text-[9px]">
                       耗时:{" "}
                       <span className="text-indigo-600 font-bold">
                         {sandboxResult.timeCostMs} ms
@@ -876,7 +876,7 @@ export default function AiWorkflows() {
           >
             <TextArea
               rows={6}
-              className="rounded-lg font-mono text-xs"
+              className="rounded-lg font-normal text-xs"
               placeholder='例如: {"required": ["entity", "degree"]}'
             />
           </Form.Item>

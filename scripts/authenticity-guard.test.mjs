@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -84,6 +85,31 @@ test("前端测试与 Storybook 文件走白名单，不因测试 mock 被误杀
   );
 });
 
+test("前端 catch 成功门禁只检查 catch 代码块内部", async () => {
+  await withFixture(
+    {
+      "frontend/src/pages/GoodPage.tsx": `
+        export async function GoodPage() {
+          try {
+            JSON.parse("{}");
+          } catch {
+            message.error("JSON 格式不合法");
+            return;
+          }
+
+          message.success("后端真实返回后再提示成功");
+        }
+      `,
+    },
+    async (root) => {
+      const report = await scanFiles(root, ["frontend/src/pages/GoodPage.tsx"]);
+
+      assert.equal(hasBlockingViolations(report), false);
+      assert.deepEqual(report.violations, []);
+    },
+  );
+});
+
 test("CSS 触碰文件会阻断 hex/rgb/hsl 与字号圆角 px 硬编码", async () => {
   await withFixture(
     {
@@ -106,6 +132,24 @@ test("CSS 触碰文件会阻断 hex/rgb/hsl 与字号圆角 px 硬编码", async
       ]);
     },
   );
+});
+
+test("登录页 CSS 必须全部使用设计 token 变量", async () => {
+  const report = await scanFiles(process.cwd(), ["frontend/src/pages/Login.module.css"]);
+
+  assert.equal(hasBlockingViolations(report), false);
+  assert.deepEqual(report.violations, []);
+});
+
+test("全仓真实性 inventory 必须清零", async () => {
+  const files = execFileSync("git", ["ls-files"], { encoding: "utf8" })
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean);
+  const report = await scanFiles(process.cwd(), files);
+
+  assert.equal(hasBlockingViolations(report), false);
+  assert.deepEqual(report.violations, []);
 });
 
 test("后端生产代码触碰文件会阻断随机造数、吞错成功、UUID 伪 hash 和占位 Javadoc", async () => {
@@ -146,6 +190,38 @@ test("后端生产代码触碰文件会阻断随机造数、吞错成功、UUID 
         "backend.random-business-value",
         "backend.uuid-as-hash",
       ]);
+    },
+  );
+});
+
+test("后端占位 Javadoc 门禁只检查 Javadoc 块内部", async () => {
+  await withFixture(
+    {
+      "medkernel-backend/src/main/java/com/medkernel/engine/GoodService.java": `
+        package com.medkernel.engine;
+
+        /**
+         * 真实服务说明。
+         */
+        public class GoodService {
+          // 普通实现备注里的占位词不应被 Javadoc 门禁跨块误报。
+
+          /**
+           * 查询当前状态。
+           */
+          public String status() {
+            return "OK";
+          }
+        }
+      `,
+    },
+    async (root) => {
+      const report = await scanFiles(root, [
+        "medkernel-backend/src/main/java/com/medkernel/engine/GoodService.java",
+      ]);
+
+      assert.equal(hasBlockingViolations(report), false);
+      assert.deepEqual(report.violations, []);
     },
   );
 });

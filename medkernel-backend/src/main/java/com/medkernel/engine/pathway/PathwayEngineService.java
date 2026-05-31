@@ -37,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>专病路径资产的草稿创建、模板发布门禁和版本化查询；</li>
  *   <li>基于已发布模板创建患者路径实例并初始化节点关键时钟；</li>
  *   <li>按确定性推进器处理完成、变异和退出事件，并保存审计事实；</li>
- *   <li>输出仿真轨迹和诊断解释，支撑后续路径画布与临床嵌入式提醒。</li>
+ *   <li>输出试运行轨迹和诊断解释，支撑后续路径画布与临床嵌入式提醒。</li>
  * </ul>
  * 所有读写均按当前租户隔离，写动作发布审计事件并记录状态迁移。
  */
@@ -318,9 +318,9 @@ public class PathwayEngineService {
     }
 
     /**
-     * 基于模板图和可选目标节点序列仿真路径推进。
+     * 基于模板图和可选目标节点序列试运行路径推进。
      *
-     * <p>仿真只返回节点轨迹与最终状态，不创建患者路径、不写变异、不创建关键时钟。
+     * <p>试运行只返回节点轨迹与最终状态，不创建患者路径、不写变异、不创建关键时钟。
      */
     @Transactional(readOnly = true)
     public PathwaySimulationResponse simulate(String templateId, PathwaySimulateRequest request) {

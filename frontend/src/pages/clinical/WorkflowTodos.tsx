@@ -7,7 +7,7 @@ function getInitialTodos() {
   return [
     {
       id: 101,
-      title: "审批：'胸痛中心急性心梗分型' 临床路径知识包发布申请",
+      title: "审批：'胸痛中心急性胸痛急症分型' 临床路径知识包发布申请",
       type: "APPROVAL",
       severity: "P0",
       department: "心内科",
@@ -34,7 +34,7 @@ function getInitialTodos() {
     },
     {
       id: 104,
-      title: "审批：'高血压合并糖尿病慢病管理路径' 关键节点推进修正案",
+      title: "审批：'血压异常合并代谢慢病慢病管理路径' 关键节点推进修正案",
       type: "APPROVAL",
       severity: "P2",
       department: "内分泌科",
@@ -118,9 +118,7 @@ export default function WorkflowTodos() {
       setTodos((prev) => prev.map((t) => (t.id === activeTodo.id ? { ...t, status: "DONE" } : t)));
 
       setMessage(
-        `[SLA 安全闭环] 待办任务 #${activeTodo.id} 处理完毕！操作已物理审计上报，TraceId: tr-${Math.floor(
-          100000 + Math.random() * 900000,
-        )}`,
+        `[SLA 安全闭环] 待办任务 #${activeTodo.id} 已在当前页面标记完成；后端审计写入待 D0 审计骨干接入后回填。`,
       );
       setActiveTodo(null);
       setTimeout(() => setMessage(null), 4000);

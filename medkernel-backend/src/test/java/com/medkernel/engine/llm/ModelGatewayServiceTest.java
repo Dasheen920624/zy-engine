@@ -89,14 +89,15 @@ class ModelGatewayServiceTest {
         when(policyRepo.findByTenantIdAndCapabilityCode("tenant-1", "knowledge.extract"))
             .thenReturn(Optional.of(baseplayPolicy));
 
-        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取高血压病历信息", null, null, 60);
+        ModelTaskRequest req = new ModelTaskRequest("knowledge.extract", "提取结构化临床文本信息", null, null, 60);
 
         ModelTaskResponse resp = service.submitTask(req);
         assertNotNull(resp);
         assertEquals("DEGRADED", resp.status());
         assertEquals("B0", resp.modelMode());
         assertTrue(resp.fallbackUsed());
-        assertTrue(resp.outputContent().contains("高血压"));
+        assertTrue(resp.outputContent().contains("临床概念A"));
+        assertFalse(resp.outputContent().contains("高血压"));
 
         verify(taskRepo).save(any(ModelCapabilityTask.class));
         // 成功路径走 AuditEventPublisher（同事务）；isolated 仅用于失败留痕（LLM-M-04）

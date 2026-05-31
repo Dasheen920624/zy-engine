@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card, Button, Tag, Alert, Spin, Radio, Input, Modal, Badge, message } from "antd";
@@ -66,13 +65,13 @@ const fallbackCards: RecommendationCard[] = [
     title: "急性心肌梗死溶栓禁忌症物理红线预警",
     severity: "CRITICAL",
     summary:
-      "患者收缩压持续 > 180 mmHg。临床路径红线阻断：严重未控制的高血压属于溶栓绝对禁忌症，禁止直接开具尿激酶/阿替普酶！",
+      "患者收缩压持续 > 180 mmHg。临床路径红线阻断：严重未控制的血压异常属于溶栓绝对禁忌症，禁止直接开具尿激酶/阿替普酶！",
     recommendations: [
       {
         actionCode: "CONSULT_NEURO",
         actionType: "CONSULT",
         description:
-          "首要建议：紧急请心内科与脑卒中中心会诊，评估急诊 PCI 手术指征或先期静脉降压治疗。",
+          "首要建议：紧急请心内科与急性神经事件中心会诊，评估急诊 PCI 手术指征或先期静脉降压治疗。",
       },
     ],
     evidenceSummary:
@@ -132,10 +131,7 @@ export default function EmbedLaunch() {
         setSubmittedFeedback(true);
         sendPostMessage("ADOPT", "医师确认符合临床指征并予以执行");
       } catch {
-        // 仿真退回
-        message.success("[仿真模式] 已采纳此建议！物理审计日志留痕完成。");
-        setSubmittedFeedback(true);
-        sendPostMessage("ADOPT", "医师确认符合临床指征并予以执行");
+        message.error("建议采纳提交失败，未向集成方发送采纳事件。");
       }
     }
   };
@@ -159,11 +155,7 @@ export default function EmbedLaunch() {
       setSubmittedFeedback(true);
       sendPostMessage("REJECT", finalReason);
     } catch {
-      // 仿真退回
-      message.info("[仿真模式] 医师拒绝采纳建议。物理审计日志留痕完成。");
-      setFeedbackVisible(false);
-      setSubmittedFeedback(true);
-      sendPostMessage("REJECT", finalReason);
+      message.error("拒绝反馈提交失败，未向集成方发送拒绝事件。");
     }
   };
 
@@ -174,11 +166,11 @@ export default function EmbedLaunch() {
         source: "MEDKERNEL_CDSS_EMBED",
         action: actionType,
         reason: reasonText,
-        patientId: launchContext?.patientId || "P-1001",
-        encounterId: launchContext?.encounterId || "E-2001",
-        triggerPoint: launchContext?.triggerPoint || "OUTPATIENT_DIAGNOSIS",
+        patientId: launchContext?.patientId || "未提供患者标识",
+        encounterId: launchContext?.encounterId || "未提供就诊标识",
+        triggerPoint: launchContext?.triggerPoint || "未提供触发点",
         timestamp: new Date().toISOString(),
-        traceId: launchContext?.traceId || "tr-local-embed-9122",
+        traceId: launchContext?.traceId || "未提供追踪链路",
       };
       window.parent.postMessage(eventData, "*");
     }
@@ -235,7 +227,7 @@ export default function EmbedLaunch() {
           <Tag color="blue" className="font-semibold m-0 text-xs">
             就诊: {launchContext?.encounterId}
           </Tag>
-          <Tag color="purple" className="m-0 text-[10px] font-mono">
+          <Tag color="purple" className="m-0 text-[10px] font-normal">
             触发点: {launchContext?.triggerPoint}
           </Tag>
         </div>
@@ -365,7 +357,7 @@ export default function EmbedLaunch() {
         <span className="flex items-center gap-1">
           <AuditOutlined /> 嵌入式交互合规审计凭证 traceId
         </span>
-        <span className="font-mono bg-slate-900 px-2 py-0.5 rounded text-slate-400">
+        <span className="font-normal bg-slate-900 px-2 py-0.5 rounded text-slate-400">
           {launchContext?.traceId || "tr-local-embed-9122"}
         </span>
       </div>

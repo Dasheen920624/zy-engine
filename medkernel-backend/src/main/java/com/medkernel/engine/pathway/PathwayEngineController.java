@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 路径引擎 REST 入口（GA-ENG-API-06 {@code /api/v1/engine/pathways}）。
  *
- * <p>承担专病包、路径模板、发布、仿真、患者入径、节点推进、关键时钟与诊断解释的 HTTP 合同；
+ * <p>承担专病包、路径模板、发布、试运行、患者入径、节点推进、关键时钟与诊断解释的 HTTP 合同；
  * 权限由 {@code pathway.read}/{@code pathway.write}/{@code pathway.publish} 拆分控制，
  * 租户隔离由类级 {@link DataScope}{@code (requireTenant=true)} 兜底。
  */
@@ -122,9 +122,9 @@ public class PathwayEngineController {
     }
 
     /**
-     * 使用指定起点和目标节点序列仿真路径推进轨迹。
+     * 使用指定起点和目标节点序列试运行路径推进轨迹。
      *
-     * <p>权限：{@code pathway.write}；仿真不创建患者路径实例，也不写入变异或关键时钟。
+     * <p>权限：{@code pathway.write}；试运行不创建患者路径实例，也不写入变异或关键时钟。
      */
     @PostMapping("/templates/{templateId}/simulate")
     @PreAuthorize("@perm.has('pathway.write')")

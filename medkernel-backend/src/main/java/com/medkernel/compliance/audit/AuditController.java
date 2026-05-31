@@ -28,7 +28,7 @@ import com.medkernel.shared.datascope.DataScope;
  * <ul>
  *   <li>{@code GET /events} — 当前租户的审计事件流，游标分页 + 过滤</li>
  *   <li>{@code POST /snapshot} — 发布一个 {@code EXPORT} 审计事件并返回落库后的视图，
- *       既是导出快照接口，也是端到端的链路演示</li>
+ *       既是导出快照接口，也是端到端的链路校验</li>
  * </ul>
  *
  * <p>所有访问受 {@code @DataScope(requireTenant=true)} 保护，没有租户上下文的请求返回

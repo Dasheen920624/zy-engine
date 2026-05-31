@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import {
   Table,
@@ -53,7 +52,7 @@ const DEFAULT_DSL_TEMPLATE = `{
       {
         "fact": "prescription.drug_code",
         "operator": "equals",
-        "value": "DRUG-001"
+        "value": "DRUG-CODE"
       }
     ]
   },
@@ -97,7 +96,7 @@ export default function RuleDefinitions() {
 
   // 仿真运行态
   const [simulatePayload, setSimulatePayload] = useState<string>(
-    '{\n  "patient": {\n    "age": 70\n  },\n  "prescription": {\n    "drug_code": "DRUG-001"\n  }\n}',
+    '{\n  "patient": {\n    "age": 70\n  },\n  "prescription": {\n    "drug_code": "DRUG-CODE"\n  }\n}',
   );
   const [simulateResult, setSimulateResult] = useState<any | null>(null);
 
@@ -462,20 +461,20 @@ export default function RuleDefinitions() {
                 <Row gutter={16}>
                   <Col span={12}>
                     <Card title="确定性条件树 (JSON DSL)" className="h-full">
-                      <pre className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-xs font-mono">
+                      <div className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-xs font-normal">
                         {JSON.stringify(JSON.parse(detailData.version?.dslJson || "{}"), null, 2)}
-                      </pre>
+                      </div>
                     </Card>
                   </Col>
                   <Col span={12}>
                     <Card title="临床可信解释模板" className="h-full">
-                      <pre className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-xs font-mono">
+                      <div className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-xs font-normal">
                         {JSON.stringify(
                           JSON.parse(detailData.version?.explanationJson || "{}"),
                           null,
                           2,
                         )}
-                      </pre>
+                      </div>
                     </Card>
                   </Col>
                 </Row>
@@ -500,7 +499,7 @@ export default function RuleDefinitions() {
                       onClick={() => {
                         caseForm.setFieldsValue({
                           inputPayload:
-                            '{\n  "patient": {\n    "age": 70\n  },\n  "prescription": {\n    "drug_code": "DRUG-001"\n  }\n}',
+                            '{\n  "patient": {\n    "age": 70\n  },\n  "prescription": {\n    "drug_code": "DRUG-CODE"\n  }\n}',
                           expectedHit: true,
                           expectedSeverity: "HIGH",
                           expectedActionCode: "STRONG_REMINDER",
@@ -581,7 +580,7 @@ export default function RuleDefinitions() {
                         rows={12}
                         value={simulatePayload}
                         onChange={(e) => setSimulatePayload(e.target.value)}
-                        className="font-mono text-xs"
+                        className="font-normal text-xs"
                       />
                       <Button
                         type="primary"
@@ -620,7 +619,7 @@ export default function RuleDefinitions() {
                           <div className="text-xs font-semibold text-gray-700 mb-2">
                             详细决策动作说明:
                           </div>
-                          <div className="text-xs text-gray-600 bg-white p-3 rounded border border-gray-200 font-mono mb-4">
+                          <div className="text-xs text-gray-600 bg-white p-3 rounded border border-gray-200 font-normal mb-4">
                             {simulateResult.explanation || "未命中，无动作输出。"}
                           </div>
                         </div>
@@ -695,7 +694,7 @@ export default function RuleDefinitions() {
                 label="医学依据/来源"
                 rules={[{ required: true, message: "请输入依据来源" }]}
               >
-                <Input placeholder="例如: 高血压合理用药指南2025" />
+                <Input placeholder="例如: 血压异常合理用药指南2025" />
               </Form.Item>
             </Col>
           </Row>
@@ -710,7 +709,7 @@ export default function RuleDefinitions() {
                 label="确定性条件 JSON DSL"
                 rules={[{ required: true, message: "请输入条件树 JSON" }]}
               >
-                <TextArea rows={12} className="font-mono text-xs" />
+                <TextArea rows={12} className="font-normal text-xs" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -719,7 +718,7 @@ export default function RuleDefinitions() {
                 label="可解释追溯模板 JSON"
                 rules={[{ required: true, message: "请输入解释模板" }]}
               >
-                <TextArea rows={12} className="font-mono text-xs" />
+                <TextArea rows={12} className="font-normal text-xs" />
               </Form.Item>
             </Col>
           </Row>
@@ -749,7 +748,7 @@ export default function RuleDefinitions() {
             label="测试输入 payload JSON 快照"
             rules={[{ required: true, message: "请输入快照" }]}
           >
-            <TextArea rows={8} className="font-mono text-xs" />
+            <TextArea rows={8} className="font-normal text-xs" />
           </Form.Item>
           <Form.Item name="expectedHit" label="期望求值结果" valuePropName="checked">
             <Select>

@@ -79,8 +79,8 @@ export default function SecurityBaseline() {
           if (item.id === 5) {
             return {
               ...item,
-              status: Math.random() > 0.4 ? "PASS" : "WARN",
-              desc: "第三方 HIS 启动令牌已匹配域名前缀白名单，且全部备案拦截机制运行中",
+              status: "WARN",
+              desc: "第三方启动令牌需等待真实域名前缀白名单接口返回后确认",
             };
           }
           return item;

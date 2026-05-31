@@ -16,7 +16,7 @@ import org.springframework.stereotype.Repository;
 public interface RuleDefinitionRepository extends ListCrudRepository<RuleDefinition, Long> {
 
     /**
-     * 按规则业务 ID 与租户 ID 查询单条规则定义，用于详情、仿真、发布等单规则入口。
+     * 按规则业务 ID 与租户 ID 查询单条规则定义，用于详情、试运行、发布等单规则入口。
      */
     Optional<RuleDefinition> findByRuleIdAndTenantId(String ruleId, String tenantId);
 

@@ -7,23 +7,23 @@
 }
 
 .card {
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
-  border-radius: 12px;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
   padding: 24px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px 0 var(--ant-color-fill-tertiary);
 }
 
 .title {
-  font-size: 18px;
+  font-size: var(--ant-font-size-xl);
   font-weight: 600;
-  color: #0f172a;
+  color: var(--ant-color-text);
   margin-bottom: 16px;
 }
 
 .description {
-  font-size: 14px;
-  color: #64748b;
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text-secondary);
   margin-bottom: 24px;
 }
 
@@ -44,7 +44,7 @@
 
 .heatmapCell {
   padding: 16px;
-  border-radius: 8px;
+  border-radius: var(--ant-border-radius-lg);
   border: 1px solid transparent;
   display: flex;
   flex-direction: column;
@@ -56,35 +56,35 @@
 
 .heatmapCell:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px var(--ant-color-fill-tertiary);
 }
 
 .cellPass {
-  background-color: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #14532d;
+  background-color: var(--ant-color-success-bg);
+  border-color: var(--ant-color-success-border);
+  color: var(--ant-color-success-text);
 }
 
 .cellWarn {
-  background-color: #fffbeb;
-  border-color: #fde68a;
-  color: #78350f;
+  background-color: var(--ant-color-warning-bg);
+  border-color: var(--ant-color-warning-border);
+  color: var(--ant-color-warning-text);
 }
 
 .cellFail {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-  color: #7f1d1d;
+  background-color: var(--ant-color-error-bg);
+  border-color: var(--ant-color-error-border);
+  color: var(--ant-color-error-text);
 }
 
 .cellText {
-  font-size: 12px;
+  font-size: var(--ant-font-size-sm);
   font-weight: 500;
   opacity: 0.85;
 }
 
 .cellValue {
-  font-size: 20px;
+  font-size: var(--ant-font-size-heading-5);
   font-weight: bold;
   font-family: monospace;
 }
@@ -92,36 +92,36 @@
 /* 进度条 */
 .progressWrap {
   height: 8px;
-  background-color: #f1f5f9;
-  border-radius: 4px;
+  background-color: var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-sm);
   overflow: hidden;
   margin-top: 8px;
 }
 
 .progressBar {
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--ant-border-radius-sm);
   transition: width 0.4s ease;
 }
 
 .barSuccess {
-  background-color: #10b981;
+  background-color: var(--ant-color-success);
 }
 
 .barWarning {
-  background-color: #f59e0b;
+  background-color: var(--ant-color-warning);
 }
 
 .barDanger {
-  background-color: #ef4444;
+  background-color: var(--ant-color-error);
 }
 
 /* 按钮样式 */
 .btnPrimary {
-  background-color: #0f172a;
-  color: #ffffff;
+  background-color: var(--ant-color-text);
+  color: var(--ant-color-bg-container);
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
   border: none;
   cursor: pointer;
@@ -129,48 +129,48 @@
 }
 
 .btnPrimary:hover {
-  background-color: #1e293b;
+  background-color: var(--ant-color-text-secondary);
 }
 
 .btnDanger {
-  background-color: #ef4444;
-  color: #ffffff;
+  background-color: var(--ant-color-error);
+  color: var(--ant-color-bg-container);
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
   border: none;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--ant-font-size-sm);
   transition: background-color 0.2s;
 }
 
 .btnDanger:hover {
-  background-color: #dc2626;
+  background-color: var(--ant-color-error);
 }
 
 .btnSecondary {
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: var(--ant-color-border-secondary);
+  color: var(--ant-color-text);
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ant-color-border);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--ant-font-size-sm);
   transition: background-color 0.2s;
 }
 
 .btnSecondary:hover {
-  background-color: #e2e8f0;
+  background-color: var(--ant-color-border-secondary);
 }
 
 /* 提示框 */
 .alertSuccess {
-  border: 1px solid #10b981;
-  background-color: #ecfdf5;
-  color: #065f46;
+  border: 1px solid var(--ant-color-success);
+  background-color: var(--ant-color-success-bg);
+  color: var(--ant-color-success-text);
   padding: 12px 24px;
-  border-radius: 12px;
+  border-radius: var(--ant-border-radius-lg);
 }
 
 /* 辅助排版与模态框 */
@@ -183,7 +183,7 @@
 }
 
 .fontSize28 {
-  font-size: 28px;
+  font-size: var(--ant-font-size-heading-3);
 }
 
 .flexBetween {
@@ -200,22 +200,22 @@
 }
 
 .formLabel {
-  font-size: 14px;
+  font-size: var(--ant-font-size);
   font-weight: 500;
-  color: #334155;
+  color: var(--ant-color-text);
 }
 
 .formInput {
   padding: 8px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 14px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius);
+  font-size: var(--ant-font-size);
   outline: none;
   transition: border-color 0.2s;
 }
 
 .formInput:focus {
-  border-color: #0f172a;
+  border-color: var(--ant-color-text);
 }
 
 .btnGroup {
@@ -238,18 +238,18 @@
 
 .table th {
   padding: 12px 16px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: var(--ant-color-bg-layout);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
   font-weight: 600;
-  color: #475569;
-  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+  font-size: var(--ant-font-size-sm);
 }
 
 .table td {
   padding: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 14px;
-  color: #334155;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text);
 }
 
 /* 模态框 */
@@ -259,7 +259,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(15, 23, 42, 0.6);
+  background-color: var(--ant-color-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,26 +268,26 @@
 }
 
 .modalContent {
-  background: #ffffff;
-  border-radius: 16px;
+  background: var(--ant-color-bg-container);
+  border-radius: var(--ant-border-radius-lg);
   padding: 32px;
   max-width: 600px;
   width: 90%;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  border: 1px solid #f1f5f9;
+  box-shadow: 0 25px 50px -12px var(--ant-color-fill);
+  border: 1px solid var(--ant-color-border-secondary);
 }
 
 /* 质控指标卡 */
 .indicatorCard {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
   padding: 20px;
   transition: all 0.3s;
 }
 
 .indicatorCard:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  border-color: var(--ant-color-border);
+  box-shadow: 0 10px 15px -3px var(--ant-color-fill-tertiary);
 }
 
 /* 低打扰辅助 */
@@ -319,8 +319,8 @@
 
 .modalBodyText {
   margin-bottom: 20px;
-  font-size: 14px;
-  color: #334155;
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text);
 }
 
 .opinionTextarea {
@@ -333,23 +333,23 @@
 }
 
 .textSuccess {
-  color: #16a34a;
+  color: var(--ant-color-success);
   font-weight: 600;
 }
 
 .textWarning {
-  color: #d97706;
+  color: var(--ant-color-warning);
   font-weight: 600;
 }
 
 .textDanger {
-  color: #dc2626;
+  color: var(--ant-color-error);
   font-weight: 600;
 }
 
 .indicatorCard {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
   padding: 20px;
   transition: all 0.3s;
   cursor: pointer;
@@ -362,27 +362,27 @@
 }
 
 .valueText {
-  font-size: 24px;
+  font-size: var(--ant-font-size-heading-4);
   font-weight: bold;
   font-family: monospace;
 }
 
 .unitText {
-  font-size: 14px;
+  font-size: var(--ant-font-size);
   font-weight: normal;
 }
 
 .descText {
   margin: 0;
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-color-text-secondary);
 }
 
 .descTextMargin {
   margin-top: 12px;
   margin-bottom: 0;
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-color-text-secondary);
 }
 
 .modalTableWrap {
@@ -392,7 +392,7 @@
 }
 
 .violationText {
-  font-size: 12px;
-  color: #dc2626;
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-color-error);
   font-weight: 500;
 }

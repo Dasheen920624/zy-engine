@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * 路径模板详情响应。
  *
- * <p>聚合模板主数据、节点、边、指标绑定和 traceId，用于模板查看、发布校验和仿真准备。
+ * <p>聚合模板主数据、节点、边、指标绑定和 traceId，用于模板查看、发布校验和试运行准备。
  */
 public record PathwayTemplateDetailResponse(
     PathwayTemplate template,

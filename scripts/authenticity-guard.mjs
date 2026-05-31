@@ -45,7 +45,7 @@ const FRONTEND_RULES = [
   {
     ruleId: "frontend.catch-success",
     message: "前端生产文件禁止 catch 后 message.success 或返回成功，失败必须诚实暴露。",
-    pattern: /catch\s*(?:\([^)]*\))?\s*\{[\s\S]{0,500}(?:message\.success|return\s+(?:success|ApiResult\.success|ResponseEntity\.ok))/m,
+    catchBlockPattern: /(?:message\.success|return\s+(?:success|ApiResult\.success|ResponseEntity\.ok))/m,
   },
 ];
 
@@ -76,8 +76,7 @@ const BACKEND_RULES = [
   {
     ruleId: "backend.catch-success",
     message: "后端生产代码禁止 catch 后返回 success / ok 伪造成功。",
-    pattern:
-      /catch\s*\([^)]*\)\s*\{[\s\S]{0,500}return\s+(?:ApiResult\.success|ResponseEntity\.ok|success)\b/m,
+    catchBlockPattern: /return\s+(?:ApiResult\.success|ResponseEntity\.ok|success)\b/m,
   },
   {
     ruleId: "backend.uuid-as-hash",
@@ -88,7 +87,7 @@ const BACKEND_RULES = [
   {
     ruleId: "backend.placeholder-javadoc",
     message: "后端生产 Javadoc 禁止出现模拟、仿真、演示、占位或 placeholder。",
-    pattern: /\/\*\*[\s\S]*?(?:模拟|仿真|演示|占位|placeholder)[\s\S]*?\*\//i,
+    javadocBlockPattern: /模拟|仿真|演示|占位|placeholder/i,
   },
 ];
 
@@ -103,9 +102,102 @@ function lineOf(content, index) {
 }
 
 function firstMatch(content, rule) {
+  if (rule.catchBlockPattern) return firstCatchBlockMatch(content, rule.catchBlockPattern);
+  if (rule.javadocBlockPattern) return firstJavadocBlockMatch(content, rule.javadocBlockPattern);
   const match = rule.pattern.exec(content);
   if (!match) return null;
   return { index: match.index, text: match[0] };
+}
+
+function firstJavadocBlockMatch(content, pattern) {
+  const javadocPattern = /\/\*\*[\s\S]*?\*\//g;
+  let match;
+  while ((match = javadocPattern.exec(content))) {
+    if (pattern.test(match[0])) {
+      return { index: match.index, text: match[0] };
+    }
+  }
+  return null;
+}
+
+function firstCatchBlockMatch(content, pattern) {
+  const catchPattern = /\bcatch\s*(?:\([^)]*\))?\s*\{/g;
+  let match;
+  while ((match = catchPattern.exec(content))) {
+    const openIndex = catchPattern.lastIndex - 1;
+    const closeIndex = findMatchingBrace(content, openIndex);
+    if (closeIndex === -1) break;
+
+    const block = content.slice(openIndex + 1, closeIndex);
+    if (pattern.test(block)) {
+      return { index: match.index, text: content.slice(match.index, closeIndex + 1) };
+    }
+    catchPattern.lastIndex = closeIndex + 1;
+  }
+  return null;
+}
+
+function findMatchingBrace(content, openIndex) {
+  let depth = 0;
+  let state = "code";
+  let quote = "";
+  let escaped = false;
+
+  for (let index = openIndex; index < content.length; index += 1) {
+    const char = content[index];
+    const next = content[index + 1];
+
+    if (state === "line-comment") {
+      if (char === "\n") state = "code";
+      continue;
+    }
+
+    if (state === "block-comment") {
+      if (char === "*" && next === "/") {
+        state = "code";
+        index += 1;
+      }
+      continue;
+    }
+
+    if (state === "string") {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (char === quote) state = "code";
+      continue;
+    }
+
+    if (char === "/" && next === "/") {
+      state = "line-comment";
+      index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      state = "block-comment";
+      index += 1;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === "`") {
+      state = "string";
+      quote = char;
+      continue;
+    }
+    if (char === "{") {
+      depth += 1;
+      continue;
+    }
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
 }
 
 function addRuleViolations(violations, file, content, rules) {

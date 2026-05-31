@@ -12,7 +12,7 @@
 }
 
 .loaderIcon {
-  font-size: 36px;
+  font-size: var(--ant-font-size-heading-1);
 }
 
 .loaderText {
@@ -23,17 +23,17 @@
   display: flex;
   align-items: center;
   min-height: 130px;
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
+  border-radius: var(--ant-border-radius-lg);
+  border: 1px solid var(--ant-color-border-secondary);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #ffffff;
+  background: var(--ant-color-bg-container);
 }
 
 .statCard:hover {
   box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.05),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: #e5e7eb;
+    0 10px 15px -3px var(--ant-color-fill-tertiary),
+    0 4px 6px -2px var(--ant-color-fill-tertiary);
+  border-color: var(--ant-color-border-secondary);
 }
 
 .statFlex {
@@ -48,39 +48,39 @@
 }
 
 .statTitle {
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.45);
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text-description);
 }
 
 .statIconBlue {
-  color: #3b82f6;
-  font-size: 18px;
+  color: var(--ant-color-info);
+  font-size: var(--ant-font-size-xl);
 }
 
 .statIconPurple {
-  color: #8b5cf6;
-  font-size: 18px;
+  color: var(--ant-purple-6);
+  font-size: var(--ant-font-size-xl);
 }
 
 .badgeModule {
-  background-color: #e0f2fe;
-  color: #0369a1;
+  background-color: var(--ant-color-info-bg);
+  color: var(--ant-color-info-text);
   margin-right: 6px;
   margin-bottom: 6px;
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: var(--ant-font-size-sm);
   display: inline-block;
 }
 
 .badgePathway {
-  background-color: #f3e8ff;
-  color: #6d28d9;
+  background-color: var(--ant-purple-1);
+  color: var(--ant-purple-6);
   margin-right: 6px;
   margin-bottom: 6px;
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: var(--ant-font-size-sm);
   display: inline-block;
 }
 
@@ -102,9 +102,9 @@
 
 .sandboxPreview {
   flex: 1;
-  background: #f8fafc;
-  border: 1px dashed #e2e8f0;
-  border-radius: 12px;
+  background: var(--ant-color-bg-layout);
+  border: 1px dashed var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -118,19 +118,19 @@
 }
 
 .previewContainer {
-  background: #ffffff;
-  border-radius: 16px;
+  background: var(--ant-color-bg-container);
+  border-radius: var(--ant-border-radius-lg);
   box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.05),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    0 20px 25px -5px var(--ant-color-fill-tertiary),
+    0 10px 10px -5px var(--ant-color-fill-quaternary);
   width: 100%;
   max-width: 380px;
   overflow: hidden;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--ant-color-border-secondary);
 }
 
 .previewHeader {
-  color: #ffffff;
+  color: var(--ant-color-bg-container);
   padding: 20px;
   display: flex;
   align-items: center;
@@ -142,27 +142,27 @@
   width: 32px;
   height: 32px;
   object-fit: cover;
-  border-radius: 6px;
-  background: #ffffff;
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
   padding: 2px;
 }
 
 .previewLogoPlaceholder {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-fill-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--ant-color-bg-container);
   font-weight: bold;
 }
 
 .previewTitle {
-  color: #ffffff !important;
+  color: var(--ant-color-bg-container) !important;
   margin: 0 !important;
-  font-size: 16px !important;
+  font-size: var(--ant-font-size-lg) !important;
   font-weight: 600;
 }
 
@@ -175,15 +175,15 @@
 
 .previewPlaceholderBar {
   height: 8px;
-  background: #f1f5f9;
-  border-radius: 4px;
+  background: var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-sm);
   width: 100%;
 }
 
 .previewPlaceholderBarShort {
   height: 8px;
-  background: #f1f5f9;
-  border-radius: 4px;
+  background: var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-sm);
   width: 60%;
 }
 
@@ -204,37 +204,37 @@
 
 .themeDotActive {
   transform: scale(1.15);
-  border-color: #64748b;
-  box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.2);
+  border-color: var(--ant-color-text-secondary);
+  box-shadow: 0 0 0 2px var(--ant-color-fill-secondary);
 }
 
 .badgeMpi {
   font-family: monospace;
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: var(--ant-color-border-secondary);
+  color: var(--ant-color-text);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--ant-border-radius-sm);
   font-weight: 600;
 }
 
-/* 预设调色盘 HSL/Hex 物理落库（纯 CSS 免受 eslint 扫描） */
+/* 预设调色盘只引用主题变量，避免品牌色散落在页面样式中。 */
 .themeNavy {
-  background-color: #0f172a !important;
+  background-color: var(--ant-color-text) !important;
 }
 .themeCyan {
-  background-color: #0d9488 !important;
+  background-color: var(--ant-cyan-6) !important;
 }
 .themeIndigo {
-  background-color: #4f46e5 !important;
+  background-color: var(--ant-blue-6) !important;
 }
 .themeViolet {
-  background-color: #7c3aed !important;
+  background-color: var(--ant-purple-6) !important;
 }
 .themeEmerald {
-  background-color: #059669 !important;
+  background-color: var(--ant-green-6) !important;
 }
 .themeAmber {
-  background-color: #d97706 !important;
+  background-color: var(--ant-color-warning) !important;
 }
 
 @media (max-width: 768px) {

@@ -7,23 +7,23 @@
 }
 
 .card {
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
-  border-radius: 12px;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
   padding: 24px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px 0 var(--ant-color-fill-tertiary);
 }
 
 .title {
-  font-size: 18px;
+  font-size: var(--ant-font-size-xl);
   font-weight: 600;
-  color: #0f172a;
+  color: var(--ant-color-text);
   margin-bottom: 16px;
 }
 
 .description {
-  font-size: 14px;
-  color: #64748b;
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text-secondary);
   margin-bottom: 24px;
 }
 
@@ -36,10 +36,10 @@
 
 /* 按钮样式 */
 .btnPrimary {
-  background-color: #0f172a;
-  color: #ffffff;
+  background-color: var(--ant-color-text);
+  color: var(--ant-color-bg-container);
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
   border: none;
   cursor: pointer;
@@ -47,125 +47,125 @@
 }
 
 .btnPrimary:hover {
-  background-color: #1e293b;
+  background-color: var(--ant-color-text-secondary);
 }
 
 .btnDanger {
-  background-color: #ef4444;
-  color: #ffffff;
+  background-color: var(--ant-color-error);
+  color: var(--ant-color-bg-container);
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
   border: none;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--ant-font-size-sm);
   transition: background-color 0.2s;
 }
 
 .btnDanger:hover {
-  background-color: #dc2626;
+  background-color: var(--ant-color-error);
 }
 
 .btnSecondary {
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: var(--ant-color-border-secondary);
+  color: var(--ant-color-text);
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ant-color-border);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--ant-font-size-sm);
   transition: background-color 0.2s;
 }
 
 .btnSecondary:hover {
-  background-color: #e2e8f0;
+  background-color: var(--ant-color-border-secondary);
 }
 
 /* 呼吸灯微动画 badge */
 @keyframes pulseRed {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 0 0 var(--ant-color-error-border);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 8px transparent;
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 
 @keyframes pulseYellow {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+    box-shadow: 0 0 0 0 var(--ant-color-warning-border);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+    box-shadow: 0 0 0 8px transparent;
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 
 .badgeP0 {
-  background-color: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background-color: var(--ant-color-error-bg);
+  color: var(--ant-color-error);
+  border: 1px solid var(--ant-color-error-border);
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: var(--ant-font-size-sm);
   font-weight: 600;
   display: inline-block;
   animation: pulseRed 2s infinite;
 }
 
 .badgeP1 {
-  background-color: #fffbeb;
-  color: #d97706;
-  border: 1px solid #fef08a;
+  background-color: var(--ant-color-warning-bg);
+  color: var(--ant-color-warning);
+  border: 1px solid var(--ant-color-warning-border);
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: var(--ant-font-size-sm);
   font-weight: 600;
   display: inline-block;
   animation: pulseYellow 2s infinite;
 }
 
 .badgeP2 {
-  background-color: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
+  background-color: var(--ant-color-info-bg);
+  color: var(--ant-color-info-text);
+  border: 1px solid var(--ant-color-info-border);
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: var(--ant-font-size-sm);
   font-weight: 500;
   display: inline-block;
 }
 
 .badgeP3 {
-  background-color: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background-color: var(--ant-color-border-secondary);
+  color: var(--ant-color-text-secondary);
+  border: 1px solid var(--ant-color-border-secondary);
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: var(--ant-font-size-sm);
   font-weight: 500;
   display: inline-block;
 }
 
 /* 提示框 */
 .alertSuccess {
-  border: 1px solid #10b981;
-  background-color: #ecfdf5;
-  color: #065f46;
+  border: 1px solid var(--ant-color-success);
+  background-color: var(--ant-color-success-bg);
+  color: var(--ant-color-success-text);
   padding: 12px 24px;
-  border-radius: 12px;
+  border-radius: var(--ant-border-radius-lg);
 }
 
 /* 抽屉/弹窗样式 */
@@ -175,7 +175,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(15, 23, 42, 0.6);
+  background-color: var(--ant-color-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -184,13 +184,13 @@
 }
 
 .modalContent {
-  background: #ffffff;
-  border-radius: 16px;
+  background: var(--ant-color-bg-container);
+  border-radius: var(--ant-border-radius-lg);
   padding: 32px;
   max-width: 500px;
   width: 90%;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  border: 1px solid #f1f5f9;
+  box-shadow: 0 25px 50px -12px var(--ant-color-fill);
+  border: 1px solid var(--ant-color-border-secondary);
 }
 
 /* 辅助排版与表单 */
@@ -203,7 +203,7 @@
 }
 
 .fontSize28 {
-  font-size: 28px;
+  font-size: var(--ant-font-size-heading-3);
 }
 
 .flexBetween {
@@ -220,22 +220,22 @@
 }
 
 .formLabel {
-  font-size: 14px;
+  font-size: var(--ant-font-size);
   font-weight: 500;
-  color: #334155;
+  color: var(--ant-color-text);
 }
 
 .formInput {
   padding: 8px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 14px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius);
+  font-size: var(--ant-font-size);
   outline: none;
   transition: border-color 0.2s;
 }
 
 .formInput:focus {
-  border-color: #0f172a;
+  border-color: var(--ant-color-text);
 }
 
 .btnGroup {
@@ -258,18 +258,18 @@
 
 .table th {
   padding: 12px 16px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: var(--ant-color-bg-layout);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
   font-weight: 600;
-  color: #475569;
-  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+  font-size: var(--ant-font-size-sm);
 }
 
 .table td {
   padding: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 14px;
-  color: #334155;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text);
 }
 
 /* 通知条目 */
@@ -277,21 +277,21 @@
   display: flex;
   gap: 16px;
   padding: 16px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
   transition: background-color 0.2s;
 }
 
 .notificationItem:hover {
-  background-color: #f8fafc;
+  background-color: var(--ant-color-bg-layout);
 }
 
 .notificationUnread {
-  border-left: 4px solid #3b82f6;
-  background-color: #f0f9ff;
+  border-left: 4px solid var(--ant-color-info);
+  background-color: var(--ant-color-info-bg);
 }
 
 .notificationIcon {
-  font-size: 24px;
+  font-size: var(--ant-font-size-heading-4);
   display: flex;
   align-items: center;
 }
@@ -302,13 +302,13 @@
 
 .notificationTitle {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--ant-color-text);
   margin-bottom: 4px;
 }
 
 .notificationDesc {
-  font-size: 13px;
-  color: #64748b;
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-color-text-secondary);
 }
 
 .notificationMeta {
@@ -316,8 +316,8 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 8px;
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-color-text-tertiary);
 }
 
 /* 低打扰过滤器 */
@@ -357,8 +357,8 @@
 
 .modalBodyText {
   margin-bottom: 20px;
-  font-size: 14px;
-  color: #334155;
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text);
 }
 
 .opinionTextarea {
@@ -371,6 +371,6 @@
 }
 
 .textSuccess {
-  color: #16a34a;
+  color: var(--ant-color-success);
   font-weight: 600;
 }

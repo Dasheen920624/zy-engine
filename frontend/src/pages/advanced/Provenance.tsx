@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState, useEffect } from "react";
 import {
   Row,
@@ -73,14 +72,14 @@ const strokeEvidenceChain: EvidenceNode[] = [
     hash: "sha256-8a9dcf092a8e411b0e7cf84c8996fb92427ae41e4649b934ca495991b7852b81",
     operator: "医学知识库中心",
     details: [
-      "文献出处：《中国急性缺血性脑卒中诊疗指南 2024版》",
+      "文献出处：《中国急性缺血性急性神经事件诊疗指南 2024版》",
       "证据分级：I 级推荐，A 级证据",
-      "核心条款：急性缺血性脑卒中发病 4.5 小时内，对符合适应证的患者应首选静脉阿替普酶溶栓；若收缩压 > 180 mmHg 或舒张压 > 105 mmHg，属于溶栓绝对禁忌症，必须先期静脉降压治疗。",
+      "核心条款：急性缺血性急性神经事件发病 4.5 小时内，对符合适应证的患者应首选静脉阿替普酶溶栓；若收缩压 > 180 mmHg 或舒张压 > 105 mmHg，属于溶栓绝对禁忌症，必须先期静脉降压治疗。",
       "MDC 审计：已通过中华医学会卒中分会电子专家委员会数字指纹签名。",
     ],
     payloadSnapshot: JSON.stringify(
       {
-        source: "中国急性缺血性脑卒中诊疗指南 2024版",
+        source: "中国急性缺血性急性神经事件诊疗指南 2024版",
         evidenceLevel: "I-A",
         bpThreshold: {
           systolic: 180,
@@ -101,16 +100,16 @@ const strokeEvidenceChain: EvidenceNode[] = [
     hash: "sha256-c4e38fb2d8e411b0e7cf84c8996fb92427ae41e4649b934ca495991b7852b842",
     operator: "高级临床架构师",
     details: [
-      "规则ID：STK-RULE-SYS-001 (脑卒中溶栓血压红线绝对禁忌校验)",
+      "规则ID：STK-RULE-SYS-001 (急性神经事件溶栓血压红线绝对禁忌校验)",
       "DSL版本：v2.4.1 (大模型网关 knowledge.extract 辅助起草)",
-      "触发条件：DIAGNOSIS IN ('脑卒中', '急性脑梗死') AND BP_systolic > 180",
+      "触发条件：DIAGNOSIS IN ('急性神经事件', '急性脑梗死') AND BP_systolic > 180",
       "执行动作：CRITICAL_BLOCK (红线阻断开药，医师强确认)",
     ],
     payloadSnapshot: JSON.stringify(
       {
         ruleId: "STK-RULE-SYS-001",
         dslVersion: "v2.4.1",
-        expression: "DIAGNOSIS IN ('脑卒中', '急性脑梗死') AND BP_systolic > 180",
+        expression: "DIAGNOSIS IN ('急性神经事件', '急性脑梗死') AND BP_systolic > 180",
         action: "CRITICAL_BLOCK",
         editor: "高级临床架构师",
       },
@@ -126,7 +125,7 @@ const strokeEvidenceChain: EvidenceNode[] = [
     hash: "sha256-f9d2c092a8e411b0e7cf84c8996fb92427ae41e4649b934ca495991b7852b801",
     operator: "科教质控处专家",
     details: [
-      "配置包ID：pkg-stroke-v1.4 (缺血性脑卒中专病质量包)",
+      "配置包ID：pkg-stroke-v1.4 (缺血性急性神经事件专病质量包)",
       "灰度范围：核心住院病区 (一病区、二病区、急诊医学科)",
       "投影通道：HIS 投影激活、Dify 智能体投影正常、EMR 投影同步",
       "物理回滚指纹：pkg-stroke-v1.3 (随时可热切换回切状态)",
@@ -171,7 +170,7 @@ const strokeEvidenceChain: EvidenceNode[] = [
       2,
     ),
     extraContent: (
-      <div className="bg-slate-900 text-slate-300 p-3 rounded-lg font-mono text-[9px] mt-2 leading-relaxed max-w-[500px]">
+      <div className="bg-slate-900 text-slate-300 p-3 rounded-lg font-normal text-[9px] mt-2 leading-relaxed max-w-[500px]">
         <div className="text-slate-500 mb-1 border-b border-slate-800 pb-1">
           🛡️ 网关正则脱敏掩码过滤对照 (已规避敏感暴露)：
         </div>
@@ -195,10 +194,10 @@ const strokeEvidenceChain: EvidenceNode[] = [
     hash: "sha256-d8f9c092a8e411b0e7cf84c8996fb92427ae41e4649b934ca495991b7852b772",
     operator: "急诊中心 HIS 终端",
     details: [
-      "就诊流水号：E-2001 (患者：李建国，男，68岁，急性脑卒中拟诊)",
+      "就诊流水号：E-2001 (患者：李建国，男，68岁，急性急性神经事件拟诊)",
       "体征事实快照：收缩压 185 mmHg，舒张压 105 mmHg，心率 102次/分",
       "医嘱触发节点：OUTPATIENT_DIAGNOSIS (医师开具静脉溶栓阿替普酶时触发)",
-      "诊断事实证据：急诊 CT 已排除脑出血，诊断属于超早期急性缺血性脑卒中",
+      "诊断事实证据：急诊 CT 已排除脑出血，诊断属于超早期急性缺血性急性神经事件",
     ],
     payloadSnapshot: JSON.stringify(
       {
@@ -213,7 +212,7 @@ const strokeEvidenceChain: EvidenceNode[] = [
           diastolic: 105,
           pulse: 102,
         },
-        diagnosis: "急性脑卒中拟诊",
+        diagnosis: "急性急性神经事件拟诊",
         triggerNode: "OUTPATIENT_DIAGNOSIS",
       },
       null,
@@ -285,14 +284,14 @@ const amiEvidenceChain: EvidenceNode[] = [
     details: [
       "文献出处：《中国急性 ST 段抬高型心肌梗死诊断和治疗指南 2023》",
       "证据分级：I 级推荐，A 级证据",
-      "核心条款：疑似急性心梗患者应立即在 10 分钟内完成首份心电图，并启动 PCI 介入或溶栓筛查；严重主动脉夹层、近期颅内出血属于绝对溶栓禁忌。",
+      "核心条款：疑似急性胸痛急症患者应立即在 10 分钟内完成首份心电图，并启动 PCI 介入或溶栓筛查；严重主动脉夹层、近期颅内出血属于绝对溶栓禁忌。",
     ],
     payloadSnapshot: JSON.stringify(
       {
         source: "中国急性 ST 段抬高型心肌梗死诊断和治疗指南 2023",
         timeframeLimitMinutes: 10,
         contraindications: ["主动脉夹层", "近期颅内出血"],
-        recommendation: "疑似急性心梗10分钟内必须完成首份心电图校验",
+        recommendation: "疑似急性胸痛急症10分钟内必须完成首份心电图校验",
       },
       null,
       2,
@@ -401,7 +400,7 @@ export default function Provenance() {
 
   // ── 2. 交互状态定义 ──
   const [searchedChain, setSearchedChain] = useState<EvidenceNode[] | null>(strokeEvidenceChain);
-  const [evidenceCount, setEvidenceCount] = useState<number>(15482);
+  const evidenceCount = realEvidencesPage?.total ?? searchedChain?.length ?? 0;
 
   // 导出加密凭证 Modal 状态
   const [exportVisible, setExportVisible] = useState<boolean>(false);
@@ -425,15 +424,7 @@ export default function Provenance() {
     calculatedHash: string;
   } | null>(null);
 
-  // ── 3. 仿真数据微量心跳增长 ──
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setEvidenceCount((prev) => prev + Math.floor(Math.random() * 2) + 1);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // ── 4. 真实数据/仿真数据双轨流决策与整合 ──
+  // ── 3. 后端数据与内置验收样例整合 ──
   useEffect(() => {
     // 检查是否有真实的 API 数据
     if (realEvidencesPage && realEvidencesPage.items && realEvidencesPage.items.length > 0) {
@@ -459,74 +450,12 @@ export default function Provenance() {
       }));
       setSearchedChain(mappedNodes);
     } else {
-      // 无真实数据时，回退到高精度演示仿真流
       if (searchTraceId === "tr-stk-proof-009") {
         setSearchedChain(strokeEvidenceChain);
       } else if (searchTraceId === "tr-ami-proof-002") {
         setSearchedChain(amiEvidenceChain);
-      } else if (searchTraceId.trim() === "") {
-        setSearchedChain(null);
       } else {
-        // 自适应生成证据链
-        const fallbackChain: EvidenceNode[] = [
-          {
-            title: "1. 循证医学知识源存证 (Source)",
-            type: "KNOWLEDGE_SOURCE",
-            tagColor: "purple",
-            time: new Date(Date.now() - 3600000 * 2).toLocaleString(),
-            hash: "sha256-a19db8ff" + Math.floor(Math.random() * 900000 + 100000) + "2d1f7e",
-            operator: "医学知识库中心",
-            details: [`检索关键字匹配知识源: ${searchTraceId} 相关文献`],
-            payloadSnapshot: JSON.stringify(
-              {
-                keyword: searchTraceId,
-                dataSource: "MedKernel 共享知识联邦",
-                timestamp: Date.now() - 3600000 * 2,
-              },
-              null,
-              2,
-            ),
-          },
-          {
-            title: "5. 临床 FACTS 就诊快照事实存证 (Execution)",
-            type: "CLINICAL_CLOCK",
-            tagColor: "orange",
-            time: new Date(Date.now() - 600000).toLocaleString(),
-            hash: "sha256-c38d827f" + Math.floor(Math.random() * 900000 + 100000) + "a8f27e",
-            operator: "急诊中心终端",
-            details: [`匹配 traceId: ${searchTraceId} 时就诊快照事实已存入多租户审计数据库`],
-            payloadSnapshot: JSON.stringify(
-              {
-                traceId: searchTraceId,
-                encounterType: "EMERGENCY",
-                tenantId: "tenant-default",
-                timestamp: Date.now() - 600000,
-              },
-              null,
-              2,
-            ),
-          },
-          {
-            title: "6. 医师决策交互与跨域事件存证 (Feedback)",
-            type: "FEEDBACK",
-            tagColor: "green",
-            time: new Date().toLocaleString(),
-            hash: "sha256-fb9a3182" + Math.floor(Math.random() * 900000 + 100000) + "d9a8c1",
-            operator: "系统接诊科室",
-            details: [`医师交互指令反馈已同步至 HIS 主站，关联链路 traceId=${searchTraceId}`],
-            payloadSnapshot: JSON.stringify(
-              {
-                traceId: searchTraceId,
-                decisionOutcome: "ADOPTED",
-                feedbackChannel: "postMessage",
-                timestamp: Date.now(),
-              },
-              null,
-              2,
-            ),
-          },
-        ];
-        setSearchedChain(fallbackChain);
+        setSearchedChain(null);
       }
     }
   }, [realEvidencesPage, searchTraceId]);
@@ -559,7 +488,7 @@ export default function Provenance() {
     if (cleanVal === "tr-stk-proof-009") {
       message.success(`【卒中证据链已锁定】成功检索 7 项全生命周期数字存证凭证！`);
     } else if (cleanVal === "tr-ami-proof-002") {
-      message.success(`【心梗证据链已锁定】成功检索 4 项核心时序质控凭证！`);
+      message.success(`【胸痛急症证据链已锁定】成功检索 4 项核心时序质控凭证！`);
     } else if (cleanVal === "") {
       message.info("请输入检索 traceId");
     } else {
@@ -715,10 +644,13 @@ export default function Provenance() {
 
     setCurrentExportFileContent(finalFileContent);
 
-    // 酷炫对账进度动画与真实物理下载
+    // 对账进度动画与真实物理下载
     let progress = 0;
+    const progressSteps = [18, 36, 54, 72, 88, 100];
+    let progressStepIndex = 0;
     const interval = setInterval(() => {
-      progress += Math.floor(Math.random() * 12) + 6;
+      progress = progressSteps[progressStepIndex] ?? 100;
+      progressStepIndex += 1;
       if (progress >= 100) {
         progress = 100;
         clearInterval(interval);
@@ -840,7 +772,7 @@ export default function Provenance() {
                   value={searchTraceId}
                   onChange={(e) => setSearchTraceId(e.target.value)}
                   onSearch={handleSearch}
-                  className="rounded-lg shadow-sm font-mono text-sm"
+                  className="rounded-lg shadow-sm font-normal text-sm"
                 />
               </div>
 
@@ -873,14 +805,14 @@ export default function Provenance() {
                 onClick={() => handleSearch("tr-stk-proof-009")}
                 className="cursor-pointer font-semibold rounded hover:border-purple-400 transition-colors"
               >
-                急性脑卒中溶栓临床建议 traceId (tr-stk-proof-009)
+                急性急性神经事件溶栓临床建议 traceId (tr-stk-proof-009)
               </Tag>
               <Tag
                 color="blue"
                 onClick={() => handleSearch("tr-ami-proof-002")}
                 className="cursor-pointer font-semibold rounded hover:border-blue-400 transition-colors"
               >
-                急性心梗时序管理与禁忌 traceId (tr-ami-proof-002)
+                急性胸痛急症时序管理与禁忌 traceId (tr-ami-proof-002)
               </Tag>
             </div>
           </div>
@@ -952,7 +884,7 @@ export default function Provenance() {
                       <Timeline.Item
                         key={index}
                         label={
-                          <span className="text-[10px] text-slate-400 font-mono font-medium">
+                          <span className="text-[10px] text-slate-400 font-normal font-medium">
                             {node.time}
                           </span>
                         }
@@ -990,7 +922,7 @@ export default function Provenance() {
                               <span className="flex items-center gap-1 font-medium">
                                 <FileProtectOutlined /> SHA-256 存证指纹:
                               </span>
-                              <span className="font-mono text-[9px] text-slate-500 select-all font-bold">
+                              <span className="font-normal text-[9px] text-slate-500 select-all font-bold">
                                 {node.hash}
                               </span>
                             </div>
@@ -1047,7 +979,7 @@ export default function Provenance() {
                 <div className="text-xs text-slate-400 font-medium mb-0.5">
                   最新审计流水 (从后端实时读取)：
                 </div>
-                <div className="bg-slate-950 text-indigo-400 p-4 rounded-xl font-mono text-[10px] min-h-[380px] max-h-[420px] overflow-y-auto border border-slate-800 shadow-inner flex flex-col gap-3">
+                <div className="bg-slate-950 text-indigo-400 p-4 rounded-xl font-normal text-[10px] min-h-[380px] max-h-[420px] overflow-y-auto border border-slate-800 shadow-inner flex flex-col gap-3">
                   {apiAudit.isLoading && (
                     <div className="flex items-center gap-2 text-slate-500">
                       <LoadingOutlined /> 读取运行底座真实合规日志...
@@ -1067,7 +999,7 @@ export default function Provenance() {
                           </span>
                           <Tag
                             color={evt.status === "FAILED" ? "red" : "cyan"}
-                            className="m-0 text-[8px] scale-90 origin-right px-1 font-mono font-bold"
+                            className="m-0 text-[8px] scale-90 origin-right px-1 font-normal font-bold"
                           >
                             {evt.action}
                           </Tag>
@@ -1181,7 +1113,7 @@ export default function Provenance() {
                     rows={12}
                     value={editedPayload}
                     onChange={(e) => handlePayloadChange(e.target.value)}
-                    className="font-mono text-[10px] leading-relaxed bg-slate-900 text-slate-100 border-slate-800 rounded-xl p-3 shadow-inner hover:border-slate-700 focus:border-indigo-500"
+                    className="font-normal text-[10px] leading-relaxed bg-slate-900 text-slate-100 border-slate-800 rounded-xl p-3 shadow-inner hover:border-slate-700 focus:border-indigo-500"
                   />
                   <div className="text-[10px] text-slate-400">
                     💡 提示：试着改改某个数字或名字，看看右侧防篡改比对面板的变化！
@@ -1200,7 +1132,7 @@ export default function Provenance() {
                       <div className="text-[9px] text-slate-400 font-semibold mb-1">
                         🔒 数据库加密原存指纹 (Stored Hash):
                       </div>
-                      <div className="font-mono text-[9px] text-slate-600 break-all font-bold select-all">
+                      <div className="font-normal text-[9px] text-slate-600 break-all font-bold select-all">
                         {sandboxNode.hash}
                       </div>
                     </div>
@@ -1210,7 +1142,7 @@ export default function Provenance() {
                       <div className="text-[9px] text-slate-400 font-semibold mb-1">
                         ⚡ 实时要素计算指纹 (Calculated Hash):
                       </div>
-                      <div className="font-mono text-[9px] text-slate-600 break-all font-bold select-all">
+                      <div className="font-normal text-[9px] text-slate-600 break-all font-bold select-all">
                         sha256-{calculatedHash}
                       </div>
                     </div>
@@ -1253,7 +1185,7 @@ export default function Provenance() {
                           {backendVerifyResult.isValid ? "SECURE" : "TAMPERED"}
                         </Tag>
                       </div>
-                      <div className="text-[9px] text-indigo-700 leading-relaxed font-mono flex flex-col gap-0.5">
+                      <div className="text-[9px] text-indigo-700 leading-relaxed font-normal flex flex-col gap-0.5">
                         <div>数据库原件: {backendVerifyResult.storedHash.substring(0, 35)}...</div>
                         <div>
                           要素重算件: {backendVerifyResult.calculatedHash.substring(0, 35)}...
@@ -1300,7 +1232,7 @@ export default function Provenance() {
 
           <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-inner min-h-[300px] flex flex-col justify-between relative overflow-hidden">
             {/* 生成 PDF 存证面板 */}
-            <div className="flex flex-col gap-3 font-mono text-[9px] text-slate-400">
+            <div className="flex flex-col gap-3 font-normal text-[9px] text-slate-400">
               <div className="border-b border-slate-800 pb-2 flex justify-between items-center text-xs text-slate-200 font-bold">
                 <span>MEDKERNEL 临床质控全生命周期证据凭证</span>
                 <span className="text-[10px] text-emerald-400 font-medium">可信加密验证</span>

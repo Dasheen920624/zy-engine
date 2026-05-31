@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/require-source-info-for-medical */
 import { useState } from "react";
 import { PageShell } from "@/shared/ui/PageShell";
 import styles from "./Quality.module.css";
@@ -106,9 +105,7 @@ export default function InsuranceAudit() {
 
       const actionText = actionType === "ACCEPT" ? "核准扣罚并自查" : "发起申诉并上传证据";
       setMessage(
-        `[医保合规闭环] 病例 ${activeViolation.recordNo} 已成功进行“${actionText}”！操作已物理审计留痕，TraceId: tr-${Math.floor(
-          100000 + Math.random() * 900000,
-        )}`,
+        `[医保合规闭环] 病例 ${activeViolation.recordNo} 已在当前页面标记为“${actionText}”，后端审计追踪号待接口返回。`,
       );
       setActiveViolation(null);
       setTimeout(() => setMessage(null), 4000);
