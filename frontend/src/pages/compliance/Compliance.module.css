@@ -7,23 +7,23 @@
 }
 
 .card {
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
-  border-radius: 12px;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
   padding: 24px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px 0 var(--ant-color-fill-tertiary);
 }
 
 .title {
-  font-size: 18px;
+  font-size: var(--ant-font-size-xl);
   font-weight: 600;
-  color: #0f172a;
+  color: var(--ant-color-text);
   margin-bottom: 16px;
 }
 
 .description {
-  font-size: 14px;
-  color: #64748b;
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text-secondary);
   margin-bottom: 24px;
 }
 
@@ -42,7 +42,7 @@
 
 /* 辅助布局类，消灭 JSX inline style */
 .fontSize28 {
-  font-size: 28px;
+  font-size: var(--ant-font-size-heading-3);
 }
 
 .flexBetween {
@@ -66,71 +66,71 @@
   width: 90px;
   height: 90px;
   border-radius: 50%;
-  border: 6px solid #e2e8f0;
+  border: 6px solid var(--ant-color-border-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 24px;
-  color: #0f172a;
+  font-size: var(--ant-font-size-heading-4);
+  color: var(--ant-color-text);
   transition: all 0.5s ease;
 }
 
 .scoreCirclePass {
-  border-top-color: #10b981;
+  border-top-color: var(--ant-color-success);
 }
 
 .scoreCircleWarn {
-  border-top-color: #d97706;
+  border-top-color: var(--ant-color-warning);
 }
 
 .scoreCircleFail {
-  border-top-color: #ef4444;
+  border-top-color: var(--ant-color-error);
 }
 
 /* 提示框 */
 .alertSuccess {
-  border: 1px solid #10b981;
-  background-color: #ecfdf5;
-  color: #065f46;
+  border: 1px solid var(--ant-color-success);
+  background-color: var(--ant-color-success-bg);
+  color: var(--ant-color-success-text);
   padding: 12px 24px;
-  border-radius: 12px;
+  border-radius: var(--ant-border-radius-lg);
 }
 
 .alertError {
-  border: 1px solid #ef4444;
-  background-color: #fef2f2;
-  color: #991b1b;
+  border: 1px solid var(--ant-color-error);
+  background-color: var(--ant-color-error-bg);
+  color: var(--ant-color-error-text);
   padding: 12px 24px;
-  border-radius: 12px;
+  border-radius: var(--ant-border-radius-lg);
 }
 
 .connectionTestPass {
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #14532d;
+  background-color: var(--ant-color-success-bg);
+  border: 1px solid var(--ant-color-success-border);
+  color: var(--ant-color-success-text);
   padding: 16px;
   margin-top: 16px;
   margin-bottom: 16px;
-  border-radius: 12px;
+  border-radius: var(--ant-border-radius-lg);
 }
 
 .connectionTestFail {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #7f1d1d;
+  background-color: var(--ant-color-error-bg);
+  border: 1px solid var(--ant-color-error-border);
+  color: var(--ant-color-error-text);
   padding: 16px;
   margin-top: 16px;
   margin-bottom: 16px;
-  border-radius: 12px;
+  border-radius: var(--ant-border-radius-lg);
 }
 
 /* 按钮样式 */
 .btnPrimary {
-  background-color: #0f172a;
-  color: #ffffff;
+  background-color: var(--ant-color-text);
+  color: var(--ant-color-bg-container);
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
   border: none;
   cursor: pointer;
@@ -138,50 +138,50 @@
 }
 
 .btnPrimary:hover {
-  background-color: #1e293b;
+  background-color: var(--ant-color-text-secondary);
 }
 
 .btnDanger {
-  background-color: #ef4444;
-  color: #ffffff;
+  background-color: var(--ant-color-error);
+  color: var(--ant-color-bg-container);
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
   border: none;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--ant-font-size-sm);
   transition: background-color 0.2s;
 }
 
 .btnDanger:hover {
-  background-color: #dc2626;
+  background-color: var(--ant-color-error);
 }
 
 /* 标签与徽章 */
 .scopeTag {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: var(--ant-font-size-sm);
   font-weight: 500;
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: var(--ant-color-border-secondary);
+  color: var(--ant-color-text-secondary);
 }
 
 .roleTag {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--ant-border-radius-sm);
+  font-size: var(--ant-font-size-sm);
   font-weight: 500;
-  background-color: #e0f2fe;
-  color: #0369a1;
+  background-color: var(--ant-color-info-bg);
+  color: var(--ant-color-info-text);
 }
 
 /* 身份绑定卡片 */
 .authCard {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
   padding: 20px;
   transition: all 0.3s;
   display: flex;
@@ -191,13 +191,13 @@
 }
 
 .authCard:hover {
-  border-color: #94a3b8;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border-color: var(--ant-color-text-tertiary);
+  box-shadow: 0 4px 6px -1px var(--ant-color-fill-tertiary);
 }
 
 .authCardActive {
-  border-color: #3b82f6;
-  background-color: #f8fafc;
+  border-color: var(--ant-color-info);
+  background-color: var(--ant-color-bg-layout);
 }
 
 .authHeader {
@@ -208,24 +208,24 @@
 }
 
 .authIcon {
-  font-size: 28px;
+  font-size: var(--ant-font-size-heading-3);
 }
 
 .badgeActive {
-  background-color: #dcfce7;
-  color: #15803d;
-  font-size: 12px;
+  background-color: var(--ant-color-success-bg);
+  color: var(--ant-color-success);
+  font-size: var(--ant-font-size-sm);
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: 999em;
   font-weight: 500;
 }
 
 .badgeInactive {
-  background-color: #f1f5f9;
-  color: #64748b;
-  font-size: 12px;
+  background-color: var(--ant-color-border-secondary);
+  color: var(--ant-color-text-secondary);
+  font-size: var(--ant-font-size-sm);
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: 999em;
   font-weight: 500;
 }
 
@@ -235,7 +235,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
 .baselineItem:last-child {
@@ -250,41 +250,41 @@
 
 .baselineTitle {
   font-weight: 500;
-  color: #0f172a;
+  color: var(--ant-color-text);
 }
 
 .baselineDesc {
-  font-size: 13px;
-  color: #64748b;
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-color-text-secondary);
 }
 
 .baselineStatusPass {
-  color: #16a34a;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: var(--ant-color-success);
+  background-color: var(--ant-color-success-bg);
+  border: 1px solid var(--ant-color-success-border);
   padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: var(--ant-border-radius);
+  font-size: var(--ant-font-size-sm);
   font-weight: 500;
 }
 
 .baselineStatusWarn {
-  color: #d97706;
-  background-color: #fffbeb;
-  border: 1px solid #fef08a;
+  color: var(--ant-color-warning);
+  background-color: var(--ant-color-warning-bg);
+  border: 1px solid var(--ant-color-warning-border);
   padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: var(--ant-border-radius);
+  font-size: var(--ant-font-size-sm);
   font-weight: 500;
 }
 
 .baselineStatusFail {
-  color: #dc2626;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  color: var(--ant-color-error);
+  background-color: var(--ant-color-error-bg);
+  border: 1px solid var(--ant-color-error-border);
   padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: var(--ant-border-radius);
+  font-size: var(--ant-font-size-sm);
   font-weight: 500;
 }
 
@@ -297,22 +297,22 @@
 }
 
 .formLabel {
-  font-size: 14px;
+  font-size: var(--ant-font-size);
   font-weight: 500;
-  color: #334155;
+  color: var(--ant-color-text);
 }
 
 .formInput {
   padding: 8px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 14px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius);
+  font-size: var(--ant-font-size);
   outline: none;
   transition: border-color 0.2s;
 }
 
 .formInput:focus {
-  border-color: #0f172a;
+  border-color: var(--ant-color-text);
 }
 
 .tableWrap {
@@ -328,18 +328,18 @@
 
 .table th {
   padding: 12px 16px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: var(--ant-color-bg-layout);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
   font-weight: 600;
-  color: #475569;
-  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+  font-size: var(--ant-font-size-sm);
 }
 
 .table td {
   padding: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 14px;
-  color: #334155;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text);
 }
 
 .fontMonospace {
@@ -351,10 +351,10 @@
 }
 
 .btnSuccess {
-  background-color: #10b981;
-  color: #ffffff;
+  background-color: var(--ant-color-success);
+  color: var(--ant-color-bg-container);
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
   border: none;
   cursor: pointer;
@@ -362,14 +362,14 @@
 }
 
 .btnSuccess:hover {
-  background-color: #059669;
+  background-color: var(--ant-green-6);
 }
 
 .btnInfo {
-  background-color: #0284c7;
-  color: #ffffff;
+  background-color: var(--ant-color-info);
+  color: var(--ant-color-bg-container);
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--ant-border-radius);
   font-weight: 500;
   border: none;
   cursor: pointer;
@@ -377,11 +377,11 @@
 }
 
 .btnInfo:hover {
-  background-color: #0369a1;
+  background-color: var(--ant-color-info-text);
 }
 
 .btnDisabled {
-  background-color: #64748b !important;
+  background-color: var(--ant-color-text-secondary) !important;
   cursor: not-allowed;
 }
 

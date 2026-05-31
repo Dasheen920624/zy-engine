@@ -118,7 +118,7 @@ export default function IdentityBinding() {
 
       setTestResult({
         success: true,
-        latency: Math.floor(25 + Math.random() * 30),
+        latency: isSecure ? 25 : 0,
         certStatus: isSecure
           ? "SSL 证书校验通过 (有效期剩余 274 天)"
           : "无 SSL 加密 (局域网明文传输已告警)",

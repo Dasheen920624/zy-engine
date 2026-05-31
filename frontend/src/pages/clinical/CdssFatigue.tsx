@@ -192,7 +192,7 @@ export default function CdssFatigue() {
       title: "卡片编号",
       dataIndex: "cardId",
       key: "cardId",
-      render: (text: string) => <span className="font-mono text-xs font-semibold">{text}</span>,
+      render: (text: string) => <span className="font-normal text-xs font-semibold">{text}</span>,
     },
     {
       title: "提醒摘要 Title",
@@ -399,7 +399,7 @@ export default function CdssFatigue() {
             </Col>
             <Col span={12}>
               <Form.Item name="diseaseCode" label="病种诊断 (ICD-10)" rules={[{ required: true }]}>
-                <Input placeholder="如 J18" />
+                <Input placeholder="如 DX-CODE-C" />
               </Form.Item>
             </Col>
           </Row>
@@ -410,7 +410,7 @@ export default function CdssFatigue() {
             <TextArea
               rows={4}
               placeholder="请输入临床上下文载荷 JSON..."
-              className="font-mono text-xs"
+              className="font-normal text-xs"
             />
           </Form.Item>
         </Form>
@@ -439,13 +439,13 @@ export default function CdssFatigue() {
               className="mb-6"
             >
               <Descriptions.Item label="卡片编号">
-                <span className="font-mono text-xs font-semibold">{detailData.card.cardId}</span>
+                <span className="font-normal text-xs font-semibold">{detailData.card.cardId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="患者 ID">
                 <span className="font-semibold">{detailData.card.patientId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="就诊编码">
-                <span className="font-mono text-xs">{detailData.card.encounterId}</span>
+                <span className="font-normal text-xs">{detailData.card.encounterId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="决策场景">
                 <Tag color="cyan">{detailData.card.scenarioCode}</Tag>
@@ -491,7 +491,7 @@ export default function CdssFatigue() {
                         }
                         className="border-gray-200 bg-gray-50 rounded-lg shadow-sm"
                       >
-                        <div className="text-xs text-gray-700 leading-relaxed font-mono">
+                        <div className="text-xs text-gray-700 leading-relaxed font-normal">
                           {source.content}
                         </div>
                         <Descriptions
@@ -624,7 +624,7 @@ export default function CdssFatigue() {
                       >
                         <Descriptions size="small" column={2}>
                           <Descriptions.Item label="疲劳 Key">
-                            <span className="font-mono text-xs font-semibold">
+                            <span className="font-normal text-xs font-semibold">
                               {signal.fatigueKey}
                             </span>
                           </Descriptions.Item>
@@ -709,13 +709,13 @@ export default function CdssFatigue() {
 
             <Descriptions title="求值Trace元数据" bordered column={1} size="small" className="mb-6">
               <Descriptions.Item label="推荐 Trigger ID">
-                <span className="font-mono text-xs">{diagnoseData.executionId}</span>
+                <span className="font-normal text-xs">{diagnoseData.executionId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="链路 Trace ID">
-                <span className="font-mono text-xs">{diagnoseData.traceId}</span>
+                <span className="font-normal text-xs">{diagnoseData.traceId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="输入 Payload 摘要 (SHA-256)">
-                <span className="font-mono text-xs">{diagnoseData.inputPayloadSummary || "—"}</span>
+                <span className="font-normal text-xs">{diagnoseData.inputPayloadSummary || "—"}</span>
               </Descriptions.Item>
               <Descriptions.Item label="提醒卡风险定级">
                 <Tag color={diagnoseData.riskLevel === "HIGH" ? "red" : "orange"}>
@@ -733,7 +733,7 @@ export default function CdssFatigue() {
               }
               className="mb-6 rounded-xl border-gray-200"
             >
-              <div className="text-sm text-gray-800 bg-gray-50 p-4 rounded-lg font-mono border border-gray-100">
+              <div className="text-sm text-gray-800 bg-gray-50 p-4 rounded-lg font-normal border border-gray-100">
                 {diagnoseData.explanationSnapshot || "暂无决策解释快照"}
               </div>
             </Card>
@@ -762,7 +762,7 @@ export default function CdssFatigue() {
                         {h.changedBy}
                       </Tag>
                     </div>
-                    <div className="text-gray-500 text-xs mt-1 font-mono italic">{h.summary}</div>
+                    <div className="text-gray-500 text-xs mt-1 font-normal italic">{h.summary}</div>
                   </Timeline.Item>
                 ))}
               </Timeline>

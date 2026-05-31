@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import { PageShell } from "@/shared/ui/PageShell";
 import {
@@ -436,40 +435,40 @@ export default function QcEvalSets() {
                 <div className="text-xs font-semibold text-emerald-600 mb-2">
                   分母入组判定条件 (Denominator Definition)
                 </div>
-                <pre className="text-xs font-mono text-emerald-800 bg-white p-3 rounded-lg border border-emerald-100 overflow-x-auto">
+                <div className="text-xs font-normal text-emerald-800 bg-white p-3 rounded-lg border border-emerald-100 overflow-x-auto">
                   {selectedIndicator.denominatorDefinition
                     ? JSON.stringify(JSON.parse(selectedIndicator.denominatorDefinition), null, 2)
                     : "暂无配置"}
-                </pre>
+                </div>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-amber-500/5">
                 <div className="text-xs font-semibold text-amber-600 mb-2">
                   排除特定患者判定条件 (Exclusion Definition)
                 </div>
-                <pre className="text-xs font-mono text-amber-800 bg-white p-3 rounded-lg border border-amber-100 overflow-x-auto">
+                <div className="text-xs font-normal text-amber-800 bg-white p-3 rounded-lg border border-amber-100 overflow-x-auto">
                   {selectedIndicator.exclusionDefinition
                     ? JSON.stringify(JSON.parse(selectedIndicator.exclusionDefinition), null, 2)
                     : "暂无排除条件配置"}
-                </pre>
+                </div>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-rose-500/5">
                 <div className="text-xs font-semibold text-rose-600 mb-2">
                   分子达标规范判定条件 (Numerator Definition)
                 </div>
-                <pre className="text-xs font-mono text-rose-800 bg-white p-3 rounded-lg border border-rose-100 overflow-x-auto">
+                <div className="text-xs font-normal text-rose-800 bg-white p-3 rounded-lg border border-rose-100 overflow-x-auto">
                   {selectedIndicator.numeratorDefinition
                     ? JSON.stringify(JSON.parse(selectedIndicator.numeratorDefinition), null, 2)
                     : "暂无配置"}
-                </pre>
+                </div>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50">
                 <div className="text-xs font-semibold text-slate-600 mb-2">
                   缺陷严重度与扣分配置 (Scoring Definition)
                 </div>
-                <div className="text-xs font-mono text-slate-700 bg-white p-3 rounded-lg border border-slate-200">
+                <div className="text-xs font-normal text-slate-700 bg-white p-3 rounded-lg border border-slate-200">
                   {selectedIndicator.scoringDefinition || "默认扣 100 分，不达标生成 P1 缺陷"}
                 </div>
               </div>
@@ -689,7 +688,7 @@ export default function QcEvalSets() {
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-slate-800 pl-2 border-l-2 border-amber-500 flex items-center gap-1.5">
                 扫描求值输出事实结论 (Audit Calc Outcomes)
-                <span className="text-[11px] font-normal text-slate-400 font-mono">
+                <span className="text-[11px] font-normal text-slate-400 font-normal">
                   TraceId: {scanResult.traceId}
                 </span>
               </h3>
@@ -698,7 +697,7 @@ export default function QcEvalSets() {
               <div className="p-4 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="text-slate-400 text-xs">评估运行事实 ID</div>
-                  <div className="font-mono font-semibold text-slate-800 text-sm">
+                  <div className="font-normal font-semibold text-slate-800 text-sm">
                     {scanResult.runId}
                   </div>
                 </div>
@@ -759,9 +758,9 @@ export default function QcEvalSets() {
                 <div className="text-slate-400 text-xs font-semibold">
                   详细引擎仿真诊断日志 (Raw JSON Response)
                 </div>
-                <pre className="text-[10px] font-mono text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 overflow-x-auto max-h-[300px]">
+                <div className="text-[10px] font-normal text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 overflow-x-auto max-h-[300px]">
                   {JSON.stringify(scanResult, null, 2)}
-                </pre>
+                </div>
               </div>
             </div>
           )}

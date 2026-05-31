@@ -22,7 +22,7 @@ import jakarta.validation.Valid;
 /**
  * 规则引擎 REST 入口（GA-ENG-API-05 {@code /api/v1/engine/rules}）。
  *
- * <p>承担规则定义、版本、测试用例、仿真、发布、真实执行与诊断的 HTTP 合同；
+ * <p>承担规则定义、版本、测试用例、试运行、发布、真实执行与诊断的 HTTP 合同；
  * 权限由 {@code @PreAuthorize} 强校验 {@code rule.read}/{@code rule.write}/{@code rule.publish}，
  * 租户隔离由类级 {@link DataScope}{@code (requireTenant=true)} 兜底。
  */
@@ -98,9 +98,9 @@ public class RuleEngineController {
     }
 
     /**
-     * 用指定上下文仿真执行该规则的当前版本。
+     * 用指定上下文试运行执行该规则的当前版本。
      *
-     * <p>权限：{@code rule.write}；仿真同样写 {@code rule_execution_log}，便于回放与诊断。
+     * <p>权限：{@code rule.write}；试运行同样写 {@code rule_execution_log}，便于回放与诊断。
      */
     @PostMapping("/{ruleId}/simulate")
     @PreAuthorize("@perm.has('rule.write')")

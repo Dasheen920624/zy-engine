@@ -7,7 +7,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 /**
- * 知识身份（跨版本的稳定主题，比如"瑞舒伐他汀说明书" / "高血压合并糖尿病治疗指南"）。
+ * 知识身份（跨版本的稳定主题，比如"药品说明书" / "专科诊疗指南"）。
  *
  * <p>{@code current_version_id} 由 Service 层在激活/替换/撤回时维护，
  * 客户端不应直接修改它。

@@ -24,8 +24,8 @@ describe("Login", () => {
       mustChangePwd: false,
     });
     render(<Login />);
-    fireEvent.change(screen.getByPlaceholderText("工号 / 账号"), { target: { value: "doctor" } });
-    fireEvent.change(screen.getByPlaceholderText("密码"), { target: { value: "Mk@2026dev" } });
+    fireEvent.change(screen.getByLabelText("工号 / 账号"), { target: { value: "doctor" } });
+    fireEvent.change(screen.getByLabelText("密码"), { target: { value: "Mk@2026dev" } });
     fireEvent.click(screen.getByRole("button", { name: /进入工作台/ }));
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith("/dashboard"));
   });
@@ -35,10 +35,34 @@ describe("Login", () => {
       response: { data: { detail: "用户名或密码不正确" } },
     });
     render(<Login />);
-    fireEvent.change(screen.getByPlaceholderText("工号 / 账号"), { target: { value: "x" } });
-    fireEvent.change(screen.getByPlaceholderText("密码"), { target: { value: "y" } });
+    fireEvent.change(screen.getByLabelText("工号 / 账号"), { target: { value: "x" } });
+    fireEvent.change(screen.getByLabelText("密码"), { target: { value: "y" } });
     fireEvent.click(screen.getByRole("button", { name: /进入工作台/ }));
     await waitFor(() => expect(screen.getByText("用户名或密码不正确")).toBeInTheDocument());
     expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it("登录页提供主题切换入口", () => {
+    render(<Login />);
+
+    expect(screen.getByRole("button", { name: /默认/ })).toBeInTheDocument();
+  });
+
+  it("登录页根容器注入主题 token，避免背景和文字失效", () => {
+    const { container } = render(<Login />);
+    const main = container.querySelector("main");
+
+    expect(main?.style.getPropertyValue("--mk-login-page-bg")).toContain("linear-gradient");
+    expect(main?.style.getPropertyValue("--mk-login-text")).not.toBe("");
+  });
+
+  it("统一身份入口折叠展示待配置方式", async () => {
+    render(<Login />);
+
+    fireEvent.click(screen.getByRole("button", { name: "院方统一身份认证" }));
+
+    expect(await screen.findByRole("button", { name: "CAS（待院方配置）" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "OIDC（待院方配置）" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "SAML（待院方配置）" })).toBeDisabled();
   });
 });

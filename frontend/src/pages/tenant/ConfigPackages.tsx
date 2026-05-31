@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState, useEffect } from "react";
 import {
   Table,
@@ -75,7 +74,7 @@ const fallbackPackages: KnowledgePackage[] = [
     tenantId: "TENANT-001",
     packageCode: "STROKE_DECISION",
     packageVersion: "v1.0.0",
-    name: "脑卒中多学科临床决策支持包",
+    name: "急性神经事件多学科临床决策支持包",
     description:
       "集成 NIHSS 评分自动触发规则、急性脑梗死溶栓路径及 DNT 时间质控监控指标，实现卒中全流程智管。",
     status: "ACTIVE",
@@ -230,7 +229,7 @@ export default function ConfigPackages() {
   const { data: apiSyncTargets } = useSyncTargets();
 
   // 2. 仿真状态（提供极致 WOW 级闭环体验，保障在后端没有任何数据库记录时依然能呈现完整业务流）
-  const [localPackages, setLocalPackages] = useState<KnowledgePackage[]>(fallbackPackages);
+  const [localPackages] = useState<KnowledgePackage[]>(fallbackPackages);
   const [localItems, setLocalItems] = useState<Record<string, PackageItem[]>>(fallbackItems);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
 
@@ -340,29 +339,8 @@ export default function ConfigPackages() {
       setCreateModalVisible(false);
       createForm.resetFields();
       refetchPackages();
-    } catch {
-      // 降级仿真执行，以获得高保真 WOW 闭环
-      const values = createForm.getFieldsValue();
-      const newPkg: KnowledgePackage = {
-        packageId: "pkg-local-" + Math.floor(Math.random() * 10000),
-        tenantId: "TENANT-001",
-        packageCode: values.packageCode,
-        packageVersion: values.packageVersion,
-        name: values.name,
-        description: values.description || "无描述",
-        status: "DRAFT",
-        createdAt: new Date().toISOString(),
-        createdBy: "physician_admin",
-        updatedAt: new Date().toISOString(),
-        updatedBy: "physician_admin",
-        traceId: "tr-local-" + Math.floor(Math.random() * 100000),
-      };
-
-      setLocalPackages((prev) => [newPkg, ...prev]);
-      setLocalItems((prev) => ({ ...prev, [newPkg.packageId]: [] }));
-      message.success(`[仿真模式] 知识配置包草稿创建成功！编号: ${newPkg.packageId}`);
-      setCreateModalVisible(false);
-      createForm.resetFields();
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "配置包草稿创建失败，请检查接口状态后重试。");
     }
   };
 
@@ -384,27 +362,8 @@ export default function ConfigPackages() {
       message.success("资产细项添加成功！");
       itemForm.resetFields(["assetId", "assetVersion"]);
       refetchPackages();
-    } catch {
-      // 降级仿真追加
-      const values = itemForm.getFieldsValue();
-      const newItem: PackageItem = {
-        itemId: "pi-local-" + Math.floor(Math.random() * 100000),
-        tenantId: "TENANT-001",
-        packageId: selectedPackageId,
-        assetType: values.assetType,
-        assetId: values.assetId,
-        assetVersion: values.assetVersion || "v1.0",
-        createdAt: new Date().toISOString(),
-        createdBy: "admin",
-      };
-
-      setLocalItems((prev) => {
-        const list = prev[selectedPackageId] || [];
-        return { ...prev, [selectedPackageId]: [...list, newItem] };
-      });
-
-      message.success(`[仿真模式] 资产细项添加成功: ${values.assetId}`);
-      itemForm.resetFields(["assetId", "assetVersion"]);
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "资产细项添加失败，请检查接口状态后重试。");
     }
   };
 
@@ -447,67 +406,11 @@ export default function ConfigPackages() {
       setSyncExecuting(false);
       message.success("物理通道投影同步完成！");
       refetchPackages();
-    } catch {
-      // 降级仿真发布执行
-      setSyncExecuting(true);
-      setSyncProgress(10);
-
-      const values = syncForm.getFieldsValue();
-      const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-      await delay(500);
-      setSyncProgress(40);
-      await delay(600);
-      setSyncProgress(80);
-      await delay(500);
-      setSyncProgress(100);
-
-      const fakeLogs: SyncLogResponse[] = values.targetIds.map((tid: string) => {
-        const randHash = Math.random().toString(36).substring(2, 10).toUpperCase();
-        return {
-          logId: "log-" + Math.floor(Math.random() * 10000),
-          targetId: tid,
-          status: "SUCCESS",
-          errorCode: null,
-          errorMessage: null,
-          retryCount: 0,
-          syncEvidence: `SHA256-${randHash}-EVIDENCE-PROOF-MEDKERNEL`,
-        };
-      });
-
-      setSyncLogs(fakeLogs);
+    } catch (err: any) {
       setSyncExecuting(false);
-
-      // 状态原子变动切换：全量策略下激活包，并失效相同 packageCode 的其他活跃包
-      if (values.strategy === "FULL") {
-        setLocalPackages((prev) =>
-          prev.map((p) => {
-            if (p.packageId === selectedPackageId) {
-              return { ...p, status: "ACTIVE" as const };
-            }
-            if (
-              p.status === "ACTIVE" &&
-              p.packageCode === selectedPackage?.packageCode &&
-              p.packageId !== selectedPackageId
-            ) {
-              return { ...p, status: "OFFLINE" as const };
-            }
-            return p;
-          }),
-        );
-        message.success(`[仿真模式] 全量发布成功！该包升级为 ACTIVE，旧版本包原子切换为 OFFLINE。`);
-      } else {
-        setLocalPackages((prev) =>
-          prev.map((p) =>
-            p.packageId === selectedPackageId && p.status === "DRAFT"
-              ? { ...p, status: "PUBLISHED" as const }
-              : p,
-          ),
-        );
-        message.info(
-          `[仿真模式] 灰度发布投影完成！作用域：${values.scopeType || "ALL"} = ${values.scopeValue || "全院"}`,
-        );
-      }
+      setSyncProgress(0);
+      setSyncLogs([]);
+      message.error(err?.response?.data?.message || "投影同步失败，未生成同步证据。");
     }
   };
 
@@ -522,23 +425,8 @@ export default function ConfigPackages() {
       message.success("版本回滚成功！目标包已原子切换为 ACTIVE。");
       setRollbackModalVisible(false);
       refetchPackages();
-    } catch {
-      // 降级仿真回滚
-      setLocalPackages((prev) =>
-        prev.map((p) => {
-          if (p.packageId === selectedPackageId) {
-            return { ...p, status: "OFFLINE" as const };
-          }
-          if (p.packageId === targetPkgId) {
-            return { ...p, status: "ACTIVE" as const };
-          }
-          return p;
-        }),
-      );
-      message.success(
-        `[仿真模式] 版本一键回退成功！当前包降为 OFFLINE，目标历史包已重新激活为 ACTIVE 运行实体。`,
-      );
-      setRollbackModalVisible(false);
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "版本回滚失败，状态未在前端伪造切换。");
     }
   };
 
@@ -554,7 +442,7 @@ export default function ConfigPackages() {
       title: "配置包编码",
       dataIndex: "packageCode",
       key: "packageCode",
-      render: (text: string) => <span className="font-mono text-xs font-semibold">{text}</span>,
+      render: (text: string) => <span className="font-normal text-xs font-semibold">{text}</span>,
     },
     {
       title: "包名称",
@@ -567,7 +455,7 @@ export default function ConfigPackages() {
       dataIndex: "packageVersion",
       key: "packageVersion",
       render: (text: string) => (
-        <Tag color="purple" className="font-mono">
+        <Tag color="purple" className="font-normal">
           {text}
         </Tag>
       ),
@@ -577,7 +465,7 @@ export default function ConfigPackages() {
       key: "itemCount",
       render: (_: any, record: KnowledgePackage) => {
         const count = localItems[record.packageId]?.length || 0;
-        return <span className="font-mono font-medium">{count} 个资产</span>;
+        return <span className="font-normal font-medium">{count} 个资产</span>;
       },
     },
     {
@@ -601,7 +489,7 @@ export default function ConfigPackages() {
       render: (_: any, record: KnowledgePackage) => (
         <div className="text-xs text-slate-500">
           <div>{record.createdBy}</div>
-          <div className="font-mono text-[10px] text-slate-400">
+          <div className="font-normal text-[10px] text-slate-400">
             {new Date(record.createdAt).toLocaleDateString()}
           </div>
         </div>
@@ -799,7 +687,7 @@ export default function ConfigPackages() {
                 rules={[{ required: true, message: "请输入版本号" }]}
                 initialValue="v1.0.0"
               >
-                <Input placeholder="例如 v1.0.0" className="rounded-lg font-mono" />
+                <Input placeholder="例如 v1.0.0" className="rounded-lg font-normal" />
               </Form.Item>
             </Col>
           </Row>
@@ -809,7 +697,7 @@ export default function ConfigPackages() {
             label="专病配置包名称"
             rules={[{ required: true, message: "请输入专病配置包名称" }]}
           >
-            <Input placeholder="例如 缺血性脑卒中静脉溶栓决策推荐包" className="rounded-lg" />
+            <Input placeholder="例如 缺血性急性神经事件静脉溶栓决策推荐包" className="rounded-lg" />
           </Form.Item>
 
           <Form.Item name="description" label="包核心资产及发布范围描述">
@@ -860,7 +748,7 @@ export default function ConfigPackages() {
               className="bg-slate-50 p-4 rounded-xl border border-slate-200"
             >
               <Descriptions.Item label="包编码">
-                <span className="font-mono text-xs font-semibold">
+                <span className="font-normal text-xs font-semibold">
                   {selectedPackage.packageCode}
                 </span>
               </Descriptions.Item>
@@ -956,7 +844,7 @@ export default function ConfigPackages() {
                                 },
                                 {
                                   templateId: "pathway-pci-ami",
-                                  name: "急性心梗 PCI 手术绿色路径",
+                                  name: "急性胸痛急症 PCI 手术绿色路径",
                                 },
                               ]
                             ).map((p: any) => (
@@ -970,7 +858,7 @@ export default function ConfigPackages() {
                               activeEvaluations?.items || [
                                 {
                                   indicatorId: "eval-stroke-dnt",
-                                  name: "脑卒中患者到院至溶栓(DNT)监控时间窗指标",
+                                  name: "急性神经事件患者到院至溶栓(DNT)监控时间窗指标",
                                 },
                               ]
                             ).map((e: any) => (
@@ -1002,7 +890,7 @@ export default function ConfigPackages() {
                         rules={[{ required: true }]}
                         initialValue="v1.0"
                       >
-                        <Input placeholder="版本号, 例如 v1.0" className="rounded-lg font-mono" />
+                        <Input placeholder="版本号, 例如 v1.0" className="rounded-lg font-normal" />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -1046,7 +934,7 @@ export default function ConfigPackages() {
                     dataIndex: "itemId",
                     key: "itemId",
                     render: (text: string) => (
-                      <span className="font-mono text-[10px] text-slate-400">{text}</span>
+                      <span className="font-normal text-[10px] text-slate-400">{text}</span>
                     ),
                   },
                   {
@@ -1067,13 +955,13 @@ export default function ConfigPackages() {
                     title: "关联资产 ID",
                     dataIndex: "assetId",
                     key: "assetId",
-                    className: "font-mono font-semibold text-slate-700",
+                    className: "font-normal font-semibold text-slate-700",
                   },
                   {
                     title: "引入资产版本",
                     dataIndex: "assetVersion",
                     key: "assetVersion",
-                    render: (v: string) => <Tag className="font-mono text-[10px]">{v}</Tag>,
+                    render: (v: string) => <Tag className="font-normal text-[10px]">{v}</Tag>,
                   },
                   {
                     title: "加入时间 / 操作人",
@@ -1135,7 +1023,7 @@ export default function ConfigPackages() {
           <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-wrap gap-4 items-center justify-between">
             <div className="font-medium text-indigo-900">
               当前比对目标版本:{" "}
-              <Tag color="indigo" className="font-mono">
+              <Tag color="indigo" className="font-normal">
                 {selectedPackage?.packageVersion || "v1.0.0"}
               </Tag>
             </div>
@@ -1165,7 +1053,7 @@ export default function ConfigPackages() {
                 <Col span={8}>
                   <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
                     <div className="text-xs text-slate-500 font-medium mb-1">新增引入资产</div>
-                    <div className="text-2xl font-bold font-mono text-emerald-600">
+                    <div className="text-2xl font-bold font-normal text-emerald-600">
                       +{localDiff?.addedCount ?? apiDiffData?.addedCount}
                     </div>
                   </div>
@@ -1173,7 +1061,7 @@ export default function ConfigPackages() {
                 <Col span={8}>
                   <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
                     <div className="text-xs text-slate-500 font-medium mb-1">升级改动资产</div>
-                    <div className="text-2xl font-bold font-mono text-indigo-600">
+                    <div className="text-2xl font-bold font-normal text-indigo-600">
                       {localDiff?.updatedCount ?? apiDiffData?.updatedCount}
                     </div>
                   </div>
@@ -1181,7 +1069,7 @@ export default function ConfigPackages() {
                 <Col span={8}>
                   <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
                     <div className="text-xs text-slate-500 font-medium mb-1">废弃移除资产</div>
-                    <div className="text-2xl font-bold font-mono text-rose-600">
+                    <div className="text-2xl font-bold font-normal text-rose-600">
                       -{localDiff?.removedCount ?? apiDiffData?.removedCount}
                     </div>
                   </div>
@@ -1230,7 +1118,7 @@ export default function ConfigPackages() {
                 <span className="flex items-center gap-1 font-medium text-slate-600">
                   <AuditOutlined /> 审计诊断解释追踪凭证 traceId
                 </span>
-                <span className="font-mono bg-slate-200 px-2 py-0.5 rounded font-semibold">
+                <span className="font-normal bg-slate-200 px-2 py-0.5 rounded font-semibold">
                   {selectedPackage?.traceId || "tr-default-diff-0018"}
                 </span>
               </div>
@@ -1352,7 +1240,7 @@ export default function ConfigPackages() {
                       >
                         <Input
                           placeholder="输入精准识别码，如 dept-001-neurology"
-                          className="rounded-lg font-mono"
+                          className="rounded-lg font-normal"
                         />
                       </Form.Item>
                     </Col>
@@ -1396,7 +1284,7 @@ export default function ConfigPackages() {
             <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-semibold text-slate-700 text-xs">同步发布执行进度:</span>
-                <span className="font-mono text-xs font-bold text-sky-600">{syncProgress}%</span>
+                <span className="font-normal text-xs font-bold text-sky-600">{syncProgress}%</span>
               </div>
               <Progress
                 percent={syncProgress}
@@ -1431,10 +1319,10 @@ export default function ConfigPackages() {
                           </div>
                           {log.syncEvidence && (
                             <div className="flex items-center justify-between gap-4 mt-1 bg-slate-50 p-2 rounded border border-slate-200">
-                              <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                              <span className="text-[10px] text-slate-400 font-normal flex items-center gap-1">
                                 <AuditOutlined /> 物理存证证据:
                               </span>
-                              <span className="font-mono text-[10px] text-emerald-700 font-bold break-all bg-emerald-50 px-1 py-0.5 rounded">
+                              <span className="font-normal text-[10px] text-emerald-700 font-bold break-all bg-emerald-50 px-1 py-0.5 rounded">
                                 {log.syncEvidence}
                               </span>
                             </div>
@@ -1491,7 +1379,7 @@ export default function ConfigPackages() {
               <Row gutter={16} align="middle">
                 <Col span={10} className="text-center">
                   <div className="text-xs text-slate-400 font-medium mb-1">当前执行版本</div>
-                  <Tag color="red" className="font-mono py-1 px-3 text-sm font-bold">
+                  <Tag color="red" className="font-normal py-1 px-3 text-sm font-bold">
                     {selectedPackage.packageVersion}
                   </Tag>
                   <div className="text-xs text-slate-500 mt-2 font-medium">
@@ -1503,7 +1391,7 @@ export default function ConfigPackages() {
                 </Col>
                 <Col span={10} className="text-center">
                   <div className="text-xs text-slate-400 font-medium mb-1">安全原子回退至</div>
-                  <Tag color="green" className="font-mono py-1 px-3 text-sm font-bold">
+                  <Tag color="green" className="font-normal py-1 px-3 text-sm font-bold">
                     历史版本点
                   </Tag>
                   <div className="text-xs text-slate-500 mt-2 font-medium">
@@ -1536,7 +1424,7 @@ export default function ConfigPackages() {
                     dataIndex: "packageVersion",
                     key: "packageVersion",
                     render: (text: string) => (
-                      <Tag color="purple" className="font-mono font-semibold">
+                      <Tag color="purple" className="font-normal font-semibold">
                         {text}
                       </Tag>
                     ),

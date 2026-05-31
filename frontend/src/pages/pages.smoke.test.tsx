@@ -115,13 +115,14 @@ describe("page smoke coverage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "集团医疗智能中枢" })).toBeInTheDocument();
-    expect(screen.getByText("当前任务：确认身份并进入工作台")).toBeInTheDocument();
+    expect(screen.getByText("确认身份后进入工作台，系统会按角色展示对应菜单。")).toBeInTheDocument();
     expect(screen.getByText("安全审计已开启")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "进入工作台" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /默认/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /进入工作台/ })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "院方统一身份认证" }));
 
-    expect(screen.getByRole("button", { name: "用 CAS 登录" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "CAS（待院方配置）" })).toBeDisabled();
     expect(screen.getByText(/统一身份由医院信息中心配置/)).toBeInTheDocument();
   });
 

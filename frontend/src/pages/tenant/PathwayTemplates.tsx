@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import {
   Table,
@@ -279,7 +278,7 @@ export default function PathwayTemplates() {
           </Form.Item>
           <Form.Item label="病种编码">
             <Input
-              placeholder="例如 I10"
+              placeholder="例如 DX-CODE-A"
               allowClear
               value={diseaseFilter}
               onChange={(e) => setDiseaseFilter(e.target.value)}
@@ -418,7 +417,7 @@ export default function PathwayTemplates() {
                   <span className="font-semibold text-gray-800">{pkg.name}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label="包编码">
-                  <span className="font-mono text-xs">{pkg.packageCode}</span>
+                  <span className="font-normal text-xs">{pkg.packageCode}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label="病种/版本">
                   <Tag color="cyan">{pkg.diseaseCode}</Tag>
@@ -455,7 +454,7 @@ export default function PathwayTemplates() {
             </Col>
             <Col span={12}>
               <Form.Item name="name" label="路径模型名称" rules={[{ required: true }]}>
-                <Input placeholder="如 社区获得性肺炎标准诊疗路径" />
+                <Input placeholder="如 社区获得性呼吸系统感染标准诊疗路径" />
               </Form.Item>
             </Col>
           </Row>
@@ -467,7 +466,7 @@ export default function PathwayTemplates() {
             </Col>
             <Col span={8}>
               <Form.Item name="diseaseCode" label="病种代码" rules={[{ required: true }]}>
-                <Input placeholder="如 J18" />
+                <Input placeholder="如 DX-CODE-C" />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -480,7 +479,7 @@ export default function PathwayTemplates() {
             </Col>
           </Row>
           <Form.Item name="sourceRef" label="临床知识与指南基础" rules={[{ required: true }]}>
-            <Input placeholder="如 社区获得性肺炎诊断和治疗指南 (2025年版)" />
+            <Input placeholder="如 社区获得性呼吸系统感染诊断和治疗指南 (2025年版)" />
           </Form.Item>
           <Form.Item name="description" label="收治标准与排除指标">
             <TextArea rows={2} placeholder="输入路径说明..." />
@@ -493,7 +492,7 @@ export default function PathwayTemplates() {
                 label="生命周期节点配置 (JSON 列表)"
                 rules={[{ required: true }]}
               >
-                <TextArea rows={8} className="font-mono text-xs" />
+                <TextArea rows={8} className="font-normal text-xs" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -502,7 +501,7 @@ export default function PathwayTemplates() {
                 label="拓扑流转连线配置 (JSON 列表)"
                 rules={[{ required: true }]}
               >
-                <TextArea rows={8} className="font-mono text-xs" />
+                <TextArea rows={8} className="font-normal text-xs" />
               </Form.Item>
             </Col>
           </Row>
@@ -636,7 +635,7 @@ export default function PathwayTemplates() {
                       title: "流转条件 (DSL)",
                       dataIndex: "conditionJson",
                       render: (c) => (
-                        <span className="font-mono text-xs">{c || "无条件直接推进"}</span>
+                        <span className="font-normal text-xs">{c || "无条件直接推进"}</span>
                       ),
                     },
                     { title: "优先级", dataIndex: "priority" },
@@ -693,7 +692,7 @@ export default function PathwayTemplates() {
                                   <div className="font-semibold text-gray-800 text-xs">
                                     {nodeDetail?.name || "未知节点"}
                                   </div>
-                                  <div className="text-gray-400 text-xs font-mono mt-0.5">
+                                  <div className="text-gray-400 text-xs font-normal mt-0.5">
                                     {nodeCode}
                                   </div>
                                 </Timeline.Item>

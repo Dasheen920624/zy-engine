@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import {
   Row,
@@ -37,13 +36,13 @@ const DEFAULT_CLINICAL_CONTEXT = `{
     "gender": "M"
   },
   "prescription": {
-    "drug_code": "DRUG-001",
+    "drug_code": "DRUG-CODE",
     "drug_name": "强力阿司匹林",
     "dose": "100mg"
   },
   "diagnosis": {
-    "code": "I10",
-    "name": "原发性高血压"
+    "code": "DX-CODE-A",
+    "name": "原发性血压异常"
   }
 }`;
 
@@ -168,7 +167,7 @@ export default function RuleValidate() {
                 placeholder="例如: PRESCRIPTION_SUBMIT"
                 value={triggerPoint}
                 onChange={(e) => setTriggerPoint(e.target.value)}
-                className="font-mono text-sm"
+                className="font-normal text-sm"
               />
             </div>
 
@@ -180,7 +179,7 @@ export default function RuleValidate() {
                 rows={16}
                 value={contextJson}
                 onChange={(e) => setContextJson(e.target.value)}
-                className="font-mono text-xs p-3 bg-gray-50 rounded-lg"
+                className="font-normal text-xs p-3 bg-gray-50 rounded-lg"
               />
             </div>
 
@@ -212,12 +211,12 @@ export default function RuleValidate() {
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 flex flex-wrap gap-6 items-center">
                   <Descriptions size="small" column={2} className="flex-1">
                     <Descriptions.Item label="链路 TraceId">
-                      <span className="font-mono text-xs text-gray-500">
+                      <span className="font-normal text-xs text-gray-500">
                         {evaluateResponse.traceId}
                       </span>
                     </Descriptions.Item>
                     <Descriptions.Item label="求值 ExecutionId">
-                      <span className="font-mono text-xs text-indigo-500">
+                      <span className="font-normal text-xs text-indigo-500">
                         {evaluateResponse.executionId}
                       </span>
                     </Descriptions.Item>
@@ -287,13 +286,13 @@ export default function RuleValidate() {
 
             <Descriptions title="求值快照元数据" bordered column={1} size="small" className="mb-6">
               <Descriptions.Item label="求值 Execution ID">
-                <span className="font-mono text-xs">{diagnoseData.executionId}</span>
+                <span className="font-normal text-xs">{diagnoseData.executionId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="链路 Trace ID">
-                <span className="font-mono text-xs">{diagnoseData.traceId}</span>
+                <span className="font-normal text-xs">{diagnoseData.traceId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="输入 Payload 摘要 (SHA-256)">
-                <span className="font-mono text-xs">{diagnoseData.inputPayloadSummary}</span>
+                <span className="font-normal text-xs">{diagnoseData.inputPayloadSummary}</span>
               </Descriptions.Item>
               <Descriptions.Item label="风险评级">
                 <Tag color={diagnoseData.riskLevel === "HIGH" ? "red" : "orange"}>
@@ -311,7 +310,7 @@ export default function RuleValidate() {
               }
               className="mb-6 rounded-xl border-gray-200"
             >
-              <div className="text-sm text-gray-800 bg-gray-50 p-4 rounded-lg font-mono border border-gray-100">
+              <div className="text-sm text-gray-800 bg-gray-50 p-4 rounded-lg font-normal border border-gray-100">
                 {diagnoseData.explanationSnapshot || "暂无解释。"}
               </div>
             </Card>
@@ -340,7 +339,7 @@ export default function RuleValidate() {
                         {h.changedBy}
                       </Tag>
                     </div>
-                    <div className="text-gray-500 text-xs mt-1 font-mono italic">{h.summary}</div>
+                    <div className="text-gray-500 text-xs mt-1 font-normal italic">{h.summary}</div>
                   </Timeline.Item>
                 ))}
               </Timeline>

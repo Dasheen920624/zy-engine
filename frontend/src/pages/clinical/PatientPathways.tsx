@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import {
   Table,
@@ -131,7 +130,7 @@ export default function PatientPathways() {
       const values = await enterForm.validateFields();
       const res = await enterPathwayMutation.mutateAsync({
         patientId: values.patientId,
-        encounterId: values.encounterId || "E-" + Math.floor(Math.random() * 10000),
+        encounterId: values.encounterId?.trim() || undefined,
         templateId: values.templateId,
         startNodeCode: values.startNodeCode || "START",
       });
@@ -144,20 +143,7 @@ export default function PatientPathways() {
       if (res?.patientPathway) {
         setLocalPathways((prev) => [res.patientPathway, ...prev]);
       } else {
-        // Mock fallback 如果后端因隔离策略没有返回具体 body 实体
-        setLocalPathways((prev) => [
-          {
-            patientPathwayId: "PP-" + Math.floor(Math.random() * 10000),
-            patientId: values.patientId,
-            encounterId: values.encounterId || "E-" + Math.floor(Math.random() * 10000),
-            templateId: values.templateId,
-            currentNodeCode: values.startNodeCode || "START",
-            status: "ACTIVE",
-            enteredAt: new Date().toISOString(),
-            traceId: "TRACE-" + Math.floor(Math.random() * 1000000),
-          },
-          ...prev,
-        ]);
+        message.warning("后端未返回患者路径实体，列表保持不变。");
       }
     } catch (err: any) {
       message.error(err.response?.data?.message || "办理患者入径失败");
@@ -280,7 +266,7 @@ export default function PatientPathways() {
       title: "实例编号",
       dataIndex: "patientPathwayId",
       key: "patientPathwayId",
-      render: (text: string) => <span className="font-mono text-xs font-semibold">{text}</span>,
+      render: (text: string) => <span className="font-normal text-xs font-semibold">{text}</span>,
     },
     {
       title: "患者 ID",
@@ -413,7 +399,7 @@ export default function PatientPathways() {
                 <Option key={t.templateId} value={t.templateId}>
                   {t.name} (v{t.templateVersion}.0)
                 </Option>
-              )) || <Option value="PT-CAP-01">社区获得性肺炎标准诊疗路径 (PT-CAP-01)</Option>}
+              )) || <Option value="PT-CAP-01">社区获得性呼吸系统感染标准诊疗路径 (PT-CAP-01)</Option>}
             </Select>
           </Form.Item>
           <Form.Item name="startNodeCode" label="起始临床推进节点 (可选，默认为 START)">
@@ -448,13 +434,13 @@ export default function PatientPathways() {
                 <span className="font-semibold">{detailData.patientPathway.patientId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="就诊编号">
-                <span className="font-mono text-xs">{detailData.patientPathway.encounterId}</span>
+                <span className="font-normal text-xs">{detailData.patientPathway.encounterId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="所用模型">
                 <Tag color="geekblue">{detailData.patientPathway.templateId}</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="入径实例">
-                <span className="font-mono text-xs">
+                <span className="font-normal text-xs">
                   {detailData.patientPathway.patientPathwayId}
                 </span>
               </Descriptions.Item>
@@ -511,7 +497,7 @@ export default function PatientPathways() {
                               <span>{node.name}</span>
                               {isCurrent && <Tag color="blue">当前活动</Tag>}
                             </div>
-                            <div className="text-gray-400 text-xs font-mono">{node.nodeCode}</div>
+                            <div className="text-gray-400 text-xs font-normal">{node.nodeCode}</div>
 
                             {/* 关键时钟展示 */}
                             {activeClock && (
@@ -796,14 +782,14 @@ export default function PatientPathways() {
 
             <Descriptions title="求值Trace元数据" bordered column={1} size="small" className="mb-6">
               <Descriptions.Item label="流转 Execution ID">
-                <span className="font-mono text-xs">{diagnoseData.executionId}</span>
+                <span className="font-normal text-xs">{diagnoseData.executionId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="链路 Trace ID">
-                <span className="font-mono text-xs">{diagnoseData.traceId}</span>
+                <span className="font-normal text-xs">{diagnoseData.traceId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="输入 Payload 摘要 (SHA-256)">
-                <span className="font-mono text-xs">
-                  {diagnoseData.inputPayloadSummary || "SHA-256-MOCK-HASH"}
+                <span className="font-normal text-xs">
+                  {diagnoseData.inputPayloadSummary || "待后端返回"}
                 </span>
               </Descriptions.Item>
               <Descriptions.Item label="流程风险定级">
@@ -822,9 +808,9 @@ export default function PatientPathways() {
               }
               className="mb-6 rounded-xl border-gray-200"
             >
-              <div className="text-sm text-gray-800 bg-gray-50 p-4 rounded-lg font-mono border border-gray-100">
+              <div className="text-sm text-gray-800 bg-gray-50 p-4 rounded-lg font-normal border border-gray-100">
                 {diagnoseData.explanationSnapshot ||
-                  "由于患者病情已流转至标准节点，依据《社区获得性肺炎指南 §3.2》自动激活抗感染时钟，且检测到血常规白细胞偏高，流转归因成立。"}
+                  "由于患者病情已流转至标准节点，依据《社区获得性呼吸系统感染指南 §3.2》自动激活抗感染时钟，且检测到血常规白细胞偏高，流转归因成立。"}
               </div>
             </Card>
 
@@ -852,7 +838,7 @@ export default function PatientPathways() {
                         {h.changedBy}
                       </Tag>
                     </div>
-                    <div className="text-gray-500 text-xs mt-1 font-mono italic">{h.summary}</div>
+                    <div className="text-gray-500 text-xs mt-1 font-normal italic">{h.summary}</div>
                   </Timeline.Item>
                 ))}
               </Timeline>

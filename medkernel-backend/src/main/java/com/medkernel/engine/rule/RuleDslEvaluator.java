@@ -18,7 +18,7 @@ import com.medkernel.shared.api.error.ErrorCode;
  *
  * <p>负责把 {@code when} 条件树（all/any/leaf）按上下文求值，命中后解析 {@code then} 动作并计算最高严重度。
  * 仅覆盖 exists/equals/not_equals/contains/gt/gte/lt/lte/in/not_in 十种确定性算子，
- * 缺失字段不抛内部异常，而是产生未命中以便仿真和发布门禁能精准定位失败原因。
+ * 缺失字段不抛内部异常，而是产生未命中以便试运行和发布门禁能精准定位失败原因。
  */
 @Component
 public class RuleDslEvaluator {

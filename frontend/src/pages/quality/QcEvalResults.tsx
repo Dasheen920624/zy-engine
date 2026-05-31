@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import { PageShell } from "@/shared/ui/PageShell";
 import { Table, Button, Tag, Input, Select, Card, Progress, Tooltip } from "antd";
@@ -45,7 +44,7 @@ export default function QcEvalResults() {
     const isPass = score >= 90;
     return (
       <span
-        className={`font-mono font-bold text-sm ${isPass ? "text-emerald-500" : "text-rose-500"}`}
+        className={`font-normal font-bold text-sm ${isPass ? "text-emerald-500" : "text-rose-500"}`}
       >
         {score.toFixed(1)}分
       </span>
@@ -123,7 +122,7 @@ export default function QcEvalResults() {
       dataIndex: "createdAt",
       key: "createdAt",
       render: (date: string) => (
-        <span className="text-slate-400 font-mono text-xs">
+        <span className="text-slate-400 font-normal text-xs">
           {date ? date.substring(0, 16) : "--"}
         </span>
       ),

@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import type { Key } from "react";
 import { useState } from "react";
 

@@ -36,7 +36,7 @@ import com.medkernel.shared.observability.StateTransitionRecorder;
  * <ul>
  *   <li>创建规则与初始草稿版本（DSL 校验失败抛 {@code ENG-RULE-001}）；</li>
  *   <li>新增测试用例并校验状态（仅 {@code DRAFT} 可加）；</li>
- *   <li>仿真执行：复用 {@link RuleDslEvaluator}，同步写 {@code rule_execution_log} 与状态历史；</li>
+ *   <li>试运行执行：复用 {@link RuleDslEvaluator}，同步写 {@code rule_execution_log} 与状态历史；</li>
  *   <li>发布门禁：要求阳性/阴性/边界/冲突四类用例齐备且全部 PASS，否则抛 {@code ENG-RULE-004}；</li>
  *   <li>真实执行：按触发点匹配已发布规则集合，返回命中明细 + 最高严重度；</li>
  *   <li>诊断：基于 {@code execution_id} 装配 {@link DiagnoseResponse}。</li>
@@ -177,7 +177,7 @@ public class RuleEngineService {
     }
 
     /**
-     * 用指定上下文仿真执行规则当前版本，并写入执行日志与状态迁移。
+     * 用指定上下文试运行执行规则当前版本，并写入执行日志与状态迁移。
      *
      * <p>触发点取自 DSL 的 {@code trigger}（缺省 {@code SIMULATE}）；
      * 失败：规则/版本不存在抛 {@code ENG-RULE-002}/{@code ENG-RULE-003}。

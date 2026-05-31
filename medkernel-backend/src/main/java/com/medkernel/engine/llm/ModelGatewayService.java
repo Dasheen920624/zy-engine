@@ -359,7 +359,7 @@ public class ModelGatewayService {
             }
             return hexString.toString();
         } catch (Exception e) {
-            return "hash-" + UUID.randomUUID().toString().replace("-", "");
+            throw new IllegalStateException("SHA-256 摘要计算失败", e);
         }
     }
 
@@ -459,12 +459,11 @@ public class ModelGatewayService {
      */
     private String executeB0Fallback(String capabilityCode) {
         return switch (capabilityCode) {
-            case "knowledge.extract" -> "{\"entity\": \"高血压\", \"degree\": \"III级\", \"risk\": \"高危\"}";
-            case "terminology.map" -> "{\"standard_code\": \"I10.xx02\", \"standard_name\": \"原发性高血压\"}";
-            case "rule.draft" -> "{\"rule_name\": \"高血压联合用药规则\", \"trigger\": \"BP > 140/90\", \"action\": \"推荐卡片\"}";
-            case "pathway.draft" -> "{\"pathway_name\": \"高血压临床路径\", \"steps\": [\"诊断分期\", \"生活干预\", \"药物治疗\"]}";
+            case "knowledge.extract" -> "{\"entity\": \"临床概念A\", \"degree\": \"分级A\", \"risk\": \"风险级别A\"}";
+            case "terminology.map" -> "{\"standard_code\": \"STANDARD-CODE\", \"standard_name\": \"标准术语A\"}";
+            case "rule.draft" -> "{\"rule_name\": \"用药安全规则草案\", \"trigger\": \"结构化条件A\", \"action\": \"推荐卡片\"}";
+            case "pathway.draft" -> "{\"pathway_name\": \"专科路径草案\", \"steps\": [\"入径评估\", \"执行节点\", \"出径评估\"]}";
             default -> "{\"result\": \"确定性基线回退数据\", \"capability\": \"" + capabilityCode + "\"}";
         };
     }
 }
-

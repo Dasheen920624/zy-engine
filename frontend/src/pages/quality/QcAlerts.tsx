@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import { PageShell } from "@/shared/ui/PageShell";
 import {
@@ -227,7 +226,7 @@ export default function QcAlerts() {
       title: "问题编码",
       dataIndex: "findingCode",
       key: "findingCode",
-      className: "font-mono text-xs text-slate-500",
+      className: "font-normal text-xs text-slate-500",
     },
     {
       title: "质控缺陷名称",
@@ -436,7 +435,7 @@ export default function QcAlerts() {
                 <div className="space-y-4 py-2">
                   <Descriptions bordered column={1} size="small" className="bg-slate-50/30">
                     <Descriptions.Item label="质控问题 ID">
-                      <span className="font-mono text-xs font-semibold">
+                      <span className="font-normal text-xs font-semibold">
                         {selectedFinding.findingId}
                       </span>
                     </Descriptions.Item>
@@ -601,7 +600,7 @@ export default function QcAlerts() {
                       <div className="text-slate-400 text-xs font-semibold">
                         审计 Trace ID (可追溯唯一凭据)
                       </div>
-                      <div className="font-mono font-bold text-sky-600 text-sm mt-1">
+                      <div className="font-normal font-bold text-sky-600 text-sm mt-1">
                         {selectedFinding.createdAt
                           ? selectedFinding.findingId + "_TRACE"
                           : "TRACE_NOT_FOUND"}

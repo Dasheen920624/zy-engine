@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { Dropdown, Button, Tooltip } from "antd";
 import { BgColorsOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
@@ -27,6 +26,8 @@ export function ThemeSwitcher({ compact = false }: { compact?: boolean }) {
     system: "跟随系统",
   };
 
+  const currentLabel = labelMap[mode];
+
   return (
     <Dropdown
       menu={{
@@ -36,12 +37,19 @@ export function ThemeSwitcher({ compact = false }: { compact?: boolean }) {
         onClick: (info) => setMode(info.key as never),
       }}
       placement="bottomRight"
+      trigger={["click"]}
     >
-      <Tooltip title="主题模式">
-        <Button type="text" icon={<BgColorsOutlined />}>
-          {compact ? null : labelMap[mode]}
-        </Button>
-      </Tooltip>
+      <Button
+        type="text"
+        aria-label={`主题模式：${currentLabel}`}
+        icon={
+          <Tooltip title="主题模式">
+            <BgColorsOutlined />
+          </Tooltip>
+        }
+      >
+        {compact ? null : currentLabel}
+      </Button>
     </Dropdown>
   );
 }

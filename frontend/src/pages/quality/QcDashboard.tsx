@@ -134,9 +134,8 @@ export default function QcDashboard() {
           if (ind.id === 3) {
             return {
               ...ind,
-              value: Math.round((38.5 + Math.random() * 3) * 10) / 10,
-              status: "PASS",
-              desc: "最新抗菌药物处方量已被成功控额，AUD 均值已回落至绿线安全阈值。",
+              status: "WARN",
+              desc: "指标刷新请求已记录，等待真实质控接口返回最新值。",
             };
           }
           return ind;
@@ -275,7 +274,6 @@ export default function QcDashboard() {
                   <div className={styles.progressWrap}>
                     <div
                       className={`${styles.progressBar} ${getProgressBarClass(ind.status)}`}
-                      // eslint-disable-next-line medkernel/no-inline-style
                       style={barStyle}
                     />
                   </div>

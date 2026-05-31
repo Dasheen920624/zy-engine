@@ -1,4 +1,3 @@
-/* eslint-disable medkernel/no-page-mock */
 import { useState } from "react";
 import {
   Table,
@@ -43,7 +42,6 @@ import {
 } from "@/shared/api/hooks";
 import type {
   FollowupPlanDetailResponse,
-  FollowupTaskType,
   FollowupPlanStatus,
 } from "@/shared/api/hooks";
 
@@ -150,33 +148,21 @@ export default function Followup() {
       const values = await generateForm.validateFields();
       const res = await generatePlanMutation.mutateAsync({
         patientId: values.patientId,
-        encounterId: values.encounterId || "E-" + Math.floor(Math.random() * 10000),
+        encounterId: values.encounterId?.trim() || undefined,
         diseaseCode: values.diseaseCode,
         riskLevel: values.riskLevel || "MEDIUM",
         taskTypes: values.taskTypes,
       });
 
-      message.success(`智能随访计划生成成功！计划编号: ${res?.planId || "FP-New"}`);
       setGenerateModalVisible(false);
       generateForm.resetFields();
 
-      // 追加到本地列表展现以获得流畅交互
-      const newPlan: FollowupPlanDetailResponse = res || {
-        planId: "FP-" + Math.floor(Math.random() * 1000000),
-        tenantId: "TENANT-001",
-        patientId: values.patientId,
-        encounterId: values.encounterId || "E-" + Math.floor(Math.random() * 10000),
-        diseaseCode: values.diseaseCode,
-        status: "ACTIVE",
-        tasks: values.taskTypes.map((type: string, i: number) => ({
-          taskId: "FT-" + Math.floor(Math.random() * 100000),
-          taskType: type as FollowupTaskType,
-          dueDate: new Date(Date.now() + 3600000 * 24 * (i + 1)).toISOString(),
-          status: "PENDING",
-        })),
-      };
-
-      setLocalPlans((prev) => [newPlan, ...prev]);
+      if (res) {
+        message.success(`智能随访计划生成成功！计划编号: ${res.planId}`);
+        setLocalPlans((prev) => [res, ...prev]);
+      } else {
+        message.warning("随访计划请求已提交，但后端未返回计划详情，请刷新列表确认。");
+      }
       refetchPlans();
     } catch (err: any) {
       message.error(err.response?.data?.message || "智能随访计划生成失败");
@@ -277,7 +263,7 @@ export default function Followup() {
       title: "计划编号",
       dataIndex: "planId",
       key: "planId",
-      render: (text: string) => <span className="font-mono text-xs font-semibold">{text}</span>,
+      render: (text: string) => <span className="font-normal text-xs font-semibold">{text}</span>,
     },
     {
       title: "患者 ID",
@@ -320,7 +306,7 @@ export default function Followup() {
               strokeColor={{ "0%": token.colorPrimary, "100%": token.colorInfo }}
               className="mb-0"
             />
-            <span className="text-xs text-gray-500 font-mono">
+            <span className="text-xs text-gray-500 font-normal">
               {done}/{total}
             </span>
           </div>
@@ -509,7 +495,7 @@ export default function Followup() {
                 <Select placeholder="请选择病种" className="rounded-lg">
                   <Option value="VTE">静脉血栓栓塞症 (VTE)</Option>
                   <Option value="CHD">冠状动脉粥样硬化性心脏病 (CHD)</Option>
-                  <Option value="DIABETES">糖尿病 (DIABETES)</Option>
+                  <Option value="DIABETES">代谢慢病 (DIABETES)</Option>
                   <Option value="COPD">慢性阻塞性肺疾病 (COPD)</Option>
                 </Select>
               </Form.Item>
@@ -592,13 +578,13 @@ export default function Followup() {
               className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm"
             >
               <Descriptions.Item label="计划编号">
-                <span className="font-mono text-xs font-semibold">{selectedPlanDetail.planId}</span>
+                <span className="font-normal text-xs font-semibold">{selectedPlanDetail.planId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="患者识别码">
                 <span className="font-semibold">{selectedPlanDetail.patientId}</span>
               </Descriptions.Item>
               <Descriptions.Item label="关联就诊">
-                <span className="font-mono text-xs text-gray-500">
+                <span className="font-normal text-xs text-gray-500">
                   {selectedPlanDetail.encounterId}
                 </span>
               </Descriptions.Item>
@@ -658,7 +644,7 @@ export default function Followup() {
                                   {task.status}
                                 </Tag>
                               </div>
-                              <div className="text-gray-400 text-[11px] font-mono">
+                              <div className="text-gray-400 text-[11px] font-normal">
                                 任务 ID: {task.taskId}
                               </div>
                               <div className="text-gray-500 text-[11px]">
@@ -893,7 +879,7 @@ export default function Followup() {
                       }
                       key="trace"
                     >
-                      <div className="bg-slate-900 text-slate-300 p-5 rounded-xl font-mono text-xs overflow-x-auto leading-relaxed shadow-inner">
+                      <div className="bg-slate-900 text-slate-300 p-5 rounded-xl font-normal text-xs overflow-x-auto leading-relaxed shadow-inner">
                         <div className="text-slate-500 border-b border-slate-800 pb-2 mb-3 flex justify-between">
                           <span>Trace Audit Log</span>
                           <span className="text-emerald-500 font-bold">● ONLINE</span>
