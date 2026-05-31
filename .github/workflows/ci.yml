@@ -68,6 +68,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Enforce trunk-based PR rule
         run: |
@@ -99,6 +101,24 @@ jobs:
             exit 1
           fi
           echo "✓ 代码区无旧任务命名残留"
+
+      - name: Set up Node 20 for authenticity guard
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Fetch main for touched-file guard
+        run: git fetch origin main
+
+      - name: Test authenticity guard
+        run: node --test scripts/authenticity-guard.test.mjs
+
+      - name: Block new touched-file authenticity debt
+        run: node scripts/authenticity-guard.mjs --mode=changed --base=origin/main
+
+      - name: Print authenticity debt inventory
+        if: always()
+        run: node scripts/authenticity-guard.mjs --mode=inventory
 
   # 前端骨架编译检查
   frontend-build-test:
