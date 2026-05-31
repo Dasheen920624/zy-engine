@@ -58,7 +58,7 @@
 ### D1 工作台 ✅ 已建（[域简报](D1/_brief.md)）
 [INFRA-09](D1/INFRA-09.md) StepFlowDemo 清出生产路由 · [WORKBENCH-01](D1/WORKBENCH-01.md) 工作台页面（原 `D1-PAGE-工作台`）· [WORKBENCH-02](D1/WORKBENCH-02.md) 演示与校验页面（原 `D1-PAGE-演示校验`）
 
-### D2 试点准备 ✅ 已建（30 卡：23 ID + 7 页面，[域简报](D2/_brief.md)）
+### D2 试点准备 ✅ 已建（28 张物理卡：30 个逻辑能力/页面交付项，规则库并入 RULE-01、路径配置并入 PATH-01，[域简报](D2/_brief.md)）
 **B1 框架**：[API-01](D2/API-01.md) 标准上下文 API · [OPT-01](D2/OPT-01.md) FHIR R4/R5 门面 · [SYS-04](D2/SYS-04.md) 版本继承与发布框架 · [SYS-08](D2/SYS-08.md) 权威知识版本解析与原子替换框架
 **B2 知识+字典**：[KNOW-01](D2/KNOW-01.md) 知识资产引擎 · [KNOW-02](D2/KNOW-02.md) 版本/审核去重 · [TERM-01](D2/TERM-01.md) 字典映射引擎 · [API-03](D2/API-03.md) 知识 API · [API-04](D2/API-04.md) 字典 API
 **B3 规则+路径**：[RULE-01](D2/RULE-01.md) 规则引擎（含规则库页）· [PATH-01](D2/PATH-01.md) 路径引擎（含路径配置页）· [MED-C2](D2/MED-C2.md) 临床 DSL 算子 · [API-05](D2/API-05.md) 规则 API · [API-06](D2/API-06.md) 路径 API

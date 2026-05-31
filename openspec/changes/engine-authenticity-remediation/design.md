@@ -1,88 +1,118 @@
-# 设计方案：MedKernel 引擎真实性整治与算法物理化重构
+# 设计方案：真实性整治与研发重启闸门
 
-> 设计日期：2026-05-28
-> 设计人：Antigravity
-> 状态：设计中 (Under Design)
+> 设计日期：2026-05-31
+> 状态：设计纠偏中
 > 关联 OpenSpec：`engine-authenticity-remediation`
 
 ---
 
-## 1. 架构总览
+## 1. 设计原则
 
-本次重构旨在消除 MedKernel 项目中所有的假实现与 Mock 数据（特别是欺骗性哈希、伪造的流程状态以及前端 catch 块伪造成功的行为），通过物理化算法和真实的接口重建全中枢高可信的底座。
+1. **先闸门后功能**：先把 T-GATE、登录域、证据模板和交接状态修到可信，再按施工卡推进业务。
+2. **按卡收编，不搞大爆炸**：所有代码整改归属到 D0–D6 / wave2 / ga 的施工卡；本 OpenSpec 只负责纠偏和门禁设计。
+3. **真实运行优先**：页面必须真实浏览器打开，接口必须真实测试，证据 hash 必须来自物理字节流，外部断连必须诚实降级。
+4. **医学语义优先**：字典映射禁止把字符 LCS 作为语义判断依据；高危近似必须由负样本判别和人工确认保护。
 
-重构的整体架构图如下所示：
+---
+
+## 2. 架构总览
 
 ```mermaid
-graph TD
-    subgraph Frontend [前端加固门禁]
-        F_ESLint[no-page-mock ESLint 规则] -->|硬拦截所有命名形式的对象数组字面量| F_Code[业务页面与Feature组件]
-        F_Provenance[Provenance.tsx 来源追溯控制台] -->|请求真实证据流与异步ZIP包下载| B_Evidence[EvidenceService 证据服务]
-        F_Adapter[AdapterHub.tsx 适配器控制台] -->|请求真实 Ping 和死信重试| B_Integ[IntegrationService 集成服务]
-    end
+flowchart TD
+    Handoff["_HANDOFF 最新状态"] --> Read["AI 只读核心 + 域简报 + 施工卡"]
+    Read --> Baseline["真实现状核查"]
+    Baseline --> Scope["业务范围核查"]
+    Scope --> Red["红灯测试 / 页面复现"]
+    Red --> Gate["T-GATE 前后端门禁"]
+    Gate --> D0["D0 登录域救援"]
+    D0 --> Domain["D1-D6 按域纵向"]
+    Domain --> GA["GA 总验收"]
 
-    subgraph Backend [后端算法物理化]
-        B_Evidence -->|利用 BouncyCastle 算法计算物理哈希| B_Zip[物理打包物理归档 ZIP 压缩]
-        B_LLM[ModelGatewayService 大模型网关] -->|物理调用本地/云端 LLM Provider| B_LLM_API[真实大模型 API]
-        B_LLM -->|Provider 断连时诚实回退且报警| B_B0[B0 确定性基线决策引擎]
-        B_Integ -->|物理 Socket/HTTP 握手 Ping| B_Network[院内 HIS/EMR 外部系统]
-        B_Integ -->|物理线程消息异步投递与死信重试| B_MQ[物理重试持久化表]
-        B_Term[TerminologyService 字典服务] -->|运行 LCS 算法和编辑距离匹配| B_DB_Term[(标准字典关系表)]
-        B_Know[KnowledgeIdentityService 知识引擎] -->|物理计算指南文本 SHA-256 哈希| B_DB_Know[(SourceFragment 锚点表)]
-    end
+    Gate --> Debt["存量债务清单"]
+    Debt --> Cards["归属到施工卡"]
+    Cards --> PR["一卡一 PR / 域级验收"]
 ```
 
 ---
 
-## 2. 核心模块重构设计
+## 3. 前端真实性门禁设计
 
-### 2.1 R1 · 前端防防 Mock 门禁加固
-- **痛点**：原 `no-page-mock.js` 规则仅检测以大写字母命名的 `VariableDeclarator`。
-- **设计**：
-  1. 移除 `NAME_PATTERN`（全大写）的正则过滤。
-  2. 针对 `VariableDeclarator`：只要变量声明的初始值是 `ArrayExpression`（非空），且数组中存在元素为 `ObjectExpression`（对象字面量），且该文件位于 `src/pages/**` 或 `src/features/**`，则直接拦截报错。
-  3. 对于菜单配置和表格列定义（Columns）等确实需要本地定义的对象数组，可使用注释 `/* eslint-disable medkernel/no-page-mock */` 显式声明，其余所有业务 Mock 数据一律强制从 `shared/api` 导入或通过 API 查询。
+### 3.1 拦截对象
 
-### 2.2 B8 · EVID-01 证据链真实打包与自校验
-- **痛点**：`exportEvidences` 不生成任何物理包且返回 UUID 生成的假哈希，前端自校验沙箱对不上导致误报“篡改”。
-- **设计**：
-  1. **后端物理打包**：`EvidenceService.exportEvidences()` 方法通过 Spring Data JDBC 读取当前租户下所有的 `audit_event` 以及相关病案的快照记录。
-  2. 使用 Java 的 `ZipOutputStream` 在内存或磁盘临时文件中物理生成一个含有审计条目的 `.json` 或 `.csv` 的打包文件，并将其转换为字节数组。
-  3. 使用 `BouncyCastle` 的 `MessageDigest`（SHA-256）计算该压缩包真实的哈希值并记录在导出审计日志中。
-  4. **前端沙箱物理比对**：前端 `Provenance.tsx` 的自校验沙箱不再采用硬编码假哈希，而是向后端真实请求该 ZIP 的数据流，前端利用原生 `Web Crypto API` 计算下载的物理二进制流的 `SHA-256` 摘要，并与后端数据库记录中由 `EvidenceService` 生成并防伪盖章的哈希进行 100% 相同性验签比对。
+- 业务页面与 feature 内的假数据数组、函数包装假数据、绕门禁注释。
+- `Math.random()` 生成健康分、RTT、证据数量、业务 ID、hash、trace 等业务字段。
+- `message.success` 或本地状态伪造后端成功。
+- `<pre>{JSON.stringify(...)}</pre>`、`font-mono`、默认展示 trace / DSL / prompt。
+- `.module.css` / inline style 中的 hex、rgb、hsl、硬编码圆角、硬编码字号。
 
-### 2.3 B7 · LLM-01 大模型网关去假推理
-- **痛点**：B1/B2 辅助和生成模式不调模型，编造引文置信度，实走 B0 并返回写死的“高血压”JSON。
-- **设计**：
-  1. **物理调用层**：在 `ModelGatewayService` 中接入标准的 `WebClient` 或大模型 SDK（如 Spring AI 或本地 HTTP 客户端）。
-  2. **诚实回退**：若没有配置 Provider 或调用失败，系统应主动捕获 `ModelGatewayException`，在返回结果中诚实标明：`modelMode = "B0"`、`modelVersion = "MedKernel-Deterministic-Baseline"`、`confidence = 1.0`（确定性基线为 1.0），`sourceCitations = "MedKernel 内置物理规则库"`，并返回 B0 规则计算出的真实业务结果，绝对禁止在不调模型的情况下贴上 B2 标签并编造“指南 §3.2”等假引文。
-  3. 清理 `FORCE_TIMEOUT` 等魔法字符串，只在调试环境的测试套件中保留。
+### 3.2 放行方式
 
-### 2.4 B4/B5 · INTEG-01 集成总线物理 Ping 与死信投递
-- **痛点**：`pingAdapter` 使用随机数生成 RTT，`retryMessage` 使用 `Math.random() > 0.3` 掷骰子伪造死信重试成功。
-- **设计**：
-  1. **物理 Ping 校验**：在 `IntegrationService.pingAdapter` 中获取适配器的物理 `url` 属性。如果是 HTTP 协议，使用 Spring 的 `RestClient` 或 `WebClient` 发送物理 `OPTIONS` 或 `GET` 请求（设置 2 秒硬超时），记录从发送到收到响应的真实系统时间差（RTT）。如果连接失败，抛出物理异常并由前端正常展示“连通失败”六态。
-  2. **物理重试投递**：在 `retryMessage` 中，调用物理的消息发送方法（例如通过消息队列或真实的 REST 适配器）向目标适配器发起真实的重试请求。若目标不可达，捕获网络异常，递增重试次数。只有当目标成功响应 200 OK 且包含预期报文时才标记为 `SUCCESS`；重试超限后将其移入死信表 `integration_dead_letter`。
+静态 UI 配置不可再靠整文件 `eslint-disable` 放行。允许三类：
 
-### 2.5 B1/B2 · 知识 SHA-256 锚点去重与字典 LCS 相似算法
-- **痛点**：知识去重没有哈希计算，字典匹配基于简单的字符命中比产生低劣的误配。
-- **设计**：
-  1. **知识哈希计算**：在 `KnowledgeIdentityService.createFragment` 中，将 `textExcerpt` 转为 UTF-8 字节，利用 `BouncyCastle` SHA-256 计算真实的哈希值并赋给实体类新增的 `contentHash` 字段，并在数据库保存。在创建或登记指南时，利用 `contentHash` 建立唯一索引与物理去重，相同文本片段不允许在同一个文档版本中重复录入。
-  2. **字典最长公共子序列 (LCS) 算法**：在 `TerminologyService.calculateSimilarity(source, target)` 中，彻底废弃简单的 `charMatchCount / source.length` 计算，改用动态规划实现标准的 LCS 最长公共子序列相似度计算：
-     $$\text{Similarity} = \frac{2 \times \text{LCS}(S_1, S_2)}{|S_1| + |S_2|}$$
-     同时，增加编辑距离（Levenshtein Distance）相似度作为第二参考权重，提供高置信度的医学词条自动候选映射。
+1. 测试、Storybook、fixture 目录。
+2. 菜单、表格列、步骤配置等非业务数据，迁到集中配置模块或 typed helper，并带中文业务说明。
+3. 个别行级豁免必须有中文理由，且不得包含业务数据、医学常量、假 hash、假状态。
+
+### 3.3 存量处理
+
+研发重启初期允许门禁输出“存量债务清单 + touched file 硬阻断”；[BASE-09](../../../docs/cards/D0/BASE-09.md) 完成后切换为全量硬阻断。任何页面卡 done 前，相关页面必须零豁免、零假数据。
 
 ---
 
-## 3. 医疗安全与边界设计
+## 4. 后端真实性门禁设计
 
-本整治方案的核心目标是**医疗数据可信与防伪**：
-1. **防伪盖章与验签**：在证据链的生成与归档过程中，所有签名与哈希均由物理算法生成，防范因编造哈希导致的司法证据失效。
-2. **AI 引文合规**：绝不编造医学文献引用！在模型无法获取引文时，展示无模型基线出处。
+后端门禁由 [INFRA-02](../../../docs/cards/D0/INFRA-02.md) 承接：
+
+- 阻断生产路径 `Math.random()` 业务造数。
+- 阻断 UUID / 时间戳充当 hash；证据 hash 必须由物理内容生成，按配置选择 SM3 或 SHA-256。
+- 阻断 catch 吞错返回成功。
+- 阻断生产路径占位 Javadoc 和“模拟/占位/placeholder”公共说明。
+- 阻断写死医学常量和单病种硬编码。
+
+业务 ID 可用数据库序列、雪花算法或 UUID，但不得被描述为完整性 hash 或证据签名。
 
 ---
 
-## 4. 回滚与降级策略
+## 5. D0 登录域救援设计
 
-1. **版本回滚**：所有后端的重构改动与 Flyway `V22__engine_remediation.sql` 绑定。如需回滚，支持一键 Flyway 倒滚并部署上一个 Stable 镜像。
-2. **前端六态降级**：若后端 API 在测试阶段不可用，前端组件能够通过 `PageState` 正确进入 `disabled` 或 `error` 状态并显示“后端服务未就绪”，绝对不允许 catch 捕获后伪造“成功”或进行假闭环交互。
+D0 是重启第一闸：
+
+1. **可渲染**：登录页在桌面和移动浏览器无空白、无重叠、无系统色/硬编码 token 违反。
+2. **可提交**：`POST /auth/login` 使用 httpOnly cookie + CSRF；失败返回真实中文错误和 traceId。
+3. **可导航**：登录后进工作台；401 / 会话过期 / 多 tab 登出回登录。
+4. **可授权**：13 角色菜单按五维 RBAC 到 27 二级 + 5 高级粒度呈现。
+5. **可审计**：登录、失败、登出、跨租户拒绝均有审计。
+6. **可截图**：D0 PR 必须包含登录页、错误态、工作台、无权限态的浏览器证据。
+
+---
+
+## 6. 业务实现范围核查设计
+
+业务范围核查由 `docs/BUSINESS_IMPLEMENTATION_SCOPE_AUDIT.md` 承接，作为每域开工前的硬闸：
+
+1. **S 场景到卡**：S0–S40 必须有主卡；多卡承接时必须说明主卡和辅助卡。
+2. **菜单到页面**：27 个客户二级菜单 + 5 个高级工具必须有页面卡或合并说明；实际路由不得游离于卡体系之外。
+3. **卡到代码**：每卡进入实现前列出前端、后端、数据迁移、测试和 E2E 映射。
+4. **B0 主链路**：D0–D6 每域必须有一条可自动化验证的无模型主链路。
+5. **wave2 消费点**：AIK/LLM/KNOWGEN/DOMAIN 每张卡必须回指 D0–D6 的 B0 消费点。
+6. **覆盖矩阵回填**：S17–S40 与 wave2 旧锚点仍待迁时，不得宣称业务范围零遗漏或 P8 巨物退役完成。
+
+---
+
+## 7. 医学语义映射纠偏
+
+旧计划中的“实现 LCS 算法提升医学匹配”必须废止。新的 TERM 路径：
+
+- B0：标准编码交叉表 + 同义词词典 + 来源分级 + 组织范围 + 高危负样本规则。
+- B1/B2：可选模型嵌入仅经模型能力网关生成候选，不直接成为事实。
+- 字符相似度：只可作为低权重召回信号；任何高危近似或高置信发布必须人工确认。
+- 验收：钾/钠、肌钙蛋白 T/I、左/右、剂量量级等负样本必须被判为 HIGH，禁止批量确认与自动确认。
+
+---
+
+## 8. 回滚与渐进策略
+
+- 本 OpenSpec 只改计划与门禁口径，可独立回滚。
+- 后续代码按施工卡 PR 推进；每个 PR 小范围、可回滚。
+- 门禁先 ratchet 再 full hard-block，避免一口气把存量债务变成不可定位的 CI 红海。
+- D0 过闸前，不推进 D1–D6 新功能，防止继续在坏地基上堆页面。
