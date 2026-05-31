@@ -1,48 +1,55 @@
-# MedKernel AI 协作规则
+# MedKernel AI 协作规则（AGENTS.md）
 
-## 语言要求
+> **任何 AI 工具与人类协作者的协作权威，管「怎么协作」**（产品「做什么 / 不变量」见 [CONSTITUTION](docs/CONSTITUTION.md)）。**每次开工先读 [docs/_HANDOFF.md](docs/_HANDOFF.md) 续接，别考古。**
 
-- 本仓库面向中文医疗、实施、研发和交付团队，所有新增或修改的文档必须使用简体中文书写。
-- 代码标识符、接口路径、命令、配置键、数据库字段、标准英文缩写、第三方产品名和必要原文引用可以保留英文，但必须用中文解释其业务含义。
-- `medkernel-backend` 引擎层（`com.medkernel.engine.**` 与 `com.medkernel.shared.**`）公共类、公共方法的 Javadoc，以及 Oracle/PostgreSQL/Kingbase 迁移脚本中新增表与枚举/状态/外键列的 `COMMENT ON`，必须使用简体中文；CI 由 `scripts/check-comment-zh.sh` 软门禁兜底。
-- 不允许新增以英文为主的 README、设计文档、计划、OpenSpec、PR 说明、Issue 模板、运行手册或 AI 协作说明。
-- 不保留旧版本历史归档、旧任务锁、旧协作模板或旧分支口径；项目按未上线的新项目方式运行。`openspec/archive/` 仅作已完成变更的审计追溯，不作为当前事实源。
-- 详细规则见 [docs/DOCUMENTATION_LANGUAGE_POLICY.md](docs/DOCUMENTATION_LANGUAGE_POLICY.md)。
+## §0 总则
+- 适用任何 AI 工具（Claude Code / Codex / Cursor / Copilot / Gemini）与人类；各入口（CLAUDE.md / GEMINI.md…）仅转交至此，不另维护。
+- 冲突时 **CONSTITUTION（§8 红线）＞ 本文件**；指令优先级 **用户 ＞ 本文件 ＞ 工具默认**。
+- 活文档：改规则走 PR（§6）。
 
-## 开发与合并要求
+## §1 语言
+当前有效文档 / PR / 注释用**简体中文**；代码标识符 / 接口 / 配置键 / 字段可英文但须中文释义；引擎层（`com.medkernel.engine/shared.**`）公共 Javadoc 与迁移 `COMMENT ON` 必须中文。详 [语言规范](docs/DOCUMENTATION_LANGUAGE_POLICY.md) / 核心 §14。
 
-- 任何功能、修复或文档治理任务完成后，必须创建 PR，等待远端检查通过，再合并到 GitHub 远程 `main`。
-- 禁止直接推送到远程 `main`；开发分支合入远程 `main` 的标准路径是：分支提交 → 推送 → PR → CI 通过 → 合并 PR → 确认 `origin/main` 包含合并提交。
-- 远程长期分支只保留 `main`；禁止创建或保留 `develop`、`dev` 等第二主干分支。
-- 分支前缀按所用 AI 工具而定（如 Claude Code 用 `claude/`、Codex 用 `codex/`），除非用户明确指定其他分支名。
-- PR 描述必须使用中文，写清变更范围、验证结果、未完成事项和是否影响医疗安全、部署或数据迁移。
+## §2 六条总纲（贯穿所有场景）
+1. **质量优先** — 不为赶工 / 省 token 破 §8 红线。
+2. **证据优先·不臆造** — grep 核实仓库真相，不编端点 / 类 / 进度；如实报失败 / 跳过 / 完成；宣称完成附证据。
+3. **安全降级优先** — 医疗安全高于功能；缺模型 / 连接 / 图时返诚实状态 + 真实主链路（B0 先于模型）。
+4. **单一真相源·工具中立** — 认 CONSTITUTION / 域简报 / 卡为权威，文档随代码同 PR；走 _HANDOFF 接力，不靠工具私有记忆。
+5. **Token 经济** — 最少 token 做最全：grep 定位不通读、并行 / 合并 PR / 不重读已写、套模板填全（N·A 不留空）、主线能做不开 subagent。**省冗余，不省质量。**
+6. **重构优先·全新高标准** — 未完成任务按全新设计做（卡 + 11 铁律 + 最新标准）；旧低质码不将就——达标复用、不达标重构过 T-GATE，不在烂地基加层、不扩范围。
 
-## 文档权威顺序
+## §3 权威序与真相源
+- 权威序 **核心 CONSTITUTION ＞ 域简报 `_brief.md` ＞ 卡 `<ID>.md`**（页面卡加 [体验契约](docs/EXPERIENCE_CONTRACT.md)）；冲突核心赢，卡间冲突＝修分区。旧巨物 P8 前不权威。
+- 指针（按需查，不通读）：[_HANDOFF](docs/_HANDOFF.md) 接力 / [backlog](docs/backlog.md) 任务 / [_index](docs/cards/_index.md) 找卡 / [覆盖矩阵](docs/cards/_coverage-matrix.md) / [质量基线](docs/audit/质量基线.md) 验收 / [glossary](docs/glossary.md) 名词。
 
-构建任一任务，按下序读（读最少、拿最全）：
+## §4 工作循环（含会话接力）
+读 [_HANDOFF](docs/_HANDOFF.md) 续接 → **核查现状**（grep / find / git diff 比对 `frontend/src`、`medkernel-backend/src`，不信单次 read、不臆造）→ 创作类**先设计后码** → 按 §3 权威序读最少做 → **自检留证**（测试 + T-GATE，不空口说「已通过」）→ **收尾更新 _HANDOFF**（状态 / 下一步 / 归档，新线套末尾模板）。中断后用 `git worktree list` + `git status` + `git log origin/main` 找散落改动。
 
-1. [docs/CONSTITUTION.md](docs/CONSTITUTION.md) —— 核心（恒读，11 视角不变量）
-2. `docs/cards/<域>/_brief.md` —— 所领卡所在域的域简报
-3. `docs/cards/<域>/<TASK-ID>.md` —— 所领的施工卡
+## §5 分场景规约（一行一规则 + 指针）
 
-页面卡额外读 [docs/EXPERIENCE_CONTRACT.md](docs/EXPERIENCE_CONTRACT.md)（共享体验与组件契约）。
+| 场景 | 必守 | 详见 |
+|---|---|---|
+| 需求 / 设计 | 创作类先设计后码 / YAGNI / 小而可测单元 | — |
+| 开发 | TDD（先失败测试 → 实现 → 绿，动手前建绿基线）/ B0 先于模型 / 单一归属 / 配置外置 / 标准契约（Record DTO + 校验 / ApiResult / traceId / 幂等）| 核心 §1·§11 |
+| 数据 / 迁移 | 5 方言一致 + 中文 COMMENT + 索引约束 + 组织 / 版本 / 审计字段 | 核心 §12 |
+| 产品体验 | 一页一目标 / 六态 / 主按钮 ≤1 / 默认筛选 ≤3 / 低打扰 / 服务端分页 / 技术对象藏专家模式 | [体验契约](docs/EXPERIENCE_CONTRACT.md) |
+| 集成 / 互操作 | FHIR / CDS Hooks 门面 / 适配器 / Webhook 签名 / 健康检查 / 重试死信 / 断连诚实降级 | 核心 §10 |
+| 性能 / NFR | 10 万级服务端分页 / P95 / 并发幂等 / 可用性 / 5 方言一致 | [SYS-07](docs/cards/ga/SYS-07.md) |
+| 测试 | 真实不造数 / 六态全 / 单测 / 契约 / E2E / 不写死医学常量 | [质量基线](docs/audit/质量基线.md) |
+| 真实性门禁 T-GATE | 前端 no-page-mock + stylelint 拦 hex；后端拦 Math.random / 吞错返成功 / UUID 充 hash / 占位 Javadoc；前后端全绿才 done | [INFRA-01](docs/cards/D0/INFRA-01.md) |
+| 调试 | 先复现 + 定根因再改，不瞎试 / 不吞错 / 最小可复现 | — |
+| 代码评审 | 给 / 收都附证据 + 技术核实，不盲改 / 不表演同意 | — |
+| 验收 | 11 铁律 + 证据清单（permalink / 测试 / T-GATE / 锚点 / A1–A9 / owner≠reviewer）+ 域级 + GA 门禁 | [质量基线](docs/audit/质量基线.md) |
+| 文档 / 施工卡 | 套 _template / 11 视角填全或 N·A / FR↔AC / 单一归属 / 零死链 / 四索引回填 / commit 引锚点 / 整批一 PR | [_template](docs/cards/_template.md) |
+| 运维 / 国产化 | 国产化 profile 自检 / 备份恢复 / 无连接诚实（NOT_CONNECTED）/ 监控健康检查 | 核心 §12 |
+| 审计 / 核查 | 主线广度优先；逐单元 subagent 太费 token，慎用 | — |
+| 安全 | 仅授权防御性研发；密钥 / 凭证不落明文 / 不入日志 / 不进库；患者数据脱敏 | §7 |
 
-辅助（按需查，不通读）：
-- 找卡：[docs/cards/_index.md](docs/cards/_index.md)（场景 S0–S40 → 卡）
-- 验收方法论：[docs/audit/质量基线.md](docs/audit/质量基线.md)
-- 名词：[docs/glossary.md](docs/glossary.md)
-- 任务状态 / 派单：[docs/backlog.md](docs/backlog.md)
+## §6 Git / PR
+禁直推 `main`：分支 → 推送 → PR → CI → 合并 → 确认 `origin/main` 含合并提交。分支前缀按工具（`claude/` / `codex/`）。一逻辑单元一 PR；分批基于最新 `main`；**squash 后从新 `origin/main` 重拉**。远程只留 `main`，清理已并分支 / worktree。commit / PR 用中文，写清范围 / 验证 / 未完成 / 医疗安全·部署·迁移影响；**文档随代码同 PR**。
 
-冲突裁决：核心 > 域简报 > 卡。卡与核心冲突 → 核心赢；卡之间本不应重叠，若冲突＝分区错误，修分区而非裁决。
+## §7 协作边界与安全
+难逆 / 外向操作（发布 / 删除 / 外调）先确认；删改前看清目标，矛盾或非己建则上报不蛮干；不伪造证据 / 不假装通过。密钥 / 凭证不落明文 / 不入日志 / 不进库；患者数据脱敏后外调。授权医疗研发，恪守医疗安全。
 
-> 迁移过渡期（P0–P7）：旧巨物（详规/落地规划/FOUNDATION/体验规范）在对应域搬迁完成前物理保留但**不再作为权威**；以本序为准。全部域搬迁完成后（P8）删除。
-
-## 会话接力（中断续接）
-
-会话可能因额度耗尽突然中断，且本项目由多种 AI 工具（Claude Code / Codex / Cursor / Copilot / Gemini 等）协作。为避免下个会话、或换一个工具后花大量 token 考古"上次做到哪"，统一走一套**工具中立**的接力：
-
-- **真相源**：[docs/_HANDOFF.md](docs/_HANDOFF.md) —— 所有在途工作线的活跃分支、状态、下一步精确动作。纯 markdown、在版本库里，**任何 AI 工具或人都能读写，不依赖某工具的私有记忆**。
-- **开工第一件事**：读 `docs/_HANDOFF.md`，按对应工作线续接。不要翻历史会话或 git 考古。
-- **收尾或预感中断时**：立刻更新 `docs/_HANDOFF.md` 中对应工作线的「状态」「下一步」；完成的线移入「已归档」。
-- **开新工作线**（领新功能/任务）：按 `docs/_HANDOFF.md` 末尾模板加一条线。
-- 中断后找散落改动：`git worktree list` + `git status` + 各 worktree 查未跟踪文件（改动曾停在未提交的 worktree）。
+## §8 质量红线（不可妥协）
+[CONSTITUTION](docs/CONSTITUTION.md) 11 铁律 / 20 硬约束，**token 经济绝不牺牲**：真实性 / 医疗安全（AI 标识 / 医师确认 / 高危双签 / 禁自动开嘱）/ 诚实降级 / 关系库权威 / 唯一权威知识 / 五维权限 / 六态 / 中文优先 / 文档同步 / 配置外置 / 无模型可运行。
