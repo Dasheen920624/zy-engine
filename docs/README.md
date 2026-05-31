@@ -29,6 +29,8 @@ AI 开发"读最少、拿最全"：建任一任务只读 **核心 + 该域简报
 docs/
 ├─ CONSTITUTION.md            ← 核心 CORE（11 视角不变量，恒读）
 ├─ EXPERIENCE_CONTRACT.md     ← 共享体验与组件契约（页面卡读）
+├─ AI_DEVELOPMENT_RESTART_PLAN.md ← AI 研发重启执行闸门（开工流程 / 阶段门 / PR 证据）
+├─ BUSINESS_IMPLEMENTATION_SCOPE_AUDIT.md ← 业务实现范围核查（S0-S40 / 菜单 / 卡到代码 / B0）
 ├─ glossary.md                ← 术语表
 ├─ backlog.md                 ← 任务台账（行→卡链接 / 状态 / 派单）
 ├─ cards/                     ← 施工卡（一卡 = 一 backlog 可交付物）

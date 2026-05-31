@@ -1,60 +1,67 @@
-# 提案：MedKernel 引擎真实性彻底整治与门禁修复工程 (GA-ENG-CLEAN-01)
+# 提案：MedKernel 真实性整治与研发重启闸门
 
-> 提案日期：2026-05-28
-> 提案人：Antigravity
-> 状态：提案中 (Under Proposal)
-> 关联任务：GA-ENG-KNOW-01 / GA-ENG-KNOW-02 / GA-ENG-TERM-01 / GA-ENG-LLM-01 / GA-ENG-EVID-01 / GA-ENG-INTEG-01
+> 提案日期：2026-05-31
+> 提案人：Codex
+> 状态：提案纠偏中
+> 关联：D0 [INFRA-01](../../../docs/cards/D0/INFRA-01.md) / [INFRA-02](../../../docs/cards/D0/INFRA-02.md) / [BASE-09](../../../docs/cards/D0/BASE-09.md) / [AUTH-02](../../../docs/cards/D0/AUTH-02.md) / [AI 研发重启执行方案](../../../docs/AI_DEVELOPMENT_RESTART_PLAN.md)
 
 ---
 
 ## 1. 背景与动机
 
-根据 2026-05-28 的引擎能力真实性代码核查报告（`docs/audit/2026-05-28-engine-capability-authenticity-audit.md`），系统存在严重的真实性代码质量债务，部分标记为 `done` 的旗舰功能包含造假的 mock 实现，违反了产品宪法（`docs/CONSTITUTION.md`）中关于“禁止业务 mock 假闭环”的明确要求。
+项目已因低质量 AI 代码暴露出系统性问题：页面假闭环、登录体验不稳定、门禁被 `eslint-disable` 和函数包装绕过、`Math.random()` 造数、假 hash、模型与外部系统诚实降级不足，以及旧计划与新卡体系并存导致执行口径漂移。
 
-主要暴露出的问题包括：
-1. **防假闭环门禁失效**：ESLint 规则 `no-page-mock` 仅检测全大写命名，导致驼峰命名 (camelCase) 的页面级大体量硬编码数组绕过了代码库门禁。
-2. **核心业务返回假哈希/假推理**：证据链大导出（B8）为没有打包与归档的空操作，返回假哈希串；大模型能力网关（B7）在 B2 模式下不调模型，编造引文并强行降级为 B0 写死输出；集成总线（B4/B5）通过 `Math.random` 掷骰子来模拟 Ping 握手 RTT 和 70% 假成功的死信重试投递。
-3. **关键去重与匹配算法缺失**：知识资产 SHA-256 片段锚点去重（B1）不计算哈希，同文档重复登记无法拦截；字典映射推荐（B2）使用简单的字符命中比，而非长公共子序列 (LCS)，导致严重的临床词条误配。
+本提案纠偏 2026-05-28 版本中两个关键问题：
 
-为了保证医疗系统的严肃性、高可信度及医疗安全，必须开展一场彻底的**“真实性重构与门禁加固工程”**，将这 6 个核心引擎任务进行重构与整治。
+1. 原提案把“字典 LCS / 编辑距离”写成修复目标，违反核心 §7 与质量基线 §4.3 对“医学语义映射、禁止字符 LCS”的要求。
+2. 原提案仍以旧 `GA-ENG-* / E5 / E6` 口径组织，已不适配当前“核心 + 域简报 + 施工卡”的权威体系。
+
+因此，本变更不再作为独立大爆炸重构，而是收编为研发重启第一闸：先把真实性门禁、D0 登录域和质量证据链修到可信，再逐卡推进 D1–D6。
 
 ---
 
 ## 2. 改造目标
 
-1. **重建防伪防 Mock 前端门禁 (R1)**：重写并收紧 ESLint 规则 `no-page-mock.js`，无差别拦截所有页面内（包含 camelCase 命名）的大型对象数组字面量和 catch 块伪造成功的欺骗性交互。
-2. **实现真实的证据打包与防伪导出 (B8 / F1 / F2)**：废除假哈希和固定病案展示，对接后台真实的知识包、配置包发布与审计证据流，使用后台 ZIP 真实压缩打包并计算真实的 SHA-256 指纹，确保前端自校验沙箱能精确完成哈希即时校验。
-3. **重构模型能力网关真实通道 (B7)**：在 B1/B2 辅助和生成模式下，必须通过 Spring Boot 统一的模型能力适配器真实调用外部 Provider 或本地大模型。没有 Provider 时，诚实回退至 B0（确定性基线）并进行醒目状态提示，严禁伪造高置信度与引文。
-4. **重构集成总线真实 Ping 与重试机制 (B4 / B5 / B6)**：适配器健康 Ping 必须进行物理 Socket/HTTP 握手并计算真实延迟；死信重试队列必须进行物理级异步重新投递；Webhook 签名和调用参数移除裸 Map，采用强类型 Record DTO 进行封装。
-5. **重构知识去重与字典映射算法 (B1 / B2 / B3)**：在 `KnowledgeIdentityService` 中真实计算片段的 SHA-256 并持久化到 `SourceFragment` 表中，实现高内聚的原子去重；在 `TerminologyService` 中落地标准 LCS（最长公共子序列）及编辑距离算法，提高相似词条推荐的医学精准度。
+1. **计划纠偏**：活动 OpenSpec、质量基线、README、backlog 和 `_HANDOFF` 不再保留误导 AI 的旧权威口径。
+2. **前端 T-GATE 加固**：`no-page-mock` 不只拦截变量命名，还要拦截业务页面假数据、绕门禁注释、函数包装规避、写死医学常量、JSON 裸露和内联硬编码样式；静态 UI 配置必须走集中白名单或 typed helper，不得靠整文件禁用。
+3. **后端 T-GATE 加固**：生产路径阻断 `Math.random()` 业务造数、UUID 充当完整性 hash、catch 吞错成功、占位 Javadoc、硬编码医学常量。
+4. **D0 登录域救援**：先证明登录页可渲染、可提交、可报错、可跳转、可登出、会话过期可回登录，且 13 角色菜单按 RBAC 呈现。
+5. **业务实现范围核查**：先核 S0–S40、27+5 菜单、页面、接口、数据、B0 主链路和 wave2 消费点，禁止把“有卡承接”误写成“业务已实现”。
+6. **真实性债务归属**：现有低质量代码按施工卡归属登记；未清债务不能作为 done 证据。
+7. **医学语义映射纠偏**：字典候选必须基于同义词典、编码交叉表、来源权重、可选模型嵌入和高危负样本判别；字符 LCS / 编辑距离最多作为低权重召回信号，不能作为自动确认或高置信判断依据。
 
 ---
 
-## 3. 影响范围分析
+## 3. 影响范围
 
-### 3.1 影响的文档
-- `docs/CONSTITUTION.md`：增加第 18 条硬约束（已完成）。
-- `docs/backlog.md`：确认将 6 个引擎任务标为 `in_progress` 并添加整治进度说明。
-- `docs/superpowers/plans/2026-05-28-engine-authenticity-remediation.md`：记录作为 superpowers 的实施证据。
+### 3.1 文档与流程
 
-### 3.2 影响的 API 与 DTO
-- `medkernel-backend`：
-  - `EvidenceService` / `EvidenceController`：证据打包导出 ZIP API。
-  - `ModelGatewayService` / `ModelGatewayController`：B1/B2 真实调用接口、敏感脱敏接口、验证逻辑。
-  - `IntegrationService` / `IntegrationController`：真实的 ping 握手与消息重投递机制。
-  - `TerminologyService`：最长公共子序列（LCS）算法及映射接口。
-  - `KnowledgeIdentityService`：片段真实的 SHA-256 哈希计算与幂等校验。
-  - 迁移脚本：如果表结构需要增加 `hash` 字段或表索引，需要增加 Flyway 迁移脚本。
+- `docs/AI_DEVELOPMENT_RESTART_PLAN.md`
+- `docs/BUSINESS_IMPLEMENTATION_SCOPE_AUDIT.md`
+- `docs/audit/质量基线.md`
+- `docs/backlog.md`
+- `docs/_HANDOFF.md`
+- `README.md` / `docs/README.md`
+- 本 OpenSpec 变更目录
 
-### 3.3 影响的前端组件
-- `eslint-rules/no-page-mock.js`
-- `advanced/Provenance.tsx` (来源追溯控制台)
-- `tenant/AdapterHub.tsx` (适配器中心与 HIS 仿真沙箱)
-- 其它 8+ 包含仿真兜底的页面。
+### 3.2 后续代码卡归属
+
+- D0 `INFRA-01`：前端真实性门禁。
+- D0 `INFRA-02`：后端真实性门禁。
+- D0 `BASE-09`：存量代码基线净化。
+- D0 `BASE-10`：设计 token 与 stylelint。
+- D0 `AUTH-01/02/03`：登录闭环与凭证安全。
+- D0 `BASE-02/INFRA-05`：五维 RBAC 与角色菜单。
+
+### 3.3 明确不做
+
+- 不按旧 `GA-ENG-CLEAN-01` 一次性重写所有业务模块。
+- 不把旧巨物作为当前实现权威。
+- 不把 LCS、编辑距离或字符命中比作为医学字典映射的充分依据。
+- 不绕过施工卡直接开发 D1–D6 新功能。
 
 ---
 
 ## 4. 提案结论
 
-本提案是全面洗刷 MedKernel 引擎“假闭环、伪功能”质量债的唯一正规途径，对于通过 v1.0 GA 的 E5 全能力验收、等保评测、商密评测与临床安全门禁具有决定性意义。
-我们将以最高标准的专业严谨性与诚实原则执行本次重构。
+本提案的核心是先恢复研发系统的可信度：先让 AI 按统一卡体系、统一门禁、统一证据模板工作，再进入功能实现。D0 登录域和 T-GATE 是重启第一闸；闸门不过，任何后续页面和业务闭环都不可信。
