@@ -1,0 +1,62 @@
+# LLM-01 · 模型能力网关（引擎）
+
+> 读卡前置：[核心 CONSTITUTION](../../CONSTITUTION.md) + [wave2 域简报](_brief.md)。
+> 迁移来源（覆盖矩阵锚点）：落地规划 §模型网关 · 核心 §11 B0 先于模型 · 铁律 #1 真实性。
+
+## 身份
+- 卡 ID：LLM-01（= backlog `LLM-01`）
+- 域：wave2（X-LLM）
+- 关联场景：S15
+- 依赖卡：[API-12](API-12.md)（对外契约）· [BASE-01](../D0/BASE-01.md)（OrgContext）· [BASE-04](../D0/BASE-04.md)（审计）
+- 工作量：5d
+- owner / reviewer：待派单（owner ≠ reviewer）
+
+## 目标
+模型能力网关**引擎**：provider 无关契约 + 路由策略持久化 + 组织继承 + B0 诚实空候选（不写死病种）——所有 AI 增强能力的统一入口与降级裁决中枢。
+
+## 现状（搬迁时核查 2026-05-31，以 `medkernel-backend` 为准）
+**MVP 已建**：`engine/llm/ModelGatewayService`（470 行）实现能力状态、`submitTask`（脱敏→hash→路由→Schema 校验→B0 回退→审计）、`getTask`/`retryTask`/`validatePolicy`；`ModelCapabilityPolicy`(route_strategy/desensitize_strategy/expected_schema) + `ModelCapabilityTask` 实体；五方言 `V18`。当前 **provider 未接入，一律 B0 诚实回退**（注释明确 B1/B2 由 [LLM-08](LLM-08.md) 落地）。本卡＝**固化引擎契约**：路由策略组织继承（现仅租户级）、B0 候选去硬编码（现 `executeB0Fallback` 内置高血压样例，需改为引既有规则/字典/路径事实而非写死）、能力码目录化。
+
+## 功能要求（原子可测条目）
+- [ ] FR-1 路由裁决：按策略 `BASEPLAY/LOCAL_MODEL/EXTERNAL_MODEL/DISABLED` 选路；无 provider → B0。
+- [ ] FR-2 策略持久化 + 组织继承：策略按 平台→集团→医院→…→科室 继承覆盖（呼应核心 §9）。
+- [ ] FR-3 B0 诚实空候选：无 provider 时返回**确定性来源**（既有规则/字典/路径事实）或诚实空态，**不写死病种**。
+- [ ] FR-4 脱敏 + 存证：调用前脱敏 + `input_hash` SHA-256 存证。
+- [ ] FR-5 不伪造：禁伪造 B1/B2 模型名/置信度/来源引文；`fallbackUsed`/`mode` 据实。
+
+## 接口契约 / 页面契约
+### 接口契约（引擎/API 卡）
+- 对外契约见 [API-12](API-12.md)；本卡为其 service 实现。
+- 状态机：变更（任务态）+ 配置（策略态）。
+- 错误码：`ENG_LLM_001/002/004`；traceId 透传。
+
+## 数据与迁移
+- 表族 `model_capability_policy`/`model_capability_task`（五方言 `V18`，本卡单一归属）；组织继承字段（org_path/scope）补迁移。
+
+## 视角清单（11 视角）
+1. 产品架构：AI 能力统一中枢，provider 可插拔。
+2. 产品体验：N·A（引擎）。
+3. 系统与数据架构：B0 P95 ≤2s；任务/策略按租户+能力索引。
+4. 临床医疗安全：高危能力输出标风险、禁自动入病历。
+5. 知识与数据治理：B0 候选引既有权威事实，不写死。
+6. 安全合规与监管：脱敏 + hash 存证 + 全审计。
+7. 集团化与多租户治理：★策略组织继承（核心 §9 七层）。
+8. 集成与互操作：provider 适配解耦至 [LLM-08](LLM-08.md)。
+9. 运维 / SRE / 国产化：无外网纯 B0 可运行。
+10. 质量与真实性审计：★去 `executeB0Fallback` 硬编码病种；不伪造模型产出。
+11. AI / 模型治理与可降级：★路由 + 降级裁决中枢；矩阵见 [LLM-02](LLM-02.md)。
+
+## 适用不变量
+- 命中核心约束：**铁律 #4 B0 先于模型** · **#1 真实性** · **#5 关系库权威**（候选不入权威库）· **核心 §9 组织继承**。
+- 本卡落点：provider 无关网关引擎，策略组织继承、B0 诚实不写死、产出可审计不伪造。
+
+## 验收 + 验证
+- [ ] AC-1（FR-1/2）：策略选路 + 组织继承覆盖单测。
+- [ ] AC-2（FR-3/5）：无 provider B0 不写死病种、不伪造模型名（真实性门禁）。
+- T-GATE：后端真实性门禁全绿。
+- B0 验收：★关 provider 全能力码可调通、产出诚实。
+
+## 完工证据
+- 代码 permalink：`engine/llm/ModelGatewayService` + 策略继承 + 去硬编码 B0。
+- 测试：路由/继承/B0/脱敏/不伪造。
+- 审计员签字：@<reviewer>（owner ≠ reviewer）。
