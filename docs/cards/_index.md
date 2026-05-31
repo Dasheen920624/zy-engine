@@ -88,8 +88,11 @@
 **安全边界**：[OPT-10](D6/OPT-10.md) 插件和生态安全边界
 **页面**（实化占位 `D6-PAGE-*`）：[PROV-01](D6/PROV-01.md) 来源追溯 · [GRAPH-01](D6/GRAPH-01.md) 图谱查询 · [AIFLOW-01](D6/AIFLOW-01.md) AI 工作流（壳/查看，编排 wave2）· [DOMCHK-01](D6/DOMCHK-01.md) 国产化自检 · [DEVCON-01](D6/DEVCON-01.md) 开发者控制台
 
-### 第二波 wave2
-API-12 / LLM-01 … LLM-08 / OPT-06 / OPT-09 / AIK-STD-01 … AIK-STD-12 / KNOWGEN-01 … KNOWGEN-15 / NURSING-01 / REPORT-01 / POC-KNOW-01 / PHARMACY-01 / CRITICAL-01 / SPECIAL-POP-01 / PERIOP-01 / ONCO-RENAL-01 / ALLIED-CARE-01 / TCM-HEALTH-01 / INFECTION-PH-01 / PRIMARY-CARE-01 / REGION-COLLAB-01 / SPECIALTY-EXT-01 / RWD-01 / SVC-DOMAIN-01 / SVC-DOMAIN-02（待建）
+### 第二波 wave2 🚧 建设中（[域简报](wave2/_brief.md)；分 4 子块多 PR 增量交付）
+**X-LLM 模型网关与真实接入 ✅ 已建（11 卡，批 1）**：[API-12](wave2/API-12.md) 网关 API · [LLM-01](wave2/LLM-01.md) 网关引擎 · [LLM-02](wave2/LLM-02.md) B0/B1/B2 切换矩阵 · [LLM-03](wave2/LLM-03.md) 数据最小化外调安全 · [LLM-04](wave2/LLM-04.md) 版本治理 · [LLM-05](wave2/LLM-05.md) 增强接入矩阵 · [LLM-06](wave2/LLM-06.md) 来源探索编排 · [LLM-07](wave2/LLM-07.md) 医学回归评测 · [LLM-08](wave2/LLM-08.md) provider 真实接入 · [OPT-06](wave2/OPT-06.md) AI 质量评测中心 · [OPT-09](wave2/OPT-09.md) 数据最小化策略引擎
+**X-AIK AI 工厂（批 2，待建）**：AIK-STD-01 … AIK-STD-12
+**X-KNOWGEN 首发知识资产（批 3，待建）**：KNOWGEN-01 … KNOWGEN-15
+**X-DOMAIN 15 领域门面 + 服务包（批 4，待建）**：NURSING-01 / REPORT-01 / POC-KNOW-01 / PHARMACY-01 / CRITICAL-01 / SPECIAL-POP-01 / PERIOP-01 / ONCO-RENAL-01 / ALLIED-CARE-01 / TCM-HEALTH-01 / INFECTION-PH-01 / PRIMARY-CARE-01 / REGION-COLLAB-01 / SPECIALTY-EXT-01 / RWD-01 / SVC-DOMAIN-01 / SVC-DOMAIN-02
 
 ### GA 验收 ga ✅ 已建（12 卡，[域简报](ga/_brief.md)）
 **跨域验收**：[QA-01](ga/QA-01.md) 引擎 E2E · [QA-02](ga/QA-02.md) 迁移/性能/国产化 · [QA-03](ga/QA-03.md) 医疗安全 · [QA-04](ga/QA-04.md) 无模型 B0 · [QA-05](ga/QA-05.md) 上线评审 · [QA-06](ga/QA-06.md) 产品体验 · [QA-07](ga/QA-07.md) 代码净化 · [QA-08](ga/QA-08.md) 第三方对接
